@@ -1,6 +1,6 @@
 # NAEON — Подробная концепция игры
 
-**Версия:** 0.7 (обновлено 2026-08-05)  
+**Версия:** 0.8 (обновлено 2026-08-05)  
 **Репозиторий:** https://github.com/br7wq7yfqc-ctrl/naeon  
 **Основа:** NAEXOS + вселенная Aexion
 
@@ -19,7 +19,8 @@
 - Генерация контента по промптам прямо в клиенте
 - Живое двустороннее голосовое общение с ИИ-NPC на естественном языке
 - Голосовое управление через Yandex Alice / SpeechKit + open-source альтернативы
-- Всё на базе **Yandex GPT + Yandex SpeechKit** (с поддержкой open-source STT/TTS) при платной подписке + оплате токенов
+- Сюжетные кампании фракций, генерируемые квесты, конструктор квестов альянсов, живая история вселенной
+- Всё на базе **Yandex GPT + Yandex SpeechKit** (с поддержкой open-source) при платной подписке + оплате токенов
 
 Игра полностью standalone, 3D, в тёмно-неоновых тонах, оптимизирована для слабых машин. Обе основные фракции полностью играбельны. Поддерживаются режимы **PvP** и **PvPvE** на всех слоях геймплея.
 
@@ -51,394 +52,267 @@
 Модульная система фракций. Возможны нейтральные (древние AI, независимые колонии, remnant-расы), splinter-группы Cybernex/gROT. Разблокируются через лор и контент.
 
 ### NPC AI-боты
-У каждой расы свои активные AI-боты, участвующие в геймплее:
-
-- **Cybernex**: роботы-животные (workers, patrols, squad mates, advisors, civilian caretakers). Behavior trees + aiNEX / Yandex GPT-усиленные диалоги и адаптивное поведение.
-- **gROT**: рои биомассы, elite mutants, infection spreaders, hierarchical guardians. Агрессивный pack AI, механики заражения.
-- Боты заполняют мир, патрулируют, строят, сражаются, реагируют на действия игроков и участвуют в PvP/PvPvE (включая MOBA-minions и jungle).
-- **Все ключевые NPC поддерживают полноценный двусторонний голосовой диалог на естественном языке.**
+У каждой расы свои активные AI-боты, участвующие в геймплее. Ключевые NPC поддерживают полноценный двусторонний голосовой диалог на естественном языке и выдают все типы квестов.
 
 ---
 
 ## 3. Геймплейные слои + PvP / PvPvE
 
 ### A. Глобальная стратегия
-- Persistent shared universe. Колонии, орбитальные станции, верфи, экстракторы.
-- Модульное строительство + автоматизация через AI-ботов.
-- **PvP/PvPvE**: contested systems, colony raids, resource denial, alliance wars, claim wars. AI-силы обеих фракций + игроки.
+Persistent shared universe. Колонии, орбитальные станции, верфи, экстракторы. Модульное строительство + автоматизация через AI-ботов. PvP/PvPvE: contested systems, colony raids, resource denial, alliance wars, claim wars.
 
 ### B. Космический симулятор
-- Модульные корабли (Scout → Capital). Multi-crew (пилот, стрелок, инженер, командир и др.).
-- Флоты до 30 кораблей с управлением с флагмана (стратегический режим).
-- Semi-Newtonian физика + атмосферный полёт.
-- **PvP/PvPvE**: open-space PvP zones, fleet battles, boarding, contested jump points. AI-флоты + игроки. Safe zones у хабов.
+Модульные корабли (Scout → Capital). Multi-crew. Флоты до 30 кораблей. Semi-Newtonian физика. PvP/PvPvE в open space.
 
 ### C. TPS Action/RPG
-- Вид от третьего лица. Playable animal-robots (Cybernex) и мутант-формы (gROT).
-- Skill trees, модульное снаряжение, cyber-upgrades.
-- Seamless (или почти seamless) переход с корабля на поверхность.
-- **PvP/PvPvE**: open-world hotspots, instanced arenas, base defense/assault, squad vs squad. AI-боты как allies, enemies или третья сила.
+Третье лицо. Playable animal-robots (Cybernex) и мутант-формы (gROT). Skill trees, модульное снаряжение. Seamless переход. PvP/PvPvE на поверхности.
 
 ### D. MOBA Mode — Aexion Clash (NAEON Arena)
-**Third-person Action-RPG MOBA** в формате **PvPvE** (по аналогии с Paragon / Predecessor).
-
-#### Позиционирование
-- Основной формат: **instanced ranked / casual matches** (5v5, с вариантом 3v3).
-- Доступен из хабов NEX / ROT-цитаделей или через terminals.
-- Lore: «Simulation Conflicts» / «Proxy Wars» / тренировочные симуляции и реальные proxy-сражения за ключевые точки.
-- Не ломает open-world loop, но использует тех же героев и soft-прогрессию.
-
-#### Формат матча
-- 5v5 (стандарт) или 3v3.
-- Команды: Cybernex vs gROT (асимметрия) или draft mixed (casual).
-- Длительность: 25–40 минут или до уничтожения Core.
-- Карты: dedicated dark-neon арены (NEX Perimeter, Biomass Fields, Ruined Orbital, ARK Wilds).
-
-#### Герои
-Герои = существующие формы с полноценными ability kits (3–4 способности + passive + ultimate). Roster на запуске: 8–12 героев, расширяемый. Unlock через основной прогресс.
-
-#### Механики
-- Leveling 1–18 в матче, ability points, items (gold shop), lanes + jungle, objectives, PvPvE events, vision system.
-
-#### Связь с основным геймплеем и платформой
-- Победа и performance → Contribution Score / Biomass Rank (с daily cap).
-- Ranked MMR частично синхронизируется с Trust Score.
-- **aiNEX** + Yandex GPT: builds, draft, post-match analysis.
-- Cosmetics через подписку / Battle Pass.
-- **Нет pay-to-win и нет прямого power-transfer** в open-world.
-
-#### Влияние побед в Aexion Clash на persistent universe (без вреда MMO-loop)
-
-Все эффекты **soft, temporary, capped и преимущественно faction-wide**. MMO-loop остаётся главным источником долгосрочного прогресса и контроля карты.
-
-1. **Faction War Score / Momentum** — wins → temporary faction buffs (extraction, repairs, AI strength, claim power).
-2. **Proxy Contests** — только minor-объекты (outposts, extractors, orbital relays, derelicts) → temporary control (12–48ч) + resource trickle.
-3. **Major-объекты защищены** — full colonies, cities, capital ships, hubs можно захватывать только через main layers. Arena даёт только Siege Prep.
-4. **Resource Injection** — capped daily/weekly injection into faction pools.
-5. **Personal Soft Rewards** — temporary multipliers, Hero Momentum, mastery unlocks, cosmetics.
-6. **Seasonal & Narrative** — seasons/tournaments дают temporary map advantages и small permanent soft unlocks.
-
-Safeguards: caps, diminishing returns, open-world always can contest, UI transparency, performance rating.
+Third-person Action-RPG MOBA в формате PvPvE (5v5 / 3v3). Soft influence на persistent world (Momentum, Proxy Contests только для minor-объектов). Major-объекты защищены.
 
 ---
 
 ## 4. Базовые механики и петли (детально)
 
 ### 4.1 Режим стратегии для лидеров альянсов
-Специальный **Strategic Command Interface** (доступен рангам Leader / Officer):
-- Galactic map с real-time overview: claims, structures, NPC fleets, logistics, threats, Arena Momentum, shared resources.
-- Tools: назначение приказов флотам (NPC + player), постановка alliance goals, allocation shared resources, объявление Proxy Contests / wars, управление permissions, создание shared tasks.
-- **aiNEX / Yandex GPT Strategic Advisor**: prompt-based analysis («предложи следующий шаг экспансии», «как защитить систему X», «оптимизируй логистику»).
-- Поддержка голосовых команд через Yandex Alice / SpeechKit.
+Strategic Command Interface: galactic overview, приказы флотам, allocation shared resources, permissions, goals, Proxy Contests, aiNEX/Yandex GPT Strategic Advisor, голосовые команды.
 
 ### 4.2 Управление структурами
-
-**Космические базы и орбитальные станции**
-- Модульные: Habitat, Shipyard, Refinery, Defense Platform, Research Lab, Logistics Hub, Carrier Dock, Hangar.
-- Строительство через Strategy layer (лидеры размещают, RBE/Contribution выделяет ресурсы).
-- Ownership (player / alliance) + granular permissions matrix (view / dock / extract / manage / full control).
-- AI-боты автоматически обслуживают базу.
-
-**Флоты NPC**
-- Альянсы могут создавать и управлять NPC-флотами (лимит зависит от Contribution / Alliance rank / War Score).
-- Типы: Patrol, Defense, Mining Escort, Transport Escort, Assault.
-- Приказы из Strategy mode: move, patrol route, defend object, attack, escort.
-- Behavior trees + aiNEX / Yandex GPT для higher-level решений (при подписке).
-
-**Корабли-носители (Carriers)**
-- Специальный класс Capital / Carrier ships (Light / Fleet / Super-Carrier).
-- Hangar slots: drones (mining, combat, repair, scout) + fighters (player-piloted или AI).
-- Multi-crew: Commander управляет carrier, другие игроки пилотируют fighters или управляют drone swarms.
-- Launch / recall, formations, auto-attack modes.
-- В PvP/PvPvE — mobile force multiplier и support platform.
-- Высокоуровневые blueprints + высокие требования к Contribution / shared resources.
+Космические базы (модульные), NPC-флоты, Carriers с дронами и истребителями. Ownership + granular permissions.
 
 ### 4.3 Наземные операции
-- После посадки (или orbital drop) игрок в TPS участвует в ground ops.
-- **Player-driven objectives**: лидеры / игроки ставят динамические цели (capture zone, defend extractor, escort, sabotage, rescue, biomass purge и т.д.).
-- Objective markers + progress UI. AI-боты автоматически помогают или сопротивляются в зависимости от фракции и прав.
-- Успех даёт Contribution / Biomass, ускоряет claims, разблокирует structures.
+Player-driven objectives, Contract Board, user-generated missions.
 
-### 4.4 Пользовательские миссии и контракты
-- **Contract Board** (в хабах, на базах, через terminals).
-- Игроки / альянсы публикуют контракты: доставка, зачистка, сбор данных, защита, эскорт и т.д.
-- Награда: ресурсы, Contribution, blueprints, cosmetics, temporary rights.
-- Escrow-система (in-game + NAEXOS bridge).
-- **User-generated missions**: через Prompt Studio (Yandex GPT) игрок/лидер генерирует кастомную миссию. AI валидирует и балансирует.
-- Петля: Create → Accept → Execute (TPS/Space) → Reward + feedback в RBE/Alliance.
+### 4.4 Добыча, торговля и логистика
+Extraction → Haul (contracts / freighters) → Allocate via RBE → Craft → Build → Defend / Expand → Contribution feedback.
 
-### 4.5 Добыча ресурсов, торговля и логистика
-**Добыча**
-- Player-driven, automated (AI-bots / drones), или смешанная.
-- Extractors на планетах и в космосе.
+### 4.5 Социальная структура альянсов
+Иерархия (кастомизируемые ранги), permissions matrix, shared resource pool, shared tasks, shared blueprints library.
 
-**Торговля**
-- Cybernex: RBE allocation / request system (нет классической валюты).
-- gROT: hierarchical / black-market style с Biomass credits.
-- Internal alliance markets + limited cross-faction (с риском).
-
-**Логистика**
-- Ценные грузы (rare materials, data cores, biomass samples, crafted components) перевозятся cargo-ships или player ships.
-- Маршруты: player-driven или AI-convoy (NPC escort).
-- Риски: pirates, contested systems, player ambushes → PvPvE.
-- Logistics Hub structures автоматизируют часть перевозок.
-- Игроки создают Transport Contracts (награда в Contribution / resources).
-
-**Core Economic Loop (пример Cybernex):**
-Extract (player / AI / drones) → Haul (contracts / freighters) → Allocate via RBE (alliance leaders + Contribution) → Craft (blueprints) → Build structures / equip fleets → Defend / Expand → Contribution feedback.
-
-### 4.6 Управление социальной структурой сообществ (Альянсы)
-- **Иерархия**: Leader → Officers → Members → Recruits (полностью кастомизируемые ранги).
-- **Permissions matrix**: granular права (кто может строить, claim’ить, тратить shared resources, объявлять войну, access hangars, edit blueprints, publish contracts).
-- **Shared resource pool** (RBE-style для Cybernex-альянсов).
-- **Alliance tasks / contracts**: лидеры создают общие задачи для членов.
-- **Shared blueprints and decorations library**.
-- Strategy Command Interface даёт лидерам полный overview и инструменты управления.
-
-### 4.7 Крафтинг и чертежи (Blueprints)
-- Полная система blueprints: от компонентов → modules → ships → bases → **декорации** (furniture, neon signs, custom holograms, interior/exterior).
-- Crafting stations на базах, станциях, carriers.
-- Research / reverse-engineering / prompt-generation для получения blueprints.
-- Player-created blueprints можно сохранять, делиться в альянсе, публиковать (с модерацией).
-- Декорации полностью placeable — поддержка высокой степени персонализации баз и кораблей.
-- Крафт требует ресурсов + (иногда) Contribution rank.
-
-**Crafting Loop:**
-Unlock / research / prompt-generate blueprint → Gather components → Craft at station → Place / use (включая decorations) → Share in alliance / NAEXOS.
+### 4.6 Крафтинг и чертежи
+Полная система blueprints: компоненты → modules → ships → bases → декорации. Research, reverse-engineering, prompt-generation.
 
 ---
 
-## 5. Уникальность: Генерация контента, живые голосовые ИИ-NPC и голосовое управление
+## 5. Сюжет, квесты, события и коммуникация
 
-### 5.1 Prompt Studio / Creation Terminal (в клиенте)
-Игрок может прямо в клиенте генерировать контент по промптам (текст или голос):
-- Миссии и контракты
-- Описания и data для структур / колоний / кораблей
-- Blueprints декораций и модулей
-- Lore entries, названия, события
-- Диалоги и personality для NPC
+### 5.1 Сюжетные кампании фракций
 
-Yandex GPT генерирует текст + structured data (JSON). Результат можно сохранить как personal / alliance asset, опубликовать в Contract Board или (после модерации) в общий пул.
+Две параллельные, асимметричные сюжетные кампании.
 
-**Ограничения:**
-- Free tier: limited prompts/day + простые outputs + rule-based fallback.
-- NAEXOS Premium + оплата токенов: высокие лимиты, лучшие модели, complex multi-object generation, persistent memory.
+**Cybernex Campaign — «Awakening of NAEXOS»**
+- Главы: пробуждение ключевых людей из гибернации, защита ARK/NEX, расширение сети колоний по принципам Venus Project, поиск древних технологий, противостояние экспансии gROT, внутренние идеологические конфликты (насколько строго следовать RBE).
+- Unlock глав через Contribution Rank + выполнение story progress.
+- Смесь scripted миссий, ground ops, space operations и alliance-scale objectives.
+- Финал глав влияет на living lore (видимые изменения в мире, новые NPC, cosmetics, narrative flags), но **не даёт прямого power advantage**.
 
-### 5.2 Полноценный голосовой диалог с ИИ-NPC на естественном языке
+**gROT Campaign — «Ascension of the Swarm»**
+- Главы: подъём по иерархии ROT, assimilation ключевых систем, превращение миров в biomass, получение милости ROT, борьба с Cybernex «ересью», внутренние power struggles.
+- Unlock через Biomass Rank + story progress.
+- Более агрессивный, horror-toned, hierarchical тон.
+- Аналогично: living history + cosmetics / narrative, без hard power.
 
-NPC (advisors, governors, captains, workers, ROT proxies, ship AI и др.) поддерживают **двусторонний голосовой диалог** на естественном языке.
+Кампании можно проходить solo / group / alliance. Прогресс сохраняется на персонаже / фракции.
 
-#### Pipeline обработки естественного языка
+### 5.2 Регулярные генерируемые NPC-квесты
 
-```
-Player voice
-    ↓
-STT (Speech-to-Text)
-    ↓
-NLU / Intent + Context (short-term memory + player history + location + faction)
-    ↓
-Response Generation (Yandex GPT / local LLM / hybrid)
-    ↓
-TTS (Text-to-Speech) с голосом, соответствующим NPC
-    ↓
-NPC speaks + optional lip-sync / animation
-```
+- Ежедневные / еженедельные / динамические квесты от NPC-сетки.
+- Генерация через **Yandex GPT + templates** (Prompt Studio backend):
+  - Combat / clear zones
+  - Logistics / transport / escort
+  - Exploration / data recovery
+  - Crafting / resource gathering
+  - Social / diplomacy / training
+  - Defense / fortification
+- Параметры: фракция, локация, Contribution/Biomass rank игрока, текущие world events, alliance needs.
+- Разнообразие + повторяемость без полной повторяемости текста/целей.
+- Можно принимать несколько, есть daily/weekly caps на rewards.
 
-**Ключевые возможности:**
-- Естественный разговор (не только команды).
-- Context-aware и personality-driven ответы.
-- Short-term + session memory.
-- Interruptible (игрок может перебить).
-- Multi-NPC ambient chatter (ограниченно).
-- Emotional tone и фракционный стиль (Cybernex — спокойный/утопический, gROT — более агрессивный/хоррор).
+### 5.3 Конструктор квестов для членов альянса
 
-#### Модульная архитектура провайдеров (не только Alice)
+- Любой член (с соответствующими permissions) может создать квест через **Alliance Quest Constructor** (UI + Prompt Studio).
+- Задаёт: тип objectives, локацию, сложность, награду (из shared alliance pool или personal), описание (можно сгенерировать GPT).
+- Officers / Leaders утверждают (или auto-approve для низких наград).
+- Квест появляется в Contract Board / Alliance Hub.
+- Выполнение даёт Contribution создателю + исполнителю + shared pool feedback.
+- Модерация + anti-abuse (caps, reports).
 
-Система спроектирована **модульно**. Игрок (и сервер) может выбирать / комбинировать провайдеров:
+### 5.4 Механики наград и опыта за квесты
 
-| Компонент | Primary (Premium)              | Open-source / Alternative              | Fallback          |
-|-----------|--------------------------------|----------------------------------------|-------------------|
-| **STT**   | Yandex SpeechKit / Alice       | Whisper (local/cloud), Vosk, Silero    | Rule-based keywords |
-| **NLU/LLM** | Yandex GPT                   | Local LLMs (Ollama и др.), open models | Rule-based + templates |
-| **TTS**   | Yandex SpeechKit (high quality)| Piper, Coqui TTS, Silero, XTTS, open Godot plugins | Pre-recorded / robotic |
+**Основные награды:**
+- **Contribution Score** (Cybernex) / **Biomass Rank progress** (gROT)
+- **Character XP** (skill trees, levels)
+- **Hero Mastery XP** (для MOBA / forms)
+- Ресурсы / компоненты (capped)
+- Blueprints / recipe unlocks (редко)
+- Cosmetics / titles / decorations (часто)
+- Temporary multipliers / soft buffs (короткие)
 
-- **Yandex Alice / SpeechKit** — основной высококачественный путь (особенно удобен в экосистеме Yandex Cloud).
-- **Open-source alternatives** полностью поддерживаются (существующие моды и библиотеки для Godot уже позволяют это). Игрок может выбрать локальный/приватный stack.
-- Hybrid mode: простые команды — локально, сложные generative-диалоги — cloud.
+**Принципы:**
+- Soft и capped (daily/weekly limits).
+- Performance-based (не только «сдал»).
+- Alliance-shared rewards где уместно.
+- Нет hard power-creep от квестов.
+- Премиум-квесты и глобальные события дают **только narrative / cosmetic / lore rewards**.
 
-#### Настройка Yandex SpeechKit
+### 5.5 Премиум-квесты и глобальные события
 
-Рекомендуемые параметры конфигурации:
+**Премиум-квесты (только для подписчиков NAEXOS Premium):**
+- Чисто сюжетные, высококачественные, hand-crafted или GPT-enhanced.
+- Входят в **живую историю вселенной** (новые lore entries, NPC reactions, world flavour text, temporary visual changes).
+- **Не влияют на баланс MMO**: не дают ресурсов, Contribution, power, claims, blueprints combat-значимых.
+- Награды: exclusive cosmetics, titles, lore codex entries, unique decorations, narrative flags, temporary visual auras.
+- Доступны в специальных story hubs / через ключевых NPC.
 
-- **Языки**: русский (основной) + английский (опционально).
-- **Голоса**:
-  - Несколько базовых (male / female / neutral).
-  - Personality mapping: разные голоса / pitch / speed для Canine, Feline, Avian, gROT mutants и т.д.
-  - Возможность emotional synthesis (если доступно в API).
-- **Режимы**:
-  - Streaming STT для низкой latency.
-  - Push-to-talk (default) и continuous listening (Premium, с visual indicator).
-- **Качество / Latency**:
-  - Premium: high-quality models + priority.
-  - Free: standard models + rate limits.
-- **Offline / Edge**:
-  - Кэширование частых фраз.
-  - Локальный fallback на open-source TTS/STT при отсутствии сети или для privacy.
-- **Cost control**:
-  - Токены / минуты SpeechKit учитываются в общем балансе токенов игрока.
-  - Прозрачный UI с текущим расходом.
-- **Privacy & Consent**:
-  - Явный opt-in.
-  - Возможность полностью отключить cloud-обработку голоса.
-  - Данные обрабатываются согласно политике Yandex + игровым ToS.
-  - Локальный open-source путь не отправляет аудио в cloud.
+**Глобальные события:**
+- Server-wide или faction-wide (вторжения, пробуждения, ROT offensives, Cybernex expeditions, ancient discoveries).
+- Могут быть открытыми для всех или иметь Premium-only narrative branches / cutscenes / exclusive follow-up quests.
+- Влияние на баланс — только soft / temporary (как Arena Momentum) или чисто narrative.
+- После события мир «запоминает» его (living history).
 
-#### Доступ и монетизация
-- **Free**: push-to-talk, limited daily voice minutes, basic TTS voices, short NPC replies, open-source providers.
-- **NAEXOS Premium**: continuous listening, high-quality SpeechKit voices, full natural dialogue, lower latency, priority, advanced personality voices.
-- Длинные / generative диалоги и сложные промпты расходуют **токены Yandex GPT**.
-- Голосовой диалог **не даёт combat power** — только immersion, roleplay и accessibility.
+### 5.6 Сетка NPC, выдающих квесты (обе фракции)
 
-### 5.3 Голосовое управление через Yandex Alice / SpeechKit + open alternatives
+**Cybernex:**
+- **Core Advisors** (NEX/ARK) — campaign starters, high-level story, RBE guidance
+- **Colony Governors** — local defense, expansion, logistics
+- **Fleet Captains / Carrier Commanders** — space combat, escort, fleet ops
+- **Research Directors** — exploration, data, blueprints
+- **Logistics Coordinators** — transport, supply, contracts
+- **Animal-Robot Mentors** (Canine, Feline, Avian и др.) — form training, hero mastery, personal growth
+- **Quest Brokers / Contract Officers** — generated daily/weekly quests
+- **Special Agents** — premium / global event quests
 
-**Yandex Alice** и SpeechKit используются как удобный интерфейс голосового управления, но система не привязана исключительно к ним.
+**gROT:**
+- **ROT Proxies / Hierarchs** — campaign, hierarchy advancement, assimilation
+- **Swarm Overseers** — combat, infection, biomass collection
+- **Assimilation Specialists** — conversion of systems/colonies
+- **Fleet Warlords** — aggressive space ops, raids
+- **Biomass Harvesters** — extraction, logistics of biomass
+- **Mutation Guides** — form/mutation progression
+- **Quest Brokers** — generated quests (more aggressive tone)
+- **Special Envoys of ROT** — premium narrative / global events
 
-#### Основные сценарии
-- Голосовой диалог с ИИ-NPC (см. выше).
-- Prompt Studio голосом.
-- Strategy commands для лидеров.
-- Ship / Carrier / Fleet control.
-- TPS abilities / callouts.
-- UI navigation и accessibility.
-- Multi-crew voice orders.
+Все ключевые NPC поддерживают голосовой диалог и могут выдавать/комментировать квесты.
 
-Критические действия требуют подтверждения. Голос — convenience и immersion, не преимущество в бою.
+### 5.7 Встроенный игровой чат и коммуникационные хабы альянсов
 
-### 5.4 Интеграция с aiNEX
-Yandex GPT + Yandex SpeechKit / Alice + open-source STT/TTS-провайдеры являются backend-движком продвинутых функций aiNEX (Strategic Advisor, colony planner, ship designer, MOBA builds, NPC dialogue, prompt generation, voice control).
+**Глобальный / локальный чат:**
+- Text chat: system, local, faction, alliance, private, group.
+- Free для всех.
+- Moderation tools + report system.
+- Интеграция с NAEXOS (опциональный bridge).
 
----
+**Alliance Communication Hubs:**
+- Специальные пространства (в хабах / на базах / виртуальные).
+- Text channels (general, officers, logistics, combat, random).
+- Shared boards (quests, contracts, blueprints, announcements).
+- Permissions-based access.
 
-## 6. Экономика
+**Голосовые каналы:**
+- Alliance voice channels (general, officers, fleet ops, ground ops и т.д.).
+- **Доступ:**
+  - По **подписке NAEXOS Premium**, или
+  - За **выдающиеся достижения** (высокий Contribution / Biomass Rank, campaign completion, Arena rank, alliance leadership milestones).
+- Технически: интеграция с Yandex SpeechKit / Alice + open-source alternatives (как и NPC voice).
+- Spatial / proximity voice на станциях и в multi-crew (опционально).
+- Push-to-talk default, continuous opt-in.
+- Privacy controls, mute, deafen, channel permissions.
 
-### Cybernex — Resource-Based Economy (RBE)
-Нет классической валюты. **Contribution Score** определяет влияние на allocation. NAEXOS Core + сенсоры распределяют ресурсы. Игроки и альянсы предлагают проекты; система выделяет ресурсы пропорционально вкладу + глобальным нуждам. Shared alliance pools.
-
-### gROT — Biomass Economy
-Личная/иерархическая сила через biomass. Harvesting, conversion, ranking under ROT.
-
-### Мост с платформой NAEXOS.ONLINE
-- Contribution Score / Biomass Rank синхронизируются с **Trust Score** и **Qualification Levels**.
-- Activity Mining: открытия в игре → вклад в OKA/wiki платформы.
-- MOBA ranked + generated content также влияют на Trust Score / Battle Pass.
-
----
-
-## 7. aiNEX + Yandex GPT + SpeechKit + Open Voice Stack
-
-aiNEX — семейство AI-инструментов:
-- Colony planner / resource allocator
-- Ship & module designer
-- Combat / fleet tactics advisor
-- Procedural / prompt-based mission & event generator
-- Lore / dialogue enhancer
-- Personal robot customization
-- Strategic Advisor для лидеров
-- MOBA builds / draft / post-match analysis
-- Prompt Studio backend
-- **Голосовое управление и полноценный голосовой диалог с NPC (модульный STT/NLU/TTS)**
-
-**Доступ**: базовый free (включая open-source providers), полный через Premium + токены Yandex GPT / SpeechKit.
+Голосовые коммуникации усиливают coordination лидеров и multi-crew, но не являются обязательными для прогресса.
 
 ---
 
-## 8. Гейты вовлечения в NAEXOS.ONLINE
+## 6. Уникальность: Генерация контента, живые голосовые ИИ-NPC и голосовое управление
 
-1. Account linking (SSO)
-2. Knowledge gates (submit discoveries / generated content)
-3. Time-bank / Skill exchange
-4. Escrow & community deals
-5. Cross-events & Battle Pass (включая MOBA seasons)
-6. In-game terminals → platform tools
-7. Community votes
-8. MOBA gates + generated content contribution
+### 6.1 Prompt Studio / Creation Terminal
+Генерация миссий, контрактов, blueprints, lore, декораций, диалогов (текст или голос).
 
----
+### 6.2 Полноценный голосовой диалог с ИИ-NPC
+Модульный pipeline: STT → NLU/LLM → TTS.  
+Primary: Yandex SpeechKit + Yandex GPT.  
+Open-source: Whisper / Vosk / Silero / Piper / Coqui / local LLMs.  
+Player выбирает провайдера. Personality voices, interruptible, context-aware.
 
-## 9. Монетизация — Freemium + Subscription + Tokens
+### 6.3 Голосовое управление
+Alice / SpeechKit + open alternatives для Strategy, Space, TPS, Prompt Studio, UI.
 
-**Freemium**: полный core gameplay (все слои, обе фракции, PvP/PvPvE, базовые AI-боты, limited GPT + limited voice + open-source voice stack).
-
-**NAEXOS Premium / Cybernex Pass**:
-- Multipliers Contribution / Trust Score
-- Полный доступ к advanced aiNEX + Yandex GPT + high-quality SpeechKit / Alice
-- Cosmetics, hero skins, ability VFX, decorations
-- Дополнительные multi-crew / private fleet / carrier slots
-- Battle Pass, priority matchmaking
-- Cross-platform rewards
-
-**Токены Yandex GPT / SpeechKit**: покупаются отдельно (или частично зарабатываются) для генерации контента, long AI-NPC dialogue и high-quality voice. Не дают combat power.
-
-Строгое правило: **нет pay-to-win**.
+### 6.4 Настройка SpeechKit
+Streaming, multiple voices per NPC type, SSML, custom vocabulary, cost control via tokens, privacy opt-in, offline fallback.
 
 ---
 
-## 10. Технологический стек
+## 7. Экономика
 
-**Движок: Godot 4.3+ (4.4+)**
-- Built-in multiplayer + dedicated servers
-- GDScript + C# / GDExtension
-- AnimationTree + IK
-- Data-driven Ability + Blueprint systems
-- Модульная система провайдеров STT / TTS / LLM
-
-**Backend**:
-- Godot dedicated servers (containerized)
-- PostgreSQL + Redis
-- Interest management
-- RBE simulation service
-- Matchmaking
-- **Yandex GPT API** + **Yandex SpeechKit / Alice** + поддержка open-source STT/TTS (Whisper, Piper, Silero, Vosk, Coqui и др.) с local fallbacks
-
-**Art**: stylized low-to-mid poly + PBR + heavy emissives (dark-neon).
+Cybernex — RBE (Contribution Score).  
+gROT — Biomass hierarchy.  
+Мост с NAEXOS.ONLINE (Trust Score, Activity Mining, Battle Pass).
 
 ---
 
-## 11. Серверная инфраструктура
+## 8. aiNEX + Yandex GPT + SpeechKit + Open Voice Stack
 
-**Фаза 0 — Local-first**: Godot headless + Docker (Postgres/Redis). Cost 0 ₽. Open-source voice stack работает полностью локально.
-
-**Фаза 1 — Closed Alpha (50–200 CCU)**: Yandex Cloud, ~25–50k ₽/мес.
-
-**Фаза 2 — Open Beta (500–2000 CCU)**: horizontal scaling, ~80–200k ₽/мес.
-
-**Фаза 3 — Full Scale**: auto-scaling, multi-region, dedicated для RBE + Yandex GPT/SpeechKit proxy/rate-limiting.
+Полный набор AI-инструментов + голосовой диалог + генерация + Strategic Advisor + Prompt Studio.
 
 ---
 
-## 12. Roadmap (высокоуровневый)
+## 9. Гейты вовлечения в NAEXOS.ONLINE
 
-1. **Foundation** — TPS controllers, ship flight, simple colony, ability system, local multiplayer.
-2. **Core Loop + PvP** — multi-crew, AI-bots, Contribution/Biomass, basic PvP, ability system for MOBA, basic structures.
-3. **Vertical Slice + MOBA Prototype** — one system, fleets, carriers seed, ground ops, contracts, Momentum system, basic Prompt Studio mock + basic voice dialogue prototype (open-source path first).
-4. **Platform + Full Systems** — full alliance hierarchy/permissions, logistics, crafting/blueprints, ranked MOBA, Yandex GPT + SpeechKit integration, modular voice providers, Proxy Contests.
-5. **Scale & Polish** — optimization, more content, balance, moderation tools, voice UX + personality voices polish.
-6. **Launch** — public release + live-ops.
+Account linking, knowledge gates, time-bank, escrow, cross-events, terminals, community votes, MOBA + generated content contribution.
+
+---
+
+## 10. Монетизация — Freemium + Subscription + Tokens
+
+**Freemium**: core gameplay + generated quests + text chat + open-source voice.
+
+**NAEXOS Premium**:
+- Advanced aiNEX + high-quality SpeechKit / Alice
+- Premium narrative quests & exclusive global event branches
+- Alliance voice channels
+- Cosmetics, multipliers, priority, Battle Pass
+- Continuous listening, full NPC dialogue, voice Prompt Studio
+
+**Токены**: генерация и long voice dialogue.  
+**Нет pay-to-win.** Premium quests и global events — только living history / cosmetics / lore.
+
+---
+
+## 11. Технологический стек
+
+Godot 4.x + PostgreSQL + Redis + Yandex GPT + SpeechKit + open-source STT/TTS/LLM providers + modular voice stack.
+
+---
+
+## 12. Серверная инфраструктура
+
+Local-first → Yandex Cloud (расчёт как ранее). Voice processing rate-limited и proxy’ится.
+
+---
+
+## 13. Roadmap (высокоуровневый)
+
+1. Foundation  
+2. Core Loop + PvP  
+3. Vertical Slice + MOBA Prototype + basic quests + chat  
+4. Full Systems (alliance constructor, campaigns seed, generated quests, voice dialogue, premium narrative)  
+5. Scale & Polish  
+6. Launch
 
 ---
 
 ## Уникальные преимущества NAEON
 
-- Playable антропоморфные киборги-животные + асимметричный playable gROT.
-- Настоящая Resource-Based Economy + мост с NAEXOS.
-- Глубокая интеграция Strategy + Space + TPS + MOBA.
-- Полноценные альянсы с иерархией, permissions, shared resources и Strategy mode для лидеров.
-- Carriers с дронами/истребителями, NPC fleets, глубокая логистика.
-- Player-driven objectives, user contracts и prompt-generated content.
-- **Полноценный двусторонний голосовой диалог с ИИ-NPC на естественном языке** (Yandex SpeechKit / Alice + open-source alternatives).
-- Soft Arena influence на persistent world без ломки MMO-loop.
-- Freemium + подписка + токены (без P2W).
-- Local-first + реалистичный путь на Yandex Cloud + поддержка приватных open-source voice stacks.
+- Playable антропоморфные киборги-животные + асимметричный playable gROT
+- Resource-Based Economy + мост с NAEXOS
+- Strategy + Space + TPS + MOBA с soft Arena influence
+- Полноценные альянсы + Strategy mode для лидеров
+- Carriers, NPC fleets, глубокая логистика
+- Сюжетные кампании фракций + генерируемые квесты + alliance quest constructor
+- Премиум-квесты и глобальные события как living history (без влияния на баланс)
+- Полноценный голосовой диалог с NPC + голосовое управление (Yandex + open-source)
+- Встроенный чат и alliance voice hubs (voice по подписке / достижениям)
+- Freemium + подписка + токены без P2W
+- Local-first + Yandex Cloud
 
 ---
 
