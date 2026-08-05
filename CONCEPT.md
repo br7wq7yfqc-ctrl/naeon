@@ -1,6 +1,6 @@
 # NAEON — Подробная концепция игры
 
-**Версия:** 0.6 (обновлено 2026-08-05)  
+**Версия:** 0.7 (обновлено 2026-08-05)  
 **Репозиторий:** https://github.com/br7wq7yfqc-ctrl/naeon  
 **Основа:** NAEXOS + вселенная Aexion
 
@@ -17,9 +17,9 @@
 
 **Уникальность:**
 - Генерация контента по промптам прямо в клиенте
-- Живое общение с ИИ-NPC
-- **Голосовое управление через Yandex Alice**
-- Всё на базе **Yandex GPT + Yandex SpeechKit / Alice** (при платной подписке + оплате токенов)
+- Живое двустороннее голосовое общение с ИИ-NPC на естественном языке
+- Голосовое управление через Yandex Alice / SpeechKit + open-source альтернативы
+- Всё на базе **Yandex GPT + Yandex SpeechKit** (с поддержкой open-source STT/TTS) при платной подписке + оплате токенов
 
 Игра полностью standalone, 3D, в тёмно-неоновых тонах, оптимизирована для слабых машин. Обе основные фракции полностью играбельны. Поддерживаются режимы **PvP** и **PvPvE** на всех слоях геймплея.
 
@@ -56,6 +56,7 @@
 - **Cybernex**: роботы-животные (workers, patrols, squad mates, advisors, civilian caretakers). Behavior trees + aiNEX / Yandex GPT-усиленные диалоги и адаптивное поведение.
 - **gROT**: рои биомассы, elite mutants, infection spreaders, hierarchical guardians. Агрессивный pack AI, механики заражения.
 - Боты заполняют мир, патрулируют, строят, сражаются, реагируют на действия игроков и участвуют в PvP/PvPvE (включая MOBA-minions и jungle).
+- **Все ключевые NPC поддерживают полноценный двусторонний голосовой диалог на естественном языке.**
 
 ---
 
@@ -128,7 +129,7 @@ Safeguards: caps, diminishing returns, open-world always can contest, UI transpa
 - Galactic map с real-time overview: claims, structures, NPC fleets, logistics, threats, Arena Momentum, shared resources.
 - Tools: назначение приказов флотам (NPC + player), постановка alliance goals, allocation shared resources, объявление Proxy Contests / wars, управление permissions, создание shared tasks.
 - **aiNEX / Yandex GPT Strategic Advisor**: prompt-based analysis («предложи следующий шаг экспансии», «как защитить систему X», «оптимизируй логистику»).
-- Поддержка голосовых команд через Yandex Alice.
+- Поддержка голосовых команд через Yandex Alice / SpeechKit.
 
 ### 4.2 Управление структурами
 
@@ -207,10 +208,10 @@ Unlock / research / prompt-generate blueprint → Gather components → Craft at
 
 ---
 
-## 5. Уникальность: Генерация контента, живые ИИ-NPC и голосовое управление
+## 5. Уникальность: Генерация контента, живые голосовые ИИ-NPC и голосовое управление
 
 ### 5.1 Prompt Studio / Creation Terminal (в клиенте)
-Игрок может прямо в клиенте генерировать контент по промптам (текст или **голос через Alice**):
+Игрок может прямо в клиенте генерировать контент по промптам (текст или голос):
 - Миссии и контракты
 - Описания и data для структур / колоний / кораблей
 - Blueprints декораций и модулей
@@ -223,83 +224,98 @@ Yandex GPT генерирует текст + structured data (JSON). Резул�
 - Free tier: limited prompts/day + простые outputs + rule-based fallback.
 - NAEXOS Premium + оплата токенов: высокие лимиты, лучшие модели, complex multi-object generation, persistent memory.
 
-### 5.2 Живое общение с ИИ-NPC
-- Любые ключевые NPC (advisors, governors, captains, merchants, workers, ROT proxies) поддерживают **live dialogue**.
-- Игрок пишет **или говорит** (Yandex Alice / SpeechKit speech-to-text) → NPC отвечает in-character (text + optional TTS через Alice).
-- Context-aware (локация, фракция, recent events, история игрока).
-- Возможности: советы, торговля, динамические квесты, ролеплей, soft «обучение» NPC.
-- Powered by **Yandex GPT API** + **Yandex Alice / SpeechKit**.
+### 5.2 Полноценный голосовой диалог с ИИ-NPC на естественном языке
 
-**Доступ:**
-- Базовый (rule-based + короткие GPT-ответы) — бесплатно.
-- Полный live GPT + long memory + advanced personality + continuous voice — Premium подписка + токены.
+NPC (advisors, governors, captains, workers, ROT proxies, ship AI и др.) поддерживают **двусторонний голосовой диалог** на естественном языке.
 
-### 5.3 Голосовое управление через Yandex Alice
+#### Pipeline обработки естественного языка
 
-**Yandex Alice** интегрирована в клиент NAEON как основной голосовой интерфейс (на базе Yandex SpeechKit + Alice capabilities).
+```
+Player voice
+    ↓
+STT (Speech-to-Text)
+    ↓
+NLU / Intent + Context (short-term memory + player history + location + faction)
+    ↓
+Response Generation (Yandex GPT / local LLM / hybrid)
+    ↓
+TTS (Text-to-Speech) с голосом, соответствующим NPC
+    ↓
+NPC speaks + optional lip-sync / animation
+```
 
-#### Основные сценарии использования
+**Ключевые возможности:**
+- Естественный разговор (не только команды).
+- Context-aware и personality-driven ответы.
+- Short-term + session memory.
+- Interruptible (игрок может перебить).
+- Multi-NPC ambient chatter (ограниченно).
+- Emotional tone и фракционный стиль (Cybernex — спокойный/утопический, gROT — более агрессивный/хоррор).
 
-**1. Голосовой диалог с ИИ-NPC**
-- «Алиса, спроси у советника о состоянии экстракторов»
-- Естественный разговор с любым ключевым NPC без клавиатуры.
-- Alice выступает как «голос» ship AI / personal companion / base AI.
+#### Модульная архитектура провайдеров (не только Alice)
 
-**2. Prompt Studio голосом**
-- «Алиса, сгенерируй миссию: защитить конвой от gROT на планете X»
-- «Алиса, создай blueprint декоративного неонового фонтана в стиле Cybernex»
-- Полностью hands-free генерация контента.
+Система спроектирована **модульно**. Игрок (и сервер) может выбирать / комбинировать провайдеров:
 
-**3. Strategy Mode (для лидеров альянсов)**
-- «Алиса, отправь патрульный флот в систему 7»
-- «Алиса, выдели ресурсы на защиту орбитальной станции»
-- «Алиса, покажи статус логистики»
-- «Алиса, создай контракт на перевозку 200 единиц редких сплавов»
+| Компонент | Primary (Premium)              | Open-source / Alternative              | Fallback          |
+|-----------|--------------------------------|----------------------------------------|-------------------|
+| **STT**   | Yandex SpeechKit / Alice       | Whisper (local/cloud), Vosk, Silero    | Rule-based keywords |
+| **NLU/LLM** | Yandex GPT                   | Local LLMs (Ollama и др.), open models | Rule-based + templates |
+| **TTS**   | Yandex SpeechKit (high quality)| Piper, Coqui TTS, Silero, XTTS, open Godot plugins | Pre-recorded / robotic |
 
-**4. Космический симулятор и Carriers**
-- «Алиса, полный вперёд» / «курс на ARK»
-- «Алиса, запустить истребители» / «отозвать дроны»
-- «Алиса, перевести мощность на щиты»
-- «Алиса, приказ флоту: атаковать цель»
-- Multi-crew: голосовые приказы членам экипажа или AI-crew.
+- **Yandex Alice / SpeechKit** — основной высококачественный путь (особенно удобен в экосистеме Yandex Cloud).
+- **Open-source alternatives** полностью поддерживаются (существующие моды и библиотеки для Godot уже позволяют это). Игрок может выбрать локальный/приватный stack.
+- Hybrid mode: простые команды — локально, сложные generative-диалоги — cloud.
 
-**5. TPS / Ground Ops / Combat**
-- «Алиса, использовать способность X»
-- «Алиса, переключить форму на Feline»
-- «Алиса, отметить цель» / «запросить поддержку»
-- Callouts и быстрые команды в бою (с подтверждением для критических действий).
+#### Настройка Yandex SpeechKit
 
-**6. UI и Accessibility**
-- Навигация по меню, картам, инвентарю голосом.
-- Сильный accessibility feature (особенно важно для multi-crew и длительных сессий).
+Рекомендуемые параметры конфигурации:
 
-#### Техническая реализация
-- **Yandex SpeechKit** (STT + TTS) + Alice API / custom skill или прямой SDK в Godot-клиенте.
-- Push-to-talk (свободный) или continuous listening (Premium).
-- Offline fallback: ограниченный набор локальных команд + rule-based responses.
-- Latency optimization: локальный wake-word + cloud processing для сложных запросов.
-- Privacy: явный consent, возможность отключить, данные обрабатываются согласно политике Yandex + игровым ToS.
+- **Языки**: русский (основной) + английский (опционально).
+- **Голоса**:
+  - Несколько базовых (male / female / neutral).
+  - Personality mapping: разные голоса / pitch / speed для Canine, Feline, Avian, gROT mutants и т.д.
+  - Возможность emotional synthesis (если доступно в API).
+- **Режимы**:
+  - Streaming STT для низкой latency.
+  - Push-to-talk (default) и continuous listening (Premium, с visual indicator).
+- **Качество / Latency**:
+  - Premium: high-quality models + priority.
+  - Free: standard models + rate limits.
+- **Offline / Edge**:
+  - Кэширование частых фраз.
+  - Локальный fallback на open-source TTS/STT при отсутствии сети или для privacy.
+- **Cost control**:
+  - Токены / минуты SpeechKit учитываются в общем балансе токенов игрока.
+  - Прозрачный UI с текущим расходом.
+- **Privacy & Consent**:
+  - Явный opt-in.
+  - Возможность полностью отключить cloud-обработку голоса.
+  - Данные обрабатываются согласно политике Yandex + игровым ToS.
+  - Локальный open-source путь не отправляет аудио в cloud.
 
-#### Монетизация и доступ
-- **Free**: push-to-talk + базовые команды + limited STT/TTS.
-- **NAEXOS Premium**: continuous listening, advanced commands, lower latency, full voice NPC dialogue, voice Prompt Studio.
-- Сложные generative-запросы (длинные промпты, multi-step) расходуют **токены Yandex GPT** (как и текстовая генерация).
-- Голосовое управление **не даёт combat advantage** — только convenience, immersion и accessibility. Полностью соответствует no-P2W.
+#### Доступ и монетизация
+- **Free**: push-to-talk, limited daily voice minutes, basic TTS voices, short NPC replies, open-source providers.
+- **NAEXOS Premium**: continuous listening, high-quality SpeechKit voices, full natural dialogue, lower latency, priority, advanced personality voices.
+- Длинные / generative диалоги и сложные промпты расходуют **токены Yandex GPT**.
+- Голосовой диалог **не даёт combat power** — только immersion, roleplay и accessibility.
 
-#### Safeguards
-- Критические боевые/стратегические действия требуют подтверждения (голос + UI или double-confirm).
-- Rate limits и anti-spam.
-- System prompts и фильтры для NPC-диалогов.
-- Возможность полностью отключить Alice.
+### 5.3 Голосовое управление через Yandex Alice / SpeechKit + open alternatives
 
-### 5.4 Монетизация и безопасность Yandex-стека
-- Токены покупаются за реальные деньги или частично зарабатываются активностью.
-- Cost проходит напрямую пользователю (прозрачный баланс токенов).
-- Rate limits, system prompts (жёсткие lore/safety filters), moderation pipeline, offline fallback.
-- Генерация и голос **не дают combat power** — только content, creativity, convenience, immersion и accessibility.
+**Yandex Alice** и SpeechKit используются как удобный интерфейс голосового управления, но система не привязана исключительно к ним.
 
-### 5.5 Интеграция с aiNEX
-Yandex GPT + Yandex Alice / SpeechKit являются backend-движком продвинутых функций aiNEX (Strategic Advisor, colony planner, ship designer, MOBA builds, NPC dialogue, prompt generation, voice control).
+#### Основные сценарии
+- Голосовой диалог с ИИ-NPC (см. выше).
+- Prompt Studio голосом.
+- Strategy commands для лидеров.
+- Ship / Carrier / Fleet control.
+- TPS abilities / callouts.
+- UI navigation и accessibility.
+- Multi-crew voice orders.
+
+Критические действия требуют подтверждения. Голос — convenience и immersion, не преимущество в бою.
+
+### 5.4 Интеграция с aiNEX
+Yandex GPT + Yandex SpeechKit / Alice + open-source STT/TTS-провайдеры являются backend-движком продвинутых функций aiNEX (Strategic Advisor, colony planner, ship designer, MOBA builds, NPC dialogue, prompt generation, voice control).
 
 ---
 
@@ -318,7 +334,7 @@ Yandex GPT + Yandex Alice / SpeechKit являются backend-движком п
 
 ---
 
-## 7. aiNEX + Yandex GPT + Yandex Alice
+## 7. aiNEX + Yandex GPT + SpeechKit + Open Voice Stack
 
 aiNEX — семейство AI-инструментов:
 - Colony planner / resource allocator
@@ -330,9 +346,9 @@ aiNEX — семейство AI-инструментов:
 - Strategic Advisor для лидеров
 - MOBA builds / draft / post-match analysis
 - Prompt Studio backend
-- **Голосовое управление и TTS/STT через Yandex Alice**
+- **Голосовое управление и полноценный голосовой диалог с NPC (модульный STT/NLU/TTS)**
 
-**Доступ**: базовый free, полный через Premium + токены Yandex GPT.
+**Доступ**: базовый free (включая open-source providers), полный через Premium + токены Yandex GPT / SpeechKit.
 
 ---
 
@@ -351,17 +367,17 @@ aiNEX — семейство AI-инструментов:
 
 ## 9. Монетизация — Freemium + Subscription + Tokens
 
-**Freemium**: полный core gameplay (все слои, обе фракции, PvP/PvPvE, базовые AI-боты, limited GPT + limited voice).
+**Freemium**: полный core gameplay (все слои, обе фракции, PvP/PvPvE, базовые AI-боты, limited GPT + limited voice + open-source voice stack).
 
 **NAEXOS Premium / Cybernex Pass**:
 - Multipliers Contribution / Trust Score
-- Полный доступ к advanced aiNEX + Yandex GPT + **Yandex Alice** (continuous listening, advanced commands, full voice NPC dialogue)
+- Полный доступ к advanced aiNEX + Yandex GPT + high-quality SpeechKit / Alice
 - Cosmetics, hero skins, ability VFX, decorations
 - Дополнительные multi-crew / private fleet / carrier slots
 - Battle Pass, priority matchmaking
 - Cross-platform rewards
 
-**Токены Yandex GPT**: покупаются отдельно (или частично зарабатываются) для генерации контента, long AI-NPC dialogue и сложных голосовых generative-запросов. Не дают combat power.
+**Токены Yandex GPT / SpeechKit**: покупаются отдельно (или частично зарабатываются) для генерации контента, long AI-NPC dialogue и high-quality voice. Не дают combat power.
 
 Строгое правило: **нет pay-to-win**.
 
@@ -374,6 +390,7 @@ aiNEX — семейство AI-инструментов:
 - GDScript + C# / GDExtension
 - AnimationTree + IK
 - Data-driven Ability + Blueprint systems
+- Модульная система провайдеров STT / TTS / LLM
 
 **Backend**:
 - Godot dedicated servers (containerized)
@@ -381,7 +398,7 @@ aiNEX — семейство AI-инструментов:
 - Interest management
 - RBE simulation service
 - Matchmaking
-- **Yandex GPT API** + **Yandex SpeechKit / Alice** integration (with local fallbacks)
+- **Yandex GPT API** + **Yandex SpeechKit / Alice** + поддержка open-source STT/TTS (Whisper, Piper, Silero, Vosk, Coqui и др.) с local fallbacks
 
 **Art**: stylized low-to-mid poly + PBR + heavy emissives (dark-neon).
 
@@ -389,7 +406,7 @@ aiNEX — семейство AI-инструментов:
 
 ## 11. Серверная инфраструктура
 
-**Фаза 0 — Local-first**: Godot headless + Docker (Postgres/Redis). Cost 0 ₽.
+**Фаза 0 — Local-first**: Godot headless + Docker (Postgres/Redis). Cost 0 ₽. Open-source voice stack работает полностью локально.
 
 **Фаза 1 — Closed Alpha (50–200 CCU)**: Yandex Cloud, ~25–50k ₽/мес.
 
@@ -403,9 +420,9 @@ aiNEX — семейство AI-инструментов:
 
 1. **Foundation** — TPS controllers, ship flight, simple colony, ability system, local multiplayer.
 2. **Core Loop + PvP** — multi-crew, AI-bots, Contribution/Biomass, basic PvP, ability system for MOBA, basic structures.
-3. **Vertical Slice + MOBA Prototype** — one system, fleets, carriers seed, ground ops, contracts, Momentum system, basic Prompt Studio mock.
-4. **Platform + Full Systems** — full alliance hierarchy/permissions, logistics, crafting/blueprints, ranked MOBA, Yandex GPT integration (dialogue + generation), **Yandex Alice voice control**, Proxy Contests.
-5. **Scale & Polish** — optimization, more content, balance, moderation tools for generated content, voice UX polish.
+3. **Vertical Slice + MOBA Prototype** — one system, fleets, carriers seed, ground ops, contracts, Momentum system, basic Prompt Studio mock + basic voice dialogue prototype (open-source path first).
+4. **Platform + Full Systems** — full alliance hierarchy/permissions, logistics, crafting/blueprints, ranked MOBA, Yandex GPT + SpeechKit integration, modular voice providers, Proxy Contests.
+5. **Scale & Polish** — optimization, more content, balance, moderation tools, voice UX + personality voices polish.
 6. **Launch** — public release + live-ops.
 
 ---
@@ -418,10 +435,10 @@ aiNEX — семейство AI-инструментов:
 - Полноценные альянсы с иерархией, permissions, shared resources и Strategy mode для лидеров.
 - Carriers с дронами/истребителями, NPC fleets, глубокая логистика.
 - Player-driven objectives, user contracts и prompt-generated content.
-- **Живые ИИ-NPC, генерация контента по промптам и голосовое управление через Yandex Alice** прямо в клиенте.
+- **Полноценный двусторонний голосовой диалог с ИИ-NPC на естественном языке** (Yandex SpeechKit / Alice + open-source alternatives).
 - Soft Arena influence на persistent world без ломки MMO-loop.
 - Freemium + подписка + токены (без P2W).
-- Local-first + реалистичный путь на Yandex Cloud.
+- Local-first + реалистичный путь на Yandex Cloud + поддержка приватных open-source voice stacks.
 
 ---
 
