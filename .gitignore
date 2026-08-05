@@ -1,0 +1,30 @@
+# Godot 4+
+.godot/
+*.translation
+export.cfg
+export_presets.cfg
+
+# Imported assets
+.import/
+
+# System
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Builds
+builds/
+export/
+*.pck
+*.exe
+*.x86_64
+*.app
+
+# Local
+*.log
+local/
