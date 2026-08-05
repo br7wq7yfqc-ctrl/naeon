@@ -1,270 +1,238 @@
 # NAEON — Подробный план разработки по фазам (для build-сессий)
 
-**Версия:** 1.1  
+**Версия:** 2.0  
 **Дата:** 2026-08-05  
-**Основа:** CONCEPT.md v0.3  
+**Основа:** CONCEPT.md v1.2  
 **Движок:** Godot 4.3+ / 4.4+  
-**Принцип:** Local-first → Vertical Slices → Iterative Multiplayer → Platform Integration + MOBA
+**Принцип:** Local-first → Vertical Slices → Iterative Multiplayer → Platform + AI + Educational Systems
 
 ---
 
 ## Общие принципы
 
-- **Local-first**: всё работает offline / в локальной сети до Phase 3+. Cloud (Yandex Cloud) только после устойчивого vertical slice.
-- **Vertical Slice**: каждый значимый билд должен быть playable end-to-end (хотя бы частично).
-- **Build-сессии**: 1–2 недельные спринты или интенсивные 3–5 дневные сессии (4–8 часов focused coding + ежедневный playtest).
-- **Definition of Done (DoD)**: код + базовые тесты + playable в editor/export + проверка на low-end + обновление docs + PR review.
-- **Инструменты**:
-  - Git: main protected, feature branches, PR.
-  - Tracking: GitHub Issues + Projects (Kanban).
-  - CI: GitHub Actions (export check, headless tests).
-  - Backend local: Docker Compose (Postgres, Redis, MinIO).
-  - Profiling: Godot Profiler + low-end machine export каждый Phase.
-- **Команда**: ориентир 3–4 человека (или solo с приоритизацией). Effort указан в человеко-днях (чел/дн).
-- **Приоритет оптимизации**: low-end с самого начала (LOD, instancing, simplified physics, animation compression).
-- **MOBA**: переиспользует TPS combat, ability system, AI-bots и character controllers — минимальный новый scope при максимальной ценности.
+- **Local-first**: всё работает offline / в локальной сети максимально долго. Yandex Cloud — только после устойчивого vertical slice.
+- **Vertical Slice**: каждый значимый билд playable end-to-end.
+- **Build-сессии**: 1–2 недельные спринты или 3–5 дневные интенсивные сессии.
+- **Definition of Done**: код + playable в editor/export + low-end check + docs + PR.
+- **Инструменты**: GitHub Issues/Projects, Docker Compose (Postgres/Redis), Godot Profiler, CI export checks.
+- **Приоритет**: low-end optimization с Phase 0, data-driven systems (abilities, blueprints, quests), modular voice & AI providers.
+- **Reuse**: Ability system → open-world TPS + MOBA + Hacking/Firewall. AI-bots → all layers. Prompt Studio / aiNEX → content + educational generation.
 
 ---
 
 ## Phase 0: Setup & Foundation
-**Длительность:** 1–2 недели (1–2 build-сессии)  
-**Effort:** 4–7 чел/дн  
-**Цель:** Готовый рабочий скелет проекта + локальная инфраструктура.
+**Длительность:** 1–2 недели  
+**Effort:** 4–8 чел/дн  
+**Цель:** Рабочий скелет проекта + локальная инфраструктура.
 
-### Ключевые deliverables
-- Структура репозитория: `/godot`, `/docs`, `/docker`, `/scripts`, `CONCEPT.md`, `DEVELOPMENT_PLAN.md`
-- Godot 4.x проект с базовыми сценами (placeholder player, empty space, empty planet surface)
-- Input system + third-person camera skeleton
-- Docker Compose: Postgres + Redis + MinIO
-- Godot headless export + простой dedicated server scene
-- MultiplayerAPI + ENet skeleton (server + client connect)
-- GitHub Actions: basic export check (Windows/Linux)
-- README с инструкциями запуска local
+### Deliverables
+- Структура репозитория (`/godot`, `/docs`, `/docker`, `/scripts`)
+- Godot 4.x проект, placeholder scenes (player, space, planet surface)
+- Input + third-person camera skeleton
+- Docker Compose: Postgres + Redis (+ MinIO)
+- Godot headless + dedicated server scene + MultiplayerAPI/ENet skeleton
+- Basic GitHub Actions export check
+- README с local launch instructions
 
 ### DoD
-- `godot --headless` запускает server
+- Headless server запускается
 - Client подключается локально
 - Docker up работает
 - Проект открывается без ошибок
-
-### Риски
-- Несовместимость версий Godot / GDExtension
-- Слишком сложный setup → упростить до минимума
-
-**Зависимости:** нет
 
 ---
 
 ## Phase 1: Core Prototypes (TPS + Ship + Colony + Ability Foundation)
 **Длительность:** 2–4 недели  
-**Effort:** 14–22 чел/дн  
-**Цель:** Три независимых playable прототипа + data-driven ability system (основа для open-world и MOBA).
+**Effort:** 16–25 чел/дн  
+**Цель:** Три playable прототипа + data-driven Ability System (основа для combat, MOBA, Hacking/Firewall).
 
-### 1.1 TPS Core + Ability System (Lucas focus)
-- Character controller: walk/run/sprint/jump + form-specific (climb feline, limited flight avian, tank canine)
-- 3–4 базовые формы: Canine, Feline, Avian, Human-cyborg (+ базовые gROT placeholders)
+### 1.1 TPS Core + Ability System
+- Character controller + 3–4 формы (Canine, Feline, Avian, Human-cyborg + gROT placeholders)
 - AnimationTree + IK
-- Базовый combat: melee, simple ranged
-- **Data-driven Ability System** (Resource-based): cooldown, cost, targeting, effects — переиспользуется в open-world и MOBA
-- Health / Stamina / простой inventory + equipment slots
-- **DoD**: переключение форм, базовый бой + 2–3 abilities в арене, 60+ FPS на low-end
+- Data-driven Ability System (Resources): cooldown, cost, targeting, effects
+- Базовый combat + 2–3 abilities
+- Health / Stamina / inventory skeleton
+- **DoD**: переключение форм, бой, abilities, 60+ FPS low-end
 
-### 1.2 Space Ship Core (Harper focus)
-- Базовый корабль с custom force physics (thrust, rotation)
-- Модульная система: Hull + модули (engine, weapon, shield, cargo) как сцены/ноды
-- Простая UI экипировки модулей
-- Оружие, щиты, health
-- Camera (third-person ship + free look)
-- **DoD**: экипировать модули, летать, стрелять, получать урон, save/load конфига корабля
+### 1.2 Space Ship Core
+- Модульный корабль (Hull + engine/weapon/shield/cargo)
+- Custom force physics, camera, basic combat
+- **DoD**: экипировать, летать, стрелять, save/load
 
-### 1.3 Colony / Strategy Core (Benjamin focus)
-- Планетарная поверхность + размещение модульных зданий (habitat, extractor, turret)
-- Ресурсные ноды + extraction
-- Локальный Contribution Score
-- Простейший rule-based RBE allocator
+### 1.3 Colony / Strategy Core
+- Поверхность + размещение зданий (habitat, extractor, turret)
+- Ресурсные ноды + extraction + локальный Contribution
+- Простейший RBE allocator
 - **DoD**: построить outpost, добыть ресурс, увидеть Contribution
 
 ### Cross
-- Asset pipeline: Blender → Godot (GLTF + LOD groups)
-- Dark-neon placeholder materials (emissive)
-- Basic save system (local JSON)
+- Asset pipeline (GLTF + LOD), dark-neon materials, local save
 
-**DoD Phase 1:** Три отдельных playable демо + работающая ability system.
-
-**Риски:** Слишком много форм/модулей сразу → ограничить до 3 форм и 4–5 модулей. Ability system должна быть достаточно гибкой для MOBA kits.
+**DoD Phase 1:** Три отдельных playable демо + гибкая ability system.
 
 ---
 
-## Phase 2: Integration of Core Loop + Basic Multiplayer + AI-bots + MOBA Seed
-**Длительность:** 3–5 недель  
-**Effort:** 20–32 чел/дн  
-**Цель:** Соединить три прототипа в единый local multiplayer loop + AI-боты + базовый PvP + начало MOBA.
-
-### Основные задачи
-- **Seamless / loading transition**: посадка с корабля → TPS на поверхности
-- **Multi-crew**: 2–4 игрока на одном корабле (роли), MultiplayerSynchronizer
-- **AI-bots**: Cybernex animal-robots + gROT swarms (BehaviorTree / FSM + NavigationAgent3D)
-- **Strategy / Space / TPS PvP** basics
-- **RBE / Biomass**: глобальный pool, redistribution, Contribution / Biomass Rank
-- **MOBA Seed**:
-  - Basic arena scene (simple 3-lane or objective map)
-  - 4 heroes (2 Cybernex + 2 gROT) с полноценными kits на базе ability system
-  - Simple minion waves (reuse AI-bots)
-  - Basic XP / leveling in arena
-  - Simple gold + 2–3 items
-  - Match start / end + win condition (destroy core placeholder)
-- Networking: server authority для critical, prediction для movement
-
-### DoD
-- Local multiplayer: 2–4 игрока могут летать multi-crew, высадиться, построить/атаковать колонию, сражаться с AI-ботами
-- Обе фракции playable
-- RBE redistribution работает
-- **MOBA prototype**: 3v3 или 4v4 arena match с 4 heroes, minions, leveling, items, win condition
-- Нет критических desync
-
-**Зависимости:** Phase 1 prototypes + ability system
-
-**Риски:** Netcode complexity, balance между формами, performance с AI + MOBA entities
-
----
-
-## Phase 3: Vertical Slice + Full MOBA Prototype
+## Phase 2: Core Loop Integration + Multiplayer + AI-bots + MOBA Seed + Basic Hacking/Firewall
 **Длительность:** 3–5 недель  
 **Effort:** 22–35 чел/дн  
-**Цель:** Полностью playable vertical slice одной звёздной системы + полноценный 5v5 (или 3v3) MOBA.
+**Цель:** Единый local multiplayer loop + AI-боты + PvP + MOBA seed + асимметричные способности.
+
+### Задачи
+- Seamless / loading transition (ship → TPS)
+- Multi-crew (2–4 игрока, роли)
+- AI-bots (Cybernex animal-robots + gROT swarms) — BehaviorTree / Navigation
+- Basic Strategy / Space / TPS PvP
+- RBE / Biomass pools + Contribution / Biomass Rank
+- **Hacking / Infection (gROT) + Nex-Firewall (Cybernex)** — первые версии abilities (TPS + simple Strategy)
+- **MOBA Seed**: arena, 4 heroes (kits на ability system), minion waves, XP/leveling, basic items, win condition
+- Networking: server authority + prediction
+
+### DoD
+- 2–4 игрока: multi-crew → высадка → колония / бой с AI
+- Обе фракции playable
+- Hacking vs Firewall работают в TPS
+- MOBA 3v3/4v4 prototype playable
+- Нет критических desync
+
+---
+
+## Phase 3: Vertical Slice + Full MOBA + Dynamic Ownership Seed + Basic Quests & Knowledge
+**Длительность:** 4–6 недель  
+**Effort:** 28–42 чел/дн  
+**Цель:** Playable vertical slice одной системы + полноценный MOBA + первые динамические трансформации + квесты + Knowledge foundation.
 
 ### Deliverables
-- Одна система: 2–3 планеты + space + jump points
-- Persistent local / server authority для колоний и ships
-- Fleet system: до 10–15 кораблей, flagship strategic overlay
-- Full boarding mechanics
-- Advanced AI-bots
-- NAEXOS gates prototype + aiNEX basic (colony planner + **MOBA builds**)
-- Basic Progression: skill trees, modular equipment, mutation trees
-- **MOBA Full Prototype**:
-  - 5v5 (или polished 3v3) maps с 3 lanes + jungle
-  - 6–8 heroes с polished kits
-  - Full item shop (6 slots), last-hitting, objectives (towers, core, secondary)
-  - Jungle camps + elite neutrals + basic Invasion Events
-  - Match flow: draft/select → game → rewards (Contribution / Biomass)
-  - Basic matchmaking (local / simple queue)
-  - Post-match rewards pipeline
+- Одна система (2–3 планеты + space + jump points) — предпочтительно ARK или Helios Reach
+- Persistent colonies / ships
+- Fleet system (до 10–15 кораблей, flagship overlay)
+- Carriers seed (hangar + drones/fighters)
+- **Dynamic Ownership Transformation** (prototype): visual + mechanical swap Cybernex (Venus Project) ↔ gROT (biomass industrial) на 1–2 объектах
+- Advanced AI-bots + NPC quest givers skeleton
+- **Quest system foundation**: Contract Board, generated quests (templates), basic Alliance Quest Constructor
+- **Knowledge & Skills foundation**: Knowledge Rank / Subject Mastery, optional Learning Nodes в квестах, soft combat integration (informational)
+- **MOBA Full Prototype**: 5v5/3v3, 6–8 heroes, lanes + jungle, items, objectives, rewards pipeline, basic matchmaking
+- aiNEX basic (colony planner + MOBA builds + simple educational puzzle generation)
+- Voice foundation (open-source STT/TTS path first)
 
 ### DoD
 - Полный цикл Strategy → Space → TPS → back
-- PvP/PvPvE работает во всех слоях с AI
-- Local persistent save
-- **MOBA**: playable 5v5/3v3 match с полным циклом, rewards, AI minions/jungle
+- Ownership transformation работает на prototype objects
+- Educational puzzle nodes + soft combat knowledge effects
+- Playable 5v5/3v3 MOBA + rewards
 - Low-end playable
-- Гейты и aiNEX placeholders работают
-
-**Риски:** Scope creep (одна система + MOBA), balance, performance
 
 ---
 
-## Phase 4: Platform Integration + Economy Deep + Ranked MOBA + Monetization
-**Длительность:** 2–4 недели  
-**Effort:** 14–22 чел/дн  
-**Цель:** Реальная интеграция с NAEXOS.ONLINE + полноценная экономика + ranked MOBA + monetization hooks.
+## Phase 4: Full Systems — Quests, Campaigns, Voice, Education, Social, Platform Hooks
+**Длительность:** 4–6 недель  
+**Effort:** 25–40 чел/дн  
+**Цель:** Глубокие системы контента, социального взаимодействия, AI и образования.
 
 ### Задачи
-- Account linking (SSO / token) с NAEXOS.ONLINE
-- Activity Mining + full RBE (projects, voting, events)
-- Biomass hierarchy progression
-- aiNEX advanced (включая MOBA draft/builds/post-match)
-- Subscription system: feature flags (multipliers, aiNEX quota, cosmetics, hero skins, ability VFX)
-- Cosmetics pipeline + shop skeleton
-- Cross-events / Battle Pass (shared main + MOBA)
-- **Ranked MOBA**: MMR, seasons, leaderboards, NAEXOS Trust Score sync
-- More heroes / maps / balance pass
-- Open-world MOBA Hotspots (optional smaller scale)
+- **Сюжетные кампании** (Cybernex «Awakening of NAEXOS» + gROT «Ascension of the Swarm») — первые 1–2 главы
+- Полный Quest system: generated NPC quests, Alliance Quest Constructor, Premium narrative quests (story-only)
+- **Educational Quests** с AI-генерируемыми головоломками как тестами (aiNEX)
+- Полная soft-интеграция Subject Mastery в combat (все слои)
+- **Voice stack**: Yandex SpeechKit / Alice + open-source providers (Whisper/Vosk/Piper/Silero), natural NPC dialogue, voice commands, alliance voice channels (Premium/achievements)
+- Alliance social: hierarchy, permissions, shared resources/tasks, Communication Hubs
+- Logistics + Transport Contracts + Carriers polish
+- Crafting + full blueprints (включая decorations)
+- Dynamic Ownership на большем числе объектов + contested transition states
+- Account linking + Knowledge gates + Trust Score / Qualifications sync prototype
+- Subscription flags + cosmetics pipeline
+- Ranked MOBA + seasons + Trust Score sync
 
 ### DoD
-- Гейты end-to-end
-- Подписка влияет на UI и soft-multipliers (no P2W)
-- Ranked MOBA работает + rewards pipeline
-- Economy обеих фракций сбалансирована
-- Документация интеграции
-
-**Зависимости:** Phase 3 vertical slice + MOBA prototype
+- Кампании playable (первые главы)
+- Educational quests + combat knowledge effects работают end-to-end
+- Voice dialogue + commands (hybrid open/Yandex)
+- Alliance hubs + voice channels
+- Platform gates prototype
+- No-P2W соблюдён
 
 ---
 
-## Phase 5: Optimization, Scale Prep & Polish
+## Phase 5: Optimization, Scale Prep, Content Expansion & Polish
 **Длительность:** 3–5 недель  
-**Effort:** 15–25 чел/дн  
-**Цель:** Готовность к closed alpha + подготовка к Yandex Cloud.
+**Effort:** 18–30 чел/дн  
+**Цель:** Готовность к closed alpha + подготовка Yandex Cloud + контент.
 
 ### Задачи
 - Interest management / spatial partitioning
-- Aggressive LOD, MultiMesh, impostors, physics layers
-- Animation compression, simplified distant AI
-- Load testing (много AI-ботов + clients + MOBA instances локально)
-- Docker → Terraform / IaC шаблоны для Yandex Cloud
-- Monitoring skeleton
-- Balance pass (PvP, forms, RBE vs Biomass, MOBA heroes/items)
-- Full low-end preset + graphics options
-- Bug fixing + UX polish
-- Spectator mode / replay basics for MOBA
+- Aggressive LOD, MultiMesh, animation compression, distant AI simplification
+- Load testing (entities + MOBA instances + voice)
+- Full star systems set (ARK, ROT-Prime, Helios Reach, Verdant Veil, Forge Depths, Echo Ruins…)
+- More campaign chapters, generated content variety, educational tracks
+- Balance pass (PvP, Hacking/Firewall, RBE vs Biomass, MOBA, soft knowledge effects)
+- Terraform / IaC для Yandex Cloud
+- Monitoring, anti-cheat basics, moderation tools for generated content
+- Full low-end presets + graphics options
+- Spectator / replay для MOBA
+- UX polish (including educational UI, voice settings, ownership transition feedback)
 
 ### DoD
-- Стабильная симуляция 50–100+ entities + несколько MOBA matches локально
+- Стабильная симуляция 50–100+ entities + multiple MOBA + voice
 - Infra-as-code ready
-- Closed alpha build exportable
+- Closed alpha build
 - Performance targets достигнуты
 
 ---
 
 ## Phase 6: Closed Alpha → Open Beta → Launch Prep
 **Длительность:** ongoing  
-**Цель:** Живой сервис + контент + live-ops.
+**Цель:** Живой сервис + live-ops + полный контент.
 
 - Deploy на Yandex Cloud
-- Real NAEXOS API integration
-- Content expansion (больше систем, квестов, рас, MOBA maps/heroes)
-- Analytics, anti-cheat basics, support tools
-- Marketing / community gates + MOBA tournaments
-- Full monetization live
+- Real NAEXOS.ONLINE API integration (Trust Score, Knowledge gates, skill exchange)
+- Content expansion (больше систем, квестов, рас, MOBA maps/heroes, educational modules)
+- Full monetization (Premium + tokens)
+- Analytics, support tools, community events, MOBA tournaments
+- Living history / global events pipeline
+- Continuous balance и educational content updates
 
 ---
 
-## Рекомендуемый порядок build-сессий (первые 10–12 недель)
+## Рекомендуемый порядок первых build-сессий (ориентир 12–16 недель)
 
-| Сессия | Фокус                                      | Главный результат                          |
-|--------|--------------------------------------------|--------------------------------------------|
-| 1      | Phase 0 + TPS controller + Ability System  | Playable animal form + 1–2 abilities       |
-| 2      | Ship physics + modules                     | Fly & shoot                                |
-| 3      | Colony placement + resources                | Build outpost                              |
-| 4      | Multi-crew + basic net                     | 2 players on one ship                      |
-| 5      | AI-bots + TPS combat                       | Fight with/against AI                      |
-| 6      | Landing transition + PvP arena             | Full local loop                            |
-| 7      | MOBA Seed: arena + 4 heroes + minions      | Playable 3v3/4v4 MOBA prototype            |
-| 8–9    | Fleet + Strategy PvP + RBE + MOBA polish   | Vertical slice skeleton + better MOBA      |
-| 10+    | Full MOBA maps/items/rewards + gates       | Playable vertical slice + solid MOBA       |
+| Сессия | Фокус | Главный результат |
+|--------|-------|------------------|
+| 1 | Phase 0 + TPS controller + Ability System | Playable form + 1–2 abilities |
+| 2 | Ship physics + modules | Fly & shoot |
+| 3 | Colony + resources + Contribution | Build outpost |
+| 4 | Multi-crew + basic net | 2 players on one ship |
+| 5 | AI-bots + TPS combat + Hacking/Firewall seed | Fight with/against AI + asymmetric abilities |
+| 6 | Landing + PvP arena + Knowledge Rank foundation | Full local loop + soft knowledge |
+| 7 | MOBA Seed (arena + 4 heroes + minions) | Playable 3v3/4v4 MOBA |
+| 8–9 | Fleet + Carriers seed + Dynamic Ownership prototype + RBE | Vertical slice skeleton + transformable object |
+| 10 | Quest system + Educational Nodes + aiNEX puzzles | Generated quests + learning tests |
+| 11+ | Voice foundation + Alliance social + Campaigns seed + MOBA polish | Voice dialogue + social hubs + story start |
 
 ---
 
 ## Матрица рисков (топ)
 
-| Риск                              | Вероятность | Влияние | Митигация                                      |
-|-----------------------------------|-------------|---------|------------------------------------------------|
-| Netcode desync / lag              | Высокая     | Высокое | Server authority + prediction early            |
-| Scope creep (слишком много форм + MOBA) | Высокая | Высокое | Жёсткий лимит на Phase 1–3, reuse ability system |
-| Performance с 30 ships + AI + MOBA | Средняя   | Высокое | Interest management + LOD + separate MOBA instances |
-| RBE ощущается «не хватает agency» | Средняя     | Среднее | Visible impact + personal contribution         |
-| Интеграция NAEXOS API задержится  | Средняя     | Среднее | Полноценный mock + browser gates               |
-| Animation quality animal forms    | Высокая     | Среднее | Placeholder → polish later                     |
-| MOBA balance / hero kit depth     | Средняя     | Высокое | Start with 4–6 heroes, iterate with playtests  |
+| Риск | Вероятность | Влияние | Митигация |
+|------|-------------|---------|-----------|
+| Netcode desync / lag | Высокая | Высокое | Server authority + prediction early |
+| Scope creep (много систем) | Высокая | Высокое | Жёсткий vertical slice, reuse ability/AI systems |
+| Performance (entities + MOBA + voice + transformation) | Средняя | Высокое | Interest management, LOD, separate instances, open-source voice first |
+| Educational content quality / generation cost | Средняя | Среднее | Templates + curated knowledge base + rate limits + offline fallback |
+| Voice latency / provider complexity | Средняя | Среднее | Modular providers, open-source first, hybrid mode |
+| Ownership transformation visual complexity | Средняя | Среднее | Shader/material swap + gradual transition, start with few objects |
+| Hacking/Firewall balance | Средняя | Высокое | Early playtests, strong counterplay, caps |
+| Integration with NAEXOS.ONLINE delays | Средняя | Среднее | Full local mocks + browser gates |
 
 ---
 
 ## Следующие шаги прямо сейчас
 
-1. Создать GitHub Project / Issues по Phase 0–1 задачам (включая Ability System).
-2. Назначить owners на подсистемы (включая MOBA track).
-3. Провести Phase 0 build-сессию (setup + first playable form + ability foundation).
+1. Создать / обновить GitHub Project и Issues по Phase 0–1 (включая Ability System + Hacking/Firewall foundation).
+2. Назначить owners на подсистемы (TPS/Abilities, Space/Carriers, Strategy/RBE, AI/Voice, Quests/Education, MOBA).
+3. Провести Phase 0 build-сессию.
 4. Ежедневно: short playtest + update Issues.
+5. Параллельно вести TECHNICAL_ARCHITECTURE.md и GDD-секции (особенно Abilities, Knowledge, Voice, Dynamic Ownership).
 
 ---
 
-*План живой. Обновляется по итогам каждой build-сессии. Следующий документ: TECHNICAL_ARCHITECTURE.md и GDD sections (включая MOBA GDD).*
+*План живой. Обновляется по итогам каждой build-сессии. Актуальная версия CONCEPT.md — v1.2.*
