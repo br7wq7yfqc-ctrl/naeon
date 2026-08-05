@@ -28,3 +28,33 @@ export/
 # Local
 *.log
 local/
+
+# === Heavy assets (never commit) ===
+/assets/
+*.blend
+*.psd
+*.tif
+*.exr
+*.hdr
+*.wav
+*.mp3
+*.ogg
+*.flac
+*.fbx
+*.glb
+*.gltf
+*.obj
+*.dae
+*.abc
+
+# Secrets & credentials (CRITICAL)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+credentials
+.aws/
+secrets/
