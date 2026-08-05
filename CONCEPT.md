@@ -1,6 +1,6 @@
 # NAEON — Подробная концепция игры
 
-**Версия:** 0.3 (обновлено 2026-08-05)  
+**Версия:** 0.4 (обновлено 2026-08-05)  
 **Репозиторий:** https://github.com/br7wq7yfqc-ctrl/naeon  
 **Основа:** NAEXOS + вселенная Aexion
 
@@ -36,7 +36,7 @@
 ### gROT (полностью играбельна)
 Раса генетических киборгов-мутантов под властью бессмертного лидера **ROT**.
 
-- Цель: трансформация всего сущего в кибер-биомассу, управляемую единой нейросетью ROT.
+- Цель: трансформация всего сущего в кибер-биомассу, управляемая единой нейросетью ROT.
 - Игроки начинают как низкоранговые мутанты и продвигаются по иерархии.
 - Уникальные механики: biomass harvesting/assimilation, mutation skill trees, hive-mind бонусы, биомеханический хоррор-стиль.
 - Асимметричный геймплей: агрессивный PvP-фокус vs коллективная RBE Cybernex.
@@ -123,6 +123,67 @@ Roster на запуске: 8–12 героев, расширяемый. Unlock 
 - **aiNEX**: recommended builds, draft assistant, post-match analysis (limited free, full with sub).
 - Cosmetics и ability VFX — через подписку / Battle Pass / platform activity.
 - **Нет pay-to-win и нет прямого power-transfer** в open-world.
+
+#### Влияние побед в Aexion Clash на persistent universe (без вреда MMO-loop)
+
+Все эффекты спроектированы как **soft, temporary, capped и преимущественно faction-wide**. Основной MMO-loop (строительство, полёты, ground ops, RBE/Biomass) остаётся главным источником долгосрочного прогресса и контроля карты. Arena даёт ощутимое влияние на войну фракций, но никогда не заменяет присутствие в open world.
+
+**1. Faction War Score / Momentum**
+- Ranked (и high-performance casual) победы добавляют очки в Faction War Score / Momentum.
+- При достижении thresholds фракция получает **временные** buffs (обычно 12–72 часа):
+  - +% к extraction / production rate в contested systems
+  - Ускоренное строительство / ремонт кораблей и структур
+  - Усиленные AI-боты (больше подкреплений в open-world PvPvE и raids)
+  - Небольшое усиление claim strength на спорных территориях
+- Score имеет natural decay. Обе фракции имеют равный доступ.
+- Визуально отображается на galactic map.
+
+**2. Proxy Contests для minor-объектов**
+- Только **minor / secondary** объекты могут быть помечены как «Arena Contestable»:
+  - Малые outposts и forward bases
+  - Resource extractors и orbital relays
+  - Derelict frigates / abandoned platforms
+  - Secondary space stations и resource-rich asteroid bases
+- Фракция может инициировать Proxy Challenge → серия или один high-stakes Arena match.
+- Победа даёт **temporary control** (12–48 часов, реже до 72 часов) + trickle ресурсов в фракционный RBE / Biomass pool + усиленный AI-гарнизон.
+- По истечении времени объект снова contestable. Open-world игроки противоположной фракции всегда могут отбить контроль обычными средствами (флот + TPS).
+
+**3. Major-объекты защищены**
+- Полные колонии, города, capital ships, основные космобазы, NEX/ARK-связанные объекты и ключевые hubs **нельзя** захватить через Arena.
+- Arena может давать только **Siege Prep / Softening**:
+  - Временный debuff на защитников AI
+  - Assault Token, который снижает сложность последующего open-world штурма
+  - Дополнительные AI-подкрепления атакующим на короткое время
+- Сам захват и удержание всегда требуют main-game усилий (Strategy + Space + TPS).
+
+**4. Resource Injection (строго capped)**
+- Победа → небольшая порция Energy / Materials / Biomass в общий фракционный пул.
+- Daily cap на игрока + weekly cap на фракцию.
+- Performance rating (не только win/loss) влияет на размер награды.
+- Не заменяет основной майнинг, строительство и extraction.
+
+**5. Personal Soft Rewards**
+- Temporary personal Contribution / Biomass multiplier (обычно 5–15% на 12–24 часа).
+- Hero Momentum: небольшой boost XP / ability feel в open-world (без нарушения PvP fairness).
+- Hero Mastery points → soft-unlocks альтернативных ability variants или cosmetics, usable в main game.
+- Titles, auras, visual flair.
+
+**6. Seasonal & Narrative Layer**
+- Ranked seasons и high-stakes tournaments:
+  - Победившая фракция получает temporary map advantages (новые temporary claim zones, уникальные resource nodes на 1–2 недели).
+  - Небольшие permanent soft unlocks для всей фракции (cosmetic, minor blueprint, flavour ownership text).
+  - Narrative impact (lore events, temporary renaming of contested zones).
+- Даже сезонные преимущества требуют, чтобы open-world игроки их удерживали.
+
+**Защита MMO-loop (ключевые принципы)**
+- Все Arena-derived benefits имеют **daily/weekly caps** и diminishing returns.
+- Open-world players, которые никогда не заходят в Arena, теряют только soft temporary buffs — core прогресс и возможность контролировать карту полностью сохраняются.
+- Arena-only игроки получают ограниченные долгосрочные выгоды (в основном temporary и cosmetics).
+- Major strategic assets всегда требуют присутствия в Strategy / Space / TPS слоях.
+- UI ясно показывает временный характер Influence Zones и таймеры.
+- Matchmaking + performance rating предотвращают чистый farming wins.
+
+Таким образом, победы в Aexion Clash ощущаются значимыми («мы помогли фракции закрепиться на этом участке»), создают живую войну фракций и дают competitive игрокам влияние на большой мир, но **MMO-loop остаётся королём**.
 
 **Основная петля** остаётся: Exploration / Colonization → Ship building → Space ops & fleets → Ground ops → Contribution / Biomass Rank → feedback в RBE / hierarchy. MOBA — мощный competitive слой и источник rewards + engagement.
 
@@ -256,8 +317,8 @@ aiNEX — семейство AI-инструментов экосистемы NA
 
 1. **Foundation** — Godot прототип: TPS animal controllers + basic ship flight + simple colony + local multiplayer.
 2. **Core Loop + PvP** — модульные корабли, multi-crew, Contribution/Biomass, базовые AI-боты, PvP во всех слоях + начало ability system для MOBA.
-3. **Vertical Slice + MOBA Prototype** — одна система с планетами, seamless-переходы, fleets, RBE simulation, account linking prototype + 3v3/5v5 MOBA arena prototype.
-4. **Platform Integration + Full MOBA** — aiNEX tools, гейты в NAEXOS.ONLINE, subscription system, ranked MOBA, rewards pipeline.
+3. **Vertical Slice + MOBA Prototype** — одна система с планетами, seamless-переходы, fleets, RBE simulation, account linking prototype + 3v3/5v5 MOBA arena prototype + базовый Momentum system.
+4. **Platform Integration + Full MOBA** — aiNEX tools, гейты в NAEXOS.ONLINE, subscription system, ranked MOBA, rewards pipeline, Proxy Contests, full influence systems.
 5. **Scale & Polish** — interest management, optimization low-end, content, balance both factions + MOBA roster/maps.
 6. **Launch** — public release + live-ops.
 
@@ -268,7 +329,7 @@ aiNEX — семейство AI-инструментов экосистемы NA
 - Playable антропоморфные киборги-животные + асимметричный playable gROT.
 - Настоящая Resource-Based Economy + мост с реальной платформой обмена навыками NAEXOS.
 - Глубокая интеграция трёх жанров + полноценный PvP/PvPvE на каждом слое.
-- **Competitive third-person MOBA (Aexion Clash)** с теми же героями и PvPvE-глубиной.
+- **Competitive third-person MOBA (Aexion Clash)** с теми же героями, PvPvE-глубиной и meaningful (но soft) влиянием на persistent world.
 - aiNEX как живой AI-слой внутри игры и платформы.
 - Freemium без pay-to-win + осмысленные гейты в экосистему NAEXOS.ONLINE.
 - Local-first разработка + реалистичный путь на Yandex Cloud.
