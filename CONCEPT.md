@@ -1,6 +1,6 @@
 # NAEON — Подробная концепция игры
 
-**Версия:** 0.4 (обновлено 2026-08-05)  
+**Версия:** 0.5 (обновлено 2026-08-05)  
 **Репозиторий:** https://github.com/br7wq7yfqc-ctrl/naeon  
 **Основа:** NAEXOS + вселенная Aexion
 
@@ -14,6 +14,8 @@
 - Космический симулятор (модульные корабли, multi-crew, флоты до 30)
 - Action/RPG от третьего лица (TPS)
 - **MOBA-режим** (Aexion Clash) — third-person Action-RPG MOBA в формате PvPvE
+
+**Уникальность:** генерация контента по промптам прямо в клиенте и живое общение с ИИ-NPC на базе **Yandex GPT API** (при платной подписке + оплате токенов).
 
 Игра полностью standalone, 3D, в тёмно-неоновых тонах, оптимизирована для слабых машин. Обе основные фракции полностью играбельны. Поддерживаются режимы **PvP** и **PvPvE** на всех слоях геймплея.
 
@@ -47,7 +49,7 @@
 ### NPC AI-боты
 У каждой расы свои активные AI-боты, участвующие в геймплее:
 
-- **Cybernex**: роботы-животные (workers, patrols, squad mates, advisors, civilian caretakers). Behavior trees + aiNEX-усиленные диалоги и адаптивное поведение.
+- **Cybernex**: роботы-животные (workers, patrols, squad mates, advisors, civilian caretakers). Behavior trees + aiNEX / Yandex GPT-усиленные диалоги и адаптивное поведение.
 - **gROT**: рои биомассы, elite mutants, infection spreaders, hierarchical guardians. Агрессивный pack AI, механики заражения.
 - Боты заполняют мир, патрулируют, строят, сражаются, реагируют на действия игроков и участвуют в PvP/PvPvE (включая MOBA-minions и jungle).
 
@@ -88,238 +90,257 @@
 - Карты: dedicated dark-neon арены (NEX Perimeter, Biomass Fields, Ruined Orbital, ARK Wilds).
 
 #### Герои
-Герои = существующие формы с полноценными ability kits (3–4 способности + passive + ultimate):
-
-**Cybernex примеры:**
-- **Canine (Guardian)** — Tank/Initiator: taunt, pack howl, charge, ultimate Fortress Mode.
-- **Feline (Shadow)** — Assassin/Carry: stealth, dash, bleed, ultimate Multi-Strike.
-- **Avian (Skyward)** — Mage/Support: aerial glide, dive bomb, vision pulse, ultimate Storm Call.
-- **Cetacean (Resonance)** — Support/Healer: sonic heal, barrier, area silence, ultimate Tidal Wave.
-- **Human-cyborg (Architect)** — Utility/Flex: deploy turrets, hack, shield, ultimate NAEXOS Overload.
-
-**gROT примеры:**
-- **Brute** — Heavy/Juggernaut: smash, regenerate, grab, ultimate Biomass Explosion.
-- **Swarm Lord** — Summoner/Controller: spawn minions, infect, swarm dash, ultimate Hive Takeover.
-- **Stalker** — Assassin: cloak, pounce, toxin, ultimate Mass Infection.
-- **Assimilator** — Bruiser: drain, absorb, mutate, ultimate Conversion Field.
-- **ROT Proxy** — Mage/Control: control abilities, ultimate focused on ROT’s will.
-
-Roster на запуске: 8–12 героев, расширяемый. Unlock базовых героев через основной прогресс (Contribution / Biomass Rank / TPS playtime).
+Герои = существующие формы с полноценными ability kits (3–4 способности + passive + ultimate). Roster на запуске: 8–12 героев, расширяемый. Unlock через основной прогресс.
 
 #### Механики
-- **Leveling**: 1–18 в матче (XP от last-hits, assists, objectives, jungle).
-- **Ability points** при повышении уровня.
-- **Items**: in-match gold shop (6 слотов). Gold от minions, kills, objectives. Items = modular cyber-upgrades / biomass mutations (stats + actives). Некоторые предметы связаны с основным прогрессом (soft unlocks).
-- **Lanes + Jungle**: 3 lanes, continuous AI-minion waves (faction bots), jungle camps (neutral AI + elite objectives).
-- **Objectives**: Towers / Inhibitors (faction-themed AI defenses), Core (NEX Relay vs ROT Nexus), secondary control points / Resource Spires.
-- **PvPvE depth**: periodic Invasion Events / Infection Waves / Cybernex Drone Swarms, neutral bosses, environmental hazards. AI minions и jungle actively participate.
-- Vision system (sensors / spores).
+- Leveling 1–18 в матче, ability points, items (gold shop), lanes + jungle, objectives, PvPvE events, vision system.
 
 #### Связь с основным геймплеем и платформой
-- Победа и performance → Contribution Score / Biomass Rank (с daily cap, чтобы не сломать RBE).
-- Hero mastery и skins unlock через main game + NAEXOS Premium / Battle Pass.
-- Post-match: опциональный «submit match report» как knowledge gate в NAEXOS.ONLINE.
-- Ranked MMR частично синхронизируется с Trust Score / Qualification Levels.
-- **aiNEX**: recommended builds, draft assistant, post-match analysis (limited free, full with sub).
-- Cosmetics и ability VFX — через подписку / Battle Pass / platform activity.
+- Победа и performance → Contribution Score / Biomass Rank (с daily cap).
+- Ranked MMR частично синхронизируется с Trust Score.
+- **aiNEX** + Yandex GPT: builds, draft, post-match analysis.
+- Cosmetics через подписку / Battle Pass.
 - **Нет pay-to-win и нет прямого power-transfer** в open-world.
 
 #### Влияние побед в Aexion Clash на persistent universe (без вреда MMO-loop)
 
-Все эффекты спроектированы как **soft, temporary, capped и преимущественно faction-wide**. Основной MMO-loop (строительство, полёты, ground ops, RBE/Biomass) остаётся главным источником долгосрочного прогресса и контроля карты. Arena даёт ощутимое влияние на войну фракций, но никогда не заменяет присутствие в open world.
+Все эффекты **soft, temporary, capped и преимущественно faction-wide**. MMO-loop остаётся главным источником долгосрочного прогресса и контроля карты.
 
-**1. Faction War Score / Momentum**
-- Ranked (и high-performance casual) победы добавляют очки в Faction War Score / Momentum.
-- При достижении thresholds фракция получает **временные** buffs (обычно 12–72 часа):
-  - +% к extraction / production rate в contested systems
-  - Ускоренное строительство / ремонт кораблей и структур
-  - Усиленные AI-боты (больше подкреплений в open-world PvPvE и raids)
-  - Небольшое усиление claim strength на спорных территориях
-- Score имеет natural decay. Обе фракции имеют равный доступ.
-- Визуально отображается на galactic map.
+1. **Faction War Score / Momentum** — wins → temporary faction buffs (extraction, repairs, AI strength, claim power).
+2. **Proxy Contests** — только minor-объекты (outposts, extractors, orbital relays, derelicts) → temporary control (12–48ч) + resource trickle.
+3. **Major-объекты защищены** — full colonies, cities, capital ships, hubs можно захватывать только через main layers. Arena даёт только Siege Prep.
+4. **Resource Injection** — capped daily/weekly injection into faction pools.
+5. **Personal Soft Rewards** — temporary multipliers, Hero Momentum, mastery unlocks, cosmetics.
+6. **Seasonal & Narrative** — seasons/tournaments дают temporary map advantages и small permanent soft unlocks.
 
-**2. Proxy Contests для minor-объектов**
-- Только **minor / secondary** объекты могут быть помечены как «Arena Contestable»:
-  - Малые outposts и forward bases
-  - Resource extractors и orbital relays
-  - Derelict frigates / abandoned platforms
-  - Secondary space stations и resource-rich asteroid bases
-- Фракция может инициировать Proxy Challenge → серия или один high-stakes Arena match.
-- Победа даёт **temporary control** (12–48 часов, реже до 72 часов) + trickle ресурсов в фракционный RBE / Biomass pool + усиленный AI-гарнизон.
-- По истечении времени объект снова contestable. Open-world игроки противоположной фракции всегда могут отбить контроль обычными средствами (флот + TPS).
-
-**3. Major-объекты защищены**
-- Полные колонии, города, capital ships, основные космобазы, NEX/ARK-связанные объекты и ключевые hubs **нельзя** захватить через Arena.
-- Arena может давать только **Siege Prep / Softening**:
-  - Временный debuff на защитников AI
-  - Assault Token, который снижает сложность последующего open-world штурма
-  - Дополнительные AI-подкрепления атакующим на короткое время
-- Сам захват и удержание всегда требуют main-game усилий (Strategy + Space + TPS).
-
-**4. Resource Injection (строго capped)**
-- Победа → небольшая порция Energy / Materials / Biomass в общий фракционный пул.
-- Daily cap на игрока + weekly cap на фракцию.
-- Performance rating (не только win/loss) влияет на размер награды.
-- Не заменяет основной майнинг, строительство и extraction.
-
-**5. Personal Soft Rewards**
-- Temporary personal Contribution / Biomass multiplier (обычно 5–15% на 12–24 часа).
-- Hero Momentum: небольшой boost XP / ability feel в open-world (без нарушения PvP fairness).
-- Hero Mastery points → soft-unlocks альтернативных ability variants или cosmetics, usable в main game.
-- Titles, auras, visual flair.
-
-**6. Seasonal & Narrative Layer**
-- Ranked seasons и high-stakes tournaments:
-  - Победившая фракция получает temporary map advantages (новые temporary claim zones, уникальные resource nodes на 1–2 недели).
-  - Небольшие permanent soft unlocks для всей фракции (cosmetic, minor blueprint, flavour ownership text).
-  - Narrative impact (lore events, temporary renaming of contested zones).
-- Даже сезонные преимущества требуют, чтобы open-world игроки их удерживали.
-
-**Защита MMO-loop (ключевые принципы)**
-- Все Arena-derived benefits имеют **daily/weekly caps** и diminishing returns.
-- Open-world players, которые никогда не заходят в Arena, теряют только soft temporary buffs — core прогресс и возможность контролировать карту полностью сохраняются.
-- Arena-only игроки получают ограниченные долгосрочные выгоды (в основном temporary и cosmetics).
-- Major strategic assets всегда требуют присутствия в Strategy / Space / TPS слоях.
-- UI ясно показывает временный характер Influence Zones и таймеры.
-- Matchmaking + performance rating предотвращают чистый farming wins.
-
-Таким образом, победы в Aexion Clash ощущаются значимыми («мы помогли фракции закрепиться на этом участке»), создают живую войну фракций и дают competitive игрокам влияние на большой мир, но **MMO-loop остаётся королём**.
-
-**Основная петля** остаётся: Exploration / Colonization → Ship building → Space ops & fleets → Ground ops → Contribution / Biomass Rank → feedback в RBE / hierarchy. MOBA — мощный competitive слой и источник rewards + engagement.
+Safeguards: caps, diminishing returns, open-world always can contest, UI transparency, performance rating.
 
 ---
 
-## 4. Экономика
+## 4. Базовые механики и петли (детально)
+
+### 4.1 Режим стратегии для лидеров альянсов
+Специальный **Strategic Command Interface** (доступен рангам Leader / Officer):
+- Galactic map с real-time overview: claims, structures, NPC fleets, logistics, threats, Arena Momentum, shared resources.
+- Tools: назначение приказов флотам (NPC + player), постановка alliance goals, allocation shared resources, объявление Proxy Contests / wars, управление permissions, создание shared tasks.
+- **aiNEX / Yandex GPT Strategic Advisor**: prompt-based analysis («предложи следующий шаг экспансии», «как защитить систему X», «оптимизируй логистику»).
+
+### 4.2 Управление структурами
+
+**Космические базы и орбитальные станции**
+- Модульные: Habitat, Shipyard, Refinery, Defense Platform, Research Lab, Logistics Hub, Carrier Dock, Hangar.
+- Строительство через Strategy layer (лидеры размещают, RBE/Contribution выделяет ресурсы).
+- Ownership (player / alliance) + granular permissions matrix (view / dock / extract / manage / full control).
+- AI-боты автоматически обслуживают базу.
+
+**Флоты NPC**
+- Альянсы могут создавать и управлять NPC-флотами (лимит зависит от Contribution / Alliance rank / War Score).
+- Типы: Patrol, Defense, Mining Escort, Transport Escort, Assault.
+- Приказы из Strategy mode: move, patrol route, defend object, attack, escort.
+- Behavior trees + aiNEX / Yandex GPT для higher-level решений (при подписке).
+
+**Корабли-носители (Carriers)**
+- Специальный класс Capital / Carrier ships (Light / Fleet / Super-Carrier).
+- Hangar slots: drones (mining, combat, repair, scout) + fighters (player-piloted или AI).
+- Multi-crew: Commander управляет carrier, другие игроки пилотируют fighters или управляют drone swarms.
+- Launch / recall, formations, auto-attack modes.
+- В PvP/PvPvE — mobile force multiplier и support platform.
+- Высокоуровневые blueprints + высокие требования к Contribution / shared resources.
+
+### 4.3 Наземные операции
+- После посадки (или orbital drop) игрок в TPS участвует в ground ops.
+- **Player-driven objectives**: лидеры / игроки ставят динамические цели (capture zone, defend extractor, escort, sabotage, rescue, biomass purge и т.д.).
+- Objective markers + progress UI. AI-боты автоматически помогают или сопротивляются в зависимости от фракции и прав.
+- Успех даёт Contribution / Biomass, ускоряет claims, разблокирует structures.
+
+### 4.4 Пользовательские миссии и контракты
+- **Contract Board** (в хабах, на базах, через terminals).
+- Игроки / альянсы публикуют контракты: доставка, зачистка, сбор данных, защита, эскорт и т.д.
+- Награда: ресурсы, Contribution, blueprints, cosmetics, temporary rights.
+- Escrow-система (in-game + NAEXOS bridge).
+- **User-generated missions**: через Prompt Studio (Yandex GPT) игрок/лидер генерирует кастомную миссию. AI валидирует и балансирует.
+- Петля: Create → Accept → Execute (TPS/Space) → Reward + feedback в RBE/Alliance.
+
+### 4.5 Добыча ресурсов, торговля и логистика
+**Добыча**
+- Player-driven, automated (AI-bots / drones), или смешанная.
+- Extractors на планетах и в космосе.
+
+**Торговля**
+- Cybernex: RBE allocation / request system (нет классической валюты).
+- gROT: hierarchical / black-market style с Biomass credits.
+- Internal alliance markets + limited cross-faction (с риском).
+
+**Логистика**
+- Ценные грузы (rare materials, data cores, biomass samples, crafted components) перевозятся cargo-ships или player ships.
+- Маршруты: player-driven или AI-convoy (NPC escort).
+- Риски: pirates, contested systems, player ambushes → PvPvE.
+- Logistics Hub structures автоматизируют часть перевозок.
+- Игроки создают Transport Contracts (награда в Contribution / resources).
+
+**Core Economic Loop (пример Cybernex):**
+Extract (player / AI / drones) → Haul (contracts / freighters) → Allocate via RBE (alliance leaders + Contribution) → Craft (blueprints) → Build structures / equip fleets → Defend / Expand → Contribution feedback.
+
+### 4.6 Управление социальной структурой сообществ (Альянсы)
+- **Иерархия**: Leader → Officers → Members → Recruits (полностью кастомизируемые ранги).
+- **Permissions matrix**: granular права (кто может строить, claim’ить, тратить shared resources, объявлять войну, access hangars, edit blueprints, publish contracts).
+- **Shared resource pool** (RBE-style для Cybernex-альянсов).
+- **Alliance tasks / contracts**: лидеры создают общие задачи для членов.
+- **Shared blueprints and decorations library**.
+- Strategy Command Interface даёт лидерам полный overview и инструменты управления.
+
+### 4.7 Крафтинг и чертежи (Blueprints)
+- Полная система blueprints: от компонентов → modules → ships → bases → **декорации** (furniture, neon signs, custom holograms, interior/exterior).
+- Crafting stations на базах, станциях, carriers.
+- Research / reverse-engineering / prompt-generation для получения blueprints.
+- Player-created blueprints можно сохранять, делиться в альянсе, публиковать (с модерацией).
+- Декорации полностью placeable — поддержка высокой степени персонализации баз и кораблей.
+- Крафт требует ресурсов + (иногда) Contribution rank.
+
+**Crafting Loop:**
+Unlock / research / prompt-generate blueprint → Gather components → Craft at station → Place / use (включая decorations) → Share in alliance / NAEXOS.
+
+---
+
+## 5. Уникальность: Генерация контента и живые ИИ-NPC на Yandex GPT
+
+### 5.1 Prompt Studio / Creation Terminal (в клиенте)
+Игрок может прямо в клиенте генерировать контент по промптам:
+- Миссии и контракты
+- Описания и data для структур / колоний / кораблей
+- Blueprints декораций и модулей
+- Lore entries, названия, события
+- Диалоги и personality для NPC
+
+Yandex GPT генерирует текст + structured data (JSON). Результат можно сохранить как personal / alliance asset, опубликовать в Contract Board или (после модерации) в общий пул.
+
+**Ограничения:**
+- Free tier: limited prompts/day + простые outputs + rule-based fallback.
+- NAEXOS Premium + оплата токенов: высокие лимиты, лучшие модели, complex multi-object generation, persistent memory.
+
+### 5.2 Живое общение с ИИ-NPC
+- Любые ключевые NPC (advisors, governors, captains, merchants, workers, ROT proxies) поддерживают **live dialogue**.
+- Игрок пишет или использует voice-to-text → NPC отвечает in-character, context-aware (локация, фракция, recent events, история игрока).
+- Возможности: советы, торговля, динамические квесты, ролеплей, soft «обучение» NPC.
+- Powered by **Yandex GPT API**.
+
+**Доступ:**
+- Базовый (rule-based + короткие GPT-ответы) — бесплатно.
+- Полный live GPT + long memory + advanced personality — Premium подписка + токены.
+
+### 5.3 Монетизация и безопасность Yandex GPT
+- Токены покупаются за реальные деньги или частично зарабатываются активностью.
+- Cost проходит напрямую пользователю (прозрачный баланс токенов).
+- Rate limits, system prompts (жёсткие lore/safety filters), moderation pipeline, offline fallback (local rule-based / small models).
+- Генерация **не даёт combat power** — только content, creativity, convenience и roleplay. Полностью соответствует no-P2W.
+
+### 5.4 Интеграция с aiNEX
+Yandex GPT является backend-движком продвинутых функций aiNEX (Strategic Advisor, colony planner, ship designer, MOBA builds, NPC dialogue, prompt generation).
+
+---
+
+## 6. Экономика
 
 ### Cybernex — Resource-Based Economy (RBE)
-Нет классической валюты. **Contribution Score** определяет влияние на allocation. NAEXOS Core + сенсоры распределяют ресурсы. Игроки предлагают проекты; система выделяет ресурсы пропорционально вкладу + глобальным нуждам.
+Нет классической валюты. **Contribution Score** определяет влияние на allocation. NAEXOS Core + сенсоры распределяют ресурсы. Игроки и альянсы предлагают проекты; система выделяет ресурсы пропорционально вкладу + глобальным нуждам. Shared alliance pools.
 
 ### gROT — Biomass Economy
 Личная/иерархическая сила через biomass. Harvesting, conversion, ranking under ROT.
 
 ### Мост с платформой NAEXOS.ONLINE
-- Contribution Score / Biomass Rank синхронизируются с **Trust Score** и **Qualification Levels** платформы.
+- Contribution Score / Biomass Rank синхронизируются с **Trust Score** и **Qualification Levels**.
 - Activity Mining: открытия в игре → вклад в OKA/wiki платформы.
-- Опциональный bridge: навыки и знания, зафиксированные на платформе, дают soft-multipliers в игре.
-- MOBA ranked performance также влияет на Trust Score / Battle Pass.
+- MOBA ranked + generated content также влияют на Trust Score / Battle Pass.
 
 ---
 
-## 5. aiNEX — AI-инструменты в игре
+## 7. aiNEX + Yandex GPT
 
-aiNEX — семейство AI-инструментов экосистемы NAEXOS:
-
+aiNEX — семейство AI-инструментов:
 - Colony planner / resource allocator
 - Ship & module designer
 - Combat / fleet tactics advisor
-- Procedural mission & event generator
-- Lore / dialogue enhancer для NPC
-- Personal robot customization AI
-- **MOBA**: recommended builds, draft advice, post-match analysis, ability tooltips
+- Procedural / prompt-based mission & event generator
+- Lore / dialogue enhancer
+- Personal robot customization
+- Strategic Advisor для лидеров
+- MOBA builds / draft / post-match analysis
+- Prompt Studio backend
 
-**Доступ**:
-- Базовые лимиты — бесплатно.
-- Расширенные модели и высокий лимит — через подписку или высокий Contribution / активность на платформе.
-
----
-
-## 6. Гейты вовлечения в NAEXOS.ONLINE
-
-1. **Account linking** — единый аккаунт (SSO). Синхронизация прогресса и Trust Score.
-2. **Onboarding / Knowledge gates** — квесты «Sync with NAEXOS Core»: отправить discovery / гайд в wiki платформы → in-game reward.
-3. **Time-bank / Skill exchange** — обмен навыками (стратегия, design, coaching) на платформе → boost в RBE или cosmetics.
-4. **Escrow & community deals** — услуги, связанные с игрой, через платформенный escrow.
-5. **Cross-events & Battle Pass** — сезонные события с dual rewards (игра + платформа), включая MOBA seasons.
-6. **In-game terminals** — deep links / embedded views к dashboard, AI Lab, forums, economy tools платформы.
-7. **Community votes** — игроки влияют на приоритеты RBE через голосования на NAEXOS.ONLINE.
-8. **MOBA gates**: ranked performance, match reports, community tournaments → Trust Score / Qualifications / cosmetics.
-
-Цель гейтов: органично вовлекать игроков в реальную деятельность платформы (обмен навыками, фиксация знаний, команды, AI-tools).
+**Доступ**: базовый free, полный через Premium + токены Yandex GPT.
 
 ---
 
-## 7. Монетизация — Freemium + Subscription
+## 8. Гейты вовлечения в NAEXOS.ONLINE
 
-**Freemium (бесплатно)**:
-- Полный доступ к core gameplay всех слоёв (включая MOBA).
-- Обе фракции (Cybernex + gROT).
-- PvP / PvPvE.
-- Базовые AI-боты и limited aiNEX.
-- Все системы прогрессии.
-
-**Подписка (NAEXOS Premium / Cybernex Pass)** — удобство и cosmetics, **без pay-to-win**:
-- Повышенные multipliers Contribution / Trust Score sync.
-- Полный / приоритетный доступ к advanced aiNEX (включая MOBA builds).
-- Эксклюзивные cosmetics, варианты животных-форм / мутаций, hero skins, ability VFX.
-- Дополнительные слоты multi-crew / private fleet options.
-- Battle Pass tiers (shared between main game and MOBA), priority matchmaking, expanded storage.
-- Cross-platform rewards.
-
-Строгое правило: подписка не даёт прямого боевого преимущества или ускоренного получения ключевых ресурсов/силы.
+1. Account linking (SSO)
+2. Knowledge gates (submit discoveries / generated content)
+3. Time-bank / Skill exchange
+4. Escrow & community deals
+5. Cross-events & Battle Pass (включая MOBA seasons)
+6. In-game terminals → platform tools
+7. Community votes
+8. MOBA gates + generated content contribution
 
 ---
 
-## 8. Технологический стек
+## 9. Монетизация — Freemium + Subscription + Tokens
 
-**Движок: Godot 4.3+ (рекомендуется 4.4+)**
-- Открытый исходный код, отличная производительность на weak hardware.
-- Built-in multiplayer + dedicated/headless servers.
-- GDScript + C# / GDExtension (C++) для hot paths.
-- AnimationTree + IK для animal forms.
-- Aggressive LOD, instancing, occlusion — критично для low-end.
-- Ability system data-driven (Resources) — переиспользуется между TPS open-world и MOBA.
+**Freemium**: полный core gameplay (все слои, обе фракции, PvP/PvPvE, базовые AI-боты, limited GPT).
+
+**NAEXOS Premium / Cybernex Pass**:
+- Multipliers Contribution / Trust Score
+- Полный доступ к advanced aiNEX + Yandex GPT (высокие лимиты)
+- Cosmetics, hero skins, ability VFX, decorations
+- Дополнительные multi-crew / private fleet / carrier slots
+- Battle Pass, priority matchmaking
+- Cross-platform rewards
+
+**Токены Yandex GPT**: покупаются отдельно (или частично зарабатываются) для генерации контента и long AI-NPC dialogue. Не дают combat power.
+
+Строгое правило: **нет pay-to-win**.
+
+---
+
+## 10. Технологический стек
+
+**Движок: Godot 4.3+ (4.4+)**
+- Built-in multiplayer + dedicated servers
+- GDScript + C# / GDExtension
+- AnimationTree + IK
+- Data-driven Ability + Blueprint systems
 
 **Backend**:
-- Godot dedicated servers (containerized).
-- PostgreSQL + Redis.
-- Interest management / spatial partitioning.
-- RBE simulation как отдельный сервис (Go/Rust или Godot).
-- Matchmaking service для MOBA (local first → cloud).
+- Godot dedicated servers (containerized)
+- PostgreSQL + Redis
+- Interest management
+- RBE simulation service
+- Matchmaking
+- **Yandex GPT API** integration (with local fallbacks)
 
 **Art**: stylized low-to-mid poly + PBR + heavy emissives (dark-neon).
 
 ---
 
-## 9. Серверная инфраструктура
+## 11. Серверная инфраструктура
 
-### Фаза 0 — Полностью локальная разработка (приоритет)
-- Godot headless servers + clients на машинах разработчиков.
-- Docker Compose: Postgres, Redis, MinIO (опционально), auth/world/fleet services.
-- Полный vertical slice работает offline / в локальной сети.
-- **Стоимость: 0 ₽** (используется существующее железо).
+**Фаза 0 — Local-first**: Godot headless + Docker (Postgres/Redis). Cost 0 ₽.
 
-### Фаза 1 — Closed Alpha / Early Testing (50–200 CCU)
-Провайдер по умолчанию: **Yandex Cloud**.
+**Фаза 1 — Closed Alpha (50–200 CCU)**: Yandex Cloud, ~25–50k ₽/мес.
 
-Примерная конфигурация:
-- 1× Auth/Gateway: 2 vCPU / 4 GB
-- 2× World/Strategy servers: 4 vCPU / 8–16 GB
-- Dynamic instance managers для Space/TPS/MOBA (auto-scale)
-- Managed PostgreSQL + Redis
-- Object Storage
+**Фаза 2 — Open Beta (500–2000 CCU)**: horizontal scaling, ~80–200k ₽/мес.
 
-**Ориентировочная стоимость: 25 000 – 50 000 ₽ / месяц**
-
-### Фаза 2 — Open Beta / Soft Launch (500–2000 CCU)
-- Горизонтальное масштабирование game nodes
-- Managed K8s (опционально)
-- Более мощный DB-кластер, CDN, мониторинг
-- **Ориентировочно: 80 000 – 200 000 ₽ / месяц** (зависит от реальной нагрузки и регионов)
-
-### Фаза 3 — Full Scale
-- Auto-scaling groups, multi-region, выделенные мощности под RBE simulation и aiNEX inference (YandexGPT / DataSphere или внешние endpoints с rate limits).
-
-**Рекомендация**: максимально долго оставаться на local-first. Переход на Yandex Cloud только при необходимости persistent multi-user тестирования. Использовать Infrastructure-as-Code (Terraform).
+**Фаза 3 — Full Scale**: auto-scaling, multi-region, dedicated для RBE + Yandex GPT proxy/rate-limiting.
 
 ---
 
-## 10. Roadmap (высокоуровневый)
+## 12. Roadmap (высокоуровневый)
 
-1. **Foundation** — Godot прототип: TPS animal controllers + basic ship flight + simple colony + local multiplayer.
-2. **Core Loop + PvP** — модульные корабли, multi-crew, Contribution/Biomass, базовые AI-боты, PvP во всех слоях + начало ability system для MOBA.
-3. **Vertical Slice + MOBA Prototype** — одна система с планетами, seamless-переходы, fleets, RBE simulation, account linking prototype + 3v3/5v5 MOBA arena prototype + базовый Momentum system.
-4. **Platform Integration + Full MOBA** — aiNEX tools, гейты в NAEXOS.ONLINE, subscription system, ranked MOBA, rewards pipeline, Proxy Contests, full influence systems.
-5. **Scale & Polish** — interest management, optimization low-end, content, balance both factions + MOBA roster/maps.
+1. **Foundation** — TPS controllers, ship flight, simple colony, ability system, local multiplayer.
+2. **Core Loop + PvP** — multi-crew, AI-bots, Contribution/Biomass, basic PvP, ability system for MOBA, basic structures.
+3. **Vertical Slice + MOBA Prototype** — one system, fleets, carriers seed, ground ops, contracts, Momentum system, basic Prompt Studio mock.
+4. **Platform + Full Systems** — full alliance hierarchy/permissions, logistics, crafting/blueprints, ranked MOBA, Yandex GPT integration (dialogue + generation), Proxy Contests.
+5. **Scale & Polish** — optimization, more content, balance, moderation tools for generated content.
 6. **Launch** — public release + live-ops.
 
 ---
@@ -327,13 +348,16 @@ aiNEX — семейство AI-инструментов экосистемы NA
 ## Уникальные преимущества NAEON
 
 - Playable антропоморфные киборги-животные + асимметричный playable gROT.
-- Настоящая Resource-Based Economy + мост с реальной платформой обмена навыками NAEXOS.
-- Глубокая интеграция трёх жанров + полноценный PvP/PvPvE на каждом слое.
-- **Competitive third-person MOBA (Aexion Clash)** с теми же героями, PvPvE-глубиной и meaningful (но soft) влиянием на persistent world.
-- aiNEX как живой AI-слой внутри игры и платформы.
-- Freemium без pay-to-win + осмысленные гейты в экосистему NAEXOS.ONLINE.
-- Local-first разработка + реалистичный путь на Yandex Cloud.
+- Настоящая Resource-Based Economy + мост с NAEXOS.
+- Глубокая интеграция Strategy + Space + TPS + MOBA.
+- Полноценные альянсы с иерархией, permissions, shared resources и Strategy mode для лидеров.
+- Carriers с дронами/истребителями, NPC fleets, глубокая логистика.
+- Player-driven objectives, user contracts и prompt-generated content.
+- **Живые ИИ-NPC и генерация контента по промптам на Yandex GPT** прямо в клиенте.
+- Soft Arena influence на persistent world без ломки MMO-loop.
+- Freemium + подписка + токены (без P2W).
+- Local-first + реалистичный путь на Yandex Cloud.
 
 ---
 
-*Документ поддерживается командой разработки. Следующий шаг — детальный GDD и vertical slice в Godot.*
+*Документ поддерживается командой разработки. Следующий шаг — детальный GDD по подсистемам и vertical slice в Godot.*
