@@ -1,6 +1,6 @@
 # NAEON — Подробная концепция игры
 
-**Версия:** 1.1 (обновлено 2026-08-05)  
+**Версия:** 1.2 (обновлено 2026-08-05)  
 **Репозиторий:** https://github.com/br7wq7yfqc-ctrl/naeon  
 **Основа:** NAEXOS + вселенная Aexion
 
@@ -10,7 +10,7 @@
 
 **NAEON** — массивная многопользовательская онлайн-игра (MMO) в футуристической вселенной **Aexion**. Многожанровый проект, объединяющий глобальную стратегию, космический симулятор, TPS Action/RPG и MOBA (Aexion Clash).
 
-**Уникальность:** генерация контента по промптам, живое голосовое общение с ИИ-NPC, голосовое управление, динамические миры, глубокий лор раскола, сюжетные кампании, **личное развитие через обучение языкам и учебным дисциплинам**, living history.
+**Уникальность:** генерация контента по промптам, живое голосовое общение с ИИ-NPC, голосовое управление, динамические миры, глубокий лор раскола, сюжетные кампании, **личное развитие через обучение + интеграция знаний в боевой процесс**, living history.
 
 Игра standalone, 3D, тёмно-неоновая, оптимизирована для слабых машин. Обе фракции полностью играбельны. PvP / PvPvE на всех слоях.
 
@@ -18,7 +18,7 @@
 
 ## 2. Лор и фракции (углублённый)
 
-История раскола NAEXOS, конфликт создателей, Великая Гибернация, генетическая защита ноолюдей и антропоморфных роботов-животных (с ограничениями, компенсируемыми моделью NAEXOS), мотивации Cybernex и gROT, механики Infection Hacking vs Nex-Firewall.
+История раскола NAEXOS, конфликт создателей, Великая Гибернация, генетическая защита ноолюдей и антропоморфных роботов-животных, мотивации Cybernex и gROT, механики Infection Hacking vs Nex-Firewall.
 
 ---
 
@@ -42,82 +42,88 @@ Strategy • Space Simulator • TPS Action/RPG • MOBA (Aexion Clash) с soft 
 
 ## 6. Основные звёздные системы и планеты
 
-ARK, ROT-Prime, Helios Reach, Verdant Veil, Forge Depths, Echo Ruins, Twilight Expanse + динамическая трансформация под фракцию (Venus Project harmony vs industrial biomass).
+ARK, ROT-Prime, Helios Reach, Verdant Veil, Forge Depths, Echo Ruins, Twilight Expanse + динамическая трансформация под фракцию.
 
 ---
 
 ## 7. Личное развитие игроков (Knowledge & Skills)
 
-Одна из ключевых особенностей NAEON — **обучение и личное развитие** прямо в игровом процессе. Это напрямую связано с философией NAEXOS и платформы NAEXOS.ONLINE (обмен навыками, фиксация знаний, Qualification Levels).
-
 ### 7.1 Основные принципы
 
-- Полностью **опционально**. Core progress (Contribution, корабли, колонии, combat) возможен без обучения.
-- Soft rewards: Knowledge Rank, language proficiency, subject mastery, cosmetics, dialogue options, platform Trust Score / Qualifications, небольшие multipliers.
-- **Нет pay-to-win**. Знания не дают прямого боевого преимущества.
-- Генерация задач через **aiNEX** (Yandex GPT) во взаимосвязи с NAEXOS.ONLINE.
-- Поддержка реальных учебных дисциплин и языков в контексте вселенной Aexion.
+- Полностью **опционально**. Core progress возможен без обучения.
+- Soft rewards: Knowledge Rank, Subject Mastery, cosmetics, dialogue options, platform Trust Score / Qualifications, небольшие multipliers.
+- **Нет pay-to-win**. Знания не дают прямого raw combat power (урон, HP, щиты).
+- Генерация задач через **aiNEX** во взаимосвязи с NAEXOS.ONLINE.
 
-### 7.2 Механики обучения во время квестов
+### 7.2 Обучение во время квестов и Educational Quests
 
-Во многих квестах (особенно research, exploration, logistics, diplomacy, campaign side-objectives) появляются **образовательные узлы / головоломки**:
+Во многих квестах появляются образовательные узлы. Кроме того, существуют dedicated **Educational Quests**, специально спроектированные вокруг учебных головоломок.
 
-- Игрок сталкивается с задачей, требующей знания языка, математики, физики, биологии, логики, истории, программирования, астрономии и т.д.
-- Задачи могут быть:
-  - Встроенными в диалог с NPC (голосовой или текстовый)
-  - Интерактивными головоломками на объектах / терминалах
-  - Расчётами для навигации, extraction, crafting, firewall configuration
-  - Переводом / расшифровкой данных на «древних» или фракционных языках
-- Правильный ответ → progress в соответствующем навыке + награда.
-- Неправильный / пропуск → квест можно продолжить, но без educational reward.
+#### Учебные квесты с головоломками как тестом (AI-generated)
 
-**Примеры:**
-- Языки: перевод сообщений, переговоры с NPC, расшифровка логов (русский, английский, «древний код», фракционные диалекты).
-- Математика / физика: расчёт траекторий прыжка, оптимизация extraction, балансировка энергосистем корабля.
-- Биология / генетика: анализ biomass-образцов, понимание ограничений генетического редактирования.
-- Логика / программирование: настройка Nex-Firewall, написание простых скриптов для AI-ботов, расшифровка malware.
-- История / лор: ответы на вопросы о расколе, создателях, гибернации (углубляют immersion).
+aiNEX создаёт квесты, в которых **учебная головоломка является ключевым тестом / gate**:
 
-### 7.3 Генерация через aiNEX + связь с NAEXOS.ONLINE
+1. **Контекст**: NPC или терминал выдаёт задачу, связанную с текущей ситуацией (исследование руин, настройка firewall, анализ biomass, переговоры, навигация).
+2. **Генерация**: aiNEX (Yandex GPT) создаёт задачу, адаптированную под:
+   - Текущий Subject Mastery игрока
+   - Контекст локации / фракции / квеста
+   - Предыдущие успехи и слабые места
+3. **Тест**: игрок должен решить реальную учебную задачу (математика, язык, логика, физика, биология, программирование, история лора).
+4. **Результат**:
+   - Успех → квест продолжается / открывается путь + Knowledge progress + награда
+   - Неудача → можно использовать подсказки (ограниченно), упростить задачу, или пройти альтернативным (менее выгодным) путём
+5. **Связь с платформой**: успешное решение может фиксироваться на NAEXOS.ONLINE как contribution в knowledge base / Qualifications.
 
-- **aiNEX** генерирует задачи, адаптированные под:
-  - Уровень Knowledge Rank игрока
-  - Текущий контекст квеста / локации / фракции
-  - Предыдущие успехи / ошибки игрока
-- Задачи могут быть простыми (free) или более глубокими / персонализированными (Premium + токены).
-- Успешное решение и фиксация знания может:
-  - Отправляться как contribution в knowledge base NAEXOS.ONLINE (Activity Mining / Knowledge gates)
-  - Повышать **Trust Score** и **Qualification Levels** на платформе
-  - Разблокировать skill-exchange возможности (игрок может «учить» других или получать бусты)
-- Игрок может сознательно запрашивать учебные модули через Prompt Studio / terminals («aiNEX, дай мне задачу по орбитальной механике уровня 3»).
+**Примеры Educational Quests:**
+- «Расшифруй древний код» — языковая + логическая задача
+- «Рассчитай безопасную траекторию прыжка» — физика / математика
+- «Настрой Nex-Firewall против нового malware» — логика + основы программирования / сетей
+- «Определи тип biomass-образца и способ нейтрализации» — биология / генетика
+- «Проведи переговоры с нейтральным AI» — язык + история / дипломатия
 
-### 7.4 Knowledge Rank и Subject Mastery
+Квесты могут быть короткими (5–15 мин) или частью более длинных campaign / alliance chains. Сложность масштабируется. Полностью skippable с потерей educational rewards.
 
-- **Knowledge Rank** — общий показатель образовательного прогресса.
-- **Subject Mastery** — отдельные треки: Languages, Mathematics, Physics, Biology/Genetics, Logic/Programming, History/Lore, Logistics/Systems и др.
-- Mastery даёт:
-  - Новые dialogue options и более глубокие разговоры с NPC
-  - Soft multipliers в соответствующих активностях (research, crafting, navigation, firewall efficiency)
-  - Cosmetics, titles, decorations, unique blueprints (educational-themed)
-  - Прогресс в platform Qualifications
-  - Возможность создавать более сложные educational quests в Alliance Constructor
+### 7.3 Интеграция Subject Mastery в боевой процесс (soft)
 
-### 7.5 Награды и баланс
+Знания **не увеличивают raw damage / HP / shields**. Вместо этого они дают **situational soft advantages**, тактическую глубину и качество-of-life:
 
-- XP / Contribution / Biomass — небольшие, capped.
-- Knowledge Rank / Subject Mastery progress.
-- Cosmetics, titles, lore entries, unique decorations.
-- Soft temporary или permanent multipliers (очень небольшие, тематические).
-- Platform rewards (Trust Score, Qualifications, skill-exchange access).
-- Premium: более сложные / интересные генерируемые задачи, персонализированные учебные треки, exclusive educational narrative content.
+| Subject Mastery       | Soft-эффект в бою (TPS / Space / Strategy)                                      |
+|-----------------------|----------------------------------------------------------------------------------|
+| **Languages**         | Лучшее понимание вражеских / нейтральных коммуникаций, расширенные dialogue options mid-combat, шанс заранее узнать intent AI-ботов или игроков через перехват сообщений |
+| **Mathematics / Physics** | Более точные индикаторы траекторий, lead markers, энергопотребления; улучшенная информация о jump calculation и projectile prediction (QoL, не auto-aim) |
+| **Biology / Genetics** | Лучшее распознавание типов biomass / infection, раннее предупреждение о стадиях заражения, улучшенные подсказки по purge / counter-infection |
+| **Logic / Programming** | Более эффективный Nex-Firewall (быстрее заряд / выше resist chance), лучший анализ malware, дополнительные diagnostic tools в UI |
+| **History / Lore**    | Расширенные тактические подсказки от AI-NPC в бою, знание слабостей определённых врагов / структур на основе лора, уникальные voice lines и callouts |
+| **Logistics / Systems** | Лучший overview состояния корабля / отряда / базы во время боя, оптимизированные resource warnings, улучшенный multi-crew coordination feedback |
 
-Всё остаётся soft и optional. Игрок, который игнорирует обучение, не теряет возможность прогрессировать в core MMO-loop. Игрок, который учится, получает дополнительную глубину, immersion и связь с реальной платформой NAEXOS.ONLINE.
+**Принципы баланса:**
+- Эффекты informational / QoL / situational, а не «больше урона».
+- Чем выше Mastery — тем качественнее информация и удобнее инструменты, но raw power остаётся равным.
+- В PvP оба игрока имеют доступ к своим Mastery-эффектам → skill expression, а не paywall.
+- В MOBA (Aexion Clash) Mastery даёт небольшие informational advantages и cosmetic / callout depth, но не ломает баланс героев.
+- Можно полностью игнорировать — combat остаётся честным и полным.
+
+### 7.4 Knowledge Rank и Subject Mastery — награды
+
+- Progress в Knowledge Rank / отдельных Subject Masteries
+- Soft multipliers в thematic активностях (research, crafting, navigation, firewall)
+- Cosmetics, titles, decorations, unique dialogue
+- Platform Trust Score / Qualifications / skill-exchange access
+- Возможность создавать более сложные educational quests в Alliance Constructor
+
+### 7.5 Генерация и доступ
+
+- Free: базовые задачи + limited aiNEX generation
+- Premium: адаптивные глубокие треки, персонализированные Educational Quests, лучшие подсказки, голосовое обучение (Alice)
+- Tokens: сложные / длинные generative educational modules
+
+Всё остаётся soft, optional и полностью соответствует no-P2W.
 
 ---
 
 ## 8. Уникальность: Генерация контента, живые голосовые ИИ-NPC и голосовое управление
 
-Prompt Studio, полноценный голосовой диалог NPC (модульный STT → NLU → TTS), голосовое управление (Alice / SpeechKit + open-source), настройка SpeechKit. aiNEX также генерирует образовательные задачи.
+Prompt Studio, полноценный голосовой диалог NPC, голосовое управление, aiNEX генерирует как обычный контент, так и **образовательные квесты с учебными головоломками**.
 
 ---
 
@@ -129,20 +135,20 @@ Cybernex — RBE (Contribution). gROT — Biomass hierarchy. Мост с NAEXOS.
 
 ## 10. aiNEX + Yandex GPT + SpeechKit + Open Voice Stack
 
-Полный набор AI-инструментов + голосовой диалог + генерация контента и **образовательных задач** + Strategic Advisor.
+Полный набор AI-инструментов + голосовой диалог + генерация контента и образовательных задач + Strategic Advisor.
 
 ---
 
 ## 11. Гейты вовлечения в NAEXOS.ONLINE
 
-Account linking, knowledge gates (включая образовательный progress), time-bank / skill exchange, escrow, cross-events, terminals, community votes.
+Account linking, knowledge gates (включая educational progress), time-bank / skill exchange, escrow, cross-events, terminals, community votes.
 
 ---
 
 ## 12. Монетизация — Freemium + Subscription + Tokens
 
 Freemium core + basic educational content.  
-Premium: advanced aiNEX educational generation, deeper personalized tracks, exclusive narrative.  
+Premium: advanced educational generation, deeper tracks, exclusive narrative.  
 Tokens for complex generation. **Нет pay-to-win.**
 
 ---
@@ -164,7 +170,7 @@ Local-first → Yandex Cloud.
 1. Foundation  
 2. Core Loop + PvP  
 3. Vertical Slice + MOBA + basic systems  
-4. Full Systems (включая Knowledge & educational quests + aiNEX generation)  
+4. Full Systems (включая Knowledge integration в combat + AI educational quests)  
 5. Scale & Polish  
 6. Launch
 
@@ -172,13 +178,13 @@ Local-first → Yandex Cloud.
 
 ## Уникальные преимущества NAEON
 
-- Глубокий лор раскола NAEXOS / gROT и генетической защиты
+- Глубокий лор раскола NAEXOS / gROT
 - Playable антропоморфные киборги-животные + ноолюди + асимметричный gROT
 - Асимметричные способности: Infection Hacking vs Nex-Firewall
 - Resource-Based Economy + мост с NAEXOS
-- **Личное развитие: обучение языкам и учебным дисциплинам прямо в квестах + реальные образовательные головоломки через aiNEX**
+- **Личное развитие + soft-интеграция знаний в боевой процесс + AI-генерируемые учебные квесты с реальными головоломками**
 - Strategy + Space + TPS + MOBA с soft Arena influence
-- Динамические планеты и объекты (Venus Project vs industrial biomass)
+- Динамические планеты и объекты
 - Сюжетные кампании + генерируемые квесты + alliance quest constructor
 - Премиум-квесты и глобальные события как living history
 - Полноценный голосовой диалог с NPC + голосовое управление
