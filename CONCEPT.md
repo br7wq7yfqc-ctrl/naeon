@@ -1,6 +1,6 @@
 # NAEON — Подробная концепция игры
 
-**Версия:** 0.2 (обновлено 2026-08-05)  
+**Версия:** 0.3 (обновлено 2026-08-05)  
 **Репозиторий:** https://github.com/br7wq7yfqc-ctrl/naeon  
 **Основа:** NAEXOS + вселенная Aexion
 
@@ -13,6 +13,7 @@
 - Глобальную стратегию (колонии, базы, ресурсы, fleets)
 - Космический симулятор (модульные корабли, multi-crew, флоты до 30)
 - Action/RPG от третьего лица (TPS)
+- **MOBA-режим** (Aexion Clash) — third-person Action-RPG MOBA в формате PvPvE
 
 Игра полностью standalone, 3D, в тёмно-неоновых тонах, оптимизирована для слабых машин. Обе основные фракции полностью играбельны. Поддерживаются режимы **PvP** и **PvPvE** на всех слоях геймплея.
 
@@ -48,7 +49,7 @@
 
 - **Cybernex**: роботы-животные (workers, patrols, squad mates, advisors, civilian caretakers). Behavior trees + aiNEX-усиленные диалоги и адаптивное поведение.
 - **gROT**: рои биомассы, elite mutants, infection spreaders, hierarchical guardians. Агрессивный pack AI, механики заражения.
-- Боты заполняют мир, патрулируют, строят, сражаются, реагируют на действия игроков и участвуют в PvP/PvPvE.
+- Боты заполняют мир, патрулируют, строят, сражаются, реагируют на действия игроков и участвуют в PvP/PvPvE (включая MOBA-minions и jungle).
 
 ---
 
@@ -71,7 +72,59 @@
 - Seamless (или почти seamless) переход с корабля на поверхность.
 - **PvP/PvPvE**: open-world hotspots, instanced arenas, base defense/assault, squad vs squad. AI-боты как allies, enemies или третья сила.
 
-**Основная петля**: Exploration / Colonization → Ship building → Space ops & fleets → Ground ops → Contribution / Biomass Rank → feedback в RBE / hierarchy.
+### D. MOBA Mode — Aexion Clash (NAEON Arena)
+**Third-person Action-RPG MOBA** в формате **PvPvE** (по аналогии с Paragon / Predecessor).
+
+#### Позиционирование
+- Основной формат: **instanced ranked / casual matches** (5v5, с вариантом 3v3).
+- Доступен из хабов NEX / ROT-цитаделей или через terminals.
+- Lore: «Simulation Conflicts» / «Proxy Wars» / тренировочные симуляции и реальные proxy-сражения за ключевые точки.
+- Не ломает open-world loop, но использует тех же героев и soft-прогрессию.
+
+#### Формат матча
+- 5v5 (стандарт) или 3v3.
+- Команды: Cybernex vs gROT (асимметрия) или draft mixed (casual).
+- Длительность: 25–40 минут или до уничтожения Core.
+- Карты: dedicated dark-neon арены (NEX Perimeter, Biomass Fields, Ruined Orbital, ARK Wilds).
+
+#### Герои
+Герои = существующие формы с полноценными ability kits (3–4 способности + passive + ultimate):
+
+**Cybernex примеры:**
+- **Canine (Guardian)** — Tank/Initiator: taunt, pack howl, charge, ultimate Fortress Mode.
+- **Feline (Shadow)** — Assassin/Carry: stealth, dash, bleed, ultimate Multi-Strike.
+- **Avian (Skyward)** — Mage/Support: aerial glide, dive bomb, vision pulse, ultimate Storm Call.
+- **Cetacean (Resonance)** — Support/Healer: sonic heal, barrier, area silence, ultimate Tidal Wave.
+- **Human-cyborg (Architect)** — Utility/Flex: deploy turrets, hack, shield, ultimate NAEXOS Overload.
+
+**gROT примеры:**
+- **Brute** — Heavy/Juggernaut: smash, regenerate, grab, ultimate Biomass Explosion.
+- **Swarm Lord** — Summoner/Controller: spawn minions, infect, swarm dash, ultimate Hive Takeover.
+- **Stalker** — Assassin: cloak, pounce, toxin, ultimate Mass Infection.
+- **Assimilator** — Bruiser: drain, absorb, mutate, ultimate Conversion Field.
+- **ROT Proxy** — Mage/Control: control abilities, ultimate focused on ROT’s will.
+
+Roster на запуске: 8–12 героев, расширяемый. Unlock базовых героев через основной прогресс (Contribution / Biomass Rank / TPS playtime).
+
+#### Механики
+- **Leveling**: 1–18 в матче (XP от last-hits, assists, objectives, jungle).
+- **Ability points** при повышении уровня.
+- **Items**: in-match gold shop (6 слотов). Gold от minions, kills, objectives. Items = modular cyber-upgrades / biomass mutations (stats + actives). Некоторые предметы связаны с основным прогрессом (soft unlocks).
+- **Lanes + Jungle**: 3 lanes, continuous AI-minion waves (faction bots), jungle camps (neutral AI + elite objectives).
+- **Objectives**: Towers / Inhibitors (faction-themed AI defenses), Core (NEX Relay vs ROT Nexus), secondary control points / Resource Spires.
+- **PvPvE depth**: periodic Invasion Events / Infection Waves / Cybernex Drone Swarms, neutral bosses, environmental hazards. AI minions и jungle actively participate.
+- Vision system (sensors / spores).
+
+#### Связь с основным геймплеем и платформой
+- Победа и performance → Contribution Score / Biomass Rank (с daily cap, чтобы не сломать RBE).
+- Hero mastery и skins unlock через main game + NAEXOS Premium / Battle Pass.
+- Post-match: опциональный «submit match report» как knowledge gate в NAEXOS.ONLINE.
+- Ranked MMR частично синхронизируется с Trust Score / Qualification Levels.
+- **aiNEX**: recommended builds, draft assistant, post-match analysis (limited free, full with sub).
+- Cosmetics и ability VFX — через подписку / Battle Pass / platform activity.
+- **Нет pay-to-win и нет прямого power-transfer** в open-world.
+
+**Основная петля** остаётся: Exploration / Colonization → Ship building → Space ops & fleets → Ground ops → Contribution / Biomass Rank → feedback в RBE / hierarchy. MOBA — мощный competitive слой и источник rewards + engagement.
 
 ---
 
@@ -87,6 +140,7 @@
 - Contribution Score / Biomass Rank синхронизируются с **Trust Score** и **Qualification Levels** платформы.
 - Activity Mining: открытия в игре → вклад в OKA/wiki платформы.
 - Опциональный bridge: навыки и знания, зафиксированные на платформе, дают soft-multipliers в игре.
+- MOBA ranked performance также влияет на Trust Score / Battle Pass.
 
 ---
 
@@ -100,6 +154,7 @@ aiNEX — семейство AI-инструментов экосистемы NA
 - Procedural mission & event generator
 - Lore / dialogue enhancer для NPC
 - Personal robot customization AI
+- **MOBA**: recommended builds, draft advice, post-match analysis, ability tooltips
 
 **Доступ**:
 - Базовые лимиты — бесплатно.
@@ -113,9 +168,10 @@ aiNEX — семейство AI-инструментов экосистемы NA
 2. **Onboarding / Knowledge gates** — квесты «Sync with NAEXOS Core»: отправить discovery / гайд в wiki платформы → in-game reward.
 3. **Time-bank / Skill exchange** — обмен навыками (стратегия, design, coaching) на платформе → boost в RBE или cosmetics.
 4. **Escrow & community deals** — услуги, связанные с игрой, через платформенный escrow.
-5. **Cross-events & Battle Pass** — сезонные события с dual rewards (игра + платформа).
+5. **Cross-events & Battle Pass** — сезонные события с dual rewards (игра + платформа), включая MOBA seasons.
 6. **In-game terminals** — deep links / embedded views к dashboard, AI Lab, forums, economy tools платформы.
 7. **Community votes** — игроки влияют на приоритеты RBE через голосования на NAEXOS.ONLINE.
+8. **MOBA gates**: ranked performance, match reports, community tournaments → Trust Score / Qualifications / cosmetics.
 
 Цель гейтов: органично вовлекать игроков в реальную деятельность платформы (обмен навыками, фиксация знаний, команды, AI-tools).
 
@@ -124,7 +180,7 @@ aiNEX — семейство AI-инструментов экосистемы NA
 ## 7. Монетизация — Freemium + Subscription
 
 **Freemium (бесплатно)**:
-- Полный доступ к core gameplay всех слоёв.
+- Полный доступ к core gameplay всех слоёв (включая MOBA).
 - Обе фракции (Cybernex + gROT).
 - PvP / PvPvE.
 - Базовые AI-боты и limited aiNEX.
@@ -132,10 +188,10 @@ aiNEX — семейство AI-инструментов экосистемы NA
 
 **Подписка (NAEXOS Premium / Cybernex Pass)** — удобство и cosmetics, **без pay-to-win**:
 - Повышенные multipliers Contribution / Trust Score sync.
-- Полный / приоритетный доступ к advanced aiNEX.
-- Эксклюзивные cosmetics, варианты животных-форм / мутаций, модули внешнего вида.
+- Полный / приоритетный доступ к advanced aiNEX (включая MOBA builds).
+- Эксклюзивные cosmetics, варианты животных-форм / мутаций, hero skins, ability VFX.
 - Дополнительные слоты multi-crew / private fleet options.
-- Battle Pass tiers, priority matchmaking, expanded storage.
+- Battle Pass tiers (shared between main game and MOBA), priority matchmaking, expanded storage.
 - Cross-platform rewards.
 
 Строгое правило: подписка не даёт прямого боевого преимущества или ускоренного получения ключевых ресурсов/силы.
@@ -150,12 +206,14 @@ aiNEX — семейство AI-инструментов экосистемы NA
 - GDScript + C# / GDExtension (C++) для hot paths.
 - AnimationTree + IK для animal forms.
 - Aggressive LOD, instancing, occlusion — критично для low-end.
+- Ability system data-driven (Resources) — переиспользуется между TPS open-world и MOBA.
 
 **Backend**:
 - Godot dedicated servers (containerized).
 - PostgreSQL + Redis.
 - Interest management / spatial partitioning.
 - RBE simulation как отдельный сервис (Go/Rust или Godot).
+- Matchmaking service для MOBA (local first → cloud).
 
 **Art**: stylized low-to-mid poly + PBR + heavy emissives (dark-neon).
 
@@ -175,7 +233,7 @@ aiNEX — семейство AI-инструментов экосистемы NA
 Примерная конфигурация:
 - 1× Auth/Gateway: 2 vCPU / 4 GB
 - 2× World/Strategy servers: 4 vCPU / 8–16 GB
-- Dynamic instance managers для Space/TPS (auto-scale)
+- Dynamic instance managers для Space/TPS/MOBA (auto-scale)
 - Managed PostgreSQL + Redis
 - Object Storage
 
@@ -197,10 +255,10 @@ aiNEX — семейство AI-инструментов экосистемы NA
 ## 10. Roadmap (высокоуровневый)
 
 1. **Foundation** — Godot прототип: TPS animal controllers + basic ship flight + simple colony + local multiplayer.
-2. **Core Loop + PvP** — модульные корабли, multi-crew, Contribution/Biomass, базовые AI-боты, PvP во всех слоях.
-3. **Vertical Slice** — одна система с планетами, seamless-переходы, fleets, RBE simulation, account linking prototype.
-4. **Platform Integration** — aiNEX tools, гейты в NAEXOS.ONLINE, subscription system.
-5. **Scale & Polish** — interest management, optimization low-end, content, balance both factions.
+2. **Core Loop + PvP** — модульные корабли, multi-crew, Contribution/Biomass, базовые AI-боты, PvP во всех слоях + начало ability system для MOBA.
+3. **Vertical Slice + MOBA Prototype** — одна система с планетами, seamless-переходы, fleets, RBE simulation, account linking prototype + 3v3/5v5 MOBA arena prototype.
+4. **Platform Integration + Full MOBA** — aiNEX tools, гейты в NAEXOS.ONLINE, subscription system, ranked MOBA, rewards pipeline.
+5. **Scale & Polish** — interest management, optimization low-end, content, balance both factions + MOBA roster/maps.
 6. **Launch** — public release + live-ops.
 
 ---
@@ -210,6 +268,7 @@ aiNEX — семейство AI-инструментов экосистемы NA
 - Playable антропоморфные киборги-животные + асимметричный playable gROT.
 - Настоящая Resource-Based Economy + мост с реальной платформой обмена навыками NAEXOS.
 - Глубокая интеграция трёх жанров + полноценный PvP/PvPvE на каждом слое.
+- **Competitive third-person MOBA (Aexion Clash)** с теми же героями и PvPvE-глубиной.
 - aiNEX как живой AI-слой внутри игры и платформы.
 - Freemium без pay-to-win + осмысленные гейты в экосистему NAEXOS.ONLINE.
 - Local-first разработка + реалистичный путь на Yandex Cloud.
