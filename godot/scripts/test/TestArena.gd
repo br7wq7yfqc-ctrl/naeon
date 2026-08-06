@@ -25,11 +25,7 @@ func _ready() -> void:
 	_clash.set_script(preload("res://scripts/arena/AexionClash.gd"))
 	_clash.name = "AexionClash"
 	add_child(_clash)
-	_lanes = Node3D.new()
-	_lanes.set_script(preload("res://scripts/arena/ClashLanes.gd"))
-	_lanes.name = "ClashLanes"
-	add_child(_lanes)
-	_setup_clash_radar()
+	call_deferred("_finish_clash_layout")
 	var au: Node = get_node_or_null("/root/AutoUpdater")
 	if au != null and au.has_signal("update_available"):
 		au.connect("update_available", Callable(self, "_on_update_available"))
@@ -188,6 +184,7 @@ func _spawn_claim_nodes() -> void:
 			own.claim(str(s[1]), 2.0)
 
 func _on_dummy_died() -> void:
+	call_deferred("_maybe_refill_lane")
 	kills += 1
 	if _clash and _clash.has_method("register_kill"):
 		_clash.register_kill()
@@ -275,6 +272,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_tree().change_scene_to_file("res://scenes/test/SpaceTest.tscn")
 
 
+func _finish_clash_layout() -> void:
+	_lanes = Node3D.new()
+	_lanes.set_script(preload("res://scripts/arena/ClashLanes.gd"))
+	_lanes.name = "ClashLanes"
+	add_child(_lanes)
+	_setup_clash_radar()
+
+
 func _setup_clash_radar() -> void:
 	if hud == null:
 		return
@@ -334,3 +339,27 @@ func _update_clash_radar() -> void:
 		[Vector3(0, 0, -24), Color(0.95, 0.12, 0.42)],
 	]
 	_radar.set_snapshot(player.global_position, ene, all, nex)
+
+
+func _maybe_refill_lane() -> void:
+	var alive := 0
+	for c in get_children():
+		if c is Node3D and c.has_meta("lane") and is_instance_valid(c):
+			alive += 1
+	if alive >= 4 or dummy_scene == null:
+		return
+	var table: Array = _lanes.lane_spawn_table() if _lanes and _lanes.has_method("lane_spawn_table") else []
+	if table.is_empty():
+		return
+	var entry = table[randi() % table.size()]
+	var d: Node = dummy_scene.instantiate()
+	add_child(d)
+	d.global_position = entry[0]
+	d.set_meta("lane", str(entry[1]))
+	if d.has_signal("died"):
+		d.died.connect(_on_dummy_died)
+	d.set("faction", str(entry[2]))
+	if str(entry[1]) != "MID":
+		d.set("can_move", false)
+	if GameManager:
+		GameManager.toast_requested.emit("Lane wave: %s reinforced" % str(entry[1]))
