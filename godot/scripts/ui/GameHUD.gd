@@ -309,7 +309,7 @@ func _refresh() -> void:
 		contrib = GameManager.contribution
 		if fac == "?":
 			fac = GameManager.get_faction_name()
-	_status_label.text = "HP %s  EN %s  |  %s %s\nCONTRIB %.0f  (no P2W)" % [hp, en, fac, form, contrib]
+	_status_label.text = "HP %s  EN %s  |  %s %s\nCONTRIB %.0f  ·  4=form F9=faction  (no P2W)" % [hp, en, fac, form, contrib]
 
 	# Layer chip + context (S1 seamless)
 	if _layer_label and LayerContext:

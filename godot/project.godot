@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 [autoload]
 LayerContext="*res://scripts/systems/LayerContext.gd"
 LayerContextAuthority="*res://scripts/systems/LayerContextAuthority.gd"
+SoftSession="*res://scripts/systems/SoftSession.gd"
 
 GameManager="*res://scripts/autoload/GameManager.gd"
 AutoUpdater="*res://scripts/autoload/AutoUpdater.gd"

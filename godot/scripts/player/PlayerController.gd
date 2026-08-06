@@ -1,6 +1,7 @@
 extends CharacterBody3D
 const _AP = preload("res://scripts/assets/AssetPaths.gd")
 const _HeroForms = preload("res://scripts/player/HeroFormCatalog.gd")
+const _FormFX = preload("res://scripts/player/FormSwitchFX.gd")
 
 ## TPS controller — robust WASD (InputMap + physical/keycode fallback).
 
@@ -56,6 +57,8 @@ func _ready() -> void:
 	call_deferred("_ensure_channel_hooks")
 	_ensure_hud()
 	print("[Player] Ready form=", current_form, " faction=", faction)
+	if SoftSession:
+		SoftSession.apply_to_player(self)
 	print("[Player] InputMap move_forward=", InputMap.has_action("move_forward"))
 
 func _ensure_input_ready() -> void:
@@ -340,12 +343,14 @@ func try_load_form_mesh() -> void:
 
 
 func _form_switch_fx() -> void:
-	# Soft VFX pulse — readable form change, no combat power
+	# Soft VFX pulse + ring — readable form change, no combat power
 	if _body_mat:
 		_body_mat.emission_energy_multiplier = 4.0
+	_FormFX.play_at(self, faction, current_form)
 	if GameManager:
 		GameManager.toast_requested.emit("Hero form → %s (%s) · soft mobility only" % [current_form, faction])
-	# decay emission
+	if SoftSession:
+		SoftSession.remember_player(self)
 	var tw := get_tree().create_timer(0.35)
 	tw.timeout.connect(func():
 		if _body_mat:

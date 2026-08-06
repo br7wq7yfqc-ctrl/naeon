@@ -1,21 +1,20 @@
-# Handoff — Wave C hero dual-theme + LayerContext authority
+# Handoff — 0.3.5 form FX + SoftSession + F9 dual-theme
 
 ## Playable
-OpenSpace / Clash · cycle forms (key already bound)  
-**Hero forms** dual-theme Cybernex/gROT GLB + LOD/clean fallbacks  
-gROT unlocks **Infector** skin (asymmetric, soft mobility only)  
-**LayerContextAuthority** local session stub for future multiplayer  
+**4** = cycle hero form (ring + particles)  
+**F9** = Cybernex ↔ gROT dual-theme  
+SoftSession persists form/faction in `user://soft_session.json`  
+gROT → Infector in form cycle  
 
 ## Installer
-0.3.4 current · next 0.3.5 after playtest
+Building **0.3.5**
 
 ## Budget
-0 Tripo (existing hero meshes)
+0 Tripo
 
 ## Next
-1. Form switch particles polish
-2. 0.3.5 DMG
-3. Net multiplayer when ready
-4. rclone upload
+1. Multiplayer net
+2. rclone upload
+3. Tripo only if missing LODs
 
-Updated: 2026-08-06T18:01:56.729044+00:00
+Updated: 2026-08-06T18:08:46.518413+00:00

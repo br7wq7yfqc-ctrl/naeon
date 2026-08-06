@@ -1,5 +1,6 @@
 extends CharacterBody3D
 const _HeroForms = preload("res://scripts/player/HeroFormCatalog.gd")
+const _FormFX = preload("res://scripts/player/FormSwitchFX.gd")
 ## Planet-surface TPS walker: radial gravity, floor snap, procedural anim.
 ## Used for OpenSpace exit (not flat-world PlayerController).
 
@@ -47,6 +48,8 @@ func _ready() -> void:
 	call_deferred("snap_to_surface")
 	_ensure_combat_nodes()
 	print("[SurfaceWalker] ready form=", form_name)
+	if SoftSession:
+		SoftSession.apply_to_player(self)
 
 func _ensure_rig() -> void:
 	if get_node_or_null("CollisionShape3D") == null:
@@ -335,6 +338,9 @@ func _cycle_form() -> void:
 	form_name = forms[i]
 	if GameManager:
 		GameManager.toast_requested.emit("Hero form → %s · dual-theme %s" % [form_name, faction])
+	if SoftSession:
+		SoftSession.remember_player(self)
+	_FormFX.play_at(self, faction, form_name)
 	# reload visual
 	var old = _visual.get_node_or_null("FormGLB") if _visual else null
 	if old:
@@ -429,3 +435,28 @@ func _spawn_jump_fx() -> void:
 	var tree := get_tree()
 	if tree:
 		tree.create_timer(0.6).timeout.connect(p.queue_free)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_F9 or event.physical_keycode == KEY_F9:
+			toggle_faction()
+			get_viewport().set_input_as_handled()
+
+
+func toggle_faction() -> void:
+	faction = "gROT" if faction != "gROT" else "Cybernex"
+	var ab = get_node_or_null("AbilitySystem")
+	if ab and ab.has_method("setup_default_loadout"):
+		ab.setup_default_loadout(faction)
+	var old = _visual.get_node_or_null("FormGLB") if _visual else null
+	if old:
+		old.queue_free()
+	if _body_mesh:
+		_body_mesh.visible = true
+	_load_form_visual()
+	_FormFX.play_at(self, faction, form_name)
+	if SoftSession:
+		SoftSession.remember_player(self)
+	if GameManager:
+		GameManager.toast_requested.emit("Faction → %s (surface dual-theme)" % faction)
