@@ -316,7 +316,7 @@ func _do_land() -> void:
 		velocity = Vector3.ZERO
 		is_landed = true
 		_sync_landing_gear()
-	_spawn_land_fx()
+		_spawn_land_fx()
 		_set_mode(FlightMode.HOVER)
 		# Align flight plane to pad surface
 		_pitch = 0.0
@@ -333,6 +333,7 @@ func _do_land() -> void:
 			velocity = Vector3.ZERO
 			is_landed = true
 			_landed_pad = null
+			_sync_landing_gear()
 			_set_mode(FlightMode.HOVER)
 			landed.emit()
 			print("[Ship] Surface land near ", pl.get("planet_name"))
