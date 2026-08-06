@@ -313,6 +313,7 @@ func _do_land() -> void:
 		# Face roughly along pad
 		velocity = Vector3.ZERO
 		is_landed = true
+		_spawn_land_fx()
 		_set_mode(FlightMode.HOVER)
 		# Align flight plane to pad surface
 		_pitch = 0.0
@@ -503,3 +504,33 @@ func take_damage(amount: float) -> void:
 		shields -= absorbed
 		rest -= absorbed
 	health = max(0.0, health - rest)
+
+func _spawn_land_fx() -> void:
+	# Brief dust ring on pad touchdown
+	var p := GPUParticles3D.new()
+	p.amount = 40
+	p.lifetime = 0.9
+	p.one_shot = true
+	p.explosiveness = 0.9
+	p.emitting = true
+	var pm := ParticleProcessMaterial.new()
+	pm.direction = Vector3(0, 1, 0)
+	pm.spread = 80.0
+	pm.initial_velocity_min = 2.0
+	pm.initial_velocity_max = 6.0
+	pm.gravity = Vector3(0, -4, 0)
+	pm.scale_min = 0.08
+	pm.scale_max = 0.25
+	pm.color = Color(0.7, 0.75, 0.8, 0.8)
+	p.process_material = pm
+	var sm := SphereMesh.new()
+	sm.radius = 0.1
+	sm.height = 0.2
+	sm.radial_segments = 4
+	sm.rings = 2
+	p.draw_pass_1 = sm
+	add_child(p)
+	p.position = Vector3(0, 0.2, 0)
+	var tree := get_tree()
+	if tree:
+		tree.create_timer(1.2).timeout.connect(p.queue_free)

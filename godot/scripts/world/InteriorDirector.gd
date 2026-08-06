@@ -78,6 +78,7 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 		player.set_planet_gravity_provider(self)
 	_inside = true
 	entered.emit(kind)
+	_toast("Entered %s · press I to exit" % kind)
 	print("[Interior] entered ", kind)
 
 func gravity_at(global_pos: Vector3) -> Vector3:
@@ -100,5 +101,15 @@ func exit_interior() -> void:
 		_active = null
 	_inside = false
 	exited.emit(_kind)
+	_toast("Exited interior")
 	print("[Interior] exited ", _kind)
 	_kind = ""
+
+func _toast(msg: String) -> void:
+	var tree := get_tree()
+	if tree == null:
+		return
+	for n in tree.get_nodes_in_group("game_hud"):
+		if n.has_method("push_toast"):
+			n.push_toast(msg, 2.5)
+			return

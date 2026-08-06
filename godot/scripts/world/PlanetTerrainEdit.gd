@@ -38,6 +38,8 @@ var _undo: Array = []  # {delta: PackedFloat32Array, volume: float}
 var _stroke_active: bool = false
 var _fx: MeshInstance3D
 var _fx_ttl: float = 0.0
+var _dust: GPUParticles3D
+var _dust_mat: ParticleProcessMaterial
 
 func setup(p: Node3D, r: float, color: Color, seed_i: int, id: String) -> void:
 	add_to_group("terrain_edit")
@@ -125,6 +127,39 @@ func _ensure_nodes() -> void:
 	_fx.material_override = fm
 	_fx.visible = false
 	add_child(_fx)
+	# Soil dust particles on terra stroke (code-first, 0 Tripo)
+	_dust = GPUParticles3D.new()
+	_dust.name = "TerraDust"
+	_dust.amount = 48
+	_dust.lifetime = 0.7
+	_dust.one_shot = false
+	_dust.explosiveness = 0.15
+	_dust.visibility_aabb = AABB(Vector3(-12, -2, -12), Vector3(24, 10, 24))
+	_dust.emitting = false
+	_dust_mat = ParticleProcessMaterial.new()
+	_dust_mat.direction = Vector3(0, 1, 0)
+	_dust_mat.spread = 55.0
+	_dust_mat.initial_velocity_min = 1.2
+	_dust_mat.initial_velocity_max = 3.5
+	_dust_mat.gravity = Vector3(0, -6.0, 0)
+	_dust_mat.damping_min = 1.0
+	_dust_mat.damping_max = 3.0
+	_dust_mat.scale_min = 0.05
+	_dust_mat.scale_max = 0.18
+	_dust_mat.color = Color(0.45, 0.55, 0.4, 0.85)
+	_dust.process_material = _dust_mat
+	var dmesh := SphereMesh.new()
+	dmesh.radius = 0.08
+	dmesh.height = 0.16
+	dmesh.radial_segments = 6
+	dmesh.rings = 3
+	var dm := StandardMaterial3D.new()
+	dm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	dm.albedo_color = Color(0.5, 0.45, 0.3)
+	dm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	dmesh.material = dm
+	_dust.draw_pass_1 = dmesh
+	add_child(_dust)
 
 func _process(delta: float) -> void:
 	_accum += delta
@@ -198,6 +233,8 @@ func _try_edit(delta: float) -> void:
 	var lower := Input.is_physical_key_pressed(KEY_B)
 	if not raise and not lower:
 		_stroke_active = false
+		if _dust:
+			_dust.emitting = false
 		return
 	if remaining_volume() <= 0.01:
 		budget_exhausted.emit("planet_volume_cap")
@@ -220,6 +257,12 @@ func _try_edit(delta: float) -> void:
 		if fm:
 			fm.emission = Color(0.2, 1.0, 0.55) if raise else Color(1.0, 0.45, 0.15)
 			fm.albedo_color = Color(fm.emission.r, fm.emission.g, fm.emission.b, 0.5)
+	if _dust:
+		_dust.position = Vector3(local.x, 0.5, local.z)
+		_dust.emitting = true
+		if _dust_mat:
+			_dust_mat.color = Color(0.35, 0.75, 0.45, 0.9) if raise else Color(0.75, 0.4, 0.2, 0.9)
+			_dust_mat.direction = Vector3(0, 1 if raise else -0.2, 0)
 	var sign := 1.0 if raise else -1.0
 	var applied := _apply_brush(u, v, sign * BRUSH_STRENGTH * delta)
 	if applied > 0.0:

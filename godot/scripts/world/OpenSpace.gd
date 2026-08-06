@@ -351,7 +351,7 @@ func _update_hud() -> void:
 	var spd: float = ship.velocity.length() if _in_ship else (player.velocity.length() if player else 0.0)
 	hud_label.text = (
 		"NAEON OpenSpace  |  free flight · seamless land · surface walk\n"
-		+ "WASD thrust  Space/Shift lift  Mouse=flight plane  Z/X roll  |  1/2/3 modes  |  E land  F exit  C claim\n"
+		+ "WASD thrust  Space/Shift lift  Mouse=flight plane  Z/X roll  |  1/2/3 modes  |  E land  F exit  C claim  G/B terra  U undo  I interior  Q hack\n"
 		+ "F1 cycle quality  |  Tab → TestArena (combat sandbox)\n"
 		+ "Mode: %s  Planet: %s  Alt: %dm  Spd: %d  HP:%d SHD:%d  PLOD:%s  CONTRIB:%.0f" % [
 			mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields), (pl.current_lod_name() if pl and pl.has_method("current_lod_name") else "-"), (GameManager.contribution if GameManager else 0.0)

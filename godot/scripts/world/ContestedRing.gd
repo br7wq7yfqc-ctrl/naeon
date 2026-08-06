@@ -7,6 +7,8 @@ var _mat: StandardMaterial3D
 var _label: Label3D
 var progress: float = 0.5  # 0 = faction A, 1 = faction B (display only)
 var active: bool = false
+var _fill: MeshInstance3D
+var _fill_mat: StandardMaterial3D
 
 func _ready() -> void:
 	_mesh = MeshInstance3D.new()
@@ -35,6 +37,25 @@ func _ready() -> void:
 	_label.modulate = Color(1.0, 0.7, 0.25)
 	_label.text = "CONTESTED"
 	add_child(_label)
+	# Inner claim-fill disc (grows with claim strength)
+	_fill = MeshInstance3D.new()
+	var cm := CylinderMesh.new()
+	cm.top_radius = 10.5
+	cm.bottom_radius = 10.5
+	cm.height = 0.08
+	cm.radial_segments = 24
+	_fill.mesh = cm
+	_fill_mat = StandardMaterial3D.new()
+	_fill_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_fill_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_fill_mat.albedo_color = Color(1.0, 0.5, 0.1, 0.25)
+	_fill_mat.emission_enabled = true
+	_fill_mat.emission = Color(1.0, 0.45, 0.1)
+	_fill_mat.emission_energy_multiplier = 1.2
+	_fill_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_fill.material_override = _fill_mat
+	_fill.position = Vector3(0, 0.05, 0)
+	add_child(_fill)
 	set_process(true)
 	visible = false
 
@@ -58,3 +79,9 @@ func _process(delta: float) -> void:
 		_mat.albedo_color = Color(_mat.emission.r, _mat.emission.g, _mat.emission.b, 0.55 + pulse * 0.3)
 	if _label:
 		_label.text = "CONTESTED  %d%%" % int(progress * 100.0)
+	if _fill:
+		var s := 0.15 + progress * 0.85
+		_fill.scale = Vector3(s, 1.0, s)
+		if _fill_mat:
+			_fill_mat.emission_energy_multiplier = 1.0 + progress * 2.0
+			_fill_mat.albedo_color.a = 0.15 + progress * 0.35

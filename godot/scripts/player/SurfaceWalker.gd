@@ -17,6 +17,11 @@ var _provider: Node = null
 var _visual: Node3D
 var _body_mesh: MeshInstance3D
 var _anim_time: float = 0.0
+var _leg_l: MeshInstance3D
+var _leg_r: MeshInstance3D
+var _arm_l: MeshInstance3D
+var _arm_r: MeshInstance3D
+var _limb_rig: Node3D
 var _move_amount: float = 0.0
 var _up: Vector3 = Vector3.UP
 var cam_pivot: Node3D
@@ -34,6 +39,7 @@ func _ready() -> void:
 	up_direction = Vector3.UP
 	motion_mode = CharacterBody3D.MOTION_MODE_GROUNDED
 	_ensure_rig()
+	_ensure_limb_rig()
 	_load_form_visual()
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	# Snap to floor next frame
@@ -315,6 +321,7 @@ func _update_anim(delta: float) -> void:
 	else:
 		var stomp := absf(sin(_anim_time * TAU)) * 0.04
 		_visual.scale = Vector3(1.0 + stomp * 0.1, 1.0 - stomp * 0.08, 1.0 + stomp * 0.1)
+	_update_limbs()
 
 const FORMS := ["Canine", "Feline", "Avian", "Human"]
 
@@ -341,3 +348,55 @@ func _try_ability(idx: int) -> void:
 	var ab = get_node_or_null("AbilitySystem")
 	if ab and ab.has_method("try_activate"):
 		ab.try_activate(idx)
+
+func _ensure_limb_rig() -> void:
+	# Lightweight procedural limbs when GLB has no skeleton (code-first).
+	if _visual == null:
+		return
+	if _limb_rig and is_instance_valid(_limb_rig):
+		return
+	# Hide limbs if form GLB loaded with real mesh
+	var glb = _visual.get_node_or_null("FormGLB")
+	if glb:
+		return
+	_limb_rig = Node3D.new()
+	_limb_rig.name = "LimbRig"
+	_visual.add_child(_limb_rig)
+	_leg_l = _make_limb(Color(0.2, 0.25, 0.3), Vector3(-0.18, -0.35, 0.05), Vector3(0.12, 0.55, 0.12))
+	_leg_r = _make_limb(Color(0.2, 0.25, 0.3), Vector3(0.18, -0.35, 0.05), Vector3(0.12, 0.55, 0.12))
+	_arm_l = _make_limb(Color(0.25, 0.3, 0.35), Vector3(-0.38, 0.25, 0.0), Vector3(0.1, 0.45, 0.1))
+	_arm_r = _make_limb(Color(0.25, 0.3, 0.35), Vector3(0.38, 0.25, 0.0), Vector3(0.1, 0.45, 0.1))
+	_limb_rig.add_child(_leg_l)
+	_limb_rig.add_child(_leg_r)
+	_limb_rig.add_child(_arm_l)
+	_limb_rig.add_child(_arm_r)
+
+func _make_limb(col: Color, pos: Vector3, size: Vector3) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = size
+	mi.mesh = box
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = col
+	mat.metallic = 0.4
+	mat.roughness = 0.55
+	mat.emission_enabled = true
+	mat.emission = col * 0.35
+	mat.emission_energy_multiplier = 0.6
+	mi.material_override = mat
+	mi.position = pos
+	return mi
+
+func _update_limbs() -> void:
+	if _limb_rig == null or not is_instance_valid(_limb_rig):
+		return
+	var a := _anim_time * TAU
+	var amp := clampf(_move_amount, 0.0, 1.2)
+	if _leg_l:
+		_leg_l.rotation.x = sin(a) * 0.55 * amp
+	if _leg_r:
+		_leg_r.rotation.x = sin(a + PI) * 0.55 * amp
+	if _arm_l:
+		_arm_l.rotation.x = sin(a + PI) * 0.4 * amp
+	if _arm_r:
+		_arm_r.rotation.x = sin(a) * 0.4 * amp

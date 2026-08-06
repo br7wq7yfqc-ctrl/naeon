@@ -117,6 +117,19 @@ rm -f "$HOME/Desktop/NAEON-0.1.0-mac.dmg" \
       "$HOME/Desktop/NAEON-0.1.0-Installer.dmg" 2>/dev/null || true
 cp -f "$DMG" "$HOME/Desktop/NAEON-${VERSION}-Installer.dmg"
 cp -f "$DMG" "$HOME/Desktop/NAEON-Installer.dmg"
+# Verify Desktop copy is full-size (partial copies confused players)
+DESK="$HOME/Desktop/NAEON-${VERSION}-Installer.dmg"
+SRC_SZ=$(stat -f%z "$DMG")
+DST_SZ=$(stat -f%z "$DESK")
+if [ "$SRC_SZ" != "$DST_SZ" ]; then
+  echo "ERROR: Desktop copy size mismatch $DST_SZ vs $SRC_SZ — recopying"
+  rm -f "$DESK"
+  ditto "$DMG" "$DESK"
+fi
+if [ "$DST_SZ" -lt 100000000 ]; then
+  echo "ERROR: Desktop DMG too small ($DST_SZ) — abort"
+  exit 1
+fi
 cp -f "$DMG" "$HOME/Downloads/NAEON-${VERSION}-Installer.dmg" 2>/dev/null || true
 
 # touch to refresh Finder

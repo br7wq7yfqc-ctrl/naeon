@@ -99,6 +99,7 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 		_refresh_label()
 		claimed.emit("Contested")
 		print("[PadBase] CONTESTED ", ownership.previous_faction, " vs ", f, " @ ", name)
+		_notify_hud("CONTESTED — Dynamic Ownership open. Soft Knowledge only (colony_ops).")
 		return
 	if ownership.current_faction == OwnershipData.Faction.CONTESTED:
 		ownership.claim_strength += strength
@@ -121,6 +122,7 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 	_apply_faction_visual()
 	_refresh_label()
 	claimed.emit(ownership.faction_name())
+	_notify_hud("Claim resolved → %s. Harvest = Contribution (no combat power)." % ownership.faction_name())
 	print("[PadBase] claim → ", ownership.faction_name(), " @ ", name)
 
 func _tick_harvest(delta: float) -> void:
@@ -210,3 +212,12 @@ func _set_contested_ring(on: bool) -> void:
 	if _contest_ring and _contest_ring.has_method("set_contested"):
 		var stren := ownership.claim_strength if ownership else 0.0
 		_contest_ring.set_contested(on, stren)
+
+func _notify_hud(msg: String) -> void:
+	var tree := get_tree()
+	if tree == null:
+		return
+	for n in tree.get_nodes_in_group("game_hud"):
+		if n.has_method("push_toast"):
+			n.push_toast(msg, 3.2)
+			return

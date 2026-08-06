@@ -64,6 +64,7 @@ static func build_station(faction: String = "Cybernex") -> Node3D:
 	spawn.name = "Spawn"
 	spawn.position = Vector3(0, 1.0, 2)
 	root.add_child(spawn)
+	_add_neon_strips(root, faction)
 	return root
 
 static func build_ship(faction: String = "Cybernex") -> Node3D:
@@ -99,6 +100,7 @@ static func build_ship(faction: String = "Cybernex") -> Node3D:
 	elabel.position = Vector3(0, 2.0, -4.2)
 	elabel.modulate = neon
 	root.add_child(elabel)
+	_add_neon_strips(root, faction)
 	return root
 
 static func _room(parent: Node3D, pos: Vector3, size: Vector3, rname: String, neon: Color) -> void:
@@ -147,3 +149,29 @@ static func _box_mesh(parent: Node3D, pos: Vector3, size: Vector3, color: Color,
 		cs.shape = sh
 		sb.add_child(cs)
 		mi.add_child(sb)
+
+static func _add_neon_strips(root: Node3D, fac: String) -> void:
+	var col := Color(0.2, 0.85, 1.0) if fac == "Cybernex" else Color(0.95, 0.2, 0.45)
+	for i in 4:
+		var mi := MeshInstance3D.new()
+		mi.name = "neon_strip_%d" % i
+		var box := BoxMesh.new()
+		box.size = Vector3(0.08, 0.08, 6.0)
+		mi.mesh = box
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.albedo_color = col
+		mat.emission_enabled = true
+		mat.emission = col
+		mat.emission_energy_multiplier = 3.5
+		mi.material_override = mat
+		var ang := float(i) * TAU / 4.0
+		mi.position = Vector3(cos(ang) * 3.5, 2.2, sin(ang) * 3.5)
+		mi.rotation.y = -ang
+		root.add_child(mi)
+	var light := OmniLight3D.new()
+	light.light_color = col
+	light.light_energy = 1.8
+	light.omni_range = 18.0
+	light.position = Vector3(0, 3.0, 0)
+	root.add_child(light)

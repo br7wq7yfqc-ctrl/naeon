@@ -7,6 +7,8 @@ enum Faction { CYBERNEX, GROT, NEUTRAL }
 signal contribution_changed(value: float)
 signal knowledge_changed(rank: int)
 signal faction_changed(faction: Faction)
+signal mastery_gained(subject: String, value: float)
+signal toast_requested(msg: String)
 
 var player_faction: Faction = Faction.CYBERNEX
 var contribution: float = 0.0
@@ -38,8 +40,13 @@ func add_contribution(amount: float) -> void:
 
 func add_mastery(subject: String, amount: float) -> void:
 	var cur: float = subject_mastery.get(subject, 0.0)
-	subject_mastery[subject] = clampf(cur + amount, 0.0, 100.0)
+	var nxt: float = clampf(cur + amount, 0.0, 100.0)
+	subject_mastery[subject] = nxt
 	_recalc_knowledge()
+	mastery_gained.emit(subject, nxt)
+	# Soft-only: every integer threshold fires info toast (no combat)
+	if int(nxt) > int(cur) and int(nxt) % 5 == 0:
+		toast_requested.emit("Knowledge: %s reached %.0f (soft insight only)" % [subject, nxt])
 
 func _recalc_knowledge() -> void:
 	if subject_mastery.is_empty():
