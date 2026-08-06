@@ -1,3 +1,4 @@
+# Optional: PROCESS_FLAGS="--keep-materials --wear"
 #!/usr/bin/env bash
 # NAEON end-to-end asset pipeline: Tripo → process → assets → optional rclone sync
 set -euo pipefail
@@ -32,7 +33,7 @@ if [[ ! -f "$GLB" ]]; then
   exit 2
 fi
 
-python pipeline/scripts/process_asset.py --input "$GLB" --name "$NAME"
+python pipeline/scripts/process_asset.py ${PROCESS_FLAGS:-} --input "$GLB" --name "$NAME"
 
 if command -v rclone >/dev/null 2>&1 && rclone listremotes 2>/dev/null | grep -q '^neon:'; then
   echo "→ rclone sync assets → neon:neon/dev"

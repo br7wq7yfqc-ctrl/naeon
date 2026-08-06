@@ -1,25 +1,21 @@
-# NAEON Dev Plan — Aug 2026 (holistic-economical)
+# NAEON Dev Plan — Aug 2026
 
-## Terrain & Interiors (added 2026-08-06)
-
-| System | Status | Notes |
-|--------|--------|-------|
-| Far planet sphere LOD | done | impostor → near |
-| SurfaceDetail noise patches | done | decorative |
-| **PlanetTerrainEdit** (NMS-like) | **done** | G/B brush, ±8 m/cell, 4000 m³/planet cap, local save |
-| **Station/ship interiors** | **seed** | procedural rooms, I enter/exit |
-| Full voxel planet | deferred | too heavy for min spec |
-| Multiplayer terrain sync | deferred | post local-first |
-
-## Other done
-6DOF · surface walk · contested · infection HUD · channeled Hack · dual-theme pad · 0.3.0 installer
+## Autonomous block done
+| Item | Status |
+|------|--------|
+| Terrain G/B + cap + save | done |
+| Terrain U undo + brush FX | done |
+| Channel ring/beam VFX | done |
+| ContestedRing 3D | done |
+| Pad claim cooldown 0.85s | done |
+| Interior station/ship + GLB decorate | done |
+| Flight 6DOF, surface walk, infection, dual-theme | done |
 
 ## Next
-1. Terraform FX + undo last brush
-2. Contested ring HUD
-3. Interior GLB module swap when assets ready
-4. Installer 0.3.1
-5. Wave C hero if budget
+1. Installer 0.3.1
+2. Wave C hero (budget allows)
+3. Skeletal anim
+4. Multiplayer later
 
-## Budget
-Week 5k / month 20k · terrain/interiors **0 cr**
+## Budget policy
+Week 5k / month 20k Tripo · code-first · no P2W

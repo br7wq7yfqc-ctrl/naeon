@@ -14,8 +14,9 @@ var ownership: OwnershipData
 var running: bool = true
 var total_extracted: float = 0.0
 var _label: Label3D
-var _beacon_glow: MeshInstance3D
 var _status: String = "unclaimed"
+var _contest_ring: Node3D = null
+var _claim_cd: float = 0.0
 
 func _ready() -> void:
 	ownership = OwnershipData.new()
@@ -24,7 +25,10 @@ func _ready() -> void:
 	_ensure_label()
 	set_process(true)
 	add_to_group("pad_bases")
-	# Soft auto-claim toward planet faction after short delay if still neutral
+	_contest_ring = Node3D.new()
+	_contest_ring.set_script(preload("res://scripts/world/ContestedRing.gd"))
+	_contest_ring.name = "ContestedRing"
+	add_child(_contest_ring)
 	await get_tree().create_timer(0.4).timeout
 	if ownership.current_faction == OwnershipData.Faction.NEUTRAL:
 		claim(default_faction, 0.5)
@@ -39,11 +43,13 @@ func _ensure_label() -> void:
 	_refresh_label()
 
 func _process(delta: float) -> void:
+	_claim_cd = maxf(0.0, _claim_cd - delta)
 	if ownership and ownership.transition_progress < 1.0:
 		ownership.advance_transition(delta, 5.0)
 		_apply_faction_visual()
 		if ownership.transition_progress >= 1.0:
 			_status = "owned"
+			_set_contested_ring(false)
 			swap_cluster_theme(ownership.faction_name())
 			_refresh_label()
 	if running and ownership and ownership.is_fully_owned():
@@ -51,7 +57,8 @@ func _process(delta: float) -> void:
 	_try_player_claim()
 
 func _try_player_claim() -> void:
-	# Hold C near pad (or ability) — ship or player
+	if _claim_cd > 0.0:
+		return
 	if not Input.is_physical_key_pressed(KEY_C):
 		return
 	var actor := _find_actor()
@@ -65,14 +72,13 @@ func _try_player_claim() -> void:
 	elif GameManager:
 		fac = GameManager.get_faction_name()
 	claim(fac, 1.0)
+	_claim_cd = 0.85
 
 func _find_actor() -> Node3D:
-	var ships = get_tree().get_nodes_in_group("ship")
-	for s in ships:
+	for s in get_tree().get_nodes_in_group("ship"):
 		if s is Node3D:
 			return s
-	var players = get_tree().get_nodes_in_group("player")
-	for p in players:
+	for p in get_tree().get_nodes_in_group("player"):
 		if p is Node3D:
 			return p
 	return null
@@ -82,27 +88,28 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 		return
 	var f: OwnershipData.Faction = OwnershipData.from_string(faction_name)
 	var cur := ownership.current_faction
-	# Rival claim during ownership → Contested (Dynamic Ownership, no permanent flip alone)
 	if cur != OwnershipData.Faction.NEUTRAL and cur != OwnershipData.Faction.CONTESTED and f != cur and f != OwnershipData.Faction.NEUTRAL:
 		ownership.previous_faction = cur
 		ownership.current_faction = OwnershipData.Faction.CONTESTED
 		ownership.transition_progress = 0.35
 		ownership.claim_strength += strength * 0.5
 		_status = "contested"
+		_set_contested_ring(true)
 		_apply_faction_visual()
 		_refresh_label()
 		claimed.emit("Contested")
 		print("[PadBase] CONTESTED ", ownership.previous_faction, " vs ", f, " @ ", name)
 		return
 	if ownership.current_faction == OwnershipData.Faction.CONTESTED:
-		# Enough strength from one side resolves contest
 		ownership.claim_strength += strength
 		if ownership.claim_strength >= 2.0:
 			ownership.start_transition(f)
 			ownership.claim_strength = 0.0
 			_status = "claiming"
+			_set_contested_ring(false)
 		else:
 			_status = "contested"
+			_set_contested_ring(true)
 		_apply_faction_visual()
 		_refresh_label()
 		claimed.emit(ownership.faction_name())
@@ -110,6 +117,7 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 	ownership.claim_strength += strength
 	ownership.start_transition(f)
 	_status = "claiming"
+	_set_contested_ring(false)
 	_apply_faction_visual()
 	_refresh_label()
 	claimed.emit(ownership.faction_name())
@@ -124,7 +132,6 @@ func _tick_harvest(delta: float) -> void:
 	crystal_reserves -= got
 	total_extracted += got
 	var contrib: float = got * contribution_per_unit
-	# Soft Knowledge: small mastery in "colony" — informational only
 	if GameManager:
 		GameManager.add_contribution(contrib)
 		GameManager.add_mastery("colony_ops", got * 0.02)
@@ -141,7 +148,6 @@ func _apply_faction_visual() -> void:
 		"gROT":
 			col = Color(0.95, 0.12, 0.42)
 		"Contested":
-			# Readable dual-threat mix — not faction skin hiding danger
 			var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.008)
 			col = Color(0.15, 0.85, 1.0).lerp(Color(0.95, 0.12, 0.42), pulse)
 	var tp: float = ownership.transition_progress if ownership else 1.0
@@ -178,6 +184,8 @@ func _refresh_label() -> void:
 			_label.modulate = Color(0.5, 0.95, 1.0)
 		"gROT":
 			_label.modulate = Color(1.0, 0.45, 0.55)
+		"Contested":
+			_label.modulate = Color(1.0, 0.7, 0.25)
 		_:
 			_label.modulate = Color(0.85, 0.85, 0.9)
 
@@ -185,7 +193,6 @@ func get_faction() -> String:
 	return ownership.faction_name() if ownership else "Neutral"
 
 func swap_cluster_theme(faction_name: String) -> void:
-	# Dynamic Ownership: dual-theme mesh swap on cluster props (0 Tripo — existing variants)
 	var cluster := get_parent()
 	if cluster == null:
 		return
@@ -197,13 +204,9 @@ func swap_cluster_theme(faction_name: String) -> void:
 			continue
 		if c.has_method("reload_for_faction"):
 			c.reload_for_faction(fac)
-		elif "relative_path" in c:
-			# GlbProp without method yet — path swap
-			var rel: String = str(c.relative_path)
-			var fx := "cybernex" if fac != "gROT" else "grot"
-			if "_cybernex_" in rel:
-				rel = rel.replace("_cybernex_", "_%s_" % fx)
-			elif "_grot_" in rel:
-				rel = rel.replace("_grot_", "_%s_" % fx)
-			c.relative_path = rel
 	print("[PadBase] dual-theme cluster → ", fac)
+
+func _set_contested_ring(on: bool) -> void:
+	if _contest_ring and _contest_ring.has_method("set_contested"):
+		var stren := ownership.claim_strength if ownership else 0.0
+		_contest_ring.set_contested(on, stren)

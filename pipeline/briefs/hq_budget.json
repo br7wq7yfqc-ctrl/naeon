@@ -1,0 +1,23 @@
+{
+  "budget_total": 20000,
+  "reserve": 500,
+  "usable": 19500,
+  "waves": {
+    "S": {
+      "items": 12,
+      "est_per": 80,
+      "est_total": 960
+    },
+    "A": {
+      "items": 19,
+      "est_per": 50,
+      "est_total": 950
+    },
+    "C": {
+      "items": 8,
+      "est_per": 70,
+      "est_total": 560
+    }
+  },
+  "notes": "Blender dual-theme free; retexture pass separate"
+}

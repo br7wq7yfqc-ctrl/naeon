@@ -1,0 +1,17 @@
+{
+  "done": [
+    "ship_hull_scout",
+    "ship_module_engine",
+    "ship_module_weapon",
+    "landing_pad",
+    "extractor_unit",
+    "resource_crystal",
+    "claim_beacon",
+    "energy_barrier",
+    "combat_drone",
+    "storage_barrel"
+  ],
+  "failed": [],
+  "balance": 1320.0,
+  "ts": 1785985624.91219
+}

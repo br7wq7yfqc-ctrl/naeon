@@ -1,0 +1,19 @@
+{
+  "wave": "S",
+  "done": [
+    "player_canine",
+    "player_feline",
+    "player_avian",
+    "player_human",
+    "ship_hull_scout",
+    "grot_infector",
+    "combat_drone",
+    "colony_habitat",
+    "landing_pad",
+    "turret_emplacement",
+    "claim_beacon",
+    "extractor_unit"
+  ],
+  "failed": [],
+  "balance": 5460.0
+}

@@ -1,16 +1,13 @@
-# Handoff — terrain edit + interiors
+# Handoff
 
-## New
-- **PlanetTerrainEdit**: NMS-style raise/dig near surface (G/B), volume cap 4000 m³, save `user://terrain_*.dat`
-- **InteriorGenerator + InteriorDirector**: station (pad) / ship procedural interiors, **I** toggle
-- Docs: `docs/systems/PLANET_TERRAIN_EDIT.md`, `INTERIORS.md`
+## Playable now
+OpenSpace continuum · land/exit · G/B terra + U undo · I interiors · C claim/contested ring · Q channel VFX · harvest Contribution
 
-## Play
-OpenSpace → land → F exit → **G/B** sculpt → **I** station interior → I exit  
-Near ship on foot → I ship interior
-
-## Limits (no P2W)
-Terraform is cosmetic/navigation only; volume hard-capped; not shop-boosted.
+## Commits pending this session
+terrain undo/FX, ContestedRing, channel VFX, claim CD, interior GLB
 
 ## Next
-Terra FX · undo · 0.3.1 DMG · contested ring
+0.3.1 installer · optional Wave C
+
+## Budget
+0 Tripo this block · ~810/4800 week

@@ -1,0 +1,12 @@
+{
+  "done": [
+    "player_canine",
+    "player_feline",
+    "turret_emplacement",
+    "fuel_tank",
+    "walkway_segment",
+    "holo_projector"
+  ],
+  "failed": [],
+  "balance": 1040.0
+}

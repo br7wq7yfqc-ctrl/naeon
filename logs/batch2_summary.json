@@ -1,0 +1,14 @@
+{
+  "done": [
+    "shield_module",
+    "cargo_pod",
+    "colony_habitat",
+    "antenna_array",
+    "med_station",
+    "ammo_crate",
+    "solar_panel",
+    "gate_arch"
+  ],
+  "failed": [],
+  "balance": 1160.0
+}

@@ -1,0 +1,58 @@
+[
+  {
+    "name": "ship_frigate_hull",
+    "category": "ships",
+    "priority": "S",
+    "quality": "ultra",
+    "prompt": "game-ready medium frigate starship hull, elongated combat vessel, modular bays, Cybernex navy, PBR, no base"
+  },
+  {
+    "name": "ship_freighter_hull",
+    "category": "ships",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "game-ready bulky freighter cargo starship, boxy hull, thrusters aft, sci-fi logistics, PBR"
+  },
+  {
+    "name": "grot_thrall",
+    "category": "characters",
+    "priority": "S",
+    "quality": "ultra",
+    "prompt": "game-ready bipedal gROT thrall mutant infantry, biomass armor, claws, crimson glow, enemy character PBR"
+  },
+  {
+    "name": "cybernex_sentry",
+    "category": "characters",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "game-ready quadruped Cybernex security robot dog, armored, cyan optics, ally unit, PBR"
+  },
+  {
+    "name": "colony_command_hub",
+    "category": "colony",
+    "priority": "S",
+    "quality": "high",
+    "prompt": "game-ready colony command hub building, multi-level sci-fi structure, antenna farm, PBR"
+  },
+  {
+    "name": "orbital_dock_segment",
+    "category": "environments",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "game-ready orbital station dock segment corridor ring piece, windows, clamps, PBR"
+  },
+  {
+    "name": "mining_laser_tower",
+    "category": "colony",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "game-ready planetary mining laser tower, tall emitter, scaffolding, PBR prop"
+  },
+  {
+    "name": "biomass_spire",
+    "category": "props",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "game-ready gROT biomass infection spire, organic techno-organic tower, red glow, PBR"
+  }
+]

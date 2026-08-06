@@ -1,0 +1,86 @@
+[
+  {
+    "name": "player_canine",
+    "category": "characters",
+    "priority": "S",
+    "quality": "ultra",
+    "prompt": "game-ready third-person cybernetic canine humanoid robot soldier, bipedal anthro dog, sleek dark armor plates with cyan neon circuit lines, visor eyes, articulated joints, sci-fi Cybernex aesthetic, clean topology, full body standing T-pose-ish hero character, PBR metal and emissive details, dark neon futuristic, single character centered"
+  },
+  {
+    "name": "player_feline",
+    "category": "characters",
+    "priority": "S",
+    "quality": "ultra",
+    "prompt": "game-ready third-person cybernetic feline humanoid robot assassin, bipedal anthro cat, agile dark armor with amber-orange neon accents, lithe limbs, blade-like forearms, Cybernex aesthetic, clean game topology, full body hero character, PBR, dark neon"
+  },
+  {
+    "name": "player_avian",
+    "category": "characters",
+    "priority": "S",
+    "quality": "ultra",
+    "prompt": "game-ready third-person cybernetic avian humanoid robot scout, bipedal bird android, wing thruster modules, violet neon emissive feathers-metal, sleek helmet beak, Cybernex aesthetic, full body hero character, PBR, dark neon futuristic"
+  },
+  {
+    "name": "player_human",
+    "category": "characters",
+    "priority": "S",
+    "quality": "ultra",
+    "prompt": "game-ready third-person cybernetic human android soldier, armored pilot suit, green-teal emissive HUD lines, helmet with visor, tactical plating, Cybernex aesthetic, full body hero character, PBR metals, dark neon sci-fi"
+  },
+  {
+    "name": "ship_hull_scout",
+    "category": "ships",
+    "priority": "S",
+    "quality": "ultra",
+    "prompt": "game-ready small sci-fi scout starship hull, compact fighter-courier, angular dark metal body, cyan thruster nozzles, cockpit canopy, modular hardpoints, Cybernex fleet aesthetic, single ship centered, PBR panels and lights, no base"
+  },
+  {
+    "name": "grot_infector",
+    "category": "characters",
+    "priority": "S",
+    "quality": "ultra",
+    "prompt": "game-ready hostile biomechanical mutant drone enemy, gROT faction, organic red-black biomass armor fused with rusted cybernetics, menacing quadruped-biped hybrid, glowing crimson infection nodes, game enemy character, PBR gore-metal, dark horror sci-fi"
+  },
+  {
+    "name": "combat_drone",
+    "category": "characters",
+    "priority": "S",
+    "quality": "high",
+    "prompt": "game-ready floating combat drone robot, hexagonal core with weapon pods, dark armor cyan thrusters, hostile target dummy style, PBR, sci-fi, centered, no base"
+  },
+  {
+    "name": "colony_habitat",
+    "category": "colony",
+    "priority": "S",
+    "quality": "high",
+    "prompt": "game-ready modular colony habitat module building, cylindrical sci-fi habitat pod, dark metal panels cyan window strips, airlock door, rooftop antenna, Cybernex colony architecture, PBR, single building prop, no terrain base"
+  },
+  {
+    "name": "landing_pad",
+    "category": "environments",
+    "priority": "S",
+    "quality": "high",
+    "prompt": "game-ready sci-fi starship landing pad platform, octagonal metal deck with neon guide lights, approach chevrons, edge thruster markings, dark futuristic, PBR, flat pad prop"
+  },
+  {
+    "name": "turret_emplacement",
+    "category": "props",
+    "priority": "S",
+    "quality": "high",
+    "prompt": "game-ready automated defense turret emplacement, rotating gun barrel on armored base, sci-fi military, dark metal red warning lights for gROT style also works neutral, PBR, prop"
+  },
+  {
+    "name": "claim_beacon",
+    "category": "props",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "game-ready ownership claim beacon pillar, holographic emitter spire, tall thin sci-fi marker with glowing ring, Cybernex cyan, PBR emissive, prop centered"
+  },
+  {
+    "name": "extractor_unit",
+    "category": "colony",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "game-ready resource extractor machine unit, industrial sci-fi mining drill pump, pipes and tanks, cyan status lights, Cybernex colony tech, PBR, single prop"
+  }
+]

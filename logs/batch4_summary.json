@@ -1,0 +1,11 @@
+{
+  "done": [
+    "player_avian",
+    "player_human",
+    "grot_infector",
+    "nex_relay",
+    "asteroid_ore"
+  ],
+  "failed": [],
+  "balance": 940.0
+}

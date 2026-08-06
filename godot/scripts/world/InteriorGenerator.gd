@@ -6,6 +6,24 @@ class_name InteriorGenerator
 const _NEON_CX := Color(0.15, 0.85, 1.0)
 const _NEON_GR := Color(0.95, 0.12, 0.42)
 
+static func _try_glb(parent: Node3D, rel: String, pos: Vector3, scl: float = 1.0) -> void:
+	var ap = load("res://scripts/assets/AssetPaths.gd")
+	if ap == null:
+		return
+	var path: String = ap.resolve(rel)
+	if path == "" or not FileAccess.file_exists(path):
+		return
+	var doc := GLTFDocument.new()
+	var state := GLTFState.new()
+	if doc.append_from_file(path, state) != OK:
+		return
+	var root := doc.generate_scene(state)
+	if root == null:
+		return
+	parent.add_child(root)
+	root.position = pos
+	root.scale = Vector3.ONE * scl
+
 static func build_station(faction: String = "Cybernex") -> Node3D:
 	var root := Node3D.new()
 	root.name = "StationInterior"
@@ -18,6 +36,10 @@ static func build_station(faction: String = "Cybernex") -> Node3D:
 	_room(root, Vector3(-10, 0, 14), Vector3(8, 3.5, 8), "Storage", neon.darkened(0.15))
 	# Floor lights strip
 	_strip_light(root, Vector3(0, 0.05, 14), Vector3(0.4, 0.08, 28), neon)
+	var fx := "grot" if faction == "gROT" else "cybernex"
+	_try_glb(root, "props/control_console/control_console_%s_lod1.glb" % fx, Vector3(0, 0, 30), 1.2)
+	_try_glb(root, "props/med_station/med_station_%s_lod1.glb" % fx, Vector3(8, 0, 2), 1.0)
+	_try_glb(root, "colony/resource_crystal/resource_crystal_%s_lod2.glb" % fx, Vector3(-6, 0, 28), 0.8)
 	# Exit marker at foyer back
 	var exit := Area3D.new()
 	exit.name = "ExitVolume"
@@ -52,6 +74,11 @@ static func build_ship(faction: String = "Cybernex") -> Node3D:
 	_room(root, Vector3(0, 0, 8), Vector3(4, 2.6, 6), "MidDeck", neon.darkened(0.08))
 	_room(root, Vector3(0, 0, 14), Vector3(5, 2.8, 5), "Cargo", neon.darkened(0.2))
 	_strip_light(root, Vector3(0, 2.4, 7), Vector3(0.25, 0.06, 16), neon)
+	# ship decorate
+	var fx2 := "grot" if faction == "gROT" else "cybernex"
+	_try_glb(root, "props/storage_barrel/storage_barrel_%s_lod2.glb" % fx2, Vector3(1.2, 0, 14), 0.6)
+	_try_glb(root, "props/control_console/control_console_%s_lod2.glb" % fx2, Vector3(0, 0, 0.5), 0.7)
+
 	var exit := Area3D.new()
 	exit.name = "ExitVolume"
 	var cs := CollisionShape3D.new()

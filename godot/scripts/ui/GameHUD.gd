@@ -183,7 +183,7 @@ CONTRIB %.0f  (no P2W)" % [hp, en, fac, form, contrib]
 	if _player and _player is Node3D and get_tree():
 		for n in get_tree().get_nodes_in_group("terrain_edit"):
 			if n.has_method("get_budget_ratio") and n.visible:
-				terra = "TERRA %.0f%% used  G raise / B dig" % (float(n.get_budget_ratio()) * 100.0)
+				terra = "TERRA %.0f%%  G/B edit  U undo" % (float(n.get_budget_ratio()) * 100.0)
 				break
 	if terra != "":
 		nearest = (nearest + "\n" + terra) if nearest else terra
