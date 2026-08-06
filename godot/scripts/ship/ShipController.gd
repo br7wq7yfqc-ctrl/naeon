@@ -210,7 +210,7 @@ func _apply_attitude() -> void:
 	if camera_pivot:
 		camera_pivot.rotation = Vector3.ZERO
 
-func _reference_upfunc _reference_up() -> Vector3:
+func _reference_up() -> Vector3:
 	# Free space: world Y. Near planet/pad: blend to radial/pad up so landing feels natural
 	var up := Vector3.UP
 	if _open_space and _open_space.has_method("gravity_at"):
