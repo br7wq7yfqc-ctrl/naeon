@@ -1,28 +1,30 @@
 # NAEON — Shared Agent Memory
 
-**Last update:** 2026-08-05
+**Last update:** 2026-08-05 (autonomous session)
 
-## Completed sequence
+## Completed Rules Documents
 
-1. User Agreement + Fair Play — DONE (`docs/legal/`, `docs/rules/01_`)
-2. Ability System + Hacking/Firewall — DONE (`docs/rules/02_ABILITY_SYSTEM_AND_HACKING.md`)
-3. Dynamic Ownership + Faction Asymmetry — DONE (`docs/rules/03_DYNAMIC_OWNERSHIP_AND_FACTIONS.md`)
-4. Global Balance Framework — DONE (`docs/rules/04_GLOBAL_BALANCE_FRAMEWORK.md`)
+01. User Agreement + Fair Play
+02. Ability System + Hacking/Firewall
+03. Dynamic Ownership + Faction Asymmetry
+04. Global Balance Framework
+05. Economy — RBE / Contribution vs Biomass Rank
+06. Quest System Foundation
 
-## Locked pillars
+## Locked Pillars
 
 - No hard P2W
-- Soft Knowledge benefits only
-- Asymmetric but viable factions
-- Economical asset pipeline (Tripo-first, dual-theme)
-- Dynamic Ownership is a core pillar
-- Counterplay required for every strong tool
+- Soft Knowledge only
+- Asymmetric viable factions
+- Economical asset pipeline (Tripo-first)
+- Dynamic Ownership core pillar
+- Counterplay required
 
-## Next recommended work
+## Next in autonomous queue
 
-- Ability Parameter Sheet (numerical values)
-- NPC Grid + Quest Templates
-- Star Systems expansion
-- Structure & economy parameter tables
+- NPC Quest Giver Grid
+- Knowledge soft-effects sheet
+- Deeper Schism / ideology document
+- Ability Parameter numerical sheet (expanded)
 
-*All agents must read this file before durable design changes.*
+*Agents must read this file before durable changes.*
