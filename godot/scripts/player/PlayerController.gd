@@ -51,6 +51,8 @@ func _ready() -> void:
 		if not ability_system.ability_activated.is_connected(_on_ability_activated):
 			ability_system.ability_activated.connect(_on_ability_activated)
 	_apply_form_stats()
+	_ensure_infection()
+	_ensure_hud()
 	print("[Player] Ready form=", current_form, " faction=", faction)
 	print("[Player] InputMap move_forward=", InputMap.has_action("move_forward"))
 
@@ -79,7 +81,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	if firewall_timer > 0.0:
 		firewall_timer = max(0.0, firewall_timer - delta)
-	energy = min(max_energy, energy + energy_regen * delta)
+	energy = min(max_energy, energy + energy_regen * _infection_energy_mult() * delta)
 
 	if not is_on_floor():
 		velocity.y -= gravity * delta
@@ -237,6 +239,9 @@ func take_damage(amount: float) -> void:
 
 func apply_firewall(duration: float, heal_amount: float = 0.0) -> void:
 	firewall_timer = max(firewall_timer, duration)
+	var inf = get_node_or_null("InfectionStatus")
+	if inf and inf.has_method("cleanse"):
+		inf.cleanse(1)  # rank1 cleanse_stacks=1
 	if heal_amount > 0.0:
 		heal(heal_amount)
 
@@ -251,17 +256,54 @@ func _on_ability_activated(ability: Ability) -> void:
 	if ability and ability.ability_name == "Form Cycle":
 		cycle_form()
 
+
+func _infection_energy_mult() -> float:
+	var inf = get_node_or_null("InfectionStatus")
+	if inf and inf.has_method("energy_regen_mult"):
+		return float(inf.energy_regen_mult())
+	return 1.0
+
+func _ensure_infection() -> void:
+	if get_node_or_null("InfectionStatus") == null:
+		var n := Node.new()
+		n.set_script(preload("res://scripts/abilities/InfectionStatus.gd"))
+		n.name = "InfectionStatus"
+		add_child(n)
+
+func _ensure_hud() -> void:
+	if get_tree() == null:
+		return
+	var existing = get_tree().get_first_node_in_group("game_hud")
+	if existing:
+		if existing.has_method("bind_player"):
+			existing.bind_player(self)
+		return
+	var hud := CanvasLayer.new()
+	hud.set_script(preload("res://scripts/ui/GameHUD.gd"))
+	hud.name = "GameHUD"
+	hud.add_to_group("game_hud")
+	get_tree().current_scene.add_child(hud)
+	if hud.has_method("bind_player"):
+		hud.bind_player(self)
+
+func on_hacked(caster: Node, amount: float = 1.0) -> void:
+	var inf = get_node_or_null("InfectionStatus")
+	if inf and inf.has_method("add_stacks"):
+		inf.add_stacks(2 if amount >= 1.0 else 1)
+	# minor damage
+	take_damage(amount * 2.0)
+
 func try_load_form_mesh() -> void:
 	var rel := ""
 	match current_form:
 		"Canine":
-			rel = "characters/player_canine/player_canine_cybernex_lod1.glb"
+			rel = "characters/player_canine/player_canine_cybernex_lod0.glb"
 		"Feline":
-			rel = "characters/player_feline/player_feline_cybernex_lod1.glb"
+			rel = "characters/player_feline/player_feline_cybernex_lod0.glb"
 		"Avian":
-			rel = "characters/player_avian/player_avian_cybernex_lod1.glb"
+			rel = "characters/player_avian/player_avian_cybernex_lod0.glb"
 		"Human":
-			rel = "characters/player_human/player_human_cybernex_lod1.glb"
+			rel = "characters/player_human/player_human_cybernex_lod0.glb"
 		_:
 			if body_mesh:
 				body_mesh.visible = true

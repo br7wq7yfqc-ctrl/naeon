@@ -7,6 +7,7 @@ const _Cache = preload("res://scripts/world/PlanetMeshCache.gd")
 const _ATMO_SHADER = preload("res://shaders/planet_atmosphere.gdshader")
 const _ATMO_INNER_SHADER = preload("res://shaders/planet_atmosphere_inner.gdshader")
 const _BaseBuilder = preload("res://scripts/world/BaseBuilder.gd")
+const _SurfaceDetail = preload("res://scripts/world/SurfaceDetail.gd")
 
 @export var planet_name: String = "Aexion-III"
 @export var radius: float = 1200.0
@@ -44,6 +45,7 @@ var _segs_near: int = 64
 var _segs_mid: int = 32
 var _segs_far: int = 16
 var _collision_enabled: bool = true
+var _surface_detail: Node3D = null
 
 func _ready() -> void:
 	_configure_from_quality()
@@ -158,10 +160,20 @@ func _build_shell() -> void:
 	_pads_root.name = "Pads"
 	add_child(_pads_root)
 
+	_surface_detail = Node3D.new()
+	_surface_detail.set_script(_SurfaceDetail)
+	_surface_detail.name = "SurfaceDetail"
+	add_child(_surface_detail)
+	if _surface_detail.has_method("setup"):
+		_surface_detail.setup(self, radius, surface_color, planet_name.hash() % 10000)
+
+
 	_apply_lod_visual(1)  # start mid until first observer update
 
 func set_observer(node: Node3D) -> void:
 	_observer = node
+	if _surface_detail and _surface_detail.has_method("set_observer"):
+		_surface_detail.set_observer(node)
 
 func _process(delta: float) -> void:
 	_update_accum += delta

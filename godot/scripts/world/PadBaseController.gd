@@ -80,6 +80,32 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 	if ownership == null:
 		return
 	var f: OwnershipData.Faction = OwnershipData.from_string(faction_name)
+	var cur := ownership.current_faction
+	# Rival claim during ownership → Contested (Dynamic Ownership, no permanent flip alone)
+	if cur != OwnershipData.Faction.NEUTRAL and cur != OwnershipData.Faction.CONTESTED and f != cur and f != OwnershipData.Faction.NEUTRAL:
+		ownership.previous_faction = cur
+		ownership.current_faction = OwnershipData.Faction.CONTESTED
+		ownership.transition_progress = 0.35
+		ownership.claim_strength += strength * 0.5
+		_status = "contested"
+		_apply_faction_visual()
+		_refresh_label()
+		claimed.emit("Contested")
+		print("[PadBase] CONTESTED ", ownership.previous_faction, " vs ", f, " @ ", name)
+		return
+	if ownership.current_faction == OwnershipData.Faction.CONTESTED:
+		# Enough strength from one side resolves contest
+		ownership.claim_strength += strength
+		if ownership.claim_strength >= 2.0:
+			ownership.start_transition(f)
+			ownership.claim_strength = 0.0
+			_status = "claiming"
+		else:
+			_status = "contested"
+		_apply_faction_visual()
+		_refresh_label()
+		claimed.emit(ownership.faction_name())
+		return
 	ownership.claim_strength += strength
 	ownership.start_transition(f)
 	_status = "claiming"
@@ -106,7 +132,6 @@ func _tick_harvest(delta: float) -> void:
 	_refresh_label()
 
 func _apply_faction_visual() -> void:
-	# Recolor emission on all MeshInstance3D under BaseCluster
 	var fac := ownership.faction_name() if ownership else "Neutral"
 	var col := Color(0.55, 0.55, 0.6)
 	match fac:
@@ -114,8 +139,14 @@ func _apply_faction_visual() -> void:
 			col = Color(0.15, 0.85, 1.0)
 		"gROT":
 			col = Color(0.95, 0.12, 0.42)
-	var t: float = ownership.transition_progress if ownership else 1.0
-	_tint_recursive(get_parent(), col, t)
+		"Contested":
+			# Readable dual-threat mix — not faction skin hiding danger
+			var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.008)
+			col = Color(0.15, 0.85, 1.0).lerp(Color(0.95, 0.12, 0.42), pulse)
+	var tp: float = ownership.transition_progress if ownership else 1.0
+	if fac == "Contested":
+		tp = 1.0
+	_tint_recursive(get_parent(), col, tp)
 
 func _tint_recursive(n: Node, col: Color, t: float) -> void:
 	if n is MeshInstance3D:

@@ -1,19 +1,29 @@
 # NAEON Dev Plan — Aug 2026 (holistic-economical)
 
-## Critical playability (in progress)
+## Done (this pass)
 | Item | Status |
 |------|--------|
-| Ship flight plane follows look (pitch+yaw+roll) | **fixing** |
-| Surface exit no fall-through + radial walk | **fixing** |
-| Character procedural animation | **adding** |
-| Pad claim/harvest | done |
-| Planet LOD + atmo | done |
+| 6DOF flight plane | done |
+| Surface snap walk + procedural anim | done |
+| Pad claim/harvest Contribution | done |
+| Planet LOD + limb atmo | done |
 | Installer 0.3.0 | shipped |
+| **Surface height detail** (procedural patches) | **done** |
+| **Contested ownership** on pads | **done** |
+| **Infection stacks + GameHUD** | **done** |
+| Ability params ↔ parameter sheet rank 1 | **aligned** |
 
 ## Budget
-Week 5k / month 20k Tripo · code=0
+Week 5k / month 20k Tripo · this pass **0 cr** (code-first)
 
-## Next after controls
-1. Skeletal walk when mesh allows
-2. Surface height detail
-3. Optional Wave C hero
+## Next
+1. Channelled Hack interrupt UX (channel bar) + Firewall break mid-channel
+2. Skeletal walk when form meshes support skins
+3. Pad dual-mesh swap on ownership resolve
+4. Optional Wave C hero if week remain after polish
+5. Installer 0.3.1 after playtest
+
+## Soft Knowledge / No P2W
+- Contribution/mastery from harvest only soft economy
+- Infection is combat state from play, not shop
+- Knowledge insight bonus already capped soft on damage

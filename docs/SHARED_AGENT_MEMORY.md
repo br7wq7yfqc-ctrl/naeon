@@ -76,3 +76,7 @@
 
 | 2026-08-06 | BaseBuilder pad streaming + altitude fog; A 2w wave nearly complete | Holistic queue |
 | 2026-08-06 | Atmosphere fresnel dual-shell adopted as default (no Bruneton on min spec) | Atmo analysis |\n\n| 2026-08-06 | Pad claim + harvest → Contribution only (soft mastery colony_ops); no combat power from ownership | Holistic |\n\n| 2026-08-06 | OpenSpace: full flight attitude; SurfaceWalker snap; procedural char anim — priority playability | Holistic |\n
+
+| 2026-08-06 | SurfaceDetail procedural patches (code-first, 0 Tripo) | Holistic economical |
+| 2026-08-06 | Contested pad ownership with readable dual-threat tint | Dynamic Ownership |
+| 2026-08-06 | Infection stacks 1–5 + GameHUD; Firewall cleanse 1; ability CD to param sheet | Ability track A |

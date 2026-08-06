@@ -38,6 +38,7 @@ func _ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	# Snap to floor next frame
 	call_deferred("snap_to_surface")
+	_ensure_combat_nodes()
 	print("[SurfaceWalker] ready form=", form_name)
 
 func _ensure_rig() -> void:
@@ -129,6 +130,48 @@ func _strip_colliders(n: Node) -> void:
 		(n as CollisionObject3D).collision_layer = 0
 		(n as CollisionObject3D).collision_mask = 0
 
+
+func _ensure_combat_nodes() -> void:
+	if get_node_or_null("InfectionStatus") == null:
+		var n := Node.new()
+		n.set_script(preload("res://scripts/abilities/InfectionStatus.gd"))
+		n.name = "InfectionStatus"
+		add_child(n)
+	# Ability system lightweight for surface
+	if get_node_or_null("AbilitySystem") == null:
+		var ab := Node.new()
+		ab.set_script(preload("res://scripts/abilities/AbilitySystem.gd"))
+		ab.name = "AbilitySystem"
+		add_child(ab)
+		if ab.has_method("setup_default_loadout"):
+			ab.setup_default_loadout(faction)
+	call_deferred("_bind_hud")
+
+func _bind_hud() -> void:
+	if get_tree() == null:
+		return
+	var existing = get_tree().get_first_node_in_group("game_hud")
+	if existing == null:
+		var hud := CanvasLayer.new()
+		hud.set_script(preload("res://scripts/ui/GameHUD.gd"))
+		hud.name = "GameHUD"
+		hud.add_to_group("game_hud")
+		get_tree().current_scene.add_child(hud)
+		existing = hud
+	if existing.has_method("bind_player"):
+		existing.bind_player(self)
+
+func get_faction() -> String:
+	return faction
+
+func get_energy() -> float:
+	return 100.0
+
+func on_hacked(caster: Node, amount: float = 1.0) -> void:
+	var inf = get_node_or_null("InfectionStatus")
+	if inf and inf.has_method("add_stacks"):
+		inf.add_stacks(2)
+
 func snap_to_surface() -> void:
 	_update_up()
 	# Raycast along gravity to find ground
@@ -172,6 +215,13 @@ func _input(event: InputEvent) -> void:
 			cam_pivot.rotation.x = _pitch
 	if event is InputEventMouseButton and event.pressed:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_V:
+			_cycle_form()
+		elif event.keycode == KEY_Q:
+			_try_ability(0)
+		elif event.keycode == KEY_R:
+			_try_ability(2)
 	if event.is_action_pressed("ui_cancel"):
 		Input.set_mouse_mode(
 			Input.MOUSE_MODE_VISIBLE if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
@@ -204,7 +254,7 @@ func _physics_process(delta: float) -> void:
 	forward = (forward - _up * forward.dot(_up)).normalized()
 	right = (right - _up * right.dot(_up)).normalized()
 	var wish := right * input.x + forward * (-input.y)
-	var sp := speed * (sprint_mult if Input.is_physical_key_pressed(KEY_SHIFT) else 1.0)
+	var sp := speed * (sprint_mult if Input.is_physical_key_pressed(KEY_SHIFT) else 1.0) * _infection_move_mult()
 	var planar := wish * sp
 	_move_amount = planar.length() / maxf(speed, 0.01)
 
@@ -264,3 +314,29 @@ func _update_anim(delta: float) -> void:
 	else:
 		var stomp := absf(sin(_anim_time * TAU)) * 0.04
 		_visual.scale = Vector3(1.0 + stomp * 0.1, 1.0 - stomp * 0.08, 1.0 + stomp * 0.1)
+
+const FORMS := ["Canine", "Feline", "Avian", "Human"]
+
+func _infection_move_mult() -> float:
+	var inf = get_node_or_null("InfectionStatus")
+	if inf and inf.has_method("move_speed_mult"):
+		return float(inf.move_speed_mult())
+	return 1.0
+
+func _cycle_form() -> void:
+	var i := FORMS.find(form_name)
+	i = (i + 1) % FORMS.size()
+	form_name = FORMS[i]
+	# reload visual
+	var old = _visual.get_node_or_null("FormGLB") if _visual else null
+	if old:
+		old.queue_free()
+	if _body_mesh:
+		_body_mesh.visible = true
+	_load_form_visual()
+	print("[SurfaceWalker] form → ", form_name)
+
+func _try_ability(idx: int) -> void:
+	var ab = get_node_or_null("AbilitySystem")
+	if ab and ab.has_method("try_activate"):
+		ab.try_activate(idx)
