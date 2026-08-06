@@ -450,7 +450,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		elif event.keycode == KEY_F11 or event.physical_keycode == KEY_F11:
 			if SoftENet:
-				SoftENet.join("127.0.0.1")
+				var addr := "127.0.0.1"
+				if FileAccess.file_exists("user://softnet_join.txt"):
+					var f := FileAccess.open("user://softnet_join.txt", FileAccess.READ)
+					if f:
+						var line := f.get_line().strip_edges()
+						if line != "":
+							addr = line
+				SoftENet.join(addr)
 			get_viewport().set_input_as_handled()
 		elif event.keycode == KEY_F12 or event.physical_keycode == KEY_F12:
 			if SoftENet:

@@ -1,11 +1,18 @@
-# Soft Net
+# Soft Net (UDP soft protocol)
 
-| Mode | How |
-|------|-----|
-| Loopback CI |  |
-| Host LAN | F10 or  |
-| Join LAN | F11 or  |
-| WebSocket |  + host/join |
+Default transport: **UDP** JSON packets (NAE1) — pos/form/faction only.
+Works headless dual-process on macOS (ENet/WS bind often blocked).
 
-Headless dual-process bind may be refused by macOS; use loopback for CI, GUI for real peers.
-Ship form uses scout hull GLB on remote puppets.
+| Key | Action |
+|-----|--------|
+| F10 | host :27700 UDP |
+| F11 | join (IP from user://softnet_join.txt or 127.0.0.1) |
+| F12 | leave |
+
+CLI:
+- --softnet-host
+- --softnet-join=IP
+- --softnet-loopback
+- --softnet-enet / --softnet-ws (optional)
+
+tools/mac/softnet_stress.sh → loopback + UDP peer PASS
