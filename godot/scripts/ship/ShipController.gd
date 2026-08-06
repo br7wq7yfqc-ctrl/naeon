@@ -262,6 +262,7 @@ func _do_land() -> void:
 		_set_mode(FlightMode.HOVER)
 		landed.emit()
 		print("[Ship] Landed on pad ", pad.name)
+		_claim_nearby_pad()
 		return
 	# Surface land near planet
 	if _open_space and _open_space.has_method("nearest_planet"):
@@ -273,6 +274,7 @@ func _do_land() -> void:
 			_set_mode(FlightMode.HOVER)
 			landed.emit()
 			print("[Ship] Surface land near ", pl.get("planet_name"))
+			_claim_nearby_pad()
 			return
 	print("[Ship] Land denied — approach a pad (<", land_pad_snap_distance, "m) or surface")
 
@@ -418,6 +420,20 @@ func _apply_faction_skin() -> void:
 		mat.emission = Color(0.15, 0.75, 1.0)
 	mat.emission_energy_multiplier = 1.2
 	hull_mesh.material_override = mat
+
+
+func _claim_nearby_pad() -> void:
+	var best: Node = null
+	var best_d := 60.0
+	for n in get_tree().get_nodes_in_group("pad_bases"):
+		if n is Node3D:
+			var d: float = global_position.distance_to((n as Node3D).global_position)
+			if d < best_d:
+				best_d = d
+				best = n
+	if best and best.has_method("claim"):
+		best.claim(faction, 1.25)
+		print("[Ship] Pad claim pulse → ", faction)
 
 func get_faction() -> String:
 	return faction
