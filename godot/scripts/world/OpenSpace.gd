@@ -19,6 +19,9 @@ var _spawn_ship_pos := Vector3(0, 0, 2800)
 
 func _ready() -> void:
 	print("[OpenSpace] boot")
+	if LayerContext:
+		LayerContext.set_layer("Space")
+		LayerContext.seamless_stage = "S1"
 	_spawn_starfield()
 	_spawn_planets()
 	_spawn_ship()
@@ -267,6 +270,8 @@ func try_exit_ship() -> void:
 		print("[OpenSpace] Exit only when landed")
 		return
 	_in_ship = false
+	if LayerContext:
+		LayerContext.set_layer("TPS")
 	_spawn_player_near_ship()
 	if ship.has_method("set_pilot_active"):
 		ship.set_pilot_active(false)
@@ -283,6 +288,8 @@ func try_enter_ship() -> void:
 		print("[OpenSpace] Too far from ship")
 		return
 	_in_ship = true
+	if LayerContext:
+		LayerContext.set_layer("Space")
 	if player:
 		player.queue_free()
 		player = null
@@ -381,6 +388,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			var gq := get_node_or_null("/root/GraphicsQuality")
 			if gq:
 				gq.cycle()
+		KEY_P:
+			if GameManager and GameManager.has_method("try_promote_alliance"):
+				GameManager.try_promote_alliance()
 		KEY_TAB:
 			if ResourceLoader.exists("res://scenes/test/TestArena.tscn"):
 				get_tree().change_scene_to_file("res://scenes/test/TestArena.tscn")

@@ -1,4 +1,5 @@
 extends Node
+const _AllianceRanks = preload("res://scripts/systems/AllianceRanks.gd")
 
 ## Global game manager for NAEON.
 ## Concept: asymmetric Cybernex Contribution (RBE) vs gROT Biomass; Soft Knowledge only.
@@ -18,6 +19,7 @@ var biomass: float = 0.0       ## gROT Biomass score
 var knowledge_rank: int = 0
 var subject_mastery: Dictionary = {}
 var session_started_at: int = 0
+var alliance_rank: int = 0  ## 0–4 soft social only (AllianceRanks)
 
 func _ready() -> void:
 	ensure_default_input()
@@ -62,6 +64,30 @@ func deposit_economy(amount: float) -> void:
 	else:
 		add_contribution(amount)
 		add_mastery("colony_ops", amount * 0.02)
+
+func get_alliance_rank_name() -> String:
+	return _AllianceRanks.rank_name(alliance_rank)
+
+func try_promote_alliance() -> bool:
+	## Spend soft economy only — no combat unlock
+	var cost: float = _AllianceRanks.next_rank_cost_contribution(alliance_rank)
+	if cost <= 0.0 or alliance_rank >= 4:
+		return false
+	if player_faction == Faction.GROT:
+		if biomass < cost:
+			toast_requested.emit("Need %.0f Biomass for rank (social only)" % cost)
+			return false
+		biomass -= cost
+		biomass_changed.emit(biomass)
+	else:
+		if contribution < cost:
+			toast_requested.emit("Need %.0f Contribution for rank (social only)" % cost)
+			return false
+		contribution -= cost
+		contribution_changed.emit(contribution)
+	alliance_rank = mini(4, alliance_rank + 1)
+	toast_requested.emit("Alliance rank → %s (permissions only, no combat power)" % get_alliance_rank_name())
+	return true
 
 func economy_label() -> String:
 	if player_faction == Faction.GROT:

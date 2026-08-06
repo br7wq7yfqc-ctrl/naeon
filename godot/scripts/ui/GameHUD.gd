@@ -16,6 +16,9 @@ var _channel_bar: ProgressBar
 var _contest_banner: PanelContainer
 var _contest_label: Label
 var _mastery_label: Label
+var _layer_label: Label
+var _lead_pip: ColorRect
+var _ctx_label: Label
 var _edu_label: Label
 var _edu_quest: Node = null
 var _toast_label: Label
@@ -91,6 +94,40 @@ func _build() -> void:
 	_mastery_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	_mastery_label.add_theme_constant_override("outline_size", 3)
 	_root.add_child(_mastery_label)
+
+	_layer_label = Label.new()
+	_layer_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_layer_label.offset_left = -220
+	_layer_label.offset_right = -12
+	_layer_label.offset_top = 10
+	_layer_label.offset_bottom = 36
+	_layer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_layer_label.add_theme_font_size_override("font_size", 16)
+	_layer_label.add_theme_color_override("font_color", Color(0.55, 0.95, 1.0))
+	_layer_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	_layer_label.add_theme_constant_override("outline_size", 5)
+	_layer_label.text = "LAYER · SPACE"
+	_root.add_child(_layer_label)
+
+	_ctx_label = Label.new()
+	_ctx_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_ctx_label.offset_left = -280
+	_ctx_label.offset_right = -12
+	_ctx_label.offset_top = 36
+	_ctx_label.offset_bottom = 70
+	_ctx_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_ctx_label.add_theme_font_size_override("font_size", 11)
+	_ctx_label.add_theme_color_override("font_color", Color(0.75, 0.8, 0.85, 0.9))
+	_ctx_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	_ctx_label.add_theme_constant_override("outline_size", 3)
+	_root.add_child(_ctx_label)
+
+	# Soft physics lead pip (center-ish, QoL only — never auto-aim)
+	_lead_pip = ColorRect.new()
+	_lead_pip.size = Vector2(10, 10)
+	_lead_pip.color = Color(0.4, 0.95, 1.0, 0.55)
+	_lead_pip.visible = false
+	_root.add_child(_lead_pip)
 
 	_edu_label = Label.new()
 	_edu_label.position = Vector2(14, 114)
@@ -274,6 +311,26 @@ func _refresh() -> void:
 			fac = GameManager.get_faction_name()
 	_status_label.text = "HP %s  EN %s  |  %s %s\nCONTRIB %.0f  (no P2W)" % [hp, en, fac, form, contrib]
 
+	# Layer chip + context (S1 seamless)
+	if _layer_label and LayerContext:
+		_layer_label.text = "LAYER · %s  [%s]" % [LayerContext.current_layer.to_upper(), LayerContext.seamless_stage]
+	if _ctx_label and LayerContext:
+		var q := LayerContext.active_quest_id if LayerContext.active_quest_id != "" else "—"
+		var c := LayerContext.active_claim_id if LayerContext.active_claim_id != "" else "—"
+		var risk := int(LayerContext.cargo_risk * 100.0)
+		_ctx_label.text = "quest %s | claim %s | cargo risk %d%%" % [q, c, risk]
+
+	# Soft physics lead marker (mastery ≥20) — visual aid only
+	if _lead_pip:
+		var show_lead := _SoftK.lead_marker_visible()
+		_lead_pip.visible = show_lead and _player != null
+		if _lead_pip.visible:
+			var sc: float = _SoftK.lead_marker_scale()
+			_lead_pip.size = Vector2(8, 8) * sc
+			# Place slightly above crosshair center (prediction hint, not lock)
+			var vp := get_viewport().get_visible_rect().size
+			_lead_pip.position = Vector2(vp.x * 0.5 - _lead_pip.size.x * 0.5, vp.y * 0.48 - 12.0 * sc)
+
 	# Soft Knowledge mastery line (informational only — never combat power)
 	if GameManager and _mastery_label:
 		var m: Dictionary = GameManager.subject_mastery
@@ -282,7 +339,8 @@ func _refresh() -> void:
 		var bio: float = float(m.get("biology", 0.0))
 		var rank: int = int(GameManager.knowledge_rank)
 		var soft: float = float(GameManager.knowledge_insight_bonus()) * 100.0
-		_mastery_label.text = "KNOWLEDGE r%d | %s %.1f | bio %.0f | insight +%.1f%% | %s" % [rank, ops_key, colony, bio, soft, GameManager.economy_label()]
+		var ar := GameManager.get_alliance_rank_name() if GameManager.has_method("get_alliance_rank_name") else ""
+		_mastery_label.text = "KNOWLEDGE r%d | %s %.1f | bio %.0f | insight +%.1f%% | %s | rank %s" % [rank, ops_key, colony, bio, soft, GameManager.economy_label(), ar]
 
 	# Infection pips — always visible danger colour
 	var stacks := 0

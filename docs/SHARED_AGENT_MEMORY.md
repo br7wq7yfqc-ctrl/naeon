@@ -83,4 +83,4 @@
 
 | 2026-08-06 | Terrain undo+FX; channel VFX; ContestedRing; interior GLB decorate; 0 Tripo autonomous | Holistic |
 
-| 2026-08-06 | Contested HUD banner+radar; terra dust; limb walk; soft Knowledge toasts; Desktop DMG size verify | Holistic economical |\n\n| 2026-08-06 | SoftKnowledge §7.3 + asymmetric Contribution/Biomass + EduQuest pad seed + F9 faction cycle; 0 Tripo | Holistic conceptual |\n
+| 2026-08-06 | Contested HUD banner+radar; terra dust; limb walk; soft Knowledge toasts; Desktop DMG size verify | Holistic economical |\n\n| 2026-08-06 | SoftKnowledge §7.3 + asymmetric Contribution/Biomass + EduQuest pad seed + F9 faction cycle; 0 Tripo | Holistic conceptual |\n\n| 2026-08-06 | Seamless S1 LayerContext + layer HUD; physics lead marker QoL; AllianceRanks 0–4 soft promote; 0 Tripo | Holistic v1.4 |\n

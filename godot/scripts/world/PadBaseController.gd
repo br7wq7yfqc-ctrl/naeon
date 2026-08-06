@@ -121,6 +121,10 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 		_apply_faction_visual()
 		_refresh_label()
 		claimed.emit(ownership.faction_name())
+	if LayerContext:
+		LayerContext.set_claim(str(name))
+		if LayerContext.active_quest_id == "":
+			LayerContext.set_quest("slice_claim_%s" % name)
 		return
 	ownership.claim_strength += strength
 	ownership.start_transition(f)

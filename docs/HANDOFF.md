@@ -1,31 +1,31 @@
-# Handoff — concept-aligned soft economy + EduQuest
+# Handoff — S1 seamless + soft lead + alliance ranks
 
-## Playable now
-OpenSpace continuum · land/exit · G/B terra + U undo · I interiors · C claim/contested  
-**F9** cycle Cybernex ↔ gROT (asymmetric kits + ship modules + economy)  
-**T** EduQuest at pad (logic/math puzzle → Subject Mastery only) · **Y** skip  
-Harvest → Contribution (Cybernex) or Biomass (gROT) — soft economy, no P2W  
-Soft Knowledge: infection stage labels (biology), intercept toasts (languages), structure tips (history)
+## Playable
+OpenSpace · F land/exit · G/B terra · I interior · C claim · T EduQuest · F9 faction  
+**Layer chip** SPACE/TPS + stage **S1** · quest/claim/cargo context preserved  
+**Lead pip** when physics mastery ≥20 (QoL, not auto-aim)  
+**P** alliance rank promote (Contribution/Biomass spend, social perms only)
 
-## Concept alignment (this pass)
-| Pillar / CONCEPT | Implementation |
-|------------------|----------------|
-| Asymmetric Cybernex / gROT | F9 kits, dual economy, dual ship module names |
-| Soft Knowledge only | SoftKnowledge.gd — info/QoL, never raw combat |
-| Dynamic Ownership | Contested + dual-theme + intercept flavor |
-| Educational quests §7.2 | EduQuestStub seed at pads |
-| No P2W | deposit_economy / mastery only soft |
+## Concept / skill v1.4
+| Item | Status |
+|------|--------|
+| Seamless ladder | **S1** declared (`docs/systems/SEAMLESS_S1.md`) |
+| Layer clarity | HUD layer chip |
+| Soft Knowledge physics | lead marker |
+| Alliance ranks 0–4 | seed `AllianceRanks.gd` + P promote |
+| Infection max 5 | already locked |
+| No P2W | ranks/economy soft only |
 
 ## Installer
-Desktop `NAEON-0.3.2-Installer.dmg` still current; next stamp **0.3.3** after playtest.
+0.3.2 current · next **0.3.3** after playtest
 
 ## Budget
-**0 Tripo** this pass · week 5k / month 20k
+0 Tripo
 
 ## Next
-1. Stamp installer 0.3.3 after validation
-2. Physics lead marker soft HUD (mastery ≥20)
-3. Wave C hero forms when art ready
-4. Alliance ranks seed (design track D)
+1. 0.3.3 DMG stamp
+2. Arena layer label stub
+3. Wave C hero when art
+4. Multiplayer later
 
-Updated: 2026-08-06T15:34:31.833041+00:00
+Updated: 2026-08-06T15:59:18.473362+00:00

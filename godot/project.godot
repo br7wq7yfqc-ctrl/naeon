@@ -17,6 +17,7 @@ config/features=PackedStringArray("4.3", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
+LayerContext="*res://scripts/systems/LayerContext.gd"
 
 GameManager="*res://scripts/autoload/GameManager.gd"
 AutoUpdater="*res://scripts/autoload/AutoUpdater.gd"
