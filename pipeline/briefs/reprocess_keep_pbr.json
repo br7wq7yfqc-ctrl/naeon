@@ -1,0 +1,162 @@
+[
+  {
+    "name": "cargo_pod",
+    "category": "ships",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/cargo_pod/model.glb"
+  },
+  {
+    "name": "ship_module_weapon",
+    "category": "ships",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/ship_module_weapon/model.glb"
+  },
+  {
+    "name": "ship_hull_scout",
+    "category": "ships",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/ship_hull_scout/model.glb"
+  },
+  {
+    "name": "ship_module_engine",
+    "category": "ships",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/ship_module_engine/model.glb"
+  },
+  {
+    "name": "shield_module",
+    "category": "ships",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/shield_module/model.glb"
+  },
+  {
+    "name": "gate_arch",
+    "category": "environments",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/gate_arch/model.glb"
+  },
+  {
+    "name": "walkway_segment",
+    "category": "environments",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/walkway_segment/model.glb"
+  },
+  {
+    "name": "landing_pad",
+    "category": "environments",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/landing_pad/model.glb"
+  },
+  {
+    "name": "asteroid_ore",
+    "category": "environments",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/asteroid_ore/model.glb"
+  },
+  {
+    "name": "antenna_array",
+    "category": "props",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/antenna_array/model.glb"
+  },
+  {
+    "name": "storage_barrel",
+    "category": "props",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/storage_barrel/model.glb"
+  },
+  {
+    "name": "holo_projector",
+    "category": "props",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/holo_projector/model.glb"
+  },
+  {
+    "name": "sci_fi_crate",
+    "category": "props",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/sci_fi_crate/model.glb"
+  },
+  {
+    "name": "claim_beacon",
+    "category": "props",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/claim_beacon/model.glb"
+  },
+  {
+    "name": "med_station",
+    "category": "props",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/med_station/model.glb"
+  },
+  {
+    "name": "energy_barrier",
+    "category": "props",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/energy_barrier/model.glb"
+  },
+  {
+    "name": "turret_emplacement",
+    "category": "props",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/turret_emplacement/model.glb"
+  },
+  {
+    "name": "ammo_crate",
+    "category": "props",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/ammo_crate/model.glb"
+  },
+  {
+    "name": "nex_relay",
+    "category": "props",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/nex_relay/model.glb"
+  },
+  {
+    "name": "control_console",
+    "category": "props",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/control_console/model.glb"
+  },
+  {
+    "name": "solar_panel",
+    "category": "colony",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/solar_panel/model.glb"
+  },
+  {
+    "name": "colony_habitat",
+    "category": "colony",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/colony_habitat/model.glb"
+  },
+  {
+    "name": "resource_crystal",
+    "category": "colony",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/resource_crystal/model.glb"
+  },
+  {
+    "name": "fuel_tank",
+    "category": "colony",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/fuel_tank/model.glb"
+  },
+  {
+    "name": "extractor_unit",
+    "category": "colony",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/extractor_unit/model.glb"
+  },
+  {
+    "name": "player_avian",
+    "category": "characters",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/player_avian/model.glb"
+  },
+  {
+    "name": "player_human",
+    "category": "characters",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/player_human/model.glb"
+  },
+  {
+    "name": "grot_infector",
+    "category": "characters",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/grot_infector/model.glb"
+  },
+  {
+    "name": "player_feline",
+    "category": "characters",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/player_feline/model.glb"
+  },
+  {
+    "name": "combat_drone",
+    "category": "characters",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/combat_drone/model.glb"
+  },
+  {
+    "name": "player_canine",
+    "category": "characters",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/player_canine/model.glb"
+  },
+  {
+    "name": "mac_smoke",
+    "category": "props",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/mac_smoke/model.glb"
+  }
+]

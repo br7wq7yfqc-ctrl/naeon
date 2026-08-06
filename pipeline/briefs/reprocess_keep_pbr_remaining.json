@@ -1,0 +1,52 @@
+[
+  {
+    "name": "ship_module_weapon",
+    "category": "ships",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/ship_module_weapon/model.glb"
+  },
+  {
+    "name": "ship_module_engine",
+    "category": "ships",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/ship_module_engine/model.glb"
+  },
+  {
+    "name": "shield_module",
+    "category": "ships",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/shield_module/model.glb"
+  },
+  {
+    "name": "walkway_segment",
+    "category": "environments",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/walkway_segment/model.glb"
+  },
+  {
+    "name": "storage_barrel",
+    "category": "props",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/storage_barrel/model.glb"
+  },
+  {
+    "name": "turret_emplacement",
+    "category": "props",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/turret_emplacement/model.glb"
+  },
+  {
+    "name": "solar_panel",
+    "category": "colony",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/solar_panel/model.glb"
+  },
+  {
+    "name": "resource_crystal",
+    "category": "colony",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/resource_crystal/model.glb"
+  },
+  {
+    "name": "player_human",
+    "category": "characters",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/player_human/model.glb"
+  },
+  {
+    "name": "player_feline",
+    "category": "characters",
+    "input": "/Users/vladmann/Documents/naeon/pipeline/inbox/player_feline/model.glb"
+  }
+]

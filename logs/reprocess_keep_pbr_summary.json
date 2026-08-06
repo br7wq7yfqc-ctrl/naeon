@@ -1,0 +1,40 @@
+{
+  "done": [
+    "ammo_crate",
+    "antenna_array",
+    "asteroid_ore",
+    "cargo_pod",
+    "claim_beacon",
+    "colony_habitat",
+    "combat_drone",
+    "control_console",
+    "energy_barrier",
+    "extractor_unit",
+    "fuel_tank",
+    "gate_arch",
+    "grot_infector",
+    "holo_projector",
+    "landing_pad",
+    "med_station",
+    "nex_relay",
+    "player_avian",
+    "player_canine",
+    "player_feline",
+    "player_human",
+    "resource_crystal",
+    "sci_fi_crate"
+  ],
+  "failed": [],
+  "skipped": [
+    "mac_smoke",
+    "shield_module",
+    "ship_hull_scout",
+    "ship_module_engine",
+    "ship_module_weapon",
+    "solar_panel",
+    "storage_barrel",
+    "turret_emplacement",
+    "walkway_segment"
+  ],
+  "ts": 1786016032.5633888
+}

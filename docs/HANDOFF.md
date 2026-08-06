@@ -1,26 +1,18 @@
 # NAEON Handoff — Holistic Economical
 
-**2026-08-06** | Credits **940** | Assets **32** | Installer **0.2.3**
+**2026-08-06** | Credits **940** (no Tripo spend) | Assets **31** keep-PBR | Installer **0.2.5**
 
-## Latest
-- `process_asset.py`: `--keep-materials` (Tripo PBR tint) + `--wear` (free ×2 variants) + collision box in manifest
-- Smoke: `sci_fi_crate` → clean/worn × factions × LODs (0 Tripo credits)
-- Ship hardpoints: engine/weapon/shield/extractor/cargo GLB slots
-- **C** in SpaceTest: attach cargo pod; **R**: extractor
-- Turrets + ownership dual-mesh (0.2.2)
+## Textures
+- Batch reprocess `--keep-materials` on all inbox GLBs
+- 30/31 then hull fixed → full PBR dual-theme LODs
+- 0 Tripo credits (Blender only)
+- Arena floor/pillars upgraded materials
 
 ## Play
-Desktop: **NAEON-0.2.3-Installer.dmg**
-`cd ~/Documents/naeon/godot && godot .`
-
-## Process with PBR keep
-```bash
-python3 pipeline/scripts/process_asset.py \\
-  --input pipeline/inbox/NAME/model.glb --name NAME --category props \\
-  --keep-materials --wear
-```
+Desktop: **NAEON-0.2.5-Installer.dmg**
+WASD: click window first; HUD shows input(x,y)
 
 ## Next
-- Batch reprocess priority B assets with --keep-materials (free, Blender only)
-- Turret friendly fire tuning
+- Optional --wear pass on hero assets
 - gh auth push
+- Ship lighting / IBL polish

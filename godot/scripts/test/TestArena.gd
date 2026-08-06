@@ -23,12 +23,44 @@ func _ready() -> void:
 		GameManager.add_mastery("cybernetics", 5.0)
 		GameManager.contribution_changed.connect(_on_contrib)
 	_on_contrib(GameManager.contribution if GameManager else 0.0)
+	_upgrade_environment_materials()
 	_spawn_dummies()
 	_spawn_props()
 	_spawn_turrets()
 	_spawn_claim_nodes()
 	if kills_label:
 		kills_label.text = "Kills: 0"
+
+
+func _upgrade_environment_materials() -> void:
+	var floor_body := get_node_or_null("Floor")
+	if floor_body:
+		var mesh_i := floor_body.get_node_or_null("Mesh") as MeshInstance3D
+		if mesh_i:
+			var mat := StandardMaterial3D.new()
+			mat.albedo_color = Color(0.07, 0.09, 0.12)
+			mat.metallic = 0.55
+			mat.roughness = 0.72
+			mat.emission_enabled = true
+			mat.emission = Color(0.02, 0.12, 0.18)
+			mat.emission_energy_multiplier = 0.35
+			mat.uv1_scale = Vector3(12, 12, 12)
+			mat.uv1_triplanar = true
+			mesh_i.material_override = mat
+	for pillar_name in ["PillarA", "PillarB", "Wall"]:
+		var n := get_node_or_null(pillar_name)
+		if n == null:
+			continue
+		for c in n.get_children():
+			if c is MeshInstance3D:
+				var m := StandardMaterial3D.new()
+				m.albedo_color = Color(0.18, 0.2, 0.24)
+				m.metallic = 0.65
+				m.roughness = 0.4
+				m.emission_enabled = true
+				m.emission = Color(0.15, 0.55, 0.75)
+				m.emission_energy_multiplier = 0.55
+				(c as MeshInstance3D).material_override = m
 
 func _spawn_dummies() -> void:
 	var spots: Array[Vector3] = [
