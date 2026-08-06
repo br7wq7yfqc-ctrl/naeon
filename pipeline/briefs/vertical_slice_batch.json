@@ -1,0 +1,22 @@
+[
+  {"name": "ship_hull_scout", "category": "ships", "priority": "B",
+   "prompt": "low poly sci-fi scout spaceship hull, sleek wedge shape, game ready, clean topology, no background"},
+  {"name": "ship_module_engine", "category": "ships", "priority": "B",
+   "prompt": "low poly modular spaceship thruster engine module, cylindrical nozzle, game ready hardpoint part"},
+  {"name": "ship_module_weapon", "category": "ships", "priority": "B",
+   "prompt": "low poly sci-fi energy weapon turret module for spaceship, compact hardpoint, game ready"},
+  {"name": "landing_pad", "category": "environments", "priority": "B",
+   "prompt": "low poly sci-fi hexagonal landing pad platform with lights, game environment prop"},
+  {"name": "extractor_unit", "category": "colony", "priority": "B",
+   "prompt": "low poly industrial resource extractor machine, pipes and tank, sci-fi colony equipment"},
+  {"name": "resource_crystal", "category": "colony", "priority": "B",
+   "prompt": "low poly glowing alien resource crystal cluster on rock base, game prop"},
+  {"name": "claim_beacon", "category": "props", "priority": "B",
+   "prompt": "low poly ownership claim beacon pillar with holographic ring, sci-fi territory marker"},
+  {"name": "energy_barrier", "category": "props", "priority": "B",
+   "prompt": "low poly sci-fi energy barrier wall segment with force field posts, game prop"},
+  {"name": "combat_drone", "category": "characters", "priority": "B",
+   "prompt": "low poly hostile combat drone robot floating, sci-fi enemy unit, game character"},
+  {"name": "storage_barrel", "category": "props", "priority": "C",
+   "prompt": "low poly sci-fi metal storage barrel container, simple game prop"}
+]

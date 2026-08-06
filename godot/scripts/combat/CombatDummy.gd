@@ -44,6 +44,7 @@ func _ready() -> void:
 	if mesh:
 		mesh.material_override = _mat
 	_update_labels()
+	call_deferred("try_load_drone")
 
 func _physics_process(delta: float) -> void:
 	if not _alive:
@@ -167,3 +168,25 @@ func _update_labels() -> void:
 		label.text = "Dummy | %s" % faction
 	if health_bar:
 		health_bar.text = "HP %d/%d" % [int(health), int(max_health)]
+
+func try_load_drone() -> void:
+	var rel := "characters/combat_drone/combat_drone_grot_lod1.glb"
+	var base := ProjectSettings.globalize_path("res://").get_base_dir().get_base_dir()
+	var path := base.path_join("assets").path_join(rel)
+	if not FileAccess.file_exists(path):
+		path = OS.get_environment("HOME").path_join("Documents/naeon/assets").path_join(rel)
+	if not FileAccess.file_exists(path):
+		return
+	var doc := GLTFDocument.new()
+	var state := GLTFState.new()
+	if doc.append_from_file(path, state) != OK:
+		return
+	var root := doc.generate_scene(state)
+	if root == null:
+		return
+	if mesh:
+		mesh.visible = false
+	add_child(root)
+	root.name = "DroneGLB"
+	root.scale = Vector3.ONE * 0.9
+	print("[CombatDummy] drone mesh loaded")

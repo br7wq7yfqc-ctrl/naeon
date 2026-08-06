@@ -18,6 +18,7 @@ var running: bool = false
 var total_extracted: float = 0.0
 
 func _ready() -> void:
+	call_deferred("_ready_load_visual")
 	if auto_start:
 		running = true
 	_find_nearest_resource()
@@ -57,3 +58,29 @@ func _find_nearest_resource() -> void:
 func on_hacked(caster: Node, amount: float = 1.0) -> void:
 	if ownership:
 		ownership.on_hacked(caster, amount)
+
+func _ready_load_visual() -> void:
+	# called from _ready if present
+	try_load_glb("colony/extractor_unit/extractor_unit_cybernex_lod1.glb")
+
+func try_load_glb(rel: String) -> void:
+	var base := ProjectSettings.globalize_path("res://").get_base_dir().get_base_dir()
+	var path := base.path_join("assets").path_join(rel)
+	if not FileAccess.file_exists(path):
+		var home := OS.get_environment("HOME")
+		path = home.path_join("Documents/naeon/assets").path_join(rel)
+	if not FileAccess.file_exists(path):
+		return
+	var doc := GLTFDocument.new()
+	var state := GLTFState.new()
+	if doc.append_from_file(path, state) != OK:
+		return
+	var root := doc.generate_scene(state)
+	if root == null:
+		return
+	var old := get_node_or_null("Mesh")
+	if old:
+		old.visible = false
+	add_child(root)
+	root.name = "GLBVisual"
+	print("[", name, "] loaded ", path)

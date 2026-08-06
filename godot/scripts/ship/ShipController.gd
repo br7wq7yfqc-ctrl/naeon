@@ -42,8 +42,43 @@ func _ready() -> void:
 	attach_module(ShipModule.make_shield())
 	_recompute_stats()
 	_apply_faction_skin()
+	call_deferred("try_load_hull")
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	print("[Ship] Ready modules=", modules.size())
+
+func try_load_hull() -> void:
+	var rel := "ships/ship_hull_scout/ship_hull_scout_cybernex_lod1.glb"
+	if faction == "gROT":
+		rel = "ships/ship_hull_scout/ship_hull_scout_grot_lod1.glb"
+	var path := _asset_path(rel)
+	if path == "" or not FileAccess.file_exists(path):
+		print("[Ship] Hull asset not ready yet: ", rel)
+		return
+	var doc := GLTFDocument.new()
+	var state := GLTFState.new()
+	if doc.append_from_file(path, state) != OK:
+		return
+	var root := doc.generate_scene(state)
+	if root == null:
+		return
+	if hull_mesh:
+		hull_mesh.visible = false
+	add_child(root)
+	root.name = "HullGLB"
+	root.scale = Vector3.ONE * 1.2
+	print("[Ship] Loaded hull ", path)
+
+func _asset_path(rel: String) -> String:
+	var base := ProjectSettings.globalize_path("res://").get_base_dir().get_base_dir()
+	var c := base.path_join("assets").path_join(rel)
+	if FileAccess.file_exists(c):
+		return c
+	var home := OS.get_environment("HOME")
+	if home != "":
+		var c2 := home.path_join("Documents/naeon/assets").path_join(rel)
+		if FileAccess.file_exists(c2):
+			return c2
+	return c
 
 func _input(event: InputEvent) -> void:
 	if is_landed:
@@ -179,31 +214,45 @@ func _toggle_landing() -> void:
 func _spawn_module_visual(module: ShipModule) -> void:
 	if module_root == null:
 		return
+	var pos := Vector3.ZERO
+	var rel := ""
+	match module.module_type:
+		ShipModule.ModuleType.ENGINE:
+			pos = Vector3(0, 0, 1.1)
+			rel = "ships/ship_module_engine/ship_module_engine_cybernex_lod2.glb"
+		ShipModule.ModuleType.WEAPON:
+			pos = Vector3(0.6, 0, -0.4)
+			rel = "ships/ship_module_weapon/ship_module_weapon_cybernex_lod2.glb"
+		ShipModule.ModuleType.SHIELD:
+			pos = Vector3(-0.6, 0.2, 0)
+		ShipModule.ModuleType.EXTRACTOR:
+			pos = Vector3(0, -0.35, 0.2)
+			rel = "colony/extractor_unit/extractor_unit_cybernex_lod2.glb"
+		_:
+			pos = Vector3(randf_range(-0.5, 0.5), 0.3, 0)
+	# Try GLB first
+	if rel != "":
+		var path := _asset_path(rel)
+		if path != "" and FileAccess.file_exists(path):
+			var doc := GLTFDocument.new()
+			var state := GLTFState.new()
+			if doc.append_from_file(path, state) == OK:
+				var root := doc.generate_scene(state)
+				if root:
+					module_root.add_child(root)
+					root.position = pos
+					root.scale = Vector3.ONE * 0.45
+					return
 	var node := MeshInstance3D.new()
 	var box := BoxMesh.new()
 	box.size = Vector3(0.35, 0.25, 0.55)
 	node.mesh = box
 	var mat := StandardMaterial3D.new()
 	mat.emission_enabled = true
-	match module.module_type:
-		ShipModule.ModuleType.ENGINE:
-			mat.emission = Color(0.2, 0.6, 1.0)
-			node.position = Vector3(0, 0, 1.1)
-		ShipModule.ModuleType.WEAPON:
-			mat.emission = Color(1.0, 0.4, 0.2)
-			node.position = Vector3(0.6, 0, -0.4)
-		ShipModule.ModuleType.SHIELD:
-			mat.emission = Color(0.3, 1.0, 0.7)
-			node.position = Vector3(-0.6, 0.2, 0)
-		ShipModule.ModuleType.EXTRACTOR:
-			mat.emission = Color(0.9, 0.85, 0.2)
-			node.position = Vector3(0, -0.35, 0.2)
-		_:
-			mat.emission = Color(0.7, 0.7, 0.8)
-			node.position = Vector3(randf_range(-0.5, 0.5), 0.3, 0)
+	mat.emission = Color(0.3, 0.8, 1.0)
 	mat.emission_energy_multiplier = 1.8
-	mat.albedo_color = mat.emission.darkened(0.4)
 	node.material_override = mat
+	node.position = pos
 	module_root.add_child(node)
 
 func _apply_faction_skin() -> void:

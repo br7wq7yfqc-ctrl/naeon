@@ -63,3 +63,7 @@
 ---
 
 *This memory is the contract between all agents working on NAEON.*
+
+| 2026-08-06 | Vertical slice asset batch1 complete (10 meshes → dual-theme LODs) via Tripo+Blender; economical A/B/C | Holistic skill |
+| 2026-08-06 | Ship/colony/dummy runtime GLB load; Mac DMG installer + AutoUpdater | Session |
+

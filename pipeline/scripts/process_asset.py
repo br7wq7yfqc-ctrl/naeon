@@ -44,7 +44,7 @@ def find_blender() -> str:
     return ""
 
 
-def run_inside_blender(input_path: Path, name: str, out_dir: Path) -> None:
+def run_inside_blender(input_path: Path, name: str, out_dir: Path, category: str = "props") -> None:
     import bpy  # type: ignore
 
     # Reset scene
@@ -199,7 +199,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         import bpy  # noqa: F401
 
-        run_inside_blender(input_path, args.name, out_dir)
+        run_inside_blender(input_path, args.name, out_dir, getattr(args, "category", "props"))
         if not args.no_assets_copy:
             copy_to_assets(args.name, out_dir, getattr(args, "category", "props"))
         return 0
@@ -224,6 +224,7 @@ def main(argv: list[str] | None = None) -> int:
     ]
     if args.no_assets_copy:
         cmd.append("--no-assets-copy")
+    cmd.extend(["--category", getattr(args, "category", "props")])
     print("→", " ".join(cmd))
     env = os.environ.copy()
     # Headless servers may need xvfb

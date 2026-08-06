@@ -53,6 +53,12 @@ func _spawn_props() -> void:
 		[Vector3(5, 0, 8), "props/sci_fi_crate/sci_fi_crate_cybernex_lod1.glb", 0.55],
 		[Vector3(-6, 0, -3), "props/control_console/control_console_cybernex_lod1.glb", 0.9],
 		[Vector3(8, 0, -5), "props/control_console/control_console_grot_lod1.glb", 0.9],
+		[Vector3(0, 0, -12), "props/claim_beacon/claim_beacon_cybernex_lod1.glb", 1.0],
+		[Vector3(3, 0, -12), "props/claim_beacon/claim_beacon_grot_lod1.glb", 1.0],
+		[Vector3(-12, 0, 0), "props/energy_barrier/energy_barrier_cybernex_lod2.glb", 0.8],
+		[Vector3(12, 0, 0), "props/energy_barrier/energy_barrier_grot_lod2.glb", 0.8],
+		[Vector3(-2, 0, 10), "props/storage_barrel/storage_barrel_cybernex_lod2.glb", 0.6],
+		[Vector3(1, 0, 10), "props/storage_barrel/storage_barrel_grot_lod2.glb", 0.6],
 	]
 	for entry in positions:
 		var prop: Node3D = Node3D.new()
@@ -61,6 +67,7 @@ func _spawn_props() -> void:
 		prop.set("scale_factor", float(entry[2]))
 		add_child(prop)
 		prop.global_position = entry[0]
+
 
 func _on_dummy_died() -> void:
 	kills += 1

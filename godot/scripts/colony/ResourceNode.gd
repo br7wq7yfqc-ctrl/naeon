@@ -15,6 +15,7 @@ signal extracted(amount: float, resource_type: String)
 @onready var label: Label3D = $Label
 
 func _ready() -> void:
+	call_deferred("_ready_load_visual")
 	_refresh_label()
 	_tint()
 
@@ -43,3 +44,29 @@ func _tint() -> void:
 	mat.emission = Color(0.9, 0.7, 0.15) * t
 	mat.emission_energy_multiplier = 0.5 + t
 	mesh.material_override = mat
+
+func _ready_load_visual() -> void:
+	# called from _ready if present
+	try_load_glb("colony/resource_crystal/resource_crystal_cybernex_lod1.glb")
+
+func try_load_glb(rel: String) -> void:
+	var base := ProjectSettings.globalize_path("res://").get_base_dir().get_base_dir()
+	var path := base.path_join("assets").path_join(rel)
+	if not FileAccess.file_exists(path):
+		var home := OS.get_environment("HOME")
+		path = home.path_join("Documents/naeon/assets").path_join(rel)
+	if not FileAccess.file_exists(path):
+		return
+	var doc := GLTFDocument.new()
+	var state := GLTFState.new()
+	if doc.append_from_file(path, state) != OK:
+		return
+	var root := doc.generate_scene(state)
+	if root == null:
+		return
+	var old := get_node_or_null("Mesh")
+	if old:
+		old.visible = false
+	add_child(root)
+	root.name = "GLBVisual"
+	print("[", name, "] loaded ", path)
