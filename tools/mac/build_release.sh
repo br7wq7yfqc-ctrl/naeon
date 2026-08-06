@@ -134,8 +134,9 @@ cp -f "$DMG" "$HOME/Downloads/NAEON-${VERSION}-Installer.dmg" 2>/dev/null || tru
 
 # touch to refresh Finder
 touch "$HOME/Desktop/NAEON-${VERSION}-Installer.dmg"
-open -R "$HOME/Desktop/NAEON-${VERSION}-Installer.dmg"
-open "$HOME/Desktop/NAEON-${VERSION}-Installer.dmg"
+# Finder reveal (non-blocking; open can hang headless agents)
+open -R "$HOME/Desktop/NAEON-${VERSION}-Installer.dmg" 2>/dev/null || true
+# do not auto-open DMG (blocks CI/agents)
 
 echo "=== DONE ==="
 ls -lah "$DMG" "$HOME/Desktop/NAEON-${VERSION}-Installer.dmg" "$HOME/Desktop/NAEON-Installer.dmg"

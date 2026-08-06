@@ -1,22 +1,19 @@
 # NAEON — Session Status
 
-**Last update:** 2026-08-06  
-**Mode:** Holistic economical · autonomous ~2h
+**Last update:** 2026-08-06T15:16:25.029341+00:00
+**Mode:** Holistic economical · autonomous block
 
-## Gameplay
-- OpenSpace main continuum
-- Terrain edit NMS-like (G/B, U, volume cap, dust)
-- Contested ownership ring + HUD banner + pad radar
-- Channeled Hack + dual-theme pads
-- Interiors I key
-- Soft Knowledge mastery display (no combat power)
-
-## Installer
-- 0.3.1 full DMG on Desktop (~667M)
-- build_release verifies Desktop size
-
-## Credits
-0 Tripo this block; code-first polish
+## Shipped this session
+- Contested HUD banner + claim bar + pad radar
+- Terra brush dust particles + undo
+- Procedural limb walk + jump dust
+- Soft Knowledge mastery line + toasts (no P2W)
+- Channel interrupt/complete toasts
+- Installer **0.3.2** full-size Desktop DMG
+- build_release Desktop size verify + no hang-open
 
 ## Play
-Desktop installer or `cd ~/Documents/naeon/godot && godot .`
+Desktop `NAEON-0.3.2-Installer.dmg` or `godot` on OpenSpace
+
+## Budget
+0 Tripo
