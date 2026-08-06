@@ -1,19 +1,21 @@
-# Handoff — OpenSpace SoftENet + 2-client stress
+# Handoff — 0.3.9 OpenSpace SoftENet
 
 ## Soft multiplayer
-OpenSpace rebinds SoftENet/SoftNet ship↔walker
-F10/F11/F12 walker + ship pilot
+OpenSpace ship↔walker SoftENet rebind
+F10 host · F11 join · F12 leave (walker + ship)
 CLI --softnet-host / --softnet-join
-tools/mac/softnet_stress.sh
+tools/mac/softnet_stress.sh — SCRIPT_ERR=0
 
 ## Installer
-next 0.3.9
+Desktop NAEON-0.3.9-Installer.dmg (~675M, verified)
+Bucket upload via tools/mac/upload_release.sh
 
 ## Budget
 0 Tripo
 
 ## Next
-1. 0.3.9 DMG + rclone
+1. Peer-connected assert (longer stress)
 2. Skeleton when skinned assets
+3. Puppet ship mesh
 
-Updated: 2026-08-06T20:22:12.531142+00:00
+Updated: 2026-08-06T20:39:56.721267+00:00
