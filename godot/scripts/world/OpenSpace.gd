@@ -53,8 +53,8 @@ func _spawn_starfield() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 42
 	var mesh := SphereMesh.new()
-	mesh.radius = 0.4
-	mesh.height = 0.8
+	mesh.radius = 0.5
+	mesh.height = 1.0
 	mesh.radial_segments = 4
 	mesh.rings = 2
 	var mat := StandardMaterial3D.new()
@@ -62,15 +62,24 @@ func _spawn_starfield() -> void:
 	mat.albedo_color = Color(0.85, 0.9, 1.0)
 	mat.emission_enabled = true
 	mat.emission = Color(0.7, 0.85, 1.0)
-	mat.emission_energy_multiplier = 1.5
-	for i in 180:
-		var mi := MeshInstance3D.new()
-		mi.mesh = mesh
-		mi.material_override = mat
+	mat.emission_energy_multiplier = 1.4
+	mat.cast_shadow = false
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = mesh
+	mm.instance_count = 160
+	var mmi := MultiMeshInstance3D.new()
+	mmi.multimesh = mm
+	mmi.material_override = mat
+	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mmi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	root.add_child(mmi)
+	for i in 160:
 		var dir := Vector3(rng.randf_range(-1, 1), rng.randf_range(-1, 1), rng.randf_range(-1, 1)).normalized()
-		mi.position = dir * rng.randf_range(6000, 16000)
-		mi.scale = Vector3.ONE * rng.randf_range(0.6, 3.5)
-		root.add_child(mi)
+		var pos := dir * rng.randf_range(6000, 16000)
+		var s := rng.randf_range(0.6, 3.2)
+		var xf := Transform3D(Basis.from_scale(Vector3.ONE * s), pos)
+		mm.set_instance_transform(i, xf)
 
 func _spawn_planets() -> void:
 	var script := preload("res://scripts/world/PlanetBody.gd")
@@ -113,6 +122,7 @@ func _spawn_planets() -> void:
 	world_root.add_child(c)
 	c.global_position = Vector3(-5500, 1800, 4000)
 	planets.append(c)
+	_bind_planet_observers()
 	# Ambient free-space props (asteroids between)
 	_spawn_asteroid_belt()
 
@@ -149,6 +159,13 @@ func _spawn_ship() -> void:
 		ship.launched.connect(_on_ship_launched)
 	if ship.has_method("set_open_space_context"):
 		ship.set_open_space_context(self)
+	_bind_planet_observers()
+
+
+func _bind_planet_observers() -> void:
+	for pl in planets:
+		if pl and pl.has_method("set_observer") and ship:
+			pl.set_observer(ship)
 
 func gravity_at(global_pos: Vector3) -> Vector3:
 	var g := Vector3.ZERO
@@ -285,8 +302,8 @@ func _update_hud() -> void:
 		"NAEON OpenSpace  |  free flight · seamless land · surface walk\n"
 		+ "WASD thrust  Space/Shift lift  Mouse look  |  1/2/3 flight modes  |  E land/launch  |  F exit/enter\n"
 		+ "F1 cycle quality  |  Tab → TestArena (combat sandbox)\n"
-		+ "Mode: %s  Planet: %s  Alt: %dm  Spd: %d  HP:%d SHD:%d" % [
-			mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields)
+		+ "Mode: %s  Planet: %s  Alt: %dm  Spd: %d  HP:%d SHD:%d  PLOD:%s" % [
+			mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields), (pl.current_lod_name() if pl and pl.has_method("current_lod_name") else "-")
 		]
 	)
 	if mode_label:

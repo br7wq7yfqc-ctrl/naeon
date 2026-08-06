@@ -1,7 +1,9 @@
 extends Node3D
 class_name PlanetBody
-## Spherical planet with atmosphere shell + surface gravity + optional base pads.
-## Playable free flight around + surface walk with radial gravity.
+## Optimized spherical planet: multi-LOD surface, cheap atmosphere, pad streaming.
+## Targets: RTX 1060 3GB (LOW) → 3060 (HIGH) → 4060 (ULTRA).
+
+const _Cache = preload("res://scripts/world/PlanetMeshCache.gd")
 
 @export var planet_name: String = "Aexion-III"
 @export var radius: float = 1200.0
@@ -11,40 +13,120 @@ class_name PlanetBody
 @export var atmosphere_color: Color = Color(0.35, 0.55, 0.95, 0.12)
 @export var faction_base: String = "Cybernex"
 @export var has_base: bool = true
+## Distances are from planet center. LOD switches use camera/ship position.
+@export var lod_near: float = 0.0  # filled in _ready from radius
+@export var lod_mid: float = 0.0
+@export var lod_far: float = 0.0
+@export var lod_impostor: float = 0.0
+@export var atmo_max_dist: float = 0.0
+@export var pad_stream_dist: float = 0.0
 
 var _mesh: MeshInstance3D
 var _atmo: MeshInstance3D
+var _impostor: MeshInstance3D
 var _body: StaticBody3D
+var _pads_root: Node3D
 var _pads: Array[Node3D] = []
+var _surface_mat: StandardMaterial3D
+var _atmo_mat: StandardMaterial3D
+var _current_lod: int = -1  # 0 near, 1 mid, 2 far, 3 impostor
+var _pads_built: bool = false
+var _glb_loaded: bool = false
+var _observer: Node3D = null
+var _update_accum: float = 0.0
+var _segs_near: int = 64
+var _segs_mid: int = 32
+var _segs_far: int = 16
+var _collision_enabled: bool = true
 
 func _ready() -> void:
-	_build()
+	_configure_from_quality()
+	_build_shell()
+	# Pads deferred until approach
+	set_process(true)
+	# React to quality changes
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	if gq and gq.has_signal("tier_changed"):
+		gq.tier_changed.connect(_on_quality_changed)
 
-func _build() -> void:
-	var segs := 64
-	if Engine.has_singleton("GraphicsQuality") or get_node_or_null("/root/GraphicsQuality"):
-		var gq = get_node_or_null("/root/GraphicsQuality")
-		if gq:
-			segs = gq.planet_segments
-	# Core sphere
+func _configure_from_quality() -> void:
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	var base_segs := 64
+	var bias := 1.0
+	if gq:
+		base_segs = int(gq.planet_segments)
+		bias = float(gq.prop_lod_bias)
+	_segs_near = base_segs
+	_segs_mid = max(12, int(base_segs * 0.5 / bias))
+	_segs_far = max(8, int(base_segs * 0.25 / bias))
+	# Distance bands scale with planet size
+	lod_near = radius * 2.2 * bias
+	lod_mid = radius * 5.0 * bias
+	lod_far = radius * 10.0 * bias
+	lod_impostor = radius * 18.0 * bias
+	atmo_max_dist = (radius + atmosphere_height) * 4.5 * bias
+	pad_stream_dist = radius + 400.0 * bias
+
+func _on_quality_changed(_t: int) -> void:
+	_configure_from_quality()
+	_current_lod = -1  # force rebuild LOD mesh
+	_apply_lod(0)  # will re-evaluate next frame via process
+
+func _build_shell() -> void:
+	# Surface mesh (LOD swapped)
 	_mesh = MeshInstance3D.new()
-	var sm := SphereMesh.new()
-	sm.radius = radius
-	sm.height = radius * 2.0
-	sm.radial_segments = segs
-	sm.rings = int(segs / 2)
-	_mesh.mesh = sm
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = surface_color
-	mat.roughness = 0.92
-	mat.metallic = 0.05
-	# Cheap "terrain" via triplanar-ish: just vertex-ish color noise via emission low
-	mat.emission_enabled = true
-	mat.emission = surface_color * 0.08
-	mat.emission_energy_multiplier = 0.35
-	_mesh.material_override = mat
+	_mesh.name = "Surface"
+	_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_mesh.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	_surface_mat = StandardMaterial3D.new()
+	_surface_mat.albedo_color = surface_color
+	_surface_mat.roughness = 0.95
+	_surface_mat.metallic = 0.02
+	_surface_mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+	# Vertex shading is lighter on low tiers
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	if gq and int(gq.tier) <= 0:
+		_surface_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
+	else:
+		_surface_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+	_surface_mat.emission_enabled = true
+	_surface_mat.emission = surface_color * 0.06
+	_surface_mat.emission_energy_multiplier = 0.25
+	_mesh.material_override = _surface_mat
 	add_child(_mesh)
-	# Collision
+
+	# Atmosphere — unshaded, no shadows, low poly; toggled by distance
+	_atmo = MeshInstance3D.new()
+	_atmo.name = "Atmosphere"
+	_atmo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_atmo.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	_atmo.mesh = _Cache.sphere(radius + atmosphere_height, max(10, _segs_far))
+	_atmo_mat = StandardMaterial3D.new()
+	_atmo_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_atmo_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_atmo_mat.albedo_color = atmosphere_color
+	_atmo_mat.cull_mode = BaseMaterial3D.CULL_FRONT
+	_atmo_mat.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_DISABLED
+	_atmo.material_override = _atmo_mat
+	add_child(_atmo)
+
+	# Far impostor — single low poly unshaded billboard-ish sphere (very cheap)
+	_impostor = MeshInstance3D.new()
+	_impostor.name = "Impostor"
+	_impostor.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_impostor.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	_impostor.mesh = _Cache.sphere(radius * 1.02, 8)
+	var imat := StandardMaterial3D.new()
+	imat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	imat.albedo_color = surface_color.lightened(0.15)
+	imat.emission_enabled = true
+	imat.emission = atmosphere_color
+	imat.emission_energy_multiplier = 0.35
+	_impostor.material_override = imat
+	_impostor.visible = false
+	add_child(_impostor)
+
+	# Collision always simple SphereShape (cheap, independent of visual LOD)
 	_body = StaticBody3D.new()
 	_body.collision_layer = 1
 	_body.collision_mask = 0
@@ -54,53 +136,133 @@ func _build() -> void:
 	col.shape = ss
 	_body.add_child(col)
 	add_child(_body)
-	# Atmosphere shell (transparent)
-	_atmo = MeshInstance3D.new()
-	var am := SphereMesh.new()
-	am.radius = radius + atmosphere_height
-	am.height = (radius + atmosphere_height) * 2.0
-	am.radial_segments = max(24, segs / 2)
-	am.rings = max(12, segs / 4)
-	_atmo.mesh = am
-	var amat := StandardMaterial3D.new()
-	amat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	amat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	amat.albedo_color = atmosphere_color
-	amat.cull_mode = BaseMaterial3D.CULL_FRONT  # inner face from outside
-	amat.no_depth_test = false
-	_atmo.material_override = amat
-	add_child(_atmo)
-	# Pads on surface (north-ish + equator)
-	if has_base:
-		_spawn_pad("Pad_North", Vector3.UP)
-		_spawn_pad("Pad_Eq", Vector3(1, 0.15, 0).normalized())
-		_spawn_pad("Pad_Far", Vector3(-0.7, 0.2, 0.7).normalized())
+
+	_pads_root = Node3D.new()
+	_pads_root.name = "Pads"
+	add_child(_pads_root)
+
+	_apply_lod_visual(1)  # start mid until first observer update
+
+func set_observer(node: Node3D) -> void:
+	_observer = node
+
+func _process(delta: float) -> void:
+	_update_accum += delta
+	# Throttle LOD checks ~8 Hz — enough for free flight
+	if _update_accum < 0.12:
+		return
+	_update_accum = 0.0
+	var obs := _resolve_observer()
+	if obs == null:
+		return
+	var dist: float = global_position.distance_to(obs.global_position)
+	var lod := _lod_for_distance(dist)
+	if lod != _current_lod:
+		_apply_lod_visual(lod)
+	# Atmosphere fade / disable
+	if _atmo:
+		var show_atmo := dist < atmo_max_dist and lod < 3
+		_atmo.visible = show_atmo
+		if show_atmo:
+			var t: float = clamp(1.0 - dist / atmo_max_dist, 0.0, 1.0)
+			var c := atmosphere_color
+			c.a = atmosphere_color.a * (0.35 + 0.65 * t)
+			_atmo_mat.albedo_color = c
+	# Pad streaming
+	_update_pads(dist)
+	# Disable collision when very far (saves broadphase) — re-enable near
+	var need_col := dist < radius + 800.0
+	if need_col != _collision_enabled:
+		_collision_enabled = need_col
+		_body.set_collision_layer_value(1, need_col)
+
+func _resolve_observer() -> Node3D:
+	if _observer and is_instance_valid(_observer):
+		return _observer
+	var cam := get_viewport().get_camera_3d()
+	if cam:
+		return cam
+	return null
+
+func _lod_for_distance(dist: float) -> int:
+	if dist < lod_near:
+		return 0
+	if dist < lod_mid:
+		return 1
+	if dist < lod_far:
+		return 2
+	return 3
+
+func _apply_lod_visual(lod: int) -> void:
+	_current_lod = lod
+	if lod >= 3:
+		_mesh.visible = false
+		_impostor.visible = true
+		if _atmo:
+			_atmo.visible = false
+		return
+	_impostor.visible = false
+	_mesh.visible = true
+	var segs := _segs_mid
+	match lod:
+		0:
+			segs = _segs_near
+		1:
+			segs = _segs_mid
+		2:
+			segs = _segs_far
+	_mesh.mesh = _Cache.sphere(radius, segs)
+	# Near LOD: pixel shading; far: vertex
+	if lod == 0:
+		_surface_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+	else:
+		_surface_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
+
+func _apply_lod(lod: int) -> void:
+	_apply_lod_visual(lod)
+
+func _update_pads(dist: float) -> void:
+	if not has_base:
+		return
+	if dist < pad_stream_dist:
+		if not _pads_built:
+			_build_pads()
+		_pads_root.visible = true
+		# Load GLB detail only when close
+		if dist < radius + 180.0 and not _glb_loaded:
+			_load_glb_pads()
+	else:
+		if _pads_root:
+			_pads_root.visible = false
+
+func _build_pads() -> void:
+	_pads_built = true
+	_spawn_pad("Pad_North", Vector3.UP)
+	_spawn_pad("Pad_Eq", Vector3(1, 0.15, 0).normalized())
+	_spawn_pad("Pad_Far", Vector3(-0.7, 0.2, 0.7).normalized())
 
 func _spawn_pad(pad_name: String, dir: Vector3) -> void:
 	dir = dir.normalized()
 	var pad_root := Node3D.new()
 	pad_root.name = pad_name
-	add_child(pad_root)
-	# Position slightly above surface
-	var pos: Vector3 = dir * (radius + 2.0)
-	# Orient pad so +Y faces outward (local up = radial)
+	_pads_root.add_child(pad_root)
 	var y := dir
 	var x := y.cross(Vector3(0, 0, 1))
 	if x.length() < 0.05:
 		x = y.cross(Vector3(1, 0, 0))
 	x = x.normalized()
 	var z := x.cross(y).normalized()
-	# Local transform: position in parent (planet) space
 	pad_root.transform = Transform3D(Basis(x, y, z), dir * (radius + 2.0))
 
-	# Visual pad plate
 	var plate := MeshInstance3D.new()
 	var box := BoxMesh.new()
 	box.size = Vector3(28, 1.2, 28)
 	plate.mesh = box
+	plate.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var pmat := StandardMaterial3D.new()
-	pmat.metallic = 0.65
-	pmat.roughness = 0.35
+	pmat.metallic = 0.55
+	pmat.roughness = 0.4
+	pmat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 	pmat.emission_enabled = true
 	if faction_base == "gROT":
 		pmat.albedo_color = Color(0.2, 0.05, 0.08)
@@ -108,10 +270,10 @@ func _spawn_pad(pad_name: String, dir: Vector3) -> void:
 	else:
 		pmat.albedo_color = Color(0.06, 0.1, 0.14)
 		pmat.emission = Color(0.2, 0.8, 1.0)
-	pmat.emission_energy_multiplier = 1.4
+	pmat.emission_energy_multiplier = 1.2
 	plate.material_override = pmat
 	pad_root.add_child(plate)
-	# Collision for pad
+
 	var sb := StaticBody3D.new()
 	sb.collision_layer = 1
 	var cs := CollisionShape3D.new()
@@ -120,15 +282,14 @@ func _spawn_pad(pad_name: String, dir: Vector3) -> void:
 	cs.shape = bs
 	sb.add_child(cs)
 	pad_root.add_child(sb)
-	# Marker for ship land snap
+
 	pad_root.set_meta("landing_pad", true)
 	pad_root.set_meta("planet", self)
 	pad_root.set_meta("pad_up", dir)
 	_pads.append(pad_root)
-	# Try HQ GLB pad if available
-	call_deferred("_try_glb_pad", pad_root)
 
-func _try_glb_pad(pad_root: Node3D) -> void:
+func _load_glb_pads() -> void:
+	_glb_loaded = true
 	var ap = load("res://scripts/assets/AssetPaths.gd")
 	if ap == null:
 		return
@@ -138,6 +299,10 @@ func _try_glb_pad(pad_root: Node3D) -> void:
 	var path: String = ap.resolve(rel)
 	if path == "" or not FileAccess.file_exists(path):
 		return
+	# Only decorate first pad with full GLB to save draw calls
+	if _pads.is_empty():
+		return
+	var pad_root: Node3D = _pads[0]
 	var doc := GLTFDocument.new()
 	var state := GLTFState.new()
 	if doc.append_from_file(path, state) != OK:
@@ -148,6 +313,14 @@ func _try_glb_pad(pad_root: Node3D) -> void:
 	pad_root.add_child(root)
 	root.scale = Vector3.ONE * 3.5
 	root.position = Vector3(0, 0.8, 0)
+	# Disable shadows on imported meshes
+	_disable_shadows_recursive(root)
+
+func _disable_shadows_recursive(n: Node) -> void:
+	if n is GeometryInstance3D:
+		(n as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for c in n.get_children():
+		_disable_shadows_recursive(c)
 
 func altitude_of(global_pos: Vector3) -> float:
 	return global_pos.distance_to(global_position) - radius
@@ -158,17 +331,18 @@ func gravity_at(global_pos: Vector3) -> Vector3:
 	if dist < 0.001:
 		return Vector3.ZERO
 	var alt: float = dist - radius
-	# Only pull inside atmosphere + a bit above
 	if alt > atmosphere_height * 1.8:
 		return Vector3.ZERO
 	var strength: float = gravity
 	if alt > 0.0:
-		# Fade gravity in upper atmosphere
 		var t: float = clamp(1.0 - alt / (atmosphere_height * 1.8), 0.0, 1.0)
 		strength *= t * t
 	return to_c.normalized() * strength
 
 func nearest_pad(global_pos: Vector3) -> Node3D:
+	# Ensure pads exist if player is trying to land nearby
+	if has_base and not _pads_built and altitude_of(global_pos) < 500.0:
+		_build_pads()
 	var best: Node3D = null
 	var best_d := INF
 	for p in _pads:
@@ -180,3 +354,11 @@ func nearest_pad(global_pos: Vector3) -> Node3D:
 
 func is_near_surface(global_pos: Vector3, margin: float = 80.0) -> bool:
 	return altitude_of(global_pos) < margin
+
+func current_lod_name() -> String:
+	match _current_lod:
+		0: return "NEAR"
+		1: return "MID"
+		2: return "FAR"
+		3: return "IMPOSTOR"
+	return "?"
