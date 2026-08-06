@@ -1,26 +1,27 @@
 # NAEON Handoff — Holistic Economical
 
-**2026-08-06** | Credits **940** | Assets **32** bases | Installer **0.2.2**
+**2026-08-06** | Credits **940** | Assets **32** | Installer **0.2.3** (~276MB with wear variants)
 
-## Done this resume
-- **Turret AI** (gROT hostile + Cybernex ally) with mesh + projectiles + hack flip
-- **Ownership dual-mesh** swap Cybernex/gROT on claim beacons
-- Interactive claim nodes in TestArena
-- Dummy prefers **grot_infector** mesh
-- SpaceTest: **asteroid_ore** props
-- DMG **0.2.2** on Desktop (~107MB, assets bundled)
+## Latest (this continue)
+- `process_asset.py`: `--keep-materials` + `--wear` + collision in manifest
+- sci_fi_crate reprocessed (clean/worn × factions × LOD)
+- Ship hardpoints polish + **C** cargo module + detach_module
+- Desktop: **NAEON-0.2.3-Installer.dmg**
 
 ## Play
-Desktop: **NAEON-0.2.2-Installer.dmg**
+Desktop → **NAEON-0.2.3-Installer.dmg**
 or `cd ~/Documents/naeon/godot && godot .`
 
-F forms | Q/E/R abilities | R hack claim | med heal | turrets fire | Tab Space
+Space: Q fire | E land | R extractor | **C cargo** | Tab arena
 
-## Next (economical)
-- process_asset keep-PBR + wear (0 credits, multiplies existing)
-- Ship module hardpoints polish
-- gh auth + push (local main ahead)
-- Optional batch5 only if new vertical-slice gap
+## Free reprocess
+```bash
+python3 pipeline/scripts/process_asset.py \\
+  --input pipeline/inbox/NAME/model.glb --name NAME --category CAT \\
+  --keep-materials --wear
+```
 
-## Credits policy
-Reserve floor 150. ~20 cr / textured mesh. One mesh → 6 variants free (Blender).
+## Next
+- Finish background PBR reprocess of hull/forms
+- gh auth push
+- Optional batch5 only for real content gaps
