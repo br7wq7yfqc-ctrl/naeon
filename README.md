@@ -1,27 +1,42 @@
 # NAEON
 
-**The most global MMO for building a culture of better future for mankind**
+Многопользовательская онлайн-игра во вселенной Aexion (Cybernex vs gROT).
 
-Многожанровая MMO в футуристической вселенной Aexion: глобальная стратегия + космический симулятор + TPS Action/RPG.
+**Репозиторий:** https://github.com/br7wq7yfqc-ctrl/naeon  
+**Концепция:** [CONCEPT.md](CONCEPT.md)  
+**План разработки:** [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
 
-## Ключевые особенности
+## Структура
 
-- **Две играбельные фракции**: Cybernex (Resource-Based Economy, антропоморфные роботы-животные) и gROT (biomass hierarchy под ROT)
-- **PvP и PvPvE** на всех слоях геймплея
-- **AI-боты** уникальные для каждой расы
-- Интеграция с платформой **NAEXOS.ONLINE** и AI-инструментами **aiNEX**
-- Freemium + платная подписка (без pay-to-win)
-- Local-first разработка → Yandex Cloud
-- Движок: **Godot 4.x**, оптимизация для слабых машин
+```
+naeon/
+├── godot/                  # Godot 4.x проект
+├── assets/                 # Тяжёлые ассеты (локально, в .gitignore)
+├── docs/                   # Документация
+├── scripts/                # Скрипты синхронизации и утилит
+├── .github/workflows/      # CI/CD
+├── CONCEPT.md
+└── DEVELOPMENT_PLAN.md
+```
 
-## Документация
+## Быстрый старт
 
-- [CONCEPT.md](CONCEPT.md) — подробная концепция игры (лор, геймплей, экономика, серверная инфраструктура, монетизация, roadmap)
+1. Клонировать репозиторий
+2. Открыть папку `godot/` в Godot 4.3+
+3. (Опционально) Настроить синхронизацию ассетов с бакетом `neon` — см. `docs/ASSETS_STORAGE.md` и `docs/ASSETS_AUTO_SYNC.md`
 
-## Разработка
+## CI/CD
 
-Репозиторий: https://github.com/br7wq7yfqc-ctrl/naeon  
-Основа: NAEXOS
+При каждом push/PR в `main` и `develop` запускается:
 
----
-*Building the culture of a better future.*
+- Проверка на случайно закоммиченные секреты
+- Валидация структуры проекта
+- Godot headless check
+
+Подробнее: [docs/CI_CD.md](docs/CI_CD.md)
+
+## Важные правила
+
+- Тяжёлые ассеты **никогда** не коммитятся (папка `assets/` в `.gitignore`)
+- Секреты хранятся только локально (`.env`) или в GitHub Secrets
+- Клиент должен собираться под **macOS и Windows**
