@@ -1,14 +1,14 @@
-# Handoff — 0.3.11 SoftUDP peer PASS
+# Handoff — 0.3.12 SoftUDP polish
 
 ## Soft multiplayer
-UDP soft protocol default · dual headless peer+2 PASS
-F10 host · F11 join · F12 leave
-user://softnet_join.txt for join IP
+UDP dual peer + OpenSpace host PASS
+HELLO puppet · LAN host_info · F10-12 on Player/Walker/Ship
+HUD shows LAN IPs when hosting
 
 ## Installer
-Desktop NAEON-0.3.11-Installer.dmg
+Building 0.3.12
 
 ## Budget
 0 Tripo
 
-Updated: 2026-08-06T21:12:09.930149+00:00
+Updated: 2026-08-06T23:14:24.171413+00:00

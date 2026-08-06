@@ -44,7 +44,14 @@ echo "SCRIPT L/H/C=$LERR/$HERR/$CERR LOOP=$LP HOST=$HP CLIENT=$CP PEER=$PEER LOG
 if [ "${LERR:-0}" -gt 0 ] || [ "${HERR:-0}" -gt 0 ] || [ "${CERR:-0}" -gt 0 ]; then exit 1; fi
 if [ "$LP" -ne 1 ]; then echo "FAIL loopback"; exit 2; fi
 if [ "$PEER" -eq 1 ]; then
-  echo "STRESS PASS loopback+UDP peer"
+  godot --headless --path "${ROOT}/godot" --scene res://scenes/world/OpenSpace.tscn --quit-after 6 -- --softnet-host \
+  >"$LOGDIR/openspace_host.log" 2>&1 || true
+echo "=== OpenSpace host ===" | tee -a "$LOGDIR/SUMMARY.txt"
+grep -iE "SoftENet|OpenSpace|SCRIPT ERROR|soft net" "$LOGDIR/openspace_host.log" | head -15 | tee -a "$LOGDIR/SUMMARY.txt"
+OSERR=$(grep -c "SCRIPT ERROR" "$LOGDIR/openspace_host.log" || true)
+echo "OpenSpace_SCRIPT_ERR=$OSERR" | tee -a "$LOGDIR/SUMMARY.txt"
+if [ "${OSERR:-0}" -gt 0 ]; then exit 3; fi
+echo "STRESS PASS loopback+UDP peer"
 else
   echo "STRESS PASS loopback; UDP peer not observed (warn)"
 fi

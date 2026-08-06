@@ -312,7 +312,22 @@ func _refresh() -> void:
 	var net := ""
 	if SoftENet and SoftENet.has_method("status_line"):
 		net = "  |  " + str(SoftENet.status_line())
-	_status_label.text = "HP %s  EN %s  |  %s %s%s\nCONTRIB %.0f  ·  4=form F9=fac F10=host F11=join  (no P2W)" % [hp, en, fac, form, net, contrib]
+	var host_hint := ""
+	if SoftENet and SoftENet.is_host and FileAccess.file_exists("user://softnet_host_info.txt"):
+		var hf := FileAccess.open("user://softnet_host_info.txt", FileAccess.READ)
+		if hf:
+			var lines := hf.get_as_text().strip_edges().split("\n")
+			var ip_show: PackedStringArray = []
+			for ln in lines:
+				if ln.begins_with("port=") or ln.begins_with("transport="):
+					continue
+				if ln != "":
+					ip_show.append(ln)
+					if ip_show.size() >= 2:
+						break
+			if ip_show.size() > 0:
+				host_hint = "  LAN " + ", ".join(ip_show)
+	_status_label.text = "HP %s  EN %s  |  %s %s%s%s\nCONTRIB %.0f  ·  4=form F9=fac F10=host F11=join  (no P2W)" % [hp, en, fac, form, net, host_hint, contrib]
 
 	# Layer chip + context (S1 seamless)
 	if _layer_label and LayerContext:

@@ -119,6 +119,7 @@ func _host_udp(p: int) -> Error:
 	_ensure_puppet_root()
 	host_started.emit(p)
 	print("[SoftENet] host port=", p, " unique_id=1 transport=udp bind_ok")
+	_write_host_info(p)
 	if GameManager:
 		GameManager.toast_requested.emit("SoftENet UDP HOST :%d" % p)
 	return OK
@@ -332,6 +333,8 @@ func _handle_host_packet(kind: int, d: Dictionary, ip: String, pport: int) -> vo
 			_client_addrs[pid] = {"ip": ip, "port": pport}
 			print("[SoftENet] peer +", pid, " from ", key)
 			peer_connected.emit(pid)
+			_ensure_puppet_root()
+			_get_or_create_puppet(pid)
 			if GameManager:
 				GameManager.toast_requested.emit("Peer +%d (UDP)" % pid)
 		# welcome
@@ -497,6 +500,34 @@ func _on_mp_server_disconnected() -> void:
 	is_host = false
 	_clear_puppets()
 	print("[SoftENet] server disconnected")
+
+
+func _write_host_info(p: int) -> void:
+	var ips: PackedStringArray = IP.get_local_addresses()
+	var lines: PackedStringArray = []
+	lines.append("port=%d" % p)
+	lines.append("transport=udp")
+	for ip in ips:
+		var s := str(ip)
+		if s.begins_with("127.") or ":" in s:
+			continue
+		lines.append(s)
+	var f := FileAccess.open("user://softnet_host_info.txt", FileAccess.WRITE)
+	if f:
+		f.store_string("\n".join(lines) + "\n")
+		print("[SoftENet] wrote user://softnet_host_info.txt lines=", lines.size())
+
+
+func peer_ids() -> Array:
+	var out: Array = []
+	if is_host:
+		for k in _client_addrs.keys():
+			out.append(int(k))
+	for k in _puppets.keys():
+		var id := int(k)
+		if id not in out:
+			out.append(id)
+	return out
 
 func _maybe_cmdline_net() -> void:
 	var args := OS.get_cmdline_user_args()

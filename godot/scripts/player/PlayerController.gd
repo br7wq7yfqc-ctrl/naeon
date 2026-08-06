@@ -73,6 +73,27 @@ func _ensure_input_ready() -> void:
 		get_viewport().gui_release_focus()
 
 func _unhandled_input(event: InputEvent) -> void:
+
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_F10 or event.physical_keycode == KEY_F10:
+			if SoftENet:
+				SoftENet.host()
+			get_viewport().set_input_as_handled()
+		elif event.keycode == KEY_F11 or event.physical_keycode == KEY_F11:
+			if SoftENet:
+				var addr := "127.0.0.1"
+				if FileAccess.file_exists("user://softnet_join.txt"):
+					var f := FileAccess.open("user://softnet_join.txt", FileAccess.READ)
+					if f:
+						var line := f.get_line().strip_edges()
+						if line != "":
+							addr = line
+				SoftENet.join(addr)
+			get_viewport().set_input_as_handled()
+		elif event.keycode == KEY_F12 or event.physical_keycode == KEY_F12:
+			if SoftENet:
+				SoftENet.leave()
+			get_viewport().set_input_as_handled()
 	# Click to re-capture (exported Mac apps often start without focus)
 	if event is InputEventMouseButton and event.pressed:
 		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
