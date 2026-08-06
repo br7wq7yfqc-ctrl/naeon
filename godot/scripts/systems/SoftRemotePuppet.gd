@@ -1,6 +1,7 @@
 extends Node3D
-class_name SoftRemotePuppet
 ## Visual-only remote peer — soft multiplayer. No combat power, no authority.
+const _AP = preload("res://scripts/assets/AssetPaths.gd")
+const _HeroForms = preload("res://scripts/player/HeroFormCatalog.gd")
 
 var peer_id: int = 0
 var form: String = "Canine"
@@ -10,6 +11,8 @@ var _target_yaw: float = 0.0
 var _body: MeshInstance3D
 var _label: Label3D
 var _mat: StandardMaterial3D
+var _form_root: Node3D = null
+var _want_form_mesh: bool = true
 
 func setup(id: int) -> void:
 	peer_id = id
@@ -36,6 +39,7 @@ func setup(id: int) -> void:
 	_label.modulate = Color(1.0, 0.85, 0.55, 0.9)
 	add_child(_label)
 	_refresh_label()
+	call_deferred("_try_load_form_mesh")
 
 func apply_state(pos: Vector3, yaw: float, f: String, fac: String) -> void:
 	_target = pos
@@ -45,6 +49,7 @@ func apply_state(pos: Vector3, yaw: float, f: String, fac: String) -> void:
 	faction = fac
 	if changed:
 		_refresh_visual()
+		call_deferred("_try_load_form_mesh")
 	_refresh_label()
 
 func _refresh_visual() -> void:
@@ -56,7 +61,6 @@ func _refresh_visual() -> void:
 	else:
 		_mat.emission = Color(0.25, 0.85, 1.0)
 		_mat.albedo_color = Color(0.25, 0.75, 0.95, 0.75)
-	# Form scale flavor (soft readability only)
 	var s := 1.0
 	match form:
 		"Feline":
@@ -72,6 +76,45 @@ func _refresh_visual() -> void:
 	if _body:
 		_body.scale = Vector3.ONE * s
 
+func _try_load_form_mesh() -> void:
+	if not _want_form_mesh:
+		return
+	var path := ""
+	for rel in _HeroForms.mesh_candidates(form, faction):
+		var p: String = _AP.resolve(rel)
+		if p != "" and FileAccess.file_exists(p):
+			path = p
+			break
+	if path == "":
+		if _body:
+			_body.visible = true
+		return
+	if _form_root and is_instance_valid(_form_root):
+		_form_root.queue_free()
+		_form_root = null
+	var doc := GLTFDocument.new()
+	var state := GLTFState.new()
+	if doc.append_from_file(path, state) != OK:
+		return
+	var root := doc.generate_scene(state)
+	if root == null:
+		return
+	_strip(root)
+	add_child(root)
+	root.name = "FormGLB"
+	root.scale = Vector3.ONE * 0.85
+	_form_root = root
+	if _body:
+		_body.visible = false
+	print("[SoftRemotePuppet] form ", form, "/", faction, " ", path)
+
+func _strip(n: Node) -> void:
+	for c in n.get_children():
+		_strip(c)
+	if n is CollisionObject3D:
+		(n as CollisionObject3D).collision_layer = 0
+		(n as CollisionObject3D).collision_mask = 0
+
 func _refresh_label() -> void:
 	if _label:
 		_label.text = "P%d · %s · %s" % [peer_id, form, faction]
@@ -79,3 +122,5 @@ func _refresh_label() -> void:
 func _process(delta: float) -> void:
 	global_position = global_position.lerp(_target, clampf(delta * 12.0, 0.0, 1.0))
 	rotation.y = lerp_angle(rotation.y, _target_yaw, clampf(delta * 10.0, 0.0, 1.0))
+	if _form_root and is_instance_valid(_form_root):
+		_form_root.position.y = sin(Time.get_ticks_msec() * 0.004) * 0.03
