@@ -1,5 +1,6 @@
 class_name OwnershipComponent
 extends Node3D
+const _AP = preload("res://scripts/assets/AssetPaths.gd")
 
 ## Applies Dynamic Ownership: data + visual Cybernex/gROT theme blend.
 
@@ -11,6 +12,8 @@ signal fully_claimed(faction: OwnershipData.Faction)
 @export var mesh_path: NodePath = NodePath("Mesh")
 @export var label_height: float = 2.2
 @export var claimable: bool = true
+@export var dual_mesh_base: String = ""  # e.g. props/claim_beacon/claim_beacon — loads _cybernex/_grot lod1
+var _dual_root: Node3D
 
 var _mesh: MeshInstance3D
 var _mat: StandardMaterial3D
@@ -29,6 +32,7 @@ func _ready() -> void:
 	_ensure_material()
 	_ensure_label()
 	_apply_visual(true)
+	call_deferred("_refresh_dual_mesh")
 	set_process(true)
 
 func _process(delta: float) -> void:
@@ -38,6 +42,7 @@ func _process(delta: float) -> void:
 		ownership_changed.emit(data.current_faction, data.transition_progress)
 		if data.transition_progress >= 1.0:
 			fully_claimed.emit(data.current_faction)
+			_refresh_dual_mesh()
 
 func claim(faction_name: String, strength: float = 1.0) -> void:
 	if not claimable:
@@ -113,3 +118,31 @@ func _apply_visual(force: bool = false) -> void:
 		var pct: int = int(data.transition_progress * 100.0)
 		_label.text = "%s  %d%%" % [data.faction_name(), pct]
 		_label.modulate = c
+
+func _refresh_dual_mesh() -> void:
+	if dual_mesh_base == "":
+		return
+	var fac := "cybernex"
+	if data and data.faction_name() == "gROT":
+		fac = "grot"
+	var rel := "%s_%s_lod1.glb" % [dual_mesh_base, fac]
+	var path: String = _AP.resolve(rel)
+	if not FileAccess.file_exists(path):
+		return
+	if _dual_root and is_instance_valid(_dual_root):
+		_dual_root.queue_free()
+		_dual_root = null
+	var doc := GLTFDocument.new()
+	var state := GLTFState.new()
+	if doc.append_from_file(path, state) != OK:
+		return
+	var root := doc.generate_scene(state)
+	if root == null:
+		return
+	add_child(root)
+	_dual_root = root as Node3D
+	if _dual_root:
+		_dual_root.scale = Vector3.ONE * 0.9
+	if _mesh:
+		_mesh.visible = false
+	print("[Ownership] dual mesh ", rel)

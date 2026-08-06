@@ -20,6 +20,8 @@ func _spawn_space_props() -> void:
 		[Vector3(-8, -2, -2), "colony/colony_habitat/colony_habitat_cybernex_lod2.glb", 1.5],
 		[Vector3(10, -2, 0), "environments/gate_arch/gate_arch_cybernex_lod2.glb", 1.8],
 		[Vector3(-3, -1.5, -3), "environments/walkway_segment/walkway_segment_cybernex_lod2.glb", 1.4],
+		[Vector3(12, 3, 8), "environments/asteroid_ore/asteroid_ore_cybernex_lod2.glb", 2.0],
+		[Vector3(-14, 2, 6), "environments/asteroid_ore/asteroid_ore_grot_lod2.glb", 1.6],
 	]
 	for e in entries:
 		var prop: Node3D = Node3D.new()

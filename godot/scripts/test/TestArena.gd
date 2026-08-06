@@ -25,6 +25,8 @@ func _ready() -> void:
 	_on_contrib(GameManager.contribution if GameManager else 0.0)
 	_spawn_dummies()
 	_spawn_props()
+	_spawn_turrets()
+	_spawn_claim_nodes()
 	if kills_label:
 		kills_label.text = "Kills: 0"
 
@@ -69,6 +71,7 @@ func _spawn_props() -> void:
 		[Vector3(-8, 0, 8), "colony/solar_panel/solar_panel_cybernex_lod2.glb", 1.0],
 		[Vector3(10, 0, 10), "colony/fuel_tank/fuel_tank_cybernex_lod2.glb", 0.9],
 		[Vector3(0, 0, 14), "props/antenna_array/antenna_array_cybernex_lod2.glb", 1.0],
+		[Vector3(5, 0, 12), "props/nex_relay/nex_relay_cybernex_lod2.glb", 1.0],
 		[Vector3(0, 0, -16), "environments/gate_arch/gate_arch_cybernex_lod2.glb", 1.5],
 		[Vector3(-4, 0, 5), "environments/walkway_segment/walkway_segment_cybernex_lod2.glb", 1.2],
 	]
@@ -79,6 +82,36 @@ func _spawn_props() -> void:
 		prop.set("scale_factor", float(entry[2]))
 		add_child(prop)
 		prop.global_position = entry[0]
+
+
+func _spawn_claim_nodes() -> void:
+	# Interactive ownership beacons using dual-theme mesh swap
+	var spots: Array = [
+		[Vector3(-1, 0, -14), "Cybernex"],
+		[Vector3(4, 0, -14), "gROT"],
+	]
+	for s in spots:
+		var n := Node3D.new()
+		n.name = "ClaimNode"
+		var own := Node3D.new()
+		own.name = "Ownership"
+		own.set_script(preload("res://scripts/ownership/OwnershipComponent.gd"))
+		own.set("dual_mesh_base", "props/claim_beacon/claim_beacon")
+		own.set("claimable", true)
+		n.add_child(own)
+		# mesh placeholder under Ownership
+		var mesh := MeshInstance3D.new()
+		mesh.name = "Mesh"
+		var cyl := CylinderMesh.new()
+		cyl.top_radius = 0.25
+		cyl.bottom_radius = 0.35
+		cyl.height = 1.6
+		mesh.mesh = cyl
+		own.add_child(mesh)
+		add_child(n)
+		n.global_position = s[0]
+		if own.has_method("claim"):
+			own.claim(str(s[1]), 2.0)
 
 func _on_dummy_died() -> void:
 	kills += 1
