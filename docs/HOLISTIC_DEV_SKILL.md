@@ -1,41 +1,38 @@
 # NAEON — Holistic Development Skill (mirror)
 
 **Canonical loadable skill:** `naeon-holistic-economical`  
-**Version:** 1.4  
+**Version:** 1.5  
 **Updated:** 2026-08-06
 
-**Picker description:** NAEON holistic vision and economical pipeline (v1.4). Quality bars — Star Citizen immersion/seamless UI, No Mans Sky flexibility, EVE/Stellaris economy-social, Predecessor/Paragon MOBA TPS. Enforces no-P2W, soft Knowledge, dual-faction asymmetry, Dynamic Ownership, Infection max 5 pips, Tripo-first dual-theme, repo hygiene. Seamless ladder S0–S3; vertical-slice acceptance criteria.
+**Picker:** NAEON holistic vision and economical pipeline (v1.5). Quality bars SC / NMS / EVE / Stellaris / Predecessor. Enforces no-P2W, soft Knowledge, Infection max 5, freemium boundaries, Prompt Studio safety, Godot data patterns, seamless S0–S3, Tripo-first dual-theme, repo hygiene.
 
-## Reference orientations (bars, not parity)
+## v1.5 adds
+- Freemium allow/deny table (cosmetics/voice/story/quota only)
+- AI / Prompt Studio / educational soft-only rules
+- Godot Resource patterns (Ability, Ownership, UITheme, Quest, Module)
+- Content & QA merge checklist
+- Path ownership by session A–E
+- Phase-now priorities for vertical slice
+- Explicit do-not-invent list
 
-| Reference | NAEON use |
-|-----------|-----------|
-| Star Citizen | Immersion, multi-env UI, seamless ladder S0→S3 |
-| No Man's Sky | Object/terrain flexibility, dual-theme variants |
-| EVE Online | Economy risk, logistics, alliance consequence |
-| Stellaris | Strategy readability, faction identity |
-| Predecessor / Paragon | MOBA TPS; soft world influence only |
-
-## Seamless ladder (summary)
-
-- **S0** load pockets + layer label  
-- **S1** <3s, preserve quest/claim/cargo  
-- **S2** fewer hard breaks on primary routes  
-- **S3** stretch continuous hub routes  
-
-Do not skip to S3 early.
+## Reference bars (not parity)
+Star Citizen → immersion, seamless S0–S3  
+No Man's Sky → variants, Ownership themes  
+EVE / Stellaris → economy risk, alliance, strategy identity  
+Predecessor / Paragon → MOBA TPS; soft influence only
 
 ## Infection canon
-Max **5** visible stack pips. Unify from 3 in one Session A pass if needed.
+Max **5** stack pips.
 
-## Vertical-slice minimum
-Layer clarity · threat readability · no P2W/hard Knowledge · ~60 FPS low-end · context preserve (S1+) · asymmetric but fair
+## Seamless ladder
+S0 load pockets → S1 <3s + context preserve → S2 fewer hard breaks → S3 stretch hubs.
+
+## Freemium short
+Allowed: cosmetics, voice, story-only premium, generation quota, soft convenience.  
+Forbidden: combat power, claim strength, War Score rate, exclusive power blueprints.
 
 ## Canon priority
 Owner → CONCEPT → docs/rules/* → lore → HANDOFF/HANDOFFS → plans → SHARED_AGENT_MEMORY → code.
 
-## Never violate
-No P2W · Soft Knowledge · Asymmetric viable factions · Dynamic Ownership · Arena caps · Readable UI · Infection 5 · Tripo-first dual-theme · No secrets/heavy assets · Godot 4 Mac+Windows · References ≠ scope parity
-
 ## Canonical paths
-Pillars 00 · Legal/01 · Combat 02/04/16 · Ownership 03 · Economy 05/15 · Quests 06 · NPC/Knowledge/Schism 07–09 · **UI 10_UI_INTERFACE_LAYER** · Alliance/Craft/MOBA/Ship 11–14 · Voice 17 · lore + CAMPAIGN_QUEST_IDS · HANDOFF/HANDOFFS · SHARED_AGENT_MEMORY
+00 Pillars · 01/legal · 02/04/16 combat · 03 Ownership · 05/15 economy · 06 quests · 07–09 NPC/Knowledge/Schism · **10_UI_INTERFACE_LAYER** · 11–14 alliance/craft/MOBA/ship · 17 voice · lore + CAMPAIGN_QUEST_IDS · HANDOFF · SHARED_AGENT_MEMORY
