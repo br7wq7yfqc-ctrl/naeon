@@ -1,30 +1,30 @@
 # NAEON — Shared Agent Memory
 
-**Last updated:** 2026-08-06 (numeric design pass)
+**Last updated:** 2026-08-06 (skill v1.3 reference orientations)
 
 ## Core constraints
-No P2W · soft Knowledge only · asymmetric Cybernex/gROT · Dynamic Ownership + capped Arena influence · readable UI · Tripo-first dual-theme assets · no secrets/heavy assets in Git · Godot 4 Mac+Windows low-end
+No P2W · soft Knowledge only · asymmetric Cybernex/gROT · Dynamic Ownership + capped Arena influence · readable UI · Tripo-first dual-theme assets · no secrets/heavy assets in Git · Godot 4 Mac+Windows low-end · **reference games are quality bars not scope parity**
 
-## Design corpus on main
-- rules/00–14 + **15_ECONOMY_NUMERIC_RATES**, **16_ABILITY_RANKS_2_TO_5**, **17_VOICE_ACHIEVEMENT_THRESHOLDS**
-- rules/13 MOBA caps filled (v0.3)
-- lore/CAMPAIGN_QUEST_IDS.md
-- legal/, lore seeds, HANDOFF/HANDOFFS
-- Skill: naeon-holistic-economical v1.2
+## Design reference bars (v1.3)
+- Star Citizen → immersion, seamless layer transitions, multi-env UI
+- No Man's Sky → object/terrain flexibility, data-driven individualization
+- EVE Online / Stellaris → economy risk, logistics, alliance/strategy identity
+- Predecessor / Paragon → MOBA TPS feel; soft world influence only
+
+## Design corpus
+rules/00–17 · lore (incl. CAMPAIGN_QUEST_IDS) · legal · HANDOFF/HANDOFFS · Skill **v1.3**
 
 ## Implementation snapshot
-- TestArena + SpaceTest playable
-- Pipeline scripts live; Tripo balance 0; neon keys TBD
+TestArena + SpaceTest playable · pipeline scripts live · Tripo balance 0 · neon keys TBD
 
 ## Decision log (recent)
 | Date | Decision |
 |------|----------|
-| 2026-08-06 | Hygiene UI/economy canon; skill v1.2 |
-| 2026-08-06 | Handoff briefs A–E |
-| 2026-08-06 | **Numeric pass:** economy rates + craft tiers; ability ranks 2–5; MOBA daily 60 WS; campaign quest IDs; voice thresholds |
+| 2026-08-06 | Numeric pass 15/16/17 + MOBA caps + quest IDs |
+| 2026-08-06 | **Skill v1.3** — reference orientations SC/NMS/EVE/Stellaris/Predecessor |
 
 ## Open gaps
-Unify Infection max stacks (3 vs 5) in one Session A balance pass · post-playtest retune of rates · optional delete of redirect stubs
+Unify Infection stacks 3 vs 5 · post-playtest retune · seamless transition vertical-slice spec (load pockets → smoother)
 
 ## Agent protocol
-Read HANDOFF → session brief → listed rules (prefer 15/16/17 for numbers) → code. Append decisions here.
+Read HANDOFF → brief → rules → code. Skill v1.3 for reference bars. Append decisions here.
