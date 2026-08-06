@@ -41,3 +41,14 @@ Exceeding volume → edit blocked (`budget_exhausted`). Not purchasable.
 - Full planetary voxel shell
 - Multiplayer authoritative terrain sync
 - Underwater caves network
+
+
+## Controls (updated)
+| Key | Action |
+|-----|--------|
+| G | Raise |
+| B | Dig |
+| U | Undo last stroke (stack depth 12) |
+
+## FX
+Brush torus: green raise / orange dig under player.

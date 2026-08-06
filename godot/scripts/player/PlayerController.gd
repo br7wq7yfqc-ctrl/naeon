@@ -52,6 +52,7 @@ func _ready() -> void:
 			ability_system.ability_activated.connect(_on_ability_activated)
 	_apply_form_stats()
 	_ensure_infection()
+	call_deferred("_ensure_channel_hooks")
 	_ensure_hud()
 	print("[Player] Ready form=", current_form, " faction=", faction)
 	print("[Player] InputMap move_forward=", InputMap.has_action("move_forward"))
@@ -267,6 +268,17 @@ func _infection_energy_mult() -> float:
 	if inf and inf.has_method("energy_regen_mult"):
 		return float(inf.energy_regen_mult())
 	return 1.0
+
+func _ensure_channel_hooks() -> void:
+	var ch = get_node_or_null("ChannelController")
+	if ch == null:
+		return
+	if ch.has_signal("channel_interrupted") and not ch.channel_interrupted.is_connected(_on_channel_interrupted):
+		ch.channel_interrupted.connect(_on_channel_interrupted)
+
+func _on_channel_interrupted(reason: String) -> void:
+	# Soft feedback — partial energy already spent (design: interruptible cost risk)
+	print("[Player] channel interrupted: ", reason)
 
 func _ensure_infection() -> void:
 	if get_node_or_null("InfectionStatus") == null:
