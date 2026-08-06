@@ -1,31 +1,23 @@
 # NAEON — Shared Agent Memory
 
-**Last updated:** 2026-08-06 (rules 18–19 + skill map)
+**Last updated:** 2026-08-06 (stubs 07–09 + Act I quests + HANDOFFS)
 
 ## Core constraints
-No P2W · soft Knowledge only · asymmetric Cybernex/gROT · Dynamic Ownership + capped Arena · readable UI · Infection max 5 · Tripo-first dual-theme · no secrets/heavy assets in Git · Godot 4 Mac+Windows · reference bars ≠ parity · freemium never sells combat/claim power
-
-## Design reference bars
-Star Citizen → seamless S0–S3 · NMS → variants · EVE/Stellaris → economy/social · Predecessor/Paragon → MOBA TPS soft influence
+No P2W · soft Knowledge · asymmetric factions · Dynamic Ownership · Infection max 5 · S0–S3 transitions · Tripo-first · freemium ≠ power · Godot 4 Mac+Windows
 
 ## Design corpus
-rules/00–19 · lore · legal · HANDOFF/HANDOFFS · Skill **v1.5** (map to include 18–19)
+rules/00–19 · lore (CAMPAIGN_QUEST_IDS, **QUEST_ACT_I_STARTERS**) · legal · HANDOFFS (skill v1.6) · Skill v1.6
 
-### New this pass
-- **rules/18_SEAMLESS_CONTEXT_PAYLOAD.md** — TransitionContext schema, S0/S1 DoD, primary routes, Godot hooks
-- **rules/19_FREEMIUM_UI_AND_GATES.md** — allow/deny, EN/RU copy keys, screen gates, VS minimum
+## This pass
+- Expanded **07** NPC role IDs · **08** Knowledge soft table + rules · **09** Schism narrative
+- **QUEST_ACT_I_STARTERS** CQ-CX/GR-I-01…03 definitions
+- **HANDOFFS** refreshed for 18/19 and Infection 5
 
 ## Implementation snapshot
-TestArena + SpaceTest playable · pipeline scripts live · Tripo balance 0 · neon keys TBD · transitions **S0** until HANDOFF says otherwise
-
-## Decision log (recent)
-| Date | Decision |
-|------|----------|
-| 2026-08-06 | Skill v1.5 freemium/AI/Godot/QA |
-| 2026-08-06 | **rules/18** context payload + **rules/19** freemium UI copy/gates |
+TestArena + SpaceTest · Tripo 0 · neon TBD · transitions S0
 
 ## Open gaps
-Session A: Infection → 5 pips · Session B: implement TransitionContext round-trip TestArena↔SpaceTest · ops: Tripo/neon
+A: Infection 5 · B: TransitionContext round-trip · E: implement Act I quests in data · ops Tripo/neon
 
-## Agent protocol
-HANDOFF → brief → rules (18 for transitions, 19 for shop/sub UI) → skill → code.
+## Protocol
+HANDOFF → HANDOFFS brief → rules → skill → code.
