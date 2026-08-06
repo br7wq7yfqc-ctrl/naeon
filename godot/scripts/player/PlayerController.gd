@@ -2,6 +2,7 @@ extends CharacterBody3D
 const _AP = preload("res://scripts/assets/AssetPaths.gd")
 const _HeroForms = preload("res://scripts/player/HeroFormCatalog.gd")
 const _FormFX = preload("res://scripts/player/FormSwitchFX.gd")
+const _ProcLoco = preload("res://scripts/player/ProceduralLocomotion.gd")
 
 ## TPS controller — robust WASD (InputMap + physical/keycode fallback).
 
@@ -31,6 +32,7 @@ var firewall_timer: float = 0.0
 var _form_index: int = 0
 var _body_mat: StandardMaterial3D
 var last_move_input: Vector2 = Vector2.ZERO
+var _loco = null
 
 func _ready() -> void:
 	health = max_health
@@ -59,6 +61,9 @@ func _ready() -> void:
 	print("[Player] Ready form=", current_form, " faction=", faction)
 	if SoftSession:
 		SoftSession.apply_to_player(self)
+	_loco = _ProcLoco.new()
+	if SoftNetSession:
+		SoftNetSession.bind_player(self)
 	print("[Player] InputMap move_forward=", InputMap.has_action("move_forward"))
 
 func _ensure_input_ready() -> void:
@@ -117,6 +122,7 @@ func _physics_process(delta: float) -> void:
 		velocity.z = move_toward(velocity.z, 0.0, speed)
 
 	move_and_slide()
+	_update_locomotion(delta)
 
 	if _just_ability(1):
 		if ability_system:
@@ -340,6 +346,19 @@ func try_load_form_mesh() -> void:
 	root.scale = Vector3.ONE * 0.85
 	root.position = Vector3(0, 0, 0)
 	print("[Player] form mesh ", current_form, "/", faction, " -> ", path)
+	if _loco:
+		_loco.reset_base()
+
+
+func _update_locomotion(delta: float) -> void:
+	if _loco == null:
+		return
+	var spd := Vector2(velocity.x, velocity.z).length()
+	_loco.tick(delta, spd, is_on_floor())
+	var visual: Node3D = get_node_or_null("FormGLB") as Node3D
+	if visual == null and body_mesh:
+		visual = body_mesh
+	_loco.apply_to(visual)
 
 
 func _form_switch_fx() -> void:

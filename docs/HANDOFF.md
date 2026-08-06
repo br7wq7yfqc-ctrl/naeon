@@ -1,21 +1,20 @@
-# Handoff — 0.3.5 form FX + SoftSession
+# Handoff — procedural loco + soft net ghost
 
 ## Playable
-**4** form cycle (ring + particles) · **F9** Cybernex/gROT dual-theme  
-SoftSession persists form/faction · gROT Infector in cycle  
-Clash soft lane objectives + War Score  
+Arena walk bob on FormGLB (ProceduralLocomotion)  
+**SoftNetSession** lag ghost (~120ms) mirrors player — multiplayer prep  
+LayerContextAuthority snapshots ride in soft net capture  
+4 form · F9 faction · SoftSession persist  
 
-## Installer (Desktop)
-- `NAEON-0.3.5-Installer.dmg` (~666M)
-- `NAEON-Installer.dmg`
-- latest.json → **0.3.5**
+## Installer
+0.3.5 current · next 0.3.6 after playtest
 
 ## Budget
 0 Tripo
 
 ## Next
-1. Multiplayer net (LayerContextAuthority)
-2. rclone upload
-3. Animations / polish
+1. Real ENet multiplayer
+2. SurfaceWalker share loco helper
+3. rclone upload
 
-Updated: 2026-08-06T18:14:47.169501+00:00
+Updated: 2026-08-06T18:17:03.515106+00:00

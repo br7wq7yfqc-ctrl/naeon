@@ -48,6 +48,8 @@ func _ready() -> void:
 	call_deferred("snap_to_surface")
 	_ensure_combat_nodes()
 	print("[SurfaceWalker] ready form=", form_name)
+	if SoftNetSession:
+		SoftNetSession.bind_player(self)
 	if SoftSession:
 		SoftSession.apply_to_player(self)
 

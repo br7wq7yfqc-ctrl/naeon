@@ -287,6 +287,8 @@ func _finish_clash_layout() -> void:
 	_setup_clash_radar()
 	if _clash and _clash.has_method("bind_player") and player:
 		_clash.bind_player(player)
+	if SoftNetSession and player:
+		SoftNetSession.bind_player(player)
 
 
 func _setup_clash_radar() -> void:
