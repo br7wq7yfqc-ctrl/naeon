@@ -1,0 +1,12 @@
+[
+  {"name": "player_avian", "category": "characters", "priority": "B",
+   "prompt": "low poly cybernetic avian bird robot humanoid with wing thrusters, game character, clean topology"},
+  {"name": "player_human", "category": "characters", "priority": "B",
+   "prompt": "low poly cybernetic human android soldier armor, game character, clean topology"},
+  {"name": "grot_infector", "category": "characters", "priority": "B",
+   "prompt": "low poly organic biomechanical gROT mutant drone enemy, dark red biomass, game character"},
+  {"name": "nex_relay", "category": "props", "priority": "C",
+   "prompt": "low poly sci-fi data relay tower with glowing nodes, cybernex style game prop"},
+  {"name": "asteroid_ore", "category": "environments", "priority": "C",
+   "prompt": "low poly floating asteroid with ore veins, space environment prop"}
+]

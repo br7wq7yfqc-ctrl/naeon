@@ -1,26 +1,22 @@
 # NAEON — Session Status
 
 **Last update:** 2026-08-06  
-**Mode:** Holistic economical unified session
+**Mode:** Holistic economical
 
-## Tracks
-| Track | Status |
-|-------|--------|
-| A TestArena | Combat dummies, GLB props, ownership, extractor |
-| B Space | Ship hull/module GLB load, landing pad, SpaceTest |
-| C Assets | Batch1 **10/10 done**; Batch2 running; dual-theme LODs on neon |
+## Assets
+- **27+** base meshes (batches 1–3 done), batch4 running (avian/human/grot/relay/asteroid)
+- Dual-theme × LOD0/1/2 on all → ~160+ GLBs
+- Bucket: `neon/dev/{ships,colony,props,characters,environments}`
 
-## Assets ready (local + neon/dev)
-ships: hull_scout, module_engine, module_weapon  
-colony: extractor_unit, resource_crystal  
-environments: landing_pad  
-characters: combat_drone  
-props: sci_fi_crate, control_console, claim_beacon, energy_barrier, storage_barrel  
+## Gameplay
+- TestArena: full prop set, med heal zone, form meshes Canine/Feline, drone dummies
+- SpaceTest: landing pad, modules, habitat, gate, walkway
+- Ship/colony runtime GLB load
+- Installer 0.2.0 with bundled assets
 
 ## Credits
-Reserve floor: 150. Batch stops below floor.  
-See logs/batch_summary.json
+~1040 after batch3; reserve floor 150; batch4 in progress
 
-## Installer
-Desktop: NAEON-Installer.dmg  
-Rebuild: `./tools/mac/build_release.sh`
+## Play
+`cd ~/Documents/naeon/godot && godot .`  
+Desktop: `NAEON-0.2.0-Installer.dmg`

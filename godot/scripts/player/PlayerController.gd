@@ -1,4 +1,5 @@
 extends CharacterBody3D
+const _AP = preload("res://scripts/assets/AssetPaths.gd")
 
 ## TPS controller for NAEON — forms, abilities, energy, ownership claims.
 
@@ -132,6 +133,7 @@ func _apply_form_stats() -> void:
 		_body_mat.emission_energy_multiplier = 1.6
 	if form_label:
 		form_label.text = "%s | %s" % [current_form, faction]
+	call_deferred("try_load_form_mesh")
 
 func get_energy() -> float:
 	return energy
@@ -173,3 +175,43 @@ func _respawn() -> void:
 func _on_ability_activated(ability: Ability) -> void:
 	if ability and ability.ability_name == "Form Cycle":
 		cycle_form()
+
+func try_load_form_mesh() -> void:
+	var rel := ""
+	match current_form:
+		"Canine":
+			rel = "characters/player_canine/player_canine_cybernex_lod1.glb"
+		"Feline":
+			rel = "characters/player_feline/player_feline_cybernex_lod1.glb"
+		_:
+			# Avian/Human fallback until assets ready
+			if body_mesh:
+				body_mesh.visible = true
+			_clear_form_glb()
+			return
+	var path: String = _AP.resolve(rel)
+	if not FileAccess.file_exists(path):
+		if body_mesh:
+			body_mesh.visible = true
+		return
+	_clear_form_glb()
+	var doc := GLTFDocument.new()
+	var state := GLTFState.new()
+	if doc.append_from_file(path, state) != OK:
+		return
+	var root := doc.generate_scene(state)
+	if root == null:
+		return
+	if body_mesh:
+		body_mesh.visible = false
+	add_child(root)
+	root.name = "FormGLB"
+	root.scale = Vector3.ONE * 0.85
+	root.position = Vector3(0, 0, 0)
+	print("[Player] form mesh ", current_form, " -> ", path)
+
+func _clear_form_glb() -> void:
+	var old := get_node_or_null("FormGLB")
+	if old:
+		old.queue_free()
+

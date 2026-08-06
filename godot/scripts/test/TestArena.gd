@@ -1,6 +1,6 @@
 extends Node3D
 
-## Playable TPS TestArena — combat dummies, ownership, colony, asset props.
+## Playable TPS TestArena — combat, ownership, colony, full prop set.
 
 @onready var hud: CanvasLayer = $HUD
 @onready var info_label: Label = $HUD/Root/Info
@@ -41,31 +41,36 @@ func _spawn_dummies() -> void:
 		d.global_position = spots[i]
 		if d.has_signal("died"):
 			d.died.connect(_on_dummy_died)
-		if i % 2 == 1 and d.get("can_move") != null:
+		if i % 2 == 1:
 			d.set("can_move", false)
 			d.set("faction", "gROT")
 
 func _spawn_props() -> void:
 	var prop_script: Script = preload("res://scripts/assets/GlbProp.gd")
 	var positions: Array = [
+		# crates / storage
 		[Vector3(2, 0, 3), "props/sci_fi_crate/sci_fi_crate_cybernex_lod2.glb", 0.7],
 		[Vector3(-3, 0, 2), "props/sci_fi_crate/sci_fi_crate_grot_lod2.glb", 0.7],
-		[Vector3(5, 0, 8), "props/sci_fi_crate/sci_fi_crate_cybernex_lod1.glb", 0.55],
+		[Vector3(-2, 0, 10), "props/storage_barrel/storage_barrel_cybernex_lod2.glb", 0.6],
+		[Vector3(1, 0, 10), "props/ammo_crate/ammo_crate_cybernex_lod2.glb", 0.7],
+		# consoles / stations
 		[Vector3(-6, 0, -3), "props/control_console/control_console_cybernex_lod1.glb", 0.9],
 		[Vector3(8, 0, -5), "props/control_console/control_console_grot_lod1.glb", 0.9],
+		[Vector3(-14, 0, -4), "props/med_station/med_station_cybernex_lod2.glb", 0.9],
+		[Vector3(3, 0, 6), "props/holo_projector/holo_projector_cybernex_lod2.glb", 0.8],
+		# ownership / combat
 		[Vector3(0, 0, -12), "props/claim_beacon/claim_beacon_cybernex_lod1.glb", 1.0],
 		[Vector3(3, 0, -12), "props/claim_beacon/claim_beacon_grot_lod1.glb", 1.0],
 		[Vector3(-12, 0, 0), "props/energy_barrier/energy_barrier_cybernex_lod2.glb", 0.8],
 		[Vector3(12, 0, 0), "props/energy_barrier/energy_barrier_grot_lod2.glb", 0.8],
-		[Vector3(-2, 0, 10), "props/storage_barrel/storage_barrel_cybernex_lod2.glb", 0.6],
-		[Vector3(1, 0, 10), "props/storage_barrel/storage_barrel_grot_lod2.glb", 0.6],
+		[Vector3(6, 0, -9), "props/turret_emplacement/turret_emplacement_grot_lod2.glb", 0.85],
+		# colony / env
 		[Vector3(14, 0, 6), "colony/colony_habitat/colony_habitat_cybernex_lod2.glb", 1.2],
-		[Vector3(-14, 0, -4), "props/med_station/med_station_cybernex_lod2.glb", 0.9],
-		[Vector3(0, 0, 14), "props/antenna_array/antenna_array_cybernex_lod2.glb", 1.0],
-		[Vector3(7, 0, 12), "props/ammo_crate/ammo_crate_cybernex_lod2.glb", 0.7],
 		[Vector3(-8, 0, 8), "colony/solar_panel/solar_panel_cybernex_lod2.glb", 1.0],
+		[Vector3(10, 0, 10), "colony/fuel_tank/fuel_tank_cybernex_lod2.glb", 0.9],
+		[Vector3(0, 0, 14), "props/antenna_array/antenna_array_cybernex_lod2.glb", 1.0],
 		[Vector3(0, 0, -16), "environments/gate_arch/gate_arch_cybernex_lod2.glb", 1.5],
-
+		[Vector3(-4, 0, 5), "environments/walkway_segment/walkway_segment_cybernex_lod2.glb", 1.2],
 	]
 	for entry in positions:
 		var prop: Node3D = Node3D.new()
@@ -74,7 +79,6 @@ func _spawn_props() -> void:
 		prop.set("scale_factor", float(entry[2]))
 		add_child(prop)
 		prop.global_position = entry[0]
-
 
 func _on_dummy_died() -> void:
 	kills += 1
@@ -88,6 +92,8 @@ func _process(_delta: float) -> void:
 	bar_health.max_value = player.max_health
 	bar_energy.value = player.energy
 	bar_energy.max_value = player.max_energy
+	# proximity med station heal
+	_try_med_heal(_delta)
 	var lines: PackedStringArray = []
 	if player.ability_system:
 		for i in range(mini(4, player.ability_system.abilities.size())):
@@ -101,9 +107,16 @@ func _process(_delta: float) -> void:
 			else:
 				lines.append("%s %s" % [key, ab.ability_name])
 	ability_label.text = "\n".join(lines)
-	info_label.text = "NAEON TestArena  |  %s  |  Form %s  |  WASD  mouse  Esc cursor  Tab→Space\nQ pulse  E firewall  R probe/hack  F form  |  Kill dummies  |  Hack pillars  |  Extractor" % [
+	info_label.text = "NAEON TestArena  |  %s  |  Form %s  |  WASD mouse Esc  Tab→Space\nQ pulse  E firewall  R hack  F form  |  med station heals nearby  |  dummies+turret" % [
 		player.faction, player.current_form
 	]
+
+func _try_med_heal(delta: float) -> void:
+	# Heal near world position of med station prop placement
+	var med_pos := Vector3(-14, 0, -4)
+	if player.global_position.distance_to(med_pos) < 3.5:
+		if player.health < player.max_health:
+			player.heal(8.0 * delta)
 
 func _on_contrib(v: float) -> void:
 	if contrib_label:

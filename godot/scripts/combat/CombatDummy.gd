@@ -1,5 +1,6 @@
 extends CharacterBody3D
 class_name CombatDummy
+const _AP = preload("res://scripts/assets/AssetPaths.gd")
 
 ## Trainable combat target for TestArena. Takes damage, optional aggro fire.
 
@@ -170,11 +171,7 @@ func _update_labels() -> void:
 		health_bar.text = "HP %d/%d" % [int(health), int(max_health)]
 
 func try_load_drone() -> void:
-	var rel := "characters/combat_drone/combat_drone_grot_lod1.glb"
-	var base := ProjectSettings.globalize_path("res://").get_base_dir().get_base_dir()
-	var path := base.path_join("assets").path_join(rel)
-	if not FileAccess.file_exists(path):
-		path = OS.get_environment("HOME").path_join("Documents/naeon/assets").path_join(rel)
+	var path: String = _AP.resolve("characters/combat_drone/combat_drone_grot_lod1.glb")
 	if not FileAccess.file_exists(path):
 		return
 	var doc := GLTFDocument.new()
@@ -190,3 +187,4 @@ func try_load_drone() -> void:
 	root.name = "DroneGLB"
 	root.scale = Vector3.ONE * 0.9
 	print("[CombatDummy] drone mesh loaded")
+

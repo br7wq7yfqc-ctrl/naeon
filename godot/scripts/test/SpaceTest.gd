@@ -1,7 +1,5 @@
 extends Node3D
 
-## Space flight test — ship modules + land → TPS.
-
 @onready var hint: Label = $HUD/Root/Hint
 @onready var ship: CharacterBody3D = $Ship
 
@@ -21,6 +19,7 @@ func _spawn_space_props() -> void:
 		[Vector3(4, -1, -4), "ships/cargo_pod/cargo_pod_cybernex_lod2.glb", 1.0],
 		[Vector3(-8, -2, -2), "colony/colony_habitat/colony_habitat_cybernex_lod2.glb", 1.5],
 		[Vector3(10, -2, 0), "environments/gate_arch/gate_arch_cybernex_lod2.glb", 1.8],
+		[Vector3(-3, -1.5, -3), "environments/walkway_segment/walkway_segment_cybernex_lod2.glb", 1.4],
 	]
 	for e in entries:
 		var prop: Node3D = Node3D.new()
@@ -31,17 +30,13 @@ func _spawn_space_props() -> void:
 		add_child(prop)
 		prop.global_position = e[0]
 
-
 func _process(_delta: float) -> void:
 	if hint and ship:
 		hint.text = (
-			"NAEON SpaceTest  |  WASD thrust/strafe  |  Space/Shift lift  |  Mouse aim\n"
-			+ "Q fire  |  E land → TestArena  |  R attach Extractor module  |  Tab → Arena\n"
+			"NAEON SpaceTest  |  WASD thrust  |  Space/Shift lift  |  Mouse aim\n"
+			+ "Q fire  |  E land→Arena  |  R extractor module  |  Tab→Arena\n"
 			+ "Modules: %d  Speed: %d  HP: %d  Shield: %d" % [
-				ship.modules.size(),
-				int(ship.velocity.length()),
-				int(ship.health),
-				int(ship.shields),
+				ship.modules.size(), int(ship.velocity.length()), int(ship.health), int(ship.shields)
 			]
 		)
 

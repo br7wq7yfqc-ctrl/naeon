@@ -1,5 +1,4 @@
 #!/bin/bash
-# Export NAEON.app, package zip/dmg, upload to neon releases, write latest.json
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
@@ -15,64 +14,84 @@ echo "=== NAEON Mac release $VERSION ==="
 mkdir -p "$DIST"
 rm -rf "$APP" "$ZIP" "$DMG" "$STAGE"
 
-# Sync version into export preset
 python3 - << PY
 from pathlib import Path
+import re
+ver = Path("VERSION").read_text().strip()
 p = Path("godot/export_presets.cfg")
 t = p.read_text()
-import re
-t = re.sub(r'application/short_version="[^"]*"', 'application/short_version="$VERSION"', t)
-t = re.sub(r'application/version="[^"]*"', 'application/version="$VERSION"', t)
+t = re.sub(r'application/short_version="[^"]*"', f'application/short_version="{ver}"', t)
+t = re.sub(r'application/version="[^"]*"', f'application/version="{ver}"', t)
 p.write_text(t)
-# AutoUpdater CURRENT_VERSION
 au = Path("godot/scripts/autoload/AutoUpdater.gd")
-au.write_text(au.read_text().replace(
-    'const CURRENT_VERSION := "' + [l.split('"')[1] for l in au.read_text().splitlines() if "CURRENT_VERSION" in l][0] + '"',
-    f'const CURRENT_VERSION := "$VERSION"'
-) if False else au.read_text())
-text = au.read_text()
-import re as _re
-text = _re.sub(r'const CURRENT_VERSION := "[^"]*"', f'const CURRENT_VERSION := "$VERSION"', text)
-au.write_text(text)
-print("version stamps", "$VERSION")
+if au.exists():
+    au.write_text(re.sub(r'const CURRENT_VERSION := "[^"]*"', f'const CURRENT_VERSION := "{ver}"', au.read_text()))
+print("stamped", ver)
 PY
 
-echo "→ Exporting (release)…"
-"$GODOT" --headless --path "$ROOT/godot" --export-release "macOS" "$APP" 2>&1 | tail -30
+echo "-> Exporting..."
+"$GODOT" --headless --path "$ROOT/godot" --export-release "macOS" "$APP" 2>&1 | tail -50
 
 if [ ! -d "$APP" ]; then
-  echo "Export failed — app missing"
+  echo "EXPORT FAILED"
   exit 1
 fi
 
-# Ad-hoc codesign
 codesign --force --deep --sign - "$APP" 2>/dev/null || true
 xattr -cr "$APP" 2>/dev/null || true
 
-# Zip for auto-update
-echo "→ Zip…"
-ditto -c -k --sequesterRsrc --keepParent "$APP" "$ZIP"
-# Also pack installer
-cp tools/mac/Install\ NAEON.command "$DIST/"
-(
-  cd "$DIST"
-  ditto -c -k --keepParent "Install NAEON.command" "Install-NAEON.command.zip" 2>/dev/null || true
-)
+echo "-> Bundling assets..."
+RES_ASSETS="$APP/Contents/Resources/assets"
+mkdir -p "$RES_ASSETS"
+if [ -d "$ROOT/assets" ]; then
+  rsync -a --delete --exclude 'mac_smoke' "$ROOT/assets/" "$RES_ASSETS/"
+fi
+codesign --force --deep --sign - "$APP" 2>/dev/null || true
 
-# DMG (optional if hdiutil available)
-echo "→ DMG…"
+echo "-> Zip + DMG..."
+ditto -c -k --sequesterRsrc --keepParent "$APP" "$ZIP"
 mkdir -p "$STAGE"
 cp -R "$APP" "$STAGE/NAEON.app"
-cp tools/mac/Install\ NAEON.command "$STAGE/"
-# symlink to Applications
 ln -sf /Applications "$STAGE/Applications"
-hdiutil create -volname "NAEON" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
 
-# SHA256
+cat > "$STAGE/Install NAEON.command" << 'INST'
+#!/bin/bash
+set -euo pipefail
+DIR="$(cd "$(dirname "$0")" && pwd)"
+SRC="$DIR/NAEON.app"
+if [ ! -d "$SRC" ]; then
+  osascript -e 'display alert "NAEON" message "NAEON.app not found." as critical'
+  exit 1
+fi
+if [ -w /Applications ]; then DEST="/Applications/NAEON.app"
+else mkdir -p "$HOME/Applications"; DEST="$HOME/Applications/NAEON.app"; fi
+rm -rf "$DEST"
+cp -R "$SRC" "$DEST"
+xattr -dr com.apple.quarantine "$DEST" 2>/dev/null || true
+codesign --force --deep --sign - "$DEST" 2>/dev/null || true
+if [ -d "$DEST/Contents/Resources/assets" ]; then
+  mkdir -p "$HOME/Library/Application Support/NAEON"
+  rsync -a "$DEST/Contents/Resources/assets/" "$HOME/Library/Application Support/NAEON/assets/"
+fi
+open "$DEST"
+osascript -e "display notification \"Installed $DEST\" with title \"NAEON\""
+echo "Installed -> $DEST"
+INST
+chmod +x "$STAGE/Install NAEON.command"
+
+cat > "$STAGE/README.txt" << RDM
+NAEON ${VERSION}
+================
+1. Drag NAEON.app to Applications (or Install NAEON.command)
+2. Right-click -> Open if blocked
+Version ${VERSION} | assets bundled
+RDM
+
+hdiutil create -volname "NAEON ${VERSION}" -srcfolder "$STAGE" -ov -format UDZO -imagekey zlib-level=9 "$DMG"
+hdiutil verify "$DMG" | tail -3
+
 SHA=$(shasum -a 256 "$ZIP" | awk '{print $1}')
 SIZE=$(stat -f%z "$ZIP")
-
-# latest.json
 cat > "$DIST/latest.json" << JSON
 {
   "version": "$VERSION",
@@ -81,27 +100,31 @@ cat > "$DIST/latest.json" << JSON
   "dmg_url": "https://storage.yandexcloud.net/neon/releases/mac/NAEON-${VERSION}-mac.dmg",
   "sha256": "$SHA",
   "size": $SIZE,
-  "notes": "NAEON $VERSION — TestArena combat, dual-theme props, ship sandbox",
-  "min_os": "12.0",
+  "notes": "NAEON $VERSION bundled assets",
   "released_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
 JSON
 
-# Upload to neon if rclone configured
-if command -v rclone >/dev/null && [ -f "$HOME/.config/rclone/rclone.conf" ]; then
-  echo "→ Upload to neon:neon/releases/mac/"
-  rclone copy "$ZIP" neon:neon/releases/mac/ --progress
-  rclone copy "$DMG" neon:neon/releases/mac/ --progress
-  rclone copy "$DIST/latest.json" neon:neon/releases/mac/ --progress
-  # try public-read ACL if provider supports
-  rclone copyto "$DIST/latest.json" neon:neon/releases/mac/latest.json 2>/dev/null || true
-  echo "Uploaded. Public URL depends on bucket ACL."
-  echo "  latest:  neon:neon/releases/mac/latest.json"
-  echo "  zip:     neon:neon/releases/mac/NAEON-${VERSION}-mac.zip"
-else
-  echo "rclone not configured — artifacts only in dist/"
+if command -v rclone >/dev/null; then
+  rclone copy "$ZIP" neon:neon/releases/mac/ 2>&1 | tail -4
+  rclone copy "$DMG" neon:neon/releases/mac/ 2>&1 | tail -4
+  rclone copy "$DIST/latest.json" neon:neon/releases/mac/ 2>&1 | tail -2
 fi
 
+# Desktop: remove old, place new with unmistakable names
+rm -f "$HOME/Desktop/NAEON-0.1.0-mac.dmg" \
+      "$HOME/Desktop/NAEON-Installer.dmg" \
+      "$HOME/Desktop/NAEON-0.1.0-Installer.dmg" 2>/dev/null || true
+cp -f "$DMG" "$HOME/Desktop/NAEON-${VERSION}-Installer.dmg"
+cp -f "$DMG" "$HOME/Desktop/NAEON-Installer.dmg"
+cp -f "$DMG" "$HOME/Downloads/NAEON-${VERSION}-Installer.dmg" 2>/dev/null || true
+
+# touch to refresh Finder
+touch "$HOME/Desktop/NAEON-${VERSION}-Installer.dmg"
+open -R "$HOME/Desktop/NAEON-${VERSION}-Installer.dmg"
+open "$HOME/Desktop/NAEON-${VERSION}-Installer.dmg"
+
 echo "=== DONE ==="
-ls -lah "$APP" "$ZIP" "$DMG" "$DIST/latest.json"
-echo "Install: open tools/mac/Install\\ NAEON.command  (or mount DMG)"
+ls -lah "$DMG" "$HOME/Desktop/NAEON-${VERSION}-Installer.dmg" "$HOME/Desktop/NAEON-Installer.dmg"
+du -sh "$APP" "$APP/Contents/Resources/assets" 2>/dev/null || true
+stat -f "%Sm %N" -t "%Y-%m-%d %H:%M" "$HOME/Desktop/NAEON-${VERSION}-Installer.dmg"

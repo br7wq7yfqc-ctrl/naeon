@@ -1,5 +1,6 @@
 class_name ResourceNode
 extends Node3D
+const _AP = preload("res://scripts/assets/AssetPaths.gd")
 
 ## Harvestable resource node on planet surface / asteroid.
 
@@ -50,11 +51,7 @@ func _ready_load_visual() -> void:
 	try_load_glb("colony/resource_crystal/resource_crystal_cybernex_lod1.glb")
 
 func try_load_glb(rel: String) -> void:
-	var base := ProjectSettings.globalize_path("res://").get_base_dir().get_base_dir()
-	var path := base.path_join("assets").path_join(rel)
-	if not FileAccess.file_exists(path):
-		var home := OS.get_environment("HOME")
-		path = home.path_join("Documents/naeon/assets").path_join(rel)
+	var path: String = _AP.resolve(rel)
 	if not FileAccess.file_exists(path):
 		return
 	var doc := GLTFDocument.new()
@@ -70,3 +67,4 @@ func try_load_glb(rel: String) -> void:
 	add_child(root)
 	root.name = "GLBVisual"
 	print("[", name, "] loaded ", path)
+

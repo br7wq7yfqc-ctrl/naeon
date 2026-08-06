@@ -1,4 +1,5 @@
 extends CharacterBody3D
+const _AP = preload("res://scripts/assets/AssetPaths.gd")
 
 ## Semi-Newtonian space ship controller with modular hardpoints.
 
@@ -69,10 +70,7 @@ func try_load_hull() -> void:
 	print("[Ship] Loaded hull ", path)
 
 func _asset_path(rel: String) -> String:
-	var base := ProjectSettings.globalize_path("res://").get_base_dir().get_base_dir()
-	var c := base.path_join("assets").path_join(rel)
-	if FileAccess.file_exists(c):
-		return c
+	return _AP.resolve(rel)
 	var home := OS.get_environment("HOME")
 	if home != "":
 		var c2 := home.path_join("Documents/naeon/assets").path_join(rel)
