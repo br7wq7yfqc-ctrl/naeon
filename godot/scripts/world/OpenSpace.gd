@@ -280,49 +280,39 @@ func try_enter_ship() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 func _spawn_player_near_ship() -> void:
-	# Prefer full player scene; fallback CharacterBody3D minimal
-	if ResourceLoader.exists(PlayerScene_PATH):
-		player = load(PlayerScene_PATH).instantiate()
-	else:
-		player = _make_fallback_player()
+	# Always use SurfaceWalker for planetary gravity (PlayerController is flat-world TPS).
+	player = _make_fallback_player()
 	world_root.add_child(player)
 	var pad_up := Vector3.UP
 	var pad: Node3D = nearest_pad(ship.global_position)
 	if pad and pad.has_meta("pad_up"):
 		pad_up = pad.get_meta("pad_up")
-	player.global_position = ship.global_position + pad_up * 3.0 + ship.global_transform.basis.x * 4.0
-	# Point camera-ish
+	elif nearest_planet(ship.global_position):
+		var pl = nearest_planet(ship.global_position)
+		pad_up = (ship.global_position - pl.global_position).normalized()
+	# Spawn beside ship, clearly above pad/surface
+	var side: Vector3 = ship.global_transform.basis.x
+	side = (side - pad_up * side.dot(pad_up)).normalized()
+	if side.length_squared() < 0.01:
+		side = pad_up.cross(Vector3.FORWARD).normalized()
+	player.global_position = ship.global_position + pad_up * 2.5 + side * 5.0
 	if player.has_method("set_planet_gravity_provider"):
 		player.set_planet_gravity_provider(self)
-	print("[OpenSpace] TPS exit at ", player.global_position)
+	if player.has_method("set_spawn_basis"):
+		var yaw := atan2(-side.x, -side.z)
+		player.set_spawn_basis(pad_up, yaw)
+	if player.has_method("snap_to_surface"):
+		player.call_deferred("snap_to_surface")
+	# Ensure ship camera off
+	if ship.has_method("set_pilot_active"):
+		ship.set_pilot_active(false)
+	print("[OpenSpace] TPS exit at ", player.global_position, " up=", pad_up)
 
 func _make_fallback_player() -> CharacterBody3D:
 	var p := CharacterBody3D.new()
-	p.collision_layer = 2
-	p.collision_mask = 1
-	var col := CollisionShape3D.new()
-	var sh := CapsuleShape3D.new()
-	sh.radius = 0.4
-	sh.height = 1.6
-	col.shape = sh
-	col.position.y = 0.9
-	p.add_child(col)
-	var mesh := MeshInstance3D.new()
-	var cm := CapsuleMesh.new()
-	cm.radius = 0.4
-	cm.height = 1.6
-	mesh.mesh = cm
-	mesh.position.y = 0.9
-	p.add_child(mesh)
-	var cam_p := Node3D.new()
-	cam_p.name = "CamPivot"
-	cam_p.position.y = 1.5
-	p.add_child(cam_p)
-	var cam := Camera3D.new()
-	cam.position = Vector3(0, 0.2, 3.5)
-	cam.current = true
-	cam_p.add_child(cam)
 	p.set_script(preload("res://scripts/player/SurfaceWalker.gd"))
+	p.set("faction", "Cybernex")
+	p.set("form_name", "Canine")
 	return p
 
 func _process(_delta: float) -> void:
@@ -348,7 +338,7 @@ func _update_hud() -> void:
 	var spd: float = ship.velocity.length() if _in_ship else (player.velocity.length() if player else 0.0)
 	hud_label.text = (
 		"NAEON OpenSpace  |  free flight · seamless land · surface walk\n"
-		+ "WASD thrust  Space/Shift lift  Mouse look  |  1/2/3 modes  |  E land/launch  |  F exit/enter  |  C claim pad\n"
+		+ "WASD thrust  Space/Shift lift  Mouse=flight plane  Z/X roll  |  1/2/3 modes  |  E land  F exit  C claim\n"
 		+ "F1 cycle quality  |  Tab → TestArena (combat sandbox)\n"
 		+ "Mode: %s  Planet: %s  Alt: %dm  Spd: %d  HP:%d SHD:%d  PLOD:%s  CONTRIB:%.0f" % [
 			mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields), (pl.current_lod_name() if pl and pl.has_method("current_lod_name") else "-"), (GameManager.contribution if GameManager else 0.0)

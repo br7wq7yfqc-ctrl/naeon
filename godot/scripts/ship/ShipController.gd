@@ -39,6 +39,7 @@ var cargo: float = 0.0
 var max_cargo: float = 20.0
 var _pitch: float = 0.0
 var _yaw: float = 0.0
+var _roll: float = 0.0
 var _fire_cd: float = 0.0
 var is_landed: bool = false
 var flight_mode: int = FlightMode.SCM
@@ -121,10 +122,9 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		_yaw -= event.relative.x * mouse_sensitivity
 		_pitch -= event.relative.y * mouse_sensitivity
-		_pitch = clamp(_pitch, deg_to_rad(-80), deg_to_rad(80))
-		rotation.y = _yaw
-		if camera_pivot:
-			camera_pivot.rotation.x = _pitch
+		# Full 3D flight plane: ship body pitches + yaws (not camera-only)
+		_pitch = clamp(_pitch, deg_to_rad(-89), deg_to_rad(89))
+		_apply_attitude()
 	if event.is_action_pressed("ui_cancel"):
 		Input.set_mouse_mode(
 			Input.MOUSE_MODE_VISIBLE if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
@@ -182,6 +182,56 @@ func _ship_axis() -> Vector3:
 		lift -= 1.0
 	return Vector3(strafe, lift, thrust)
 
+
+func _apply_attitude() -> void:
+	# Build basis: yaw around world-up for free space; near surface blend pad/planet up
+	var up := _reference_up()
+	var yaw_b := Basis(up, _yaw)
+	var right := yaw_b.x
+	var pitch_b := Basis(right, _pitch)
+	var forward := -pitch_b.z  # nose
+	forward = (forward - up * forward.dot(up) * 0.0).normalized()  # allow free pitch through up
+	# Reconstruct orthonormal basis: right, up_ship, -forward
+	# After pitch, recompute
+	var nose := (yaw_b * Basis(Vector3.RIGHT, _pitch)).z * -1.0
+	var ship_right := up.cross(nose)
+	if ship_right.length_squared() < 1e-6:
+		ship_right = yaw_b.x
+	ship_right = ship_right.normalized()
+	var ship_up := nose.cross(ship_right).normalized()
+	# Optional roll around nose
+	if absf(_roll) > 0.0001:
+		var rb := Basis(nose, _roll)
+		ship_right = rb * ship_right
+		ship_up = rb * ship_up
+	global_transform = Transform3D(Basis(ship_right, ship_up, -nose).orthonormalized(), global_position)
+	# Camera sits behind ship; slight chase only on pivot
+	if camera_pivot:
+		camera_pivot.rotation = Vector3.ZERO
+
+func _reference_up() -> Vector3:
+	# Free space: world Y. Near planet/pad: blend to radial/pad up so landing feels natural
+	var up := Vector3.UP
+	if _open_space and _open_space.has_method("gravity_at"):
+		var g: Vector3 = _open_space.gravity_at(global_position)
+		if g.length() > 0.5:
+			up = (-g).normalized()
+	if _landed_pad and is_instance_valid(_landed_pad) and _landed_pad.has_meta("pad_up"):
+		up = _landed_pad.get_meta("pad_up")
+	return up.normalized()
+
+func _update_roll_input(delta: float) -> void:
+	var roll_in := 0.0
+	if Input.is_physical_key_pressed(KEY_Z):
+		roll_in += 1.0
+	if Input.is_physical_key_pressed(KEY_X):
+		roll_in -= 1.0
+	if roll_in != 0.0:
+		_roll = clampf(_roll + roll_in * 1.8 * delta, -deg_to_rad(80), deg_to_rad(80))
+	else:
+		# Auto-level roll gently in free flight
+		_roll = lerpf(_roll, 0.0, 2.0 * delta)
+
 func _physics_process(delta: float) -> void:
 	if not pilot_active:
 		velocity = Vector3.ZERO
@@ -190,6 +240,9 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector3.ZERO
 		_update_status()
 		return
+
+	_update_roll_input(delta)
+	_apply_attitude()
 
 	_fire_cd = max(0.0, _fire_cd - delta)
 	shields = min(max_shields, shields + 4.0 * delta)
@@ -260,6 +313,10 @@ func _do_land() -> void:
 		velocity = Vector3.ZERO
 		is_landed = true
 		_set_mode(FlightMode.HOVER)
+		# Align flight plane to pad surface
+		_pitch = 0.0
+		_roll = 0.0
+		_apply_attitude()
 		landed.emit()
 		print("[Ship] Landed on pad ", pad.name)
 		_claim_nearby_pad()

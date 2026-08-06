@@ -1,21 +1,19 @@
-# NAEON Development Plan — August 2026
+# NAEON Dev Plan — Aug 2026 (holistic-economical)
 
-**Skill:** holistic-economical · Sysreqs 1060→3060→4060 · Week 5k / Month 20k
+## Critical playability (in progress)
+| Item | Status |
+|------|--------|
+| Ship flight plane follows look (pitch+yaw+roll) | **fixing** |
+| Surface exit no fall-through + radial walk | **fixing** |
+| Character procedural animation | **adding** |
+| Pad claim/harvest | done |
+| Planet LOD + atmo | done |
+| Installer 0.3.0 | shipped |
 
-## Done
-- OpenSpace continuum, planet LOD, atmo limb shaders, altitude fog
-- BaseBuilder pad clusters
-- **PadBaseController**: claim (C / land pulse) + extractor harvest → Contribution + soft colony_ops mastery (no combat P2W)
-- Wave S · A 2w · A leftovers running
+## Budget
+Week 5k / month 20k Tripo · code=0
 
-## P0 next
-1. Installer 0.3.0 OpenSpace main
-2. Turret fire when base owned (optional)
-3. Surface height noise detail
-
-## P1 assets
-- A leftovers (cargo_pod, fuel, solar, holo, barrel, antenna, walkway, asteroid)
-- C hero if week remain > 1k after leftovers
-
-## Deferred
-Bruneton full · multiplayer · Rodin mass
+## Next after controls
+1. Skeletal walk when mesh allows
+2. Surface height detail
+3. Optional Wave C hero
