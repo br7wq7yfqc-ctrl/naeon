@@ -1,38 +1,31 @@
 # NAEON — Shared Agent Memory
 
-**Last updated:** 2026-08-06 (skill v1.5 deepen)
+**Last updated:** 2026-08-06 (rules 18–19 + skill map)
 
 ## Core constraints
-No P2W · soft Knowledge only · asymmetric Cybernex/gROT · Dynamic Ownership + capped Arena influence · readable UI · **Infection max 5** · Tripo-first dual-theme · no secrets/heavy assets in Git · Godot 4 Mac+Windows low-end · reference bars ≠ scope parity · freemium never sells combat/claim power
+No P2W · soft Knowledge only · asymmetric Cybernex/gROT · Dynamic Ownership + capped Arena · readable UI · Infection max 5 · Tripo-first dual-theme · no secrets/heavy assets in Git · Godot 4 Mac+Windows · reference bars ≠ parity · freemium never sells combat/claim power
 
 ## Design reference bars
-- Star Citizen → immersion, seamless **S0–S3**, multi-env UI
-- No Man's Sky → object/terrain flexibility, dual-theme variants
-- EVE / Stellaris → economy risk, logistics, alliance/strategy identity
-- Predecessor / Paragon → MOBA TPS; soft world influence only
-
-## Skill v1.5 highlights
-Freemium allow/deny · Prompt Studio safety · Godot Resource patterns · QA merge gates · session path ownership · phase-now VS priorities · do-not-invent list
-
-## Seamless ladder
-S0 load pockets → S1 context-preserving <3s → S2 fewer hard breaks → S3 stretch. Document stage in HANDOFF.
+Star Citizen → seamless S0–S3 · NMS → variants · EVE/Stellaris → economy/social · Predecessor/Paragon → MOBA TPS soft influence
 
 ## Design corpus
-rules/00–17 · lore (CAMPAIGN_QUEST_IDS) · legal · HANDOFF/HANDOFFS · Skill **v1.5**
+rules/00–19 · lore · legal · HANDOFF/HANDOFFS · Skill **v1.5** (map to include 18–19)
+
+### New this pass
+- **rules/18_SEAMLESS_CONTEXT_PAYLOAD.md** — TransitionContext schema, S0/S1 DoD, primary routes, Godot hooks
+- **rules/19_FREEMIUM_UI_AND_GATES.md** — allow/deny, EN/RU copy keys, screen gates, VS minimum
 
 ## Implementation snapshot
-TestArena + SpaceTest playable · pipeline scripts live · Tripo balance 0 · neon keys TBD · transitions likely S0
+TestArena + SpaceTest playable · pipeline scripts live · Tripo balance 0 · neon keys TBD · transitions **S0** until HANDOFF says otherwise
 
 ## Decision log (recent)
 | Date | Decision |
 |------|----------|
-| 2026-08-06 | Numeric pass 15/16/17 + MOBA caps + quest IDs |
-| 2026-08-06 | Skill v1.3 reference orientations |
-| 2026-08-06 | Skill v1.4 S0–S3, Infection 5, VS acceptance |
-| 2026-08-06 | **Skill v1.5** freemium/AI/Godot patterns/QA/ownership/phase-now |
+| 2026-08-06 | Skill v1.5 freemium/AI/Godot/QA |
+| 2026-08-06 | **rules/18** context payload + **rules/19** freemium UI copy/gates |
 
 ## Open gaps
-Session A: unify Infection to 5 if code at 3 · declare transition stage when Space↔TPS polished · post-playtest retune rates
+Session A: Infection → 5 pips · Session B: implement TransitionContext round-trip TestArena↔SpaceTest · ops: Tripo/neon
 
 ## Agent protocol
-Read HANDOFF → brief → rules → skill **v1.5** → code. Append decisions here.
+HANDOFF → brief → rules (18 for transitions, 19 for shop/sub UI) → skill → code.
