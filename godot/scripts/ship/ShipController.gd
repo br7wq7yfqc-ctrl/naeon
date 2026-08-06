@@ -96,6 +96,36 @@ func _input(event: InputEvent) -> void:
 			else Input.MOUSE_MODE_CAPTURED
 		)
 
+
+func _ship_axis() -> Vector3:
+	# x=strafe, y=lift, z=thrust (forward +)
+	var thrust := 0.0
+	var strafe := 0.0
+	var lift := 0.0
+	if InputMap.has_action("move_forward") and Input.is_action_pressed("move_forward"):
+		thrust += 1.0
+	if InputMap.has_action("move_back") and Input.is_action_pressed("move_back"):
+		thrust -= 0.45
+	if InputMap.has_action("move_left") and Input.is_action_pressed("move_left"):
+		strafe -= 1.0
+	if InputMap.has_action("move_right") and Input.is_action_pressed("move_right"):
+		strafe += 1.0
+	if Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_W):
+		thrust = max(thrust, 1.0)
+	if Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_S):
+		thrust = min(thrust, -0.45) if thrust <= 0.0 else thrust
+		if not (InputMap.has_action("move_forward") and Input.is_action_pressed("move_forward")):
+			thrust = -0.45 if thrust == 0.0 else thrust
+	if Input.is_physical_key_pressed(KEY_A) or Input.is_key_pressed(KEY_A):
+		strafe = -1.0 if strafe == 0.0 else strafe
+	if Input.is_physical_key_pressed(KEY_D) or Input.is_key_pressed(KEY_D):
+		strafe = 1.0 if strafe == 0.0 else strafe
+	if (InputMap.has_action("jump") and Input.is_action_pressed("jump")) or Input.is_physical_key_pressed(KEY_SPACE):
+		lift += 1.0
+	if (InputMap.has_action("sprint") and Input.is_action_pressed("sprint")) or Input.is_physical_key_pressed(KEY_SHIFT):
+		lift -= 1.0
+	return Vector3(strafe, lift, thrust)
+
 func _physics_process(delta: float) -> void:
 	if is_landed:
 		return
@@ -103,21 +133,10 @@ func _physics_process(delta: float) -> void:
 	shields = min(max_shields, shields + 4.0 * delta)
 	energy = min(max_energy, energy + 8.0 * delta)
 
-	var thrust_input: float = 0.0
-	if Input.is_action_pressed("move_forward"):
-		thrust_input += 1.0
-	if Input.is_action_pressed("move_back"):
-		thrust_input -= 0.45
-	var strafe: float = 0.0
-	if Input.is_action_pressed("move_left"):
-		strafe -= 1.0
-	if Input.is_action_pressed("move_right"):
-		strafe += 1.0
-	var lift: float = 0.0
-	if Input.is_action_pressed("jump"):
-		lift += 1.0
-	if Input.is_action_pressed("sprint"):
-		lift -= 1.0
+	var axes: Vector3 = _ship_axis()
+	var thrust_input: float = axes.z
+	var strafe: float = axes.x
+	var lift: float = axes.y
 
 	var thrust: float = base_thrust + _module_thrust()
 	var forward: Vector3 = -global_transform.basis.z

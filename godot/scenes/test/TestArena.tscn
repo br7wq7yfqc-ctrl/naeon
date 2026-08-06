@@ -135,7 +135,7 @@ surface_material_override/0 = SubResource("FloorMat")
 shape = SubResource("FloorShape")
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 6)
 
 [node name="ResourceNode" parent="." instance=ExtResource("4_res")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 4)

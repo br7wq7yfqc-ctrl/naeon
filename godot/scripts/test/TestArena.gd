@@ -142,7 +142,6 @@ func _process(_delta: float) -> void:
 	bar_health.max_value = player.max_health
 	bar_energy.value = player.energy
 	bar_energy.max_value = player.max_energy
-	# proximity med station heal
 	_try_med_heal(_delta)
 	var lines: PackedStringArray = []
 	if player.ability_system:
@@ -157,9 +156,17 @@ func _process(_delta: float) -> void:
 			else:
 				lines.append("%s %s" % [key, ab.ability_name])
 	ability_label.text = "\n".join(lines)
-	info_label.text = "NAEON TestArena  |  %s  |  Form %s  |  WASD mouse Esc  Tab→Space\nQ pulse  E firewall  R hack  F form  |  med station heals nearby  |  dummies+turret" % [
-		player.faction, player.current_form
-	]
+	var mvin: Vector2 = Vector2.ZERO
+	if "last_move_input" in player:
+		mvin = player.last_move_input
+	info_label.text = (
+		"NAEON | %s | Form %s | WASD/arrows | click window to focus | Esc | Tab=Space\n" % [
+			player.faction, player.current_form
+		]
+		+ "Q/E/R/F abilities | input(%.0f,%.0f) floor=%s | med heals" % [
+			mvin.x, mvin.y, str(player.is_on_floor())
+		]
+	)
 
 func _try_med_heal(delta: float) -> void:
 	# Heal near world position of med station prop placement

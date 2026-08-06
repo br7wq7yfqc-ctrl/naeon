@@ -1,7 +1,7 @@
 extends CharacterBody3D
 const _AP = preload("res://scripts/assets/AssetPaths.gd")
 
-## TPS controller for NAEON — forms, abilities, energy, ownership claims.
+## TPS controller — robust WASD (InputMap + physical/keycode fallback).
 
 const FORMS := ["Canine", "Feline", "Avian", "Human"]
 
@@ -28,11 +28,17 @@ var biomass: float = 0.0
 var firewall_timer: float = 0.0
 var _form_index: int = 0
 var _body_mat: StandardMaterial3D
+var last_move_input: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
 	health = max_health
 	energy = max_energy
-	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	add_to_group("player")
+	collision_layer = 2
+	collision_mask = 1  # world only — don't jam on enemy layer oddities
+	floor_snap_length = 0.2
+	# Capture mouse so look + window focus work on first click too
+	call_deferred("_ensure_input_ready")
 	_body_mat = StandardMaterial3D.new()
 	_body_mat.albedo_color = Color(0.08, 0.12, 0.18)
 	_body_mat.metallic = 0.6
@@ -40,17 +46,30 @@ func _ready() -> void:
 	_body_mat.emission_enabled = true
 	if body_mesh:
 		body_mesh.material_override = _body_mat
-	ability_system.setup_default_loadout(faction)
-	ability_system.ability_activated.connect(_on_ability_activated)
+	if ability_system:
+		ability_system.setup_default_loadout(faction)
+		if not ability_system.ability_activated.is_connected(_on_ability_activated):
+			ability_system.ability_activated.connect(_on_ability_activated)
 	_apply_form_stats()
-	add_to_group("player")
 	print("[Player] Ready form=", current_form, " faction=", faction)
+	print("[Player] InputMap move_forward=", InputMap.has_action("move_forward"))
 
-func _input(event: InputEvent) -> void:
+func _ensure_input_ready() -> void:
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	# Re-assert focus for exported .app on macOS
+	if get_viewport():
+		get_viewport().gui_release_focus()
+
+func _unhandled_input(event: InputEvent) -> void:
+	# Click to re-capture (exported Mac apps often start without focus)
+	if event is InputEventMouseButton and event.pressed:
+		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		rotate_y(-event.relative.x * mouse_sensitivity)
-		camera_pivot.rotate_x(-event.relative.y * mouse_sensitivity)
-		camera_pivot.rotation.x = clamp(camera_pivot.rotation.x, deg_to_rad(-80), deg_to_rad(80))
+		if camera_pivot:
+			camera_pivot.rotate_x(-event.relative.y * mouse_sensitivity)
+			camera_pivot.rotation.x = clamp(camera_pivot.rotation.x, deg_to_rad(-80), deg_to_rad(80))
 	if event.is_action_pressed("ui_cancel"):
 		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
@@ -64,34 +83,90 @@ func _physics_process(delta: float) -> void:
 
 	if not is_on_floor():
 		velocity.y -= gravity * delta
-	if Input.is_action_just_pressed("jump") and is_on_floor():
+	if _pressed_jump() and is_on_floor():
 		velocity.y = jump_velocity
 
-	var input_dir: Vector2 = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-	var direction: Vector3 = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
+	var input_dir: Vector2 = _read_move_vector()
+	last_move_input = input_dir
+	# Local space: -Z forward (Godot default)
+	var direction: Vector3 = (transform.basis * Vector3(input_dir.x, 0.0, input_dir.y))
+	if direction.length_squared() > 0.0001:
+		direction = direction.normalized()
+	else:
+		direction = Vector3.ZERO
+
 	var speed: float = move_speed
-	if Input.is_action_pressed("sprint"):
+	if _pressed_sprint():
 		speed *= sprint_multiplier
 	if current_form == "Avian" and not is_on_floor():
 		velocity.y += 2.5 * delta
 		speed *= 1.1
 
-	if direction:
+	if direction != Vector3.ZERO:
 		velocity.x = direction.x * speed
 		velocity.z = direction.z * speed
 	else:
-		velocity.x = move_toward(velocity.x, 0, speed)
-		velocity.z = move_toward(velocity.z, 0, speed)
+		velocity.x = move_toward(velocity.x, 0.0, speed)
+		velocity.z = move_toward(velocity.z, 0.0, speed)
+
 	move_and_slide()
 
-	if Input.is_action_just_pressed("ability_1"):
-		ability_system.try_activate(0)
-	if Input.is_action_just_pressed("ability_2"):
-		ability_system.try_activate(1)
-	if Input.is_action_just_pressed("ability_3"):
-		ability_system.try_activate(2)
-	if Input.is_action_just_pressed("ability_4"):
+	if _just_ability(1):
+		if ability_system:
+			ability_system.try_activate(0)
+	if _just_ability(2):
+		if ability_system:
+			ability_system.try_activate(1)
+	if _just_ability(3):
+		if ability_system:
+			ability_system.try_activate(2)
+	if _just_ability(4):
 		cycle_form()
+
+
+## Robust WASD: InputMap first, then physical keys + keycodes + arrows.
+func _read_move_vector() -> Vector2:
+	var v := Vector2.ZERO
+	if InputMap.has_action("move_left") and InputMap.has_action("move_right") \
+			and InputMap.has_action("move_forward") and InputMap.has_action("move_back"):
+		v = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	# Fallback if InputMap silent (export / focus issues)
+	if v.length_squared() < 0.0001:
+		if Input.is_physical_key_pressed(KEY_A) or Input.is_key_pressed(KEY_A):
+			v.x -= 1.0
+		if Input.is_physical_key_pressed(KEY_D) or Input.is_key_pressed(KEY_D):
+			v.x += 1.0
+		if Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_W):
+			v.y -= 1.0
+		if Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_S):
+			v.y += 1.0
+		if Input.is_physical_key_pressed(KEY_LEFT) or Input.is_key_pressed(KEY_LEFT):
+			v.x -= 1.0
+		if Input.is_physical_key_pressed(KEY_RIGHT) or Input.is_key_pressed(KEY_RIGHT):
+			v.x += 1.0
+		if Input.is_physical_key_pressed(KEY_UP) or Input.is_key_pressed(KEY_UP):
+			v.y -= 1.0
+		if Input.is_physical_key_pressed(KEY_DOWN) or Input.is_key_pressed(KEY_DOWN):
+			v.y += 1.0
+	if v.length_squared() > 1.0:
+		v = v.normalized()
+	return v
+
+func _pressed_jump() -> bool:
+	if InputMap.has_action("jump") and Input.is_action_just_pressed("jump"):
+		return true
+	return false
+
+func _pressed_sprint() -> bool:
+	if InputMap.has_action("sprint") and Input.is_action_pressed("sprint"):
+		return true
+	return Input.is_physical_key_pressed(KEY_SHIFT)
+
+func _just_ability(n: int) -> bool:
+	var action := "ability_%d" % n
+	if InputMap.has_action(action) and Input.is_action_just_pressed(action):
+		return true
+	return false
 
 func cycle_form() -> void:
 	_form_index = (_form_index + 1) % FORMS.size()
@@ -168,7 +243,7 @@ func apply_firewall(duration: float, heal_amount: float = 0.0) -> void:
 func _respawn() -> void:
 	health = max_health
 	energy = max_energy
-	global_position = Vector3(0, 2, 0)
+	global_position = Vector3(0, 2, 6)
 	velocity = Vector3.ZERO
 	print("[Player] Respawned")
 
@@ -205,6 +280,8 @@ func try_load_form_mesh() -> void:
 	var root := doc.generate_scene(state)
 	if root == null:
 		return
+	# Visual only — remove any imported collision that could pin the player
+	_strip_colliders(root)
 	if body_mesh:
 		body_mesh.visible = false
 	add_child(root)
@@ -213,8 +290,20 @@ func try_load_form_mesh() -> void:
 	root.position = Vector3(0, 0, 0)
 	print("[Player] form mesh ", current_form, " -> ", path)
 
+func _strip_colliders(n: Node) -> void:
+	# Remove StaticBody/CollisionShape so form mesh never freezes CharacterBody3D
+	for c in n.get_children():
+		_strip_colliders(c)
+	if n is CollisionShape3D or n is CollisionPolygon3D:
+		n.queue_free()
+	elif n is StaticBody3D or n is RigidBody3D or n is CharacterBody3D or n is AnimatableBody3D:
+		# keep mesh children, free body itself after reparent meshes? simpler: disable
+		n.set("collision_layer", 0)
+		n.set("collision_mask", 0)
+		if n is RigidBody3D:
+			(n as RigidBody3D).freeze = true
+
 func _clear_form_glb() -> void:
 	var old := get_node_or_null("FormGLB")
 	if old:
 		old.queue_free()
-

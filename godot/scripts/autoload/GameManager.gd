@@ -15,6 +15,7 @@ var subject_mastery: Dictionary = {}
 var session_started_at: int = 0
 
 func _ready() -> void:
+	ensure_default_input()
 	session_started_at = int(Time.get_unix_time_from_system())
 	print("[GameManager] NAEON initialized")
 
@@ -50,6 +51,34 @@ func _recalc_knowledge() -> void:
 		knowledge_rank = int(total / subject_mastery.size())
 	knowledge_changed.emit(knowledge_rank)
 
-## Soft combat insight from knowledge (QoL only, no P2W).
 func knowledge_insight_bonus() -> float:
 	return clampf(float(knowledge_rank) * 0.002, 0.0, 0.15)
+
+func ensure_default_input() -> void:
+	var binds := {
+		"move_forward": [KEY_W, KEY_UP],
+		"move_back": [KEY_S, KEY_DOWN],
+		"move_left": [KEY_A, KEY_LEFT],
+		"move_right": [KEY_D, KEY_RIGHT],
+		"jump": [KEY_SPACE],
+		"sprint": [KEY_SHIFT],
+		"ability_1": [KEY_Q],
+		"ability_2": [KEY_E],
+		"ability_3": [KEY_R],
+		"ability_4": [KEY_F],
+	}
+	for action in binds.keys():
+		if not InputMap.has_action(action):
+			InputMap.add_action(action)
+		for k in binds[action]:
+			var has_k := false
+			for existing in InputMap.action_get_events(action):
+				if existing is InputEventKey and (existing.physical_keycode == k or existing.keycode == k):
+					has_k = true
+					break
+			if not has_k:
+				var ev := InputEventKey.new()
+				ev.physical_keycode = k
+				ev.keycode = k
+				InputMap.action_add_event(action, ev)
+	print("[GameManager] Input ready; move_forward events=", InputMap.action_get_events("move_forward").size())
