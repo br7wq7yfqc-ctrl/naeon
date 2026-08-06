@@ -1,33 +1,44 @@
 # NAEON — Ship & Space Combat Seed
 
-**Version:** 0.2
+**Version:** 0.3  
+**Depends on:** rules/18 transitions, rules/03 Ownership, rules/13 MOBA influence, rules/10 UI
 
 ---
 
-## Feel
+## 1. Feel
 
-Semi-Newtonian: thrust, drift, torque; readable inertia; low-end friendly. Multi-crew later (pilot/gunner/engineer). Fleet mode (~30) strategy-assisted from flagship with aggregation/LOD.
-
----
-
-## Modules
-
-Propulsion, Defense (Firewall lattice CX / spore cloud gROT), Offense, Utility (scanner, cargo, hack probe, cleanse beacon), Carrier (drone/fighter bays).
-
-Faction flavour within shared power budgets by tier.
+Semi-Newtonian: thrust, drift, torque; readable inertia; low-end first. Multi-crew later (pilot / gunner / engineer). Fleet ~30 = strategy-assisted from flagship with aggregation/LOD — not 30 full-fidelity sims on minimum preset.
 
 ---
 
-## TPS ↔ Space
+## 2. Modules (data categories)
 
-Early transitions via loading/instance pockets. Hack/Firewall space analogues share ability tags where possible.
+| Category | Examples | Faction flavour (same tier budget) |
+|----------|----------|-------------------------------------|
+| Propulsion | Engines, thrusters | — |
+| Defense | Shields | Firewall lattice (CX) / spore cloud (gROT) |
+| Offense | Guns, missiles | Shared DPS bands by tier |
+| Utility | Scanner, cargo, hack probe, cleanse beacon | Tag-aligned with TPS abilities |
+| Carrier | Drone / fighter bays | Seed only for VS |
 
 ---
 
-## Ownership
+## 3. TPS ↔ Space
 
-Capitals and stations follow Dynamic Ownership. Arena influence cannot permanently flip them alone.
+Use **TransitionContext** (rules/18). Early phases: S0 load pockets; aim S1 (<3 s, preserve quest/claim/cargo). Hack/Firewall space analogues share ability **tags** where possible.
 
 ---
 
-*Space combat design seed.*
+## 4. Ownership
+
+Capitals and stations follow Dynamic Ownership. Arena War Score cannot permanently flip them alone (rules/13).
+
+---
+
+## 5. VS must-have
+
+Flyable placeholder, land to TestArena, one modular attach, one Contested/Ownership object, layer label on transition.
+
+---
+
+*Space design seed authority.*

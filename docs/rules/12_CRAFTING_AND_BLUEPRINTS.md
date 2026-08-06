@@ -1,44 +1,50 @@
 # NAEON — Crafting & Blueprint Rules
 
-**Version:** 0.2
+**Version:** 0.3  
+**Depends on:** rules/15 economy tiers, rules/05, rules/19 freemium, skill economical pipeline
 
 ---
 
-## Layers
+## 1. Layers
 
-| Layer | Examples | Gate |
-|-------|----------|------|
-| Components | Plates, conduits, biomass gel | Gather + basic station |
-| Modules / gear | Ship modules, TPS gear | Blueprints + soft Knowledge hints |
-| Structures | Extractor kits, turrets, décor | Claim context |
-| Cosmetics | Habitat props, emission skins | Blueprint or premium track |
+| Tier / Layer | Examples | Gate |
+|--------------|----------|------|
+| T0 Components | Plates, cables, gel | Gather + basic station |
+| T1 Gear / modules | Basic TPS piece, ship module | Blueprint + mats (rules/15) |
+| T2 Mid | Improved modules | Faction tree |
+| T3 High | High modules | Alliance project or long chain |
+| Cosmetics / décor | Habitat props, emissions | Blueprint or premium cosmetic track |
 
-Decorations never grant combat stats.
-
----
-
-## Blueprints
-
-From quests, capped drops, vendors, or Prompt Studio within numeric templates. AI does not invent unconstrained DPS. Faction fantasy trees with matched power budgets.
+**Decorations never grant combat stats.**
 
 ---
 
-## Ownership and stations
+## 2. Blueprints
 
-Station services can change with Dynamic Ownership. No permanent global endgame craft lockout for the map loser. Personal portable craft limited to low tiers.
+Sources: quests, capped drops, vendors, Prompt Studio **within numeric templates**.
 
----
-
-## Knowledge and anti-P2W
-
-Knowledge = recipe hints / UI friction reduction only. Shop may sell cosmetic skins and soft convenience — not exclusive top-tier weapon blueprints.
+- AI must not invent unconstrained DPS or claim strength.
+- Faction fantasy trees with **matched power budgets** at each tier.
+- Shop: cosmetic skins + craft convenience only — not exclusive top-tier weapon BPs (rules/19).
 
 ---
 
-## Pipeline note
+## 3. Ownership and stations
 
-Many décor/low-tier props = dual-theme variants of one mesh (Priority C). Hero crafts = Priority A.
+Station craft services follow Dynamic Ownership. No permanent global endgame craft lockout for map losers. Portable personal craft = low tiers only.
 
 ---
 
-*Crafting philosophy source of truth.*
+## 4. Knowledge
+
+Recipe hints and UI friction reduction only — not cheaper tiers than tables in rules/15.
+
+---
+
+## 5. Pipeline
+
+Décor / low-tier = dual-theme variants (Priority C). Hero crafts = Priority A. One mesh → two faction materials when possible.
+
+---
+
+*Crafting source of truth.*

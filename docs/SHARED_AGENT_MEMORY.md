@@ -1,23 +1,22 @@
 # NAEON — Shared Agent Memory
 
-**Last updated:** 2026-08-06 (stubs 07–09 + Act I quests + HANDOFFS)
+**Last updated:** 2026-08-06 (**design VS queue closed**)
 
 ## Core constraints
-No P2W · soft Knowledge · asymmetric factions · Dynamic Ownership · Infection max 5 · S0–S3 transitions · Tripo-first · freemium ≠ power · Godot 4 Mac+Windows
+No P2W · soft Knowledge · asymmetric CX/gROT · Dynamic Ownership · Infection **max 5** · S0–S3 · freemium ≠ power · Tripo-first · no secrets in git · Godot 4 Mac+Windows · reference bars ≠ parity
 
 ## Design corpus
-rules/00–19 · lore (CAMPAIGN_QUEST_IDS, **QUEST_ACT_I_STARTERS**) · legal · HANDOFFS (skill v1.6) · Skill v1.6
+rules/00–19 · lore (systems, campaigns, bios, **QUEST_ACT_I_STARTERS**) · design/DATA_SCHEMAS_VS · legal · HANDOFF/HANDOFFS · Skill **v1.6**
 
-## This pass
-- Expanded **07** NPC role IDs · **08** Knowledge soft table + rules · **09** Schism narrative
-- **QUEST_ACT_I_STARTERS** CQ-CX/GR-I-01…03 definitions
-- **HANDOFFS** refreshed for 18/19 and Infection 5
+## Decision log (closeout)
+| Date | Decision |
+|------|----------|
+| 2026-08-06 | **04 v0.2** Infection max **5** (was 3) |
+| 2026-08-06 | Expanded 02, 12, 14; STAR_SYSTEMS v0.2; DATA_SCHEMAS_VS |
+| 2026-08-06 | **Design VS queue marked COMPLETE** — remaining work is code/ops |
 
-## Implementation snapshot
-TestArena + SpaceTest · Tripo 0 · neon TBD · transitions S0
-
-## Open gaps
-A: Infection 5 · B: TransitionContext round-trip · E: implement Act I quests in data · ops Tripo/neon
+## Implementation P0
+A: Infection 5 UI + param align · B: TransitionContext round-trip · Ops: Tripo/neon
 
 ## Protocol
-HANDOFF → HANDOFFS brief → rules → skill → code.
+HANDOFF → HANDOFFS → rules → skill → code. Do not re-open VS design scope without owner decision.
