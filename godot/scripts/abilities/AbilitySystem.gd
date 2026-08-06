@@ -148,6 +148,8 @@ func setup_default_loadout(faction: String = "Cybernex") -> void:
 		hack.damage = 8.0
 		hack.range = 14.0
 		hack.is_hacking = true
+	hack.is_channeled = true
+	hack.channel_time = 1.5
 		hack.effect_color = Color(0.4, 0.8, 1.0)
 		add_ability(hack)
 	else:
@@ -160,6 +162,8 @@ func setup_default_loadout(faction: String = "Cybernex") -> void:
 		infection.damage = 10.0
 		infection.range = 12.0
 		infection.is_hacking = true
+	infection.is_channeled = true
+	infection.channel_time = 1.5
 		infection.faction_restriction = Ability.FactionRestriction.GROT_ONLY
 		infection.effect_color = Color(1.0, 0.15, 0.45)
 		add_ability(infection)
