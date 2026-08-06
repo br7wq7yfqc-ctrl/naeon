@@ -12,24 +12,41 @@ var _history: Array = []  ## {t, snap}
 var _player: Node3D = null
 var _ghost: Node3D = null
 var _tick: float = 0.0
+var _ghost_pending: bool = false
 
 func bind_player(p: Node3D) -> void:
 	_player = p
+	if SoftENet and SoftENet.has_method("bind_player"):
+		SoftENet.bind_player(p)
 	if ghost_enabled:
-		call_deferred("_ensure_ghost")
+		_ghost_pending = true
+		# Wait until scene tree is idle (avoids busy parent during TestArena _ready)
+		get_tree().create_timer(0.05).timeout.connect(_ensure_ghost)
 
 func _ensure_ghost() -> void:
+	if not _ghost_pending:
+		return
 	if _player == null or not is_instance_valid(_player):
 		return
 	if _ghost and is_instance_valid(_ghost):
+		_ghost_pending = false
 		return
 	var parent := _player.get_parent()
 	if parent == null:
+		# try next frame
+		call_deferred("_ensure_ghost")
 		return
 	_ghost = Node3D.new()
 	_ghost.name = "SoftNetGhost"
-	parent.add_child(_ghost)
-	# capsule body
+	parent.add_child.call_deferred(_ghost)
+	call_deferred("_finish_ghost_visual")
+	_ghost_pending = false
+
+func _finish_ghost_visual() -> void:
+	if _ghost == null or not is_instance_valid(_ghost):
+		return
+	if _ghost.get_child_count() > 0:
+		return
 	var mi := MeshInstance3D.new()
 	var cap := CapsuleMesh.new()
 	cap.radius = 0.35
@@ -52,7 +69,8 @@ func _ensure_ghost() -> void:
 	lab.position = Vector3(0, 2.0, 0)
 	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_ghost.add_child(lab)
-	_ghost.global_position = _player.global_position + Vector3(1.5, 0, 1.5)
+	if _player and is_instance_valid(_player):
+		_ghost.global_position = _player.global_position + Vector3(1.5, 0, 1.5)
 	print("[SoftNetSession] ghost spawned (local lag sim ", lag_ms, "ms)")
 
 func _process(delta: float) -> void:
@@ -64,7 +82,6 @@ func _process(delta: float) -> void:
 	_tick = 0.0
 	var snap := _capture()
 	_history.append({"t": Time.get_ticks_msec(), "snap": snap})
-	# trim 2s
 	var now := Time.get_ticks_msec()
 	while _history.size() > 0 and now - int(_history[0]["t"]) > 2000:
 		_history.pop_front()
@@ -98,6 +115,8 @@ func _capture() -> Dictionary:
 func _apply_ghost(now_ms: int) -> void:
 	if _ghost == null or not is_instance_valid(_ghost):
 		return
+	if _ghost.get_parent() == null:
+		return
 	var target_t := now_ms - lag_ms
 	var best: Dictionary = {}
 	for h in _history:
@@ -110,7 +129,6 @@ func _apply_ghost(now_ms: int) -> void:
 	var s: Dictionary = best["snap"]
 	var p: Array = s.get("pos", [0, 0, 0])
 	var dest := Vector3(float(p[0]), float(p[1]), float(p[2]))
-	# offset ghost slightly so it doesn't z-fight under player
 	dest += Vector3(1.2, 0, 0.8)
 	_ghost.global_position = _ghost.global_position.lerp(dest, 0.35)
 	_ghost.rotation.y = float(s.get("yaw", 0.0))

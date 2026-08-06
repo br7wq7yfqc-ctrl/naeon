@@ -21,6 +21,7 @@ LayerContext="*res://scripts/systems/LayerContext.gd"
 LayerContextAuthority="*res://scripts/systems/LayerContextAuthority.gd"
 SoftSession="*res://scripts/systems/SoftSession.gd"
 SoftNetSession="*res://scripts/systems/SoftNetSession.gd"
+SoftENet="*res://scripts/systems/SoftENet.gd"
 
 GameManager="*res://scripts/autoload/GameManager.gd"
 AutoUpdater="*res://scripts/autoload/AutoUpdater.gd"

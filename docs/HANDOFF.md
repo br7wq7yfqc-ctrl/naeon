@@ -1,20 +1,24 @@
-# Handoff — 0.3.6 loco + soft net ghost
+# Handoff — playtest GREEN + SoftENet
 
-## Playable
-Walk bob on FormGLB · soft peer ghost (~120ms lag sim)  
-4 form · F9 faction · SoftSession · Clash soft objectives  
+## Playtest (full)
+`tools/mac/playtest_full.sh` → **PASS=10 FAIL=0**  
+Modes: OpenSpace · Clash/TestArena · SpaceTest · Player · Ship · Dummy · Turret · Colony  
+Headless `Parameter m is null` = dummy renderer noise only  
+Fixed: deferred HUD/form/ghost add_child  
 
-## Installer (Desktop)
-- NAEON-0.3.6-Installer.dmg (~666M)
-- NAEON-Installer.dmg
-- latest.json → 0.3.6
+## Soft multiplayer
+**F10** host :27700 · **F11** join · **F12** leave  
+SoftENet RPC soft state (pos/form/faction) · no combat power  
+
+## Installer
+0.3.6 · next **0.3.7** with SoftENet
 
 ## Budget
 0 Tripo
 
 ## Next
-1. Real ENet multiplayer
+1. Remote player puppets from SoftENet RPC
 2. rclone upload
-3. Skeleton anims when GLB has AnimationPlayer
+3. Skeleton anims
 
-Updated: 2026-08-06T18:20:41.307591+00:00
+Updated: 2026-08-06T19:20:36.738214+00:00

@@ -291,7 +291,7 @@ func _ensure_infection() -> void:
 		var n := Node.new()
 		n.set_script(preload("res://scripts/abilities/InfectionStatus.gd"))
 		n.name = "InfectionStatus"
-		add_child(n)
+		add_child.call_deferred(n)
 
 func _ensure_hud() -> void:
 	if get_tree() == null:
@@ -305,7 +305,7 @@ func _ensure_hud() -> void:
 	hud.set_script(preload("res://scripts/ui/GameHUD.gd"))
 	hud.name = "GameHUD"
 	hud.add_to_group("game_hud")
-	get_tree().current_scene.add_child(hud)
+	get_tree().current_scene.add_child.call_deferred(hud)
 	if hud.has_method("bind_player"):
 		hud.bind_player(self)
 
@@ -341,8 +341,8 @@ func try_load_form_mesh() -> void:
 	_strip_colliders(root)
 	if body_mesh:
 		body_mesh.visible = false
-	add_child(root)
 	root.name = "FormGLB"
+	add_child.call_deferred(root)
 	root.scale = Vector3.ONE * 0.85
 	root.position = Vector3(0, 0, 0)
 	print("[Player] form mesh ", current_form, "/", faction, " -> ", path)
