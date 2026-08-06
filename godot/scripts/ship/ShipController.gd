@@ -315,7 +315,8 @@ func _do_land() -> void:
 		# Face roughly along pad
 		velocity = Vector3.ZERO
 		is_landed = true
-		_spawn_land_fx()
+		_sync_landing_gear()
+	_spawn_land_fx()
 		_set_mode(FlightMode.HOVER)
 		# Align flight plane to pad surface
 		_pitch = 0.0

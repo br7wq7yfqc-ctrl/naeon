@@ -1,19 +1,20 @@
 # Handoff — 0.3.13 Sprint A+B
 
-## A — Ship soft-state + landing gear
-SoftUDP: mode + landed + pitch/roll  
-Procedural ShipLandingGear on local ship + remote puppets  
-DEV_PLAN refreshed  
+## A Ship soft-state + landing gear
+SoftUDP: mode/landed/pitch/roll
+ShipLandingGear procedural deploy on land
+Remote puppets show gear + mode label
 
-## B — Interiors + terrain HUD
-GameHUD: terrain budget m³ · interior banner  
-I enter/exit (SurfaceWalker)  
-groups: terrain_edit, interior_director, open_space  
+## B Interiors + terrain HUD
+G/B terrain budget on HUD
+I enter/exit interior
+groups open_space / terrain_edit / interior_director
 
 ## Installer
-Building 0.3.13  
+Desktop NAEON-0.3.13-Installer.dmg
+Sprint C Tripo deferred
 
 ## Budget
-0 Tripo · Sprint C deferred  
+0 Tripo
 
-Updated: 2026-08-06T23:29:29.939248+00:00
+Updated: 2026-08-06T23:34:35.855212+00:00
