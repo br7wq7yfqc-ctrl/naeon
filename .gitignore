@@ -58,3 +58,12 @@ id_ed25519*
 credentials
 .aws/
 secrets/
+
+# Pipeline working data (keep structure via .gitkeep)
+pipeline/inbox/**
+!pipeline/inbox/.gitkeep
+pipeline/processing/**
+!pipeline/processing/.gitkeep
+pipeline/processed/**
+!pipeline/processed/.gitkeep
+.venv/

@@ -4,39 +4,53 @@
 
 **Репозиторий:** https://github.com/br7wq7yfqc-ctrl/naeon  
 **Концепция:** [CONCEPT.md](CONCEPT.md)  
-**План разработки:** [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+**План разработки:** [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)  
+**Локальный сетап:** [docs/LOCAL_SETUP.md](docs/LOCAL_SETUP.md)  
+**Handoff:** [docs/HANDOFF.md](docs/HANDOFF.md)
+
+## Быстрый старт (Godot 4.3)
+
+```bash
+git clone https://github.com/br7wq7yfqc-ctrl/naeon.git
+cd naeon
+# Открыть папку godot/ в Godot 4.3+
+# Main scene: scenes/test/TestArena.tscn
+```
+
+### Что уже playable
+
+| Сцена | Содержание |
+|-------|------------|
+| `TestArena` | TPS, abilities (Pulse / Firewall / Probe), form cycle, Ownership pillars, extractor → Contribution |
+| `SpaceTest` | Semi-Newtonian ship, modules, fire, land → TestArena |
+
+**Управление (TestArena):** WASD, мышь, Space, Shift, Q/E/R/F, Tab → космос  
+**Управление (Ship):** WASD + Space/Shift, Q огонь, E посадка, R модуль
 
 ## Структура
 
 ```
 naeon/
-├── godot/                  # Godot 4.x проект
-├── assets/                 # Тяжёлые ассеты (локально, в .gitignore)
-├── docs/                   # Документация
-├── scripts/                # Скрипты синхронизации и утилит
-├── .github/workflows/      # CI/CD
+├── godot/                  # Godot 4.3 проект
+├── assets/                 # Тяжёлые ассеты (gitignore)
+├── pipeline/               # Tripo → Blender → dual-theme
+├── docs/                   # Документация + handoff
+├── scripts/                # Sync utilities
 ├── CONCEPT.md
 └── DEVELOPMENT_PLAN.md
 ```
 
-## Быстрый старт
+## Asset pipeline
 
-1. Клонировать репозиторий
-2. Открыть папку `godot/` в Godot 4.3+
-3. (Опционально) Настроить синхронизацию ассетов с бакетом `neon` — см. `docs/ASSETS_STORAGE.md` и `docs/ASSETS_AUTO_SYNC.md`
+```bash
+export TRIPO_API_KEY=tsk_...
+./pipeline/scripts/run_pipeline.sh "cybernex canine robot, dark neon" canine_scout B
+```
 
-## CI/CD
+См. [docs/ASSET_PIPELINE.md](docs/ASSET_PIPELINE.md).
 
-При каждом push/PR в `main` и `develop` запускается:
+## Правила
 
-- Проверка на случайно закоммиченные секреты
-- Валидация структуры проекта
-- Godot headless check
-
-Подробнее: [docs/CI_CD.md](docs/CI_CD.md)
-
-## Важные правила
-
-- Тяжёлые ассеты **никогда** не коммитятся (папка `assets/` в `.gitignore`)
-- Секреты хранятся только локально (`.env`) или в GitHub Secrets
-- Клиент должен собираться под **macOS и Windows**
+- Тяжёлые ассеты **никогда** не коммитятся (`assets/`)
+- Секреты только в `.env` / GitHub Secrets
+- Клиент: **macOS + Windows**

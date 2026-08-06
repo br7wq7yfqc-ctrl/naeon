@@ -1,0 +1,205 @@
+[gd_scene load_steps=14 format=3 uid="uid://naeon_testarena"]
+
+[ext_resource type="Script" path="res://scripts/test/TestArena.gd" id="1_arena"]
+[ext_resource type="PackedScene" uid="uid://naeon_player" path="res://scenes/player/Player.tscn" id="2_player"]
+[ext_resource type="PackedScene" uid="uid://naeon_extractor" path="res://scenes/colony/Extractor.tscn" id="3_ext"]
+[ext_resource type="PackedScene" uid="uid://naeon_resnode" path="res://scenes/colony/ResourceNode.tscn" id="4_res"]
+[ext_resource type="Script" path="res://scripts/ownership/OwnershipComponent.gd" id="5_own"]
+
+[sub_resource type="Environment" id="Env"]
+background_mode = 1
+background_color = Color(0.02, 0.03, 0.06, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.15, 0.22, 0.35, 1)
+ambient_light_energy = 0.55
+tonemap_mode = 2
+glow_enabled = true
+glow_intensity = 0.45
+glow_bloom = 0.2
+fog_enabled = true
+fog_light_color = Color(0.05, 0.08, 0.14, 1)
+fog_density = 0.0025
+
+[sub_resource type="BoxMesh" id="FloorMesh"]
+size = Vector3(60, 1, 60)
+
+[sub_resource type="StandardMaterial3D" id="FloorMat"]
+albedo_color = Color(0.06, 0.08, 0.12, 1)
+metallic = 0.3
+roughness = 0.85
+emission_enabled = true
+emission = Color(0.02, 0.08, 0.12, 1)
+emission_energy_multiplier = 0.3
+
+[sub_resource type="BoxShape3D" id="FloorShape"]
+size = Vector3(60, 1, 60)
+
+[sub_resource type="BoxMesh" id="PillarMesh"]
+size = Vector3(1.2, 3.5, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="PillarMat"]
+albedo_color = Color(0.25, 0.25, 0.3, 1)
+metallic = 0.55
+roughness = 0.35
+emission_enabled = true
+emission = Color(0.5, 0.5, 0.55, 1)
+emission_energy_multiplier = 0.8
+
+[sub_resource type="BoxShape3D" id="PillarShape"]
+size = Vector3(1.2, 3.5, 1.2)
+
+[sub_resource type="BoxMesh" id="WallMesh"]
+size = Vector3(0.4, 2.5, 12)
+
+[node name="TestArena" type="Node3D"]
+script = ExtResource("1_arena")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.86, -0.35, 0.37, 0, 0.72, 0.69, -0.51, -0.6, 0.62, 0, 18, 8)
+light_color = Color(0.75, 0.85, 1, 1)
+light_energy = 1.1
+shadow_enabled = true
+
+[node name="FillLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 6, -6)
+light_color = Color(0.2, 0.9, 1, 1)
+light_energy = 2.5
+omni_range = 28.0
+
+[node name="AccentLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 4, 8)
+light_color = Color(1, 0.15, 0.45, 1)
+light_energy = 1.8
+omni_range = 22.0
+
+[node name="Floor" type="StaticBody3D" parent="."]
+collision_layer = 1
+
+[node name="Mesh" type="MeshInstance3D" parent="Floor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+mesh = SubResource("FloorMesh")
+surface_material_override/0 = SubResource("FloorMat")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+shape = SubResource("FloorShape")
+
+[node name="ClaimPillarA" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -4)
+collision_layer = 1
+
+[node name="Mesh" type="MeshInstance3D" parent="ClaimPillarA"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
+mesh = SubResource("PillarMesh")
+surface_material_override/0 = SubResource("PillarMat")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ClaimPillarA"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
+shape = SubResource("PillarShape")
+
+[node name="Ownership" type="Node3D" parent="ClaimPillarA"]
+script = ExtResource("5_own")
+mesh_path = NodePath("../Mesh")
+label_height = 4.0
+
+[node name="ClaimPillarB" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0, -6)
+collision_layer = 1
+
+[node name="Mesh" type="MeshInstance3D" parent="ClaimPillarB"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
+mesh = SubResource("PillarMesh")
+surface_material_override/0 = SubResource("PillarMat")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ClaimPillarB"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
+shape = SubResource("PillarShape")
+
+[node name="Ownership" type="Node3D" parent="ClaimPillarB"]
+script = ExtResource("5_own")
+mesh_path = NodePath("../Mesh")
+label_height = 4.0
+
+[node name="Barrier" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, -14)
+collision_layer = 1
+
+[node name="Mesh" type="MeshInstance3D" parent="Barrier"]
+mesh = SubResource("WallMesh")
+surface_material_override/0 = SubResource("FloorMat")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Barrier"]
+shape = SubResource("FloorShape")
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 6)
+
+[node name="ResourceNode" parent="." instance=ExtResource("4_res")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 4)
+
+[node name="Extractor" parent="." instance=ExtResource("3_ext")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 0, 4)
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Root" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Info" type="Label" parent="HUD/Root"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 1100.0
+offset_bottom = 70.0
+theme_override_colors/font_color = Color(0.75, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "NAEON TestArena"
+
+[node name="HealthBar" type="ProgressBar" parent="HUD/Root"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 78.0
+offset_right = 260.0
+offset_bottom = 98.0
+max_value = 100.0
+value = 100.0
+show_percentage = false
+
+[node name="EnergyBar" type="ProgressBar" parent="HUD/Root"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 104.0
+offset_right = 260.0
+offset_bottom = 124.0
+max_value = 100.0
+value = 100.0
+show_percentage = false
+
+[node name="Abilities" type="Label" parent="HUD/Root"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 140.0
+offset_right = 360.0
+offset_bottom = 260.0
+theme_override_colors/font_color = Color(0.85, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 16
+text = "Abilities"
+
+[node name="Contribution" type="Label" parent="HUD/Root"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 270.0
+offset_right = 400.0
+offset_bottom = 300.0
+theme_override_colors/font_color = Color(0.55, 1, 0.75, 1)
+theme_override_font_sizes/font_size = 16
+text = "Contribution: 0"

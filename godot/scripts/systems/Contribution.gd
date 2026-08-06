@@ -11,11 +11,11 @@ extends Resource
 func add(amount: float) -> void:
 	value += amount
 	lifetime_value += amount
-	last_updated = Time.get_unix_time_from_system()
+	last_updated = int(Time.get_unix_time_from_system())
 
 func spend(amount: float) -> bool:
 	if value < amount:
 		return false
 	value -= amount
-	last_updated = Time.get_unix_time_from_system()
+	last_updated = int(Time.get_unix_time_from_system())
 	return true

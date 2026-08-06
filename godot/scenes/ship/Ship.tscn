@@ -1,0 +1,48 @@
+[gd_scene load_steps=5 format=3 uid="uid://naeon_ship"]
+
+[ext_resource type="Script" path="res://scripts/ship/ShipController.gd" id="1_ship"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_hull"]
+size = Vector3(2.2, 0.9, 3.4)
+
+[sub_resource type="PrismMesh" id="PrismMesh_hull"]
+size = Vector3(2, 0.9, 3.2)
+
+[sub_resource type="StandardMaterial3D" id="Mat_hull"]
+albedo_color = Color(0.05, 0.12, 0.18, 1)
+metallic = 0.75
+roughness = 0.25
+emission_enabled = true
+emission = Color(0.15, 0.75, 1, 1)
+emission_energy_multiplier = 1.2
+
+[node name="Ship" type="CharacterBody3D"]
+collision_layer = 2
+collision_mask = 1
+motion_mode = 1
+script = ExtResource("1_ship")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape_hull")
+
+[node name="HullMesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("PrismMesh_hull")
+surface_material_override/0 = SubResource("Mat_hull")
+
+[node name="CameraPivot" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot"]
+transform = Transform3D(1, 0, 0, 0, 0.96, 0.28, 0, -0.28, 0.96, 0, 2.2, 7.5)
+current = true
+fov = 72.0
+far = 4000.0
+
+[node name="Modules" type="Node3D" parent="."]
+
+[node name="StatusLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+billboard = 1
+font_size = 22
+outline_size = 5
+text = "SHIP"

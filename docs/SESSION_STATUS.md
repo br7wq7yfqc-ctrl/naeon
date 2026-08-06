@@ -1,21 +1,25 @@
 # NAEON — Session Status
 
-**Last update:** 2026-08-05 20:58 UTC
+**Last update:** 2026-08-06  
+**Mode:** Unified multi-track session (A + B + C)
 
-## Active Multi-Agent Session
-**Status:** STOPPED
+## Active Session
+**Status:** RUNNING (unified)
 
-All sub-agents (Benjamin, Harper, Lucas) have been instructed to stop active work.
+### Tracks
+| Track | Focus | Status |
+|-------|--------|--------|
+| A | TPS + Ability + Ownership + TestArena | Implemented — playable vertical slice |
+| B | ShipController + modules + colony seed | Implemented — SpaceTest + Extractor |
+| C | Asset Pipeline Tripo→Blender→dual-theme→bucket | Scripts live; generation gated on Tripo balance |
 
-## Ready for
-Parallel Build-Sessions using the handoffs in `docs/HANDOFF.md`.
-
-## Current Focus Areas Available
-- Build-Session A: Core Gameplay (TPS + Abilities + Ownership)
-- Build-Session B: Space + Ship + Colony
-- Build-Session C: Asset Pipeline + Tripo + VM
+## Infrastructure
+- Mac: Godot 4.3, repo at `~/Documents/naeon`, `.env` local
+- Asset VM: `84.201.170.6` Blender 4.2.9 + venv + rclone + repo `~/naeon`
+- Tripo API verified (`/user/balance`); **balance currently 0** — top-up required for real generation
+- Bucket `neon` — rclone remote still needs YC keys on machines
 
 ## Notes
-- Tripo API key must be supplied via environment variable only
-- Asset VM public IP was provided earlier (89.169.142.255) — setup script still pending user confirmation
-- No secrets were committed
+- No secrets committed
+- Main scene: `godot/scenes/test/TestArena.tscn`
+- Space scene: `godot/scenes/test/SpaceTest.tscn`
