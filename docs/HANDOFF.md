@@ -1,16 +1,13 @@
 # Handoff — 0.3.0
 
 ## Shipped
-- NAEON **0.3.0** main=OpenSpace (seamless + pads + claim/harvest)
-- Desktop: NAEON-0.3.0-Installer.dmg (~667MB)
-- Auto-update: neon/releases/mac/latest.json → 0.3.0
+- **NAEON 0.3.0** OpenSpace main: seamless flight, planets, pad bases, claim/harvest
+- DMG: Desktop/NAEON-0.3.0-Installer.dmg (~667MB) + neon/releases/mac/
+- PadBaseController: land/C claim · extract → Contribution (no combat P2W)
+- Wave S+A done · week spend ~810 / 4800
 
-## Mechanics
-- PadBaseController: claim on land / C · harvest → Contribution + soft colony_ops mastery (no combat power)
-- Atmosphere limb shaders · planet LOD · altitude fog
-
-## Budget
-HQ spent ~810 / week 4800 · bal ~5.1k
+## Play
+Installer or godot OpenSpace · E land · C claim · F exit · F1 quality
 
 ## Next
-Surface height detail · Wave C hero if desired · ownership dual-mesh swap polish
+Surface detail · optional C hero · more A density if needed
