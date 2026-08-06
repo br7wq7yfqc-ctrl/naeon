@@ -1,0 +1,8 @@
+[
+  {"name": "player_canine", "category": "characters", "priority": "B", "prompt": "low poly cybernetic canine robot character bipedal wolf mech, game hero unit, clean topology"},
+  {"name": "player_feline", "category": "characters", "priority": "B", "prompt": "low poly cybernetic feline cat robot humanoid, game character, clean topology"},
+  {"name": "turret_emplacement", "category": "props", "priority": "B", "prompt": "low poly sci-fi automated defense turret on circular base, game prop"},
+  {"name": "fuel_tank", "category": "colony", "priority": "C", "prompt": "low poly large sci-fi fuel storage tank industrial, colony equipment"},
+  {"name": "walkway_segment", "category": "environments", "priority": "C", "prompt": "low poly sci-fi metal walkway platform segment with rails modular"},
+  {"name": "holo_projector", "category": "props", "priority": "B", "prompt": "low poly sci-fi holographic projector pedestal device, game prop"}
+]
