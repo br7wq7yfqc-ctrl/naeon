@@ -1,22 +1,22 @@
-# Handoff — SoftENet remote puppets
+# Handoff — 0.3.7 SoftENet puppets
 
 ## Soft multiplayer
-**F10** host :27700 · **F11** join · **F12** leave  
-Remote **SoftRemotePuppet** (visual only): pos/form/faction color+scale  
-Soft state RPC 10 Hz · no combat power · no P2W  
+**F10** host :27700 · **F11** join · **F12** leave
+Remote SoftRemotePuppet visual only
 
 ## Playtest
-tools/mac/playtest_full.sh — re-run after puppets  
+10/10 PASS
 
-## Installer
-Building **0.3.7**
+## Installer (Desktop)
+- NAEON-0.3.7-Installer.dmg (~666M)
+- latest.json → 0.3.7
 
 ## Budget
 0 Tripo
 
 ## Next
-1. Puppet dual-theme form GLB (optional, code-first scale OK)
-2. rclone
-3. Skeleton anims
+1. rclone
+2. Skeleton anims
+3. Puppet form GLB optional
 
-Updated: 2026-08-06T19:27:20.029228+00:00
+Updated: 2026-08-06T19:32:52.314933+00:00
