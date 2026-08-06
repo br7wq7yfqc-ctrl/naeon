@@ -14,6 +14,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 GameManager="*res://scripts/autoload/GameManager.gd"
+AutoUpdater="*res://scripts/autoload/AutoUpdater.gd"
 
 [display]
 
@@ -84,6 +85,7 @@ ability_4={
 3d_physics/layer_4="Projectile"
 
 [rendering]
+textures/vram_compression/import_etc2_astc=true
 
 anti_aliasing/quality/msaa_3d=1
 lights_and_shadows/directional_shadow/size=4096

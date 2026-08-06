@@ -16,6 +16,9 @@ var dummy_scene: PackedScene = preload("res://scenes/combat/CombatDummy.tscn")
 
 func _ready() -> void:
 	print("[TestArena] Loaded")
+	var au: Node = get_node_or_null("/root/AutoUpdater")
+	if au != null and au.has_signal("update_available"):
+		au.connect("update_available", Callable(self, "_on_update_available"))
 	if GameManager:
 		GameManager.add_mastery("cybernetics", 5.0)
 		GameManager.contribution_changed.connect(_on_contrib)
@@ -38,10 +41,9 @@ func _spawn_dummies() -> void:
 		d.global_position = spots[i]
 		if d.has_signal("died"):
 			d.died.connect(_on_dummy_died)
-		# Alternate aggression
 		if i % 2 == 1 and d.get("can_move") != null:
-			d.can_move = false
-			d.faction = "gROT"
+			d.set("can_move", false)
+			d.set("faction", "gROT")
 
 func _spawn_props() -> void:
 	var prop_script: Script = preload("res://scripts/assets/GlbProp.gd")
@@ -94,6 +96,11 @@ func _on_contrib(v: float) -> void:
 		contrib_label.text = "Contribution: %.1f  |  Knowledge: %d" % [
 			v, GameManager.knowledge_rank if GameManager else 0
 		]
+
+func _on_update_available(version: String, notes: String) -> void:
+	print("[TestArena] Update available: ", version, " ", notes)
+	if info_label:
+		info_label.text += "\n⬆ Update %s available" % version
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_home") or (event is InputEventKey and event.pressed and event.keycode == KEY_TAB):

@@ -67,3 +67,6 @@ pipeline/processing/**
 pipeline/processed/**
 !pipeline/processed/.gitkeep
 .venv/
+
+/dist/
+
