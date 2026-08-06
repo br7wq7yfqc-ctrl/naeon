@@ -48,9 +48,9 @@ func _ready() -> void:
 	print("[Ship] Ready modules=", modules.size())
 
 func try_load_hull() -> void:
-	var rel := "ships/ship_hull_scout/ship_hull_scout_cybernex_lod1.glb"
+	var rel := "ships/ship_hull_scout/ship_hull_scout_cybernex_lod0.glb"
 	if faction == "gROT":
-		rel = "ships/ship_hull_scout/ship_hull_scout_grot_lod1.glb"
+		rel = "ships/ship_hull_scout/ship_hull_scout_grot_lod0.glb"
 	var path := _asset_path(rel)
 	if path == "" or not FileAccess.file_exists(path):
 		print("[Ship] Hull asset not ready yet: ", rel)
@@ -257,19 +257,19 @@ func _spawn_module_visual(module: ShipModule) -> void:
 	match module.module_type:
 		ShipModule.ModuleType.ENGINE:
 			pos = Vector3(0, 0, 1.25)
-			rel = "ships/ship_module_engine/ship_module_engine_cybernex_lod2.glb"
+			rel = "ships/ship_module_engine/ship_module_engine_cybernex_lod1.glb"
 			scale_v = 0.5
 		ShipModule.ModuleType.WEAPON:
 			pos = Vector3(0.75, 0.05, -0.35)
-			rel = "ships/ship_module_weapon/ship_module_weapon_cybernex_lod2.glb"
+			rel = "ships/ship_module_weapon/ship_module_weapon_cybernex_lod1.glb"
 			scale_v = 0.45
 		ShipModule.ModuleType.SHIELD:
 			pos = Vector3(-0.75, 0.15, 0.1)
-			rel = "ships/shield_module/shield_module_cybernex_lod2.glb"
+			rel = "ships/shield_module/shield_module_cybernex_lod1.glb"
 			scale_v = 0.4
 		ShipModule.ModuleType.EXTRACTOR:
 			pos = Vector3(0, -0.4, 0.15)
-			rel = "colony/extractor_unit/extractor_unit_cybernex_lod2.glb"
+			rel = "colony/extractor_unit/extractor_unit_cybernex_lod1.glb"
 			scale_v = 0.35
 		_:
 			pos = Vector3(randf_range(-0.4, 0.4), 0.35, 0)

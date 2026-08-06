@@ -171,9 +171,9 @@ func _update_labels() -> void:
 		health_bar.text = "HP %d/%d" % [int(health), int(max_health)]
 
 func try_load_drone() -> void:
-	var path: String = _AP.resolve("characters/grot_infector/grot_infector_grot_lod1.glb")
+	var path: String = _AP.resolve("characters/grot_infector/grot_infector_grot_lod0.glb")
 	if not FileAccess.file_exists(path):
-		path = _AP.resolve("characters/combat_drone/combat_drone_grot_lod1.glb")
+		path = _AP.resolve("characters/combat_drone/combat_drone_grot_lod0.glb")
 	if not FileAccess.file_exists(path):
 		return
 	var doc := GLTFDocument.new()

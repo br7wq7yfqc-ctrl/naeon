@@ -90,21 +90,21 @@ func _spawn_props() -> void:
 		# consoles / stations
 		[Vector3(-6, 0, -3), "props/control_console/control_console_cybernex_lod1.glb", 0.9],
 		[Vector3(8, 0, -5), "props/control_console/control_console_grot_lod1.glb", 0.9],
-		[Vector3(-14, 0, -4), "props/med_station/med_station_cybernex_lod2.glb", 0.9],
+		[Vector3(-14, 0, -4), "props/med_station/med_station_cybernex_lod1.glb", 0.9],
 		[Vector3(3, 0, 6), "props/holo_projector/holo_projector_cybernex_lod2.glb", 0.8],
 		# ownership / combat
 		[Vector3(0, 0, -12), "props/claim_beacon/claim_beacon_cybernex_lod1.glb", 1.0],
 		[Vector3(3, 0, -12), "props/claim_beacon/claim_beacon_grot_lod1.glb", 1.0],
 		[Vector3(-12, 0, 0), "props/energy_barrier/energy_barrier_cybernex_lod2.glb", 0.8],
 		[Vector3(12, 0, 0), "props/energy_barrier/energy_barrier_grot_lod2.glb", 0.8],
-		[Vector3(6, 0, -9), "props/turret_emplacement/turret_emplacement_grot_lod2.glb", 0.85],
+		[Vector3(6, 0, -9), "props/turret_emplacement/turret_emplacement_grot_lod1.glb", 0.85],
 		# colony / env
-		[Vector3(14, 0, 6), "colony/colony_habitat/colony_habitat_cybernex_lod2.glb", 1.2],
+		[Vector3(14, 0, 6), "colony/colony_habitat/colony_habitat_cybernex_lod1.glb", 1.2],
 		[Vector3(-8, 0, 8), "colony/solar_panel/solar_panel_cybernex_lod2.glb", 1.0],
 		[Vector3(10, 0, 10), "colony/fuel_tank/fuel_tank_cybernex_lod2.glb", 0.9],
 		[Vector3(0, 0, 14), "props/antenna_array/antenna_array_cybernex_lod2.glb", 1.0],
 		[Vector3(5, 0, 12), "props/nex_relay/nex_relay_cybernex_lod2.glb", 1.0],
-		[Vector3(0, 0, -16), "environments/gate_arch/gate_arch_cybernex_lod2.glb", 1.5],
+		[Vector3(0, 0, -16), "environments/gate_arch/gate_arch_cybernex_lod1.glb", 1.5],
 		[Vector3(-4, 0, 5), "environments/walkway_segment/walkway_segment_cybernex_lod2.glb", 1.2],
 	]
 	for entry in positions:
