@@ -17,6 +17,10 @@ func _spawn_space_props() -> void:
 		[Vector3(0, -2, -8), "environments/landing_pad/landing_pad_cybernex_lod1.glb", 2.5],
 		[Vector3(6, 0, 4), "ships/ship_module_engine/ship_module_engine_cybernex_lod2.glb", 1.5],
 		[Vector3(-6, 0, 4), "ships/ship_module_weapon/ship_module_weapon_cybernex_lod2.glb", 1.5],
+		[Vector3(0, 1, 6), "ships/shield_module/shield_module_cybernex_lod2.glb", 1.2],
+		[Vector3(4, -1, -4), "ships/cargo_pod/cargo_pod_cybernex_lod2.glb", 1.0],
+		[Vector3(-8, -2, -2), "colony/colony_habitat/colony_habitat_cybernex_lod2.glb", 1.5],
+		[Vector3(10, -2, 0), "environments/gate_arch/gate_arch_cybernex_lod2.glb", 1.8],
 	]
 	for e in entries:
 		var prop: Node3D = Node3D.new()
@@ -26,6 +30,7 @@ func _spawn_space_props() -> void:
 		prop.set("add_static_collision", false)
 		add_child(prop)
 		prop.global_position = e[0]
+
 
 func _process(_delta: float) -> void:
 	if hint and ship:

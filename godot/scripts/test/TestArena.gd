@@ -59,6 +59,13 @@ func _spawn_props() -> void:
 		[Vector3(12, 0, 0), "props/energy_barrier/energy_barrier_grot_lod2.glb", 0.8],
 		[Vector3(-2, 0, 10), "props/storage_barrel/storage_barrel_cybernex_lod2.glb", 0.6],
 		[Vector3(1, 0, 10), "props/storage_barrel/storage_barrel_grot_lod2.glb", 0.6],
+		[Vector3(14, 0, 6), "colony/colony_habitat/colony_habitat_cybernex_lod2.glb", 1.2],
+		[Vector3(-14, 0, -4), "props/med_station/med_station_cybernex_lod2.glb", 0.9],
+		[Vector3(0, 0, 14), "props/antenna_array/antenna_array_cybernex_lod2.glb", 1.0],
+		[Vector3(7, 0, 12), "props/ammo_crate/ammo_crate_cybernex_lod2.glb", 0.7],
+		[Vector3(-8, 0, 8), "colony/solar_panel/solar_panel_cybernex_lod2.glb", 1.0],
+		[Vector3(0, 0, -16), "environments/gate_arch/gate_arch_cybernex_lod2.glb", 1.5],
+
 	]
 	for entry in positions:
 		var prop: Node3D = Node3D.new()
