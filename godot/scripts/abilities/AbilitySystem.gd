@@ -42,7 +42,7 @@ func try_activate(index: int, target = null) -> bool:
 func get_cooldown_remaining(index: int) -> float:
 	if index < 0 or index >= abilities.size():
 		return 0.0
-	var ability = abilities[index]
+	var ability: Ability = abilities[index]
 	return current_cooldowns.get(ability, 0.0)
 
 func get_cooldown_ratio(index: int) -> float:

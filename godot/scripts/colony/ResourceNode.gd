@@ -19,7 +19,7 @@ func _ready() -> void:
 	_tint()
 
 func extract(amount: float) -> float:
-	var got := min(reserves, amount * richness)
+	var got: float = min(reserves, amount * richness)
 	reserves -= got
 	_refresh_label()
 	_tint()
@@ -38,7 +38,7 @@ func _tint() -> void:
 		return
 	var mat := StandardMaterial3D.new()
 	mat.emission_enabled = true
-	var t := reserves / max(max_reserves, 1.0)
+	var t: float = reserves / max(max_reserves, 1.0)
 	mat.albedo_color = Color(0.2, 0.15, 0.05).lerp(Color(0.55, 0.4, 0.1), t)
 	mat.emission = Color(0.9, 0.7, 0.15) * t
 	mat.emission_energy_multiplier = 0.5 + t

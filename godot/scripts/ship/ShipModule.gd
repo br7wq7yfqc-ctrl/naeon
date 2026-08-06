@@ -19,7 +19,7 @@ enum ModuleType { HULL, ENGINE, WEAPON, SHIELD, CARGO, EXTRACTOR, SENSOR }
 
 static func make_engine(name: String = "Ion Drive", thrust: float = 18.0) -> ShipModule:
 	var m := ShipModule.new()
-	m.module_id = "engine_%s" % name.to_snake_case()
+	m.module_id = "engine_%s" % name.to_lower().replace(" ", "_")
 	m.display_name = name
 	m.module_type = ModuleType.ENGINE
 	m.thrust = thrust
@@ -29,7 +29,7 @@ static func make_engine(name: String = "Ion Drive", thrust: float = 18.0) -> Shi
 
 static func make_weapon(name: String = "Pulse Cannon", dps: float = 14.0) -> ShipModule:
 	var m := ShipModule.new()
-	m.module_id = "weapon_%s" % name.to_snake_case()
+	m.module_id = "weapon_%s" % name.to_lower().replace(" ", "_")
 	m.display_name = name
 	m.module_type = ModuleType.WEAPON
 	m.weapon_dps = dps
@@ -39,7 +39,7 @@ static func make_weapon(name: String = "Pulse Cannon", dps: float = 14.0) -> Shi
 
 static func make_shield(name: String = "Nex Barrier", bonus: float = 40.0) -> ShipModule:
 	var m := ShipModule.new()
-	m.module_id = "shield_%s" % name.to_snake_case()
+	m.module_id = "shield_%s" % name.to_lower().replace(" ", "_")
 	m.display_name = name
 	m.module_type = ModuleType.SHIELD
 	m.shield_bonus = bonus
@@ -49,7 +49,7 @@ static func make_shield(name: String = "Nex Barrier", bonus: float = 40.0) -> Sh
 
 static func make_extractor(name: String = "RBE Tap", rate: float = 2.0) -> ShipModule:
 	var m := ShipModule.new()
-	m.module_id = "extractor_%s" % name.to_snake_case()
+	m.module_id = "extractor_%s" % name.to_lower().replace(" ", "_")
 	m.display_name = name
 	m.module_type = ModuleType.EXTRACTOR
 	m.extract_rate = rate

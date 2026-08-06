@@ -32,21 +32,21 @@ func _process(delta: float) -> void:
 			if label:
 				label.text = "Extractor idle"
 			return
-	var got := target_node.extract(extract_rate * delta)
+	var got: float = target_node.extract(extract_rate * delta)
 	if got <= 0.0:
 		return
 	total_extracted += got
-	var contrib := got * contribution_per_unit
+	var contrib: float = got * contribution_per_unit
 	if GameManager:
 		GameManager.add_contribution(contrib)
 	contribution_gained.emit(contrib)
 	if label:
-		var fac := ownership.get_faction() if ownership else "?"
+		var fac: String = ownership.get_faction() if ownership else "?"
 		label.text = "EXTRACT %.1f\n%s +%.1f C" % [total_extracted, fac, contrib]
 
 func _find_nearest_resource() -> void:
 	target_node = null
-	var best_d := 9999.0
+	var best_d: float = 9999.0
 	for n in get_tree().get_nodes_in_group("resource_nodes"):
 		if n is ResourceNode and n.reserves > 0.0:
 			var d: float = global_position.distance_to(n.global_position)

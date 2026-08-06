@@ -23,13 +23,13 @@ func get_mastery(subject: String) -> float:
 	return subject_mastery.get(subject, 0.0)
 
 func add_mastery(subject: String, amount: float) -> void:
-	var current = get_mastery(subject)
+	var current: float = get_mastery(subject)
 	subject_mastery[subject] = clampf(current + amount, 0.0, 100.0)
 	_recalculate_overall()
 
 func _recalculate_overall() -> void:
-	var total := 0.0
-	var count := 0
+	var total: float = 0.0
+	var count: int = 0
 	for s in SUBJECTS:
 		total += get_mastery(s)
 		count += 1

@@ -44,7 +44,7 @@ func _recalc_knowledge() -> void:
 	if subject_mastery.is_empty():
 		knowledge_rank = 0
 	else:
-		var total := 0.0
+		var total: float = 0.0
 		for k in subject_mastery.keys():
 			total += subject_mastery[k]
 		knowledge_rank = int(total / subject_mastery.size())

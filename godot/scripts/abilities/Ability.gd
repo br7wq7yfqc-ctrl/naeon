@@ -65,17 +65,19 @@ func _apply_effect(caster: Node, _target) -> void:
 		caster.heal(heal)
 
 func _apply_hacking(caster: Node) -> void:
-	var hit := _ray_query(caster, range)
+	var hit: Dictionary = _ray_query(caster, range)
 	if hit.is_empty():
 		print("[Hacking] No target in range")
 		return
-	var col: Node = hit.get("collider")
-	var target := _find_hackable(col)
+	var col_v: Variant = hit.get("collider")
+	var col: Node = col_v as Node
+	var target: Node = _find_hackable(col)
 	if target:
 		target.on_hacked(caster, damage)
 	else:
 		print("[Hacking] Hit non-hackable: ", col)
-	_spawn_beam(caster, hit.get("position", caster.global_position), Color(1.0, 0.2, 0.55))
+	var hit_pos: Vector3 = hit.get("position", caster.global_position)
+	_spawn_beam(caster, hit_pos, Color(1.0, 0.2, 0.55))
 
 func _find_hackable(node: Node) -> Node:
 	if node == null:
@@ -85,7 +87,7 @@ func _find_hackable(node: Node) -> Node:
 	for c in node.get_children():
 		if c.has_method("on_hacked"):
 			return c
-	var p := node.get_parent()
+	var p: Node = node.get_parent()
 	if p and p.has_method("on_hacked"):
 		return p
 	if p:
@@ -103,7 +105,7 @@ func _spawn_projectile(caster: Node, dmg: float, color: Color) -> void:
 	if caster == null or not caster.is_inside_tree():
 		return
 	var origin: Vector3 = caster.global_position + Vector3.UP * 1.4
-	var dir := -caster.global_transform.basis.z
+	var dir: Vector3 = -caster.global_transform.basis.z
 	if caster.has_node("CameraPivot/Camera3D"):
 		var cam: Camera3D = caster.get_node("CameraPivot/Camera3D")
 		dir = -cam.global_transform.basis.z
@@ -164,7 +166,7 @@ func _spawn_beam(caster: Node, to: Vector3, color: Color) -> void:
 	imm.surface_add_vertex(caster.global_position + Vector3.UP * 1.3)
 	imm.surface_add_vertex(to)
 	imm.surface_end()
-	var tree := caster.get_tree()
+	var tree: SceneTree = caster.get_tree()
 	tree.create_timer(0.25).timeout.connect(func():
 		if is_instance_valid(im):
 			im.queue_free()
@@ -188,7 +190,7 @@ func _spawn_shield_fx(caster: Node, color: Color) -> void:
 	shell.material_override = mat
 	caster.add_child(shell)
 	shell.position = Vector3.UP * 1.0
-	var dur := max(duration, 0.6)
+	var dur: float = max(duration, 0.6)
 	caster.get_tree().create_timer(dur).timeout.connect(func():
 		if is_instance_valid(shell):
 			shell.queue_free()
@@ -197,16 +199,17 @@ func _spawn_shield_fx(caster: Node, color: Color) -> void:
 func _ray_query(caster: Node, max_range: float) -> Dictionary:
 	if caster == null or not caster.is_inside_tree():
 		return {}
-	var space := caster.get_world_3d().direct_space_state
-	var from := caster.global_position + Vector3.UP * 1.4
-	var dir := -caster.global_transform.basis.z
+	var space: PhysicsDirectSpaceState3D = caster.get_world_3d().direct_space_state
+	var from: Vector3 = caster.global_position + Vector3.UP * 1.4
+	var dir: Vector3 = -caster.global_transform.basis.z
 	if caster.has_node("CameraPivot/Camera3D"):
 		var cam: Camera3D = caster.get_node("CameraPivot/Camera3D")
 		from = cam.global_position
 		dir = -cam.global_transform.basis.z
-	var to := from + dir * max_range
-	var q := PhysicsRayQueryParameters3D.create(from, to)
+	var to: Vector3 = from + dir * max_range
+	var q: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(from, to)
 	if caster is CollisionObject3D:
 		q.exclude = [caster.get_rid()]
 	q.collision_mask = 0xFFFFFFFF
-	return space.intersect_ray(q)
+	var result: Dictionary = space.intersect_ray(q)
+	return result

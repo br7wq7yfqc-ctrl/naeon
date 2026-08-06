@@ -67,27 +67,27 @@ func _physics_process(delta: float) -> void:
 	shields = min(max_shields, shields + 4.0 * delta)
 	energy = min(max_energy, energy + 8.0 * delta)
 
-	var thrust_input := 0.0
+	var thrust_input: float = 0.0
 	if Input.is_action_pressed("move_forward"):
 		thrust_input += 1.0
 	if Input.is_action_pressed("move_back"):
 		thrust_input -= 0.45
-	var strafe := 0.0
+	var strafe: float = 0.0
 	if Input.is_action_pressed("move_left"):
 		strafe -= 1.0
 	if Input.is_action_pressed("move_right"):
 		strafe += 1.0
-	var lift := 0.0
+	var lift: float = 0.0
 	if Input.is_action_pressed("jump"):
 		lift += 1.0
 	if Input.is_action_pressed("sprint"):
 		lift -= 1.0
 
-	var thrust := base_thrust + _module_thrust()
-	var forward := -global_transform.basis.z
-	var right := global_transform.basis.x
-	var up := global_transform.basis.y
-	var accel := forward * thrust_input * thrust \
+	var thrust: float = base_thrust + _module_thrust()
+	var forward: Vector3 = -global_transform.basis.z
+	var right: Vector3 = global_transform.basis.x
+	var up: Vector3 = global_transform.basis.y
+	var accel: Vector3 = forward * thrust_input * thrust \
 		+ right * strafe * thrust * 0.55 \
 		+ up * lift * thrust * 0.5
 	velocity += accel * delta
@@ -120,7 +120,7 @@ func attach_module(module: ShipModule) -> void:
 	print("[Ship] Attached ", module.display_name)
 
 func _module_thrust() -> float:
-	var t := 0.0
+	var t: float = 0.0
 	for m in modules:
 		t += m.thrust
 	return t
@@ -134,7 +134,7 @@ func _recompute_stats() -> void:
 	shields = min(shields, max_shields)
 
 func _fire_weapon() -> void:
-	var dps := 8.0
+	var dps: float = 8.0
 	for m in modules:
 		dps += m.weapon_dps
 	if energy < 4.0:
@@ -152,7 +152,7 @@ func _fire_weapon() -> void:
 	mat.emission_energy_multiplier = 3.0
 	mat.albedo_color = mat.emission
 	bolt.material_override = mat
-	var dir := -global_transform.basis.z
+	var dir: Vector3 = -global_transform.basis.z
 	bolt.set_meta("direction", dir)
 	bolt.set_meta("speed", 70.0)
 	get_tree().current_scene.add_child(bolt)
@@ -226,9 +226,9 @@ func get_faction() -> String:
 	return faction
 
 func take_damage(amount: float) -> void:
-	var rest := amount
+	var rest: float = amount
 	if shields > 0.0:
-		var absorbed = min(shields, rest)
+		var absorbed: float = min(shields, rest)
 		shields -= absorbed
 		rest -= absorbed
 	health = max(0.0, health - rest)

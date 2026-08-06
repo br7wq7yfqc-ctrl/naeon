@@ -30,8 +30,8 @@ func _process(_delta: float) -> void:
 			var ab: Ability = player.ability_system.abilities[i]
 			if ab == null:
 				continue
-			var cd := player.ability_system.get_cooldown_remaining(i)
-			var key := ["Q", "E", "R", "F"][i]
+			var cd: float = player.ability_system.get_cooldown_remaining(i)
+			var key: String = ["Q", "E", "R", "F"][i]
 			if cd > 0.0:
 				lines.append("%s %s (%.1fs)" % [key, ab.ability_name, cd])
 			else:

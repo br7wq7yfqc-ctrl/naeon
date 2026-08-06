@@ -42,14 +42,14 @@ func _process(delta: float) -> void:
 func claim(faction_name: String, strength: float = 1.0) -> void:
 	if not claimable:
 		return
-	var f := OwnershipData.from_string(faction_name)
+	var f: OwnershipData.Faction = OwnershipData.from_string(faction_name)
 	data.claim_strength += strength
 	data.start_transition(f)
 	ownership_changed.emit(data.current_faction, data.transition_progress)
 	print("[Ownership] ", name, " → ", data.faction_name())
 
 func on_hacked(caster: Node, amount: float = 1.0) -> void:
-	var faction := "Cybernex"
+	var faction: String = "Cybernex"
 	if caster and caster.has_method("get_faction"):
 		faction = caster.get_faction()
 	# gROT hacking claims toward gROT; Cybernex probe claims toward Cybernex
@@ -87,7 +87,7 @@ func _apply_visual(force: bool = false) -> void:
 		_ensure_material()
 	if _mat == null:
 		return
-	var target := _neutral_color
+	var target: Color = _neutral_color
 	match data.current_faction:
 		OwnershipData.Faction.CYBERNEX:
 			target = _cybernex_color
@@ -97,7 +97,7 @@ func _apply_visual(force: bool = false) -> void:
 			target = _cybernex_color.lerp(_grot_color, 0.5)
 		_:
 			target = _neutral_color
-	var from := _neutral_color
+	var from: Color = _neutral_color
 	match data.previous_faction:
 		OwnershipData.Faction.CYBERNEX:
 			from = _cybernex_color
@@ -105,11 +105,11 @@ func _apply_visual(force: bool = false) -> void:
 			from = _grot_color
 		_:
 			from = _neutral_color
-	var c := from.lerp(target, data.transition_progress)
+	var c: Color = from.lerp(target, data.transition_progress)
 	_mat.albedo_color = c.darkened(0.35)
 	_mat.emission = c
 	_mat.emission_energy_multiplier = 0.8 + data.transition_progress * 1.4
 	if _label:
-		var pct := int(data.transition_progress * 100.0)
+		var pct: int = int(data.transition_progress * 100.0)
 		_label.text = "%s  %d%%" % [data.faction_name(), pct]
 		_label.modulate = c
