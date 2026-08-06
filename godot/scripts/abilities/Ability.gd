@@ -28,6 +28,8 @@ enum FactionRestriction { ANY, CYBERNEX_ONLY, GROT_ONLY }
 @export var heal: float = 0.0
 @export var is_hacking: bool = false
 @export var is_firewall: bool = false
+@export var is_channeled: bool = false
+@export var channel_time: float = 0.0  ## >0 starts ChannelController
 @export var force: float = 0.0
 @export var effect_color: Color = Color(0.0, 0.9, 1.0, 1.0)
 
@@ -51,8 +53,16 @@ func activate(caster: Node, target = null) -> void:
 		caster.spend_energy(energy_cost)
 	if biomass_cost > 0.0 and caster != null and caster.has_method("spend_biomass"):
 		caster.spend_biomass(biomass_cost)
+	if is_channeled and channel_time > 0.0:
+		# ChannelController on caster completes → _apply_effect
+		print("[Ability] ", ability_name, " channeling…")
+		return
 	_apply_effect(caster, target)
 	print("[Ability] ", ability_name, " activated")
+
+func finish_channel(caster: Node, target = null) -> void:
+	_apply_effect(caster, target)
+	print("[Ability] ", ability_name, " channel complete")
 
 func _apply_effect(caster: Node, _target) -> void:
 	if is_hacking:

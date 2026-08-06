@@ -10,6 +10,8 @@ var _ability_label: Label
 var _status_label: Label
 var _infection_label: Label
 var _owner_label: Label
+var _channel_label: Label
+var _channel_bar: ProgressBar
 var _player: Node
 var _ability_sys: Node
 
@@ -74,6 +76,32 @@ func _build() -> void:
 	_owner_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
 	_owner_label.add_theme_constant_override("outline_size", 4)
 	_root.add_child(_owner_label)
+
+	_channel_label = Label.new()
+	_channel_label.set_anchors_preset(Control.PRESET_CENTER)
+	_channel_label.offset_left = -120
+	_channel_label.offset_right = 120
+	_channel_label.offset_top = 40
+	_channel_label.offset_bottom = 70
+	_channel_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_channel_label.add_theme_font_size_override("font_size", 18)
+	_channel_label.add_theme_color_override("font_color", Color(1.0, 0.4, 0.65))
+	_channel_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	_channel_label.add_theme_constant_override("outline_size", 5)
+	_channel_label.visible = false
+	_root.add_child(_channel_label)
+
+	_channel_bar = ProgressBar.new()
+	_channel_bar.set_anchors_preset(Control.PRESET_CENTER)
+	_channel_bar.offset_left = -140
+	_channel_bar.offset_right = 140
+	_channel_bar.offset_top = 72
+	_channel_bar.offset_bottom = 88
+	_channel_bar.min_value = 0.0
+	_channel_bar.max_value = 1.0
+	_channel_bar.show_percentage = false
+	_channel_bar.visible = false
+	_root.add_child(_channel_bar)
 
 func _process(_d: float) -> void:
 	_refresh()
@@ -151,6 +179,25 @@ CONTRIB %.0f  (no P2W)" % [hp, en, fac, form, contrib]
 					best_txt = "PAD %s  %s  (%.0fm)" % [n.get_faction(), st, d]
 		nearest = best_txt
 	_owner_label.text = nearest
+	# Channel bar
+	var ch_ratio := 0.0
+	var channeling := false
+	var ch_name := ""
+	if _player:
+		var ch = _player.get_node_or_null("ChannelController")
+		if ch and ch.has_method("is_channeling") and ch.is_channeling():
+			channeling = true
+			ch_ratio = float(ch.get_ratio())
+			ch_name = str(ch.ability_name)
+	if _channel_bar and _channel_label:
+		_channel_bar.visible = channeling
+		_channel_label.visible = channeling
+		if channeling:
+			_channel_bar.value = ch_ratio
+			_channel_label.text = "CHANNEL %s  %d%%" % [ch_name, int(ch_ratio * 100)]
+			# Distinct silhouette colour for Hack channel (danger magenta)
+			_channel_label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.6))
+
 	if "contested" in nearest.to_lower():
 		_owner_label.add_theme_color_override("font_color", Color(1.0, 0.55, 0.2))
 	else:

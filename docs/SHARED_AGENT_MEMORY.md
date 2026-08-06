@@ -79,4 +79,4 @@
 
 | 2026-08-06 | SurfaceDetail procedural patches (code-first, 0 Tripo) | Holistic economical |
 | 2026-08-06 | Contested pad ownership with readable dual-threat tint | Dynamic Ownership |
-| 2026-08-06 | Infection stacks 1–5 + GameHUD; Firewall cleanse 1; ability CD to param sheet | Ability track A |
+| 2026-08-06 | Infection stacks 1–5 + GameHUD; Firewall cleanse 1; ability CD to param sheet | Ability track A |\n\n| 2026-08-06 | Channeled Hack 1.5s interruptible + Firewall break; pad dual-theme swap on claim resolve | Holistic A/B |\n

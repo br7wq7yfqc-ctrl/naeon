@@ -10,6 +10,8 @@ signal ability_failed(ability: Ability, reason: String)
 
 var current_cooldowns: Dictionary = {}  # Ability -> remaining time
 var owner_character: Node = null
+var _pending_channel_ability: Ability = null
+var _pending_channel_target = null
 
 func _ready() -> void:
 	owner_character = get_parent()
@@ -34,10 +36,64 @@ func try_activate(index: int, target = null) -> bool:
 	if not ability.can_activate(owner_character):
 		ability_failed.emit(ability, "Cannot activate")
 		return false
+	# Ensure channel controller
+	var ch := _ensure_channel()
+	if ch and ch.has_method("is_channeling") and ch.is_channeling():
+		ability_failed.emit(ability, "Channeling")
+		return false
+	if ability.is_channeled and ability.channel_time > 0.0 and ch:
+		# Spend costs via activate (no effect yet)
+		ability.activate(owner_character, target)
+		_pending_channel_ability = ability
+		_pending_channel_target = target
+		var ok: bool = ch.start_channel(
+			ability.ability_name,
+			ability.channel_time,
+			Callable(self, "_on_channel_done"),
+			owner_character
+		)
+		if not ok:
+			ability_failed.emit(ability, "Cannot channel")
+			return false
+		# CD starts only after complete — set half-CD on start to prevent spam
+		current_cooldowns[ability] = minf(ability.cooldown * 0.25, 2.0)
+		ability_activated.emit(ability)
+		return true
 	ability.activate(owner_character, target)
 	current_cooldowns[ability] = ability.cooldown
 	ability_activated.emit(ability)
 	return true
+
+func _ensure_channel() -> Node:
+	if owner_character == null:
+		return null
+	var ch = owner_character.get_node_or_null("ChannelController")
+	if ch == null:
+		ch = Node.new()
+		ch.set_script(preload("res://scripts/abilities/ChannelController.gd"))
+		ch.name = "ChannelController"
+		owner_character.add_child(ch)
+	return ch
+
+func _complete_channel(ability: Ability, target) -> void:
+	if ability == null:
+		return
+	if ability.has_method("finish_channel"):
+		ability.finish_channel(owner_character, target)
+	else:
+		ability._apply_effect(owner_character, target)
+	current_cooldowns[ability] = ability.cooldown
+	print("[AbilitySystem] channel finished ", ability.ability_name)
+
+func get_channel_ratio() -> float:
+	var ch := _ensure_channel()
+	if ch and ch.has_method("get_ratio") and ch.is_channeling():
+		return float(ch.get_ratio())
+	return 0.0
+
+func is_channeling() -> bool:
+	var ch = owner_character.get_node_or_null("ChannelController") if owner_character else null
+	return ch != null and ch.has_method("is_channeling") and ch.is_channeling()
 
 func get_cooldown_remaining(index: int) -> float:
 	if index < 0 or index >= abilities.size():

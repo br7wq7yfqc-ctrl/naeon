@@ -44,6 +44,7 @@ func _process(delta: float) -> void:
 		_apply_faction_visual()
 		if ownership.transition_progress >= 1.0:
 			_status = "owned"
+			swap_cluster_theme(ownership.faction_name())
 			_refresh_label()
 	if running and ownership and ownership.is_fully_owned():
 		_tick_harvest(delta)
@@ -182,3 +183,27 @@ func _refresh_label() -> void:
 
 func get_faction() -> String:
 	return ownership.faction_name() if ownership else "Neutral"
+
+func swap_cluster_theme(faction_name: String) -> void:
+	# Dynamic Ownership: dual-theme mesh swap on cluster props (0 Tripo — existing variants)
+	var cluster := get_parent()
+	if cluster == null:
+		return
+	var fac := faction_name
+	if fac == "Contested" or fac == "Neutral":
+		return
+	for c in cluster.get_children():
+		if c == self:
+			continue
+		if c.has_method("reload_for_faction"):
+			c.reload_for_faction(fac)
+		elif "relative_path" in c:
+			# GlbProp without method yet — path swap
+			var rel: String = str(c.relative_path)
+			var fx := "cybernex" if fac != "gROT" else "grot"
+			if "_cybernex_" in rel:
+				rel = rel.replace("_cybernex_", "_%s_" % fx)
+			elif "_grot_" in rel:
+				rel = rel.replace("_grot_", "_%s_" % fx)
+			c.relative_path = rel
+	print("[PadBase] dual-theme cluster → ", fac)

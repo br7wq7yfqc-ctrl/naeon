@@ -40,3 +40,21 @@ func _add_collision_from_meshes(n: Node) -> void:
 			mi.add_child(body)
 	for c in n.get_children():
 		_add_collision_from_meshes(c)
+
+func reload_for_faction(faction: String) -> void:
+	var fx := "cybernex" if faction != "gROT" else "grot"
+	var rel: String = relative_path
+	if "_cybernex_" in rel:
+		rel = rel.replace("_cybernex_", "_%s_" % fx)
+	elif "_grot_" in rel:
+		rel = rel.replace("_grot_", "_%s_" % fx)
+	else:
+		return
+	if rel == relative_path:
+		return
+	relative_path = rel
+	for c in get_children():
+		remove_child(c)
+		c.free()
+	_load_prop()
+	print("[GlbProp] theme → ", faction, " ", relative_path)

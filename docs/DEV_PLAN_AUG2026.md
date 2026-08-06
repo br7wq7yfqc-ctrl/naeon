@@ -1,29 +1,22 @@
-# NAEON Dev Plan — Aug 2026 (holistic-economical)
+# NAEON Dev Plan — Aug 2026
 
-## Done (this pass)
+## Done
 | Item | Status |
 |------|--------|
-| 6DOF flight plane | done |
-| Surface snap walk + procedural anim | done |
-| Pad claim/harvest Contribution | done |
-| Planet LOD + limb atmo | done |
-| Installer 0.3.0 | shipped |
-| **Surface height detail** (procedural patches) | **done** |
-| **Contested ownership** on pads | **done** |
-| **Infection stacks + GameHUD** | **done** |
-| Ability params ↔ parameter sheet rank 1 | **aligned** |
-
-## Budget
-Week 5k / month 20k Tripo · this pass **0 cr** (code-first)
+| 6DOF flight / surface walk / procedural anim | done |
+| SurfaceDetail patches | done |
+| Contested pads | done |
+| Infection + GameHUD | done |
+| Ability sheet rank1 | done |
+| **Channeled Hack + interrupt** | **done** |
+| **Pad dual-theme mesh swap** | **done** |
 
 ## Next
-1. Channelled Hack interrupt UX (channel bar) + Firewall break mid-channel
-2. Skeletal walk when form meshes support skins
-3. Pad dual-mesh swap on ownership resolve
-4. Optional Wave C hero if week remain after polish
-5. Installer 0.3.1 after playtest
+1. Channel VFX during cast
+2. Contested ring HUD polish
+3. Installer 0.3.1
+4. Skeletal anim when rigs ready
+5. Wave C hero if budget
 
-## Soft Knowledge / No P2W
-- Contribution/mastery from harvest only soft economy
-- Infection is combat state from play, not shop
-- Knowledge insight bonus already capped soft on damage
+## Budget policy
+Week 5k / month 20k · code-first · no P2W

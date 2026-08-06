@@ -234,6 +234,10 @@ func take_damage(amount: float) -> void:
 	if firewall_timer > 0.0:
 		amount *= 0.35
 	health = max(0.0, health - amount)
+	# Interrupt own channel on any damage (Hack is fully interruptible)
+	var ch = get_node_or_null("ChannelController")
+	if ch and ch.has_method("notify_damage"):
+		ch.notify_damage()
 	if health <= 0.0:
 		_respawn()
 
@@ -244,6 +248,7 @@ func apply_firewall(duration: float, heal_amount: float = 0.0) -> void:
 		inf.cleanse(1)  # rank1 cleanse_stacks=1
 	if heal_amount > 0.0:
 		heal(heal_amount)
+	_firewall_break_nearby_channels()
 
 func _respawn() -> void:
 	health = max_health
