@@ -1,27 +1,19 @@
 # NAEON — Holistic Development Skill (mirror)
 
 **Canonical loadable skill:** `naeon-holistic-economical`  
-**Version:** 1.8  
+**Version:** 1.9  
 **Updated:** 2026-08-06
 
-## v1.8
-Doc map adds rules **20–24**:
-- 20 Abilities cross-layer (TPS/Space/Strategy; MOBA subset)
-- 21 Weapons / gear / equipment (tier DPS index, no shop power)
-- 22 Ship / base / colony modules + stats
-- 23 Diplomacy: war / truce / coalition / standings
-- 24 Friends / squads (2–5) / parties / fleet seed
+## v1.9 — lore depth
+- SCHISM_TIMELINE · FORMS_AND_IDENTITY · CULTURE_AND_DAILY_LIFE
+- RELICS_AND_PHENOMENA · GLOSSARY_AEXION · NEUTRAL_AND_REMNANTS
+- Guard: narrative never grants exclusive permanent DPS / claim strength
 
-Guards: no squad damage auras · no sub-bought wars · no Premium-only gear tiers · diplomacy ≠ permanent uncapturable
+## v1.8 — systems
+rules 20–24: abilities cross-layer, gear, modules, diplomacy, friends/squads
 
-## v1.7 core retained
-Recursive Observe→Measure→one lever→Reflect · calculation levers · telemetry · Infection max 5 · S1 · freemium · Tripo-first · reference bars ≠ parity
-
-## Path ownership
-A combat/gear · B space/modules/transitions · C assets · D economy/diplomacy · E quests · Design lead UI/skill/social
-
-## Numeric authority
-rules/04, 13, 15, 16 (+ module/gear bands in 21–22). Skill defines safe retune process.
+## v1.7 — methodology
+Recursive one-lever retune · telemetry · Infection max 5 · S1 · freemium · Tripo-first · bars ≠ parity
 
 ## Session protocol
-HANDOFF → brief → rules → skill → code. Reflect after numeric changes.
+HANDOFF → rules/lore → skill → code.
