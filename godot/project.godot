@@ -77,6 +77,11 @@ ability_4={
 ]
 }
 
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/Tripo3d_Godot_Bridge/plugin.cfg")
+
 [layer_names]
 
 3d_physics/layer_1="World"
