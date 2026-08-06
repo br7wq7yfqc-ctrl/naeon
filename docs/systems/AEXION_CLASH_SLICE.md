@@ -25,3 +25,14 @@ OpenSpace → **M** or **Tab** → TestArena Clash · kill dummies to 5 · soft 
 - Towers mid each lane
 - ClashRadar Control HUD
 - Dummies spawn from `lane_spawn_table()`
+
+## Soft lane objectives
+| Action | Pressure | Soft WS |
+|--------|----------|---------|
+| Kill on lane | +12 | via kill WS |
+| Near gROT nexus | +1.2–3.5 /0.25s | — |
+| Forward of z=-10 | +0.8 /0.25s | — |
+| Lane hits 100 | claim once | **+2** |
+| All 3 lanes | match win | win WS |
+
+Never permanent map control. Daily WS still capped at 60.

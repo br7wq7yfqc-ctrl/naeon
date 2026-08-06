@@ -3,17 +3,17 @@
 ## Done
 | Item | Status |
 |------|--------|
-| Clash + WarScore | done |
+| Clash + WarScore + 3 lanes + radar | done |
 | Installer 0.3.3 | shipped |
-| **3-lane readability + radar + dual nexus** | **done** |
+| **Soft lane objectives (pressure 0–100)** | **done** |
+| Alt win: 3 lanes secured | **done** |
 
 ## Next
-1. Lane wave respawn
-2. 0.3.4 installer
-3. Wave C hero
-4. Multiplayer
+1. 0.3.4 installer
+2. Wave C hero
+3. Multiplayer
 
 ## Budget
 Week 5k / month 20k · 0 Tripo · no P2W
 
-Updated: 2026-08-06T17:38:15.772021+00:00
+Updated: 2026-08-06T17:43:08.647430+00:00

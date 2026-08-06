@@ -1,22 +1,21 @@
-# Handoff — Clash 3-lane readability + radar
+# Handoff — soft lane objectives + Clash pressure
 
 ## Playable
 OpenSpace · **M** → Aexion Clash  
-**3 lanes** TOP (cyan) / MID (gold) / BOT (magenta) · dual NEXUS · towers  
-**Radar** bottom-right · lane HUD · dummies slotted per lane  
-War Score soft (daily 60) · first to 5 kills  
+3 lanes · radar · dual nexus · towers  
+**Lane pressure** T/M/B 0–100 (push north / kill on lane / near gROT nexus)  
+Secure lane @100 → **+2 soft WS** · all 3 = alt win  
+Kills 5 = classic win · daily WS cap 60 · no planet flip  
 
 ## Installer
-Desktop `NAEON-0.3.3-Installer.dmg` (~666M) — still current for this polish  
-Next stamp **0.3.4** after more playtest
+0.3.3 on Desktop · next **0.3.4** (this polish)
 
 ## Budget
 0 Tripo
 
 ## Next
-1. Wave respawn on lanes
-2. Soft lane objective score
-3. Wave C hero art
-4. rclone 0.3.3 when CLI available
+1. 0.3.4 DMG export
+2. Wave C hero (Tripo)
+3. Multiplayer later
 
-Updated: 2026-08-06T17:38:15.772021+00:00
+Updated: 2026-08-06T17:43:08.647430+00:00

@@ -186,8 +186,12 @@ func _spawn_claim_nodes() -> void:
 func _on_dummy_died() -> void:
 	call_deferred("_maybe_refill_lane")
 	kills += 1
+	var lane_k := "MID"
+	# last-killed lane is unknown here; prefer player lane if available
+	if _lanes and "player_lane" in _lanes:
+		lane_k = str(_lanes.player_lane)
 	if _clash and _clash.has_method("register_kill"):
-		_clash.register_kill()
+		_clash.register_kill(lane_k)
 	elif _clash and "kills" in _clash:
 		# sync local kills display from clash if present
 		pass
@@ -223,7 +227,10 @@ func _process(_delta: float) -> void:
 	ability_label.text = "\n".join(lines)
 	if contrib_label and _clash and _clash.has_method("status_line"):
 		var econ2 := GameManager.economy_label() if GameManager and GameManager.has_method("economy_label") else ""
-		contrib_label.text = "%s  |  %s" % [econ2, _clash.status_line()]
+		var obj := ""
+		if _clash.has_method("objectives_secured"):
+			obj = "  |  OBJ %d/3" % int(_clash.objectives_secured())
+		contrib_label.text = "%s  |  %s%s" % [econ2, _clash.status_line(), obj]
 	var mvin: Vector2 = Vector2.ZERO
 	if "last_move_input" in player:
 		mvin = player.last_move_input
@@ -278,6 +285,8 @@ func _finish_clash_layout() -> void:
 	_lanes.name = "ClashLanes"
 	add_child(_lanes)
 	_setup_clash_radar()
+	if _clash and _clash.has_method("bind_player") and player:
+		_clash.bind_player(player)
 
 
 func _setup_clash_radar() -> void:
@@ -312,7 +321,10 @@ func _update_clash_radar() -> void:
 	if _lanes and _lanes.has_method("update_player"):
 		_lanes.update_player(player.global_position)
 		if _lane_hud and "player_lane" in _lanes:
-			_lane_hud.text = "LANE · %s  |  TOP cyan · MID gold · BOT magenta" % _lanes.player_lane
+			var press := ""
+			if _clash and _clash.has_method("lane_hud_line"):
+				press = "  ·  " + str(_clash.lane_hud_line())
+			_lane_hud.text = "LANE · %s  |  TOP cyan · MID gold · BOT magenta%s" % [_lanes.player_lane, press]
 	if _radar == null or not _radar.has_method("set_snapshot"):
 		return
 	var ene: Array = []
