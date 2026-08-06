@@ -177,6 +177,47 @@ func _sync_planet_sun() -> void:
 		if pl and pl.has_method("set_sun_direction"):
 			pl.set_sun_direction(dir)
 
+
+func _update_altitude_fog() -> void:
+	## Cheap height fog: Environment fog denser inside atmosphere (tier-aware).
+	var we := $WorldEnvironment as WorldEnvironment
+	if we == null or we.environment == null or ship == null:
+		return
+	var env := we.environment
+	var pl: Node3D = nearest_planet(ship.global_position)
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	var use_fog := true
+	if gq and int(gq.tier) == 0:
+		# LOW: lighter fog
+		pass
+	if pl == null or not pl.has_method("altitude_of"):
+		env.fog_enabled = false
+		return
+	var alt: float = pl.altitude_of(ship.global_position)
+	var h: float = float(pl.get("atmosphere_height"))
+	var col = pl.get("atmosphere_color")
+	var fog_col := Color(0.15, 0.25, 0.45) if not (col is Color) else Color(col.r, col.g, col.b)
+	if alt > h * 1.6:
+		env.fog_enabled = false
+		return
+	env.fog_enabled = true
+	env.fog_light_color = fog_col
+	# Density rises toward surface
+	var t: float = clamp(1.0 - max(alt, 0.0) / max(h * 1.6, 1.0), 0.0, 1.0)
+	var dens := 0.00015 + t * t * 0.0022
+	if gq:
+		match int(gq.tier):
+			0:
+				dens *= 0.55
+			2:
+				dens *= 1.15
+			3:
+				dens *= 1.35
+	env.fog_density = dens
+	env.fog_aerial_perspective = 0.5 * t
+	# Optional sun scatter color
+	env.fog_sun_scatter = 0.15 + 0.35 * t
+
 func gravity_at(global_pos: Vector3) -> Vector3:
 	var g := Vector3.ZERO
 	for pl in planets:
@@ -289,6 +330,7 @@ func _make_fallback_player() -> CharacterBody3D:
 	return p
 
 func _process(_delta: float) -> void:
+	_update_altitude_fog()
 	_update_hud()
 
 func _update_hud() -> void:

@@ -6,6 +6,7 @@ class_name PlanetBody
 const _Cache = preload("res://scripts/world/PlanetMeshCache.gd")
 const _ATMO_SHADER = preload("res://shaders/planet_atmosphere.gdshader")
 const _ATMO_INNER_SHADER = preload("res://shaders/planet_atmosphere_inner.gdshader")
+const _BaseBuilder = preload("res://scripts/world/BaseBuilder.gd")
 
 @export var planet_name: String = "Aexion-III"
 @export var radius: float = 1200.0
@@ -242,6 +243,9 @@ func _update_pads(dist: float) -> void:
 		# Load GLB detail only when close
 		if dist < radius + 180.0 and not _glb_loaded:
 			_load_glb_pads()
+		# Stream full base cluster on primary pad when very close
+		if dist < radius + 220.0:
+			_stream_bases()
 	else:
 		if _pads_root:
 			_pads_root.visible = false

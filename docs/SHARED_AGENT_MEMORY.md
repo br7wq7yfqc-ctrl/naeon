@@ -73,3 +73,6 @@
 - Shipped OpenSpace seamless continuum (FloatingOrigin, PlanetBody, ship SCM/NAV/HOVER, surface walk).
 - Main scene switched to OpenSpace.tscn.
 - Wave S complete; A in progress under week cap.
+
+| 2026-08-06 | BaseBuilder pad streaming + altitude fog; A 2w wave nearly complete | Holistic queue |
+| 2026-08-06 | Atmosphere fresnel dual-shell adopted as default (no Bruneton on min spec) | Atmo analysis |

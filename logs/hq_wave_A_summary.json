@@ -1,0 +1,18 @@
+{
+  "wave": "A",
+  "done": [
+    "ship_module_engine",
+    "ship_module_weapon",
+    "shield_module",
+    "resource_crystal",
+    "med_station",
+    "energy_barrier",
+    "control_console",
+    "gate_arch",
+    "nex_relay",
+    "sci_fi_crate",
+    "ammo_crate"
+  ],
+  "balance": 5130.0,
+  "hq_spent": 780.0
+}
