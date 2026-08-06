@@ -1,4 +1,5 @@
 extends Node3D
+const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 ## Pad base: Dynamic Ownership claim + extractor harvest → Contribution (soft economy, no P2W combat).
 
 signal claimed(faction: String)
@@ -99,7 +100,13 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 		_refresh_label()
 		claimed.emit("Contested")
 		print("[PadBase] CONTESTED ", ownership.previous_faction, " vs ", f, " @ ", name)
-		_notify_hud("CONTESTED — Dynamic Ownership open. Soft Knowledge only (colony_ops).")
+		_notify_hud("CONTESTED — Dynamic Ownership open. Soft Knowledge only.")
+	var ic: String = _SoftK.intercept_claim_toast(faction_name)
+	if ic != "":
+		_notify_hud(ic)
+	var tip: String = _SoftK.structure_tip(ownership.faction_name() if ownership else "")
+	if tip != "":
+		_notify_hud(tip)
 		return
 	if ownership.current_faction == OwnershipData.Faction.CONTESTED:
 		ownership.claim_strength += strength
@@ -133,10 +140,10 @@ func _tick_harvest(delta: float) -> void:
 	var got: float = minf(crystal_reserves, extract_rate * delta)
 	crystal_reserves -= got
 	total_extracted += got
-	var contrib: float = got * contribution_per_unit
+	var econ: float = got * contribution_per_unit
 	if GameManager:
-		GameManager.add_contribution(contrib)
-		GameManager.add_mastery("colony_ops", got * 0.02)
+		# Asymmetric soft economy (CONCEPT): Cybernex Contribution vs gROT Biomass
+		GameManager.deposit_economy(econ)
 	harvested.emit(got, total_extracted)
 	_status = "extracting"
 	_refresh_label()
@@ -174,10 +181,10 @@ func _tint_recursive(n: Node, col: Color, t: float) -> void:
 func _refresh_label() -> void:
 	if _label == null or ownership == null:
 		return
-	_label.text = "BASE %s\n%s  C:%.0f\nEXT %.0f / R%.0f" % [
+	_label.text = "BASE %s\n%s  %s\nEXT %.0f / R%.0f" % [
 		ownership.faction_name().to_upper(),
 		_status,
-		GameManager.contribution if GameManager else 0.0,
+		GameManager.economy_label() if GameManager else "—",
 		total_extracted,
 		crystal_reserves,
 	]

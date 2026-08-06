@@ -361,24 +361,30 @@ func _update_hud() -> void:
 		mode_label.text = "GFX: %s" % gqn
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_I:
-		_toggle_interior()
+	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
+	match event.keycode:
+		KEY_I:
+			_toggle_interior()
+		KEY_F9:
+			_cycle_faction_demo()
+		KEY_T:
+			_try_edu_quest()
+		KEY_Y:
+			_skip_edu_quest()
+		KEY_F:
+			if _in_ship:
+				try_exit_ship()
+			else:
+				try_enter_ship()
+		KEY_F1:
+			var gq := get_node_or_null("/root/GraphicsQuality")
+			if gq:
+				gq.cycle()
+		KEY_TAB:
+			if ResourceLoader.exists("res://scenes/test/TestArena.tscn"):
+				get_tree().change_scene_to_file("res://scenes/test/TestArena.tscn")
 
-	if event is InputEventKey and event.pressed and not event.echo:
-		match event.keycode:
-			KEY_F:
-				if _in_ship:
-					try_exit_ship()
-				else:
-					try_enter_ship()
-			KEY_F1:
-				var gq := get_node_or_null("/root/GraphicsQuality")
-				if gq:
-					gq.cycle()
-			KEY_TAB:
-				if ResourceLoader.exists("res://scenes/test/TestArena.tscn"):
-					get_tree().change_scene_to_file("res://scenes/test/TestArena.tscn")
 
 func _toggle_interior() -> void:
 	var actor: Node3D = player if player and is_instance_valid(player) else null
@@ -389,3 +395,72 @@ func _toggle_interior() -> void:
 		return
 	if _interior and _interior.has_method("try_toggle"):
 		_interior.try_toggle(actor, ship)
+
+
+func _cycle_faction_demo() -> void:
+	if GameManager == null:
+		return
+	GameManager.cycle_faction()
+	# Rebuild ability kits for new faction asymmetry
+	var actor: Node = player if player and is_instance_valid(player) else null
+	if actor:
+		var absys = actor.get_node_or_null("AbilitySystem")
+		if absys == null:
+			for c in actor.get_children():
+				if c is AbilitySystem or (c.get_script() and "AbilitySystem" in str(c.get_script().resource_path)):
+					absys = c
+					break
+		if absys and absys.has_method("setup_default_loadout"):
+			absys.setup_default_loadout(GameManager.get_faction_name())
+	# Dual-theme ship modules
+	if ship and ship.has_method("apply_faction_modules"):
+		ship.apply_faction_modules(GameManager.get_faction_name())
+	print("[OpenSpace] faction demo → ", GameManager.get_faction_name())
+
+func _ensure_edu_on_player() -> Node:
+	if player == null or not is_instance_valid(player):
+		return null
+	var eq = player.get_node_or_null("EduQuestStub")
+	if eq == null:
+		eq = Node.new()
+		eq.set_script(preload("res://scripts/systems/EduQuestStub.gd"))
+		eq.name = "EduQuestStub"
+		player.add_child(eq)
+	return eq
+
+func _try_edu_quest() -> void:
+	# Near pad: start educational puzzle (CONCEPT §7.2) — soft Knowledge only
+	if player == null:
+		return
+	var near_pad := false
+	if get_tree():
+		for n in get_tree().get_nodes_in_group("pad_bases"):
+			if n is Node3D and player.global_position.distance_to((n as Node3D).global_position) < 45.0:
+				near_pad = true
+				break
+	if not near_pad:
+		if GameManager:
+			GameManager.toast_requested.emit("EduQuest: approach a pad console (C claim zone)")
+		return
+	var eq := _ensure_edu_on_player()
+	if eq == null:
+		return
+	if eq.is_active():
+		# Cycle simple answers for vertical slice: try random near-correct
+		var guess := randi_range(1, 30)
+		var res: String = eq.try_answer(guess)
+		if res == "ok":
+			GameManager.add_mastery("history", 0.5)  # tiny lore crumb
+		elif res.begins_with("hint:"):
+			var ans := int(res.split(":")[1])
+			GameManager.toast_requested.emit("EduQuest hint: answer is %d — press T to retry" % ans)
+		else:
+			GameManager.toast_requested.emit("EduQuest: incorrect (%s)" % res)
+	else:
+		var info: Dictionary = eq.start_logic_puzzle()
+		GameManager.toast_requested.emit("EduQuest [%s]: %s — T submit · Y skip" % [info.get("subject", "?"), info.get("prompt", "")])
+
+func _skip_edu_quest() -> void:
+	var eq := _ensure_edu_on_player()
+	if eq and eq.has_method("skip"):
+		eq.skip()

@@ -534,3 +534,22 @@ func _spawn_land_fx() -> void:
 	var tree := get_tree()
 	if tree:
 		tree.create_timer(1.2).timeout.connect(p.queue_free)
+
+
+func apply_faction_modules(faction: String) -> void:
+	# Dual-theme fantasy names (CONCEPT asymmetry) — stats stay non-P2W fair
+	modules.clear()
+	if module_root:
+		for c in module_root.get_children():
+			c.queue_free()
+	if faction == "gROT":
+		attach_module(ShipModule.make_engine("Rot Thruster", 18.0))
+		attach_module(ShipModule.make_weapon("Spore Lance", 14.0))
+		attach_module(ShipModule.make_shield("Biomass Shell", 40.0))
+	else:
+		attach_module(ShipModule.make_engine("Ion Drive", 18.0))
+		attach_module(ShipModule.make_weapon("Pulse Cannon", 14.0))
+		attach_module(ShipModule.make_shield("Nex Barrier", 40.0))
+	for m in modules:
+		m.faction_skin = faction
+	print("[Ship] faction modules → ", faction, " count=", modules.size())

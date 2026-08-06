@@ -1,17 +1,20 @@
 extends Node
 
 ## Global game manager for NAEON.
+## Concept: asymmetric Cybernex Contribution (RBE) vs gROT Biomass; Soft Knowledge only.
 
 enum Faction { CYBERNEX, GROT, NEUTRAL }
 
 signal contribution_changed(value: float)
+signal biomass_changed(value: float)
 signal knowledge_changed(rank: int)
 signal faction_changed(faction: Faction)
 signal mastery_gained(subject: String, value: float)
 signal toast_requested(msg: String)
 
 var player_faction: Faction = Faction.CYBERNEX
-var contribution: float = 0.0
+var contribution: float = 0.0  ## Cybernex RBE score
+var biomass: float = 0.0       ## gROT Biomass score
 var knowledge_rank: int = 0
 var subject_mastery: Dictionary = {}
 var session_started_at: int = 0
@@ -33,10 +36,37 @@ func get_faction_name() -> String:
 func set_faction(f: Faction) -> void:
 	player_faction = f
 	faction_changed.emit(f)
+	toast_requested.emit("Faction → %s (asymmetric economy + ability kits)" % get_faction_name())
+
+func cycle_faction() -> void:
+	if player_faction == Faction.CYBERNEX:
+		set_faction(Faction.GROT)
+	else:
+		set_faction(Faction.CYBERNEX)
 
 func add_contribution(amount: float) -> void:
 	contribution += amount
 	contribution_changed.emit(contribution)
+
+func add_biomass(amount: float) -> void:
+	biomass += amount
+	biomass_changed.emit(biomass)
+
+## Faction-aware soft economy deposit from harvest/work
+func deposit_economy(amount: float) -> void:
+	if amount <= 0.0:
+		return
+	if player_faction == Faction.GROT:
+		add_biomass(amount)
+		add_mastery("biomass_ops", amount * 0.02)
+	else:
+		add_contribution(amount)
+		add_mastery("colony_ops", amount * 0.02)
+
+func economy_label() -> String:
+	if player_faction == Faction.GROT:
+		return "BIOMASS %.1f" % biomass
+	return "CONTRIB %.1f" % contribution
 
 func add_mastery(subject: String, amount: float) -> void:
 	var cur: float = subject_mastery.get(subject, 0.0)
@@ -44,7 +74,7 @@ func add_mastery(subject: String, amount: float) -> void:
 	subject_mastery[subject] = nxt
 	_recalc_knowledge()
 	mastery_gained.emit(subject, nxt)
-	# Soft-only: every integer threshold fires info toast (no combat)
+	# Soft-only: every 5 pts fires info toast (no combat)
 	if int(nxt) > int(cur) and int(nxt) % 5 == 0:
 		toast_requested.emit("Knowledge: %s reached %.0f (soft insight only)" % [subject, nxt])
 
@@ -59,6 +89,7 @@ func _recalc_knowledge() -> void:
 	knowledge_changed.emit(knowledge_rank)
 
 func knowledge_insight_bonus() -> float:
+	# Soft display/QoL insight — CAP 15%. Never raw combat.
 	return clampf(float(knowledge_rank) * 0.002, 0.0, 0.15)
 
 func ensure_default_input() -> void:

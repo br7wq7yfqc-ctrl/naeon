@@ -1,5 +1,6 @@
 extends CanvasLayer
 class_name GameHUD
+const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 ## Readable dark-neon HUD: abilities, infection, contested banner, mastery, toasts.
 ## Threat colours universal; faction skin does not hide red/green meaning.
 
@@ -15,6 +16,8 @@ var _channel_bar: ProgressBar
 var _contest_banner: PanelContainer
 var _contest_label: Label
 var _mastery_label: Label
+var _edu_label: Label
+var _edu_quest: Node = null
 var _toast_label: Label
 var _claim_bar: ProgressBar
 var _player: Node
@@ -88,6 +91,15 @@ func _build() -> void:
 	_mastery_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	_mastery_label.add_theme_constant_override("outline_size", 3)
 	_root.add_child(_mastery_label)
+
+	_edu_label = Label.new()
+	_edu_label.position = Vector2(14, 114)
+	_edu_label.add_theme_font_size_override("font_size", 13)
+	_edu_label.add_theme_color_override("font_color", Color(0.95, 0.9, 0.4))
+	_edu_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	_edu_label.add_theme_constant_override("outline_size", 4)
+	_edu_label.visible = false
+	_root.add_child(_edu_label)
 
 	_ability_label = Label.new()
 	_ability_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
@@ -265,10 +277,12 @@ func _refresh() -> void:
 	# Soft Knowledge mastery line (informational only — never combat power)
 	if GameManager and _mastery_label:
 		var m: Dictionary = GameManager.subject_mastery
-		var colony: float = float(m.get("colony_ops", 0.0))
+		var ops_key := "biomass_ops" if GameManager.get_faction_name() == "gROT" else "colony_ops"
+		var colony: float = float(m.get(ops_key, 0.0))
+		var bio: float = float(m.get("biology", 0.0))
 		var rank: int = int(GameManager.knowledge_rank)
 		var soft: float = float(GameManager.knowledge_insight_bonus()) * 100.0
-		_mastery_label.text = "KNOWLEDGE rank %d  |  colony_ops %.1f  |  soft insight +%.1f%% (info only)" % [rank, colony, soft]
+		_mastery_label.text = "KNOWLEDGE r%d | %s %.1f | bio %.0f | insight +%.1f%% | %s" % [rank, ops_key, colony, bio, soft, GameManager.economy_label()]
 
 	# Infection pips — always visible danger colour
 	var stacks := 0
@@ -282,7 +296,10 @@ func _refresh() -> void:
 		var pips := ""
 		for i in 5:
 			pips += "●" if i < stacks else "○"
-		_infection_label.text = "INFECTION %s%s" % [pips, "  GLITCH" if glitch else ""]
+		var stage: String = _SoftK.infection_label(stacks)
+		if stage == "":
+			stage = "INFECTION %s" % pips
+		_infection_label.text = "%s%s" % [stage, "  GLITCH" if glitch else ""]
 		_infection_label.visible = true
 	else:
 		_infection_label.visible = false
@@ -351,6 +368,18 @@ func _refresh() -> void:
 	if _claim_bar:
 		_claim_bar.visible = contested_near
 		_claim_bar.value = claim_ratio
+
+	# Edu quest prompt
+	if _edu_label:
+		var eq = _edu_quest
+		if eq == null and _player:
+			eq = _player.get_node_or_null("EduQuestStub")
+			_edu_quest = eq
+		if eq and eq.has_method("is_active") and eq.is_active():
+			_edu_label.visible = true
+			_edu_label.text = "EDU [T] %s  |  type answer via T cycle · Y skip" % eq.get_prompt()
+		else:
+			_edu_label.visible = false
 
 	# Channel bar
 	var ch_ratio := 0.0
@@ -428,3 +457,8 @@ func _refresh() -> void:
 
 func _on_gm_toast(msg: String) -> void:
 	push_toast(msg, 3.0)
+
+
+func _soft_infection_text(stacks: int) -> String:
+	# CONCEPT §7.3 Biology mastery — stage labels only
+	return _SoftK.infection_label(stacks)
