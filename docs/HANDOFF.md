@@ -1,20 +1,21 @@
-# Handoff — 0.3.5 form FX + SoftSession + F9 dual-theme
+# Handoff — 0.3.5 form FX + SoftSession
 
 ## Playable
-**4** = cycle hero form (ring + particles)  
-**F9** = Cybernex ↔ gROT dual-theme  
-SoftSession persists form/faction in `user://soft_session.json`  
-gROT → Infector in form cycle  
+**4** form cycle (ring + particles) · **F9** Cybernex/gROT dual-theme  
+SoftSession persists form/faction · gROT Infector in cycle  
+Clash soft lane objectives + War Score  
 
-## Installer
-Building **0.3.5**
+## Installer (Desktop)
+- `NAEON-0.3.5-Installer.dmg` (~666M)
+- `NAEON-Installer.dmg`
+- latest.json → **0.3.5**
 
 ## Budget
 0 Tripo
 
 ## Next
-1. Multiplayer net
+1. Multiplayer net (LayerContextAuthority)
 2. rclone upload
-3. Tripo only if missing LODs
+3. Animations / polish
 
-Updated: 2026-08-06T18:08:46.518413+00:00
+Updated: 2026-08-06T18:14:47.169501+00:00
