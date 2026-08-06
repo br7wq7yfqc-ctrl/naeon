@@ -109,7 +109,10 @@ func _input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_C:
-			attach_module(ShipModule.make_cargo())
+			if is_landed:
+				_claim_nearby_pad()
+			else:
+				attach_module(ShipModule.make_cargo())
 			return
 		if event.keycode == KEY_1:
 			_set_mode(FlightMode.SCM)
@@ -184,32 +187,30 @@ func _ship_axis() -> Vector3:
 
 
 func _apply_attitude() -> void:
-	# Build basis: yaw around world-up for free space; near surface blend pad/planet up
-	var up := _reference_up()
-	var yaw_b := Basis(up, _yaw)
-	var right := yaw_b.x
-	var pitch_b := Basis(right, _pitch)
-	var forward := -pitch_b.z  # nose
-	forward = (forward - up * forward.dot(up) * 0.0).normalized()  # allow free pitch through up
-	# Reconstruct orthonormal basis: right, up_ship, -forward
-	# After pitch, recompute
-	var nose := (yaw_b * Basis(Vector3.RIGHT, _pitch)).z * -1.0
-	var ship_right := up.cross(nose)
-	if ship_right.length_squared() < 1e-6:
-		ship_right = yaw_b.x
-	ship_right = ship_right.normalized()
-	var ship_up := nose.cross(ship_right).normalized()
-	# Optional roll around nose
-	if absf(_roll) > 0.0001:
-		var rb := Basis(nose, _roll)
-		ship_right = rb * ship_right
-		ship_up = rb * ship_up
-	global_transform = Transform3D(Basis(ship_right, ship_up, -nose).orthonormalized(), global_position)
-	# Camera sits behind ship; slight chase only on pivot
+	# Euler-style free-flight: yaw around ref-up, then pitch around local right, then roll around nose.
+	var up_ref := _reference_up()
+	# Start from identity relative to up_ref
+	var f0 := Vector3.FORWARD
+	if absf(up_ref.dot(f0)) > 0.92:
+		f0 = Vector3.RIGHT
+	var right0 := up_ref.cross(f0).normalized()
+	var forward0 := right0.cross(up_ref).normalized()  # level forward
+	var b := Basis(right0, up_ref, -forward0)  # Godot: X right, Y up, Z back (-forward)
+	b = Basis(up_ref, _yaw) * b
+	# Pitch around local right (X)
+	b = b * Basis(Vector3.RIGHT, _pitch)
+	# Roll around local forward (-Z)
+	b = b * Basis(Vector3.FORWARD, _roll)  # FORWARD is -Z in Godot? Basis(Vector3.FORWARD) rotates around -Z
+	# Actually roll around nose = -basis.z
+	var nose := -b.z
+	var right := b.x
+	var up := b.y
+	# Re-orthonormalize with optional roll already applied via last multiply:
+	global_transform = Transform3D(b.orthonormalized(), global_position)
 	if camera_pivot:
 		camera_pivot.rotation = Vector3.ZERO
 
-func _reference_up() -> Vector3:
+func _reference_upfunc _reference_up() -> Vector3:
 	# Free space: world Y. Near planet/pad: blend to radial/pad up so landing feels natural
 	var up := Vector3.UP
 	if _open_space and _open_space.has_method("gravity_at"):
