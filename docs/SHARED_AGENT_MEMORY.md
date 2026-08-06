@@ -1,14 +1,24 @@
 # NAEON — Shared Agent Memory
 
-**Last update:** 2026-08-05 (post-unlock attempt)
+**Last updated:** 2026-08-06
 
-## In main
-00 Design Pillars
-01–06 (Agreement, Ability, Ownership, Balance, Economy, Quests)
-07 NPC Grid
-08 Knowledge Soft Effects
-09 Schism & Ideologies
-+ Star Systems Seed
+## Core constraints
+No P2W; soft Knowledge only; asymmetric Cybernex/gROT; Dynamic Ownership + capped Arena influence; Tripo-first economical assets; no secrets/heavy assets in Git; Godot 4 Mac+Windows low-end.
 
-## Pillars locked
-No hard P2W · Soft Knowledge · Asymmetric viable factions · Economical pipeline · Dynamic Ownership · Counterplay
+## Design corpus on main
+- docs/rules/00–14 (pillars through UI, alliance, crafting, MOBA, ship)
+- docs/legal/ User Agreement, Fair Play, Community Guidelines
+- docs/lore/ Star systems, Campaign arcs, Character bios seeds
+- Skill: naeon-holistic-economical (Grok skills path)
+
+## Decision log (recent)
+| Date | Decision |
+|------|----------|
+| 2026-08-05 | Design Lead + rules 01–06 |
+| 2026-08-05 | Knowledge, Schism, NPC grid, stars |
+| 2026-08-05 | UI interface layer |
+| 2026-08-05 | Alliance, Crafting, MOBA, Ship seeds |
+| 2026-08-06 | Campaigns, Bios, Community Guidelines synced; skill deepening |
+
+## Open gaps
+Economy numeric rates; ability rank 4–5; voice achievement thresholds; MOBA numeric caps; dedupe overlapping UI rule filenames; campaign quest ID lists.
