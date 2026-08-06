@@ -36,13 +36,11 @@ func try_activate(index: int, target = null) -> bool:
 	if not ability.can_activate(owner_character):
 		ability_failed.emit(ability, "Cannot activate")
 		return false
-	# Ensure channel controller
 	var ch := _ensure_channel()
 	if ch and ch.has_method("is_channeling") and ch.is_channeling():
 		ability_failed.emit(ability, "Channeling")
 		return false
 	if ability.is_channeled and ability.channel_time > 0.0 and ch:
-		# Spend costs via activate (no effect yet)
 		ability.activate(owner_character, target)
 		_pending_channel_ability = ability
 		_pending_channel_target = target
@@ -55,7 +53,7 @@ func try_activate(index: int, target = null) -> bool:
 		if not ok:
 			ability_failed.emit(ability, "Cannot channel")
 			return false
-		# CD starts only after complete — set half-CD on start to prevent spam
+		# Short anti-spam lock; full CD applied on complete
 		current_cooldowns[ability] = minf(ability.cooldown * 0.25, 2.0)
 		ability_activated.emit(ability)
 		return true
@@ -75,6 +73,11 @@ func _ensure_channel() -> Node:
 		owner_character.add_child(ch)
 	return ch
 
+func _on_channel_done() -> void:
+	_complete_channel(_pending_channel_ability, _pending_channel_target)
+	_pending_channel_ability = null
+	_pending_channel_target = null
+
 func _complete_channel(ability: Ability, target) -> void:
 	if ability == null:
 		return
@@ -92,7 +95,9 @@ func get_channel_ratio() -> float:
 	return 0.0
 
 func is_channeling() -> bool:
-	var ch = owner_character.get_node_or_null("ChannelController") if owner_character else null
+	if owner_character == null:
+		return false
+	var ch = owner_character.get_node_or_null("ChannelController")
 	return ch != null and ch.has_method("is_channeling") and ch.is_channeling()
 
 func get_cooldown_remaining(index: int) -> float:
@@ -130,11 +135,11 @@ func setup_default_loadout(faction: String = "Cybernex") -> void:
 	if faction == "Cybernex":
 		var fw := Ability.new()
 		fw.ability_name = "Nex-Firewall"
-		fw.description = "Raise short Nex shield + minor heal"
-		fw.cooldown = 8.0
-		fw.energy_cost = 20.0
-		fw.duration = 3.0
-		fw.heal = 15.0
+		fw.description = "Nex shield window + cleanse (param sheet rank 1)"
+		fw.cooldown = 14.0
+		fw.energy_cost = 30.0
+		fw.duration = 5.0
+		fw.heal = 10.0
 		fw.is_firewall = true
 		fw.faction_restriction = Ability.FactionRestriction.CYBERNEX_ONLY
 		fw.effect_color = Color(0.2, 1.0, 0.65)
@@ -142,28 +147,28 @@ func setup_default_loadout(faction: String = "Cybernex") -> void:
 
 		var hack := Ability.new()
 		hack.ability_name = "System Probe"
-		hack.description = "Soft recon probe (training)"
-		hack.cooldown = 5.0
-		hack.energy_cost = 12.0
-		hack.damage = 8.0
-		hack.range = 14.0
+		hack.description = "Soft recon / structure claim pulse (channeled)"
+		hack.cooldown = 10.0
+		hack.energy_cost = 25.0
+		hack.damage = 6.0
+		hack.range = 18.0
 		hack.is_hacking = true
-	hack.is_channeled = true
-	hack.channel_time = 1.5
+		hack.is_channeled = true
+		hack.channel_time = 1.5
 		hack.effect_color = Color(0.4, 0.8, 1.0)
 		add_ability(hack)
 	else:
 		var infection := Ability.new()
-		infection.ability_name = "Biomass Infection"
-		infection.description = "gROT hack / claim push"
-		infection.cooldown = 6.0
-		infection.energy_cost = 8.0
-		infection.biomass_cost = 5.0
-		infection.damage = 10.0
-		infection.range = 12.0
+		infection.ability_name = "Hack"
+		infection.description = "Channeled claim/hack push (param sheet rank 1)"
+		infection.cooldown = 10.0
+		infection.energy_cost = 25.0
+		infection.biomass_cost = 0.0
+		infection.damage = 12.0
+		infection.range = 18.0
 		infection.is_hacking = true
-	infection.is_channeled = true
-	infection.channel_time = 1.5
+		infection.is_channeled = true
+		infection.channel_time = 1.5
 		infection.faction_restriction = Ability.FactionRestriction.GROT_ONLY
 		infection.effect_color = Color(1.0, 0.15, 0.45)
 		add_ability(infection)
@@ -183,5 +188,4 @@ func setup_default_loadout(faction: String = "Cybernex") -> void:
 	form_swap.cooldown = 1.5
 	form_swap.energy_cost = 0.0
 	form_swap.targeting = Ability.TargetingType.SELF
-	# Handled specially in player — still occupies slot 3
 	add_ability(form_swap)
