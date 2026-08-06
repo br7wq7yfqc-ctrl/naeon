@@ -1,98 +1,110 @@
-# NAEON Asset Pipeline (Tripo-first, low-cost)
+# NAEON Asset Pipeline (Tripo-first, minimal cost)
 
 ## Goal
 
-Generate and process 3D assets for NAEON with **minimal external spend**, using:
+Fully automated (as much as possible) generation and processing of 3D assets with **minimal external spend**.
 
-- **Tripo** as primary generator (best free-tier value + good topology)
-- Meshy as secondary
-- Rodin only for rare hero assets
-- Heavy post-processing on our Yandex VM (Blender headless)
-- Automatic Cybernex / gROT dual-theme variants
+Primary generation service: **Tripo**  
+Secondary: Meshy (fallback)  
+Rare: Rodin (hero assets only)
 
-## Priority system
+All heavy processing (LOD, dual-theme materials, export) happens on the Yandex Cloud VM + local `assets/` folder synced with bucket `neon`.
 
-| Priority | Type of asset | Generator policy |
-|----------|---------------|------------------|
-| **A** | Hero characters, flagship ships, key buildings | Tripo → Meshy → (rarely) Rodin |
-| **B** | Regular units, modules, props | Tripo free credits only |
-| **C** | Mass / background / decorations | Procedural + variants from existing meshes |
+---
 
-## Recommended tools
+## Priority System
 
-| Role | Tool | Notes |
-|------|------|-------|
-| Primary generation | **Tripo** | Best free credits + clean topology for games |
-| Secondary | Meshy | Strong textures, good fallback |
-| Hero only | Rodin | High fidelity, expensive |
-| Processing | Blender headless on VM | LOD, UV, dual materials, export |
-| Storage | Yandex Object Storage `neon` | `dev/` folder |
+| Priority | Description | Generation source | Notes |
+|----------|-------------|-------------------|-------|
+| **A** | Hero characters, flagship ships, key buildings | Tripo (paid if needed) → Rodin only if critical | Highest quality |
+| **B** | Regular units, modules, important props | Tripo free credits / Meshy free | Good enough + variants |
+| **C** | Mass decoration, repeated elements | Procedural / reused base meshes + Blender variants | Almost free |
 
-## Pipeline flow
+---
+
+## High-level Flow
 
 ```
-1. Brief / Prompt (with faction + style)
-2. Generate via Tripo API (prefer free credits)
+1. Brief / Prompt (A/B/C priority)
+2. Tripo generation (prefer free credits)
 3. Download .glb → pipeline/inbox/
-4. Blender headless:
+4. Blender headless processing
    - Cleanup
    - LOD0/1/2
-   - Dual materials (Cybernex + gROT)
+   - Cybernex material variant
+   - gROT material variant
    - Collision
 5. Export to assets/{category}/{name}/
-6. rclone sync → s3://neon/dev/
-7. Update assets_manifest.json
+6. Update assets_manifest.json
+7. rclone sync → s3://neon/dev/
 ```
 
-## Faction variants (almost free)
+---
 
-From **one** base mesh we automatically produce:
-
-- `*_cybernex.glb` + materials (clean, cyan/white/green, Venus Project style)
-- `*_grot.glb` + materials (industrial, biomass, red-purple, organic overlays)
-- Shared LODs
-
-This is the main cost-saving technique.
-
-## Environment variables (never commit)
-
-```bash
-TRIPO_API_KEY=tsk_...
-TRIPO_API_ID=naeon-grok          # optional
-YC_STORAGE_ACCESS_KEY=...
-YC_STORAGE_SECRET_KEY=...
-YC_STORAGE_BUCKET=neon
-YC_STORAGE_ENDPOINT=https://storage.yandexcloud.net
-```
-
-## Directory structure on VM / local
+## Folder Structure
 
 ```
-pipeline/
-├── inbox/                 # raw downloads from Tripo/Meshy
-├── processing/            # temp Blender work
-├── processed/             # final glTF + materials
-├── briefs/                # JSON briefs
-├── scripts/
-│   ├── generate_via_tripo.py
-│   ├── process_asset.py     # Blender
-│   ├── make_faction_variants.py
-│   └── run_pipeline.sh
-└── logs/
-
-assets/                       # final Godot-ready assets (synced)
+naeon/
+├── pipeline/
+│   ├── inbox/              # raw downloads from Tripo/Meshy
+│   ├── processing/         # temp Blender work
+│   ├── processed/          # final godot-ready assets
+│   ├── briefs/             # json briefs
+│   └── scripts/
+│       ├── generate_tripo.py
+│       ├── process_asset.py
+│       ├── make_faction_variants.py
+│       └── run_pipeline.sh
+├── assets/                 # local working copy (gitignored)
+└── godot/
 ```
 
-## Current status
+---
 
-- Storage + sync scripts: ready
-- Tripo-first policy: defined
-- Blender processing scripts: to be added next
-- Full VM bootstrap script: next step
+## Tripo Integration
 
-## Rules
+- API key must be provided via environment variable:
+  ```bash
+  export TRIPO_API_KEY="tsk_..."
+  ```
+- Never commit the real key.
+- Script `pipeline/scripts/generate_tripo.py` will:
+  - Accept a prompt + priority
+  - Call Tripo API
+  - Poll for result
+  - Download GLB into `pipeline/inbox/`
 
-- Never commit API keys or `.env`
-- Prefer free Tripo credits
-- One good mesh → many variants
-- Only Priority A may spend paid credits
+---
+
+## Free-tier Strategy
+
+1. Always exhaust Tripo free credits first.
+2. Use Meshy free tier as second source.
+3. Generate one good base mesh → create many variants in Blender (Cybernex / gROT + color / wear variations).
+4. Only upgrade to paid when free limits are exhausted and the asset is Priority A.
+
+---
+
+## Dual Faction Variants (almost free)
+
+After a base mesh is ready, Blender scripts automatically produce:
+
+- `*_cybernex.glb` + materials (clean, cyan/white/green emission, Venus Project style)
+- `*_grot.glb` + materials (dark, organic, red-purple, biomass overlays)
+
+This is the main cost-saving mechanism of the pipeline.
+
+---
+
+## Current Status
+
+- Documentation and structure defined
+- Scripts to be expanded on the Asset Pipeline VM
+- Local `assets/` + rclone sync already prepared
+- Godot `AssetLoader` supports threaded loading
+
+Next steps after VM setup:
+1. Install Blender headless + dependencies
+2. Implement `generate_tripo.py`
+3. Implement `process_asset.py` (LOD + dual materials)
+4. Connect watch → process → sync loop
