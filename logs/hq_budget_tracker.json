@@ -1,0 +1,79 @@
+{
+  "as_of": "2026-08-06T12:28:36.257408+00:00",
+  "policy": {
+    "policy_version": 2,
+    "updated": "2026-08-06",
+    "window_days": 14,
+    "window_start": "2026-08-06",
+    "window_end": "2026-08-20",
+    "cap_credits": 5000,
+    "hard_reserve": 200,
+    "usable_this_window": 4800,
+    "long_term_plan_credits": 20000,
+    "long_term_status": "deferred_not_cancelled",
+    "long_term_resume_after": "2026-08-20",
+    "notes": "Owner: 2-week cap 5k API credits. Full 20k HQ plan remains valid after window."
+  },
+  "hq_wave_spent_tracked": 390.0,
+  "items": [
+    {
+      "name": "colony_habitat",
+      "quality": "high",
+      "consumed": 30.0,
+      "status": "success"
+    },
+    {
+      "name": "combat_drone",
+      "quality": "high",
+      "consumed": 30.0,
+      "status": "success"
+    },
+    {
+      "name": "grot_infector",
+      "quality": "ultra",
+      "consumed": 50.0,
+      "status": "success"
+    },
+    {
+      "name": "landing_pad",
+      "quality": "high",
+      "consumed": 30.0,
+      "status": "success"
+    },
+    {
+      "name": "player_avian",
+      "quality": "ultra",
+      "consumed": 50.0,
+      "status": "success"
+    },
+    {
+      "name": "player_canine",
+      "quality": "ultra",
+      "consumed": 50.0,
+      "status": "success"
+    },
+    {
+      "name": "player_feline",
+      "quality": "ultra",
+      "consumed": 50.0,
+      "status": "success"
+    },
+    {
+      "name": "player_human",
+      "quality": "ultra",
+      "consumed": 50.0,
+      "status": "success"
+    },
+    {
+      "name": "ship_hull_scout",
+      "quality": "ultra",
+      "consumed": 50.0,
+      "status": "success"
+    }
+  ],
+  "remaining_under_cap": 4410.0,
+  "api_balance": 520.0,
+  "api_frozen": 5030.0,
+  "api_total_visible": 5550.0,
+  "spend_allowed_now": 320.0
+}

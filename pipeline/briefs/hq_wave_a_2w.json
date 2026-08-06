@@ -1,0 +1,79 @@
+[
+  {
+    "name": "ship_module_engine",
+    "category": "ships",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "game-ready starship ion engine thruster module, cylindrical nozzle cluster, cyan exhaust rings, PBR metal, hardpoint prop"
+  },
+  {
+    "name": "ship_module_weapon",
+    "category": "ships",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "game-ready starship pulse cannon weapon module, dual barrels, cooling fins, neon rails, PBR, hardpoint prop"
+  },
+  {
+    "name": "shield_module",
+    "category": "ships",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "game-ready starship shield generator module, spherical projector dish with energy rings, cyan, PBR prop"
+  },
+  {
+    "name": "resource_crystal",
+    "category": "colony",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "game-ready glowing alien resource crystal cluster, cyan-teal crystalline ore, emissive PBR, prop"
+  },
+  {
+    "name": "med_station",
+    "category": "props",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "game-ready futuristic medical healing station console, glowing cross hologram, white-cyan, PBR prop"
+  },
+  {
+    "name": "energy_barrier",
+    "category": "props",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "game-ready energy barrier gate emitter posts with forcefield plane suggestion, sci-fi, PBR prop"
+  },
+  {
+    "name": "control_console",
+    "category": "props",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "game-ready sci-fi holographic control console desk, screens and switches, dark neon, PBR prop"
+  },
+  {
+    "name": "gate_arch",
+    "category": "environments",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "game-ready monumental sci-fi gate arch portal frame, neon rim lights, dark metal, environment prop"
+  },
+  {
+    "name": "nex_relay",
+    "category": "props",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "game-ready data relay tower antenna, stacked nodes glowing cyan, Cybernex, PBR prop"
+  },
+  {
+    "name": "sci_fi_crate",
+    "category": "props",
+    "priority": "B",
+    "quality": "high",
+    "prompt": "game-ready sci-fi supply crate, metal panels clamps, neon label strip, PBR prop"
+  },
+  {
+    "name": "ammo_crate",
+    "category": "props",
+    "priority": "B",
+    "quality": "high",
+    "prompt": "game-ready military ammo crate sci-fi, reinforced corners, warning icons, PBR prop"
+  }
+]

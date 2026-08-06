@@ -1,0 +1,14 @@
+{
+  "policy_version": 2,
+  "updated": "2026-08-06",
+  "window_days": 14,
+  "window_start": "2026-08-06",
+  "window_end": "2026-08-20",
+  "cap_credits": 5000,
+  "hard_reserve": 200,
+  "usable_this_window": 4800,
+  "long_term_plan_credits": 20000,
+  "long_term_status": "deferred_not_cancelled",
+  "long_term_resume_after": "2026-08-20",
+  "notes": "Owner: 2-week cap 5k API credits. Full 20k HQ plan remains valid after window."
+}
