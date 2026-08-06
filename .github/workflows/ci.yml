@@ -5,6 +5,10 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -21,13 +25,11 @@ jobs:
       - name: Check for secrets / large files
         run: |
           echo "Checking for accidentally committed secrets and large binaries..."
-          # Fail if .env or private keys are present
           if git ls-files | grep -E '\.env$|id_rsa|id_ed25519|\.pem$|credentials'; then
             echo "ERROR: Secret-like files are tracked by git!"
             git ls-files | grep -E '\.env$|id_rsa|id_ed25519|\.pem$|credentials'
             exit 1
           fi
-          # Warn on large files (>20MB)
           find . -type f -size +20M -not -path './.git/*' | while read f; do
             echo "WARNING: Large file detected: $f"
           done
@@ -71,37 +73,91 @@ jobs:
       - name: Check for parse errors in scripts
         working-directory: godot
         run: |
-          # Basic syntax / load check
           godot --headless --check-only --path . 2>&1 | tee godot_check.log || true
           if grep -i "error" godot_check.log | grep -v "WARNING" | grep -v "Optional"; then
             echo "Possible errors found in Godot check:"
             grep -i "error" godot_check.log
-            # Do not fail hard yet – project is still in early stage
           fi
           echo "Godot headless check completed"
 
-  # Future jobs (commented until export presets & secrets are ready):
-  #
-  # export-windows:
-  #   name: Export Windows
-  #   runs-on: ubuntu-latest
-  #   needs: godot-headless
-  #   if: github.ref == 'refs/heads/main'
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: chickensoft-games/setup-godot@v2
-  #       with:
-  #         version: 4.3.0
-  #     - name: Export
-  #       working-directory: godot
-  #       run: |
-  #         mkdir -p ../build/windows
-  #         godot --headless --export-release "Windows Desktop" ../build/windows/NAEON.exe
-  #     - name: Upload artifact
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: naeon-windows
-  #         path: build/windows/
+  export-windows:
+    name: Export Windows
+    runs-on: ubuntu-latest
+    needs: godot-headless
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Godot 4.3 + templates
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.3.0
+          use-dotnet: false
+          include-templates: true
+
+      - name: Create export presets if missing
+        working-directory: godot
+        run: |
+          if [ ! -f export_presets.cfg ]; then
+            echo "No export_presets.cfg yet — creating minimal placeholder"
+            cat > export_presets.cfg << 'EOF'
+[preset.0]
+name="Windows Desktop"
+platform="Windows Desktop"
+runnable=true
+dedicated_server=false
+custom_features=""
+export_filter="all_resources"
+include_filter=""
+exclude_filter=""
+export_path="../build/windows/NAEON.exe"
+encryption_include_filters=""
+encryption_exclude_filters=""
+encrypt_pck=false
+encrypt_directory=false
+
+[preset.0.options]
+custom_template/debug=""
+custom_template/release=""
+debug/export_console_wrapper=1
+binary_format/embed_pck=false
+texture_format/bptc=true
+texture_format/s3tc=true
+texture_format/etc=false
+texture_format/etc2=false
+binary_format/architecture="x86_64"
+codesign/enable=false
+application/modify_resources=true
+application/icon=""
+application/console_wrapper_icon=""
+application/icon_interpolation=4
+application/file_version=""
+application/product_version=""
+application/company_name="NAEXOS"
+application/product_name="NAEON"
+application/file_description="NAEON"
+application/copyright=""
+application/trademarks=""
+application/export_angle=0
+application/export_d3d12=0
+application/d3d12_agility_sdk_multiarch=true
+ssh_remote_deploy/enabled=false
+EOF
+          fi
+
+      - name: Export Windows
+        working-directory: godot
+        run: |
+          mkdir -p ../build/windows
+          godot --headless --export-release "Windows Desktop" ../build/windows/NAEON.exe || echo "Export failed or presets incomplete — this is expected at early stage"
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: naeon-windows
+          path: build/windows/
+          if-no-files-found: ignore
 
   summary:
     name: CI Summary
