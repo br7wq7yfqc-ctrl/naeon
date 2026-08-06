@@ -26,6 +26,7 @@ func _ready() -> void:
 	multiplayer.connected_to_server.connect(_on_connected_ok)
 	multiplayer.connection_failed.connect(_on_connection_failed)
 	multiplayer.server_disconnected.connect(_on_server_disconnected)
+	call_deferred("_maybe_cmdline_net")
 
 func bind_player(p: Node3D) -> void:
 	_player_ref = p
@@ -120,6 +121,8 @@ func _process(delta: float) -> void:
 		form = str(_player_ref.current_form)
 	elif "form_name" in _player_ref:
 		form = str(_player_ref.form_name)
+	elif _player_ref.is_in_group("ship"):
+		form = "Ship"
 	if "faction" in _player_ref:
 		fac = str(_player_ref.faction)
 	var pos: Vector3 = _player_ref.global_position
@@ -197,3 +200,20 @@ func _on_server_disconnected() -> void:
 	is_host = false
 	_clear_puppets()
 	print("[SoftENet] server disconnected")
+
+func _maybe_cmdline_net() -> void:
+	# Headless / CLI stress: -- --softnet-host | --softnet-join=host
+	var args := OS.get_cmdline_user_args()
+	for a in args:
+		if a == "--softnet-host" or a == "softnet-host":
+			host()
+			return
+		if a.begins_with("--softnet-join=") or a.begins_with("softnet-join="):
+			var addr := a.split("=", true, 1)[1]
+			if addr == "":
+				addr = "127.0.0.1"
+			join(addr)
+			return
+		if a == "--softnet-join" or a == "softnet-join":
+			join("127.0.0.1")
+			return

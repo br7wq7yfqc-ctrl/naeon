@@ -444,6 +444,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.keycode == KEY_F9 or event.physical_keycode == KEY_F9:
 			toggle_faction()
 			get_viewport().set_input_as_handled()
+		elif event.keycode == KEY_F10 or event.physical_keycode == KEY_F10:
+			if SoftENet:
+				SoftENet.host()
+			get_viewport().set_input_as_handled()
+		elif event.keycode == KEY_F11 or event.physical_keycode == KEY_F11:
+			if SoftENet:
+				SoftENet.join("127.0.0.1")
+			get_viewport().set_input_as_handled()
+		elif event.keycode == KEY_F12 or event.physical_keycode == KEY_F12:
+			if SoftENet:
+				SoftENet.leave()
+			get_viewport().set_input_as_handled()
 
 
 func toggle_faction() -> void:

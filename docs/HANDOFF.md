@@ -1,18 +1,20 @@
-# Handoff — 0.3.8 procedural anims + rclone
+# Handoff — OpenSpace SoftENet + stress green
 
-## Playable
-Idle/walk procedural · SoftENet puppets with form GLB
-F10 host · F11 join · F12 leave · F9 faction · 4 form
+## Soft multiplayer
+OpenSpace soft-net rebind ship↔walker  
+F10/F11/F12 walker + ship  
+CLI softnet-host / softnet-join  
+tools/mac/softnet_stress.sh — HOST+CLIENT SCRIPT_ERR=0  
 
 ## Installer
-Desktop NAEON-0.3.8-Installer.dmg (~666M)
-Bucket neon/releases/mac/ NAEON-0.3.8-* + latest.json
+0.3.8 current · next 0.3.9
 
 ## Budget
 0 Tripo
 
 ## Next
-1. Skinned skeleton when assets ready
-2. 2-client puppet stress
+1. 0.3.9 DMG + rclone
+2. Puppet ship mesh optional
+3. Skeleton when skinned assets
 
-Updated: 2026-08-06T20:18:38.116837+00:00
+Updated: 2026-08-06T20:22:03.534205+00:00

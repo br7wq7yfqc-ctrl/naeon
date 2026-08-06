@@ -171,6 +171,7 @@ func _spawn_ship() -> void:
 		ship.launched.connect(_on_ship_launched)
 	if ship.has_method("set_open_space_context"):
 		ship.set_open_space_context(self)
+	_bind_soft_net_actor(ship)
 	_bind_planet_observers()
 	_sync_planet_sun()
 
@@ -297,6 +298,7 @@ func try_enter_ship() -> void:
 		ship.set_pilot_active(true)
 	if floating and floating.has_method("set_target"):
 		floating.set_target(ship)
+	_bind_soft_net_actor(ship)
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 func _spawn_player_near_ship() -> void:
@@ -326,6 +328,7 @@ func _spawn_player_near_ship() -> void:
 	# Ensure ship camera off
 	if ship.has_method("set_pilot_active"):
 		ship.set_pilot_active(false)
+	_bind_soft_net_actor(player)
 	print("[OpenSpace] TPS exit at ", player.global_position, " up=", pad_up)
 
 func _make_fallback_player() -> CharacterBody3D:
@@ -334,6 +337,17 @@ func _make_fallback_player() -> CharacterBody3D:
 	p.set("faction", "Cybernex")
 	p.set("form_name", "Canine")
 	return p
+
+func _bind_soft_net_actor(actor: Node3D) -> void:
+	## Soft multiplayer tracks current pilot/walker (pos/form only).
+	if actor == null or not is_instance_valid(actor):
+		return
+	if SoftNetSession and SoftNetSession.has_method("bind_player"):
+		SoftNetSession.bind_player(actor)
+	if SoftENet and SoftENet.has_method("bind_player"):
+		SoftENet.bind_player(actor)
+	print("[OpenSpace] soft net actor → ", actor.name)
+
 
 func _process(_delta: float) -> void:
 	_update_altitude_fog()

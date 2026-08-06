@@ -553,3 +553,22 @@ func apply_faction_modules(faction: String) -> void:
 	for m in modules:
 		m.faction_skin = faction
 	print("[Ship] faction modules → ", faction, " count=", modules.size())
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not pilot_active:
+		return
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_F10 or event.physical_keycode == KEY_F10:
+			if SoftENet:
+				SoftENet.host()
+				SoftENet.bind_player(self)
+			get_viewport().set_input_as_handled()
+		elif event.keycode == KEY_F11 or event.physical_keycode == KEY_F11:
+			if SoftENet:
+				SoftENet.join("127.0.0.1")
+				SoftENet.bind_player(self)
+			get_viewport().set_input_as_handled()
+		elif event.keycode == KEY_F12 or event.physical_keycode == KEY_F12:
+			if SoftENet:
+				SoftENet.leave()
+			get_viewport().set_input_as_handled()
