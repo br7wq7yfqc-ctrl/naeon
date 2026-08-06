@@ -84,6 +84,23 @@ func _spawn_props() -> void:
 		prop.global_position = entry[0]
 
 
+
+func _spawn_turrets() -> void:
+	var tscn: PackedScene = load("res://scenes/combat/Turret.tscn")
+	if tscn == null:
+		return
+	var spots: Array = [
+		[Vector3(6, 0, -9), "gROT"],
+		[Vector3(-11, 0, -6), "gROT"],
+		[Vector3(9, 0, 4), "Cybernex"],
+	]
+	for s in spots:
+		var turr: Node = tscn.instantiate()
+		add_child(turr)
+		turr.global_position = s[0]
+		turr.set("faction", s[1])
+		turr.set("target_player", s[1] == "gROT")
+
 func _spawn_claim_nodes() -> void:
 	# Interactive ownership beacons using dual-theme mesh swap
 	var spots: Array = [

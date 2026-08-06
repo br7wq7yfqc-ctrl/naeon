@@ -1,20 +1,26 @@
 # NAEON Handoff — Holistic Economical
 
-**2026-08-06** | Credits ~940 | Assets 31+ bases | Installer **0.2.1**
+**2026-08-06** | Credits **940** | Assets **32** bases | Installer **0.2.2**
 
-## Done
-- Batches 1–4: ships, colony, env, props, **all 4 player forms**, drone, grot_infector
-- Dual-theme LODs + neon upload; runtime AssetPaths
-- TestArena full prop set + med heal + form meshes (F cycles forms)
-- SpaceTest modules/landing/habitat
-- Mac DMG 0.2.1 on Desktop (bundled assets ~73MB)
+## Done this resume
+- **Turret AI** (gROT hostile + Cybernex ally) with mesh + projectiles + hack flip
+- **Ownership dual-mesh** swap Cybernex/gROT on claim beacons
+- Interactive claim nodes in TestArena
+- Dummy prefers **grot_infector** mesh
+- SpaceTest: **asteroid_ore** props
+- DMG **0.2.2** on Desktop (~107MB, assets bundled)
 
 ## Play
-Desktop: **NAEON-0.2.1-Installer.dmg**
+Desktop: **NAEON-0.2.2-Installer.dmg**
 or `cd ~/Documents/naeon/godot && godot .`
 
-## Next
-- process_asset keep-PBR + wear
-- Active turret AI (mesh exists)
-- Ownership visual on claim with dual meshes
-- gh auth push
+F forms | Q/E/R abilities | R hack claim | med heal | turrets fire | Tab Space
+
+## Next (economical)
+- process_asset keep-PBR + wear (0 credits, multiplies existing)
+- Ship module hardpoints polish
+- gh auth + push (local main ahead)
+- Optional batch5 only if new vertical-slice gap
+
+## Credits policy
+Reserve floor 150. ~20 cr / textured mesh. One mesh → 6 variants free (Blender).
