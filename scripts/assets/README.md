@@ -1,28 +1,38 @@
 # Asset sync scripts
 
-These scripts synchronise the local `assets/` folder with the Yandex Object Storage bucket `neon`.
-
-## Prerequisites
-
-- `aws-cli` installed
-- Credentials provided either via:
-  - environment variables (`YC_STORAGE_ACCESS_KEY`, `YC_STORAGE_SECRET_KEY`), or
-  - AWS profile named `neon`
-
-## Usage
+## Manual sync
 
 ```bash
-# Download from bucket → local
-./scripts/assets/sync_from_bucket.sh          # syncs neon/dev/ → ./assets/
-./scripts/assets/sync_from_bucket.sh shared   # syncs neon/shared/
-
-# Upload local → bucket
-./scripts/assets/sync_to_bucket.sh
-./scripts/assets/sync_to_bucket.sh shared
+./scripts/assets/sync_from_bucket.sh     # bucket → local
+./scripts/assets/sync_to_bucket.sh       # local → bucket
 ```
 
-Make scripts executable once:
+## Automatic sync
 
-```bash
-chmod +x scripts/assets/*.sh
-```
+См. подробную инструкцию: `docs/ASSETS_AUTO_SYNC.md`
+
+### Быстрый старт (macOS)
+
+1. Установите rclone и fswatch:
+   ```bash
+   brew install rclone fswatch
+   ```
+2. Настройте remote `neon` (`rclone config`)
+3. Запустите вотчер:
+   ```bash
+   chmod +x scripts/assets/watch_and_sync.sh
+   ./scripts/assets/watch_and_sync.sh
+   ```
+
+### Периодическая синхронизация (macOS launchd)
+
+1. Отредактируйте `scripts/assets/com.naeon.assets.sync.plist` (путь к проекту)
+2. Скопируйте в `~/Library/LaunchAgents/`
+3. Загрузите:
+   ```bash
+   launchctl load ~/Library/LaunchAgents/com.naeon.assets.sync.plist
+   ```
+
+### Windows
+
+Используйте `windows_auto_sync.ps1` + Task Scheduler.
