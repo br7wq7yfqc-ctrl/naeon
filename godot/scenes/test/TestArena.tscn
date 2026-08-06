@@ -203,3 +203,13 @@ offset_bottom = 300.0
 theme_override_colors/font_color = Color(0.55, 1, 0.75, 1)
 theme_override_font_sizes/font_size = 16
 text = "Contribution: 0"
+
+[node name="Kills" type="Label" parent="HUD/Root"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 200.0
+offset_right = 360.0
+offset_bottom = 230.0
+theme_override_font_sizes/font_size = 20
+text = "Kills: 0"
+

@@ -35,8 +35,8 @@ fi
 python pipeline/scripts/process_asset.py --input "$GLB" --name "$NAME"
 
 if command -v rclone >/dev/null 2>&1 && rclone listremotes 2>/dev/null | grep -q '^neon:'; then
-  echo "→ rclone sync assets → neon:dev"
-  rclone sync "$ROOT/assets" neon:dev --progress
+  echo "→ rclone sync assets → neon:neon/dev"
+  rclone sync "$ROOT/assets" neon:neon/dev --progress
 else
   echo "(skip rclone — configure remote 'neon' to enable bucket sync)"
 fi

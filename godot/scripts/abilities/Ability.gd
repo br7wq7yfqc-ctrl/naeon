@@ -135,11 +135,18 @@ func _spawn_projectile(caster: Node, dmg: float, color: Color) -> void:
 	body.set_meta("speed", 28.0)
 	caster.get_tree().current_scene.add_child(body)
 	body.global_position = origin
+	body.monitoring = true
+	body.monitorable = true
 	body.body_entered.connect(func(other: Node):
 		if other == caster:
 			return
+		if other.is_in_group("player") and caster.is_in_group("player"):
+			return
 		if other.has_method("take_damage"):
-			other.take_damage(dmg)
+			var final_dmg: float = dmg
+			if GameManager:
+				final_dmg *= 1.0 + GameManager.knowledge_insight_bonus()
+			other.take_damage(final_dmg)
 		if is_instance_valid(body):
 			body.queue_free()
 	)

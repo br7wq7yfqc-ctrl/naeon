@@ -163,8 +163,8 @@ def run_inside_blender(input_path: Path, name: str, out_dir: Path) -> None:
     print(json.dumps(manifest, indent=2))
 
 
-def copy_to_assets(name: str, out_dir: Path) -> None:
-    dest = ASSETS / "props" / name
+def copy_to_assets(name: str, out_dir: Path, category: str = "props") -> None:
+    dest = ASSETS / category / name
     dest.mkdir(parents=True, exist_ok=True)
     for f in out_dir.glob("*.glb"):
         shutil.copy2(f, dest / f.name)
@@ -185,6 +185,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--input", required=True)
     parser.add_argument("--name", required=True)
     parser.add_argument("--no-assets-copy", action="store_true")
+    parser.add_argument("--category", default="props")
     args = parser.parse_args(argv)
 
     input_path = Path(args.input).resolve()
@@ -200,7 +201,7 @@ def main(argv: list[str] | None = None) -> int:
 
         run_inside_blender(input_path, args.name, out_dir)
         if not args.no_assets_copy:
-            copy_to_assets(args.name, out_dir)
+            copy_to_assets(args.name, out_dir, getattr(args, "category", "props"))
         return 0
     except ImportError:
         pass
