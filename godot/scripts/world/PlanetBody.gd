@@ -407,6 +407,13 @@ func _update_atmosphere(dist: float, lod: int, obs: Node3D) -> void:
 			_atmo_inner_mat.set_shader_parameter("intensity", 0.5 + depth * 0.9)
 			_atmo_inner_mat.set_shader_parameter("density", 0.45 + depth * 0.5)
 
+func _stream_bases() -> void:
+	if not has_base or _pads.is_empty():
+		return
+	var n := mini(2, _pads.size())
+	for i in n:
+		_BaseBuilder.build_on_pad(_pads[i], faction_base)
+
 func altitude_of(global_pos: Vector3) -> float:
 	return global_pos.distance_to(global_position) - radius
 

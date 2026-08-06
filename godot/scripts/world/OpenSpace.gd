@@ -148,8 +148,8 @@ func _spawn_ship() -> void:
 	world_root.add_child(ship)
 	# Start in free space above Nex-Prime atmosphere
 	var p0: Node3D = planets[0]
-	var r: float = p0.get("radius")
-	var ah: float = p0.get("atmosphere_height")
+	var r: float = float(p0.get("radius") if p0.get("radius") != null else 1400.0)
+	var ah: float = float(p0.get("atmosphere_height") if p0.get("atmosphere_height") != null else 320.0)
 	ship.global_position = p0.global_position + Vector3(0, 0, r + ah + 450.0)
 	_spawn_ship_pos = ship.global_position
 	if ship.has_signal("landed"):
@@ -179,32 +179,30 @@ func _sync_planet_sun() -> void:
 
 
 func _update_altitude_fog() -> void:
-	## Cheap height fog: Environment fog denser inside atmosphere (tier-aware).
+	## Cheap height fog denser inside atmosphere (tier-aware).
 	var we := $WorldEnvironment as WorldEnvironment
 	if we == null or we.environment == null or ship == null:
 		return
 	var env := we.environment
 	var pl: Node3D = nearest_planet(ship.global_position)
-	var gq := get_node_or_null("/root/GraphicsQuality")
-	var use_fog := true
-	if gq and int(gq.tier) == 0:
-		# LOW: lighter fog
-		pass
 	if pl == null or not pl.has_method("altitude_of"):
 		env.fog_enabled = false
 		return
-	var alt: float = pl.altitude_of(ship.global_position)
-	var h: float = float(pl.get("atmosphere_height"))
+	var alt: float = float(pl.altitude_of(ship.global_position))
+	var h_val = pl.get("atmosphere_height")
+	var h: float = float(h_val) if h_val != null else 300.0
 	var col = pl.get("atmosphere_color")
-	var fog_col := Color(0.15, 0.25, 0.45) if not (col is Color) else Color(col.r, col.g, col.b)
+	var fog_col := Color(0.15, 0.25, 0.45)
+	if col is Color:
+		fog_col = Color(col.r, col.g, col.b)
 	if alt > h * 1.6:
 		env.fog_enabled = false
 		return
 	env.fog_enabled = true
 	env.fog_light_color = fog_col
-	# Density rises toward surface
-	var t: float = clamp(1.0 - max(alt, 0.0) / max(h * 1.6, 1.0), 0.0, 1.0)
-	var dens := 0.00015 + t * t * 0.0022
+	var depth: float = clampf(1.0 - maxf(alt, 0.0) / maxf(h * 1.6, 1.0), 0.0, 1.0)
+	var dens: float = 0.00015 + depth * depth * 0.0022
+	var gq := get_node_or_null("/root/GraphicsQuality")
 	if gq:
 		match int(gq.tier):
 			0:
@@ -214,9 +212,7 @@ func _update_altitude_fog() -> void:
 			3:
 				dens *= 1.35
 	env.fog_density = dens
-	env.fog_aerial_perspective = 0.5 * t
-	# Optional sun scatter color
-	env.fog_sun_scatter = 0.15 + 0.35 * t
+
 
 func gravity_at(global_pos: Vector3) -> Vector3:
 	var g := Vector3.ZERO
