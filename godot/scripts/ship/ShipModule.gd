@@ -56,3 +56,13 @@ static func make_extractor(name: String = "RBE Tap", rate: float = 2.0) -> ShipM
 	m.power_draw = 2.0
 	m.mass = 2.5
 	return m
+
+static func make_cargo(name: String = "Cargo Pod", capacity: float = 15.0) -> ShipModule:
+	var m := ShipModule.new()
+	m.module_id = "cargo_%s" % name.to_lower().replace(" ", "_")
+	m.display_name = name
+	m.module_type = ModuleType.CARGO
+	m.cargo_bonus = capacity
+	m.power_draw = 0.5
+	m.mass = 3.0
+	return m

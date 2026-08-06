@@ -79,6 +79,9 @@ func _asset_path(rel: String) -> String:
 	return c
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_C:
+		attach_module(ShipModule.make_cargo())
+		return
 	if is_landed:
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
@@ -137,11 +140,26 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("ability_3"):
 		# Quick attach demo module
 		attach_module(ShipModule.make_extractor())
+	if Input.is_physical_key_pressed(KEY_C) and modules.size() < 8:
+		pass
 		_recompute_stats()
 	if status_label:
 		status_label.text = "SHIP  SPD %d  SHD %d  E %d  MOD %d" % [
 			int(velocity.length()), int(shields), int(energy), modules.size()
 		]
+
+func detach_module(index: int) -> void:
+	if index < 0 or index >= modules.size():
+		return
+	var m: ShipModule = modules[index]
+	modules.remove_at(index)
+	_recompute_stats()
+	print("[Ship] Detached ", m.display_name if m else str(index))
+	if module_root:
+		for c in module_root.get_children():
+			c.queue_free()
+		for mod in modules:
+			_spawn_module_visual(mod)
 
 func attach_module(module: ShipModule) -> void:
 	if module == null:
@@ -212,25 +230,34 @@ func _toggle_landing() -> void:
 func _spawn_module_visual(module: ShipModule) -> void:
 	if module_root == null:
 		return
+	# Hardpoint slots by type (local offsets relative to hull)
 	var pos := Vector3.ZERO
+	var rot_y: float = 0.0
+	var scale_v: float = 0.4
 	var rel := ""
 	match module.module_type:
 		ShipModule.ModuleType.ENGINE:
-			pos = Vector3(0, 0, 1.1)
+			pos = Vector3(0, 0, 1.25)
 			rel = "ships/ship_module_engine/ship_module_engine_cybernex_lod2.glb"
+			scale_v = 0.5
 		ShipModule.ModuleType.WEAPON:
-			pos = Vector3(0.6, 0, -0.4)
+			pos = Vector3(0.75, 0.05, -0.35)
 			rel = "ships/ship_module_weapon/ship_module_weapon_cybernex_lod2.glb"
+			scale_v = 0.45
 		ShipModule.ModuleType.SHIELD:
-			pos = Vector3(-0.6, 0.2, 0)
+			pos = Vector3(-0.75, 0.15, 0.1)
+			rel = "ships/shield_module/shield_module_cybernex_lod2.glb"
+			scale_v = 0.4
 		ShipModule.ModuleType.EXTRACTOR:
-			pos = Vector3(0, -0.35, 0.2)
+			pos = Vector3(0, -0.4, 0.15)
 			rel = "colony/extractor_unit/extractor_unit_cybernex_lod2.glb"
+			scale_v = 0.35
 		_:
-			pos = Vector3(randf_range(-0.5, 0.5), 0.3, 0)
-	# Try GLB first
+			pos = Vector3(randf_range(-0.4, 0.4), 0.35, 0)
+	if faction == "gROT" and rel != "":
+		rel = rel.replace("_cybernex_", "_grot_")
 	if rel != "":
-		var path := _asset_path(rel)
+		var path: String = _asset_path(rel)
 		if path != "" and FileAccess.file_exists(path):
 			var doc := GLTFDocument.new()
 			var state := GLTFState.new()
@@ -239,7 +266,8 @@ func _spawn_module_visual(module: ShipModule) -> void:
 				if root:
 					module_root.add_child(root)
 					root.position = pos
-					root.scale = Vector3.ONE * 0.45
+					root.scale = Vector3.ONE * scale_v
+					root.rotation.y = rot_y
 					return
 	var node := MeshInstance3D.new()
 	var box := BoxMesh.new()
@@ -252,6 +280,7 @@ func _spawn_module_visual(module: ShipModule) -> void:
 	node.material_override = mat
 	node.position = pos
 	module_root.add_child(node)
+
 
 func _apply_faction_skin() -> void:
 	if hull_mesh == null:

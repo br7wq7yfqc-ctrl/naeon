@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
 """
-NAEON Blender headless processor:
-  - import GLB
-  - basic cleanup
-  - export LOD0/1/2
-  - dual-theme material variants (Cybernex / gROT)
-
-Usage:
-  blender --background --python process_asset.py -- --input path/to/model.glb --name canine_scout
-  # or (auto-finds blender):
-  python process_asset.py --input path/to/model.glb --name canine_scout
+NAEON Blender processor (economical):
+  - LOD0/1/2 decimation
+  - dual-theme Cybernex / gROT materials
+  - optional --keep-materials (preserve Tripo PBR, tint only)
+  - optional --wear (extra worn/damaged material variants — free multiplication)
+  - collision hull proxy in manifest
+  - export to assets/{category}/{name}/
 """
-
 from __future__ import annotations
 
 import argparse
@@ -23,49 +19,49 @@ import sys
 import time
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-PROCESSED = ROOT / "processed"
-ASSETS = Path(__file__).resolve().parents[2] / "assets"
+ROOT = Path(__file__).resolve().parents[2]
+PROCESSED = ROOT / "pipeline" / "processed"
+ASSETS = ROOT / "assets"
+PROCESSED.mkdir(parents=True, exist_ok=True)
+ASSETS.mkdir(parents=True, exist_ok=True)
 
 
 def find_blender() -> str:
-    for c in [
-        os.getenv("BLENDER_BIN", ""),
-        "blender",
-        "/usr/local/bin/blender",
-        "/opt/blender/blender",
+    env = os.getenv("BLENDER_BIN")
+    if env and Path(env).exists():
+        return env
+    candidates = [
         "/Applications/Blender.app/Contents/MacOS/Blender",
-        str(Path.home() / "Applications" / "Blender.app" / "Contents" / "MacOS" / "Blender"),
-    ]:
-        if c and shutil.which(c):
-            return shutil.which(c) or c
-        if c and Path(c).is_file():
+        str(Path.home() / "Applications/Blender.app/Contents/MacOS/Blender"),
+        "/usr/bin/blender",
+        shutil.which("blender") or "",
+    ]
+    for c in candidates:
+        if c and Path(c).exists():
             return c
     return ""
 
 
-def run_inside_blender(input_path: Path, name: str, out_dir: Path, category: str = "props") -> None:
-    import bpy  # type: ignore
+def run_inside_blender(
+    input_path: Path,
+    name: str,
+    out_dir: Path,
+    category: str = "props",
+    keep_materials: bool = False,
+    wear: bool = False,
+) -> None:
+    import bpy
 
-    # Reset scene
+    out_dir.mkdir(parents=True, exist_ok=True)
     bpy.ops.wm.read_factory_settings(use_empty=True)
-
     # Import
-    ext = input_path.suffix.lower()
-    if ext in (".glb", ".gltf"):
-        bpy.ops.import_scene.gltf(filepath=str(input_path))
-    elif ext == ".obj":
-        bpy.ops.wm.obj_import(filepath=str(input_path))
-    elif ext == ".fbx":
-        bpy.ops.import_scene.fbx(filepath=str(input_path))
-    else:
-        raise RuntimeError(f"Unsupported format: {ext}")
+    bpy.ops.import_scene.gltf(filepath=str(input_path))
 
     meshes = [o for o in bpy.context.scene.objects if o.type == "MESH"]
     if not meshes:
         raise RuntimeError("No mesh objects after import")
 
-    # Join meshes for simple LOD pipeline
+    # Join meshes
     bpy.ops.object.select_all(action="DESELECT")
     for o in meshes:
         o.select_set(True)
@@ -73,19 +69,25 @@ def run_inside_blender(input_path: Path, name: str, out_dir: Path, category: str
     if len(meshes) > 1:
         bpy.ops.object.join()
     base = bpy.context.view_layer.objects.active
-    base.name = name
+    base.name = f"{name}_base"
 
-    # Center & normalize scale roughly
-    bpy.ops.object.origin_set(type="ORIGIN_GEOMETRY", center="BOUNDS")
-    base.location = (0, 0, 0)
-    max_dim = max(base.dimensions) if max(base.dimensions) > 0 else 1.0
-    scale = 2.0 / max_dim
-    base.scale = (scale, scale, scale)
-    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    # Normalize scale to ~1.5m height
+    dims = base.dimensions
+    max_dim = max(dims.x, dims.y, dims.z) or 1.0
+    target = 1.5
+    if max_dim > 0.001:
+        s = target / max_dim
+        base.scale = (s, s, s)
+        bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 
-    out_dir.mkdir(parents=True, exist_ok=True)
+    # Store original material slots if keep
+    orig_mats = list(base.data.materials) if base.data.materials else []
 
     def export_glb(path: Path) -> None:
+        bpy.ops.object.select_all(action="DESELECT")
+        for o in bpy.context.scene.objects:
+            if o.type == "MESH":
+                o.select_set(True)
         bpy.ops.export_scene.gltf(
             filepath=str(path),
             export_format="GLB",
@@ -93,70 +95,123 @@ def run_inside_blender(input_path: Path, name: str, out_dir: Path, category: str
             export_apply=True,
         )
 
-    def set_faction_material(obj, faction: str) -> None:
-        mat = bpy.data.materials.new(name=f"{name}_{faction}")
+    def clear_mats(obj) -> None:
+        obj.data.materials.clear()
+
+    def apply_faction_material(obj, faction: str, worn: bool = False) -> None:
+        if keep_materials and orig_mats:
+            # Clone materials and tint emission/base toward faction
+            clear_mats(obj)
+            for src in orig_mats:
+                if src is None:
+                    continue
+                mat = src.copy()
+                mat.name = f"{name}_{faction}_{'worn_' if worn else ''}{src.name}"
+                # Tint principled if present
+                if mat.use_nodes and mat.node_tree:
+                    for n in mat.node_tree.nodes:
+                        if n.type == "BSDF_PRINCIPLED":
+                            col = n.inputs.get("Base Color")
+                            emis = n.inputs.get("Emission Color") or n.inputs.get("Emission")
+                            if faction == "cybernex":
+                                tint = (0.15, 0.75, 1.0, 1.0)
+                            else:
+                                tint = (0.95, 0.12, 0.42, 1.0)
+                            if col:
+                                c = list(col.default_value)
+                                col.default_value = (
+                                    c[0] * 0.55 + tint[0] * 0.45,
+                                    c[1] * 0.55 + tint[1] * 0.45,
+                                    c[2] * 0.55 + tint[2] * 0.45,
+                                    1.0,
+                                )
+                            if emis:
+                                try:
+                                    emis.default_value = tint
+                                except Exception:
+                                    pass
+                            rough = n.inputs.get("Roughness")
+                            if worn and rough:
+                                rough.default_value = min(1.0, float(rough.default_value) + 0.25)
+                            metal = n.inputs.get("Metallic")
+                            if worn and metal:
+                                metal.default_value = max(0.0, float(metal.default_value) - 0.15)
+                obj.data.materials.append(mat)
+            return
+
+        mat = bpy.data.materials.new(name=f"{name}_{faction}{'_worn' if worn else ''}")
         mat.use_nodes = True
         nodes = mat.node_tree.nodes
         links = mat.node_tree.links
         nodes.clear()
         out = nodes.new("ShaderNodeOutputMaterial")
         bsdf = nodes.new("ShaderNodeBsdfPrincipled")
-        em = nodes.new("ShaderNodeEmission")
-        mix = nodes.new("ShaderNodeMixShader")
+        links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
         if faction == "cybernex":
-            base_col = (0.05, 0.15, 0.22, 1)
-            em_col = (0.15, 0.85, 1.0, 1)
-            em.inputs["Strength"].default_value = 2.0
+            base_c = (0.08, 0.14, 0.2, 1.0)
+            emis = (0.15, 0.85, 1.0, 1.0)
+            metal, rough = 0.7, 0.28
         else:
-            base_col = (0.12, 0.03, 0.06, 1)
-            em_col = (0.95, 0.12, 0.4, 1)
-            em.inputs["Strength"].default_value = 2.2
-        bsdf.inputs["Base Color"].default_value = base_col
-        bsdf.inputs["Metallic"].default_value = 0.65
-        bsdf.inputs["Roughness"].default_value = 0.3
-        em.inputs["Color"].default_value = em_col
-        links.new(bsdf.outputs["BSDF"], mix.inputs[1])
-        links.new(em.outputs["Emission"], mix.inputs[2])
-        mix.inputs["Fac"].default_value = 0.35
-        links.new(mix.outputs["Shader"], out.inputs["Surface"])
-        if obj.data.materials:
-            obj.data.materials[0] = mat
-        else:
-            obj.data.materials.append(mat)
+            base_c = (0.18, 0.05, 0.08, 1.0)
+            emis = (0.95, 0.12, 0.42, 1.0)
+            metal, rough = 0.45, 0.4
+        if worn:
+            rough = min(1.0, rough + 0.3)
+            metal = max(0.1, metal - 0.2)
+            base_c = (base_c[0] * 0.7, base_c[1] * 0.7, base_c[2] * 0.7, 1.0)
+        bsdf.inputs["Base Color"].default_value = base_c
+        bsdf.inputs["Metallic"].default_value = metal
+        bsdf.inputs["Roughness"].default_value = rough
+        if "Emission Color" in bsdf.inputs:
+            bsdf.inputs["Emission Color"].default_value = emis
+            bsdf.inputs["Emission Strength"].default_value = 0.6 if not worn else 0.25
+        clear_mats(obj)
+        obj.data.materials.append(mat)
 
-    # LOD ratios (decimate)
-    lod_ratios = [("lod0", 1.0), ("lod1", 0.45), ("lod2", 0.18)]
-    exports = []
+    lod_map = [("lod0", 1.0), ("lod1", 0.45), ("lod2", 0.18)]
+    variants = [("clean", False)]
+    if wear:
+        variants.append(("worn", True))
 
+    exports: list[str] = []
     for faction in ("cybernex", "grot"):
-        for lod_name, ratio in lod_ratios:
-            # Duplicate base
-            bpy.ops.object.select_all(action="DESELECT")
-            base.select_set(True)
-            bpy.context.view_layer.objects.active = base
-            bpy.ops.object.duplicate()
-            obj = bpy.context.view_layer.objects.active
-            obj.name = f"{name}_{faction}_{lod_name}"
-            if ratio < 1.0:
-                mod = obj.modifiers.new(name="Decimate", type="DECIMATE")
-                mod.ratio = ratio
-                bpy.ops.object.modifier_apply(modifier=mod.name)
-            set_faction_material(obj, faction)
-            out_path = out_dir / f"{name}_{faction}_{lod_name}.glb"
-            bpy.ops.object.select_all(action="DESELECT")
-            obj.select_set(True)
-            bpy.context.view_layer.objects.active = obj
-            export_glb(out_path)
-            exports.append(str(out_path))
-            # cleanup duplicate
-            bpy.data.objects.remove(obj, do_unlink=True)
+        for vname, worn in variants:
+            for lod_name, ratio in lod_map:
+                bpy.ops.object.select_all(action="DESELECT")
+                base.select_set(True)
+                bpy.context.view_layer.objects.active = base
+                bpy.ops.object.duplicate()
+                obj = bpy.context.view_layer.objects.active
+                suffix = f"{faction}_{vname}_{lod_name}" if wear else f"{faction}_{lod_name}"
+                obj.name = f"{name}_{suffix}"
+                if ratio < 0.999:
+                    mod = obj.modifiers.new(name="Decimate", type="DECIMATE")
+                    mod.ratio = ratio
+                    bpy.ops.object.modifier_apply(modifier=mod.name)
+                apply_faction_material(obj, faction, worn=worn)
+                out_path = out_dir / f"{name}_{suffix}.glb"
+                export_glb(out_path)
+                exports.append(str(out_path))
+                # remove duplicate mesh to keep scene clean
+                bpy.data.objects.remove(obj, do_unlink=True)
+
+    # Simple collision: box dimensions of base
+    d = base.dimensions
+    collision = {
+        "type": "box",
+        "size": [round(float(d.x), 3), round(float(d.y), 3), round(float(d.z), 3)],
+    }
 
     manifest = {
         "name": name,
+        "category": category,
         "source": str(input_path),
         "exports": exports,
         "factions": ["cybernex", "grot"],
         "lods": ["lod0", "lod1", "lod2"],
+        "keep_materials": keep_materials,
+        "wear": wear,
+        "collision": collision,
         "created": time.time(),
     }
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
@@ -174,7 +229,6 @@ def copy_to_assets(name: str, out_dir: Path, category: str = "props") -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    # When launched via blender --python, args after -- 
     if argv is None:
         if "--" in sys.argv:
             argv = sys.argv[sys.argv.index("--") + 1 :]
@@ -186,6 +240,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--name", required=True)
     parser.add_argument("--no-assets-copy", action="store_true")
     parser.add_argument("--category", default="props")
+    parser.add_argument("--keep-materials", action="store_true", help="Preserve Tripo PBR, tint by faction")
+    parser.add_argument("--wear", action="store_true", help="Also export worn material variants (free ×2)")
     args = parser.parse_args(argv)
 
     input_path = Path(args.input).resolve()
@@ -195,11 +251,17 @@ def main(argv: list[str] | None = None) -> int:
 
     out_dir = PROCESSED / args.name
 
-    # Are we already inside Blender?
     try:
         import bpy  # noqa: F401
 
-        run_inside_blender(input_path, args.name, out_dir, getattr(args, "category", "props"))
+        run_inside_blender(
+            input_path,
+            args.name,
+            out_dir,
+            getattr(args, "category", "props"),
+            keep_materials=args.keep_materials,
+            wear=args.wear,
+        )
         if not args.no_assets_copy:
             copy_to_assets(args.name, out_dir, getattr(args, "category", "props"))
         return 0
@@ -212,27 +274,23 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     cmd = [
-        blender,
-        "--background",
-        "--python",
-        str(Path(__file__).resolve()),
-        "--",
-        "--input",
-        str(input_path),
-        "--name",
-        args.name,
+        blender, "--background", "--python", str(Path(__file__).resolve()), "--",
+        "--input", str(input_path),
+        "--name", args.name,
+        "--category", args.category,
     ]
     if args.no_assets_copy:
         cmd.append("--no-assets-copy")
-    cmd.extend(["--category", getattr(args, "category", "props")])
+    if args.keep_materials:
+        cmd.append("--keep-materials")
+    if args.wear:
+        cmd.append("--wear")
     print("→", " ".join(cmd))
     env = os.environ.copy()
-    # Headless servers may need xvfb
     if sys.platform.startswith("linux") and not os.getenv("DISPLAY"):
         if shutil.which("xvfb-run"):
             cmd = ["xvfb-run", "-a"] + cmd
-    r = subprocess.run(cmd, env=env)
-    return r.returncode
+    return subprocess.run(cmd, env=env).returncode
 
 
 if __name__ == "__main__":
