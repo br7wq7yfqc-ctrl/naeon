@@ -14,6 +14,9 @@ extends Node3D
 
 var kills: int = 0
 var _clash: Node = null
+var _lanes: Node3D = null
+var _radar: Control = null
+var _lane_hud: Label = null
 var dummy_scene: PackedScene = preload("res://scenes/combat/CombatDummy.tscn")
 
 func _ready() -> void:
@@ -22,6 +25,11 @@ func _ready() -> void:
 	_clash.set_script(preload("res://scripts/arena/AexionClash.gd"))
 	_clash.name = "AexionClash"
 	add_child(_clash)
+	_lanes = Node3D.new()
+	_lanes.set_script(preload("res://scripts/arena/ClashLanes.gd"))
+	_lanes.name = "ClashLanes"
+	add_child(_lanes)
+	_setup_clash_radar()
 	var au: Node = get_node_or_null("/root/AutoUpdater")
 	if au != null and au.has_signal("update_available"):
 		au.connect("update_available", Callable(self, "_on_update_available"))
@@ -69,21 +77,32 @@ func _upgrade_environment_materials() -> void:
 				(c as MeshInstance3D).material_override = m
 
 func _spawn_dummies() -> void:
-	var spots: Array[Vector3] = [
-		Vector3(4, 0.1, -8),
-		Vector3(-5, 0.1, -10),
-		Vector3(12, 0.1, -2),
-		Vector3(-10, 0.1, 2),
-	]
-	for i in spots.size():
+	# Lane-slotted hostiles for MOBA readability (TOP/MID/BOT)
+	var table: Array = []
+	if _lanes and _lanes.has_method("lane_spawn_table"):
+		table = _lanes.lane_spawn_table()
+	else:
+		table = [
+			[Vector3(0, 0.1, -8), "MID", "gROT"],
+			[Vector3(14, 0.1, -6), "TOP", "gROT"],
+			[Vector3(-14, 0.1, -6), "BOT", "gROT"],
+			[Vector3(0, 0.1, -16), "MID", "gROT"],
+			[Vector3(2, 0.1, 2), "MID", "gROT"],
+			[Vector3(14, 0.1, 4), "TOP", "gROT"],
+			[Vector3(-12, 0.1, 3), "BOT", "gROT"],
+		]
+	for i in table.size():
+		var entry = table[i]
 		var d: Node = dummy_scene.instantiate()
 		add_child(d)
-		d.global_position = spots[i]
+		d.global_position = entry[0]
+		d.set_meta("lane", str(entry[1]))
 		if d.has_signal("died"):
 			d.died.connect(_on_dummy_died)
-		if i % 2 == 1:
+		d.set("faction", str(entry[2]))
+		# Outer lane dummies hold; mid skirmishes can move
+		if str(entry[1]) != "MID":
 			d.set("can_move", false)
-			d.set("faction", "gROT")
 
 func _spawn_props() -> void:
 	var prop_script: Script = preload("res://scripts/assets/GlbProp.gd")
@@ -184,6 +203,9 @@ func _on_dummy_died() -> void:
 func _process(_delta: float) -> void:
 	if player == null:
 		return
+	_update_clash_radar()
+	if not ("health" in player):
+		return
 	bar_health.value = player.health
 	bar_health.max_value = player.max_health
 	bar_energy.value = player.energy
@@ -209,7 +231,7 @@ func _process(_delta: float) -> void:
 	if "last_move_input" in player:
 		mvin = player.last_move_input
 	info_label.text = (
-		"NAEON CLASH | %s | Form %s | O=OpenSpace | soft WS only\n" % [
+		"NAEON CLASH | %s | Form %s | O=OpenSpace | 3 LANES + radar | soft WS\n" % [
 			player.faction, player.current_form
 		]
 		+ "Q/E/R/F abilities | input(%.0f,%.0f) floor=%s | med heals" % [
@@ -218,10 +240,11 @@ func _process(_delta: float) -> void:
 	)
 
 func _try_med_heal(delta: float) -> void:
-	# Heal near world position of med station prop placement
+	if player == null or not ("health" in player):
+		return
 	var med_pos := Vector3(-14, 0, -4)
 	if player.global_position.distance_to(med_pos) < 3.5:
-		if player.health < player.max_health:
+		if player.health < player.max_health and player.has_method("heal"):
 			player.heal(8.0 * delta)
 
 func _on_contrib(v: float) -> void:
@@ -250,3 +273,64 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_home") or (event is InputEventKey and event.pressed and event.keycode == KEY_TAB):
 		if ResourceLoader.exists("res://scenes/test/SpaceTest.tscn"):
 			get_tree().change_scene_to_file("res://scenes/test/SpaceTest.tscn")
+
+
+func _setup_clash_radar() -> void:
+	if hud == null:
+		return
+	var root: Control = hud.get_node_or_null("Root")
+	if root == null:
+		return
+	_radar = Control.new()
+	_radar.set_script(preload("res://scripts/arena/ClashRadar.gd"))
+	_radar.name = "ClashRadar"
+	_radar.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	_radar.offset_left = -156
+	_radar.offset_top = -170
+	_radar.offset_right = -12
+	_radar.offset_bottom = -26
+	root.add_child(_radar)
+	_lane_hud = Label.new()
+	_lane_hud.name = "LaneHUD"
+	_lane_hud.position = Vector2(14, 130)
+	_lane_hud.add_theme_font_size_override("font_size", 14)
+	_lane_hud.add_theme_color_override("font_color", Color(0.95, 0.9, 0.4))
+	_lane_hud.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	_lane_hud.add_theme_constant_override("outline_size", 4)
+	_lane_hud.text = "LANE · MID"
+	root.add_child(_lane_hud)
+
+
+func _update_clash_radar() -> void:
+	if player == null:
+		return
+	if _lanes and _lanes.has_method("update_player"):
+		_lanes.update_player(player.global_position)
+		if _lane_hud and "player_lane" in _lanes:
+			_lane_hud.text = "LANE · %s  |  TOP cyan · MID gold · BOT magenta" % _lanes.player_lane
+	if _radar == null or not _radar.has_method("set_snapshot"):
+		return
+	var ene: Array = []
+	var all: Array = []
+	for c in get_children():
+		if c == player:
+			continue
+		if c is Node3D and "faction" in c:
+			var fac := str(c.faction)
+			if fac == "gROT":
+				ene.append((c as Node3D).global_position)
+			elif fac == "Cybernex":
+				all.append((c as Node3D).global_position)
+		# CombatDummy may use set faction property differently
+		if c is Node3D and c.has_meta("lane"):
+			if c not in ene and c != player:
+				# treat lane meta dummies as enemies if not player
+				if "health" in c or c.get_script():
+					var fp := str(c.get("faction")) if "faction" in c else "gROT"
+					if fp == "gROT":
+						ene.append((c as Node3D).global_position)
+	var nex := [
+		[Vector3(0, 0, 24), Color(0.15, 0.85, 1.0)],
+		[Vector3(0, 0, -24), Color(0.95, 0.12, 0.42)],
+	]
+	_radar.set_snapshot(player.global_position, ene, all, nex)

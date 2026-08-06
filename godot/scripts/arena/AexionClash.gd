@@ -53,5 +53,5 @@ func _end_match(winner: String) -> void:
 	print("[AexionClash] match end → ", winner)
 
 func status_line() -> String:
-	var ws := war.hud_line() if war else "WS —"
+	var ws: String = war.hud_line() if war else "WS —"
 	return "CLASH %d/%d  |  %s" % [kills, target_kills, ws]

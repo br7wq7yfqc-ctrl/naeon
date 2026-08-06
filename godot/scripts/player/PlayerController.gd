@@ -251,6 +251,21 @@ func apply_firewall(duration: float, heal_amount: float = 0.0) -> void:
 		heal(heal_amount)
 	_firewall_break_nearby_channels()
 
+func _firewall_break_nearby_channels() -> void:
+	# Soft interrupt: Firewall pulse breaks nearby enemy channels (readability counterplay)
+	var tree := get_tree()
+	if tree == null:
+		return
+	for n in tree.get_nodes_in_group("channel_controllers"):
+		if n == null or not is_instance_valid(n):
+			continue
+		if n.has_method("interrupt"):
+			var owner_n = n.get_parent()
+			if owner_n is Node3D and global_position.distance_to((owner_n as Node3D).global_position) < 18.0:
+				n.interrupt("firewall")
+		elif n.has_method("cancel"):
+			n.cancel()
+
 func _respawn() -> void:
 	health = max_health
 	energy = max_energy

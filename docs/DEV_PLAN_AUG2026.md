@@ -3,19 +3,17 @@
 ## Done
 | Item | Status |
 |------|--------|
-| Soft Knowledge + asymmetric economy + EduQuest | done |
-| Seamless S1 LayerContext | done |
-| Physics lead + Alliance ranks | done |
-| **Aexion Clash + WarScore (cap 60)** | **done** |
-| Installer 0.3.2 | shipped · **0.3.3** stamp |
+| Clash + WarScore | done |
+| Installer 0.3.3 | shipped |
+| **3-lane readability + radar + dual nexus** | **done** |
 
 ## Next
-1. Export 0.3.3 DMG
-2. Clash polish (lanes readability)
-3. Skeletal / Wave C
-4. Multiplayer LayerContext authority
+1. Lane wave respawn
+2. 0.3.4 installer
+3. Wave C hero
+4. Multiplayer
 
 ## Budget
 Week 5k / month 20k · 0 Tripo · no P2W
 
-Updated: 2026-08-06T17:02:28.965771+00:00
+Updated: 2026-08-06T17:38:15.772021+00:00

@@ -18,3 +18,10 @@ Full MOBA lanes, items shop P2W, arena flipping capitals.
 
 ## Play
 OpenSpace → **M** or **Tab** → TestArena Clash · kill dummies to 5 · soft influence toast
+
+## Lane readability (0.3.3+)
+- TOP +X cyan · MID gold · BOT -X magenta strips + Label3D
+- NEXUS Cybernex south (+Z) / gROT north (-Z)
+- Towers mid each lane
+- ClashRadar Control HUD
+- Dummies spawn from `lane_spawn_table()`
