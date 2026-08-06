@@ -183,8 +183,11 @@ func try_load_form_mesh() -> void:
 			rel = "characters/player_canine/player_canine_cybernex_lod1.glb"
 		"Feline":
 			rel = "characters/player_feline/player_feline_cybernex_lod1.glb"
+		"Avian":
+			rel = "characters/player_avian/player_avian_cybernex_lod1.glb"
+		"Human":
+			rel = "characters/player_human/player_human_cybernex_lod1.glb"
 		_:
-			# Avian/Human fallback until assets ready
 			if body_mesh:
 				body_mesh.visible = true
 			_clear_form_glb()

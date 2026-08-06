@@ -1,31 +1,20 @@
-# NAEON — Handoff (Holistic Economical Session)
+# NAEON Handoff — Holistic Economical
 
-**Date:** 2026-08-06  
-**Status:** Active — asset pipeline + gameplay integration running
+**2026-08-06** | Credits ~940 | Assets 31+ bases | Installer **0.2.1**
 
 ## Done
-- Vertical slice batch1: 10/10 assets (ship, colony, props, drone)
-- Batch2: shield/cargo/habitat/antenna/med/ammo/solar/gate (see assets/)
-- Dual-theme LODs + neon upload automated
-- TestArena/SpaceTest load GLBs at runtime
-- CombatDummy uses combat_drone mesh
-- Ship loads hull + module GLBs
-- Mac DMG installer + AutoUpdater
-- Batch daemons: logs/batch*_daemon.log
-
-## Credits policy
-- Reserve floor **150** credits
-- ~20 credits / textured text_to_model
-- One mesh → 6 variants (2 faction × 3 LOD) free in Blender
+- Batches 1–4: ships, colony, env, props, **all 4 player forms**, drone, grot_infector
+- Dual-theme LODs + neon upload; runtime AssetPaths
+- TestArena full prop set + med heal + form meshes (F cycles forms)
+- SpaceTest modules/landing/habitat
+- Mac DMG 0.2.1 on Desktop (bundled assets ~73MB)
 
 ## Play
-```bash
-cd ~/Documents/naeon/godot && godot .
-# or open Desktop NAEON-Installer.dmg
-```
+Desktop: **NAEON-0.2.1-Installer.dmg**
+or `cd ~/Documents/naeon/godot && godot .`
 
 ## Next
-- Finish batch3 (player forms, turret, walkway…)
-- process_asset: preserve Tripo PBR + wear
-- Rebuild DMG after feature freeze
-- gh auth for push
+- process_asset keep-PBR + wear
+- Active turret AI (mesh exists)
+- Ownership visual on claim with dual meshes
+- gh auth push
