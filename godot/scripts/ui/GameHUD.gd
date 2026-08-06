@@ -312,7 +312,7 @@ func _refresh() -> void:
 	var net := ""
 	if SoftENet and SoftENet.has_method("status_line"):
 		net = "  |  " + str(SoftENet.status_line())
-	_status_label.text = "HP %s  EN %s  |  %s %s%s\nCONTRIB %.0f  ·  4=form F9=faction F10=host  (no P2W)" % [hp, en, fac, form, net, contrib]
+	_status_label.text = "HP %s  EN %s  |  %s %s%s\nCONTRIB %.0f  ·  4=form F9=fac F10=host F11=join  (no P2W)" % [hp, en, fac, form, net, contrib]
 
 	# Layer chip + context (S1 seamless)
 	if _layer_label and LayerContext:

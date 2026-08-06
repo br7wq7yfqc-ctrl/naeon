@@ -1,14 +1,12 @@
-# Soft Net Session
+# Soft Net + SoftENet
 
-Local-only multiplayer readiness layer.
-
-| Piece | Role |
+| Layer | Role |
 |-------|------|
-| SoftNetSession | 20 Hz snapshots + lag ghost |
-| LayerContextAuthority | mutation guard + export in snap |
-| SoftSession | local form/faction persist |
+| SoftNetSession | Local lag ghost (always on) |
+| SoftENet | Real ENet host/join :27700 |
+| SoftRemotePuppet | Visual peer only |
 
-Ghost is **visual only** — no combat power, no loot authority.
-Real net (ENet) later replaces lag sim with peer RPC.
+Keys: F10 host · F11 join 127.0.0.1 · F12 leave  
+RPC: pos, yaw, form, faction — never HP/DPS/loot.
 
-Updated: 2026-08-06T18:17:03.515106+00:00
+Updated: 2026-08-06T19:27:20.029228+00:00
