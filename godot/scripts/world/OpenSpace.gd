@@ -391,6 +391,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_P:
 			if GameManager and GameManager.has_method("try_promote_alliance"):
 				GameManager.try_promote_alliance()
+		KEY_M:
+			if ResourceLoader.exists("res://scenes/test/TestArena.tscn"):
+				get_tree().change_scene_to_file("res://scenes/test/TestArena.tscn")
 		KEY_TAB:
 			if ResourceLoader.exists("res://scenes/test/TestArena.tscn"):
 				get_tree().change_scene_to_file("res://scenes/test/TestArena.tscn")

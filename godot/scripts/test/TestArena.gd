@@ -1,6 +1,7 @@
 extends Node3D
 
-## Playable TPS TestArena — combat, ownership, colony, full prop set.
+## Aexion Clash vertical slice — TPS MOBA kits + soft War Score (Predecessor bar).
+## Soft world influence only; never permanent planet flip from Arena alone.
 
 @onready var hud: CanvasLayer = $HUD
 @onready var info_label: Label = $HUD/Root/Info
@@ -12,10 +13,15 @@ extends Node3D
 @onready var kills_label: Label = $HUD/Root/Kills
 
 var kills: int = 0
+var _clash: Node = null
 var dummy_scene: PackedScene = preload("res://scenes/combat/CombatDummy.tscn")
 
 func _ready() -> void:
-	print("[TestArena] Loaded")
+	print("[TestArena] Loaded — Aexion Clash slice")
+	_clash = Node.new()
+	_clash.set_script(preload("res://scripts/arena/AexionClash.gd"))
+	_clash.name = "AexionClash"
+	add_child(_clash)
 	var au: Node = get_node_or_null("/root/AutoUpdater")
 	if au != null and au.has_signal("update_available"):
 		au.connect("update_available", Callable(self, "_on_update_available"))
@@ -164,8 +170,16 @@ func _spawn_claim_nodes() -> void:
 
 func _on_dummy_died() -> void:
 	kills += 1
+	if _clash and _clash.has_method("register_kill"):
+		_clash.register_kill()
+	elif _clash and "kills" in _clash:
+		# sync local kills display from clash if present
+		pass
 	if kills_label:
-		kills_label.text = "Kills: %d" % kills
+		var extra := ""
+		if _clash and _clash.has_method("status_line"):
+			extra = "  |  " + str(_clash.status_line())
+		kills_label.text = "Kills: %d%s" % [kills, extra]
 
 func _process(_delta: float) -> void:
 	if player == null:
@@ -188,11 +202,14 @@ func _process(_delta: float) -> void:
 			else:
 				lines.append("%s %s" % [key, ab.ability_name])
 	ability_label.text = "\n".join(lines)
+	if contrib_label and _clash and _clash.has_method("status_line"):
+		var econ2 := GameManager.economy_label() if GameManager and GameManager.has_method("economy_label") else ""
+		contrib_label.text = "%s  |  %s" % [econ2, _clash.status_line()]
 	var mvin: Vector2 = Vector2.ZERO
 	if "last_move_input" in player:
 		mvin = player.last_move_input
 	info_label.text = (
-		"NAEON | %s | Form %s | WASD/arrows | click window to focus | Esc | Tab=Space\n" % [
+		"NAEON CLASH | %s | Form %s | O=OpenSpace | soft WS only\n" % [
 			player.faction, player.current_form
 		]
 		+ "Q/E/R/F abilities | input(%.0f,%.0f) floor=%s | med heals" % [
@@ -209,8 +226,12 @@ func _try_med_heal(delta: float) -> void:
 
 func _on_contrib(v: float) -> void:
 	if contrib_label:
-		contrib_label.text = "Contribution: %.1f  |  Knowledge: %d" % [
-			v, GameManager.knowledge_rank if GameManager else 0
+		var econ := GameManager.economy_label() if GameManager and GameManager.has_method("economy_label") else ("C:%.1f" % v)
+		var ws := ""
+		if _clash and _clash.get("war") != null and _clash.war.has_method("hud_line"):
+			ws = "  |  " + _clash.war.hud_line()
+		contrib_label.text = "%s  |  Knowledge: %d%s" % [
+			econ, GameManager.knowledge_rank if GameManager else 0, ws
 		]
 
 func _on_update_available(version: String, notes: String) -> void:
