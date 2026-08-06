@@ -464,6 +464,19 @@ func _unhandled_input(event: InputEvent) -> void:
 				SoftENet.leave()
 			get_viewport().set_input_as_handled()
 
+		elif event.keycode == KEY_I or event.physical_keycode == KEY_I:
+			var os := get_tree().get_first_node_in_group("open_space") if get_tree() else null
+			if os == null and get_parent():
+				os = get_tree().current_scene if get_tree() else null
+			if os and os.has_node("InteriorDirector"):
+				var idir = os.get_node("InteriorDirector")
+				if idir.has_method("try_toggle"):
+					var ship = os.get("ship") if "ship" in os else null
+					idir.try_toggle(self, ship)
+			elif os and os.get_node_or_null("InteriorDirector"):
+				pass
+			get_viewport().set_input_as_handled()
+
 
 func toggle_faction() -> void:
 	faction = "gROT" if faction != "gROT" else "Cybernex"

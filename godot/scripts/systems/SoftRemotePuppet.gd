@@ -6,12 +6,17 @@ const _HeroForms = preload("res://scripts/player/HeroFormCatalog.gd")
 var peer_id: int = 0
 var form: String = "Canine"
 var faction: String = "Cybernex"
+var ship_mode: String = ""
+var ship_landed: bool = false
 var _target: Vector3 = Vector3.ZERO
 var _target_yaw: float = 0.0
+var _target_pitch: float = 0.0
+var _target_roll: float = 0.0
 var _body: MeshInstance3D
 var _label: Label3D
 var _mat: StandardMaterial3D
 var _form_root: Node3D = null
+var _gear: Node3D = null
 var _want_form_mesh: bool = true
 
 func setup(id: int) -> void:
@@ -42,15 +47,36 @@ func setup(id: int) -> void:
 	call_deferred("_try_load_form_mesh")
 
 func apply_state(pos: Vector3, yaw: float, f: String, fac: String) -> void:
+	apply_state_ex(pos, yaw, 0.0, 0.0, f, fac, "", false)
+
+func apply_state_ex(pos: Vector3, yaw: float, pitch: float, roll: float, f: String, fac: String, mode: String, landed: bool) -> void:
 	_target = pos
 	_target_yaw = yaw
+	_target_pitch = pitch
+	_target_roll = roll
 	var changed := form != f or faction != fac
 	form = f
 	faction = fac
+	ship_mode = mode
+	ship_landed = landed
 	if changed:
 		_refresh_visual()
 		call_deferred("_try_load_form_mesh")
+	_sync_remote_gear()
 	_refresh_label()
+
+func _sync_remote_gear() -> void:
+	if form != "Ship":
+		if _gear and is_instance_valid(_gear):
+			_gear.visible = false
+		return
+	if _gear == null or not is_instance_valid(_gear):
+		_gear = Node3D.new()
+		_gear.set_script(preload("res://scripts/ship/ShipLandingGear.gd"))
+		add_child(_gear)
+	_gear.visible = true
+	if _gear.has_method("set_deployed"):
+		_gear.call("set_deployed", ship_landed)
 
 func _refresh_visual() -> void:
 	if _mat == null:
@@ -141,12 +167,18 @@ func _strip(n: Node) -> void:
 
 func _refresh_label() -> void:
 	if _label:
-		_label.text = "P%d · %s · %s" % [peer_id, form, faction]
+		var extra := ""
+		if form == "Ship":
+			extra = " · %s%s" % [ship_mode if ship_mode != "" else "SCM", " LANDED" if ship_landed else ""]
+		_label.text = "P%d · %s · %s%s" % [peer_id, form, faction, extra]
 		_label.position = Vector3(0, 2.4 if form == "Ship" else 2.05, 0)
 
 func _process(delta: float) -> void:
 	global_position = global_position.lerp(_target, clampf(delta * 12.0, 0.0, 1.0))
 	rotation.y = lerp_angle(rotation.y, _target_yaw, clampf(delta * 10.0, 0.0, 1.0))
+	if form == "Ship":
+		rotation.x = lerp_angle(rotation.x, _target_pitch, clampf(delta * 8.0, 0.0, 1.0))
+		rotation.z = lerp_angle(rotation.z, _target_roll, clampf(delta * 8.0, 0.0, 1.0))
 	if _form_root and is_instance_valid(_form_root):
 		var amp := 0.02 if form == "Ship" else 0.03
 		_form_root.position.y = (0.2 if form == "Ship" else 0.0) + sin(Time.get_ticks_msec() * 0.004) * amp

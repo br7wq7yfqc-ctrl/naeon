@@ -1,19 +1,45 @@
 # NAEON Dev Plan — Aug 2026
 
+## Current release
+**0.3.13** — SoftUDP ship soft-state · procedural landing gear · terrain/interior HUD
+
 ## Done
 | Item | Status |
 |------|--------|
-| Clash lanes + soft objectives + 0.3.4 | done |
-| **Wave C hero dual-theme catalog** | **done** (existing meshes, 0 Tripo) |
-| **LayerContextAuthority stub** | **done** |
-| gROT Infector form asymmetry | **done** |
+| Clash lanes + soft objectives | done |
+| Hero dual-theme catalog (0 Tripo) | done |
+| LayerContextAuthority + SoftSession | done |
+| SoftUDP multiplayer (headless peer PASS) | done |
+| SoftRemotePuppet + Ship form/mode/landed | done |
+| OpenSpace seamless v1 | playable |
+| Procedural locomotion + limb rig | done |
+| Landing gear procedural | done |
+| Terrain edit G/B + budget HUD | done |
+| Interiors I enter/exit + HUD | done |
+| Planet atmosphere / LOD tiers | base done |
 
-## Next
-1. 0.3.5 installer after playtest
-2. Real multiplayer net
-3. Tripo only for missing hero LODs if needed
+## Sprint status
+| Sprint | Scope | Status |
+|--------|-------|--------|
+| **A** | ship soft-state + landing gear + DEV_PLAN | **this release** |
+| **B** | interiors + terrain HUD | **this release** |
+| **C** | Tripo skinned blend tree | **blocked until A/B stable** |
 
-## Budget
-0 Tripo this pass · no P2W · soft mobility forms only
+## Next (code-first, 0 Tripo)
+1. SoftUDP thruster/exhaust soft VFX sync (visual only)
+2. Pad streaming density + floating-origin edge cases
+3. Colony claim soft WS polish
+4. 2-client GUI LAN playtest checklist
+5. Ship interior props density (procedural)
 
-Updated: 2026-08-06T18:02:52.303157+00:00
+## Tripo (later, budget 5k/wk → 20k month)
+- Skinned hero LODs only where missing
+- No P2W combat assets
+- Keep dual-theme Cybernex / gROT
+
+## Soft rules
+- Soft multiplayer: pos / form / faction / ship mode / landed only
+- Contribution / WarScore never become combat power
+- Terrain volume hard-capped per planet
+
+Updated: 2026-08-06T23:29:29.939248+00:00

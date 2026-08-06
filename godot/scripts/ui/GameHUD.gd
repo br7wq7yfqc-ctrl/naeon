@@ -17,6 +17,8 @@ var _contest_banner: PanelContainer
 var _contest_label: Label
 var _mastery_label: Label
 var _layer_label: Label
+var _terrain_label: Label
+var _interior_label: Label
 var _lead_pip: ColorRect
 var _ctx_label: Label
 var _edu_label: Label
@@ -108,6 +110,30 @@ func _build() -> void:
 	_layer_label.add_theme_constant_override("outline_size", 5)
 	_layer_label.text = "LAYER · SPACE"
 	_root.add_child(_layer_label)
+	_terrain_label = Label.new()
+	_terrain_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	_terrain_label.offset_left = 12
+	_terrain_label.offset_right = 420
+	_terrain_label.offset_top = -72
+	_terrain_label.offset_bottom = -36
+	_terrain_label.add_theme_font_size_override("font_size", 15)
+	_terrain_label.add_theme_color_override("font_color", Color(0.45, 0.95, 0.65))
+	_terrain_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	_terrain_label.add_theme_constant_override("outline_size", 4)
+	_terrain_label.text = ""
+	_root.add_child(_terrain_label)
+	_interior_label = Label.new()
+	_interior_label.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_interior_label.offset_left = 12
+	_interior_label.offset_right = 360
+	_interior_label.offset_top = 48
+	_interior_label.offset_bottom = 76
+	_interior_label.add_theme_font_size_override("font_size", 16)
+	_interior_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.45))
+	_interior_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	_interior_label.add_theme_constant_override("outline_size", 5)
+	_interior_label.text = ""
+	_root.add_child(_interior_label)
 
 	_ctx_label = Label.new()
 	_ctx_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -328,6 +354,39 @@ func _refresh() -> void:
 			if ip_show.size() > 0:
 				host_hint = "  LAN " + ", ".join(ip_show)
 	_status_label.text = "HP %s  EN %s  |  %s %s%s%s\nCONTRIB %.0f  ·  4=form F9=fac F10=host F11=join  (no P2W)" % [hp, en, fac, form, net, host_hint, contrib]
+
+	# Terrain budget + interior status (soft info only)
+	if _terrain_label:
+		var tline := ""
+		var tree := get_tree()
+		if tree and _player:
+			for n in tree.get_nodes_in_group("terrain_edit"):
+				if n.has_method("get_budget_ratio") and n.has_method("remaining_volume"):
+					var ratio := float(n.get_budget_ratio())
+					var rem := float(n.remaining_volume())
+					var pct := int((1.0 - ratio) * 100.0) if ratio <= 1.0 else 0
+					# get_budget_ratio = used/max typically
+					if n.has_method("get_budget_ratio"):
+						pct = int(clampf(float(n.get_budget_ratio()), 0.0, 1.0) * 100.0)
+					tline = "TERRAIN  used %d%%  rem %.0f m³  ·  G raise B dig U undo" % [pct, rem]
+					break
+		_terrain_label.text = tline
+		_terrain_label.visible = tline != ""
+	if _interior_label:
+		var iline := ""
+		if LayerContext and str(LayerContext.current_layer).to_lower() in ["interior", "station", "ship_int"]:
+			iline = "INTERIOR · I to exit"
+		var tree2 := get_tree()
+		if tree2:
+			for n in tree2.get_nodes_in_group("interior_director"):
+				if n.has_method("is_inside") and n.is_inside():
+					var k := "pocket"
+					if n.has_method("get_kind"):
+						k = str(n.get_kind())
+					iline = "INTERIOR · %s · press I to exit" % k
+					break
+		_interior_label.text = iline
+		_interior_label.visible = iline != ""
 
 	# Layer chip + context (S1 seamless)
 	if _layer_label and LayerContext:

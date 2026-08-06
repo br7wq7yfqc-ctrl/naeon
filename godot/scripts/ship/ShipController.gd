@@ -46,6 +46,7 @@ var flight_mode: int = FlightMode.SCM
 var pilot_active: bool = true
 var _open_space: Node = null
 var _landed_pad: Node3D = null
+var _landing_gear: Node3D = null
 
 func _ready() -> void:
 	add_to_group("ship")
@@ -55,6 +56,7 @@ func _ready() -> void:
 	_recompute_stats()
 	_apply_faction_skin()
 	call_deferred("try_load_hull")
+	call_deferred("_ensure_landing_gear")
 	if pilot_active:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	print("[Ship] Ready modules=", modules.size())
@@ -340,6 +342,7 @@ func _do_land() -> void:
 func _do_launch() -> void:
 	is_landed = false
 	_landed_pad = null
+	_sync_landing_gear()
 	if flight_mode == FlightMode.HOVER:
 		_set_mode(FlightMode.SCM)
 	# Boost off pad
@@ -579,3 +582,20 @@ func _unhandled_input(event: InputEvent) -> void:
 			if SoftENet:
 				SoftENet.leave()
 			get_viewport().set_input_as_handled()
+
+
+func _ensure_landing_gear() -> void:
+	if _landing_gear and is_instance_valid(_landing_gear):
+		return
+	_landing_gear = Node3D.new()
+	_landing_gear.set_script(preload("res://scripts/ship/ShipLandingGear.gd"))
+	add_child(_landing_gear)
+	if _landing_gear.has_method("set_deployed"):
+		_landing_gear.call("set_deployed", is_landed)
+
+
+func _sync_landing_gear() -> void:
+	if _landing_gear == null or not is_instance_valid(_landing_gear):
+		_ensure_landing_gear()
+	if _landing_gear and _landing_gear.has_method("set_deployed"):
+		_landing_gear.call("set_deployed", is_landed)

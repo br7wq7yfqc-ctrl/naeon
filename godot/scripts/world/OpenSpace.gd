@@ -18,6 +18,7 @@ var _interior: Node = null
 var _spawn_ship_pos := Vector3(0, 0, 2800)
 
 func _ready() -> void:
+	add_to_group("open_space")
 	print("[OpenSpace] boot")
 	if LayerContext:
 		LayerContext.set_layer("Space")

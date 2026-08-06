@@ -17,11 +17,15 @@ var _open_space: Node
 var _inside: bool = false
 
 func setup(world_root: Node3D, open_space: Node) -> void:
+	add_to_group("interior_director")
 	_root = world_root
 	_open_space = open_space
 
 func is_inside() -> bool:
 	return _inside
+
+func get_kind() -> String:
+	return _kind
 
 func try_toggle(player: Node3D, ship: Node3D = null) -> void:
 	if _inside:

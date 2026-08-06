@@ -1,14 +1,19 @@
-# Handoff — 0.3.12 SoftUDP polish
+# Handoff — 0.3.13 Sprint A+B
 
-## Soft multiplayer
-UDP dual + OpenSpace PASS
-HELLO puppet · LAN host_info · F10-12 all controllers
+## A — Ship soft-state + landing gear
+SoftUDP: mode + landed + pitch/roll  
+Procedural ShipLandingGear on local ship + remote puppets  
+DEV_PLAN refreshed  
+
+## B — Interiors + terrain HUD
+GameHUD: terrain budget m³ · interior banner  
+I enter/exit (SurfaceWalker)  
+groups: terrain_edit, interior_director, open_space  
 
 ## Installer
-Desktop NAEON-0.3.12-Installer.dmg
-Bucket upload via tools/mac/upload_release.sh
+Building 0.3.13  
 
 ## Budget
-0 Tripo
+0 Tripo · Sprint C deferred  
 
-Updated: 2026-08-06T23:16:38.033172+00:00
+Updated: 2026-08-06T23:29:29.939248+00:00

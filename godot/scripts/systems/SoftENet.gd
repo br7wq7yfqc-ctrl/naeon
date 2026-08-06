@@ -261,6 +261,8 @@ func _process(delta: float) -> void:
 func _broadcast_state() -> void:
 	var form := "Canine"
 	var fac := "Cybernex"
+	var mode := ""
+	var landed := 0
 	if "current_form" in _player_ref:
 		form = str(_player_ref.current_form)
 	elif "form_name" in _player_ref:
@@ -269,14 +271,27 @@ func _broadcast_state() -> void:
 		form = "Ship"
 	if "faction" in _player_ref:
 		fac = str(_player_ref.faction)
+	if _player_ref.is_in_group("ship"):
+		if _player_ref.has_method("flight_mode_name"):
+			mode = str(_player_ref.flight_mode_name())
+		elif "flight_mode" in _player_ref:
+			mode = str(_player_ref.flight_mode)
+		if "is_landed" in _player_ref:
+			landed = 1 if bool(_player_ref.is_landed) else 0
 	var pos: Vector3 = _player_ref.global_position
 	var yaw: float = _player_ref.rotation.y
+	var pitch := 0.0
+	var roll := 0.0
+	if "rotation" in _player_ref:
+		pitch = _player_ref.rotation.x
+		roll = _player_ref.rotation.z
 	if _udp and (is_host or is_connected):
 		_send_raw({
 			"k": KIND_STATE,
 			"id": local_peer_id,
 			"x": pos.x, "y": pos.y, "z": pos.z,
-			"yaw": yaw, "form": form, "fac": fac,
+			"yaw": yaw, "pitch": pitch, "roll": roll,
+			"form": form, "fac": fac, "mode": mode, "landed": landed,
 		})
 	elif _peer and multiplayer.multiplayer_peer and (is_host or is_connected):
 		rpc_soft_state.rpc(pos.x, pos.y, pos.z, yaw, form, fac)
@@ -400,7 +415,14 @@ func _apply_remote_state(pid: int, d: Dictionary) -> void:
 	var yaw := float(d.get("yaw", 0))
 	var form := str(d.get("form", "Canine"))
 	var fac := str(d.get("fac", "Cybernex"))
-	pup.call("apply_state", pos, yaw, form, fac)
+	var mode := str(d.get("mode", ""))
+	var landed := int(d.get("landed", 0)) == 1
+	var pitch := float(d.get("pitch", 0.0))
+	var roll := float(d.get("roll", 0.0))
+	if pup.has_method("apply_state_ex"):
+		pup.call("apply_state_ex", pos, yaw, pitch, roll, form, fac, mode, landed)
+	else:
+		pup.call("apply_state", pos, yaw, form, fac)
 
 func _drop_peer(pid: int, key: String) -> void:
 	if _puppets.has(pid):
