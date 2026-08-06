@@ -1,15 +1,14 @@
-# Handoff — SoftUDP peer PASS
+# Handoff — 0.3.11 SoftUDP peer PASS
 
 ## Soft multiplayer
-**UDP soft protocol** default (works headless macOS)
-loopback + dual-process: peer+2 / connected as 2 / puppet+1
-F10 host · F11 join (IP from user://softnet_join.txt) · F12 leave
-Optional --softnet-enet / --softnet-ws
+UDP soft protocol default · dual headless peer+2 PASS
+F10 host · F11 join · F12 leave
+user://softnet_join.txt for join IP
 
 ## Installer
-0.3.10 Desktop · next 0.3.11 with SoftUDP
+Desktop NAEON-0.3.11-Installer.dmg
 
 ## Budget
 0 Tripo
 
-Updated: 2026-08-06T21:04:36.202174+00:00
+Updated: 2026-08-06T21:12:09.930149+00:00
