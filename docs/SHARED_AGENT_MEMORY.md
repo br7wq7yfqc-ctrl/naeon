@@ -1,22 +1,26 @@
 # NAEON — Shared Agent Memory
 
-**Last updated:** 2026-08-06 (**design VS queue closed**)
+**Last updated:** 2026-08-06 (skill v1.7 methodology)
 
 ## Core constraints
-No P2W · soft Knowledge · asymmetric CX/gROT · Dynamic Ownership · Infection **max 5** · S0–S3 · freemium ≠ power · Tripo-first · no secrets in git · Godot 4 Mac+Windows · reference bars ≠ parity
+No P2W · soft Knowledge · asymmetric CX/gROT · Dynamic Ownership · Infection **max 5** · seamless **S1** target · freemium ≠ power · Tripo-first · no secrets in git · Godot 4 Mac+Windows · reference bars ≠ parity · **one-lever retune**
 
 ## Design corpus
-rules/00–19 · lore (systems, campaigns, bios, **QUEST_ACT_I_STARTERS**) · design/DATA_SCHEMAS_VS · legal · HANDOFF/HANDOFFS · Skill **v1.6**
+rules/00–19 · lore · design/DATA_SCHEMAS_VS · legal · HANDOFF/HANDOFFS · Skill **v1.7**
 
-## Decision log (closeout)
-| Date | Decision |
-|------|----------|
-| 2026-08-06 | **04 v0.2** Infection max **5** (was 3) |
-| 2026-08-06 | Expanded 02, 12, 14; STAR_SYSTEMS v0.2; DATA_SCHEMAS_VS |
-| 2026-08-06 | **Design VS queue marked COMPLETE** — remaining work is code/ops |
+## Skill v1.7
+Recursive build-session loop · calculation levers (combat/energy/economy/MOBA) · telemetry checklist · session start card
 
 ## Implementation P0
-A: Infection 5 UI + param align · B: TransitionContext round-trip · Ops: Tripo/neon
+A: Infection 5 UI + 04/16 align · B: TransitionContext hold S1 · E: Act I quest resources · Ops: Tripo/neon
+
+## Decision log
+| Date | Decision |
+|------|----------|
+| 2026-08-06 | Design VS queue COMPLETE |
+| 2026-08-06 | Infection max 5 in rules/04 |
+| 2026-08-06 | Seamless S1 declared (Mac/docs) |
+| 2026-08-06 | **Skill v1.7** recursive methodology + calc levers |
 
 ## Protocol
-HANDOFF → HANDOFFS → rules → skill → code. Do not re-open VS design scope without owner decision.
+HANDOFF → HANDOFFS → rules → skill §19–23 → code. Reflect after every numeric change.
