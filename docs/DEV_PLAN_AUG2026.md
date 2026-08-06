@@ -3,17 +3,17 @@
 ## Done
 | Item | Status |
 |------|--------|
-| Clash + WarScore + 3 lanes + radar | done |
-| Installer 0.3.3 | shipped |
-| **Soft lane objectives (pressure 0–100)** | **done** |
-| Alt win: 3 lanes secured | **done** |
+| Clash lanes + soft objectives + 0.3.4 | done |
+| **Wave C hero dual-theme catalog** | **done** (existing meshes, 0 Tripo) |
+| **LayerContextAuthority stub** | **done** |
+| gROT Infector form asymmetry | **done** |
 
 ## Next
-1. 0.3.4 installer
-2. Wave C hero
-3. Multiplayer
+1. 0.3.5 installer after playtest
+2. Real multiplayer net
+3. Tripo only for missing hero LODs if needed
 
 ## Budget
-Week 5k / month 20k · 0 Tripo · no P2W
+0 Tripo this pass · no P2W · soft mobility forms only
 
-Updated: 2026-08-06T17:43:08.647430+00:00
+Updated: 2026-08-06T18:02:52.303157+00:00

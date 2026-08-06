@@ -1,5 +1,6 @@
 extends CharacterBody3D
 const _AP = preload("res://scripts/assets/AssetPaths.gd")
+const _HeroForms = preload("res://scripts/player/HeroFormCatalog.gd")
 
 ## TPS controller — robust WASD (InputMap + physical/keycode fallback).
 
@@ -172,8 +173,10 @@ func _just_ability(n: int) -> bool:
 	return false
 
 func cycle_form() -> void:
-	_form_index = (_form_index + 1) % FORMS.size()
-	switch_form(FORMS[_form_index])
+	var forms: PackedStringArray = _HeroForms.forms_for_faction(faction)
+	_form_index = (_form_index + 1) % forms.size()
+	switch_form(forms[_form_index])
+	_form_switch_fx()
 
 func switch_form(new_form: String) -> void:
 	current_form = new_form
@@ -181,33 +184,12 @@ func switch_form(new_form: String) -> void:
 	print("[Player] Form → ", current_form)
 
 func _apply_form_stats() -> void:
-	match current_form:
-		"Canine":
-			move_speed = 8.5
-			jump_velocity = 6.5
-			sprint_multiplier = 1.7
-		"Feline":
-			move_speed = 9.5
-			jump_velocity = 7.5
-			sprint_multiplier = 1.5
-		"Avian":
-			move_speed = 7.5
-			jump_velocity = 9.0
-			sprint_multiplier = 1.4
-		"Human":
-			move_speed = 7.0
-			jump_velocity = 6.0
-			sprint_multiplier = 1.5
+	var prof: Dictionary = _HeroForms.apply_soft_mobility(current_form)
+	move_speed = float(prof.get("move", 8.0))
+	jump_velocity = float(prof.get("jump", 6.5))
+	sprint_multiplier = float(prof.get("sprint", 1.5))
 	if _body_mat:
-		match current_form:
-			"Canine":
-				_body_mat.emission = Color(0.2, 0.85, 1.0)
-			"Feline":
-				_body_mat.emission = Color(0.9, 0.5, 0.15)
-			"Avian":
-				_body_mat.emission = Color(0.55, 0.35, 1.0)
-			"Human":
-				_body_mat.emission = Color(0.4, 0.9, 0.55)
+		_body_mat.emission = prof.get("emit", Color(0.5, 0.7, 0.9))
 		_body_mat.emission_energy_multiplier = 1.6
 	if form_label:
 		form_label.text = "%s | %s" % [current_form, faction]
@@ -326,23 +308,14 @@ func on_hacked(caster: Node, amount: float = 1.0) -> void:
 	take_damage(amount * 2.0)
 
 func try_load_form_mesh() -> void:
-	var rel := ""
-	match current_form:
-		"Canine":
-			rel = "characters/player_canine/player_canine_cybernex_lod0.glb"
-		"Feline":
-			rel = "characters/player_feline/player_feline_cybernex_lod0.glb"
-		"Avian":
-			rel = "characters/player_avian/player_avian_cybernex_lod0.glb"
-		"Human":
-			rel = "characters/player_human/player_human_cybernex_lod0.glb"
-		_:
-			if body_mesh:
-				body_mesh.visible = true
-			_clear_form_glb()
-			return
-	var path: String = _AP.resolve(rel)
-	if not FileAccess.file_exists(path):
+	# Wave C: dual-theme GLB by faction + LOD/clean fallbacks (HeroFormCatalog)
+	var path := ""
+	for rel in _HeroForms.mesh_candidates(current_form, faction):
+		var p: String = _AP.resolve(rel)
+		if p != "" and FileAccess.file_exists(p):
+			path = p
+			break
+	if path == "":
 		if body_mesh:
 			body_mesh.visible = true
 		return
@@ -350,11 +323,12 @@ func try_load_form_mesh() -> void:
 	var doc := GLTFDocument.new()
 	var state := GLTFState.new()
 	if doc.append_from_file(path, state) != OK:
+		if body_mesh:
+			body_mesh.visible = true
 		return
 	var root := doc.generate_scene(state)
 	if root == null:
 		return
-	# Visual only — remove any imported collision that could pin the player
 	_strip_colliders(root)
 	if body_mesh:
 		body_mesh.visible = false
@@ -362,7 +336,21 @@ func try_load_form_mesh() -> void:
 	root.name = "FormGLB"
 	root.scale = Vector3.ONE * 0.85
 	root.position = Vector3(0, 0, 0)
-	print("[Player] form mesh ", current_form, " -> ", path)
+	print("[Player] form mesh ", current_form, "/", faction, " -> ", path)
+
+
+func _form_switch_fx() -> void:
+	# Soft VFX pulse — readable form change, no combat power
+	if _body_mat:
+		_body_mat.emission_energy_multiplier = 4.0
+	if GameManager:
+		GameManager.toast_requested.emit("Hero form → %s (%s) · soft mobility only" % [current_form, faction])
+	# decay emission
+	var tw := get_tree().create_timer(0.35)
+	tw.timeout.connect(func():
+		if _body_mat:
+			_body_mat.emission_energy_multiplier = 1.6
+	)
 
 func _strip_colliders(n: Node) -> void:
 	# Remove StaticBody/CollisionShape so form mesh never freezes CharacterBody3D

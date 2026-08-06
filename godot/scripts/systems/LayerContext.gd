@@ -19,9 +19,13 @@ func set_layer(name: String) -> void:
 	print("[LayerContext] → ", name, " stage=", seamless_stage)
 
 func set_quest(qid: String) -> void:
+	if LayerContextAuthority and not LayerContextAuthority.can_mutate_context():
+		return
 	active_quest_id = qid
 
 func set_claim(cid: String) -> void:
+	if LayerContextAuthority and not LayerContextAuthority.can_mutate_context():
+		return
 	active_claim_id = cid
 
 func add_cargo_risk(delta: float) -> void:

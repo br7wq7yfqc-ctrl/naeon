@@ -1,4 +1,5 @@
 extends CharacterBody3D
+const _HeroForms = preload("res://scripts/player/HeroFormCatalog.gd")
 ## Planet-surface TPS walker: radial gravity, floor snap, procedural anim.
 ## Used for OpenSpace exit (not flat-world PlayerController).
 
@@ -97,20 +98,13 @@ func _ensure_rig() -> void:
 		camera.current = true
 
 func _load_form_visual() -> void:
-	var map := {
-		"Canine": "characters/player_canine/player_canine_%s_lod0.glb",
-		"Feline": "characters/player_feline/player_feline_%s_lod0.glb",
-		"Avian": "characters/player_avian/player_avian_%s_lod0.glb",
-		"Human": "characters/player_human/player_human_%s_lod0.glb",
-	}
-	var fx := "cybernex" if faction != "gROT" else "grot"
-	var tmpl: String = map.get(form_name, map["Canine"])
-	var rel: String = tmpl % fx
-	var path: String = _AP.resolve(rel)
-	if path == "" or not FileAccess.file_exists(path):
-		rel = rel.replace("lod0", "lod1")
-		path = _AP.resolve(rel)
-	if path == "" or not FileAccess.file_exists(path):
+	var path := ""
+	for rel in _HeroForms.mesh_candidates(form_name, faction):
+		var p: String = _AP.resolve(rel)
+		if p != "" and FileAccess.file_exists(p):
+			path = p
+			break
+	if path == "":
 		return
 	var doc := GLTFDocument.new()
 	var state := GLTFState.new()
@@ -333,9 +327,14 @@ func _infection_move_mult() -> float:
 	return 1.0
 
 func _cycle_form() -> void:
-	var i := FORMS.find(form_name)
-	i = (i + 1) % FORMS.size()
-	form_name = FORMS[i]
+	var forms: PackedStringArray = _HeroForms.forms_for_faction(faction)
+	var i := forms.find(form_name)
+	if i < 0:
+		i = 0
+	i = (i + 1) % forms.size()
+	form_name = forms[i]
+	if GameManager:
+		GameManager.toast_requested.emit("Hero form → %s · dual-theme %s" % [form_name, faction])
 	# reload visual
 	var old = _visual.get_node_or_null("FormGLB") if _visual else null
 	if old:
