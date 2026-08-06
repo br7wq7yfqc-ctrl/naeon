@@ -178,6 +178,15 @@ CONTRIB %.0f  (no P2W)" % [hp, en, fac, form, contrib]
 					var st := str(n.get("_status")) if "_status" in n else ""
 					best_txt = "PAD %s  %s  (%.0fm)" % [n.get_faction(), st, d]
 		nearest = best_txt
+	# Terrain budget from nearest planet TerrainEdit
+	var terra := ""
+	if _player and _player is Node3D and get_tree():
+		for n in get_tree().get_nodes_in_group("terrain_edit"):
+			if n.has_method("get_budget_ratio") and n.visible:
+				terra = "TERRA %.0f%% used  G raise / B dig" % (float(n.get_budget_ratio()) * 100.0)
+				break
+	if terra != "":
+		nearest = (nearest + "\n" + terra) if nearest else terra
 	_owner_label.text = nearest
 	# Channel bar
 	var ch_ratio := 0.0

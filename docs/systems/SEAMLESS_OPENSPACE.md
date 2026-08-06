@@ -39,7 +39,7 @@ Quality tiers: `GraphicsQuality` autoload F1 cycle LOW→MEDIUM→HIGH→ULTRA.
 
 ## Roadmap (same month, 20k assets + code)
 - [x] v1 seamless continuum + modes + origin
-- [ ] Surface chunk height detail (noise displacement / heightmap region)
+- [x] Surface chunk height detail + **editable** heightfield (PlanetTerrainEdit, NMS caps)\n- [x] Station/ship interior pockets (procedural)
 - [ ] Colony buildings stream on pads (HQ GLBs)
 - [ ] Atmosphere shader (height fog band)
 - [ ] Multi-seat / cargo gameplay on surface

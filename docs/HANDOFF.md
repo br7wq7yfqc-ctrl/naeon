@@ -1,20 +1,16 @@
-# Handoff — channel Hack + dual-theme ownership
+# Handoff — terrain edit + interiors
 
-## Shipped
-- **ChannelController**: Hack/Probe channel 1.5s, bar on GameHUD
-- Interrupt: damage / Firewall break within 8 m / glitch stacks
-- **Pad dual-theme swap** on ownership resolve (`GlbProp.reload_for_faction`)
-- Contested + SurfaceDetail + Infection from prior pass
+## New
+- **PlanetTerrainEdit**: NMS-style raise/dig near surface (G/B), volume cap 4000 m³, save `user://terrain_*.dat`
+- **InteriorGenerator + InteriorDirector**: station (pad) / ship procedural interiors, **I** toggle
+- Docs: `docs/systems/PLANET_TERRAIN_EDIT.md`, `INTERIORS.md`
 
 ## Play
-TestArena / on-foot: Q/E start **channel bar** · take damage cancels · Firewall breaks nearby hacker  
-OpenSpace pad: claim resolve → cluster props swap Cybernex↔gROT GLBs
+OpenSpace → land → F exit → **G/B** sculpt → **I** station interior → I exit  
+Near ship on foot → I ship interior
 
-## Budget
-0 Tripo this pass · week ~810/4800
+## Limits (no P2W)
+Terraform is cosmetic/navigation only; volume hard-capped; not shop-boosted.
 
 ## Next
-1. Channel VFX beam during progress
-2. Contested progress ring UI (2D)
-3. Installer 0.3.1 after playtest
-4. Optional Wave C hero
+Terra FX · undo · 0.3.1 DMG · contested ring

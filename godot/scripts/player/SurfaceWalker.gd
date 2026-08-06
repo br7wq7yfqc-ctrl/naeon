@@ -222,6 +222,7 @@ func _input(event: InputEvent) -> void:
 			_try_ability(0)
 		elif event.keycode == KEY_R:
 			_try_ability(2)
+		# G/B terrain edit handled by PlanetTerrainEdit while in player group
 	if event.is_action_pressed("ui_cancel"):
 		Input.set_mouse_mode(
 			Input.MOUSE_MODE_VISIBLE if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED

@@ -14,6 +14,7 @@ var ship: CharacterBody3D
 var player: CharacterBody3D
 var planets: Array = []
 var _in_ship: bool = true
+var _interior: Node = null
 var _spawn_ship_pos := Vector3(0, 0, 2800)
 
 func _ready() -> void:
@@ -143,6 +144,14 @@ func _spawn_asteroid_belt() -> void:
 		var r := rng.randf_range(3200, 5200)
 		p.global_position = Vector3(cos(ang) * r, rng.randf_range(-400, 400), sin(ang) * r - 800)
 
+func _setup_interior() -> void:
+	_interior = Node.new()
+	_interior.set_script(preload("res://scripts/world/InteriorDirector.gd"))
+	_interior.name = "InteriorDirector"
+	add_child(_interior)
+	if _interior.has_method("setup"):
+		_interior.setup(world_root, self)
+
 func _spawn_ship() -> void:
 	ship = ShipScene.instantiate()
 	world_root.add_child(ship)
@@ -262,6 +271,9 @@ func try_exit_ship() -> void:
 		ship.set_pilot_active(false)
 	if floating and floating.has_method("set_target") and player:
 		floating.set_target(player)
+	for pl in planets:
+		if pl.has_method("set_observer"):
+			pl.set_observer(player)
 
 func try_enter_ship() -> void:
 	if _in_ship or ship == null or player == null:
@@ -348,6 +360,10 @@ func _update_hud() -> void:
 		mode_label.text = "GFX: %s" % gqn
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_I:
+		_toggle_interior()
+		return
+
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
 			KEY_F:
@@ -362,3 +378,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_TAB:
 				if ResourceLoader.exists("res://scenes/test/TestArena.tscn"):
 					get_tree().change_scene_to_file("res://scenes/test/TestArena.tscn")
+
+func _toggle_interior() -> void:
+	var actor: Node3D = player if player and is_instance_valid(player) else null
+	if actor == null and ship and _in_ship:
+		print("[OpenSpace] Exit ship first (F) to enter interiors on foot")
+		return
+	if actor == null:
+		return
+	if _interior and _interior.has_method("try_toggle"):
+		_interior.try_toggle(actor, ship)
