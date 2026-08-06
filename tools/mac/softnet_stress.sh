@@ -1,27 +1,23 @@
 #!/bin/bash
 set -uo pipefail
-# 2-process SoftENet host/join stress (headless)
 ROOT="${HOME}/Documents/naeon"
 export PATH="${HOME}/bin:${HOME}/Applications/Godot.app/Contents/MacOS:${PATH}"
 LOGDIR="${ROOT}/logs/softnet_$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$LOGDIR"
 SCENE="${1:-res://scenes/test/TestArena.tscn}"
-echo "SoftENet stress host+join scene=$SCENE"
-godot --headless --path "${ROOT}/godot" --scene "$SCENE" --quit-after 10 -- --softnet-host \
-  >"$LOGDIR/host.log" 2>&1 &
-HPID=$!
-sleep 2
-godot --headless --path "${ROOT}/godot" --scene "$SCENE" --quit-after 8 -- --softnet-join=127.0.0.1 \
-  >"$LOGDIR/client.log" 2>&1 &
-CPID=$!
-wait $HPID || true
-wait $CPID || true
-echo "=== HOST ===" | tee "$LOGDIR/SUMMARY.txt"
-grep -iE "SoftENet|SCRIPT ERROR|puppet|peer" "$LOGDIR/host.log" | head -20 | tee -a "$LOGDIR/SUMMARY.txt"
-echo "=== CLIENT ===" | tee -a "$LOGDIR/SUMMARY.txt"
-grep -iE "SoftENet|SCRIPT ERROR|puppet|peer|connected" "$LOGDIR/client.log" | head -20 | tee -a "$LOGDIR/SUMMARY.txt"
-HERR=$(grep -c "SCRIPT ERROR" "$LOGDIR/host.log" || true)
-CERR=$(grep -c "SCRIPT ERROR" "$LOGDIR/client.log" || true)
-echo "HOST_SCRIPT_ERR=$HERR CLIENT_SCRIPT_ERR=$CERR LOGDIR=$LOGDIR" | tee -a "$LOGDIR/SUMMARY.txt"
-# success if no script errors and host started
-grep -q "\[SoftENet\] host" "$LOGDIR/host.log"
+echo "SoftENet loopback puppet stress scene=$SCENE"
+godot --headless --path "${ROOT}/godot" --scene "$SCENE" --quit-after 8 -- --softnet-loopback \
+  >"$LOGDIR/loopback.log" 2>&1 || true
+echo "=== LOOPBACK ===" | tee "$LOGDIR/SUMMARY.txt"
+grep -iE "SoftENet|SCRIPT ERROR|puppet" "$LOGDIR/loopback.log" | head -25 | tee -a "$LOGDIR/SUMMARY.txt"
+ERR=$(grep -c "SCRIPT ERROR" "$LOGDIR/loopback.log" || true)
+PUP=0
+grep -q "\[SoftENet\] loopback peer enabled" "$LOGDIR/loopback.log" && grep -q "\[SoftENet\] puppet +" "$LOGDIR/loopback.log" && PUP=1
+echo "SCRIPT_ERR=$ERR PUPPET_OK=$PUP LOGDIR=$LOGDIR" | tee -a "$LOGDIR/SUMMARY.txt"
+if [ "${ERR:-0}" -gt 0 ]; then exit 1; fi
+if [ "$PUP" -ne 1 ]; then
+  echo "FAIL: loopback puppet not spawned" | tee -a "$LOGDIR/SUMMARY.txt"
+  exit 2
+fi
+echo "STRESS PASS loopback puppet" | tee -a "$LOGDIR/SUMMARY.txt"
+exit 0

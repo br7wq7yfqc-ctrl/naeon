@@ -1,21 +1,15 @@
-# Handoff — 0.3.9 OpenSpace SoftENet
+# Handoff — 0.3.10 ship puppet + loopback stress PASS
 
 ## Soft multiplayer
-OpenSpace ship↔walker SoftENet rebind
-F10 host · F11 join · F12 leave (walker + ship)
-CLI --softnet-host / --softnet-join
-tools/mac/softnet_stress.sh — SCRIPT_ERR=0
+SoftRemotePuppet Ship hull + hero forms  
+ → puppet +99 STRESS PASS  
+F10/F11/F12 ENet/WS (LAN; headless bind blocked on macOS)  
+tools/mac/softnet_stress.sh  
 
 ## Installer
-Desktop NAEON-0.3.9-Installer.dmg (~675M, verified)
-Bucket upload via tools/mac/upload_release.sh
+Building 0.3.10  
 
 ## Budget
 0 Tripo
 
-## Next
-1. Peer-connected assert (longer stress)
-2. Skeleton when skinned assets
-3. Puppet ship mesh
-
-Updated: 2026-08-06T20:39:56.721267+00:00
+Updated: 2026-08-06T20:55:12.778047+00:00

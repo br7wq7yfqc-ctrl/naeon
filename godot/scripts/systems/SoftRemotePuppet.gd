@@ -55,6 +55,13 @@ func apply_state(pos: Vector3, yaw: float, f: String, fac: String) -> void:
 func _refresh_visual() -> void:
 	if _mat == null:
 		return
+	if form == "Ship":
+		_mat.emission = Color(0.4, 0.7, 1.0)
+		_mat.albedo_color = Color(0.35, 0.55, 0.85, 0.7)
+		if _body:
+			_body.scale = Vector3(1.6, 0.55, 2.2)
+			_body.position = Vector3(0, 0.4, 0)
+		return
 	if faction == "gROT":
 		_mat.emission = Color(0.95, 0.15, 0.45)
 		_mat.albedo_color = Color(0.9, 0.2, 0.4, 0.75)
@@ -75,12 +82,25 @@ func _refresh_visual() -> void:
 			s = 1.0
 	if _body:
 		_body.scale = Vector3.ONE * s
+		_body.position = Vector3(0, 0.9, 0)
+
+func _ship_mesh_candidates() -> PackedStringArray:
+	var fx := "grot" if faction == "gROT" else "cybernex"
+	var out := PackedStringArray()
+	for lod in ["lod0", "lod1", "lod2"]:
+		out.append("ships/ship_hull_scout/ship_hull_scout_%s_%s.glb" % [fx, lod])
+	return out
 
 func _try_load_form_mesh() -> void:
 	if not _want_form_mesh:
 		return
 	var path := ""
-	for rel in _HeroForms.mesh_candidates(form, faction):
+	var cands: PackedStringArray
+	if form == "Ship":
+		cands = _ship_mesh_candidates()
+	else:
+		cands = _HeroForms.mesh_candidates(form, faction)
+	for rel in cands:
 		var p: String = _AP.resolve(rel)
 		if p != "" and FileAccess.file_exists(p):
 			path = p
@@ -102,7 +122,11 @@ func _try_load_form_mesh() -> void:
 	_strip(root)
 	add_child(root)
 	root.name = "FormGLB"
-	root.scale = Vector3.ONE * 0.85
+	if form == "Ship":
+		root.scale = Vector3.ONE * 0.35
+		root.position = Vector3(0, 0.2, 0)
+	else:
+		root.scale = Vector3.ONE * 0.85
 	_form_root = root
 	if _body:
 		_body.visible = false
@@ -118,9 +142,11 @@ func _strip(n: Node) -> void:
 func _refresh_label() -> void:
 	if _label:
 		_label.text = "P%d · %s · %s" % [peer_id, form, faction]
+		_label.position = Vector3(0, 2.4 if form == "Ship" else 2.05, 0)
 
 func _process(delta: float) -> void:
 	global_position = global_position.lerp(_target, clampf(delta * 12.0, 0.0, 1.0))
 	rotation.y = lerp_angle(rotation.y, _target_yaw, clampf(delta * 10.0, 0.0, 1.0))
 	if _form_root and is_instance_valid(_form_root):
-		_form_root.position.y = sin(Time.get_ticks_msec() * 0.004) * 0.03
+		var amp := 0.02 if form == "Ship" else 0.03
+		_form_root.position.y = (0.2 if form == "Ship" else 0.0) + sin(Time.get_ticks_msec() * 0.004) * amp
