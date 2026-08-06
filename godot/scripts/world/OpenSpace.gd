@@ -63,7 +63,6 @@ func _spawn_starfield() -> void:
 	mat.emission_enabled = true
 	mat.emission = Color(0.7, 0.85, 1.0)
 	mat.emission_energy_multiplier = 1.4
-	mat.cast_shadow = false
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.mesh = mesh
@@ -160,12 +159,23 @@ func _spawn_ship() -> void:
 	if ship.has_method("set_open_space_context"):
 		ship.set_open_space_context(self)
 	_bind_planet_observers()
+	_sync_planet_sun()
 
 
 func _bind_planet_observers() -> void:
 	for pl in planets:
 		if pl and pl.has_method("set_observer") and ship:
 			pl.set_observer(ship)
+
+
+func _sync_planet_sun() -> void:
+	var sun := $Sun as DirectionalLight3D
+	if sun == null:
+		return
+	var dir: Vector3 = -sun.global_transform.basis.z
+	for pl in planets:
+		if pl and pl.has_method("set_sun_direction"):
+			pl.set_sun_direction(dir)
 
 func gravity_at(global_pos: Vector3) -> Vector3:
 	var g := Vector3.ZERO

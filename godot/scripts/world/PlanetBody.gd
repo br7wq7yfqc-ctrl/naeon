@@ -4,6 +4,8 @@ class_name PlanetBody
 ## Targets: RTX 1060 3GB (LOW) → 3060 (HIGH) → 4060 (ULTRA).
 
 const _Cache = preload("res://scripts/world/PlanetMeshCache.gd")
+const _ATMO_SHADER = preload("res://shaders/planet_atmosphere.gdshader")
+const _ATMO_INNER_SHADER = preload("res://shaders/planet_atmosphere_inner.gdshader")
 
 @export var planet_name: String = "Aexion-III"
 @export var radius: float = 1200.0
@@ -28,7 +30,10 @@ var _body: StaticBody3D
 var _pads_root: Node3D
 var _pads: Array[Node3D] = []
 var _surface_mat: StandardMaterial3D
-var _atmo_mat: StandardMaterial3D
+var _atmo_mat: ShaderMaterial
+var _atmo_inner: MeshInstance3D
+var _atmo_inner_mat: ShaderMaterial
+var _sun_dir: Vector3 = Vector3(0.55, 0.75, 0.35)
 var _current_lod: int = -1  # 0 near, 1 mid, 2 far, 3 impostor
 var _pads_built: bool = false
 var _glb_loaded: bool = false
@@ -70,6 +75,7 @@ func _configure_from_quality() -> void:
 func _on_quality_changed(_t: int) -> void:
 	_configure_from_quality()
 	_current_lod = -1  # force rebuild LOD mesh
+	_apply_atmo_uniforms()
 	_apply_lod(0)  # will re-evaluate next frame via process
 
 func _build_shell() -> void:
@@ -95,20 +101,30 @@ func _build_shell() -> void:
 	_mesh.material_override = _surface_mat
 	add_child(_mesh)
 
-	# Atmosphere — unshaded, no shadows, low poly; toggled by distance
+	# Atmosphere outer shell — fresnel limb shader (space view)
 	_atmo = MeshInstance3D.new()
 	_atmo.name = "Atmosphere"
 	_atmo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_atmo.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-	_atmo.mesh = _Cache.sphere(radius + atmosphere_height, max(10, _segs_far))
-	_atmo_mat = StandardMaterial3D.new()
-	_atmo_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	_atmo_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	_atmo_mat.albedo_color = atmosphere_color
-	_atmo_mat.cull_mode = BaseMaterial3D.CULL_FRONT
-	_atmo_mat.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_DISABLED
+	_atmo.mesh = _Cache.sphere(radius + atmosphere_height, max(12, _segs_far + 4))
+	_atmo_mat = ShaderMaterial.new()
+	_atmo_mat.shader = _ATMO_SHADER
+	_apply_atmo_uniforms()
 	_atmo.material_override = _atmo_mat
 	add_child(_atmo)
+	# Inner haze (enabled only inside atmosphere)
+	_atmo_inner = MeshInstance3D.new()
+	_atmo_inner.name = "AtmosphereInner"
+	_atmo_inner.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_atmo_inner.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	_atmo_inner.mesh = _Cache.sphere(radius + atmosphere_height * 0.92, max(10, _segs_far))
+	_atmo_inner_mat = ShaderMaterial.new()
+	_atmo_inner_mat.shader = _ATMO_INNER_SHADER
+	_atmo_inner_mat.set_shader_parameter("haze_color", atmosphere_color)
+	_atmo_inner_mat.set_shader_parameter("sun_direction", _sun_dir)
+	_atmo_inner.material_override = _atmo_inner_mat
+	_atmo_inner.visible = false
+	add_child(_atmo_inner)
 
 	# Far impostor — single low poly unshaded billboard-ish sphere (very cheap)
 	_impostor = MeshInstance3D.new()
@@ -159,15 +175,8 @@ func _process(delta: float) -> void:
 	var lod := _lod_for_distance(dist)
 	if lod != _current_lod:
 		_apply_lod_visual(lod)
-	# Atmosphere fade / disable
-	if _atmo:
-		var show_atmo := dist < atmo_max_dist and lod < 3
-		_atmo.visible = show_atmo
-		if show_atmo:
-			var t: float = clamp(1.0 - dist / atmo_max_dist, 0.0, 1.0)
-			var c := atmosphere_color
-			c.a = atmosphere_color.a * (0.35 + 0.65 * t)
-			_atmo_mat.albedo_color = c
+	# Atmosphere LOD + shader params
+	_update_atmosphere(dist, lod, obs)
 	# Pad streaming
 	_update_pads(dist)
 	# Disable collision when very far (saves broadphase) — re-enable near
@@ -200,6 +209,8 @@ func _apply_lod_visual(lod: int) -> void:
 		_impostor.visible = true
 		if _atmo:
 			_atmo.visible = false
+		if _atmo_inner:
+			_atmo_inner.visible = false
 		return
 	_impostor.visible = false
 	_mesh.visible = true
@@ -321,6 +332,76 @@ func _disable_shadows_recursive(n: Node) -> void:
 		(n as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	for c in n.get_children():
 		_disable_shadows_recursive(c)
+
+
+func _apply_atmo_uniforms() -> void:
+	if _atmo_mat == null:
+		return
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	var rim := 3.8
+	var dens := 0.95
+	var intens := 1.35
+	if gq:
+		match int(gq.tier):
+			0:  # LOW — thinner, cheaper look
+				rim = 4.5
+				dens = 0.75
+				intens = 1.1
+			1:
+				rim = 3.8
+				dens = 0.95
+				intens = 1.35
+			2:
+				rim = 3.2
+				dens = 1.05
+				intens = 1.5
+			3:
+				rim = 2.8
+				dens = 1.15
+				intens = 1.65
+	_atmo_mat.set_shader_parameter("atmosphere_color", atmosphere_color)
+	_atmo_mat.set_shader_parameter("rim_power", rim)
+	_atmo_mat.set_shader_parameter("density", dens)
+	_atmo_mat.set_shader_parameter("intensity", intens)
+	_atmo_mat.set_shader_parameter("sun_direction", _sun_dir)
+	if _atmo_inner_mat:
+		_atmo_inner_mat.set_shader_parameter("haze_color", atmosphere_color)
+		_atmo_inner_mat.set_shader_parameter("sun_direction", _sun_dir)
+
+func set_sun_direction(dir: Vector3) -> void:
+	_sun_dir = dir.normalized()
+	_apply_atmo_uniforms()
+
+func _update_atmosphere(dist: float, lod: int, obs: Node3D) -> void:
+	if _atmo == null:
+		return
+	var show_outer := dist < atmo_max_dist and lod < 3
+	_atmo.visible = show_outer
+	var alt: float = dist - radius
+	# Horizon boost as we approach (limb brightens)
+	if show_outer and _atmo_mat:
+		var approach := 0.0
+		if alt < atmosphere_height * 3.0:
+			approach = clamp(1.0 - alt / (atmosphere_height * 3.0), 0.0, 1.0)
+		_atmo_mat.set_shader_parameter("horizon_boost", approach * 0.9)
+		# Soft distance fade of overall intensity
+		var fade: float = clamp(1.0 - dist / atmo_max_dist, 0.0, 1.0)
+		var base_i := 1.35
+		var gq := get_node_or_null("/root/GraphicsQuality")
+		if gq:
+			match int(gq.tier):
+				0: base_i = 1.1
+				2: base_i = 1.5
+				3: base_i = 1.65
+		_atmo_mat.set_shader_parameter("intensity", base_i * (0.4 + 0.6 * fade))
+	# Inner haze when inside / skimming atmosphere
+	if _atmo_inner:
+		var inside := alt < atmosphere_height * 1.05 and lod <= 1
+		_atmo_inner.visible = inside
+		if inside and _atmo_inner_mat:
+			var depth: float = clamp(1.0 - max(alt, 0.0) / max(atmosphere_height, 1.0), 0.0, 1.0)
+			_atmo_inner_mat.set_shader_parameter("intensity", 0.5 + depth * 0.9)
+			_atmo_inner_mat.set_shader_parameter("density", 0.45 + depth * 0.5)
 
 func altitude_of(global_pos: Vector3) -> float:
 	return global_pos.distance_to(global_position) - radius
