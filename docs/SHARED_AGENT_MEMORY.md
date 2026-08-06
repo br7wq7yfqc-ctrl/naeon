@@ -1,27 +1,32 @@
 # NAEON — Shared Agent Memory
 
-**Last updated:** 2026-08-06
+**Last updated:** 2026-08-06 (handoff refresh)
 
 ## Core constraints
-No P2W; soft Knowledge only; asymmetric Cybernex/gROT; Dynamic Ownership + capped Arena influence; readable UI; Tripo-first economical assets; no secrets/heavy assets in Git; Godot 4 Mac+Windows low-end.
+No P2W · soft Knowledge only · asymmetric Cybernex/gROT · Dynamic Ownership + capped Arena influence · readable UI · Tripo-first dual-theme assets · no secrets/heavy assets in Git · Godot 4 Mac+Windows low-end
 
 ## Design corpus on main
-- docs/rules/00 Design Pillars (full v0.2)
-- docs/rules/01–09 mechanics, economy, quests, NPC, knowledge, schism
-- docs/rules/10_UI_INTERFACE_LAYER.md **canonical UI** (old 10_INTERFACE_* and 12_UI_* are redirects)
-- docs/rules/11–14 alliance, crafting, MOBA, ship (expanded)
-- docs/rules/05_ECONOMY_RBE_BIOMASS.md **canonical economy** (05_ECONOMY_RBE_AND_BIOMASS is redirect)
-- docs/legal/ User Agreement, Fair Play, Community Guidelines
-- docs/lore/ Star systems, Campaign arcs, Character bios
-- Skill: naeon-holistic-economical v1.2
+- rules/00–14 (canonical UI `10_UI_INTERFACE_LAYER`, economy `05_ECONOMY_RBE_BIOMASS`)
+- legal/: User Agreement, Fair Play, Community Guidelines
+- lore/: Star systems, Campaign arcs, Character bios
+- Skill: naeon-holistic-economical **v1.2**
+
+## Implementation snapshot
+- TestArena + SpaceTest playable
+- Ability / Ownership / Extractor seeds live
+- Pipeline scripts live; Tripo balance 0; neon rclone keys TBD
 
 ## Decision log (recent)
 | Date | Decision |
 |------|----------|
 | 2026-08-05 | Design Lead + rules foundation |
-| 2026-08-05 | UI layer + alliance/craft/MOBA/ship seeds |
+| 2026-08-05 | UI + alliance/craft/MOBA/ship seeds |
 | 2026-08-06 | Campaigns, bios, community guidelines |
-| 2026-08-06 | Hygiene: UI merge, pillars restored, stubs expanded, redirects, skill v1.2 |
+| 2026-08-06 | Hygiene: UI/economy canon, redirects, skill v1.2 |
+| 2026-08-06 | **Handoff refresh:** HANDOFF.md + HANDOFFS.md design-aware session briefs |
 
 ## Open gaps
-Economy conversion ratios and crafting tier costs; ability rank 4–5 numbers; voice achievement thresholds; MOBA exact daily caps; campaign quest ID lists per act; optional delete of redirect stubs later.
+Economy conversion ratios + crafting tiers · ability rank 4–5 · voice achievement thresholds · MOBA exact daily caps · campaign quest ID lists per act
+
+## Agent protocol
+Read HANDOFF.md → session brief in HANDOFFS.md → listed rules docs → code. Append decisions here. Prefer canonical paths over redirects.

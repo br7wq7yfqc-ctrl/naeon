@@ -1,153 +1,144 @@
-# NAEON — Handoffs for Parallel Build Sessions
+# NAEON — Build-Session Briefs (Design-Aware)
 
-**Date:** 2026-08-05  
-**Status:** All sub-agents paused. Ready for parallel independent sessions.
+**Date:** 2026-08-06  
+**Companion:** `docs/HANDOFF.md` (unified snapshot)  
+**Canon:** `docs/rules/*`, skill `naeon-holistic-economical` v1.2
 
----
-
-## Current Project State (Snapshot)
-
-### Repository
-- https://github.com/br7wq7yfqc-ctrl/naeon
-- Main branch is up to date with CONCEPT.md (v1.2+), DEVELOPMENT_PLAN.md (v2.0), CI, asset pipeline docs.
-
-### Already Implemented
-- Godot 4.3 project skeleton (`godot/`)
-- `PlayerController.gd` (TPS movement + form switch skeleton)
-- Data-driven Ability System (`Ability.gd` + `AbilitySystem.gd`) with Hacking / Nex-Firewall flags
-- `OwnershipData.gd` + basic Contribution / KnowledgeRank
-- Asset storage strategy (Yandex Object Storage bucket `neon`)
-- Sync scripts + `.gitignore` protection for `/assets/`
-- CI pipeline (validate + headless + export jobs for Linux/Windows)
-- Tripo-first low-cost Asset Pipeline documentation
-
-### Infrastructure
-- Yandex Object Storage bucket: `neon`
-- Service account with storage.editor rights exists
-- Asset Pipeline VM exists (public IP was provided, but no permanent agent access)
-- Tripo API key available (user-side only)
+Sessions may run unified or parallel. Each brief lists **must-read design**, **current code**, **next tasks**, **DoD**.
 
 ---
 
-## Parallel Build Sessions — Handoffs
+## Session A — Core Gameplay (TPS / Ability / Ownership feel)
 
-### Session A — Core Gameplay & Ability Systems
-**Owner focus:** TPS, Ability System, Hacking/Firewall, Combat feel, Educational soft integration
+### Must-read design
+| Doc | Why |
+|-----|-----|
+| `00_DESIGN_PILLARS.md` | Constraints |
+| `02_ABILITY_SYSTEM_AND_HACKING.md` | Ability model, Hack vs Firewall |
+| `04_ABILITY_PARAMETERS.md` | Rank-1 numbers, Infection stacks |
+| `03_DYNAMIC_OWNERSHIP_AND_FACTIONS.md` | Claim / Contested |
+| `08_KNOWLEDGE_SOFT_EFFECTS.md` | Soft combat UI only |
+| `10_UI_INTERFACE_LAYER.md` | TPS HUD contracts |
 
-**Current status:**
-- Basic TPS controller exists
-- Ability System is data-driven and supports asymmetric flags
-- Hacking / Nex-Firewall exist as concept + flags
+### Current code
+- TestArena playable: movement, form cycle, Pulse / Nex-Firewall / System Probe
+- Claimable pillars with Ownership visual blend
+- Extractor + resource node → Contribution
+- Data-driven Ability scaffolding
 
-**Next concrete tasks:**
-1. Polish Ability resource format and activation flow
-2. Implement real Hacking ability (TPS) and Nex-Firewall counter
-3. Create simple TestArena scene for combat testing
-4. Soft Knowledge Mastery combat insights (QoL only)
-5. Basic form-specific movement (Canine / Feline / Avian)
+### Next tasks (priority order)
+1. Align ability resources to `04_ABILITY_PARAMETERS` (channel time, CD, Infection stacks 1–5, Firewall duration/absorption).
+2. Make Hacking **interruptible**; Firewall **breaks/slows** channel and cleanses stacks per rules.
+3. Infection stack UI pips on target (shape + number); never colour-only.
+4. Optional Knowledge overlays (weak-point / hazard) — **off by default**, no auto-aim.
+5. Enemy dummy for TTK feel targets (4.5–6.5 s equal skill).
+6. Form flavour (Canine / Feline / Avian) within **shared balance budget**.
 
-**Definition of Done:**
-- Playable TPS character with 2–3 working abilities including Hacking vs Firewall
-- Test scene loads and runs at 60 FPS on low-end settings
-
----
-
-### Session B — Space, Ships & Ownership
-**Owner focus:** ShipController, modules, carriers seed, Dynamic Ownership Transformation
-
-**Current status:**
-- OwnershipData resource exists
-- No full ShipController yet
-- Dynamic Ownership design is documented
-
-**Next concrete tasks:**
-1. Implement `ShipController.gd` (semi-Newtonian flight)
-2. Basic modular system (Module resource + attach points)
-3. OwnershipComponent with transition_progress
-4. Simple visual theme swap (material blend Cybernex ↔ gROT) on one object
-5. Space test scene
-
-**Definition of Done:**
-- Flyable ship placeholder
-- One claimable object that can switch faction visually and in data
+### DoD
+- Playable TPS: Hack vs Firewall readable and interruptible
+- Infection 5-stack window feels decisive, not permanent lock
+- TestArena stable ~60 FPS low-end preset
+- No hard power from Knowledge or shop
 
 ---
 
-### Session C — Strategy, Alliance & Economy
-**Owner focus:** Colony, Contribution, RBE, Alliance hierarchy, Knowledge system
+## Session B — Space / Ships / Ownership objects
 
-**Current status:**
-- Contribution and KnowledgeRank skeletons exist
-- RBE philosophy documented
+### Must-read design
+| Doc | Why |
+|-----|-----|
+| `14_SHIP_AND_SPACE_SEED.md` | Semi-Newtonian, modules, multi-crew later |
+| `03_DYNAMIC_OWNERSHIP_AND_FACTIONS.md` | Capitals/stations claim rules |
+| `13_MOBA_ARENA_INFLUENCE.md` | Arena cannot permanently flip capitals |
+| `10_UI_INTERFACE_LAYER.md` | Space HUD |
+| `05_ECONOMY_RBE_BIOMASS.md` | Extractor output by owner |
 
-**Next concrete tasks:**
-1. ResourceNode + basic extractor
-2. Contribution score calculation
-3. Alliance hierarchy data model + permissions
-4. Knowledge Rank progression + soft rewards
-5. Simple Strategy overlay / orders skeleton
+### Current code
+- ShipController: semi-Newtonian flight, modular attach, fire, land → TestArena
+- Colony seed: ResourceNode + Extractor + OwnershipComponent
 
-**Definition of Done:**
-- Place an extractor, gain Contribution
-- Alliance data structure with roles and shared resources
+### Next tasks
+1. Module categories as data: propulsion / defense / offense / utility / carrier seed.
+2. Faction flavour modules (Firewall lattice CX / spore cloud gROT) **same tier budget**.
+3. Ownership on one station/outpost: Contested progress ring + service list swap.
+4. Space HUD: speed/shield, module hotbar, ownership-tinted brackets.
+5. Cargo risk placeholder (logistics loop later).
+6. Keep fleet aggregation in mind — no 30 full-fidelity ships on low-end.
 
----
-
-### Session D — Asset Pipeline & Tooling
-**Owner focus:** Tripo automation, Blender processing, dual-theme variants, VM bootstrap
-
-**Current status:**
-- Documentation ready (`docs/ASSET_PIPELINE.md`)
-- Storage + sync scripts ready
-- Tripo chosen as primary generator
-
-**Next concrete tasks:**
-1. Complete `generate_tripo.py` (API call + download)
-2. Blender headless `process_asset.py` (LOD + dual materials)
-3. `make_faction_variants.py`
-4. Full VM install script (user runs it)
-5. Inbox watcher
-
-**Definition of Done:**
-- One command: prompt → Tripo → processed dual-theme assets in `assets/` + synced to `neon`
+### DoD
+- Fly, equip modules, land, claim/contest one object with visual theme shift
+- SpaceTest playable low-end
+- No Arena-only permanent capital flip logic
 
 ---
 
-### Session E — Platform, Quests, Voice & Meta
-**Owner focus:** Quest system, Educational nodes, Voice (SpeechKit / Alice), NAEXOS.ONLINE gates
+## Session C — Asset Pipeline
 
-**Current status:**
-- Design fully documented in CONCEPT.md
-- No runtime implementation yet
+### Must-read design
+| Doc | Why |
+|-----|-----|
+| `docs/ASSET_PIPELINE.md` | Pipeline steps |
+| `docs/ASSETS_STORAGE.md` / `ASSETS_AUTO_SYNC.md` | neon + local |
+| Skill §5 | Economical checklist A/B/C |
+| `10_UI_INTERFACE_LAYER.md` | Placeholder UI before final art |
 
-**Next concrete tasks:**
-1. Quest data model + simple static quests
-2. Educational Learning Node UI skeleton
-3. Prompt Studio / aiNEX placeholder
-4. Voice pipeline architecture (modular STT/TTS)
-5. Alliance Quest Constructor design implementation start
+### Current code / ops
+- Tripo client + Blender dual-theme LOD processor + `run_pipeline.sh`
+- **Blocked:** Tripo balance 0; rclone `neon` keys may be missing on machines
 
-**Definition of Done:**
-- One complete static quest + one educational puzzle node playable
+### Next tasks
+1. When credits available: one Priority **B** prop → dual Cybernex/gROT variants + LODs.
+2. Verify output lands in local `assets/` (gitignored) and optionally syncs to `neon`.
+3. Prefer variant materials over second mesh.
+4. Document any paid spend in SHARED_AGENT_MEMORY.
+5. Do **not** commit binaries or API keys.
 
----
-
-## How to start a parallel session
-
-1. Create a feature branch: `feature/session-A-abilities`, etc.
-2. Work only within the scope of that handoff
-3. Keep commits small and focused
-4. Update this HANDOFFS.md when a session reaches its DoD
-5. Merge via PR into `main` after review
-
-## Global Rules (still active)
-
-- Never commit secrets / API keys / `.env`
-- `/assets/` stays gitignored
-- Prefer soft, non-P2W mechanics
-- Local-first, then Yandex Cloud
-- Cross-platform (Mac + Windows)
+### DoD
+- One end-to-end: prompt → processed dual-theme asset usable as Godot placeholder
+- Pipeline runnable on VM without secrets in git
 
 ---
 
-*All sub-agents are now stopped. Parallel sessions can be started independently using the handoffs above.*
+## Session D — Strategy / Alliance / Economy (when staffed)
+
+### Must-read
+`05_ECONOMY_RBE_BIOMASS.md`, `11_ALLIANCE_AND_SOCIAL.md`, `12_CRAFTING_AND_BLUEPRINTS.md`, `06_QUEST_SYSTEM.md`
+
+### Next tasks
+1. Contribution / Biomass ledgers with **soft daily caps** (use early bands from economy doc).
+2. Alliance ranks 0–4 + object permissions (dock/storage/defenses).
+3. Constructor templates only; no harassment targets.
+4. Crafting layers: components → modules → structures → cosmetics (no combat on décor).
+
+### DoD
+- Extract → deliver → small upgrade loop
+- Alliance data model with permissions; no pool→combat power conversion
+
+---
+
+## Session E — Quests / Lore / Meta (when staffed)
+
+### Must-read
+`06_QUEST_SYSTEM.md`, `07_NPC_QUEST_GIVER_GRID.md`, `docs/lore/CAMPAIGN_ARCS_SEED.md`, `CHARACTER_BIOS_SEED.md`, `docs/legal/*`
+
+### Next tasks
+1. Static quest data model + 1 Cybernex + 1 gROT standard quest.
+2. Premium quests marked **Story only — no power**.
+3. Educational node stub (soft Knowledge only).
+4. NPC role IDs from grid for dialogue hooks.
+
+### DoD
+- One complete static quest playable; premium path cannot grant claim/combat power
+
+---
+
+## Cross-session rules
+
+- Feature branches: `feature/session-A-…`, etc.
+- One writer per hot path when possible (anti-drift).
+- After DoD: PR → main; update SESSION_STATUS + SHARED_AGENT_MEMORY.
+- Placeholders OK; design numbers in `04_*` / `05_*` are starting points.
+
+---
+
+*Briefs supersede the 2026-08-05 paused-session text. Implementation snapshot wins over older task lists where they conflict.*
