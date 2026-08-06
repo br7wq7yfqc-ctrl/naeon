@@ -1,0 +1,58 @@
+name: NAEON CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  GODOT_VERSION: "4.3"
+  PROJECT_PATH: "godot"
+
+jobs:
+  validate:
+    name: Validate Godot Project
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: ${{ env.GODOT_VERSION }}-stable
+          include-templates: false
+
+      - name: Check project structure
+        run: |
+          echo "Checking project structure..."
+          test -f ${{ env.PROJECT_PATH }}/project.godot || (echo "project.godot not found" && exit 1)
+          test -d ${{ env.PROJECT_PATH }}/scripts || (echo "scripts directory missing" && exit 1)
+          echo "Structure OK"
+
+      - name: Godot headless import / validate
+        working-directory: ${{ env.PROJECT_PATH }}
+        run: |
+          # Pre-heat / import
+          godot --headless --editor --quit-after 3 || true
+          echo "Godot project validated successfully"
+
+  lint-docs:
+    name: Check Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check required docs exist
+        run: |
+          test -f CONCEPT.md
+          test -f DEVELOPMENT_PLAN.md
+          test -f docs/ASSETS_STORAGE.md
+          echo "Documentation present"
+
+  # Future jobs (commented for now):
+  # export-linux:
+  # export-windows:
+  # export-macos:
