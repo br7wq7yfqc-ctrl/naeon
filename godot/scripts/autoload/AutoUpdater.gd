@@ -10,7 +10,7 @@ signal update_finished(ok: bool, message: String)
 signal no_update
 
 const DEFAULT_MANIFEST := "https://storage.yandexcloud.net/neon/releases/mac/latest.json"
-const CURRENT_VERSION := "0.3.1"
+const CURRENT_VERSION := "0.3.2"
 
 var _http: HTTPRequest
 var _download: HTTPRequest

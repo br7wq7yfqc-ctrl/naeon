@@ -18,7 +18,7 @@
 | build_release Desktop size verify | done |
 
 ## Next
-1. Release stamp 0.3.2 with this polish block
+1. Release 0.3.2 packaging in progress
 2. Wave C hero (budget allows; code-first preferred)
 3. Real skeletal anim when rigged characters land
 4. Multiplayer later

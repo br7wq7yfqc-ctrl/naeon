@@ -54,6 +54,7 @@ func interrupt(reason: String = "interrupt") -> void:
 	elapsed = 0.0
 	_clear_vfx()
 	channel_interrupted.emit(reason)
+	_toast("Channel interrupted: %s" % reason)
 	print("[Channel] interrupted: ", reason)
 	_on_complete = Callable()
 	_caster = null
@@ -77,6 +78,7 @@ func _finish() -> void:
 	_clear_vfx()
 	_caster = null
 	channel_completed.emit(n)
+	_toast("Channel complete: %s" % n)
 	if cb.is_valid():
 		cb.call()
 	print("[Channel] complete ", n)
@@ -145,3 +147,7 @@ func _clear_vfx() -> void:
 		_ring.queue_free()
 	_beam = null
 	_ring = null
+
+func _toast(msg: String) -> void:
+	if GameManager and GameManager.has_signal("toast_requested"):
+		GameManager.toast_requested.emit(msg)

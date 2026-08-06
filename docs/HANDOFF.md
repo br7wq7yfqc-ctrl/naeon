@@ -4,8 +4,8 @@
 OpenSpace continuum · land/exit · G/B terra + dust + U undo · I interiors · C claim/contested banner · Q channel VFX · harvest Contribution · pad radar · limb walk · soft Knowledge toasts
 
 ## Installer
-- Desktop: `NAEON-0.3.1-Installer.dmg` (~667M full) + `NAEON-Installer.dmg`
-- `dist/latest.json` → 0.3.1
+- Desktop: `NAEON-0.3.2-Installer.dmg` (~667M full) + `NAEON-Installer.dmg`
+- `dist/latest.json` → 0.3.2
 - Upload: rclone `neon:neon/releases/mac/`
 
 ## Commits this block

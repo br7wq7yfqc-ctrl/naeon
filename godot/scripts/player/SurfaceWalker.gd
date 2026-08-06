@@ -273,6 +273,7 @@ func _physics_process(delta: float) -> void:
 		v_up = minf(v_up, 0.0)
 		if Input.is_physical_key_pressed(KEY_SPACE):
 			v_up = jump_velocity
+			_spawn_jump_fx()
 
 	velocity = planar + _up * v_up
 	_apply_body_basis()
@@ -400,3 +401,32 @@ func _update_limbs() -> void:
 		_arm_l.rotation.x = sin(a + PI) * 0.4 * amp
 	if _arm_r:
 		_arm_r.rotation.x = sin(a) * 0.4 * amp
+
+func _spawn_jump_fx() -> void:
+	var p := GPUParticles3D.new()
+	p.amount = 18
+	p.lifetime = 0.45
+	p.one_shot = true
+	p.explosiveness = 1.0
+	p.emitting = true
+	var pm := ParticleProcessMaterial.new()
+	pm.direction = Vector3(0, 1, 0)
+	pm.spread = 70.0
+	pm.initial_velocity_min = 1.0
+	pm.initial_velocity_max = 3.5
+	pm.gravity = Vector3(0, -8, 0)
+	pm.scale_min = 0.04
+	pm.scale_max = 0.12
+	pm.color = Color(0.65, 0.7, 0.6, 0.85)
+	p.process_material = pm
+	var sm := SphereMesh.new()
+	sm.radius = 0.06
+	sm.height = 0.12
+	sm.radial_segments = 4
+	sm.rings = 2
+	p.draw_pass_1 = sm
+	add_child(p)
+	p.position = Vector3(0, 0.05, 0)
+	var tree := get_tree()
+	if tree:
+		tree.create_timer(0.6).timeout.connect(p.queue_free)

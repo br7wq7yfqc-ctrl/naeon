@@ -70,3 +70,9 @@ pipeline/processed/**
 
 /dist/
 
+
+__pycache__/
+*.pyc
+*.pid
+logs/*.pid
+
