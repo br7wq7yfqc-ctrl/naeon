@@ -1,10 +1,16 @@
-# Handoff
+# Handoff — 0.3.0
 
-## Play
-OpenSpace → approach pad → base streams → land (E) auto-claims · C re-claim · harvest adds Contribution (HUD)
+## Shipped
+- NAEON **0.3.0** main=OpenSpace (seamless + pads + claim/harvest)
+- Desktop: NAEON-0.3.0-Installer.dmg (~667MB)
+- Auto-update: neon/releases/mac/latest.json → 0.3.0
+
+## Mechanics
+- PadBaseController: claim on land / C · harvest → Contribution + soft colony_ops mastery (no combat power)
+- Atmosphere limb shaders · planet LOD · altitude fog
 
 ## Budget
-Week remain ~4k · A leftovers generating
+HQ spent ~810 / week 4800 · bal ~5.1k
 
 ## Next
-Installer 0.3.0 · finish leftovers · optional C hero
+Surface height detail · Wave C hero if desired · ownership dual-mesh swap polish
