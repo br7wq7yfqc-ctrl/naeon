@@ -1,22 +1,22 @@
-# NAEON Handoff
+# NAEON Handoff — 2026-08-06
 
-**2026-08-06** | **2-week Tripo cap: 5 000 cr** (20k plan deferred, not cancelled)
+## Owner direction
+- Month budget **20k** Tripo; **next week 5k**
+- Beyond 20k later — do not cancel vision
+- Seamless SC-like space/planet/bases; free flight + surface
+- Sysreqs min **i3 / RTX 1060 3GB / 16GB** (not weaker)
 
-## Budget
-- Window: 2026-08-06 → 2026-08-20
-- Cap 5000 / reserve 200 / usable 4800
-- Policy: `pipeline/briefs/hq_budget_policy.json`
-- Tracker: `logs/hq_budget_tracker.json`
-- Long-term 20k: after 2026-08-20
+## Playable now
+- **Main scene:** `OpenSpace` — free flight, 3 planets, pads, origin rebase, land/exit/enter
+- TestArena still available (Tab from OpenSpace / O from Arena)
+- Wave **S complete** (12/12). Wave **A** chaining
+- Bal ~5k+ after top-up; HQ spent ~500 from S
 
-## Running
-- Wave S → then prioritized A (2w subset) via chain
-- `run_hq_wave.sh` stops at cap
-
-## Bridges
-- Blender 60600 · Godot 60650
+## Controls OpenSpace
+WASD flight · 123 modes · E land/launch · F exit/enter · F1 quality · Tab arena
 
 ## Next
-1. Finish S + A subset within 5k
-2. Rebuild installer 0.3.0
-3. After window / top-up: restore full 20k campaign
+1. Finish A within week 5k  
+2. Stream colony HQ props onto pads  
+3. Atmosphere height fog + surface detail  
+4. Rebuild installer 0.3.0 with OpenSpace main

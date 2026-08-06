@@ -67,3 +67,9 @@
 | 2026-08-06 | Vertical slice asset batch1 complete (10 meshes → dual-theme LODs) via Tripo+Blender; economical A/B/C | Holistic skill |
 | 2026-08-06 | Ship/colony/dummy runtime GLB load; Mac DMG installer + AutoUpdater | Session |
 
+## Decision Log — 2026-08-06
+- Budget: week 5k / month 20k Tripo; vision not capped after top-up.
+- Sysreqs floor: RTX 1060 3GB / i3 / 16GB; tiers LOW–ULTRA in GraphicsQuality.
+- Shipped OpenSpace seamless continuum (FloatingOrigin, PlanetBody, ship SCM/NAV/HOVER, surface walk).
+- Main scene switched to OpenSpace.tscn.
+- Wave S complete; A in progress under week cap.

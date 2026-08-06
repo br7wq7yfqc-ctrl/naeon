@@ -218,7 +218,14 @@ func _on_update_available(version: String, notes: String) -> void:
 	if info_label:
 		info_label.text += "\n⬆ Update %s available" % version
 
+func _goto_openspace() -> void:
+	if ResourceLoader.exists("res://scenes/world/OpenSpace.tscn"):
+		get_tree().change_scene_to_file("res://scenes/world/OpenSpace.tscn")
+
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_O:
+		_goto_openspace()
+		return
 	if event.is_action_pressed("ui_home") or (event is InputEventKey and event.pressed and event.keycode == KEY_TAB):
 		if ResourceLoader.exists("res://scenes/test/SpaceTest.tscn"):
 			get_tree().change_scene_to_file("res://scenes/test/SpaceTest.tscn")

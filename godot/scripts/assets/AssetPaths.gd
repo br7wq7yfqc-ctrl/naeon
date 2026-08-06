@@ -1,6 +1,5 @@
 extends RefCounted
 ## Static path resolver — use: preload("res://scripts/assets/AssetPaths.gd").resolve(...)
-## Or call via AssetPaths if global class registered.
 
 static func resolve(rel: String) -> String:
 	var candidates: Array[String] = []

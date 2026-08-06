@@ -1,0 +1,81 @@
+[gd_scene load_steps=5 format=3 uid="uid://naeon_openspace"]
+
+[ext_resource type="Script" path="res://scripts/world/OpenSpace.gd" id="1_os"]
+[ext_resource type="Script" path="res://scripts/world/FloatingOrigin.gd" id="2_fo"]
+
+[sub_resource type="Environment" id="Env"]
+background_mode = 1
+background_color = Color(0.004, 0.005, 0.02, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.05, 0.07, 0.14, 1)
+ambient_light_energy = 0.28
+tonemap_mode = 2
+glow_enabled = true
+glow_intensity = 0.55
+glow_bloom = 0.15
+ssao_enabled = false
+fog_enabled = false
+adjustment_enabled = true
+adjustment_saturation = 1.05
+
+[sub_resource type="Sky" id="Sky"]
+
+[node name="OpenSpace" type="Node3D"]
+script = ExtResource("1_os")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.8, -0.35, 0.48, 0, 0.81, 0.58, -0.6, -0.47, 0.65, 0, 0, 0)
+light_color = Color(1, 0.96, 0.9, 1)
+light_energy = 1.55
+shadow_enabled = true
+directional_shadow_mode = 1
+directional_shadow_max_distance = 4000.0
+
+[node name="WorldRoot" type="Node3D" parent="."]
+
+[node name="Starfield" type="Node3D" parent="WorldRoot"]
+
+[node name="FloatingOrigin" type="Node" parent="."]
+script = ExtResource("2_fo")
+threshold = 2500.0
+world_root_path = NodePath("../WorldRoot")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Root" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Hint" type="Label" parent="HUD/Root"]
+layout_mode = 0
+offset_left = 14.0
+offset_top = 10.0
+offset_right = 1200.0
+offset_bottom = 120.0
+theme_override_colors/font_color = Color(0.72, 0.95, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 15
+text = "NAEON OpenSpace"
+
+[node name="Mode" type="Label" parent="HUD/Root"]
+layout_mode = 0
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -280.0
+offset_top = 12.0
+offset_right = -16.0
+offset_bottom = 40.0
+theme_override_colors/font_color = Color(0.9, 0.85, 0.5, 1)
+theme_override_font_sizes/font_size = 14
+text = "GFX"
+horizontal_alignment = 2

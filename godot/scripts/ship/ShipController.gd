@@ -1,19 +1,26 @@
 extends CharacterBody3D
 const _AP = preload("res://scripts/assets/AssetPaths.gd")
 
-## Semi-Newtonian space ship controller with modular hardpoints.
+## Semi-Newtonian ship with SCM / NAV / HOVER modes + seamless landing (no scene swap).
 
 signal module_attached(module: ShipModule)
 signal landed()
 signal launched()
+signal flight_mode_changed(mode: int)
+
+enum FlightMode { SCM, NAV, HOVER }
 
 @export var base_thrust: float = 22.0
 @export var base_torque: float = 2.8
 @export var linear_damp_custom: float = 0.35
 @export var angular_damp_custom: float = 2.0
-@export var max_speed: float = 55.0
+@export var max_speed_scm: float = 55.0
+@export var max_speed_nav: float = 180.0
+@export var max_speed_hover: float = 22.0
 @export var mouse_sensitivity: float = 0.0025
 @export var faction: String = "Cybernex"
+@export var land_pad_snap_distance: float = 55.0
+@export var surface_land_alt: float = 35.0
 
 @onready var camera_pivot: Node3D = $CameraPivot
 @onready var camera: Camera3D = $CameraPivot/Camera3D
@@ -34,18 +41,42 @@ var _pitch: float = 0.0
 var _yaw: float = 0.0
 var _fire_cd: float = 0.0
 var is_landed: bool = false
+var flight_mode: int = FlightMode.SCM
+var pilot_active: bool = true
+var _open_space: Node = null
+var _landed_pad: Node3D = null
 
 func _ready() -> void:
 	add_to_group("ship")
-	# Default loadout
 	attach_module(ShipModule.make_engine())
 	attach_module(ShipModule.make_weapon())
 	attach_module(ShipModule.make_shield())
 	_recompute_stats()
 	_apply_faction_skin()
 	call_deferred("try_load_hull")
-	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	if pilot_active:
+		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	print("[Ship] Ready modules=", modules.size())
+
+func set_open_space_context(ctx: Node) -> void:
+	_open_space = ctx
+
+func set_pilot_active(active: bool) -> void:
+	pilot_active = active
+	if camera:
+		camera.current = active
+	if active:
+		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	else:
+		# Keep ship frozen while on foot
+		velocity = Vector3.ZERO
+
+func flight_mode_name() -> String:
+	match flight_mode:
+		FlightMode.SCM: return "SCM"
+		FlightMode.NAV: return "NAV"
+		FlightMode.HOVER: return "HOVER"
+	return "?"
 
 func try_load_hull() -> void:
 	var rel := "ships/ship_hull_scout/ship_hull_scout_cybernex_lod0.glb"
@@ -71,17 +102,20 @@ func try_load_hull() -> void:
 
 func _asset_path(rel: String) -> String:
 	return _AP.resolve(rel)
-	var home := OS.get_environment("HOME")
-	if home != "":
-		var c2 := home.path_join("Documents/naeon/assets").path_join(rel)
-		if FileAccess.file_exists(c2):
-			return c2
-	return c
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_C:
-		attach_module(ShipModule.make_cargo())
+	if not pilot_active:
 		return
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_C:
+			attach_module(ShipModule.make_cargo())
+			return
+		if event.keycode == KEY_1:
+			_set_mode(FlightMode.SCM)
+		elif event.keycode == KEY_2:
+			_set_mode(FlightMode.NAV)
+		elif event.keycode == KEY_3:
+			_set_mode(FlightMode.HOVER)
 	if is_landed:
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
@@ -89,16 +123,38 @@ func _input(event: InputEvent) -> void:
 		_pitch -= event.relative.y * mouse_sensitivity
 		_pitch = clamp(_pitch, deg_to_rad(-80), deg_to_rad(80))
 		rotation.y = _yaw
-		camera_pivot.rotation.x = _pitch
+		if camera_pivot:
+			camera_pivot.rotation.x = _pitch
 	if event.is_action_pressed("ui_cancel"):
 		Input.set_mouse_mode(
 			Input.MOUSE_MODE_VISIBLE if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
 			else Input.MOUSE_MODE_CAPTURED
 		)
 
+func _set_mode(m: int) -> void:
+	flight_mode = m
+	flight_mode_changed.emit(m)
+	print("[Ship] Flight mode ", flight_mode_name())
+
+func _max_speed() -> float:
+	match flight_mode:
+		FlightMode.NAV: return max_speed_nav
+		FlightMode.HOVER: return max_speed_hover
+		_: return max_speed_scm
+
+func _thrust_mult() -> float:
+	match flight_mode:
+		FlightMode.NAV: return 1.55
+		FlightMode.HOVER: return 0.55
+		_: return 1.0
+
+func _damp_mult() -> float:
+	match flight_mode:
+		FlightMode.NAV: return 0.45
+		FlightMode.HOVER: return 2.4
+		_: return 1.0
 
 func _ship_axis() -> Vector3:
-	# x=strafe, y=lift, z=thrust (forward +)
 	var thrust := 0.0
 	var strafe := 0.0
 	var lift := 0.0
@@ -113,9 +169,9 @@ func _ship_axis() -> Vector3:
 	if Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_W):
 		thrust = max(thrust, 1.0)
 	if Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_S):
-		thrust = min(thrust, -0.45) if thrust <= 0.0 else thrust
-		if not (InputMap.has_action("move_forward") and Input.is_action_pressed("move_forward")):
-			thrust = -0.45 if thrust == 0.0 else thrust
+		if not (InputMap.has_action("move_forward") and Input.is_action_pressed("move_forward")) \
+			and not (Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_W)):
+			thrust = -0.45
 	if Input.is_physical_key_pressed(KEY_A) or Input.is_key_pressed(KEY_A):
 		strafe = -1.0 if strafe == 0.0 else strafe
 	if Input.is_physical_key_pressed(KEY_D) or Input.is_key_pressed(KEY_D):
@@ -127,29 +183,43 @@ func _ship_axis() -> Vector3:
 	return Vector3(strafe, lift, thrust)
 
 func _physics_process(delta: float) -> void:
-	if is_landed:
+	if not pilot_active:
+		velocity = Vector3.ZERO
 		return
+	if is_landed:
+		velocity = Vector3.ZERO
+		_update_status()
+		return
+
 	_fire_cd = max(0.0, _fire_cd - delta)
 	shields = min(max_shields, shields + 4.0 * delta)
 	energy = min(max_energy, energy + 8.0 * delta)
 
 	var axes: Vector3 = _ship_axis()
-	var thrust_input: float = axes.z
-	var strafe: float = axes.x
-	var lift: float = axes.y
-
-	var thrust: float = base_thrust + _module_thrust()
+	var thrust: float = (base_thrust + _module_thrust()) * _thrust_mult()
 	var forward: Vector3 = -global_transform.basis.z
 	var right: Vector3 = global_transform.basis.x
 	var up: Vector3 = global_transform.basis.y
-	var accel: Vector3 = forward * thrust_input * thrust \
-		+ right * strafe * thrust * 0.55 \
-		+ up * lift * thrust * 0.5
+	var accel: Vector3 = forward * axes.z * thrust \
+		+ right * axes.x * thrust * 0.55 \
+		+ up * axes.y * thrust * 0.5
+
+	# Planetary gravity when near atmosphere (seamless continuum)
+	if _open_space and _open_space.has_method("gravity_at"):
+		var g: Vector3 = _open_space.gravity_at(global_position)
+		if flight_mode == FlightMode.HOVER:
+			# Counter gravity softly for hover pads
+			accel -= g * 0.85
+		elif flight_mode == FlightMode.SCM:
+			accel += g * 0.35
+		else:
+			accel += g * 0.15
+
 	velocity += accel * delta
-	# Custom damping (semi-Newtonian)
-	velocity = velocity.lerp(Vector3.ZERO, linear_damp_custom * delta)
-	if velocity.length() > max_speed:
-		velocity = velocity.normalized() * max_speed
+	velocity = velocity.lerp(Vector3.ZERO, linear_damp_custom * _damp_mult() * delta)
+	var ms := _max_speed()
+	if velocity.length() > ms:
+		velocity = velocity.normalized() * ms
 	move_and_slide()
 
 	if Input.is_action_pressed("ability_1") and _fire_cd <= 0.0:
@@ -157,23 +227,70 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("ability_2"):
 		_toggle_landing()
 	if Input.is_action_just_pressed("ability_3"):
-		# Quick attach demo module
 		attach_module(ShipModule.make_extractor())
-	if Input.is_physical_key_pressed(KEY_C) and modules.size() < 8:
-		pass
-		_recompute_stats()
+	_recompute_stats()
+	_update_status()
+
+func _update_status() -> void:
 	if status_label:
-		status_label.text = "SHIP  SPD %d  SHD %d  E %d  MOD %d" % [
-			int(velocity.length()), int(shields), int(energy), modules.size()
+		status_label.text = "%s  SPD %d  SHD %d  E %d  %s" % [
+			flight_mode_name(), int(velocity.length()), int(shields), int(energy),
+			("LANDED" if is_landed else "FLIGHT")
 		]
+
+func _toggle_landing() -> void:
+	if is_landed:
+		_do_launch()
+	else:
+		_do_land()
+
+func _do_land() -> void:
+	# Prefer pad snap within range; else surface land if altitude low
+	var pad: Node3D = null
+	if _open_space and _open_space.has_method("nearest_pad"):
+		pad = _open_space.nearest_pad(global_position)
+	if pad and pad.global_position.distance_to(global_position) <= land_pad_snap_distance:
+		_landed_pad = pad
+		# Snap above pad
+		var up: Vector3 = Vector3.UP
+		if pad.has_meta("pad_up"):
+			up = pad.get_meta("pad_up")
+		global_position = pad.global_position + up * 4.0
+		# Face roughly along pad
+		velocity = Vector3.ZERO
+		is_landed = true
+		_set_mode(FlightMode.HOVER)
+		landed.emit()
+		print("[Ship] Landed on pad ", pad.name)
+		return
+	# Surface land near planet
+	if _open_space and _open_space.has_method("nearest_planet"):
+		var pl: Node3D = _open_space.nearest_planet(global_position)
+		if pl and pl.has_method("altitude_of") and pl.altitude_of(global_position) < surface_land_alt:
+			velocity = Vector3.ZERO
+			is_landed = true
+			_landed_pad = null
+			_set_mode(FlightMode.HOVER)
+			landed.emit()
+			print("[Ship] Surface land near ", pl.get("planet_name"))
+			return
+	print("[Ship] Land denied — approach a pad (<", land_pad_snap_distance, "m) or surface")
+
+func _do_launch() -> void:
+	is_landed = false
+	_landed_pad = null
+	if flight_mode == FlightMode.HOVER:
+		_set_mode(FlightMode.SCM)
+	# Boost off pad
+	velocity = global_transform.basis.y * 12.0 - global_transform.basis.z * 8.0
+	launched.emit()
+	print("[Ship] Launched")
 
 func detach_module(index: int) -> void:
 	if index < 0 or index >= modules.size():
 		return
-	var m: ShipModule = modules[index]
 	modules.remove_at(index)
 	_recompute_stats()
-	print("[Ship] Detached ", m.display_name if m else str(index))
 	if module_root:
 		for c in module_root.get_children():
 			c.queue_free()
@@ -224,34 +341,21 @@ func _fire_weapon() -> void:
 	bolt.material_override = mat
 	var dir: Vector3 = -global_transform.basis.z
 	bolt.set_meta("direction", dir)
-	bolt.set_meta("speed", 70.0)
-	get_tree().current_scene.add_child(bolt)
+	bolt.set_meta("speed", 90.0 if flight_mode == FlightMode.NAV else 70.0)
+	var scene := get_tree().current_scene
+	if scene:
+		scene.add_child(bolt)
+	else:
+		get_parent().add_child(bolt)
 	bolt.global_position = global_position - global_transform.basis.z * 2.0
 	var runner := Node.new()
 	runner.set_script(preload("res://scripts/abilities/ProjectileRunner.gd"))
 	bolt.add_child(runner)
 
-func _toggle_landing() -> void:
-	if is_landed:
-		is_landed = false
-		launched.emit()
-		print("[Ship] Launched")
-	else:
-		# Placeholder "land" → load TPS arena if present
-		is_landed = true
-		velocity = Vector3.ZERO
-		landed.emit()
-		print("[Ship] Landing sequence…")
-		if ResourceLoader.exists("res://scenes/test/TestArena.tscn"):
-			await get_tree().create_timer(0.6).timeout
-			get_tree().change_scene_to_file("res://scenes/test/TestArena.tscn")
-
 func _spawn_module_visual(module: ShipModule) -> void:
 	if module_root == null:
 		return
-	# Hardpoint slots by type (local offsets relative to hull)
 	var pos := Vector3.ZERO
-	var rot_y: float = 0.0
 	var scale_v: float = 0.4
 	var rel := ""
 	match module.module_type:
@@ -286,7 +390,6 @@ func _spawn_module_visual(module: ShipModule) -> void:
 					module_root.add_child(root)
 					root.position = pos
 					root.scale = Vector3.ONE * scale_v
-					root.rotation.y = rot_y
 					return
 	var node := MeshInstance3D.new()
 	var box := BoxMesh.new()
@@ -299,7 +402,6 @@ func _spawn_module_visual(module: ShipModule) -> void:
 	node.material_override = mat
 	node.position = pos
 	module_root.add_child(node)
-
 
 func _apply_faction_skin() -> void:
 	if hull_mesh == null:

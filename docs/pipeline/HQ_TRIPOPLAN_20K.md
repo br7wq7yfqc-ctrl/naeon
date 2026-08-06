@@ -1,45 +1,35 @@
-# NAEON HQ Asset Plan
+# NAEON HQ Asset + World Plan (August 2026)
 
-## Two-week budget (ACTIVE) — 2026-08-06 → 2026-08-20
+## Budgets
+| Window | Cap | Usable (reserve 200) |
+|--------|-----|----------------------|
+| **Next week** (2026-08-06 → 08-13) | **5 000** | 4 800 |
+| **This month** | **20 000** | 19 500 |
+| After month | Owner tops up further — vision not capped | |
 
-| | |
-|--|--|
-| **Cap** | **5 000** Tripo API credits |
-| Hard reserve | 200 |
-| Usable | **4 800** |
-| Policy file | `pipeline/briefs/hq_budget_policy.json` |
-| Tracker | `logs/hq_budget_tracker.json` |
+**Code systems (seamless, physics, quality tiers) cost 0 Tripo.**
 
-**Scope this window:** finish Wave S heroes + prioritized Wave A (high, not ultra where possible).  
-**Do not** start full Wave C expansion or extreme retexture mass-pass until after 2026-08-20 unless owner raises cap.
+## Product targets (all target GPUs ≥ 1060 3GB)
+1. Seamless landing (pad + surface) without scene swap  
+2. Whole planet render (sphere + atmo + free orbit)  
+3. Bases on surface  
+4. Free space flight anywhere in volume  
+5. Free surface walk (radial gravity)  
+6. SC-like ship modes SCM/NAV/HOVER  
 
-`run_hq_wave.sh` enforces: stop if `hq_spent >= usable` or balance < min_balance/reserve.
+## Wave spend plan (this month ≤20k)
 
-## Long-term plan (NOT CANCELLED) — 20 000
-
-After the 2-week window (or when owner tops up for full campaign):
-
-| Bucket | Credits | Purpose |
-|--------|---------|---------|
-| S Heroes | ~3 000 | forms, hull, enemies, habitat… |
-| A Gameplay | ~4 000 | modules, colony, combat props |
-| B World | ~3 500 | env fill |
-| C New | ~5 000 | frigate, thrall, hubs… |
-| R Retexture | ~2 000 | detailed/extreme pass |
-| Buffer + reserve | ~2 500 | retries + floor |
-
-Resume: set `cap_credits` / `usable_this_window` in policy to 20000/19500 or new window, then `run_hq_wave.sh C 500`.
+| Phase | When | Assets | Est cr |
+|-------|------|--------|--------|
+| S Heroes | week 1 | forms, hull, enemies, pad, habitat… | ~500 (done) |
+| A Gameplay | week 1 | modules, props priority | ~500–800 |
+| A full + B density | week 2–3 | env fill, stations | ~3 000 |
+| C new content | week 3–4 | frigate, thrall, hubs | ~2 000–5 000 |
+| R retexture | week 4 | hero polish | ~2 000 |
+| Buffer | — | retries | ~2 000 |
 
 ## Observed costs
-- ultra (v3.1 detailed): **~50 cr**
-- high: **~30–40 cr**
+- ultra ≈ 50 · high ≈ 30
 
-## CLI
-```bash
-# Status
-python3 -c "import json; print(json.load(open(\"logs/hq_budget_tracker.json\"))[\"remaining_under_cap\"])"
-
-# Waves (respect policy automatically)
-bash pipeline/scripts/run_hq_wave.sh S 200
-bash pipeline/scripts/run_hq_wave.sh A 200   # uses brief; 2w chain uses a_2w subset
-```
+## Enforcement
+`pipeline/briefs/hq_budget_policy.json` + `run_hq_wave.sh` stop at week cap.
