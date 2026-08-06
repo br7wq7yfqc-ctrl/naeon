@@ -1,8 +1,33 @@
-# 14 — Ship & Space Combat Seed
+# NAEON — Ship & Space Combat Seed
 
-**Version:** 0.1
+**Version:** 0.2
 
-Ship classes: fighters, multirole, freighters, carriers (with drones / fighters), capital ships.
-Modules: weapons, defenses, utility, logistics, hacking/firewall projectors.
-Multi-crew supported. Fleet control from flagship in strategic mode (up to ~30 ships).
-Space combat must remain readable on low-end hardware; prefer clear silhouettes and readable VFX budgets.
+---
+
+## Feel
+
+Semi-Newtonian: thrust, drift, torque; readable inertia; low-end friendly. Multi-crew later (pilot/gunner/engineer). Fleet mode (~30) strategy-assisted from flagship with aggregation/LOD.
+
+---
+
+## Modules
+
+Propulsion, Defense (Firewall lattice CX / spore cloud gROT), Offense, Utility (scanner, cargo, hack probe, cleanse beacon), Carrier (drone/fighter bays).
+
+Faction flavour within shared power budgets by tier.
+
+---
+
+## TPS ↔ Space
+
+Early transitions via loading/instance pockets. Hack/Firewall space analogues share ability tags where possible.
+
+---
+
+## Ownership
+
+Capitals and stations follow Dynamic Ownership. Arena influence cannot permanently flip them alone.
+
+---
+
+*Space combat design seed.*

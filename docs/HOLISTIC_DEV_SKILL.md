@@ -1,84 +1,37 @@
-# NAEON — Holistic Development Skill
+# NAEON — Holistic Development Skill (mirror)
 
-**For every development agent (code, design, assets, infrastructure)**
+**Canonical loadable skill:** `naeon-holistic-economical`  
+**Version:** 1.2
 
-This skill must be loaded / respected at the start of any work session.
+## When to load
+Session start; before mechanics/content/UI/asset work; before commits; cost/pipeline decisions; multi-agent handoff.
 
----
+## Canon priority
+Owner decisions → CONCEPT.md → docs/rules/* → docs/lore/* → plans → SHARED_AGENT_MEMORY → code.
+Living docs win over stale skill text.
 
-## 1. Holistic Vision
+## Never violate
+No P2W · Soft Knowledge only · Asymmetric viable factions · Dynamic Ownership · Arena influence soft/capped · Readable UI (Hack/Firewall/Infection shapes) · Tripo-first dual-theme assets · No secrets/heavy assets in Git · Godot 4 Mac+Windows low-end
 
-NAEON is a multi-genre MMO (Strategy + Space Sim + TPS Action-RPG + MOBA) in the Aexion universe.
+## Canonical doc paths (post-hygiene)
+| Area | Path |
+|------|------|
+| Pillars | docs/rules/00_DESIGN_PILLARS.md |
+| Legal | docs/legal/*, rules/01_* |
+| Combat | rules/02_*, 04_* |
+| Ownership | rules/03_* |
+| Economy | rules/05_ECONOMY_RBE_BIOMASS.md |
+| Quests | rules/06_* |
+| NPC / Knowledge / Schism | rules/07–09_* |
+| **UI (canonical)** | rules/10_UI_INTERFACE_LAYER.md |
+| Alliance / Craft / MOBA / Ship | rules/11–14_* |
+| Lore | docs/lore/* |
+| Memory | docs/SHARED_AGENT_MEMORY.md |
 
-Two asymmetric playable factions:
-- **Cybernex** — protectors of hibernating humanity, Venus Project inspired, animal-robot forms, Nex-Firewall, RBE economy.
-- **gROT** — assimilation swarm under ROT, biomass, hacking/infection, aggressive expansion.
+Redirect stubs exist for old UI/economy filenames — do not edit them.
 
-Core unique pillars:
-- Dynamic Ownership Transformation (visual + gameplay changes by faction).
-- Soft Knowledge / Educational system integrated into quests and combat (information only).
-- AI-generated content + live AI-NPC dialogue (Yandex GPT / aiNEX).
-- Deep integration with NAEXOS.ONLINE platform.
-- Freemium with strict no-P2W policy.
+## Economical checklist
+Variant before new mesh? Free credits? Priority A or B/C? Dual materials enough? UI mockable with placeholders?
 
-Everything must serve these pillars and the low-end + cross-platform (Mac + Windows) target.
-
-## 2. Repository Rules
-
-- Main branch is protected. Prefer feature branches + PR for significant changes.
-- Never commit:
-  - Secrets, API keys, `.env`, private keys
-  - Heavy assets (`/assets/` is gitignored)
-  - Generated binaries or large media
-- Always update related documentation when changing systems.
-- Keep CONCEPT.md and SHARED_AGENT_MEMORY.md in sync with reality.
-
-## 3. Economical Pipeline & Cost Minimization (Early Stages)
-
-**Mandatory rules until Closed Alpha foundation is solid:**
-
-1. **Asset Generation Priority**
-   - Free credits first (Tripo → Meshy).
-   - Rodin only for true hero assets.
-   - One good base mesh → generate Cybernex + gROT variants + LODs in Blender on VM (almost free).
-
-2. **A/B/C Classification**
-   - A = key characters, flagship ships, major locations (higher quality allowed).
-   - B/C = everything else (maximum reuse + procedural).
-
-3. **No unnecessary paid services**
-   - Prefer open-source / free tiers / local processing on the Asset VM.
-   - Yandex Cloud costs should stay predictable (right-size the VM).
-
-4. **Code over content early**
-   - Prefer solid systems with placeholders over large quantities of unfinished assets.
-
-5. **Record cost-impacting decisions** in SHARED_AGENT_MEMORY.md.
-
-## 4. Design & Mechanics Discipline
-
-- All new mechanics must be checked against:
-  - Asymmetry of factions
-  - Soft-only Knowledge advantages
-  - No-P2W
-  - Dynamic Ownership compatibility
-- Prefer data-driven systems (Resources, Ability definitions, Ownership profiles).
-- Every major system needs a short rules document or section in the Design Artifact Plan.
-
-## 5. Communication & Memory
-
-- Significant decisions → append to SHARED_AGENT_MEMORY.md Decision Log.
-- When finishing a session, leave clear status and next recommended tasks.
-- Use the Design Artifacts Plan as the checklist of what still needs formalization.
-
-## 6. Success Criteria for Early Stages
-
-A good early contribution:
-- Moves a core system closer to playable
-- Respects economical constraints
-- Does not introduce hard power from monetization or Knowledge
-- Is documented and leaves the shared memory accurate
-
----
-
-**Load this skill at the beginning of every development session.**
+## Anti-drift
+One writer per path; re-list tips before bulk push; append memory after sessions; code does not invent hard Knowledge power or shop DPS.
