@@ -1,23 +1,27 @@
 # NAEON — Holistic Development Skill (mirror)
 
 **Canonical loadable skill:** `naeon-holistic-economical`  
-**Version:** 1.7  
+**Version:** 1.8  
 **Updated:** 2026-08-06
 
-## v1.7 adds (build-session methodology)
+## v1.8
+Doc map adds rules **20–24**:
+- 20 Abilities cross-layer (TPS/Space/Strategy; MOBA subset)
+- 21 Weapons / gear / equipment (tier DPS index, no shop power)
+- 22 Ship / base / colony modules + stats
+- 23 Diplomacy: war / truce / coalition / standings
+- 24 Friends / squads (2–5) / parties / fleet seed
 
-- **Recursive loop:** Observe → Measure → Hypothesis → Propose one lever → Guard → Apply → Verify → Reflect → Improve
-- **Calculation levers:** combat (04/16), energy pool, economy (15), MOBA WS (13), soft Knowledge reject rules
-- **Telemetry checklist** for retunes
-- **Session timebox** and start card
-- **One-lever rule** — no multi-stat silent retunes
-- Phase-now: design VS complete; code P0 Infection 5 + TransitionContext S1; ops Tripo/neon
+Guards: no squad damage auras · no sub-bought wars · no Premium-only gear tiers · diplomacy ≠ permanent uncapturable
 
-## Still core
-No P2W · soft Knowledge · Infection max 5 · S0–S3 (S1 current) · freemium boundaries · Tripo-first · reference bars ≠ parity · Godot Resources · path ownership A–E
+## v1.7 core retained
+Recursive Observe→Measure→one lever→Reflect · calculation levers · telemetry · Infection max 5 · S1 · freemium · Tripo-first · reference bars ≠ parity
+
+## Path ownership
+A combat/gear · B space/modules/transitions · C assets · D economy/diplomacy · E quests · Design lead UI/skill/social
 
 ## Numeric authority
-rules/04, 13, 15, 16 — skill defines *how* to change them, not a second conflicting table.
+rules/04, 13, 15, 16 (+ module/gear bands in 21–22). Skill defines safe retune process.
 
 ## Session protocol
-HANDOFF → brief → rules → skill §19–23 → code. Append Reflect to SHARED_AGENT_MEMORY.
+HANDOFF → brief → rules → skill → code. Reflect after numeric changes.
