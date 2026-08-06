@@ -22,6 +22,7 @@ func _ready() -> void:
 	_spawn_starfield()
 	_spawn_planets()
 	_spawn_ship()
+	_setup_interior()
 	if floating and floating.has_method("set_target"):
 		floating.set_target(ship)
 	# Graphics
