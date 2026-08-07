@@ -1,21 +1,14 @@
-# Handoff — 0.3.15 Sprint C wave + perf
+# Handoff — 0.3.16 controls fix
 
-## Perf (0.3.14)
-Terrain swim fixed · SoftNetSession OFF · UI throttle
-Installer: NAEON-0.3.14-Installer.dmg
+## Bug
+Characters/ships moved sideways; mouse X inverted.
 
-## Sprint C Tripo (90 cr)
-| Asset | cr | path |
-|-------|-----|------|
-| player_canine_skinned | 30 | assets/characters/player_canine_skinned/ |
-| grot_thrall | 30 | assets/characters/grot_thrall/ |
-| cybernex_sentry | 30 | assets/characters/cybernex_sentry/ |
+## Cause
+Basis built with up.cross(f0) → left-handed (det=-1).
 
-Balance after: ~5040
-FormAnimator + skinned catalog paths
-Arena shows thrall+sentry props
+## Fix
+forward×up=right; form/hull rotation.y=PI to face −Z.
 
-## Note
-Tripo GLBs are NOT true skinned skeletons — FormAnimator falls back to procedural limbs when no Skeleton3D. Meshes still HQ PBR with keep-materials.
+Installer building: NAEON-0.3.16-Installer.dmg
 
-Updated: 2026-08-07T00:13:08.930852+00:00
+Updated: 2026-08-07T00:17:52.104285+00:00
