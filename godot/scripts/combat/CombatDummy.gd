@@ -77,7 +77,8 @@ func _physics_process(delta: float) -> void:
 
 func take_damage(amount: float) -> void:
 	if CombatJuice:
-		CombatJuice.hit_feedback(float(amount), global_position)
+		var crit := amount >= max_health * 0.35 or amount >= 25.0
+		CombatJuice.hit_feedback(float(amount), global_position + Vector3(0, 1.2, 0), crit)
 	if not _alive:
 		return
 	health = max(0.0, health - amount)
@@ -101,6 +102,8 @@ func get_faction() -> String:
 	return faction
 
 func _die() -> void:
+	if CombatJuice:
+		CombatJuice.hit_feedback(max_health, global_position + Vector3(0, 1.2, 0), true)
 	_alive = false
 	died.emit()
 	visible = false

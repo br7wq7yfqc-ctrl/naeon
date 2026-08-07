@@ -89,3 +89,10 @@
 
 | 2026-08-07 | Session Contract: batch DMG only; benchmarks SC/NMS+EVE/Stellaris+Predecessor; Phase0 ~5%; Tripo check each iter | Owner |
 | 2026-08-07 | Phase 0 feel pass: MainMenu, CombatJuice, AudioDirector, SessionObjectives, pad density | Holistic |
+
+
+| 2026-08-07 | Planned EVA open-space exit, per-hull interiors (incl. single-seat), OpMode SIEGE morph geometry | Owner + holistic |
+| 2026-08-07 | Authority doc docs/systems/SHIP_EVA_INTERIOR_MORPH.md; sprint order EVA→MORPH→INT→NET | Holistic |
+
+| 2026-08-07 | Ground vehicles hangars/ramps planned + CargoHold/Ramp/Rover scaffold | Holistic |
+| 2026-08-07 | 0.3.18 combat readability + SurfaceFlora | Holistic |

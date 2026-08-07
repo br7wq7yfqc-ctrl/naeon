@@ -22,6 +22,11 @@ class_name ShipRoleProfile
 @export var siege_enter_sec: float = 1.2
 @export var siege_exit_sec: float = 0.8
 
+@export var hangar_slots: int = 0
+@export var cargo_volume_m3: float = 0.0
+@export var cargo_mass_t: float = 0.0
+@export var has_cargo_ramp: bool = false
+
 static func make_scout() -> ShipRoleProfile:
 	var p := ShipRoleProfile.new()
 	p.hull_id = scout
@@ -51,4 +56,8 @@ static func make_hauler() -> ShipRoleProfile:
 	p.interior_profile_id = hauler_cargo
 	p.allows_cargo_open = true
 	p.allows_siege = false
+	p.hangar_slots = 2
+	p.cargo_volume_m3 = 120.0
+	p.cargo_mass_t = 40.0
+	p.has_cargo_ramp = true
 	return p

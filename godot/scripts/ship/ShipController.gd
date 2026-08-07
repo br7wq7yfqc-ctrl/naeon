@@ -49,6 +49,8 @@ var _open_space: Node = null
 var _landed_pad: Node3D = null
 var _landing_gear: Node3D = null
 var _thruster_fx: GPUParticles3D = null
+var _cargo_hold: Node = null
+var _cargo_ramp: Node3D = null
 var _engine_pulse_t: float = 0.0
 
 func _ready() -> void:
@@ -61,6 +63,7 @@ func _ready() -> void:
 	call_deferred("try_load_hull")
 	call_deferred("_ensure_landing_gear")
 	call_deferred("_ensure_thruster_fx")
+	call_deferred("_ensure_cargo_systems")
 	if pilot_active:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	print("[Ship] Ready modules=", modules.size())
@@ -536,6 +539,8 @@ func get_faction() -> String:
 	return faction
 
 func take_damage(amount: float) -> void:
+	if CombatJuice:
+		CombatJuice.hit_feedback(float(amount), global_position, amount >= 40.0)
 	var rest: float = amount
 	if shields > 0.0:
 		var absorbed: float = min(shields, rest)
@@ -679,3 +684,21 @@ func _update_thruster_fx(axes: Vector3, delta: float) -> void:
 		if _engine_pulse_t > 0.35 and AudioDirector and power > 0.5:
 			_engine_pulse_t = 0.0
 			AudioDirector.play_engine_pulse()
+
+
+func _ensure_cargo_systems() -> void:
+	if _cargo_hold != null:
+		return
+	_cargo_hold = Node.new()
+	_cargo_hold.set_script(load("res://scripts/ship/CargoHold.gd"))
+	_cargo_hold.name = "CargoHold"
+	add_child(_cargo_hold)
+	_cargo_hold.set("max_vehicle_slots", 2)
+	_cargo_hold.set("volume_m3", 120.0)
+	_cargo_hold.set("mass_t", 40.0)
+	_cargo_ramp = Node3D.new()
+	_cargo_ramp.set_script(load("res://scripts/ship/CargoRamp.gd"))
+	_cargo_ramp.name = "CargoRamp"
+	_cargo_ramp.position = Vector3(0, -0.5, 3.5)
+	add_child(_cargo_ramp)
+	print("[Ship] CargoHold + Ramp scaffold")

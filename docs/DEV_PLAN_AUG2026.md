@@ -1,27 +1,27 @@
 # NAEON Dev Plan — Aug 2026
 
-## Honesty
-Phase 0 early. Desktop **0.3.17**. Next continuum pillars: EVA, ship interiors, hull OpMode morph.
+## Current tip → **0.3.18** batch
 
-## Contract
-SESSION_CONTRACT — batch DMG; Tripo floor 800; code-first.
+### This wave
+- Combat hit readability (marker, CRIT, impact FX, soft hitstop)
+- Surface flora/rock density (SurfaceFlora)
+- Ground vehicles / hangars / ramps **planned + scaffold**
+- Vehicle: GroundVehicle, CargoHold, CargoRamp stubs
 
-## Authority
-- **docs/systems/SHIP_EVA_INTERIOR_MORPH.md** — EVA · interiors · Siege morph
-- docs/systems/INTERIORS.md
-- docs/systems/SEAMLESS_OPENSPACE.md
+### Authority docs
+- docs/systems/SHIP_EVA_INTERIOR_MORPH.md
+- docs/systems/GROUND_VEHICLES_HANGARS.md
 
-## Sprint queue (locked)
-| Sprint | Scope | Status |
-|--------|-------|--------|
-| S-EVA | Open-space F exit + zero-G + hatch reboard | **next** |
-| S-MORPH | OpMode CRUISE/SIEGE + mults + procedural plates | queued |
-| S-INT | Scout single-seat interior + seat→pilot | queued |
-| S-NET | SoftNet actor_mode + op_mode + morph_t | queued |
-| S-POLISH | → batch **0.3.18** | blocked |
+### Sprint queue
+| Sprint | Status |
+|--------|--------|
+| Combat readability | **done** (this) |
+| Surface flora | **done** (this) |
+| S-EVA | next implement |
+| S-MORPH | queued |
+| S-INT | queued |
+| V0–V2 hangar/rover | planned scaffold |
+| 0.3.18 batch | **building** |
 
-## Scaffold
-ShipRoleProfile · ShipHullMorph · ShipInteriorProfiles (data only)
-
-## Tripo
-0 until S-EVA + S-MORPH playable; then optional 1× sniper hull A.
+### Economical
+Tripo recheck each iter; flora/vehicles procedural first.

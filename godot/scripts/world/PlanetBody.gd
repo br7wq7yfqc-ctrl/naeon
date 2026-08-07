@@ -180,6 +180,9 @@ func _build_shell() -> void:
 	_apply_lod_visual(1)  # start mid until first observer update
 
 func set_observer(node: Node3D) -> void:
+	var _fl := get_node_or_null("SurfaceFlora")
+	if _fl and _fl.has_method("set_observer"):
+		_fl.set_observer(node)
 	_observer = node
 	if _surface_detail and _surface_detail.has_method("set_observer"):
 		_surface_detail.set_observer(node)
@@ -484,6 +487,7 @@ func current_lod_name() -> String:
 
 
 func _spawn_pad_density() -> void:
+	_ensure_surface_flora()
 	if _pads_root == null:
 		return
 	if _pads_root.has_node("PadDensityCluster"):
@@ -504,4 +508,28 @@ func _spawn_pad_density() -> void:
 		_pads_root.add_child(life)
 		if life.has_method("build"):
 			life.build(5)
+
+
+
+func _ensure_surface_flora() -> void:
+	if has_node("SurfaceFlora"):
+		return
+	var fl := Node3D.new()
+	fl.set_script(load("res://scripts/world/SurfaceFlora.gd"))
+	fl.name = "SurfaceFlora"
+	add_child(fl)
+	var rad := 1200.0
+	if "radius" in self:
+		rad = float(radius)
+	if fl.has_method("setup"):
+		fl.setup(self, rad, int(abs(hash(name)) % 10000))
+	if fl.has_method("set_observer"):
+		var obs = null
+		if has_method("_resolve_observer"):
+			obs = _resolve_observer()
+		elif "_observer" in self:
+			obs = _observer
+		if obs:
+			fl.set_observer(obs)
+	print("[PlanetBody] SurfaceFlora")
 
