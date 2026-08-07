@@ -617,4 +617,4 @@ func _prune_stale() -> void:
 			if p and is_instance_valid(p):
 				p.queue_free()
 			_puppets.erase(pid)
-			print([SoftENet] stale drop , pid)
+			print("[SoftENet] stale drop ", pid)

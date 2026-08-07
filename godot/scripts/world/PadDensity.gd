@@ -24,6 +24,7 @@ const PROPS := [
 	"props/pad_floodlight/pad_floodlight_cybernex_lod2.glb",
 	"props/cybernex_shield_emitter/cybernex_shield_emitter_cybernex_lod1.glb",
 	"props/cargo_landing_container/cargo_landing_container_cybernex_lod2.glb",
+	"props/pad_refuel_pump/pad_refuel_pump_cybernex_lod2.glb",
 	"colony/surface_crystal_spire/surface_crystal_spire_cybernex_lod2.glb",
 	"environments/surface_rock_cluster/surface_rock_cluster_cybernex_lod2.glb",
 ]
