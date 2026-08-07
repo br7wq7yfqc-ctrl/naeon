@@ -241,6 +241,7 @@ func enable_loopback() -> void:
 func _process(delta: float) -> void:
 	_poll_udp()
 	_loopback_tick_process(delta)
+	_prune_stale()
 	if not is_connected and not is_host and not is_joining and not loopback_enabled:
 		return
 	_peer_log_tick += delta
@@ -290,6 +291,18 @@ func _broadcast_state() -> void:
 	if "rotation" in _player_ref:
 		pitch = _player_ref.rotation.x
 		roll = _player_ref.rotation.z
+	var op_mode := 0
+	var morph_t := 0.0
+	var actor_mode := "surface"
+	if "op_mode" in _player_ref:
+		op_mode = int(_player_ref.op_mode)
+	if _player_ref.has_method("flight_mode_name") or _player_ref.is_in_group("ship"):
+		actor_mode = "pilot"
+	elif "eva_mode" in _player_ref and bool(_player_ref.eva_mode):
+		actor_mode = "eva"
+	var hm = _player_ref.get_node_or_null("HullMorph")
+	if hm and "morph_t" in hm:
+		morph_t = float(hm.morph_t)
 	if _udp and (is_host or is_connected):
 		_send_raw({
 			"k": KIND_STATE,
@@ -297,6 +310,7 @@ func _broadcast_state() -> void:
 			"x": pos.x, "y": pos.y, "z": pos.z,
 			"yaw": yaw, "pitch": pitch, "roll": roll,
 			"form": form, "fac": fac, "mode": mode, "landed": landed,
+			"op": op_mode, "morph": morph_t, "amode": actor_mode,
 		})
 	elif _peer and multiplayer.multiplayer_peer and (is_host or is_connected):
 		rpc_soft_state.rpc(pos.x, pos.y, pos.z, yaw, form, fac)
@@ -430,6 +444,9 @@ func _apply_remote_state(pid: int, d: Dictionary) -> void:
 		pup.call("apply_state_ex", pos, yaw, pitch, roll, form, fac, mode, landed)
 	else:
 		pup.call("apply_state", pos, yaw, form, fac)
+	if pup.has_method("apply_soft_extra"):
+		pup.call("apply_soft_extra", int(d.get("op", 0)), float(d.get("morph", 0.0)), str(d.get("amode", "surface")))
+	_last_seen[pid] = Time.get_ticks_msec()
 
 func _drop_peer(pid: int, key: String) -> void:
 	if _puppets.has(pid):
@@ -467,6 +484,7 @@ func _clear_puppets() -> void:
 		if p and is_instance_valid(p):
 			p.queue_free()
 	_puppets.clear()
+	_last_seen.clear()
 
 func _loopback_tick_process(delta: float) -> void:
 	if not loopback_enabled:
@@ -581,3 +599,22 @@ func _maybe_cmdline_net() -> void:
 			return
 	if loopback_enabled:
 		enable_loopback()
+
+
+
+func _prune_stale() -> void:
+	if _last_seen.is_empty():
+		return
+	var now := Time.get_ticks_msec()
+	var drop: Array = []
+	for pid in _last_seen.keys():
+		if now - int(_last_seen[pid]) > STALE_MS:
+			drop.append(int(pid))
+	for pid in drop:
+		_last_seen.erase(pid)
+		if _puppets.has(pid):
+			var p = _puppets[pid]
+			if p and is_instance_valid(p):
+				p.queue_free()
+			_puppets.erase(pid)
+			print([SoftENet] stale drop , pid)

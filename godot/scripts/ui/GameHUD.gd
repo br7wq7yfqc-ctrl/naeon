@@ -722,7 +722,7 @@ func _refresh_economy() -> void:
 	var cur: float = GameManager.biomass if fac == "gROT" else GameManager.contribution
 	var label_n := "BIOMASS" if fac == "gROT" else "CONTRIB"
 	var rank: int = int(GameManager.alliance_rank) if "alliance_rank" in GameManager else 0
-	var next_cost: float = float(_AllianceRanks.next_rank_cost_contribution(rank))
+	var next_cost: float = float(GameManager.next_alliance_cost()) if GameManager.has_method("next_alliance_cost") else float(_AllianceRanks.next_rank_cost_contribution(rank))
 	var rname: String = str(_AllianceRanks.rank_name(rank))
 	var ratio := 1.0
 	if next_cost > 0.0:

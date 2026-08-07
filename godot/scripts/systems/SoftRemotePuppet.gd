@@ -173,6 +173,10 @@ func _refresh_label() -> void:
 		var extra := ""
 		if form == "Ship":
 			extra = " · %s%s" % [ship_mode if ship_mode != "" else "SCM", " LANDED" if ship_landed else ""]
+			if op_mode == 1:
+				extra += " SIEGE"
+		elif actor_mode == "eva":
+			extra = " · EVA"
 		_label.text = "P%d · %s · %s%s" % [peer_id, form, faction, extra]
 		_label.position = Vector3(0, 2.4 if form == "Ship" else 2.05, 0)
 

@@ -1,12 +1,19 @@
-# Soft Net (UDP)
+# SoftNet (visual multiplayer only)
 
-Default: UDP soft protocol NAE1.
-tools/mac/softnet_stress.sh — loopback + dual peer + OpenSpace host.
+## Rules
+- **No combat authority** — puppets visual-only
+- **No P2W** — state is pose/form/faction/flight only
+- is_instance_valid on all rebind/free paths
 
-| Key | Action |
-|-----|--------|
-| F10 | host :27700, writes user://softnet_host_info.txt |
-| F11 | join IP from user://softnet_join.txt or 127.0.0.1 |
-| F12 | leave |
+## Continuum fields (UDP STATE)
 
-No combat power sync.
+
+## Stale
+Peers silent > 8s → puppet queue_free
+
+## Transports
+- UDP JSON primary
+- ENet multiplayer fallback (reduced fields)
+- Loopback for single-machine ghost
+
+Updated: 2026-08-07T23:40:44.258474+00:00

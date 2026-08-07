@@ -154,6 +154,8 @@ func _capture() -> Dictionary:
 	return {
 		"pos": [_player.global_position.x, _player.global_position.y, _player.global_position.z],
 		"yaw": _player.rotation.y,
+		"pitch": _player.rotation.x,
+		"roll": _player.rotation.z,
 		"form": form,
 		"faction": fac,
 		"actor_mode": actor_mode,

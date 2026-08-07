@@ -93,6 +93,10 @@ func try_promote_alliance() -> bool:
 	toast_requested.emit("Alliance rank → %s (permissions only, no combat power)" % get_alliance_rank_name())
 	return true
 
+func next_alliance_cost() -> float:
+	return _AllianceRanks.next_rank_cost_contribution(alliance_rank)
+
+
 func economy_label() -> String:
 	if player_faction == Faction.GROT:
 		return "BIOMASS %.1f" % biomass

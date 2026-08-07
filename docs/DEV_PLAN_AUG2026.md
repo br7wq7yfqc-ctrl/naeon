@@ -3,16 +3,17 @@
 ## Mode
 holistic-economical + sequential
 
-## Done this turn
+## Done
 | Item | Status |
 |------|--------|
-| Channel ring faction polish + burst | done |
-| Soft economy HUD + delta flash + rank bar | done |
-| Channel progress HUD bar | done |
+| Channel + economy HUD | done |
+| SoftNet continuum fields (op/morph/amode) | **done** |
+| SoftNet stale puppet prune 8s | **done** |
+| AllianceRanks cost via GameManager | **done** |
 
 ## Next
-1. SoftNet audit (only if clean)
-2. Economy rank cost align with AllianceRanks
-3. B props if pad sparse
+1. SoftNet loopback playtest polish
+2. Pad ambient life if sparse
+3. No SoftNet combat authority (locked)
 
-Updated: 2026-08-07T23:37:55.829940+00:00
+Updated: 2026-08-07T23:40:44.258474+00:00
