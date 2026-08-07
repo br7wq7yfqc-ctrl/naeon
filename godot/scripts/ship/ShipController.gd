@@ -117,8 +117,8 @@ func try_load_hull() -> void:
 	# Align GLB nose to Godot −Z (thrust / camera forward)
 	_MeshOrient.face_neg_z(root as Node3D, true)
 	# Pick yaw maximizing length on Z (nose along −Z after MeshOrient)
-	var best_y := root.rotation.y
-	var best_len := -1.0
+	var best_y: float = root.rotation.y
+	var best_len: float = -1.0
 	for y in [0.0, PI * 0.5, PI, PI * 1.5]:
 		root.rotation.y = y
 		var sz: Vector3 = _hull_local_size(root)
@@ -916,8 +916,7 @@ func _stick_to_pad() -> void:
 
 
 func _hull_local_size(n: Node3D) -> Vector3:
-	# Use MeshOrient-style AABB in root local space
-	var a: AABB = _MeshOrient._aabb_in_root(n) if _MeshOrient.has_method("_aabb_in_root") else AABB()
+	var a: AABB = _MeshOrient._aabb_in_root(n)
 	if a.size.length_squared() < 1e-6:
 		return Vector3.ONE
 	return a.size
