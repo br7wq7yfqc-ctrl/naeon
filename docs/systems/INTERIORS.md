@@ -19,3 +19,15 @@ Hero station meshes are A-tier Tripo later. For playable vertical slice we gener
 - Swap rooms for HQ dual-theme GLB modules when budget allows
 - Multi-crew ship stations
 - Persistence of interior props
+
+
+---
+
+## Planned expansion (see SHIP_EVA_INTERIOR_MORPH.md)
+
+- **ShipInteriorProfile** per hull class — single-seat still has Cockpit + Airlock
+- Seat volume → direct PILOT
+- Morph-linked interior parts (siege blister)
+- EVA exterior ≠ interior pocket (I only when in hull volume or on pad)
+
+Updated: 2026-08-07T10:55:29.115564+00:00

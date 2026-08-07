@@ -1,20 +1,19 @@
-# Handoff — post 0.3.17 feel continue
+# Handoff — plan: EVA + interiors + morph
 
-## Desktop still
-NAEON-0.3.17-Installer.dmg (no new micro-DMG this pass)
+## Authority
+docs/systems/SHIP_EVA_INTERIOR_MORPH.md
 
-## This iteration (dev tip)
-- PadDensity flood/crystal OmniLights
-- OpenSpace altitude fog + sun limb + ambient
-- Ship thruster FX + engine audio pulse
-- Interiors: cockpit console, spire, omni lights
-- Clash dual nexus Cybernex/gROT + lights
-- Orbital station_habitat_ring ×3
+## Sprint order
+1. S-EVA — mid-space F exit/reboard
+2. S-MORPH — OpMode SIEGE + plates + DPS/mobility mult
+3. S-INT — scout single-seat + seat→pilot
+4. S-NET — soft fields
+5. 0.3.18 batch at acceptance
 
-## Play (dev)
-`godot --path godot` — thrust trails, pad night lights, I interiors lit
+## Scaffold
+godot/scripts/ship/ShipRoleProfile.gd
+godot/scripts/ship/ShipHullMorph.gd
+godot/scripts/ship/ShipInteriorProfiles.gd
 
-## Next
-Weapon projectile juice, surface flora, then batch 0.3.18
-
-Updated: 2026-08-07T10:49:09.293249+00:00
+## Desktop
+Still 0.3.17 — plan + scaffold only, no micro-DMG.
