@@ -420,7 +420,7 @@ func _fire_weapon() -> void:
 		AudioDirector.play_hit(false)
 	if CombatJuice:
 		CombatJuice.hit_feedback(2.0, global_position - global_transform.basis.z * 3.0)
-var dps: float = 8.0
+	var dps: float = 8.0
 	for m in modules:
 		dps += m.weapon_dps
 	if energy < 4.0:
