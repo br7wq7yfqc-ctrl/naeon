@@ -1,77 +1,76 @@
 # NAEON — Legendary Sites (per system)
 
-**Version:** 0.1  
-**Depends on:** STAR_SYSTEMS_SEED, RELICS_AND_PHENOMENA, SCHISM_TIMELINE  
-**Constraint:** Sites feed exploration, codex, soft Knowledge, Contested theatre — **not** exclusive endgame DPS monopolies
+**Version:** 0.2  
+**Depends on:** STAR_SYSTEMS_SEED, SITE_PIN_CATALOG, RELICS_AND_PHENOMENA  
+**Constraint:** Exploration / codex / Contested theatre — not exclusive endgame DPS
 
-1–2 signature sites per system for art, quest pins, and ambient storytelling.
+IDs are **authoritative** in SITE_PIN_CATALOG.md.
 
 ---
 
 ## ARK (Cybernex heartland)
 
-| Site | Hook |
-|------|------|
-| **NEX Vault Crown** | Upper hibernation spires; Wake Drill public plazas; no combat inside core vaults |
-| **Ring of Quiet Lights** | Orbital caretaker chain; Helix Ord’s operational home; tutorial CX space-adjacent |
+| ID | Name | Hook |
+|----|------|------|
+| `SITE_ARK_VAULT_CROWN` | NEX Vault Crown | Hibernation spires; Wake Drill plazas; no combat in core vaults |
+| `SITE_ARK_RING` | Ring of Quiet Lights | Orbital caretaker chain; Helix ops; CX tutorial space-adjacent |
 
-## ROT-Prime (gROT heartland)
+## ROT-Prime
 
-| Site | Hook |
-|------|------|
-| **The Spire of One Voice** | Ritual broadcasts; Third Throat ceremonies; campaign loyalty set pieces |
-| **Vein Kilns** | Primary conversion yards; Kiln-Nine logistics; biomass visual peak |
+| ID | Name | Hook |
+|----|------|------|
+| `SITE_ROT_SPIRE` | The Spire of One Voice | Ritual broadcasts; Third Throat |
+| `SITE_ROT_KILNS` | Vein Kilns | Conversion yards; Kiln-Nine logistics |
 
 ## Shattered Corridor
 
-| Site | Hook |
-|------|------|
-| **Twin Moon A** | Published MOBA-linked hub candidate (soft War Score only); frequent Contested |
-| **Hauler’s Teeth** | Logistics ambush belt; cargo risk fantasy |
+| ID | Name | Hook |
+|----|------|------|
+| `SITE_SHATTERED_TWIN_MOON_A` | Twin Moon A | Soft War Score hub candidate; Contested |
+| `SITE_SHATTERED_HAULERS_TEETH` | Hauler’s Teeth | Logistics ambush belt |
 
 ## Helios Reach
 
-| Site | Hook |
-|------|------|
-| **Dawn Scaffold** | Expansion colony skeleton; Act IV CX/GR branch |
-| **Solar Blind** | High-glare navigation hazard; scanner utility teaching |
+| ID | Name | Hook |
+|----|------|------|
+| `SITE_HELIOS_DAWN_SCAFFOLD` | Dawn Scaffold | Expansion colony; Act IV |
+| `SITE_HELIOS_SOLAR_BLIND` | Solar Blind | Navigation hazard teaching |
 
 ## Veil Reach
 
-| Site | Hook |
-|------|------|
-| **First Bleed Scar** | Landscape anomaly; History + Biology soft Knowledge |
-| **Unindexed Archive** | Pre-Schism core; Sera Venn expedition hooks |
+| ID | Name | Hook |
+|----|------|------|
+| `SITE_VEIL_FIRST_BLEED` | First Bleed Scar | Anomaly; History/Biology soft |
+| `SITE_VEIL_UNINDEXED_ARCHIVE` | Unindexed Archive | Pre-Schism; Sera expeditions |
 
 ## Mirror Expanse
 
-| Site | Hook |
-|------|------|
-| **Grey Mediator Spindle** | Neutral trade/truce theatre (rules/23 flavour) |
-| **Silent Customs** | Cross-faction repair at risk rates; broker NPCs |
+| ID | Name | Hook |
+|----|------|------|
+| `SITE_MIRROR_GREY_SPINDLE` | Grey Mediator Spindle | Neutral trade / truce theatre |
+| `SITE_MIRROR_SILENT_CUSTOMS` | Silent Customs | Cross-faction repair at risk |
 
 ## Forge Depths
 
-| Site | Hook |
-|------|------|
-| **Anvil of Claims** | Structure craft + Ownership fights |
-| **Slag Choir** | Industrial ambient; T2 module fantasy |
+| ID | Name | Hook |
+|----|------|------|
+| `SITE_FORGE_ANVIL` | Anvil of Claims | Structure craft + Ownership |
+| `SITE_FORGE_SLAG_CHOIR` | Slag Choir | Industrial ambient; T2 fantasy |
 
 ## Echo Ruins
 
-| Site | Hook |
-|------|------|
-| **Lattice Memory Well** | Educational dungeon-lite; codex flood |
-| **Ghost Switchyard** | Echo ghosts dialogue set pieces; no player mind-control power |
+| ID | Name | Hook |
+|----|------|------|
+| `SITE_ECHO_MEMORY_WELL` | Lattice Memory Well | Educational dungeon-lite |
+| `SITE_ECHO_GHOST_SWITCHYARD` | Ghost Switchyard | Echo dialogue; no mind-control power |
 
 ---
 
-## Implementation notes
+## Rules
 
-- Pin sites in quest data via ID (`SITE_ARK_VAULT_CROWN`, …).
-- Dynamic Ownership changes **presentation** of claimable sites; legendary name persists.
-- Seasonal events may spotlight one site without granting Premium-only weapons.
+- Dynamic Ownership changes presentation; ID persists.
+- Seasonal spotlight ≠ Premium-only weapons.
 
 ---
 
-*Legendary geography seed.*
+*Legendary geography + IDs.*

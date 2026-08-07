@@ -1,24 +1,22 @@
 # NAEON — Shared Agent Memory
 
-**Last updated:** 2026-08-06 (Act V–VI + premium epilogues — campaign starters complete)
+**Last updated:** 2026-08-07 (design gaps closed)
 
 ## Core constraints
-No P2W · soft Knowledge · Infection max 5 · S1 · freemium ≠ power · Tripo-first · narrative ≠ power · perf/25 · site_pin catalog only
+No P2W · soft Knowledge · Infection max 5 · S1 · freemium ≠ power · Tripo-first · narrative ≠ power · perf/25 · site_pin catalog · constructor templates only
 
 ## Design corpus
-rules/00–26 · lore Act **I–VI** + PREMIUM epilogues · SITE_PIN_CATALOG · skill **v2.0**
+rules/00–26 · Act I–VI + premium · SITE_PIN · **CONSTRUCTOR_TEMPLATES** · **SIDE_QUEST_TEMPLATES** · **EDU_MODULE_LIBRARY** · skill v2.0
 
-## Sequential queue this arc
-Act III Contested → SitePin catalog → rules/26 UI → Act IV space → **Act V Knowledge** → **Act VI climax** → **premium story-only**
+## Gaps closed
+- Constructor template seed (8 templates, VS = 2)
+- Generated side-quest templates
+- Edu module library soft
+- LEGENDARY_SITES v0.2 with IDs
+- HANDOFFS refreshed to skill v2.0 + rules 20–26
 
 ## Implementation P0
-A: Infection 5 + perf · B: TransitionContext S1 · E: Act I Quest Resources · Ops: Tripo/neon
-
-## Decision log
-| Date | Decision |
-|------|----------|
-| 2026-08-06 | Act III–IV + SitePin + alliance UI 26 |
-| 2026-08-06 | **Act V–VI starters + QUEST_PREMIUM_EPILOGUES (story only)** |
+A: Infection 5 + perf · B: TransitionContext S1 · E: Act I resources · Ops: Tripo/neon
 
 ## Protocol
-HANDOFF → rules/lore → skill §25 → code.
+HANDOFF → rules/lore/design → skill §25 → code.

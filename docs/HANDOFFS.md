@@ -1,84 +1,90 @@
 # NAEON — Build-Session Briefs (Design-Aware)
 
-**Date:** 2026-08-06  
+**Date:** 2026-08-07  
 **Companion:** `docs/HANDOFF.md`  
-**Canon:** docs/rules/* · skill `naeon-holistic-economical` **v1.6**
+**Skill:** `naeon-holistic-economical` **v2.0**  
+**Canon:** rules/00–26 · lore Act I–VI · SITE_PIN_CATALOG
 
 ---
 
 ## Session A — Core Gameplay (TPS / Ability)
 
 ### Must-read
-`00`, `02`, `04`, `16`, `03`, `08`, `10`, skill Infection max **5**
+`02`, `04`, `16`, `20`, `21`, `03`, `08`, `10`, **`25`**, skill Infection **max 5**
 
-### Next tasks
-1. Unify Infection stacks to **5** pips (shape + number).
-2. Align costs/CDs to `04` + rank curve `16`.
-3. Interruptible Hack; Firewall breaks/cleanses per rules.
-4. Knowledge overlays optional, off by default (`08`).
-5. Wire Act I tutorial objectives from `lore/QUEST_ACT_I_STARTERS.md` when ready.
+### Tasks
+1. Infection **5** pips (shape + number).
+2. Ability costs/CDs from 04 + ranks 16.
+3. Interruptible Hack; Firewall cleanse.
+4. Knowledge overlays optional, off by default.
+5. **Perf smoke** every merge (25): ~60 FPS min preset, no memory climb, free on exit.
 
 ### DoD
-Hack vs Firewall readable; 5-stack window decisive not permanent; ~60 FPS low-end; no Knowledge hard power.
+Readable Hack/Firewall; 5-stack decisive not permanent; perf baseline on TestArena.
 
 ---
 
-## Session B — Space / Ships / Ownership / Transitions
+## Session B — Space / Transitions
 
 ### Must-read
-`14`, `03`, `13`, `10`, `05`, **`18_SEAMLESS_CONTEXT_PAYLOAD`**, skill S0–S3
+`14`, `22`, `03`, `13`, `10`, **`18`**, **`25`**, SITE_PIN_CATALOG
 
-### Next tasks
-1. Implement `TransitionContext` Resource (schema v1 in rules/18).
-2. Round-trip TestArena ↔ SpaceTest: preserve quest ids + cargo snapshot + claim id.
-3. Layer label chip during load (S0 minimum).
-4. Module data categories; Contested ring on one object.
-5. Declare stage **S0** or **S1** in HANDOFF when done.
+### Tasks
+1. `TransitionContext` round-trip TestArena ↔ SpaceTest.
+2. Preserve `active_quest_ids`, cargo, claim, **`site_pin_id`**.
+3. Layer label; S1 <3 s no hitch.
+4. One modular attach; Contested ring.
 
 ### DoD
-Fly, land, contest one object; context not silently dropped on primary route; no Arena-only capital flip.
+Fly, land, context intact; S1 declared; perf on SpaceTest.
 
 ---
 
 ## Session C — Assets
 
 ### Must-read
-ASSET_PIPELINE, skill economical checklist
+ASSET_PIPELINE, skill economical, **25** (LOD)
 
 ### Blocked
-Tripo balance / neon keys — placeholders OK.
+Tripo / neon — placeholders OK.
 
 ### DoD
-One dual-theme Priority B prop when credits exist; no binaries/keys in git.
+Dual-theme prop when credits exist; no secrets in git.
 
 ---
 
 ## Session D — Economy / Alliance
 
 ### Must-read
-`05`, `15`, `11`, `12`
+`05`, `15`, `11`, `12`, **`26`**, `23`, `24`, CONSTRUCTOR_TEMPLATES
 
-### Next
-Ledgers + soft caps; ranks 0–4; constructor templates only.
+### Tasks
+1. Ledgers soft caps.
+2. Ranks 0–4 UI from 26.
+3. Constructor: `CT_DELIVER_HUB` + `CT_DEFEND_CLAIM` minimum.
+
+### DoD
+Pool deposit; rank list; one constructor template live.
 
 ---
 
 ## Session E — Quests / Meta
 
 ### Must-read
-`06`, **`07`**, `09`, CAMPAIGN_QUEST_IDS, **QUEST_ACT_I_STARTERS**, **`19`** freemium badges
+`06`, `07`, `09`, `19`, CAMPAIGN_QUEST_IDS, QUEST_ACT_I–VI, SIDE_QUEST_TEMPLATES, EDU_MODULE_LIBRARY, PREMIUM_EPILOGUES
 
-### Next
-1. Quest Resource for CQ-CX-I-01 and CQ-GR-I-01.
-2. Premium badge `label.story_only` on any premium stub.
-3. NPC role_id on dialogue nodes.
+### Tasks
+1. Quest Resources **CQ-CX-I-01** + **CQ-GR-I-01** first.
+2. site_pin from catalog only.
+3. Premium badge `story_only`.
+4. Optional: one SQ_GATHER, EDU_HIST_SCHISM_01.
 
 ### DoD
-One CX + one GR starter quest playable; premium cannot grant power.
+One CX + one GR Act I playable; premium cannot grant power.
 
 ---
 
 ## Cross-session
 
-Feature branches; one writer per hot path; after DoD update SESSION_STATUS + SHARED_AGENT_MEMORY.  
-Freemium copy keys: rules/19. Transitions: rules/18.
+One writer per hot path; after DoD → SESSION_STATUS + SHARED_AGENT_MEMORY.  
+**Every code track:** rules/25 performance.
