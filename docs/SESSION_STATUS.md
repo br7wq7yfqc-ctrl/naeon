@@ -5,11 +5,10 @@
 
 | Track | Status |
 |-------|--------|
-| Design rules 00–26 + Act I–III + SitePin catalog | **Ready** |
-| A | Code P0: Infection 5 + perf smoke |
-| B | Code P0: TransitionContext S1 + site_pin |
+| Design campaign Act I–VI + premium | **Complete** |
+| Rules 00–26 | **Complete** |
+| A / B | Code P0 open (Infection 5, S1, perf) |
+| E | Implement Act I resources first |
 | C | Ops Tripo/neon |
-| D | Design ready (incl. rules/26 UI) |
-| E | Design ready Act I–III — implement I first |
 
-Perf gate on every A/B/E scene merge.
+Campaign design sequential queue closed.
