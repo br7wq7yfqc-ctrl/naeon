@@ -101,6 +101,7 @@ func try_load_hull() -> void:
 	add_child(root)
 	root.name = "HullGLB"
 	root.scale = Vector3.ONE * 1.2
+	root.rotation.y = PI
 	print("[Ship] Loaded hull ", path)
 
 func _asset_path(rel: String) -> String:
@@ -125,7 +126,7 @@ func _input(event: InputEvent) -> void:
 	if is_landed:
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		_yaw -= event.relative.x * mouse_sensitivity
+		_yaw -= event.relative.x * mouse_sensitivity  # mouse right → look right (RH basis)
 		_pitch -= event.relative.y * mouse_sensitivity
 		# Full 3D flight plane: ship body pitches + yaws (not camera-only)
 		_pitch = clamp(_pitch, deg_to_rad(-89), deg_to_rad(89))
@@ -189,25 +190,30 @@ func _ship_axis() -> Vector3:
 
 
 func _apply_attitude() -> void:
-	# Euler-style free-flight: yaw around ref-up, then pitch around local right, then roll around nose.
+	# Right-handed free-flight attitude: yaw around ref-up, pitch around local right, roll around nose.
+	# Must keep det(+1). Old up.cross(f0) flipped the X axis → ship flew "sideways" + inverted mouse.
 	var up_ref := _reference_up()
-	# Start from identity relative to up_ref
-	var f0 := Vector3.FORWARD
-	if absf(up_ref.dot(f0)) > 0.92:
-		f0 = Vector3.RIGHT
-	var right0 := up_ref.cross(f0).normalized()
-	var forward0 := right0.cross(up_ref).normalized()  # level forward
-	var b := Basis(right0, up_ref, -forward0)  # Godot: X right, Y up, Z back (-forward)
-	b = Basis(up_ref, _yaw) * b
-	# Pitch around local right (X)
-	b = b * Basis(Vector3.RIGHT, _pitch)
-	# Roll around local forward (-Z)
-	b = b * Basis(Vector3.FORWARD, _roll)  # FORWARD is -Z in Godot? Basis(Vector3.FORWARD) rotates around -Z
-	# Actually roll around nose = -basis.z
-	var nose := -b.z
-	var right := b.x
-	var up := b.y
-	# Re-orthonormalize with optional roll already applied via last multiply:
+	# Level forward from yaw (Godot nose = −Z)
+	var yaw_b := Basis(up_ref, _yaw)
+	var level_fwd: Vector3 = yaw_b * Vector3(0, 0, -1)
+	level_fwd = (level_fwd - up_ref * level_fwd.dot(up_ref))
+	if level_fwd.length_squared() < 1e-8:
+		level_fwd = yaw_b * Vector3(1, 0, 0)
+		level_fwd = (level_fwd - up_ref * level_fwd.dot(up_ref))
+	level_fwd = level_fwd.normalized()
+	# forward × up = right
+	var right: Vector3 = level_fwd.cross(up_ref).normalized()
+	var up1: Vector3 = up_ref.normalized()
+	# Pitch around right
+	var pitched_fwd: Vector3 = level_fwd.rotated(right, _pitch)
+	var pitched_up: Vector3 = up1.rotated(right, _pitch)
+	# Re-orthonormalize
+	right = pitched_fwd.cross(pitched_up).normalized()
+	pitched_up = right.cross(pitched_fwd).normalized()
+	# Roll around nose (forward)
+	right = right.rotated(pitched_fwd, _roll)
+	pitched_up = pitched_up.rotated(pitched_fwd, _roll)
+	var b := Basis(right, pitched_up, -pitched_fwd)
 	global_transform = Transform3D(b.orthonormalized(), global_position)
 	if camera_pivot:
 		camera_pivot.rotation = Vector3.ZERO

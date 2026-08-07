@@ -125,6 +125,7 @@ func _load_form_visual() -> void:
 	# Strip rigid bodies from form mesh
 	_strip_colliders(root)
 	_visual.add_child(root)
+	root.rotation.y = PI  # face −Z
 	root.name = "FormGLB"
 	_form_skel = _FormAnim.find_skeleton(root)
 	root.scale = Vector3.ONE * 1.1
@@ -287,14 +288,17 @@ func _physics_process(delta: float) -> void:
 	_update_anim(delta)
 
 func _basis_from_up() -> Basis:
+	# Right-handed: X=right, Y=up, Z=back (−forward). Previous up.cross(f0) flipped X (det=-1)
+	# which made WASD feel sideways and inverted horizontal look.
 	var up := _up.normalized()
-	# yaw around up
-	var f0 := Vector3.FORWARD
+	var f0 := Vector3(0, 0, -1)  # Godot forward
 	if absf(up.dot(f0)) > 0.95:
-		f0 = Vector3.RIGHT
-	var right := up.cross(f0).normalized()
-	var forward := right.cross(up).normalized()
-	# rotate by yaw around up
+		f0 = Vector3(1, 0, 0)
+	# Project preferred forward onto tangent plane
+	f0 = (f0 - up * f0.dot(up)).normalized()
+	# forward × up = right (right-handed)
+	var right := f0.cross(up).normalized()
+	var forward := up.cross(right).normalized()
 	var b := Basis(right, up, -forward)
 	return Basis(up, _yaw) * b
 
