@@ -404,23 +404,23 @@ func _recompute_stats() -> void:
 	shields = min(shields, max_shields)
 
 func _fire_weapon() -> void:
-
-	# Soft muzzle flash (presentation)
+	# Soft muzzle flash (presentation only)
 	var flash := OmniLight3D.new()
 	flash.light_energy = 6.0
 	flash.omni_range = 8.0
 	flash.light_color = Color(0.5, 0.85, 1.0) if faction != "gROT" else Color(1.0, 0.3, 0.4)
 	flash.position = Vector3(0, 0, -2.0)
 	add_child(flash)
+	var flash_ref = flash
 	get_tree().create_timer(0.07).timeout.connect(func():
-		if is_instance_valid(flash):
-			flash.queue_free()
+		if is_instance_valid(flash_ref):
+			flash_ref.queue_free()
 	)
 	if AudioDirector:
 		AudioDirector.play_hit(false)
 	if CombatJuice:
 		CombatJuice.hit_feedback(2.0, global_position - global_transform.basis.z * 3.0)
-	var dps: float = 8.0
+var dps: float = 8.0
 	for m in modules:
 		dps += m.weapon_dps
 	if energy < 4.0:
