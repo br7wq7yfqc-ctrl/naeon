@@ -1,24 +1,22 @@
 # NAEON Dev Plan — Aug 2026
 
 ## Mode
-holistic-economical + sequential mechanics/physics + parallel Tripo
+holistic-economical + sequential + parallel Tripo
 
-## Latest
+## Done this turn
 | Item | Status |
 |------|--------|
-| Ship Area3D bolts + damage | done |
-| Pad claim FX + ownership pylon mesh | done (new asset) |
-| Rover chassis GLB | done (new asset) |
-| Tripo balance | ~4820 after −50 |
-
-## Assets this session
--  dual-theme LOD0–2
--  dual-theme LOD0–2
+| AbilityKitCatalog | done |
+| PlanetProfileCatalog (3 bodies) | done |
+| Walker energy/health | done |
+| Contested claim multi-pulse UX | done |
+| ship_siege_radiator dual LODs | done |
+| pad_control_obelisk / grot_biomass_spire | processing |
 
 ## Next
-1. Ability data-driven costs table
-2. Planet gravity/atmo tuning table  
-3. Optional: siege radiator / habitat module gen
-4. Contested claim multi-pulse balance
+1. Wire obelisk into PadDensity
+2. Wire biomass spire into gROT pads
+3. SoftNet only if stable
+4. Continue physics fine-tune
 
-Updated: 2026-08-07T23:23:30.587220+00:00
+Updated: 2026-08-07T23:28:29.585005+00:00

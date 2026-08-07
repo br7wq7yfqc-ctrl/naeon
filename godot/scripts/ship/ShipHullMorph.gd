@@ -105,7 +105,9 @@ func _try_load_radiator_meshes() -> void:
 	if ship and "faction" in ship and str(ship.faction) == "gROT":
 		fac = "grot"
 	var rel := "ships/ship_siege_radiator/ship_siege_radiator_%s_lod1.glb" % fac
-	var path := AP.resolve(rel) if AP.has_method("resolve") else ""
+	var path: String = ""
+	if AP.has_method("resolve"):
+		path = str(AP.resolve(rel))
 	if path == "" or not FileAccess.file_exists(path):
 		return
 	for side in [-1.0, 1.0]:

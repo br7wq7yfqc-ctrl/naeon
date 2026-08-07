@@ -36,6 +36,8 @@ var eva_time: float = 0.0
 var energy: float = 100.0
 var max_energy: float = 100.0
 var energy_regen: float = 10.0
+var health: float = 100.0
+var max_health: float = 100.0
 var _up: Vector3 = Vector3.UP
 var cam_pivot: Node3D
 var camera: Camera3D
@@ -211,8 +213,7 @@ func spend_energy(amount: float) -> void:
 
 
 func heal(amount: float) -> void:
-	if "health" in self:
-		health = minf(max_health if "max_health" in self else 100.0, float(health) + amount)
+	health = minf(max_health, health + amount)
 
 
 func on_hacked(caster: Node, amount: float = 1.0) -> void:
