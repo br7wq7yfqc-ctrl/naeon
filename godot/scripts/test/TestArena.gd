@@ -101,6 +101,21 @@ func _spawn_dummies() -> void:
 			d.set("can_move", false)
 
 func _spawn_props() -> void:
+	# Sprint C enemy mesh sample
+	var thrall := Node3D.new()
+	thrall.set_script(preload("res://scripts/assets/GlbProp.gd"))
+	thrall.set("relative_path", "characters/grot_thrall/grot_thrall_grot_lod0.glb")
+	thrall.set("scale_factor", 1.0)
+	thrall.set("add_static_collision", false)
+	add_child(thrall)
+	thrall.global_position = Vector3(6, 0, 8)
+	var sentry := Node3D.new()
+	sentry.set_script(preload("res://scripts/assets/GlbProp.gd"))
+	sentry.set("relative_path", "characters/cybernex_sentry/cybernex_sentry_cybernex_lod0.glb")
+	sentry.set("scale_factor", 1.0)
+	sentry.set("add_static_collision", false)
+	add_child(sentry)
+	sentry.global_position = Vector3(-6, 0, 8)
 	var prop_script: Script = preload("res://scripts/assets/GlbProp.gd")
 	var positions: Array = [
 		# crates / storage

@@ -86,24 +86,24 @@ static func apply_soft_mobility(form: String) -> Dictionary:
 ## Sprint C helpers — skinned GLB paths preferred by mesh_candidates callers via extra prepend
 static func skinned_candidates(form: String, faction: String) -> PackedStringArray:
 	var fx := "grot" if faction == "gROT" else "cybernex"
-	var folder := "player_canine"
 	var stem := "player_canine"
 	match form:
 		"Feline":
-			folder = "player_feline"; stem = "player_feline"
+			stem = "player_feline"
 		"Avian":
-			folder = "player_avian"; stem = "player_avian"
+			stem = "player_avian"
 		"Human":
-			folder = "player_human"; stem = "player_human"
+			stem = "player_human"
 		"Infector":
-			folder = "grot_infector"; stem = "grot_infector"
+			stem = "grot_infector"
 		_:
-			folder = "player_canine"; stem = "player_canine"
+			stem = "player_canine"
+	var folder := stem + "_skinned"
 	var out := PackedStringArray()
 	for lod in ["lod0", "lod1", "lod2"]:
-		out.append("characters/%s/%s_skinned_%s_%s.glb" % [folder, stem, fx, lod])
-		out.append("characters/%s/%s_skinned_%s.glb" % [folder, stem, fx])
-		out.append("characters/%s/%s_skinned.glb" % [folder, stem])
-	# pipeline inbox names
-	out.append("characters/%s_skinned/%s_skinned_%s_lod0.glb" % [stem, stem, fx])
+		# pipeline layout: characters/{name}/{name}_{fx}_{lod}.glb
+		out.append("characters/%s/%s_%s_%s.glb" % [folder, folder, fx, lod])
+		out.append("characters/%s/%s_skinned_%s_%s.glb" % [stem, stem, fx, lod])
+	out.append("characters/%s/%s_%s.glb" % [folder, folder, fx])
 	return out
+

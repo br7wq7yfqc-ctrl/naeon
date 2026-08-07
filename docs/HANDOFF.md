@@ -1,18 +1,21 @@
-# Handoff — 0.3.14 perf + Sprint C started
+# Handoff — 0.3.15 Sprint C wave + perf
 
-## FPS / memory root causes (fixed)
-1. SurfaceDetail Time.get_ticks orbit → terrain "swimming"
-2. SoftNetSession default ON @20Hz Dictionary alloc (Arena+OpenSpace)
-3. GameHUD FileAccess + group scans every frame
-4. Terrain plate re-anchor every 0.2s + trimesh RID churn
+## Perf (0.3.14)
+Terrain swim fixed · SoftNetSession OFF · UI throttle
+Installer: NAEON-0.3.14-Installer.dmg
 
-## Sprint C
-- FormAnimator.gd: drive Skeleton3D bones if present
-- HeroFormCatalog prefers *_skinned_* paths
-- Tripo high wave: player_canine_skinned, grot_thrall, cybernex_sentry (running)
-- Balance at start ~5130; 30 frozen on first task
+## Sprint C Tripo (90 cr)
+| Asset | cr | path |
+|-------|-----|------|
+| player_canine_skinned | 30 | assets/characters/player_canine_skinned/ |
+| grot_thrall | 30 | assets/characters/grot_thrall/ |
+| cybernex_sentry | 30 | assets/characters/cybernex_sentry/ |
 
-## Installer
-Desktop NAEON-0.3.14-Installer.dmg
+Balance after: ~5040
+FormAnimator + skinned catalog paths
+Arena shows thrall+sentry props
 
-Updated: 2026-08-07T00:05:20.809315+00:00
+## Note
+Tripo GLBs are NOT true skinned skeletons — FormAnimator falls back to procedural limbs when no Skeleton3D. Meshes still HQ PBR with keep-materials.
+
+Updated: 2026-08-07T00:13:08.930852+00:00
