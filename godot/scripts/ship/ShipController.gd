@@ -169,16 +169,15 @@ func _input(event: InputEvent) -> void:
 	if is_landed:
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		var sens := mouse_sensitivity
-	if flight_mode == FlightMode.NAV:
-		sens *= 0.55
-	elif flight_mode == FlightMode.HOVER:
-		sens *= 0.85
-	if op_mode == 1 and _role:
-		sens *= float(_role.siege_turn_mult)
-		_yaw -= event.relative.x * sens  # mouse right → look right (RH basis)
+		var sens: float = mouse_sensitivity
+		if flight_mode == FlightMode.NAV:
+			sens *= 0.55
+		elif flight_mode == FlightMode.HOVER:
+			sens *= 0.85
+		if op_mode == 1 and _role:
+			sens *= float(_role.siege_turn_mult)
+		_yaw -= event.relative.x * sens
 		_pitch -= event.relative.y * sens
-		# Full 3D flight plane: ship body pitches + yaws (not camera-only)
 		_pitch = clamp(_pitch, deg_to_rad(-89), deg_to_rad(89))
 		_apply_attitude()
 	if event.is_action_pressed("ui_cancel"):
