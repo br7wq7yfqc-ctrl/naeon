@@ -1,16 +1,19 @@
-# Handoff — reboard crash + stuck + orientation
+# Handoff — 0.3.17 batch release
 
-## Crash (0.3.16 shipped)
-SIGSEGV ClassDB::get_method / has_method while re-boarding.
-Cause: walker queue_free while SoftNet/observers/HUD still touched it mid-frame.
+## Desktop
+**~/Desktop/NAEON-0.3.17-Installer.dmg** (~795M, hdiutil VALID)
 
-## Fixes (code tip, no micro-DMG)
-1. try_enter_ship: rebind SoftNet + planet observers to ship **before** free; disable walker process; null player; queue_free
-2. SoftENet/SoftNetSession.bind_player(null-safe)
-3. Spawn higher + double snap + safe_unground; PadDensity collision off
-4. MeshOrient: align hull/form to −Z (long-X → −90°, else 180° for Tripo +Z)
+## Shipped
+- Reboard SIGSEGV fix + surface stuck + MeshOrient
+- MainMenu, CombatJuice, AudioDirector, SessionObjectives
+- ClashMatchDirector + nexus/tower landmarks
+- Pad density + ambient life
+- Full noon Tripo wave dual-theme LODs rebundled
 
-## Dev play
-godot --path godot → Open Space → land E → F exit → F board
+## Tripo
+5040 → 4890 (−150). Assets: clash_nexus_core, clash_lane_tower, station_habitat_ring, surface_crystal_spire, ship_cockpit_console, pad_floodlight
 
-Updated: 2026-08-07T00:42:38.942798+00:00
+## Play
+Install DMG → Open Space / Clash. E land, F exit/board (no crash), WASD forward.
+
+Updated: 2026-08-07T01:00:49.041251+00:00

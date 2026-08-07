@@ -1,6 +1,7 @@
 {
   "session_contract": "batch_dmg_only",
-  "phase0_percent_owner": 5,
-  "last_agent_note": "phase0_feel_pass_no_dmg",
-  "updated": "2026-08-07T00:27:44.823402+00:00"
+  "version": "0.3.17",
+  "tripo_spent_wave": 150,
+  "tripo_balance_after": 4890,
+  "updated": "2026-08-07T01:00:49.041251+00:00"
 }
