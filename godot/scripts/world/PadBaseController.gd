@@ -120,9 +120,26 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 			ownership.claim_strength = 0.0
 			_status = "claiming"
 			_set_contested_ring(false)
+			if AudioDirector:
+				AudioDirector.play_claim()
+			if CombatJuice:
+				CombatJuice.hit_feedback(10.0, global_position, true)
+			var win_c := Color(0.15, 0.85, 1.0)
+			if faction_name == "gROT":
+				win_c = Color(0.95, 0.12, 0.42)
+			_spawn_claim_fx(win_c)
+			_notify_hud("Claim locked → transition · soft economy only")
 		else:
 			_status = "contested"
 			_set_contested_ring(true)
+			if AudioDirector and AudioDirector.has_method("play_claim_pulse"):
+				AudioDirector.play_claim_pulse()
+			elif AudioDirector:
+				AudioDirector.play_ui()
+			if _contest_ring and _contest_ring.has_method("pulse"):
+				_contest_ring.pulse()
+			_spawn_claim_fx(Color(1.0, 0.6, 0.2))
+			_notify_hud("CLAIM PULSE %.2f / 1.75 — stay in zone, C again" % ownership.claim_strength)
 		_apply_faction_visual()
 		_refresh_label()
 		claimed.emit(ownership.faction_name())
@@ -141,6 +158,8 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 		SessionObjectives.on_claim_or_obj()
 	if AudioDirector:
 		AudioDirector.play_claim()
+	if CombatJuice:
+		CombatJuice.hit_feedback(12.0, global_position, true)
 	claimed.emit(ownership.faction_name())
 	_notify_hud("Claim resolved → %s. Harvest = Contribution (no combat power)." % ownership.faction_name())
 	var ccol := Color(0.15, 0.85, 1.0) if ownership.faction_name() == "Cybernex" else Color(0.95, 0.12, 0.42)
@@ -260,9 +279,9 @@ func _ensure_claim_beacon() -> void:
 		if fn == "grot":
 			fac = "grot"
 	var rels := [
-		"props/claim_beacon/claim_beacon_%s_lod1.glb" % fac,
-		"props/claim_beacon/claim_beacon_%s_lod2.glb" % fac,
 		"props/ownership_claim_pylon/ownership_claim_pylon_%s_lod1.glb" % fac,
+		"props/ownership_claim_pylon/ownership_claim_pylon_%s_lod2.glb" % fac,
+		"props/claim_beacon/claim_beacon_%s_lod1.glb" % fac,
 	]
 	var AP = load("res://scripts/assets/AssetPaths.gd")
 	for rel in rels:

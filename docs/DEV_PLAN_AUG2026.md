@@ -6,12 +6,13 @@ holistic-economical + sequential
 ## Done this turn
 | Item | Status |
 |------|--------|
-| SoftNet loopback continuum mirror + orbit ghost | done |
-| PadAmbientLife faction + idle wander + quality count | done |
+| Contested claim juice (audio/FX/ring pulse) | done |
+| AudioDirector contest/pulse/deny | done |
+| SoftNet RPC pitch/roll/op/morph parity | done |
 
 ## Next
-1. Contested claim audio/juice consistency
-2. SoftNet multiplayer RPC pitch/roll parity (optional)
-3. Keep no combat authority on SoftNet
+1. Harvest tick juice (soft econ)
+2. Contested ring near-player HUD already present
+3. SoftNet combat authority remains locked
 
-Updated: 2026-08-07T23:51:54.275356+00:00
+Updated: 2026-08-07T23:55:04.680836+00:00

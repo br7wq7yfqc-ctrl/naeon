@@ -318,7 +318,7 @@ func _broadcast_state() -> void:
 			"op": op_mode, "morph": morph_t, "amode": actor_mode,
 		})
 	elif _peer and multiplayer.multiplayer_peer and (is_host or is_connected):
-		rpc_soft_state.rpc(pos.x, pos.y, pos.z, yaw, form, fac)
+		rpc_soft_state_ex.rpc(pos.x, pos.y, pos.z, yaw, pitch, roll, form, fac, mode, landed, op_mode, morph_t, actor_mode)
 
 func _send_hello() -> void:
 	_send_raw({"k": KIND_HELLO, "id": 0, "name": "client"})
@@ -554,6 +554,22 @@ func rpc_soft_state(x: float, y: float, z: float, yaw: float, form: String, fact
 	if sender == 0 or sender == multiplayer.get_unique_id():
 		return
 	_apply_remote_state(sender, {"x": x, "y": y, "z": z, "yaw": yaw, "form": form, "fac": faction})
+
+
+@rpc("any_peer", "unreliable_ordered")
+func rpc_soft_state_ex(
+	x: float, y: float, z: float, yaw: float, pitch: float, roll: float,
+	form: String, faction: String, mode: String, landed: int,
+	op_mode: int, morph_t: float, amode: String
+) -> void:
+	var sender := multiplayer.get_remote_sender_id()
+	if sender == 0 or sender == multiplayer.get_unique_id():
+		return
+	_apply_remote_state(sender, {
+		"x": x, "y": y, "z": z, "yaw": yaw, "pitch": pitch, "roll": roll,
+		"form": form, "fac": faction, "mode": mode, "landed": landed,
+		"op": op_mode, "morph": morph_t, "amode": amode,
+	})
 
 func _on_mp_peer_connected(id: int) -> void:
 	print("[SoftENet] mp peer +", id)

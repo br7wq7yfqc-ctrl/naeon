@@ -1,10 +1,10 @@
 extends Node
 ## Lightweight procedural SFX — no asset pack required.
-## Hit / claim / engine / UI blips via AudioStreamGenerator.
 
 var _players: Array[AudioStreamPlayer] = []
 var _idx: int = 0
-const POOL := 6
+const POOL := 8
+
 
 func _ready() -> void:
 	for i in POOL:
@@ -14,29 +14,56 @@ func _ready() -> void:
 		add_child(p)
 		_players.append(p)
 
+
 func _next() -> AudioStreamPlayer:
 	var p: AudioStreamPlayer = _players[_idx % POOL]
 	_idx += 1
 	return p
 
+
 func play_hit(crit: bool = false) -> void:
 	_beep(880.0 if crit else 420.0, 0.06 if crit else 0.04, -6.0 if crit else -10.0)
 
+
 func play_claim() -> void:
-	_beep(520.0, 0.08, -8.0)
-	_beep(780.0, 0.1, -10.0, 0.07)
+	## Short resolve chord
+	_beep(520.0, 0.07, -8.0)
+	_beep(780.0, 0.09, -10.0, 0.06)
+	_beep(1040.0, 0.08, -12.0, 0.12)
+
+
+func play_contest() -> void:
+	## Lower tense pulse for contested open / pulse
+	_beep(180.0, 0.1, -9.0)
+	_beep(240.0, 0.08, -11.0, 0.05)
+	_beep(360.0, 0.06, -13.0, 0.1)
+
+
+func play_claim_pulse() -> void:
+	_beep(400.0, 0.05, -10.0)
+	_beep(600.0, 0.06, -12.0, 0.04)
+
 
 func play_ui() -> void:
 	_beep(660.0, 0.03, -14.0)
 
+
+func play_ui_deny() -> void:
+	_beep(220.0, 0.07, -10.0)
+	_beep(160.0, 0.08, -12.0, 0.05)
+
+
 func play_engine_pulse() -> void:
 	_beep(90.0, 0.05, -18.0)
+
 
 func play_land() -> void:
 	_beep(140.0, 0.12, -8.0)
 
+
 func play_toast() -> void:
 	_beep(990.0, 0.04, -12.0)
+
 
 func _beep(freq: float, dur: float, vol_db: float, delay: float = 0.0) -> void:
 	if delay > 0.0:
