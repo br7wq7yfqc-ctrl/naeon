@@ -1,11 +1,9 @@
 # Ship EVA · Interiors · Morph / Operational Modes
 
 **Status:** Planned · Phase 0→1 continuum  
-**Benchmark feel:** SC (EVA + seat) · NMS (cockpit) · EVE (mode shift fantasy) · not feature-clone  
+**Benchmark feel:** SC (EVA + seat) · NMS (cockpit) · EVE (mode-shift fantasy) — not feature clones  
 **Economical rule:** code + procedural first; Tripo only for A-tier hero hull morph LODs later  
-**No P2W:** siege/mode bonuses are **hull role identity**, not monetized power  
-
-Updated: 2026-08-07T10:55:29.115564+00:00
+**No P2W:** siege/mode bonuses are hull **role identity**, never shop power  
 
 ---
 
@@ -13,208 +11,230 @@ Updated: 2026-08-07T10:55:29.115564+00:00
 
 | System | Now | Gap |
 |--------|-----|-----|
-| Exit ship **F** | Only when  → SurfaceWalker on pad | No **open-space EVA** |
+| Exit ship **F** | Only when landed → SurfaceWalker on pad | No **open-space EVA** |
 | Enter ship **F** | Near ship, free walker | No seat/cockpit state machine |
-| Interior **I** | Pocket rooms (InteriorGenerator) on foot near pad/ship | Ship interior not tied to hull class; single-seater = same 3 rooms |
-| Flight modes | SCM / NAV / HOVER | No **role modes** (Siege / Scan / Cargo) |
-| Geometry | Landing gear deploy/stow only | No hull morph / hardpoint transform |
-| SoftNet | pos + mode + landed | Must extend for EVA + op-mode + morph stage |
+| Interior **I** | Procedural pocket rooms | Not tied to hull class; single-seater = generic 3 rooms |
+| Flight modes | SCM / NAV / HOVER | No **role OpModes** (Siege / Scan / Cargo) |
+| Geometry | Landing gear only | No hull morph / hardpoint transform |
+| SoftNet | pos + mode + landed | Need EVA + op_mode + morph_t |
 
 ---
 
-## 1. Open-space EVA (exit ship without landing)
+## 1. Open-space EVA (exit without landing)
 
-### 1.1 Player fantasy
-- In free flight or near station: leave seat → float outside hull → reboard hatch.
-- Continuum **same scene** (no ). FloatingOrigin tracks EVA actor.
+### Fantasy
+Leave the seat mid-flight or near station → thruster-suit outside the hull → reboard hatch. Same OpenSpace scene; FloatingOrigin tracks EVA actor.
 
-### 1.2 States (authority: OpenSpace)
+### States (OpenSpace authority)
 
+```
+PILOT  --F / eject-->  EVA_SPACE  --F near hatch-->  PILOT
+  |                         |
+  | E land                  | thruster pack
+  v                         v
+LANDED (surface walk)     reboard / rescue
+```
 
-### 1.3 Rules
+### Rules
+
 | Rule | Spec |
 |------|------|
-| Exit condition |  and (**not** requiring land). Optional: ship speed <  (default 40 m/s) else confirm / soft block + toast |
-| Spawn | Hatch hardpoint (default: ship local ) outside collision |
-| Actor |  with ** / EVA profile**: low gravity blend, thruster WASD+Space/Shift, mag-boot when near hull/pad |
-| Ship while EVA | ; hold velocity damp; optional soft autopilot HOVER if near pad |
-| Reboard | Distance to hatch < 4 m **or** seat volume; same hardened free path as land reboard (unbind SoftNet → ship first) |
-| Oxygen / soft danger | Soft only: HUD “EVA time” warning at long duration — **no hard death** in Phase 0; later Knowledge soft tip |
-| Suit form | Current HeroFormCatalog form with EVA tint (emission visor) — 0 Tripo |
+| Exit | Pilot active; **not** require landed. Soft block if ship speed > `eva_max_exit_speed` (default 40) + toast |
+| Spawn | Hatch hardpoint (default ship local +X*3 + up*1) outside collision |
+| Actor | SurfaceWalker **EVA profile**: gravity ~0.05, WASD thrusters, Space/Shift vertical, optional mag-boot |
+| Ship while EVA | pilot_active=false; damp velocity; optional HOVER assist near pad |
+| Reboard | Distance to hatch < 4m; **same hardened free path** as pad reboard (rebind SoftNet before free) |
+| Soft danger | EVA timer HUD warning only in Phase 0 — no hard death |
+| Suit | Existing form + emission visor tint (0 Tripo) |
 
-### 1.4 Controls (EVA)
+### EVA controls
+
 | Input | Action |
 |-------|--------|
-| WASD | Local thruster plane (camera/body) |
-| Space / Shift | +up / −up along suit up |
+| WASD | Thruster plane |
+| Space / Shift | +up / -up |
 | Mouse | Look |
-| F | Reboard if in range else toast “approach hatch” |
-| E | Mag-boot toggle when ray hits ship/pad within 2 m |
-| I | If inside ship hull volume → ship interior pocket; from EVA exterior → no station unless near pad |
+| F | Reboard if in range else toast |
+| E | Mag-boot toggle if ray hits hull/pad < 2m |
+| I | Interior only if inside hull volume or on pad |
 
-### 1.5 Implementation order (EVA)
-1. **E0** Data: ; remove hard  gate on F; speed check  
-2. **E1**  — gravity scale 0.05, thruster accel, no floor snap  
-3. **E2** Hatch Marker3D on Ship (); spawn/reboard use it  
-4. **E3** Ship exterior soft “tether” outline when EVA near  
-5. **E4** SoftNet:  + suit form  
-6. **E5** Juice: hatch open anim (procedural door plate), air-hiss audio  
+### Sprint S-EVA tasks
 
-**Exit criterion E0–E2:** F in deep space → float → F reboard without crash.
+1. **E0** `ActorMode { PILOT, SURFACE, EVA }`; F without landed gate; speed check  
+2. **E1** `SurfaceWalker.set_eva_profile(true)`  
+3. **E2** Ship `HatchPoint` Marker3D; spawn/reboard  
+4. **E3** Near-hull outline when EVA  
+5. **E4** SoftNet `actor_mode=eva`  
+6. **E5** Hatch juice (procedural door + audio)  
+
+**Done when:** F in deep space → float → F reboard, no SIGSEGV.
 
 ---
 
 ## 2. Ship interiors (including single-seat)
 
-### 2.1 Philosophy
-Every flyable hull has an **interior graph**, even scout single-seaters.  
-Single-seat ≠ empty: **Cockpit** (seat + console) + **Hatch airlock** + optional **micro-bunk/cargo niche**.
+### Philosophy
+Every flyable hull has an **interior graph**. Single-seat ≠ empty: **Cockpit** (seat + console) + **Airlock/hatch** + optional micro-cargo niche.
 
-### 2.2 Interior profiles (data-driven)
+### Profiles (data-driven)
 
+`ShipInteriorProfile` / catalog id:
 
+| Hull class | Rooms (min) | Props (reuse GLB) |
+|------------|-------------|-------------------|
+| **Scout / single-seat** | Cockpit · Airlock | ship_cockpit_console, control_console |
+| **Fighter** | Cockpit · corridor · magazine | ammo_crate |
+| **Hauler** | Cockpit · Cargo · Airlock | barrels, crates |
+| **Sniper / siege** | Cockpit · Gunnery blister · Airlock | holo, long console |
+| **Station** | existing station graph | habitat modules |
 
-| Hull class | Rooms (min) | Props (reuse assets) |
-|------------|-------------|----------------------|
-| **Scout / single-seat** | Cockpit · Airlock | ship_cockpit_console, control_console, hatch label |
-| **Fighter** | Cockpit · Short corridor · Magazine | ammo_crate, console |
-| **Hauler** | Cockpit · Cargo bay · Airlock | barrels, crates, fuel_tank LOD |
-| **Sniper / siege** | Cockpit · Gunnery blister · Airlock | long console, holo_projector |
-| **Station dock** | existing station graph | habitat modules |
+### Flow
 
-### 2.3 Flow (unified)
+```
+SURFACE or EVA --near ship + I--> SHIP_INTERIOR pocket
+SHIP_INTERIOR --I at hatch--> exterior mode (SURFACE / EVA)
+SHIP_INTERIOR seat + F --> PILOT (fast path, no exterior hop)
+```
 
+### Single-seat special
 
-### 2.4 Single-seat special cases
-- **Sit/stand:** in cockpit seat area, **F** or **E** boards pilot without leaving pocket first (fast path).  
-- **Look out:** optional exterior camera portal later; Phase 0 = neon cockpit only.  
-- **Morph visible inside:** gunnery blister rails move when Siege engages (see §3) — interior child bones/meshes follow morph alpha.
+- Seat volume + **F** → direct PILOT  
+- Phase 0: neon cockpit only (no exterior portal)  
+- Siege morph can move interior gunnery rails (child of morph alpha)
 
-### 2.5 Implementation order (Interiors)
-1. **I0**  Resource + JSON/catalog for scout default  
-2. **I1**  — replace hard-coded only rooms  
-3. **I2** Wire ship class on ShipController → profile id  
-4. **I3** Seat volume → direct PILOT  
-5. **I4** Dual-theme prop paths (existing  / )  
-6. **I5** Tripo A only for hero bridge modules when budget allows (not required for playable)
+### Sprint S-INT tasks
 
-**Exit criterion I0–I3:** single-seat scout has cockpit+airlock; I enter; F sit → fly.
+1. **I0** Catalog (`ShipInteriorProfiles.gd` scaffold)  
+2. **I1** `InteriorGenerator.build_from_profile`  
+3. **I2** ShipController → profile id via role  
+4. **I3** Seat volume → PILOT  
+5. **I4** Dual-theme prop paths  
+6. **I5** Tripo A bridge only after playable  
 
----
-
-## 3. Mutable ship geometry & operational modes
-
-### 3.1 Layers of “shape change”
-
-| Layer | What moves | Cost | Phase |
-|-------|------------|------|-------|
-| **L0 Landing gear** | Legs + thruster VFX | done | 0 |
-| **L1 Hardpoint pose** | Turrets/wings/radiators rotate/slide via Node3D tweens | code | 0–1 |
-| **L2 LOD morph set** | Swap or blend hull visual A/B (cruise vs siege mesh) | 1 base + Blender variants free | 1 |
-| **L3 Skinned morph** | Blend shapes / skeleton on hero hull | Tripo A + pipeline | later |
-
-**Economical default:** L1 procedural plates + module offsets; L2 only for flagship sniper when credits allow **one** high mesh → dual pose in Blender.
-
-### 3.2 Operational modes (beyond SCM/NAV/HOVER)
-
-Flight envelope (existing) stays **how you fly**.  
-Operational modes = **how the hull is configured** (orthogonal):
-
-
-
-| OpMode | Mobility | Weapon | Geometry signal | Unlock / role |
-|--------|----------|--------|-----------------|---------------|
-| **CRUISE** | 100% thrust/turn | baseline | wings swept / gear up | default all hulls |
-| **SIEGE** | thrust ×0.35, turn ×0.4, damp ↑ | main gun dps ×1.6, spread ↓, fire rate ↓ | radiators deploy, barrel extend, outriggers | sniper / gunnery hulls |
-| **SCAN** | thrust ×0.7 | weapons −20% soft | dish deploy | scout / science |
-| **CARGO_OPEN** | thrust ×0.5 | weapons disabled soft | bay doors | hauler |
-| **DOCK_CLAMP** | locked | — | clamps | near pad/station auto |
-
-**Soft-only rule:** numbers are **role kits** on hull definition, not shop power. Knowledge can show *how* to use Siege (soft), not +dps.
-
-### 3.3 Siege mode detail (sniper example)
-
-
-
-**Input:** hold **B** or **4** toggle Siege (toast + morph tween). Cannot Siege while HOVER-landed? → allowed on surface as “emplaced” fantasy (even lower move).
-
-### 3.4 Implementation order (Morph / OpMode)
-1. **M0**  +  on ShipController; HUD shows OP:CRUISE/SIEGE  
-2. **M1** Apply mobility/weapon multipliers from profile (data only)  
-3. **M2**  — tween listed Node3D toward siege poses (procedural plates if missing)  
-4. **M3** Auto-create proxy morph plates on scout if no mesh (visible non-placeholder cubes/plates)  
-5. **M4** SoftNet:  +  0..1  
-6. **M5** Optional Tripo: one sniper hull A-tier → Blender cruise/siege variants  
-
-**Exit criterion M0–M3:** toggle Siege → ship slows, gun hits harder, visible geometry change.
+**Done when:** scout I → cockpit props → seat F → fly.
 
 ---
 
-## 4. Unified state machine (OpenSpace)
+## 3. Mutable geometry and operational modes
 
+### Layers
 
+| Layer | What | Cost | Phase |
+|-------|------|------|-------|
+| L0 Landing gear | legs + VFX | done | 0 |
+| L1 Hardpoint pose | Node3D tweens (barrel, radiators, doors) | code | 0–1 |
+| L2 LOD morph set | cruise vs siege mesh swap | 1 mesh + Blender free | 1 |
+| L3 Skinned morph | blend shapes | Tripo A | later |
 
-Persist on LayerContext: , , .
+Default: **L1 procedural plates**; L2 only for flagship sniper later.
+
+### OpMode (orthogonal to SCM/NAV/HOVER)
+
+Flight modes = how you fly. **OpMode** = how the hull is configured:
+
+| OpMode | Mobility | Weapons | Geometry |
+|--------|----------|---------|----------|
+| **CRUISE** | 100% | baseline | compact |
+| **SIEGE** | thrust×0.35, turn×0.4 | main dps×1.6, spread×0.5, RoF down | barrel extend, radiators, outriggers |
+| **SCAN** | thrust×0.7 | weapons −20% soft | dish deploy |
+| **CARGO_OPEN** | thrust×0.5 | weapons soft-off | bay doors |
+| **DOCK_CLAMP** | locked | — | clamps |
+
+Siege example (sniper role kit — not shop power):
+
+- enter 1.2s / exit 0.8s  
+- input **4** or **B** toggle  
+- allowed in flight; on pad = “emplaced” fantasy  
+
+### Sprint S-MORPH tasks
+
+1. **M0** `ShipRoleProfile` + OpMode on ship; HUD OP:  
+2. **M1** Apply mults from profile  
+3. **M2** `ShipHullMorph` tween plates  
+4. **M3** Proxy plates if no hero mesh  
+5. **M4** SoftNet op_mode + morph_t  
+6. **M5** Optional Tripo sniper hull  
+
+**Done when:** toggle Siege → visible morph + slower ship + harder main gun.
 
 ---
 
-## 5. SoftNet / multiplayer soft
+## 4. Unified continuum state machine
 
-| Field | Type | Notes |
-|-------|------|-------|
-| actor_mode | u8 | pilot/surface/eva/interior |
-| op_mode | u8 | cruise/siege/… |
-| morph_t | u8 | 0–255 |
-| landed | bit | existing |
+```
+                 land E
+ PILOT <--------------------> LANDED_PILOT
+   | F eva/surface                 | F
+   v                               v
+ EVA_SPACE                    SURFACE_WALK
+   | I hull                        | I pad/ship
+   v                               v
+ SHIP_INTERIOR <---- I ----> STATION_INTERIOR
+   | seat F
+   v
+ PILOT
+```
 
-Puppets: show gear + morph pose + suit outside ship.
+LayerContext persists: `actor_mode`, `op_mode`, `interior_id`.
 
 ---
 
-## 6. Economical / Tripo budget mapping
+## 5. SoftNet fields
+
+| Field | Notes |
+|-------|-------|
+| actor_mode | pilot / surface / eva / interior |
+| op_mode | cruise / siege / scan / cargo / dock |
+| morph_t | 0–255 |
+| landed | existing |
+
+---
+
+## 6. Economical / Tripo
 
 | Need | Approach | Credits |
 |------|----------|---------|
-| EVA suit | tint existing form | 0 |
-| Scout interior | procedural + cockpit console asset | 0 |
-| Morph plates | code boxes/plates | 0 |
-| Siege sniper hero hull | 1× high/ultra later | ~50–90 when gate |
-| Dual-theme morph | Blender free from one mesh | 0 |
+| EVA suit | tint form | 0 |
+| Scout interior | procedural + existing console | 0 |
+| Morph plates | code | 0 |
+| Sniper hero hull | 1× high later | ~50–90 at gate |
 
-**Do not** spend Tripo on interiors until M0–M3 and E0–E2 playable.
-
----
-
-## 7. Sprint schedule (post-0.3.17 tip)
-
-| Sprint | Scope | Deliverable | Est. |
-|--------|-------|-------------|------|
-| **S-EVA** | E0–E2 | F deep space EVA + reboard | 1 session |
-| **S-INT** | I0–I3 | Scout profile cockpit+airlock+seat→pilot | 1 session |
-| **S-MORPH** | M0–M3 | OpMode SIEGE + visible morph + DPS/mobility | 1 session |
-| **S-NET** | E4 M4 | SoftNet fields | half session |
-| **S-POLISH** | juice, HUD, audio | batch **0.3.18** candidate | gate |
-
-Order: **S-EVA → S-MORPH (data) → S-INT → S-NET** so modes exist before interior seat binds.
+**No Tripo** until S-EVA + S-MORPH playable.
 
 ---
 
-## 8. Acceptance (playable, not placeholder)
+## 7. Sprint order (locked)
 
-1. Mid-space: F → EVA thrusters → F reboard, no SIGSEGV.  
-2. Single-seat: I → cockpit props → seat F → flight.  
-3. Siege: 4/B → morph deploys, speed drops, main gun hits harder (HUD shows mult).  
-4. Landed F still surface walk; pad claim intact.  
-5. No P2W / no shop power.
+| # | Sprint | Deliverable |
+|---|--------|-------------|
+| 1 | **S-EVA** | Mid-space F exit/reboard |
+| 2 | **S-MORPH** | OpMode SIEGE + mults + plates |
+| 3 | **S-INT** | Scout single-seat interior + seat→pilot |
+| 4 | **S-NET** | Replicate new fields |
+| 5 | **S-POLISH** | juice → batch **0.3.18** |
 
 ---
+
+## 8. Acceptance
+
+1. Mid-space F → EVA → F reboard, no crash  
+2. Single-seat I → cockpit → seat F → flight  
+3. Siege toggle → morph + mobility down + main dps up (HUD)  
+4. Landed F still surface walk; claim intact  
+5. No P2W  
 
 ## 9. Open questions (owner optional)
 
-- EVA oxygen hard fail or soft-only forever in freemium? (default soft)  
-- Siege allowed while NAV only vs any flight mode? (default any except DOCK_CLAMP)  
-- Multi-crew seats later — out of Phase 0 scope  
+- EVA hard oxygen fail vs soft-only? **Default soft**  
+- Siege in all flight modes vs NAV-only? **Default all except DOCK**  
+- Multi-crew seats: out of Phase 0  
 
 ---
 
-*This document is the authority for EVA / interiors / morph. Implementation agents must update status lines when sprints complete.*
+Scaffold already on disk:
+
+- `godot/scripts/ship/ShipRoleProfile.gd`
+- `godot/scripts/ship/ShipHullMorph.gd`
+- `godot/scripts/ship/ShipInteriorProfiles.gd`
+
+*Authority doc for EVA / interiors / morph. Update status when sprints complete.*
