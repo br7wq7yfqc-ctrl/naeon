@@ -78,8 +78,8 @@ func _build() -> void:
 	_root = Control.new()
 	_obj_label = Label.new()
 	_cross = Label.new()
-	_cross.text = ·
-	_cross.add_theme_font_size_override(font_size, 28)
+	_cross.text = "+"
+	_cross.add_theme_font_size_override("font_size", 28)
 	_cross.modulate = Color(0.7, 0.95, 1.0, 0.75)
 	_cross.set_anchors_preset(Control.PRESET_CENTER)
 	_cross.offset_left = -10
