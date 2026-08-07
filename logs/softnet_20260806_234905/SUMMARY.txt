@@ -1,0 +1,7 @@
+=== HOST ===
+[SoftENet] host port=27701 unique_id=1 transport=ws
+=== CLIENT ===
+[SoftENet] joining 127.0.0.1:27701 transport=ws
+[SoftENet] connection failed
+HOST_SCRIPT_ERR=0 CLIENT_SCRIPT_ERR=0 HOST_OK=1 CLIENT_OK=1 PEER_OK=0 LOGDIR=/Users/vladmann/Documents/naeon/logs/softnet_20260806_234905
+WARN: peer handshake not observed

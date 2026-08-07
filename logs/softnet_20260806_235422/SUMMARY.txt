@@ -1,0 +1,7 @@
+=== LOOPBACK ===
+[SoftENet] cmdline_user_args=["--softnet-loopback"]
+[SoftENet] loopback peer enabled (puppet stress, no OS socket)
+[SoftENet] puppet +99
+[SoftRemotePuppet] form Canine/Cybernex /Users/vladmann/Documents/naeon/assets/characters/player_canine/player_canine_cybernex_lod0.glb
+SCRIPT_ERR=0 PUPPET_OK=1 LOGDIR=/Users/vladmann/Documents/naeon/logs/softnet_20260806_235422
+STRESS PASS loopback puppet

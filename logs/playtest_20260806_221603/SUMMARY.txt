@@ -1,0 +1,77 @@
+NAEON full playtest 2026-08-06T19:16:03Z
+=== 00_MainBoot ===
+  PASS  SCRIPT_ERROR=0 PARSE=0 BUSY_ADD_CHILD=0 HEADLESS_MESH_NULL=7
+    [OpenSpace] boot
+    [Ship] Attached Ion Drive
+    [Ship] Attached Pulse Cannon
+    [Ship] Attached Nex Barrier
+    [Ship] Ready modules=3
+    [OpenSpace] ready planets=3
+    [Ship] Loaded hull /Users/vladmann/Documents/naeon/assets/ships/ship_hull_scout/ship_hull_scout_cybernex_lod0.glb
+
+=== 01_OpenSpace ===
+  PASS  SCRIPT_ERROR=0 PARSE=0 BUSY_ADD_CHILD=0 HEADLESS_MESH_NULL=7
+    [OpenSpace] boot
+    [Ship] Attached Ion Drive
+    [Ship] Attached Pulse Cannon
+    [Ship] Attached Nex Barrier
+    [Ship] Ready modules=3
+    [OpenSpace] ready planets=3
+    [Ship] Loaded hull /Users/vladmann/Documents/naeon/assets/ships/ship_hull_scout/ship_hull_scout_cybernex_lod0.glb
+
+=== 02_TestArena ===
+  FAIL  SCRIPT_ERROR=0 PARSE=0 BUSY_ADD_CHILD=1 HEADLESS_MESH_NULL=52
+    [1;31mERROR:[0;91m Parent node is busy setting up children, `add_child()` failed. Consider using `add_child.call_deferred(child)` instead.
+    [Player] Ready form=Canine faction=Cybernex
+    [Player] Form → Canine
+    [Player] InputMap move_forward=true
+    [Player] form mesh Canine/Cybernex -> /Users/vladmann/Documents/naeon/assets/characters/player_canine/player_canine_cybernex_lod0.glb
+    [Player] form mesh Canine/Cybernex -> /Users/vladmann/Documents/naeon/assets/characters/player_canine/player_canine_cybernex_lod0.glb
+    [ClashLanes] TOP/MID/BOT + dual nexus ready
+    [SoftNetSession] ghost spawned (local lag sim 120ms)
+
+=== 03_SpaceTest ===
+  PASS  SCRIPT_ERROR=0 PARSE=0 BUSY_ADD_CHILD=0 HEADLESS_MESH_NULL=2
+    [Ship] Attached Ion Drive
+    [Ship] Attached Pulse Cannon
+    [Ship] Attached Nex Barrier
+    [Ship] Ready modules=3
+    [Ship] Loaded hull /Users/vladmann/Documents/naeon/assets/ships/ship_hull_scout/ship_hull_scout_cybernex_lod0.glb
+
+=== 04_Player ===
+  PASS  SCRIPT_ERROR=0 PARSE=0 BUSY_ADD_CHILD=0 HEADLESS_MESH_NULL=3
+    [Player] Ready form=Canine faction=Cybernex
+    [Player] Form → Canine
+    [Player] InputMap move_forward=true
+    [Player] form mesh Canine/Cybernex -> /Users/vladmann/Documents/naeon/assets/characters/player_canine/player_canine_cybernex_lod0.glb
+    [Player] form mesh Canine/Cybernex -> /Users/vladmann/Documents/naeon/assets/characters/player_canine/player_canine_cybernex_lod0.glb
+    [SoftNetSession] ghost spawned (local lag sim 120ms)
+
+=== 05_Ship ===
+  PASS  SCRIPT_ERROR=0 PARSE=0 BUSY_ADD_CHILD=0 HEADLESS_MESH_NULL=2
+    [Ship] Attached Ion Drive
+    [Ship] Attached Pulse Cannon
+    [Ship] Attached Nex Barrier
+    [Ship] Ready modules=3
+    [Ship] Loaded hull /Users/vladmann/Documents/naeon/assets/ships/ship_hull_scout/ship_hull_scout_cybernex_lod0.glb
+
+=== 06_CombatDummy ===
+  PASS  SCRIPT_ERROR=0 PARSE=0 BUSY_ADD_CHILD=0 HEADLESS_MESH_NULL=2
+
+=== 07_Turret ===
+  PASS  SCRIPT_ERROR=0 PARSE=0 BUSY_ADD_CHILD=0 HEADLESS_MESH_NULL=1
+
+=== 08_Extractor ===
+  PASS  SCRIPT_ERROR=0 PARSE=0 BUSY_ADD_CHILD=0 HEADLESS_MESH_NULL=2
+
+=== 09_ResourceNode ===
+  PASS  SCRIPT_ERROR=0 PARSE=0 BUSY_ADD_CHILD=0 HEADLESS_MESH_NULL=2
+
+=== TOTAL PASS=9 FAIL=1 ===
+LOGDIR=/Users/vladmann/Documents/naeon/logs/playtest_20260806_221603
+=== SoftENet host smoke ===
+[0;90m   at: mesh_get_surface_count (servers/rendering/dummy/storage/mesh_storage.h:120)[0m
+[1;31mERROR:[0;91m Parameter "m" is null.
+[0;90m   at: mesh_get_surface_count (servers/rendering/dummy/storage/mesh_storage.h:120)[0m
+[1;31mERROR:[0;91m Parameter "m" is null.
+[0;90m   at: mesh_get_surface_count (servers/rendering/dummy/storage/mesh_storage.h:120)[0m

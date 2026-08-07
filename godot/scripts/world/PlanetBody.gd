@@ -492,6 +492,16 @@ func _spawn_pad_density() -> void:
 	d.set_script(load("res://scripts/world/PadDensity.gd"))
 	d.name = "PadDensityCluster"
 	_pads_root.add_child(d)
-	# place on primary pad local
+	var fac := "Cybernex"
+	if "faction_base" in self:
+		fac = str(faction_base)
 	if d.has_method("build"):
-		d.build(faction_base if "faction_base" in self else "Cybernex", 22.0, 14)
+		d.build(fac, 22.0, 14)
+	if not _pads_root.has_node("PadAmbientLife"):
+		var life := Node3D.new()
+		life.set_script(load("res://scripts/world/PadAmbientLife.gd"))
+		life.name = "PadAmbientLife"
+		_pads_root.add_child(life)
+		if life.has_method("build"):
+			life.build(5)
+

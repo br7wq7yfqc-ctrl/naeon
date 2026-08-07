@@ -1,0 +1,5 @@
+=== HOST ===
+[SoftENet] host port=27700
+=== CLIENT ===
+[SoftENet] joining 127.0.0.1:27700
+HOST_SCRIPT_ERR=0 CLIENT_SCRIPT_ERR=0 LOGDIR=/Users/vladmann/Documents/naeon/logs/softnet_20260806_231958

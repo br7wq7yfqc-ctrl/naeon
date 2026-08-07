@@ -1,0 +1,3 @@
+=== LOOPBACK ===
+SCRIPT_ERR=0 PUPPET_OK=0 LOGDIR=/Users/vladmann/Documents/naeon/logs/softnet_20260806_235259
+FAIL: loopback puppet not spawned

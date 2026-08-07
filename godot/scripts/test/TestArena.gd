@@ -21,6 +21,7 @@ var dummy_scene: PackedScene = preload("res://scenes/combat/CombatDummy.tscn")
 
 func _ready() -> void:
 	_phase0_arena_feel()
+	_ensure_clash_director()
 	print("[TestArena] Loaded — Aexion Clash slice")
 	_clash = Node.new()
 	_clash.set_script(preload("res://scripts/arena/AexionClash.gd"))
@@ -431,3 +432,33 @@ func _phase0_arena_feel() -> void:
 	if SessionObjectives:
 		SessionObjectives.on_entered_mode("clash")
 	print("[TestArena] Phase0 feel chrome")
+
+
+func _spawn_clash_landmarks() -> void:
+	var prop_script: Script = load("res://scripts/assets/GlbProp.gd")
+	var specs: Array = [
+		{"rel": "environments/clash_nexus_core/clash_nexus_core_cybernex_lod1.glb", "pos": Vector3(0, 0, -48), "s": 2.2},
+		{"rel": "environments/clash_lane_tower/clash_lane_tower_cybernex_lod1.glb", "pos": Vector3(-28, 0, -10), "s": 1.6},
+		{"rel": "environments/clash_lane_tower/clash_lane_tower_cybernex_lod1.glb", "pos": Vector3(0, 0, -10), "s": 1.6},
+		{"rel": "environments/clash_lane_tower/clash_lane_tower_cybernex_lod1.glb", "pos": Vector3(28, 0, -10), "s": 1.6},
+	]
+	for s in specs:
+		var node: Node3D = Node3D.new()
+		node.set_script(prop_script)
+		node.set("relative_path", str(s["rel"]))
+		node.set("scale_factor", float(s["s"]))
+		node.set("add_static_collision", true)
+		add_child(node)
+		node.position = s["pos"]
+	print("[TestArena] clash landmarks placed")
+
+
+func _ensure_clash_director() -> void:
+
+	if get_node_or_null("ClashMatchDirector"):
+		return
+	var d := Node.new()
+	d.set_script(load("res://scripts/test/ClashMatchDirector.gd"))
+	d.name = "ClashMatchDirector"
+	add_child(d)
+	print("[TestArena] ClashMatchDirector")

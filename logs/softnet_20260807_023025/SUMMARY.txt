@@ -1,0 +1,27 @@
+=== LOOPBACK ===
+[SoftENet] cmdline_user_args=["--softnet-loopback"]
+[SoftENet] loopback peer enabled (puppet stress, no OS socket)
+[SoftENet] puppet +99
+[SoftRemotePuppet] form Canine/Cybernex /Users/vladmann/Documents/naeon/assets/characters/player_canine/player_canine_cybernex_lod0.glb
+=== HOST UDP ===
+[SoftENet] cmdline_user_args=["--softnet-host"]
+[SoftENet] host port=27700 unique_id=1 transport=udp bind_ok
+[SoftENet] wrote user://softnet_host_info.txt lines=5
+[SoftENet] peer +2 from 127.0.0.1:64018
+[SoftENet] puppet +2
+[SoftRemotePuppet] form Canine/Cybernex /Users/vladmann/Documents/naeon/assets/characters/player_canine/player_canine_cybernex_lod0.glb
+=== CLIENT UDP ===
+[SoftENet] cmdline_user_args=["--softnet-join=127.0.0.1"]
+[SoftENet] joining 127.0.0.1:27700 transport=udp
+[SoftENet] connected as 2 transport=udp
+[SoftENet] puppet +1
+[SoftRemotePuppet] form Canine/Cybernex /Users/vladmann/Documents/naeon/assets/characters/player_canine/player_canine_cybernex_lod0.glb
+SCRIPT L/H/C=0/0/0 LOOP=1 HOST=1 CLIENT=1 PEER=1 LOGDIR=/Users/vladmann/Documents/naeon/logs/softnet_20260807_023025
+=== OpenSpace host ===
+[OpenSpace] boot
+[OpenSpace] soft net actor → Ship
+[OpenSpace] ready planets=3
+[SoftENet] cmdline_user_args=["--softnet-host"]
+[SoftENet] host port=27700 unique_id=1 transport=udp bind_ok
+[SoftENet] wrote user://softnet_host_info.txt lines=5
+OpenSpace_SCRIPT_ERR=0

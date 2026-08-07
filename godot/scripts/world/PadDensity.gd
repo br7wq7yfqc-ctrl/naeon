@@ -17,6 +17,9 @@ const PROPS := [
 	"props/med_station/med_station_cybernex_lod1.glb",
 	"environments/walkway_segment/walkway_segment_cybernex_lod2.glb",
 	"environments/gate_arch/gate_arch_cybernex_lod1.glb",
+	"colony/station_habitat_ring/station_habitat_ring_cybernex_lod1.glb",
+	"props/pad_floodlight/pad_floodlight_cybernex_lod2.glb",
+	"colony/surface_crystal_spire/surface_crystal_spire_cybernex_lod2.glb",
 ]
 
 func build(faction: String = "Cybernex", radius: float = 28.0, count: int = 16) -> void:

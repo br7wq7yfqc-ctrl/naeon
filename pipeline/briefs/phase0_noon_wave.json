@@ -1,0 +1,44 @@
+[
+  {
+    "name": "clash_nexus_core",
+    "category": "environments",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "Sci-fi MOBA nexus core crystal tower, glowing cyan energy core, hexagonal base, game-ready low poly PBR, single vertical landmark, clean silhouette, no characters, dark metal frame"
+  },
+  {
+    "name": "clash_lane_tower",
+    "category": "environments",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "Sci-fi defensive lane tower, tall angular armor plates, energy emitter top, MOBA style objective, game-ready PBR, single object, no base terrain, dark teal metal"
+  },
+  {
+    "name": "station_habitat_ring",
+    "category": "colony",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "Orbital station habitat module, cylindrical pressurized habitat with windows and docking collar, sci-fi space colony architecture, game-ready PBR, single module, no planet"
+  },
+  {
+    "name": "surface_crystal_spire",
+    "category": "colony",
+    "priority": "B",
+    "quality": "standard",
+    "prompt": "Alien crystal resource spire on sci-fi colony, translucent blue crystal growth, industrial base, game prop PBR, single object"
+  },
+  {
+    "name": "ship_cockpit_console",
+    "category": "props",
+    "priority": "B",
+    "quality": "standard",
+    "prompt": "Spaceship cockpit control console with holographic screens, sci-fi pilot station, game interior prop PBR, single console"
+  },
+  {
+    "name": "pad_floodlight",
+    "category": "props",
+    "priority": "B",
+    "quality": "standard",
+    "prompt": "Industrial landing pad floodlight tower, tall metal pole with dual lamps, sci-fi spaceport prop, game-ready PBR"
+  }
+]
