@@ -1,45 +1,25 @@
 # NAEON Dev Plan — Aug 2026
 
-## Current release
-**0.3.13** — SoftUDP ship soft-state · procedural landing gear · terrain/interior HUD
+## Current
+**0.3.14** — perf / terrain swim fix
 
 ## Done
 | Item | Status |
 |------|--------|
-| Clash lanes + soft objectives | done |
-| Hero dual-theme catalog (0 Tripo) | done |
-| LayerContextAuthority + SoftSession | done |
-| SoftUDP multiplayer (headless peer PASS) | done |
-| SoftRemotePuppet + Ship form/mode/landed | done |
-| OpenSpace seamless v1 | playable |
-| Procedural locomotion + limb rig | done |
-| Landing gear procedural | done |
-| Terrain edit G/B + budget HUD | done |
-| Interiors I enter/exit + HUD | done |
-| Planet atmosphere / LOD tiers | base done |
+| SoftUDP multiplayer | done |
+| Sprint A ship soft-state + landing gear | done |
+| Sprint B interiors + terrain HUD | done |
+| **FPS: SoftNetSession OFF + UI throttle** | **done** |
+| **Terrain swim: SurfaceDetail fixed angles** | **done** |
 
-## Sprint status
+## Next
 | Sprint | Scope | Status |
 |--------|-------|--------|
-| **A** | ship soft-state + landing gear + DEV_PLAN | **this release** |
-| **B** | interiors + terrain HUD | **this release** |
-| **C** | Tripo skinned blend tree | **blocked until A/B stable** |
+| **C** | Tripo skinned hero LODs (blend-tree ready meshes) | **active** |
+| D | pad streaming density + thruster VFX soft | queued |
 
-## Next (code-first, 0 Tripo)
-1. SoftUDP thruster/exhaust soft VFX sync (visual only)
-2. Pad streaming density + floating-origin edge cases
-3. Colony claim soft WS polish
-4. 2-client GUI LAN playtest checklist
-5. Ship interior props density (procedural)
+## Budget
+Sprint C: use remaining Tripo credits carefully — skinned forms only where missing
+Soft rules: no P2W combat power
 
-## Tripo (later, budget 5k/wk → 20k month)
-- Skinned hero LODs only where missing
-- No P2W combat assets
-- Keep dual-theme Cybernex / gROT
-
-## Soft rules
-- Soft multiplayer: pos / form / faction / ship mode / landed only
-- Contribution / WarScore never become combat power
-- Terrain volume hard-capped per planet
-
-Updated: 2026-08-06T23:29:29.939248+00:00
+Updated: 2026-08-07T00:00:45.629021+00:00
