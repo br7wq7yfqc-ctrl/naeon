@@ -1,17 +1,15 @@
 extends Node3D
 class_name SurfaceFlora
-## Near-surface flora / rock density from existing GLBs + procedural stems.
-## Snaps with observer — no continuous swim. 0 Tripo.
+## Near-surface flora / rock density. Snaps to planet surface GRID (not player orbit).
 
-const REPOS := 22.0
+const CELL_M := 40.0
 const COUNT_BASE := 14
 
 var _planet: Node3D
 var _radius: float = 1200.0
 var _observer: Node3D
 var _props: Array = []
-var _last: Vector3 = Vector3.ZERO
-var _has: bool = false
+var _last_cell: Vector2i = Vector2i(999999, 999999)
 var _accum: float = 0.0
 var _seed: int = 1
 
@@ -26,12 +24,15 @@ func setup(planet: Node3D, radius: float, seed_i: int = 1) -> void:
 	_radius = radius
 	_seed = seed_i
 
+
 func set_observer(n: Node3D) -> void:
 	_observer = n
-	_has = false
+	_last_cell = Vector2i(999999, 999999)
+
 
 func _ready() -> void:
 	set_process(true)
+
 
 func _process(delta: float) -> void:
 	_accum += delta
@@ -48,15 +49,35 @@ func _process(delta: float) -> void:
 	_set_vis(true)
 	if _props.is_empty():
 		_spawn_pool()
-	if (not _has) or _observer.global_position.distance_to(_last) > REPOS:
-		_place_around_observer()
-		_last = _observer.global_position
-		_has = true
+	var cell := _surface_cell(_observer.global_position)
+	if cell != _last_cell:
+		_last_cell = cell
+		_place_cell(cell)
+
+
+func _surface_cell(global_pos: Vector3) -> Vector2i:
+	var local: Vector3 = (global_pos - _planet.global_position).normalized()
+	var lat := asin(clampf(local.y, -1.0, 1.0))
+	var lon := atan2(local.x, local.z)
+	var cell_ang := CELL_M / maxf(_radius, 1.0)
+	return Vector2i(int(floor(lon / cell_ang)), int(floor(lat / cell_ang)))
+
+
+func _stable_tangent(up: Vector3) -> Array:
+	up = up.normalized()
+	var ref := Vector3.UP
+	if absf(up.dot(ref)) > 0.92:
+		ref = Vector3.RIGHT
+	var east := ref.cross(up).normalized()
+	var north := up.cross(east).normalized()
+	return [east, north]
+
 
 func _set_vis(v: bool) -> void:
 	for p in _props:
 		if p and is_instance_valid(p):
 			(p as Node3D).visible = v
+
 
 func _spawn_pool() -> void:
 	var prop_script: Script = load("res://scripts/assets/GlbProp.gd")
@@ -65,25 +86,24 @@ func _spawn_pool() -> void:
 	if gq:
 		match int(gq.tier):
 			0: n = 8
-			2, 3: n = 20
+			2, 3: n = 18
 	var rng := RandomNumberGenerator.new()
 	rng.seed = _seed * 1337
 	for i in n:
 		if i % 3 == 0:
-			# procedural stem/bush (always available)
 			var stem := _make_stem(rng)
 			add_child(stem)
 			_props.append(stem)
 		else:
 			var node := Node3D.new()
 			node.set_script(prop_script)
-			var rel: String = ROCKS[i % ROCKS.size()]
-			node.set("relative_path", rel)
+			node.set("relative_path", ROCKS[i % ROCKS.size()])
 			node.set("scale_factor", rng.randf_range(0.4, 1.1))
 			node.set("add_static_collision", false)
 			add_child(node)
 			_props.append(node)
 	print("[SurfaceFlora] pool=", _props.size())
+
 
 func _make_stem(rng: RandomNumberGenerator) -> Node3D:
 	var root := Node3D.new()
@@ -99,7 +119,6 @@ func _make_stem(rng: RandomNumberGenerator) -> Node3D:
 	mi.material_override = mat
 	mi.position.y = cyl.height * 0.5
 	root.add_child(mi)
-	# canopy blob
 	var cap := MeshInstance3D.new()
 	var sph := SphereMesh.new()
 	sph.radius = rng.randf_range(0.25, 0.55)
@@ -112,29 +131,33 @@ func _make_stem(rng: RandomNumberGenerator) -> Node3D:
 	root.add_child(cap)
 	return root
 
-func _place_around_observer() -> void:
-	if _planet == null or _observer == null:
+
+func _place_cell(cell: Vector2i) -> void:
+	if _planet == null:
 		return
-	var up: Vector3 = (_observer.global_position - _planet.global_position).normalized()
-	if up.length_squared() < 0.01:
-		up = Vector3.UP
+	var cell_ang := CELL_M / maxf(_radius, 1.0)
+	var lon := (float(cell.x) + 0.5) * cell_ang
+	var lat := (float(cell.y) + 0.5) * cell_ang
+	var clat := cos(lat)
+	var center := Vector3(sin(lon) * clat, sin(lat), cos(lon) * clat).normalized()
+	var t := _stable_tangent(center)
+	var east: Vector3 = t[0]
+	var north: Vector3 = t[1]
+	# Deterministic scatter from cell coords (stable across visits)
 	var rng := RandomNumberGenerator.new()
-	rng.seed = _seed + int(_observer.global_position.x * 0.1)
-	# tangent basis
-	var tmp := Vector3.RIGHT if absf(up.dot(Vector3.UP)) < 0.9 else Vector3.FORWARD
-	var right := up.cross(tmp).normalized()
-	var fwd := right.cross(up).normalized()
+	rng.seed = _seed * 10007 + cell.x * 131 + cell.y * 9176
 	var i := 0
 	for p in _props:
 		if p == null or not is_instance_valid(p):
 			continue
-		var ang := TAU * float(i) / float(maxi(_props.size(), 1)) + rng.randf() * 0.4
-		var r := 6.0 + rng.randf() * 28.0
-		var offset := (right * cos(ang) + fwd * sin(ang)) * r
-		var pos := _planet.global_position + up * (_radius + 0.15) + offset
-		# project to sphere
-		pos = _planet.global_position + (pos - _planet.global_position).normalized() * (_radius + 0.2)
+		var ang := rng.randf() * TAU
+		var r := 3.0 + rng.randf() * 22.0
+		var offset := (east * cos(ang) + north * sin(ang)) * r
+		var dir := (center * _radius + offset).normalized()
+		var pos: Vector3 = _planet.global_position + dir * (_radius + 0.2)
+		var up := dir
 		(p as Node3D).global_position = pos
-		(p as Node3D).look_at(pos + up, right)
-		(p as Node3D).rotate_object_local(Vector3.RIGHT, -PI * 0.5)
+		# Align stem to radial up without look_at flip spam
+		var tt := _stable_tangent(up)
+		(p as Node3D).global_transform = Transform3D(Basis(tt[0], up, -tt[1]), pos)
 		i += 1

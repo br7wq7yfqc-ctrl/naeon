@@ -33,7 +33,9 @@ var _plate_origin: Vector3 = Vector3.ZERO
 var _dirty: bool = true
 var _last_plate_obs: Vector3 = Vector3.ZERO
 var _plate_snapped: bool = false
-const PLATE_REPOS_DIST := 14.0
+const PLATE_REPOS_DIST := 14.0  ## legacy
+const CELL_M := 48.0
+var _plate_cell: Vector2i = Vector2i(999999, 999999)
 var _accum: float = 0.0
 var _edit_accum: float = 0.0
 var _mat: StandardMaterial3D
@@ -180,14 +182,14 @@ func _process(delta: float) -> void:
 		visible = false
 		return
 	visible = true
-	if _accum >= 0.35:
+	if _accum >= 0.4:
 		_accum = 0.0
-		# Only re-anchor plate when observer moved far — prevents terrain "swimming"
-		if (not _plate_snapped) or _observer.global_position.distance_to(_last_plate_obs) > PLATE_REPOS_DIST:
-			# freeze while actively editing
-			if not _stroke_active:
-				_reposition_plate()
-				_last_plate_obs = _observer.global_position
+		# Re-anchor only when surface CELL changes (grid-locked — no swim)
+		if not _stroke_active:
+			var cell := _surface_cell(_observer.global_position)
+			if (not _plate_snapped) or cell != _plate_cell:
+				_plate_cell = cell
+				_reposition_plate_to_cell(cell)
 				_plate_snapped = true
 	# Undo: U key
 	if _observer.is_in_group("player") and Input.is_physical_key_pressed(KEY_U):
@@ -203,16 +205,43 @@ func _process(delta: float) -> void:
 		_rebuild_mesh()
 		_dirty = false
 
+func _surface_cell(global_pos: Vector3) -> Vector2i:
+	var local: Vector3 = (global_pos - planet.global_position).normalized()
+	var lat := asin(clampf(local.y, -1.0, 1.0))
+	var lon := atan2(local.x, local.z)
+	var cell_ang := CELL_M / maxf(radius, 1.0)
+	return Vector2i(int(floor(lon / cell_ang)), int(floor(lat / cell_ang)))
+
+
+func _stable_tangent(up: Vector3) -> Array:
+	up = up.normalized()
+	var ref := Vector3.UP
+	if absf(up.dot(ref)) > 0.92:
+		ref = Vector3.RIGHT
+	var east := ref.cross(up).normalized()
+	var north := up.cross(east).normalized()
+	return [east, north]
+
+
 func _reposition_plate() -> void:
-	var to_obs: Vector3 = _observer.global_position - planet.global_position
-	_plate_up = to_obs.normalized()
-	_plate_origin = planet.global_position + _plate_up * (radius + 0.15)
-	var f0 := Vector3.FORWARD
-	if absf(_plate_up.dot(f0)) > 0.9:
-		f0 = Vector3.RIGHT
-	var right := _plate_up.cross(f0).normalized()
-	var forward := right.cross(_plate_up).normalized()
-	global_transform = Transform3D(Basis(right, _plate_up, -forward), _plate_origin)
+	# Back-compat: snap to observer cell
+	if _observer:
+		_reposition_plate_to_cell(_surface_cell(_observer.global_position))
+
+
+func _reposition_plate_to_cell(cell: Vector2i) -> void:
+	var cell_ang := CELL_M / maxf(radius, 1.0)
+	var lon := (float(cell.x) + 0.5) * cell_ang
+	var lat := (float(cell.y) + 0.5) * cell_ang
+	var clat := cos(lat)
+	var dir := Vector3(sin(lon) * clat, sin(lat), cos(lon) * clat).normalized()
+	_plate_up = dir
+	_plate_origin = planet.global_position + dir * (radius + 0.12)
+	var t := _stable_tangent(dir)
+	var east: Vector3 = t[0]
+	var north: Vector3 = t[1]
+	# Fixed basis — no forward-from-observer (was flipping / sliding)
+	global_transform = Transform3D(Basis(east, dir, -north), _plate_origin)
 
 func _snapshot() -> void:
 	var snap := PackedFloat32Array()

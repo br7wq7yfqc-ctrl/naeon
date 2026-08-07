@@ -42,6 +42,8 @@ var _pads_built: bool = false
 var _glb_loaded: bool = false
 var _observer: Node3D = null
 var _update_accum: float = 0.0
+var _lod_hold: float = 0.0
+var _pending_lod: int = -1
 var _segs_near: int = 64
 var _segs_mid: int = 32
 var _segs_far: int = 16
@@ -200,8 +202,20 @@ func _process(delta: float) -> void:
 		return
 	var dist: float = global_position.distance_to(obs.global_position)
 	var lod := _lod_for_distance(dist)
+	# Hysteresis: require stable LOD for ~0.5s before swapping mesh (stops sphere "morph dance")
 	if lod != _current_lod:
-		_apply_lod_visual(lod)
+		if lod != _pending_lod:
+			_pending_lod = lod
+			_lod_hold = 0.0
+		else:
+			_lod_hold += 0.12  # matches process tick
+			if _lod_hold >= 0.48:
+				_apply_lod_visual(lod)
+				_pending_lod = -1
+				_lod_hold = 0.0
+	else:
+		_pending_lod = -1
+		_lod_hold = 0.0
 	# Atmosphere LOD + shader params
 	_update_atmosphere(dist, lod, obs)
 	# Pad streaming

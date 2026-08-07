@@ -1,12 +1,12 @@
-# Handoff — land stick + F/I fix + Arena FPS
+# Handoff — terrain dance fix
 
-## Fixes
-- **F/I**: physical_keycode (keycode was 0 → inputs ignored)
-- **Land**: sticky pad snap every frame; E launches; softer HOVER (no phantom lift)
-- **Arena FPS**: no hitstop time_scale, particle budget, dummy AI cache+10Hz, radar 5Hz, fewer lights/glow
+## Root cause
+SurfaceDetail / TerrainEdit / Flora **followed the player** on a ring and rebuilt basis from observer each snap → continuous "swimming". LOD sphere mesh swaps also morphing.
 
-## Playtest
-OpenSpace: E land stays put → F exit → I interior → F board
-Clash: should feel lighter
+## Fix
+- Planet **lat/lon cell grid** anchors (stable across visits)
+- Stable tangent basis (UP/RIGHT ref, no pole flips)
+- LOD hysteresis ~0.5s before mesh swap
+- No surface emission shimmer
 
-Updated: 2026-08-07T22:50:18.482693+00:00
+Updated: 2026-08-07T23:03:47.555592+00:00

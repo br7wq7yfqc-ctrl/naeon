@@ -1,12 +1,13 @@
 extends Node3D
 class_name SurfaceDetail
-## Procedural surface height patches around observer when near planet.
-## Cheap ArrayMesh displacement — no Tripo. Patches SNAP, do not drift/swim.
+## Procedural height patches snapped to a FIXED planet surface grid.
+## Never orbits the player (that caused "dancing/swimming" terrain).
 
-const PATCH_COUNT := 6
+const PATCH_COUNT := 9
 const PATCH_RES := 10
-const PATCH_SIZE := 48.0
-const REPOS_DIST := 18.0  ## meters of observer move before re-snap
+const PATCH_SIZE := 40.0
+## Cell size on sphere (meters along surface) — only stream when crossing cell
+const CELL_M := 36.0
 
 var _planet: Node3D
 var _radius: float = 1200.0
@@ -16,48 +17,63 @@ var _observer: Node3D
 var _built: bool = false
 var _accum: float = 0.0
 var _seed: int = 1
-var _last_snap_pos: Vector3 = Vector3.ZERO
-var _has_snap: bool = false
-var _ang_base: float = 0.0
+var _last_cell: Vector2i = Vector2i(999999, 999999)
+var _active: bool = false
 
 func setup(planet: Node3D, radius: float, color: Color, seed_i: int = 1) -> void:
 	_planet = planet
 	_radius = radius
 	_surface_color = color
 	_seed = seed_i
-	_ang_base = float(seed_i) * 0.37
+
 
 func set_observer(n: Node3D) -> void:
 	_observer = n
-	_has_snap = false
+	_last_cell = Vector2i(999999, 999999)
+
 
 func _ready() -> void:
 	set_process(true)
 
+
 func _process(delta: float) -> void:
 	_accum += delta
-	if _accum < 0.5:
+	if _accum < 0.4:
 		return
 	_accum = 0.0
 	if _planet == null or _observer == null or not is_instance_valid(_observer):
 		return
 	var alt: float = _observer.global_position.distance_to(_planet.global_position) - _radius
-	if alt > 180.0 or alt < -5.0:
-		_set_patches_visible(false)
+	if alt > 160.0 or alt < -8.0:
+		if _active:
+			_set_patches_visible(false)
+			_active = false
 		return
-	_set_patches_visible(true)
 	if not _built:
 		_build_patches()
-	# Only re-place when player moved enough — no continuous orbit
-	if (not _has_snap) or _observer.global_position.distance_to(_last_snap_pos) > REPOS_DIST:
-		_update_patch_positions()
-		_last_snap_pos = _observer.global_position
-		_has_snap = true
+	_set_patches_visible(true)
+	_active = true
+	var cell := _surface_cell(_observer.global_position)
+	if cell != _last_cell:
+		_last_cell = cell
+		_place_grid(cell)
+
+
+func _surface_cell(global_pos: Vector3) -> Vector2i:
+	## Stable UV-ish grid on sphere from lat/lon quantized by CELL_M.
+	var local: Vector3 = (global_pos - _planet.global_position).normalized()
+	var lat := asin(clampf(local.y, -1.0, 1.0))
+	var lon := atan2(local.x, local.z)
+	var meters_per_rad := _radius
+	var cell_ang := CELL_M / maxf(meters_per_rad, 1.0)
+	return Vector2i(int(floor(lon / cell_ang)), int(floor(lat / cell_ang)))
+
 
 func _set_patches_visible(v: bool) -> void:
 	for p in _patches:
 		if p:
 			p.visible = v
+
 
 func _build_patches() -> void:
 	_built = true
@@ -68,32 +84,32 @@ func _build_patches() -> void:
 		match int(gq.tier):
 			0:
 				res = 8
-				count = 4
+				count = 5
 			2, 3:
 				res = 12
-				count = 8
+				count = 9
 	for i in count:
 		var mi := MeshInstance3D.new()
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
 		mi.mesh = _make_patch_mesh(res, i)
 		var mat := StandardMaterial3D.new()
-		mat.albedo_color = _surface_color.lightened(0.05 + 0.03 * (i % 3))
-		mat.roughness = 0.95
+		mat.albedo_color = _surface_color.lightened(0.04 + 0.02 * (i % 3))
+		mat.roughness = 0.96
 		mat.metallic = 0.0
 		mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+		mat.emission_enabled = false
 		if gq and int(gq.tier) <= 0:
 			mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
 		mi.material_override = mat
 		add_child(mi)
 		_patches.append(mi)
-	print("[SurfaceDetail] patches=", _patches.size(), " planet=", _planet.name if _planet else "?")
+	print("[SurfaceDetail] grid patches=", _patches.size())
+
 
 func _make_patch_mesh(res: int, patch_i: int) -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = _seed * 997 + patch_i * 31
 	var half := PATCH_SIZE * 0.5
 	var step := PATCH_SIZE / float(res - 1)
 	var verts: Array[Vector3] = []
@@ -101,9 +117,9 @@ func _make_patch_mesh(res: int, patch_i: int) -> ArrayMesh:
 		for x in res:
 			var px := -half + x * step
 			var pz := -half + z * step
-			var n := _fbm(px * 0.08 + patch_i * 3.1, pz * 0.08 + patch_i * 1.7, rng)
-			var py := n * 3.2
-			verts.append(Vector3(px, py, pz))
+			# Deterministic height from world seed + patch index (no Time)
+			var n := _fbm(px * 0.08 + float(patch_i) * 3.1 + float(_seed) * 0.01, pz * 0.08 + float(patch_i) * 1.7)
+			verts.append(Vector3(px, n * 2.6, pz))
 	for z in res - 1:
 		for x in res - 1:
 			var i00 := z * res + x
@@ -115,13 +131,14 @@ func _make_patch_mesh(res: int, patch_i: int) -> ArrayMesh:
 	st.generate_normals()
 	return st.commit()
 
+
 func _add_tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
-	st.set_normal(Vector3.UP)
 	st.add_vertex(a)
 	st.add_vertex(b)
 	st.add_vertex(c)
 
-func _fbm(x: float, z: float, rng: RandomNumberGenerator) -> float:
+
+func _fbm(x: float, z: float) -> float:
 	var v := 0.0
 	var amp := 1.0
 	var freq := 1.0
@@ -131,27 +148,51 @@ func _fbm(x: float, z: float, rng: RandomNumberGenerator) -> float:
 		freq *= 2.1
 	return v * 0.5
 
-func _update_patch_positions() -> void:
-	if _planet == null or _observer == null:
+
+func _stable_tangent(up: Vector3) -> Array:
+	## Fixed reference → no basis flip near poles (was a big "dance" source).
+	up = up.normalized()
+	var ref := Vector3.UP
+	if absf(up.dot(ref)) > 0.92:
+		ref = Vector3.RIGHT
+	var east := ref.cross(up).normalized()
+	var north := up.cross(east).normalized()
+	return [east, north]
+
+
+func _place_grid(cell: Vector2i) -> void:
+	if _planet == null or _patches.is_empty():
 		return
-	var to_obs: Vector3 = _observer.global_position - _planet.global_position
-	var up: Vector3 = to_obs.normalized()
+	# Center of current cell on sphere
+	var meters_per_rad := _radius
+	var cell_ang := CELL_M / maxf(meters_per_rad, 1.0)
+	var lon := (float(cell.x) + 0.5) * cell_ang
+	var lat := (float(cell.y) + 0.5) * cell_ang
+	var clat := cos(lat)
+	var center_dir := Vector3(sin(lon) * clat, sin(lat), cos(lon) * clat).normalized()
+	var up := center_dir
+	var t := _stable_tangent(up)
+	var east: Vector3 = t[0]
+	var north: Vector3 = t[1]
+	# 3x3 grid of patches around cell center — FIXED offsets in meters (planet space)
 	var n := _patches.size()
-	# FIXED angles — no Time.get_ticks drift (was causing "swimming" terrain)
-	for i in n:
-		var ang := TAU * float(i) / float(maxi(n, 1)) + _ang_base
-		var right := up.cross(Vector3.FORWARD)
-		if right.length_squared() < 0.01:
-			right = up.cross(Vector3.RIGHT)
-		right = right.normalized()
-		var forward := right.cross(up).normalized()
-		var offset := (right * cos(ang) + forward * sin(ang)) * (28.0 + float(i % 3) * 18.0)
-		var center: Vector3 = up * (_radius + 0.4) + offset
-		var y := up
-		var x := y.cross(forward)
-		if x.length_squared() < 0.01:
-			x = y.cross(right)
-		x = x.normalized()
-		var z := x.cross(y).normalized()
-		var xf := Transform3D(Basis(x, y, z), _planet.global_position + center)
-		_patches[i].global_transform = xf
+	var idx := 0
+	for gz in range(-1, 2):
+		for gx in range(-1, 2):
+			if idx >= n:
+				return
+			var offset := east * (float(gx) * PATCH_SIZE * 0.95) + north * (float(gz) * PATCH_SIZE * 0.95)
+			var dir := (center_dir * _radius + offset).normalized()
+			var pos: Vector3 = _planet.global_position + dir * (_radius + 0.35)
+			var pup := dir
+			var tt := _stable_tangent(pup)
+			var e: Vector3 = tt[0]
+			var nr: Vector3 = tt[1]
+			# Basis: X=east, Y=up, Z=-north so local patch +Y is radial
+			var xf := Transform3D(Basis(e, pup, -nr), pos)
+			_patches[idx].global_transform = xf
+			idx += 1
+	# Hide extras
+	while idx < n:
+		_patches[idx].visible = false
+		idx += 1
