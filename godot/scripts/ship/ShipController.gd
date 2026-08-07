@@ -124,25 +124,28 @@ func _input(event: InputEvent) -> void:
 	if not pilot_active:
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_C:
+		var k: int = event.keycode if event.keycode != KEY_NONE else event.physical_keycode
+		if k == KEY_NONE:
+			k = event.physical_keycode
+		if k == KEY_C:
 			if is_landed:
 				_claim_nearby_pad()
 			else:
 				attach_module(ShipModule.make_cargo())
 			return
-		if event.keycode == KEY_1:
+		if k == KEY_1:
 			_set_mode(FlightMode.SCM)
-		elif event.keycode == KEY_2:
+		elif k == KEY_2:
 			_set_mode(FlightMode.NAV)
-		elif event.keycode == KEY_3:
+		elif k == KEY_3:
 			_set_mode(FlightMode.HOVER)
-		elif event.keycode == KEY_4:
+		elif k == KEY_4:
 			_toggle_siege()
-		elif event.keycode == KEY_5:
+		elif k == KEY_5:
 			_toggle_cargo_ramp()
-		elif event.keycode == KEY_6:
+		elif k == KEY_6:
 			_try_deploy_rover()
-		elif event.keycode == KEY_8:
+		elif k == KEY_8:
 			_toggle_scan()
 	if is_landed:
 		return
@@ -278,7 +281,11 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector3.ZERO
 		return
 	if is_landed:
+		# Sticky pad: kill velocity, re-snap to pad, allow E launch only
 		velocity = Vector3.ZERO
+		_stick_to_pad()
+		if Input.is_action_just_pressed("ability_2"):
+			_do_launch()
 		_update_status()
 		return
 
@@ -298,16 +305,21 @@ func _physics_process(delta: float) -> void:
 		+ right * axes.x * thrust * 0.55 \
 		+ up * axes.y * thrust * 0.5
 
-	# Planetary gravity when near atmosphere (seamless continuum)
+	# Planetary gravity (g points toward planet center). Never invent lift here.
 	if _open_space and _open_space.has_method("gravity_at"):
 		var g: Vector3 = _open_space.gravity_at(global_position)
-		if flight_mode == FlightMode.HOVER:
-			# Counter gravity softly for hover pads
-			accel -= g * 0.85
-		elif flight_mode == FlightMode.SCM:
-			accel += g * 0.35
-		else:
-			accel += g * 0.15
+		if g.length() > 0.01:
+			if flight_mode == FlightMode.HOVER:
+				# Hold altitude: cancel gravity; residual damp only — no boost up
+				accel -= g
+				# kill residual vertical drift along -g
+				var up_dir: Vector3 = (-g).normalized()
+				var v_up: float = velocity.dot(up_dir)
+				velocity -= up_dir * v_up * 0.08
+			elif flight_mode == FlightMode.SCM:
+				accel += g * 0.35
+			else:
+				accel += g * 0.15
 
 	velocity += accel * delta
 	velocity = velocity.lerp(Vector3.ZERO, linear_damp_custom * _damp_mult() * delta)
@@ -357,6 +369,9 @@ func _do_land() -> void:
 		# Face roughly along pad
 		velocity = Vector3.ZERO
 		is_landed = true
+	velocity = Vector3.ZERO
+	if _thruster_fx and is_instance_valid(_thruster_fx):
+		_thruster_fx.emitting = false
 	if AudioDirector:
 		AudioDirector.play_land()
 	if SessionObjectives:
@@ -394,7 +409,7 @@ func _do_launch() -> void:
 	if flight_mode == FlightMode.HOVER:
 		_set_mode(FlightMode.SCM)
 	# Boost off pad
-	velocity = global_transform.basis.y * 12.0 - global_transform.basis.z * 8.0
+	velocity = global_transform.basis.y * 6.0 - global_transform.basis.z * 4.0
 	launched.emit()
 	print("[Ship] Launched")
 
@@ -860,3 +875,16 @@ func get_deployed_rover() -> Node3D:
 
 func clear_deployed_rover() -> void:
 	_deployed_rover = null
+
+
+func _stick_to_pad() -> void:
+	if _landed_pad and is_instance_valid(_landed_pad):
+		var up: Vector3 = Vector3.UP
+		if _landed_pad.has_meta("pad_up"):
+			up = _landed_pad.get_meta("pad_up")
+		# Keep ship parked; do not climb
+		global_position = _landed_pad.global_position + up * 4.0
+		velocity = Vector3.ZERO
+		return
+	# Surface land: freeze in place
+	velocity = Vector3.ZERO

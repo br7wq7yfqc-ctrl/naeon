@@ -6,7 +6,8 @@ const _AP = preload("res://scripts/assets/AssetPaths.gd")
 
 signal killed_target
 
-@export var faction: String = "gROT"
+@export var _ai_accum: float = 0.0
+var faction: String = "gROT"
 @export var aggro_range: float = 18.0
 @export var fire_rate: float = 1.1
 @export var damage: float = 8.0
@@ -34,6 +35,10 @@ func _ready() -> void:
 	set_process(true)
 
 func _process(delta: float) -> void:
+	_ai_accum += delta
+	if _ai_accum < 0.12:
+		return
+	_ai_accum = 0.0
 	if not _alive:
 		return
 	_cd = max(0.0, _cd - delta)

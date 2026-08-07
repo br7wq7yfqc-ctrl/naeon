@@ -229,7 +229,7 @@ func _process(_delta: float) -> void:
 		return
 	_ui_accum += _delta
 	# Radar + labels ~10 Hz (was every frame)
-	if _ui_accum < 0.1:
+	if _ui_accum < 0.2:
 		return
 	_ui_accum = 0.0
 	_update_clash_radar()
@@ -416,8 +416,8 @@ func _phase0_arena_feel() -> void:
 	if we and we.environment:
 		var e := we.environment
 		e.glow_enabled = true
-		e.glow_intensity = 0.55
-		e.glow_bloom = 0.22
+		e.glow_intensity = 0.25
+		e.glow_bloom = 0.08
 		e.tonemap_mode = Environment.TONE_MAPPER_ACES
 		e.adjustment_enabled = true
 		e.adjustment_saturation = 1.08
@@ -425,8 +425,8 @@ func _phase0_arena_feel() -> void:
 	for i in 3:
 		var o := OmniLight3D.new()
 		o.light_color = [Color(0.2, 0.8, 1), Color(1, 0.85, 0.3), Color(1, 0.25, 0.4)][i]
-		o.light_energy = 2.2
-		o.omni_range = 28.0
+		o.light_energy = 0.9
+		o.omni_range = 16.0
 		o.position = Vector3([-22, 0, 22][i], 6.0, 0)
 		add_child(o)
 	if SessionObjectives:
@@ -454,8 +454,8 @@ func _spawn_clash_landmarks() -> void:
 	print("[TestArena] clash landmarks placed")
 	for pos in [Vector3(0, 6, -48), Vector3(0, 6, 48), Vector3(-28, 5, -10), Vector3(28, 5, -10)]:
 		var o := OmniLight3D.new()
-		o.light_energy = 3.5
-		o.omni_range = 24.0
+		o.light_energy = 1.2
+		o.omni_range = 14.0
 		o.light_color = Color(0.4, 0.85, 1.0) if pos.z < 0 else Color(1.0, 0.3, 0.45)
 		o.position = pos
 		add_child(o)

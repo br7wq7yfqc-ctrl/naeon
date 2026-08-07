@@ -3,6 +3,8 @@ extends Node
 
 signal match_event(msg: String)
 
+var _tick_accum: float = 0.0
+
 var _t: float = 0.0
 var _lane_pressure: Array = [0.35, 0.5, 0.4]  # TOP MID BOT 0..1 toward enemy
 var _kills: int = 0
@@ -20,6 +22,7 @@ func _ready() -> void:
 	if GameManager:
 		GameManager.toast_requested.emit("Aexion Clash — 3 lanes · soft WS · no P2W")
 	set_process(true)
+	_tick_accum = 0.0
 
 func _build_hud() -> void:
 	_hud = CanvasLayer.new()
@@ -96,6 +99,10 @@ func _flash(msg: String) -> void:
 		GameManager.toast_requested.emit(msg)
 
 func _process(delta: float) -> void:
+	_tick_accum += delta
+	if _tick_accum < 0.15:
+		return
+	_tick_accum = 0.0
 	_t += delta
 	# Soft passive lane drift (alive match feel)
 	if int(_t) % 7 == 0 and fmod(_t, 1.0) < delta:

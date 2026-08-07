@@ -24,6 +24,8 @@ signal damaged(amount: float, health_left: float)
 var health: float = 80.0
 var _cd: float = 0.0
 var _alive: bool = true
+var _player_cache: Node3D = null
+var _ai_accum: float = 0.0
 var _spawn_pos: Vector3
 var _mat: StandardMaterial3D
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -54,7 +56,11 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 
-	var player := _find_player()
+	_ai_accum += delta
+	var do_ai := _ai_accum >= 0.1
+	if do_ai:
+		_ai_accum = 0.0
+	var player := _find_player() if do_ai or _player_cache == null else _player_cache
 	if player and can_move:
 		var to_p: Vector3 = player.global_position - global_position
 		to_p.y = 0.0
@@ -153,11 +159,30 @@ func _fire_at(player: Node) -> void:
 	ball.set_meta("speed", 18.0)
 	# Damage on proximity via Area is overkill; already applied hit-scan style once
 
-func _find_player() -> Node:
-	var nodes := get_tree().get_nodes_in_group("player")
-	if nodes.size() > 0:
-		return nodes[0]
+func _find_player() -> Node3D:
+	if _player_cache != null and is_instance_valid(_player_cache):
+		return _player_cache
+	var tree := get_tree()
+	if tree == null:
+		return null
+	# Prefer group once
+	var nodes := tree.get_nodes_in_group("player")
+	if nodes.size() > 0 and nodes[0] is Node3D:
+		_player_cache = nodes[0]
+		return _player_cache
+	for n in tree.get_nodes_in_group("players"):
+		if n is Node3D:
+			_player_cache = n
+			return _player_cache
+	# Fallback once expensive scan
+	var scene := tree.current_scene
+	if scene:
+		for c in scene.get_children():
+			if c is CharacterBody3D and c != self and c.has_method("take_damage"):
+				_player_cache = c
+				return _player_cache
 	return null
+
 
 func _flash() -> void:
 	if _mat == null:

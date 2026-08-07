@@ -505,12 +505,16 @@ func _update_hud() -> void:
 		mode_label.text = "GFX: %s" % gqn
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+	if event is InputEventKey and event.pressed and (event.keycode == KEY_ESCAPE or event.physical_keycode == KEY_ESCAPE):
 		get_tree().change_scene_to_file("res://scenes/ui/MainMenu.tscn")
 		return
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
-	match event.keycode:
+	# Godot 4 often leaves keycode=0 — always prefer physical
+	var k: int = event.keycode if event.keycode != KEY_NONE else event.physical_keycode
+	if k == KEY_NONE:
+		k = event.physical_keycode
+	match k:
 		KEY_I:
 			_toggle_interior()
 		KEY_F9:
@@ -530,13 +534,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_P:
 			if GameManager and GameManager.has_method("try_promote_alliance"):
 				GameManager.try_promote_alliance()
-		KEY_M:
+		KEY_M, KEY_TAB:
 			if ResourceLoader.exists("res://scenes/test/TestArena.tscn"):
 				get_tree().change_scene_to_file("res://scenes/test/TestArena.tscn")
-		KEY_TAB:
-			if ResourceLoader.exists("res://scenes/test/TestArena.tscn"):
-				get_tree().change_scene_to_file("res://scenes/test/TestArena.tscn")
-
 
 
 func _handle_f_interact() -> void:

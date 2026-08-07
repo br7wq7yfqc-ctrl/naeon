@@ -1,10 +1,12 @@
-# Handoff — continuum polish toward 0.3.19
+# Handoff — land stick + F/I fix + Arena FPS
 
-## Dev tip
-- EVA: F slow flight, E mag-boot, soft 90s warn
-- Seat F in ship interior → pilot
-- Rover: land → 5 ramp → 6 deploy → F board → F unboard → 7 store
-- SoftNet snaps: actor_mode, op_mode, morph_t, landed
-- Desktop still **0.3.18** until acceptance → **0.3.19**
+## Fixes
+- **F/I**: physical_keycode (keycode was 0 → inputs ignored)
+- **Land**: sticky pad snap every frame; E launches; softer HOVER (no phantom lift)
+- **Arena FPS**: no hitstop time_scale, particle budget, dummy AI cache+10Hz, radar 5Hz, fewer lights/glow
 
-Updated: 2026-08-07T22:20:41.858458+00:00
+## Playtest
+OpenSpace: E land stays put → F exit → I interior → F board
+Clash: should feel lighter
+
+Updated: 2026-08-07T22:50:18.482693+00:00

@@ -9,6 +9,7 @@ var _flash_col: Color = Color(1, 0.2, 0.15, 0)
 var _hitstop_left: float = 0.0
 var _marker: Control
 var _marker_t: float = 0.0
+var _impact_budget: int = 0
 
 func _ready() -> void:
 	_layer = CanvasLayer.new()
@@ -47,6 +48,8 @@ func _ready() -> void:
 	set_process(true)
 
 func _process(delta: float) -> void:
+	if _flash_t <= 0.0 and _marker_t <= 0.0:
+		return
 	if _flash_t > 0.0:
 		_flash_t = maxf(0.0, _flash_t - delta)
 		_flash.color = _flash_col
@@ -55,11 +58,6 @@ func _process(delta: float) -> void:
 		_marker_t = maxf(0.0, _marker_t - delta)
 		_marker.visible = _marker_t > 0.0
 		_marker.modulate.a = clampf(_marker_t * 4.0, 0.0, 1.0)
-		_marker.scale = Vector2.ONE * (1.0 + (0.15 - _marker_t) * 2.0)
-	if _hitstop_left > 0.0:
-		_hitstop_left = maxf(0.0, _hitstop_left - delta)
-		if _hitstop_left <= 0.0:
-			Engine.time_scale = 1.0
 
 func hit_feedback(amount: float, world_pos: Vector3, crit: bool = false) -> void:
 	_flash_col = Color(1.0, 0.85, 0.2, 0) if crit else Color(1.0, 0.25, 0.18, 0)
@@ -70,10 +68,7 @@ func hit_feedback(amount: float, world_pos: Vector3, crit: bool = false) -> void
 		AudioDirector.play_hit(crit)
 	_spawn_number(amount, world_pos, crit)
 	_spawn_impact(world_pos, crit)
-	# Soft hitstop — readability, not advantage (very short)
-	if crit and _hitstop_left <= 0.0:
-		_hitstop_left = 0.045
-		Engine.time_scale = 0.35
+	# Hitstop disabled — was tanking Arena FPS with time_scale thrash
 
 
 func _spawn_number(amount: float, world_pos: Vector3, crit: bool) -> void:
@@ -106,11 +101,14 @@ func _spawn_number(amount: float, world_pos: Vector3, crit: bool) -> void:
 
 
 func _spawn_impact(world_pos: Vector3, crit: bool) -> void:
+	if _impact_budget >= 4:
+		return
 	var tree := get_tree()
 	if tree == null or tree.current_scene == null:
 		return
+	_impact_budget += 1
 	var p := GPUParticles3D.new()
-	p.amount = 28 if crit else 16
+	p.amount = 10 if crit else 6
 	p.lifetime = 0.35
 	p.one_shot = true
 	p.explosiveness = 1.0
@@ -131,7 +129,8 @@ func _spawn_impact(world_pos: Vector3, crit: bool) -> void:
 	sm.height = 0.12
 	p.draw_pass_1 = sm
 	tree.current_scene.add_child(p)
-	tree.create_timer(0.5).timeout.connect(func():
+	tree.create_timer(0.35).timeout.connect(func():
+		_impact_budget = maxi(0, _impact_budget - 1)
 		if is_instance_valid(p):
 			p.queue_free()
 	)
