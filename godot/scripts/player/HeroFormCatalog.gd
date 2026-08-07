@@ -50,15 +50,20 @@ static func mesh_candidates(form: String, faction: String) -> PackedStringArray:
 		_:
 			stem = "player_canine"
 	var cands := PackedStringArray()
+	for s in skinned_candidates(form, faction):
+		cands.append(s)
 	# preferred clean → base → worn → lod cascade
 	for suffix in ["", "_clean", "_worn"]:
 		for lod in ["lod0", "lod1", "lod2"]:
 			cands.append("characters/%s/%s_%s%s_%s.glb" % [folder, stem, fx, suffix, lod])
 	# Infector uses grot/cybernex naming without clean/worn sometimes
 	if form == "Infector":
-		cands = PackedStringArray()
+		var inf := PackedStringArray()
+		for s in skinned_candidates(form, faction):
+			inf.append(s)
 		for lod in ["lod0", "lod1", "lod2"]:
-			cands.append("characters/grot_infector/grot_infector_%s_%s.glb" % [fx, lod])
+			inf.append("characters/grot_infector/grot_infector_%s_%s.glb" % [fx, lod])
+		return inf
 	return cands
 
 ## Soft mobility profile (no DPS/HP/shields)
@@ -76,3 +81,29 @@ static func apply_soft_mobility(form: String) -> Dictionary:
 			return {"move": 9.0, "jump": 7.0, "sprint": 1.55, "emit": Color(0.95, 0.15, 0.45)}
 		_:
 			return {"move": 8.0, "jump": 6.5, "sprint": 1.5, "emit": Color(0.5, 0.7, 0.9)}
+
+
+## Sprint C helpers — skinned GLB paths preferred by mesh_candidates callers via extra prepend
+static func skinned_candidates(form: String, faction: String) -> PackedStringArray:
+	var fx := "grot" if faction == "gROT" else "cybernex"
+	var folder := "player_canine"
+	var stem := "player_canine"
+	match form:
+		"Feline":
+			folder = "player_feline"; stem = "player_feline"
+		"Avian":
+			folder = "player_avian"; stem = "player_avian"
+		"Human":
+			folder = "player_human"; stem = "player_human"
+		"Infector":
+			folder = "grot_infector"; stem = "grot_infector"
+		_:
+			folder = "player_canine"; stem = "player_canine"
+	var out := PackedStringArray()
+	for lod in ["lod0", "lod1", "lod2"]:
+		out.append("characters/%s/%s_skinned_%s_%s.glb" % [folder, stem, fx, lod])
+		out.append("characters/%s/%s_skinned_%s.glb" % [folder, stem, fx])
+		out.append("characters/%s/%s_skinned.glb" % [folder, stem])
+	# pipeline inbox names
+	out.append("characters/%s_skinned/%s_skinned_%s_lod0.glb" % [stem, stem, fx])
+	return out

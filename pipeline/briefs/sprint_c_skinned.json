@@ -1,0 +1,23 @@
+[
+  {
+    "name": "player_canine_skinned",
+    "category": "characters",
+    "priority": "S",
+    "quality": "high",
+    "prompt": "game-ready bipedal anthropomorphic canine hero in clean T-pose, A-pose arms, clearly separated limbs, game character proportions, Cybernex cyan armor accents, high poly game mesh, single character centered, no ground plane, PBR materials, ready for skeletal animation"
+  },
+  {
+    "name": "grot_thrall",
+    "category": "characters",
+    "priority": "S",
+    "quality": "high",
+    "prompt": "game-ready bipedal gROT thrall mutant infantry in T-pose, biomass armor plates, claws, crimson organic tech, enemy character, separated limbs for animation, no base, PBR"
+  },
+  {
+    "name": "cybernex_sentry",
+    "category": "characters",
+    "priority": "A",
+    "quality": "high",
+    "prompt": "game-ready quadruped Cybernex security robot dog in neutral pose, armored chassis, cyan optics, mechanical joints visible, ally unit, game mesh, no base, PBR"
+  }
+]

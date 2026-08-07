@@ -1,7 +1,9 @@
 extends CharacterBody3D
 const _AP = preload("res://scripts/assets/AssetPaths.gd")
 const _HeroForms = preload("res://scripts/player/HeroFormCatalog.gd")
+const _FormAnim = preload("res://scripts/player/FormAnimator.gd")
 const _FormFX = preload("res://scripts/player/FormSwitchFX.gd")
+var _form_skel: Skeleton3D = null
 const _ProcLoco = preload("res://scripts/player/ProceduralLocomotion.gd")
 
 ## TPS controller — robust WASD (InputMap + physical/keycode fallback).
@@ -143,6 +145,9 @@ func _physics_process(delta: float) -> void:
 		velocity.z = move_toward(velocity.z, 0.0, speed)
 
 	move_and_slide()
+	if _form_skel:
+		var ma := velocity.length() / maxf(speed, 0.01) if "speed" in self else velocity.length() * 0.1
+		_FormAnim.apply_locomotion(_form_skel, ma, Time.get_ticks_msec() * 0.001, is_on_floor())
 	_update_locomotion(delta)
 
 	if _just_ability(1):

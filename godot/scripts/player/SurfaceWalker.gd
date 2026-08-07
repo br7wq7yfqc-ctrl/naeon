@@ -1,5 +1,6 @@
 extends CharacterBody3D
 const _HeroForms = preload("res://scripts/player/HeroFormCatalog.gd")
+const _FormAnim = preload("res://scripts/player/FormAnimator.gd")
 const _FormFX = preload("res://scripts/player/FormSwitchFX.gd")
 ## Planet-surface TPS walker: radial gravity, floor snap, procedural anim.
 ## Used for OpenSpace exit (not flat-world PlayerController).
@@ -24,6 +25,7 @@ var _leg_r: MeshInstance3D
 var _arm_l: MeshInstance3D
 var _arm_r: MeshInstance3D
 var _limb_rig: Node3D
+var _form_skel: Skeleton3D = null
 var _move_amount: float = 0.0
 var _up: Vector3 = Vector3.UP
 var cam_pivot: Node3D
@@ -124,6 +126,7 @@ func _load_form_visual() -> void:
 	_strip_colliders(root)
 	_visual.add_child(root)
 	root.name = "FormGLB"
+	_form_skel = _FormAnim.find_skeleton(root)
 	root.scale = Vector3.ONE * 1.1
 	root.position = Vector3(0, 0, 0)
 	print("[SurfaceWalker] form mesh ", path)
@@ -396,6 +399,10 @@ func _make_limb(col: Color, pos: Vector3, size: Vector3) -> MeshInstance3D:
 	return mi
 
 func _update_limbs() -> void:
+	if _form_skel and _FormAnim.apply_locomotion(_form_skel, _move_amount, _anim_time, is_on_floor()):
+		if _limb_rig:
+			_limb_rig.visible = false
+		return
 	if _limb_rig == null or not is_instance_valid(_limb_rig):
 		return
 	var a := _anim_time * TAU
