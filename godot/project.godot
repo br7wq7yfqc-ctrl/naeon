@@ -12,7 +12,7 @@ config_version=5
 
 config/name="NAEON"
 config/description="Multi-genre MMO in Aexion universe - Cybernex vs gROT"
-run/main_scene="res://scenes/world/OpenSpace.tscn"
+run/main_scene="res://scenes/ui/MainMenu.tscn"
 config/features=PackedStringArray("4.3", "Forward Plus")
 config/icon="res://icon.svg"
 
@@ -26,6 +26,9 @@ SoftENet="*res://scripts/systems/SoftENet.gd"
 GameManager="*res://scripts/autoload/GameManager.gd"
 AutoUpdater="*res://scripts/autoload/AutoUpdater.gd"
 GraphicsQuality="*res://scripts/world/GraphicsQuality.gd"
+AudioDirector="*res://scripts/systems/AudioDirector.gd"
+CombatJuice="*res://scripts/systems/CombatJuice.gd"
+SessionObjectives="*res://scripts/systems/SessionObjectives.gd"
 
 [debug]
 

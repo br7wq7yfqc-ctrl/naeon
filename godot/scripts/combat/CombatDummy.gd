@@ -76,6 +76,8 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 func take_damage(amount: float) -> void:
+	if CombatJuice:
+		CombatJuice.hit_feedback(float(amount), global_position)
 	if not _alive:
 		return
 	health = max(0.0, health - amount)

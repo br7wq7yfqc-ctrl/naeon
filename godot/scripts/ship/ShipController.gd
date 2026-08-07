@@ -283,6 +283,8 @@ func _physics_process(delta: float) -> void:
 	if velocity.length() > ms:
 		velocity = velocity.normalized() * ms
 	move_and_slide()
+	if velocity.length() > 5.0 and SessionObjectives:
+		SessionObjectives.on_moved()
 
 	if Input.is_action_pressed("ability_1") and _fire_cd <= 0.0:
 		_fire_weapon()
@@ -321,6 +323,10 @@ func _do_land() -> void:
 		# Face roughly along pad
 		velocity = Vector3.ZERO
 		is_landed = true
+	if AudioDirector:
+		AudioDirector.play_land()
+	if SessionObjectives:
+		SessionObjectives.on_landed_or_lane()
 		_sync_landing_gear()
 		_spawn_land_fx()
 		_set_mode(FlightMode.HOVER)

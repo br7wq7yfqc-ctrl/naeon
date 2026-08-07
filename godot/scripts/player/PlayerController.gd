@@ -145,6 +145,8 @@ func _physics_process(delta: float) -> void:
 		velocity.z = move_toward(velocity.z, 0.0, speed)
 
 	move_and_slide()
+	if last_move_input.length_squared() > 0.01 and SessionObjectives:
+		SessionObjectives.on_moved()
 	if _form_skel:
 		var ma := velocity.length() / maxf(speed, 0.01) if "speed" in self else velocity.length() * 0.1
 		_FormAnim.apply_locomotion(_form_skel, ma, Time.get_ticks_msec() * 0.001, is_on_floor())
@@ -249,6 +251,8 @@ func heal(amount: float) -> void:
 	health = min(max_health, health + amount)
 
 func take_damage(amount: float) -> void:
+	if CombatJuice:
+		CombatJuice.hit_feedback(float(amount), global_position)
 	if firewall_timer > 0.0:
 		amount *= 0.35
 	health = max(0.0, health - amount)

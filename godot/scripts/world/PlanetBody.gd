@@ -278,6 +278,8 @@ func _build_pads() -> void:
 	_spawn_pad("Pad_North", Vector3.UP)
 	_spawn_pad("Pad_Eq", Vector3(1, 0.15, 0).normalized())
 	_spawn_pad("Pad_Far", Vector3(-0.7, 0.2, 0.7).normalized())
+	_spawn_pad_density()
+
 
 func _spawn_pad(pad_name: String, dir: Vector3) -> void:
 	dir = dir.normalized()
@@ -477,3 +479,17 @@ func current_lod_name() -> String:
 		2: return "FAR"
 		3: return "IMPOSTOR"
 	return "?"
+
+
+func _spawn_pad_density() -> void:
+	if _pads_root == null:
+		return
+	if _pads_root.has_node("PadDensityCluster"):
+		return
+	var d := Node3D.new()
+	d.set_script(load("res://scripts/world/PadDensity.gd"))
+	d.name = "PadDensityCluster"
+	_pads_root.add_child(d)
+	# place on primary pad local
+	if d.has_method("build"):
+		d.build(faction_base if "faction_base" in self else "Cybernex", 22.0, 14)

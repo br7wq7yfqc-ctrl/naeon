@@ -98,15 +98,19 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 		_set_contested_ring(true)
 		_apply_faction_visual()
 		_refresh_label()
+		if SessionObjectives:
+			SessionObjectives.on_claim_or_obj()
+		if AudioDirector:
+			AudioDirector.play_claim()
 		claimed.emit("Contested")
 		print("[PadBase] CONTESTED ", ownership.previous_faction, " vs ", f, " @ ", name)
 		_notify_hud("CONTESTED — Dynamic Ownership open. Soft Knowledge only.")
-	var ic: String = _SoftK.intercept_claim_toast(faction_name)
-	if ic != "":
-		_notify_hud(ic)
-	var tip: String = _SoftK.structure_tip(ownership.faction_name() if ownership else "")
-	if tip != "":
-		_notify_hud(tip)
+		var ic: String = _SoftK.intercept_claim_toast(faction_name)
+		if ic != "":
+			_notify_hud(ic)
+		var tip: String = _SoftK.structure_tip(ownership.faction_name() if ownership else "")
+		if tip != "":
+			_notify_hud(tip)
 		return
 	if ownership.current_faction == OwnershipData.Faction.CONTESTED:
 		ownership.claim_strength += strength
@@ -121,10 +125,10 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 		_apply_faction_visual()
 		_refresh_label()
 		claimed.emit(ownership.faction_name())
-	if LayerContext:
-		LayerContext.set_claim(str(name))
-		if LayerContext.active_quest_id == "":
-			LayerContext.set_quest("slice_claim_%s" % name)
+		if LayerContext:
+			LayerContext.set_claim(str(name))
+			if LayerContext.active_quest_id == "":
+				LayerContext.set_quest("slice_claim_%s" % name)
 		return
 	ownership.claim_strength += strength
 	ownership.start_transition(f)
@@ -132,6 +136,10 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 	_set_contested_ring(false)
 	_apply_faction_visual()
 	_refresh_label()
+	if SessionObjectives:
+		SessionObjectives.on_claim_or_obj()
+	if AudioDirector:
+		AudioDirector.play_claim()
 	claimed.emit(ownership.faction_name())
 	_notify_hud("Claim resolved → %s. Harvest = Contribution (no combat power)." % ownership.faction_name())
 	print("[PadBase] claim → ", ownership.faction_name(), " @ ", name)

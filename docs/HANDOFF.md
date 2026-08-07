@@ -1,14 +1,26 @@
-# Handoff — 0.3.16 controls fix
+# Handoff — Phase 0 feel foundation (no micro-DMG)
 
-## Bug
-Characters/ships moved sideways; mouse X inverted.
+## Owner contract
+- Phase 0 ~**5%** — prototype ≠ game
+- Batch Desktop installers only at gates
+- Benchmarks: SC/NMS + EVE/Stellaris + Predecessor
+- Tripo: check balance each iter; code-first when dry
 
-## Cause
-Basis built with up.cross(f0) → left-handed (det=-1).
+## This iteration
+- MainMenu boot (Open Space / Clash)
+- AudioDirector + CombatJuice
+- SessionObjectives first-loop briefing
+- PadDensity reuses existing GLBs on planet pads
+- ESC → menu; objectives wired land/claim/kill/economy
 
-## Fix
-forward×up=right; form/hull rotation.y=PI to face −Z.
+## Tripo
+Agent rechecks live balance each loop. Prefer code density before new gens.
 
-Installer building: NAEON-0.3.16-Installer.dmg
+## Next
+- Clash lane readability + spawn waves
+- OpenSpace ambient life + better landing FX
+- Lighting pass both modes
+- A-tier Tripo only for empty hero gaps
+- DMG only at Phase0 checklist ≥70%
 
-Updated: 2026-08-07T00:17:52.104285+00:00
+Updated: 2026-08-07T00:27:44.823402+00:00

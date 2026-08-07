@@ -18,6 +18,7 @@ var _interior: Node = null
 var _spawn_ship_pos := Vector3(0, 0, 2800)
 
 func _ready() -> void:
+	_phase0_space_feel()
 	add_to_group("open_space")
 	print("[OpenSpace] boot")
 	if LayerContext:
@@ -383,6 +384,9 @@ func _update_hud() -> void:
 		mode_label.text = "GFX: %s" % gqn
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		get_tree().change_scene_to_file("res://scenes/ui/MainMenu.tscn")
+		return
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
 	match event.keycode:
@@ -492,3 +496,25 @@ func _skip_edu_quest() -> void:
 	var eq := _ensure_edu_on_player()
 	if eq and eq.has_method("skip"):
 		eq.skip()
+
+
+func _phase0_space_feel() -> void:
+	var we := get_node_or_null(WorldEnvironment) as WorldEnvironment
+	if we and we.environment:
+		var e := we.environment
+		e.glow_enabled = true
+		e.glow_intensity = 0.65
+		e.glow_bloom = 0.18
+		e.tonemap_mode = Environment.TONE_MAPPER_ACES
+		e.background_mode = Environment.BG_COLOR
+		e.background_color = Color(0.01, 0.015, 0.04)
+		e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+		e.ambient_light_color = Color(0.08, 0.1, 0.16)
+		e.ambient_light_energy = 0.35
+	var sun := get_node_or_null(Sun) as DirectionalLight3D
+	if sun:
+		sun.light_energy = 1.35
+		sun.shadow_enabled = true
+	if SessionObjectives:
+		SessionObjectives.on_entered_mode(space)
+	print([OpenSpace] Phase0 space feel)

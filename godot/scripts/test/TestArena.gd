@@ -20,6 +20,7 @@ var _lane_hud: Label = null
 var dummy_scene: PackedScene = preload("res://scenes/combat/CombatDummy.tscn")
 
 func _ready() -> void:
+	_phase0_arena_feel()
 	print("[TestArena] Loaded — Aexion Clash slice")
 	_clash = Node.new()
 	_clash.set_script(preload("res://scripts/arena/AexionClash.gd"))
@@ -199,6 +200,10 @@ func _spawn_claim_nodes() -> void:
 			own.claim(str(s[1]), 2.0)
 
 func _on_dummy_died() -> void:
+	if SessionObjectives:
+		SessionObjectives.on_landed_or_lane()
+	if AudioDirector:
+		AudioDirector.play_hit(true)
 	call_deferred("_maybe_refill_lane")
 	kills += 1
 	var lane_k := "MID"
@@ -293,6 +298,9 @@ func _goto_openspace() -> void:
 		get_tree().change_scene_to_file("res://scenes/world/OpenSpace.tscn")
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		get_tree().change_scene_to_file("res://scenes/ui/MainMenu.tscn")
+		return
 	if event is InputEventKey and event.pressed and event.keycode == KEY_O:
 		_goto_openspace()
 		return
@@ -399,3 +407,27 @@ func _maybe_refill_lane() -> void:
 		d.set("can_move", false)
 	if GameManager:
 		GameManager.toast_requested.emit("Lane wave: %s reinforced" % str(entry[1]))
+
+
+func _phase0_arena_feel() -> void:
+	## Predecessor-ish readable arena chrome (code-only).
+	var we := get_node_or_null("WorldEnvironment") as WorldEnvironment
+	if we and we.environment:
+		var e := we.environment
+		e.glow_enabled = true
+		e.glow_intensity = 0.55
+		e.glow_bloom = 0.22
+		e.tonemap_mode = Environment.TONE_MAPPER_ACES
+		e.adjustment_enabled = true
+		e.adjustment_saturation = 1.08
+	# Lane light pillars
+	for i in 3:
+		var o := OmniLight3D.new()
+		o.light_color = [Color(0.2, 0.8, 1), Color(1, 0.85, 0.3), Color(1, 0.25, 0.4)][i]
+		o.light_energy = 2.2
+		o.omni_range = 28.0
+		o.position = Vector3([-22, 0, 22][i], 6.0, 0)
+		add_child(o)
+	if SessionObjectives:
+		SessionObjectives.on_entered_mode("clash")
+	print("[TestArena] Phase0 feel chrome")

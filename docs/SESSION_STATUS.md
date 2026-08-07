@@ -1,19 +1,19 @@
 # NAEON — Session Status
 
-**Last update:** 2026-08-06T15:16:25.029341+00:00
-**Mode:** Holistic economical · autonomous block
+**Last update:** 2026-08-07T00:27:44.823402+00:00
+**Mode:** Holistic economical · Phase 0 feel · **no micro-DMG**
 
-## Shipped this session
-- Contested HUD banner + claim bar + pad radar
-- Terra brush dust particles + undo
-- Procedural limb walk + jump dust
-- Soft Knowledge mastery line + toasts (no P2W)
-- Channel interrupt/complete toasts
-- Installer **0.3.2** full-size Desktop DMG
-- build_release Desktop size verify + no hang-open
+## Phase 0
+Owner: ~5%. Working toward intentional 10-min loop.
 
-## Play
-Desktop `NAEON-0.3.2-Installer.dmg` or `godot` on OpenSpace
+## Shipped (code tip)
+- Session contract
+- MainMenu + AudioDirector + CombatJuice + SessionObjectives
+- PadDensity + arena chrome
+- Controls RH basis (0.3.16 lineage)
+
+## Play (dev)
+`godot --path godot` → Main Menu → Open Space / Clash
 
 ## Budget
-0 Tripo
+Tripo rechecked each iteration by agent

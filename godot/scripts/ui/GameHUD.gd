@@ -26,6 +26,8 @@ var _edu_quest: Node = null
 var _toast_label: Label
 var _claim_bar: ProgressBar
 var _player: Node
+var _obj_label: Label
+var _cross: Label
 var _hud_accum: float = 0.0
 var _host_hint_cache: String = ""
 var _host_hint_t: float = 999.0
@@ -74,6 +76,26 @@ func _pop_toast() -> void:
 
 func _build() -> void:
 	_root = Control.new()
+	_obj_label = Label.new()
+	_cross = Label.new()
+	_cross.text = ·
+	_cross.add_theme_font_size_override(font_size, 28)
+	_cross.modulate = Color(0.7, 0.95, 1.0, 0.75)
+	_cross.set_anchors_preset(Control.PRESET_CENTER)
+	_cross.offset_left = -10
+	_cross.offset_right = 10
+	_cross.offset_top = -16
+	_cross.offset_bottom = 16
+	_cross.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_obj_label.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	_obj_label.offset_top = 8
+	_obj_label.offset_left = 16
+	_obj_label.offset_right = -16
+	_obj_label.offset_bottom = 48
+	_obj_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_obj_label.add_theme_font_size_override("font_size", 16)
+	_obj_label.modulate = Color(0.85, 0.95, 1.0, 0.95)
+	_obj_label.text = ""
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_root)
@@ -85,6 +107,8 @@ func _build() -> void:
 	_status_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
 	_status_label.add_theme_constant_override("outline_size", 4)
 	_root.add_child(_status_label)
+	_root.add_child(_obj_label)
+	_root.add_child(_cross)
 
 	_infection_label = Label.new()
 	_infection_label.position = Vector2(14, 70)
@@ -325,6 +349,9 @@ func _process(d: float) -> void:
 	_refresh()
 
 func _refresh() -> void:
+	if _obj_label and SessionObjectives:
+		_obj_label.text = SessionObjectives.briefing()
+		_obj_label.visible = true
 	var hp := "?"
 	var en := "?"
 	var fac := "?"
