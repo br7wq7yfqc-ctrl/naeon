@@ -31,6 +31,8 @@ var _form_skel: Skeleton3D = null
 var _move_amount: float = 0.0
 var eva_mode: bool = false
 var thruster_accel: float = 14.0
+var mag_boot: bool = false
+var eva_time: float = 0.0
 var _up: Vector3 = Vector3.UP
 var cam_pivot: Node3D
 var camera: Camera3D
@@ -270,6 +272,9 @@ func _input(event: InputEvent) -> void:
 			_try_ability(0)
 		elif event.keycode == KEY_R:
 			_try_ability(2)
+		elif event.keycode == KEY_E and eva_mode:
+			mag_boot = not mag_boot
+			print("[SurfaceWalker] mag-boot ", mag_boot)
 		# G/B terrain edit handled by PlanetTerrainEdit while in player group
 	if event.is_action_pressed("ui_cancel"):
 		Input.set_mouse_mode(
@@ -325,6 +330,9 @@ func _physics_process(delta: float) -> void:
 		velocity = velocity.lerp(Vector3.ZERO, 0.65 * delta)
 		if velocity.length() > 18.0:
 			velocity = velocity.normalized() * 18.0
+		eva_time += delta
+		if mag_boot:
+			velocity = velocity.lerp(Vector3.ZERO, 4.0 * delta)
 		_move_amount = velocity.length() / 12.0
 		_apply_body_basis()
 		move_and_slide()

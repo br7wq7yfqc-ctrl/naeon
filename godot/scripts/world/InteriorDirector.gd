@@ -27,6 +27,9 @@ func is_inside() -> bool:
 func get_kind() -> String:
 	return _kind
 
+func get_active_interior() -> Node3D:
+	return _active
+
 func try_toggle(player: Node3D, ship: Node3D = null) -> void:
 	if _inside:
 		exit_interior()

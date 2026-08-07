@@ -8,6 +8,9 @@ var form: String = "Canine"
 var faction: String = "Cybernex"
 var ship_mode: String = ""
 var ship_landed: bool = false
+var op_mode: int = 0
+var morph_t: float = 0.0
+var actor_mode: String = "surface"
 var _target: Vector3 = Vector3.ZERO
 var _target_yaw: float = 0.0
 var _target_pitch: float = 0.0
@@ -182,3 +185,10 @@ func _process(delta: float) -> void:
 	if _form_root and is_instance_valid(_form_root):
 		var amp := 0.02 if form == "Ship" else 0.03
 		_form_root.position.y = (0.2 if form == "Ship" else 0.0) + sin(Time.get_ticks_msec() * 0.004) * amp
+
+
+func apply_soft_extra(mode: int, morph: float, amode: String) -> void:
+	op_mode = mode
+	morph_t = morph
+	actor_mode = amode
+	_refresh_label()

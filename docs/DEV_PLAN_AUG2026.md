@@ -1,14 +1,22 @@
 # NAEON Dev Plan — Aug 2026
 
-## Tip after 0.3.18
-S-EVA · S-MORPH · S-INT · V1-V2 implemented in code (dev). Next batch **0.3.19** after playtest acceptance.
+## Tip (post 0.3.18 continuum polish)
+Sprints EVA/MORPH/INT/V1-V2 + acceptance glue.
 
-| Sprint | Status |
-|--------|--------|
-| S-EVA | **done** F mid-space → thruster suit → reboard |
-| S-MORPH | **done** KEY4 SIEGE + HullMorph + dps/mobility |
-| S-INT | **done** ShipInteriorProfiles + seat/hatch |
-| V1-V2 | **done** KEY5 ramp · KEY6 rover deploy |
-| Batch | 0.3.19 when accepted |
+| Item | Status |
+|------|--------|
+| S-EVA | done + mag-boot E + soft timer |
+| S-MORPH | done + SCAN (8) |
+| S-INT | done + seat→pilot F |
+| V1-V2 | done + F board/unboard + 7 store |
+| S-NET | snapshot actor_mode/op_mode/morph_t/landed |
+| Batch **0.3.19** | ready when you accept playtest |
 
-Updated: 2026-08-07T11:27:49.630635+00:00
+### Play map
+| Key | Action |
+|-----|--------|
+| F | exit/EVA/board ship · board rover · seat→pilot · unboard |
+| 4 | Siege | 8 | Scan | 5 | Ramp | 6 | Deploy rover | 7 | Store rover |
+| I | Interior | E (EVA) | mag-boot |
+
+Updated: 2026-08-07T22:20:41.858458+00:00

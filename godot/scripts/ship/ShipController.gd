@@ -142,6 +142,8 @@ func _input(event: InputEvent) -> void:
 			_toggle_cargo_ramp()
 		elif event.keycode == KEY_6:
 			_try_deploy_rover()
+		elif event.keycode == KEY_8:
+			_toggle_scan()
 	if is_landed:
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
@@ -176,6 +178,8 @@ func _thrust_mult() -> float:
 		_: m = 1.0
 	if op_mode == 1 and _role:
 		m *= float(_role.siege_thrust_mult)
+	elif op_mode == 2:
+		m *= 0.7
 	return m
 
 func _damp_mult() -> float:
@@ -738,6 +742,24 @@ func _ensure_morph_and_hatch() -> void:
 	_hull_morph.set_script(load("res://scripts/ship/ShipHullMorph.gd"))
 	_hull_morph.name = "HullMorph"
 	add_child(_hull_morph)
+	# Procedural hatch plate (juice)
+	var door := MeshInstance3D.new()
+	door.name = "HatchDoor"
+	var db := BoxMesh.new()
+	db.size = Vector3(1.2, 1.8, 0.08)
+	door.mesh = db
+	var dm := StandardMaterial3D.new()
+	dm.albedo_color = Color(0.2, 0.55, 0.7)
+	dm.emission_enabled = true
+	dm.emission = Color(0.2, 0.7, 1.0)
+	dm.emission_energy_multiplier = 0.6
+	door.material_override = dm
+	var hp = get_node_or_null("HatchPoint")
+	if hp:
+		hp.add_child(door)
+	else:
+		door.position = Vector3(3.2, 0.8, 0.5)
+		add_child(door)
 	print("[Ship] Hatch + HullMorph")
 
 
@@ -817,3 +839,24 @@ func _load_role_sniper():
 	if scr and scr.has_method("make_sniper"):
 		return scr.make_sniper()
 	return null
+
+
+func _toggle_scan() -> void:
+	if op_mode == 2:
+		op_mode = 0
+		if _hull_morph and is_instance_valid(_hull_morph) and _hull_morph.has_method("set_op_mode"):
+			_hull_morph.set_op_mode(0, 0.6)
+		print("[Ship] CRUISE (left SCAN)")
+	else:
+		op_mode = 2
+		if _hull_morph and is_instance_valid(_hull_morph) and _hull_morph.has_method("set_op_mode"):
+			_hull_morph.set_op_mode(2, 0.7)
+		print("[Ship] SCAN mode — sensors fantasy, mobility soft down")
+
+
+func get_deployed_rover() -> Node3D:
+	return _deployed_rover if _deployed_rover and is_instance_valid(_deployed_rover) else null
+
+
+func clear_deployed_rover() -> void:
+	_deployed_rover = null

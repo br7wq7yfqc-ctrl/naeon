@@ -16,6 +16,9 @@ var planets: Array = []
 var _in_ship: bool = true
 var _interior: Node = null
 var _eva_mode: bool = false
+var _in_rover: bool = false
+var _rover: Node3D = null
+var _eva_warn_t: float = 0.0
 var _spawn_ship_pos := Vector3(0, 0, 2800)
 
 func _ready() -> void:
@@ -454,9 +457,16 @@ func _bind_soft_net_actor(actor: Node3D) -> void:
 	print("[OpenSpace] soft net actor → ", actor.name)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	_update_altitude_fog()
 	_update_hud()
+	# Soft EVA timer (warning only — no death Phase 0)
+	if _eva_mode and player and is_instance_valid(player) and "eva_time" in player:
+		if float(player.eva_time) > 90.0:
+			_eva_warn_t += delta
+			if _eva_warn_t > 8.0:
+				_eva_warn_t = 0.0
+				print("[OpenSpace] EVA soft warning — reboard soon")
 
 func _update_hud() -> void:
 	if hud_label == null or ship == null:
@@ -470,7 +480,11 @@ func _update_hud() -> void:
 	var mode := "SHIP"
 	if ship.get("flight_mode") != null:
 		mode = str(ship.call("flight_mode_name")) if is_instance_valid(ship) and ship.has_method("flight_mode_name") else mode
-	if not _in_ship:
+	if _in_rover:
+		mode = "ROVER"
+	elif _eva_mode:
+		mode = "EVA"
+	elif not _in_ship:
 		mode = "ON FOOT"
 	var gq := get_node_or_null("/root/GraphicsQuality")
 	var gqn: String = gq.tier_name() if gq else "?"
@@ -481,7 +495,7 @@ func _update_hud() -> void:
 		spd = player.velocity.length()
 	hud_label.text = (
 		"NAEON OpenSpace  |  free flight · seamless land · surface walk\n"
-		+ "WASD thrust  Space/Shift lift  Mouse=flight plane  Z/X roll  |  1/2/3 flight  4 siege  5 ramp  6 rover  |  E land  F exit/EVA/board  C claim  G/B terra  U undo  I interior  Q hack\n"
+		+ "WASD thrust  Space/Shift lift  Mouse=flight plane  Z/X roll  |  1/2/3 flight  4 siege  5 ramp  6 rover  7 store  |  E land  F exit/EVA/board  C claim  G/B terra  U undo  I interior  Q hack\n"
 		+ "F1 cycle quality  |  Tab → TestArena (combat sandbox)\n"
 		+ "Mode: %s  Planet: %s  Alt: %dm  Spd: %d  HP:%d SHD:%d  PLOD:%s  CONTRIB:%.0f" % [
 			mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields), (pl.current_lod_name() if pl and is_instance_valid(pl) and pl.has_method("current_lod_name") else "-"), (GameManager.contribution if GameManager else 0.0)
@@ -506,10 +520,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_Y:
 			_skip_edu_quest()
 		KEY_F:
-			if _in_ship:
-				try_exit_ship()
-			else:
-				try_enter_ship()
+			_handle_f_interact()
+		KEY_7:
+			_try_store_rover()
 		KEY_F1:
 			var gq := get_node_or_null("/root/GraphicsQuality")
 			if gq:
@@ -523,6 +536,173 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_TAB:
 			if ResourceLoader.exists("res://scenes/test/TestArena.tscn"):
 				get_tree().change_scene_to_file("res://scenes/test/TestArena.tscn")
+
+
+
+func _handle_f_interact() -> void:
+	# Priority: unboard rover → board rover → seat→pilot (interior) → ship board/exit
+	if _in_rover and _rover and is_instance_valid(_rover):
+		_unboard_rover()
+		return
+	if not _in_ship and player and is_instance_valid(player):
+		if _try_board_nearby_rover():
+			return
+		if _try_seat_to_pilot():
+			return
+	if _in_ship:
+		try_exit_ship()
+	else:
+		try_enter_ship()
+
+
+func _try_board_nearby_rover() -> bool:
+	if player == null or not is_instance_valid(player):
+		return false
+	var best: Node3D = null
+	var best_d := 6.0
+	# ship-deployed rover
+	if ship and is_instance_valid(ship) and ship.has_method("get_deployed_rover"):
+		var r: Node3D = ship.get_deployed_rover()
+		if r != null and is_instance_valid(r):
+			var d: float = player.global_position.distance_to(r.global_position)
+			if d < best_d:
+				best = r
+				best_d = d
+	if best == null:
+		var tree := get_tree()
+		if tree:
+			for n in tree.get_nodes_in_group("ground_vehicle"):
+				if n is Node3D and is_instance_valid(n):
+					var d2: float = player.global_position.distance_to(n.global_position)
+					if d2 < best_d:
+						best = n
+						best_d = d2
+	if best == null:
+		return false
+	_rover = best
+	_in_rover = true
+	if _rover.has_method("board"):
+		_rover.board(player)
+	if floating and floating.has_method("set_target"):
+		floating.set_target(_rover)
+	_bind_soft_net_actor(_rover)
+	print("[OpenSpace] boarded rover")
+	return true
+
+
+func _unboard_rover() -> void:
+	if _rover == null or not is_instance_valid(_rover):
+		_in_rover = false
+		_rover = null
+		return
+	var actor: Node3D = null
+	if _rover.has_method("unboard"):
+		actor = _rover.unboard()
+	_in_rover = false
+	if actor and is_instance_valid(actor):
+		player = actor
+		if player.has_method("set_planet_gravity_provider"):
+			player.set_planet_gravity_provider(self)
+		if floating and floating.has_method("set_target"):
+			floating.set_target(player)
+		_bind_soft_net_actor(player)
+	_rover = null
+	print("[OpenSpace] left rover")
+
+
+func _try_seat_to_pilot() -> bool:
+	## Interior seat volume → direct PILOT (single-seat fast path).
+	if _interior == null or not is_instance_valid(_interior):
+		return false
+	if not _interior.has_method("is_inside") or not _interior.is_inside():
+		return false
+	if player == null or not is_instance_valid(player):
+		return false
+	var active: Node3D = null
+	if _interior.has_method("get_active_interior"):
+		active = _interior.get_active_interior()
+	# find SeatVolume near player
+	var seat_near := false
+	if active and is_instance_valid(active):
+		var seat: Node = active.get_node_or_null("SeatVolume")
+		if seat and seat is Node3D:
+			if player.global_position.distance_to((seat as Node3D).global_position) < 3.5:
+				seat_near = true
+		var seat_m: Node = active.get_node_or_null("Seat")
+		if seat_m and seat_m is Node3D:
+			if player.global_position.distance_to((seat_m as Node3D).global_position) < 3.5:
+				seat_near = true
+	if not seat_near:
+		# also allow if kind ship and near spawn
+		if _interior.has_method("get_kind") and str(_interior.get_kind()) == "ship":
+			if player.global_position.distance_to(Vector3(0, 50000, 0)) < 12.0:
+				seat_near = true
+	if not seat_near:
+		return false
+	# Exit interior pocket then board ship without distance check
+	if _interior.has_method("exit_interior"):
+		_interior.exit_interior()
+	# Force board
+	if ship == null or not is_instance_valid(ship):
+		return false
+	_in_ship = true
+	_eva_mode = false
+	if LayerContext:
+		LayerContext.set_layer("Space")
+	for pl in planets:
+		if pl and is_instance_valid(pl) and pl.has_method("set_observer"):
+			pl.set_observer(ship)
+	if floating and is_instance_valid(floating) and floating.has_method("set_target"):
+		floating.set_target(ship)
+	_bind_soft_net_actor(ship)
+	var old: Node = player
+	player = null
+	if is_instance_valid(old):
+		old.set_process(false)
+		old.set_physics_process(false)
+		if old is CollisionObject3D:
+			(old as CollisionObject3D).collision_layer = 0
+		old.queue_free()
+	if ship.has_method("set_pilot_active"):
+		ship.set_pilot_active(true)
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	print("[OpenSpace] seat → pilot")
+	return true
+
+
+func _try_store_rover() -> void:
+	if _in_rover:
+		print("[OpenSpace] Unboard rover first (F)")
+		return
+	if ship == null or not is_instance_valid(ship):
+		return
+	if not bool(ship.get("is_landed")):
+		print("[OpenSpace] Land to store rover")
+		return
+	var r: Node3D = null
+	if ship.has_method("get_deployed_rover"):
+		r = ship.get_deployed_rover()
+	if r == null or not is_instance_valid(r):
+		print("[OpenSpace] No deployed rover")
+		return
+	if r.global_position.distance_to(ship.global_position) > 18.0:
+		print("[OpenSpace] Rover too far from ship/ramp")
+		return
+	var hold = ship.get_node_or_null("CargoHold")
+	if hold and hold.has_method("store_vehicle"):
+		var entry: Dictionary = r.as_storage_entry() if r.has_method("as_storage_entry") else {"class_id": "rover", "volume": 8.0, "mass": 2.0}
+		if hold.store_vehicle(entry):
+			r.queue_free()
+			if ship.has_method("clear_deployed_rover"):
+				ship.clear_deployed_rover()
+			print("[OpenSpace] Rover stored in cargo hold")
+		else:
+			print("[OpenSpace] Hold full")
+	else:
+		r.queue_free()
+		if ship.has_method("clear_deployed_rover"):
+			ship.clear_deployed_rover()
+		print("[OpenSpace] Rover despawned (no hold)")
 
 
 func _toggle_interior() -> void:

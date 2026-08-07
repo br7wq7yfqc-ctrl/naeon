@@ -1,12 +1,10 @@
-# Handoff — EVA / Siege / Interior / Rover
+# Handoff — continuum polish toward 0.3.19
 
-## Dev tip (post 0.3.18)
-- **F** in flight (slow) = EVA; near ship = reboard; landed = surface
-- **4** = Siege morph + mults
-- **I** = ship interior from profile (scout/sniper/hauler)
-- **5** ramp · **6** rover (landed)
+## Dev tip
+- EVA: F slow flight, E mag-boot, soft 90s warn
+- Seat F in ship interior → pilot
+- Rover: land → 5 ramp → 6 deploy → F board → F unboard → 7 store
+- SoftNet snaps: actor_mode, op_mode, morph_t, landed
+- Desktop still **0.3.18** until acceptance → **0.3.19**
 
-## Desktop
-Still 0.3.18 until acceptance → then 0.3.19 batch.
-
-Updated: 2026-08-07T11:27:49.630635+00:00
+Updated: 2026-08-07T22:20:41.858458+00:00

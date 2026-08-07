@@ -132,11 +132,34 @@ func _capture() -> Dictionary:
 	if "faction" in _player:
 		fac = str(_player.faction)
 	# Lightweight — skip LayerContextAuthority bundle every tick (was heavy)
+	var actor_mode := "pilot"
+	var op_mode := 0
+	var morph_t := 0.0
+	var landed := false
+	if "eva_mode" in _player and bool(_player.eva_mode):
+		actor_mode = "eva"
+	elif _player.is_in_group("ship") or str(_player.get_class()).find("Ship") >= 0 or _player.has_method("flight_mode_name"):
+		actor_mode = "pilot"
+		if "op_mode" in _player:
+			op_mode = int(_player.op_mode)
+		if "is_landed" in _player:
+			landed = bool(_player.is_landed)
+		var hm = _player.get_node_or_null("HullMorph")
+		if hm and "morph_t" in hm:
+			morph_t = float(hm.morph_t)
+	elif _player.has_method("board"):
+		actor_mode = "vehicle"
+	else:
+		actor_mode = "surface"
 	return {
 		"pos": [_player.global_position.x, _player.global_position.y, _player.global_position.z],
 		"yaw": _player.rotation.y,
 		"form": form,
 		"faction": fac,
+		"actor_mode": actor_mode,
+		"op_mode": op_mode,
+		"morph_t": morph_t,
+		"landed": landed,
 	}
 
 func _apply_ghost(now_ms: int) -> void:
