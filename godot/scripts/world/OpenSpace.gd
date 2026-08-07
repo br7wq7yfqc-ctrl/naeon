@@ -1,4 +1,5 @@
 extends Node3D
+const _PlanetProfiles = preload("res://scripts/world/PlanetProfileCatalog.gd")
 ## Seamless open space: free flight, planets, bases, surface walk, origin rebase.
 ## Entry scene for SC-like continuum (no change_scene landing).
 
@@ -94,48 +95,19 @@ func _spawn_starfield() -> void:
 
 func _spawn_planets() -> void:
 	var script := preload("res://scripts/world/PlanetBody.gd")
-	# Planet A — Cybernex colony world (near spawn)
-	var a: Node3D = Node3D.new()
-	a.set_script(script)
-	a.set("planet_name", "Nex-Prime")
-	a.set("radius", 1400.0)
-	a.set("atmosphere_height", 320.0)
-	a.set("surface_color", Color(0.1, 0.18, 0.28))
-	a.set("atmosphere_color", Color(0.25, 0.55, 0.95, 0.1))
-	a.set("faction_base", "Cybernex")
-	a.set("gravity", 9.0)
-	world_root.add_child(a)
-	a.global_position = Vector3(0, 0, 0)
-	planets.append(a)
-	# Planet B — gROT biomass world (free flight destination)
-	var b: Node3D = Node3D.new()
-	b.set_script(script)
-	b.set("planet_name", "ROT-Hive")
-	b.set("radius", 1100.0)
-	b.set("atmosphere_height", 260.0)
-	b.set("surface_color", Color(0.22, 0.06, 0.08))
-	b.set("atmosphere_color", Color(0.7, 0.15, 0.25, 0.1))
-	b.set("faction_base", "gROT")
-	b.set("gravity", 8.4)
-	world_root.add_child(b)
-	b.global_position = Vector3(9000, 400, -6000)
-	planets.append(b)
-	# Small moon (no base)
-	var c: Node3D = Node3D.new()
-	c.set_script(script)
-	c.set("planet_name", "Shard-Moon")
-	c.set("radius", 420.0)
-	c.set("atmosphere_height", 40.0)
-	c.set("surface_color", Color(0.35, 0.34, 0.32))
-	c.set("atmosphere_color", Color(0.4, 0.4, 0.45, 0.04))
-	c.set("has_base", false)
-	c.set("gravity", 2.2)
-	world_root.add_child(c)
-	c.global_position = Vector3(-5500, 1800, 4000)
-	planets.append(c)
-	_bind_planet_observers()
-	# Ambient free-space props (asteroids between)
-	_spawn_asteroid_belt()
+	for pid in ["Nex-Prime", "ROT-Hive", "Shard-Moon"]:
+		var pl: Node3D = Node3D.new()
+		pl.set_script(script)
+		_PlanetProfiles.apply_to(pl, pid)
+		world_root.add_child(pl)
+		# position from profile (local); ensure global after enter tree
+		var prof: Dictionary = _PlanetProfiles.profiles().get(pid, {})
+		if prof.has("pos"):
+			pl.position = prof["pos"]
+		planets.append(pl)
+	print("[OpenSpace] planets from PlanetProfileCatalog: ", planets.size())
+
+
 
 func _spawn_asteroid_belt() -> void:
 	var prop_script: Script = preload("res://scripts/assets/GlbProp.gd")

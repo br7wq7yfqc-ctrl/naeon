@@ -74,7 +74,7 @@ func _try_player_claim() -> void:
 	elif GameManager:
 		fac = GameManager.get_faction_name()
 	claim(fac, 1.0)
-	_claim_cd = 0.85
+	_claim_cd = 0.7
 
 func _find_actor() -> Node3D:
 	for s in get_tree().get_nodes_in_group("ship"):
@@ -115,7 +115,7 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 		return
 	if ownership.current_faction == OwnershipData.Faction.CONTESTED:
 		ownership.claim_strength += strength
-		if ownership.claim_strength >= 2.0:
+		if ownership.claim_strength >= 1.75:
 			ownership.start_transition(f)
 			ownership.claim_strength = 0.0
 			_status = "claiming"

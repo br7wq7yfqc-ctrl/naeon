@@ -12,6 +12,7 @@ var _tween: Tween
 func _ready() -> void:
 	if get_child_count() == 0:
 		_build_proxy_plates()
+	call_deferred("_try_load_radiator_meshes")
 
 
 func _build_proxy_plates() -> void:
@@ -92,3 +93,35 @@ func op_mode_name() -> String:
 			return "DOCK"
 		_:
 			return "CRUISE"
+
+
+
+func _try_load_radiator_meshes() -> void:
+	var AP = load("res://scripts/assets/AssetPaths.gd")
+	if AP == null:
+		return
+	var fac := "cybernex"
+	var ship := get_parent()
+	if ship and "faction" in ship and str(ship.faction) == "gROT":
+		fac = "grot"
+	var rel := "ships/ship_siege_radiator/ship_siege_radiator_%s_lod1.glb" % fac
+	var path := AP.resolve(rel) if AP.has_method("resolve") else ""
+	if path == "" or not FileAccess.file_exists(path):
+		return
+	for side in [-1.0, 1.0]:
+		var doc := GLTFDocument.new()
+		var st := GLTFState.new()
+		if doc.append_from_file(path, st) != OK:
+			continue
+		var scn := doc.generate_scene(st)
+		if scn == null:
+			continue
+		add_child(scn)
+		scn.name = "RadiatorGLB_%s" % ("L" if side < 0 else "R")
+		scn.scale = Vector3.ONE * 0.55
+		var base := Transform3D(Basis.IDENTITY, Vector3(side * 1.15, 0.25, 0.2))
+		var siege := Transform3D(Basis.from_euler(Vector3(side * 0.55, 0, 0)), Vector3(side * 1.35, 0.15, 0.1))
+		scn.transform = base
+		scn.visible = false
+		_plates.append({"node": scn, "base": base, "siege": siege})
+	print("[HullMorph] siege radiators loaded")

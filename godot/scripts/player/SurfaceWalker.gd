@@ -33,6 +33,9 @@ var eva_mode: bool = false
 var thruster_accel: float = 14.0
 var mag_boot: bool = false
 var eva_time: float = 0.0
+var energy: float = 100.0
+var max_energy: float = 100.0
+var energy_regen: float = 10.0
 var _up: Vector3 = Vector3.UP
 var cam_pivot: Node3D
 var camera: Camera3D
@@ -200,7 +203,17 @@ func get_faction() -> String:
 	return faction
 
 func get_energy() -> float:
-	return 100.0
+	return energy
+
+
+func spend_energy(amount: float) -> void:
+	energy = maxf(0.0, energy - amount)
+
+
+func heal(amount: float) -> void:
+	if "health" in self:
+		health = minf(max_health if "max_health" in self else 100.0, float(health) + amount)
+
 
 func on_hacked(caster: Node, amount: float = 1.0) -> void:
 	var inf = get_node_or_null("InfectionStatus")
@@ -284,6 +297,7 @@ func _input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	_update_up()
+	energy = minf(max_energy, energy + energy_regen * delta)
 	var g_vec := -_up * 14.0
 	if _provider and _provider.has_method("gravity_at"):
 		var pg: Vector3 = _provider.gravity_at(global_position)
