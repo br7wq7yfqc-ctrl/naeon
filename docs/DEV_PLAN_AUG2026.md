@@ -3,20 +3,26 @@
 ## Mode
 holistic-economical + sequential + parallel Tripo
 
-## Done this turn
-| Item | Status |
-|------|--------|
+## Latest complete
+| Track | Status |
+|-------|--------|
 | AbilityKitCatalog | done |
-| PlanetProfileCatalog (3 bodies) | done |
+| PlanetProfileCatalog | done (3 bodies) |
 | Walker energy/health | done |
-| Contested claim multi-pulse UX | done |
-| ship_siege_radiator dual LODs | done |
-| pad_control_obelisk / grot_biomass_spire | processing |
+| HullMorph siege radiators | done |
+| PadDensity new props | done |
+| Tripo balance | ~4760 |
+
+## Assets this session
+- ship_siege_radiator
+- pad_control_obelisk  
+- grot_biomass_spire
+- (+ earlier pylon, rover)
 
 ## Next
-1. Wire obelisk into PadDensity
-2. Wire biomass spire into gROT pads
-3. SoftNet only if stable
-4. Continue physics fine-tune
+1. Ability juice / fail toast UI
+2. Contested claim balance playtest
+3. More B props only if pad still sparse
+4. SoftNet only if clean
 
-Updated: 2026-08-07T23:28:29.585005+00:00
+Updated: 2026-08-07T23:31:16.696009+00:00
