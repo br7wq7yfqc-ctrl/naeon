@@ -1,6 +1,7 @@
 extends CanvasLayer
 class_name GameHUD
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
+const _AllianceRanks = preload("res://scripts/systems/AllianceRanks.gd")
 ## Readable dark-neon HUD: abilities, infection, contested banner, mastery, toasts.
 ## Threat colours universal; faction skin does not hide red/green meaning.
 
@@ -16,6 +17,11 @@ var _channel_bar: ProgressBar
 var _contest_banner: PanelContainer
 var _contest_label: Label
 var _mastery_label: Label
+var _econ_label: Label
+var _econ_bar: ProgressBar
+var _econ_flash: float = 0.0
+var _econ_last: float = -1.0
+var _econ_delta: float = 0.0
 var _layer_label: Label
 var _terrain_label: Label
 var _interior_label: Label
@@ -47,6 +53,11 @@ func _ready() -> void:
 	if GameManager and GameManager.has_signal("toast_requested"):
 		if not GameManager.toast_requested.is_connected(_on_gm_toast):
 			GameManager.toast_requested.connect(_on_gm_toast)
+	if GameManager:
+		if GameManager.has_signal("contribution_changed") and not GameManager.contribution_changed.is_connected(_on_econ_tick):
+			GameManager.contribution_changed.connect(_on_econ_tick)
+		if GameManager.has_signal("biomass_changed") and not GameManager.biomass_changed.is_connected(_on_econ_tick):
+			GameManager.biomass_changed.connect(_on_econ_tick)
 
 func bind_player(p: Node) -> void:
 	_player = p
@@ -125,6 +136,23 @@ func _build() -> void:
 	_mastery_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	_mastery_label.add_theme_constant_override("outline_size", 3)
 	_root.add_child(_mastery_label)
+
+	_econ_label = Label.new()
+	_econ_label.position = Vector2(14, 128)
+	_econ_label.add_theme_font_size_override("font_size", 13)
+	_econ_label.add_theme_color_override("font_color", Color(0.55, 1.0, 0.75))
+	_econ_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	_econ_label.add_theme_constant_override("outline_size", 4)
+	_econ_label.text = "ECON —"
+	_root.add_child(_econ_label)
+	_econ_bar = ProgressBar.new()
+	_econ_bar.position = Vector2(14, 148)
+	_econ_bar.size = Vector2(220, 10)
+	_econ_bar.max_value = 1.0
+	_econ_bar.value = 0.0
+	_econ_bar.show_percentage = false
+	_econ_bar.modulate = Color(0.4, 0.95, 0.7)
+	_root.add_child(_econ_bar)
 
 	_layer_label = Label.new()
 	_layer_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -337,6 +365,7 @@ func _build() -> void:
 	_root.add_child(_radar)
 
 func _process(d: float) -> void:
+	_econ_flash = maxf(0.0, _econ_flash - d)
 	if _toast_ttl > 0.0:
 		_toast_ttl -= d
 		if _toast_ttl <= 0.0:
@@ -349,6 +378,7 @@ func _process(d: float) -> void:
 	_refresh()
 
 func _refresh() -> void:
+	_refresh_economy()
 	_refresh_ability_bar()
 	if _player != null and not is_instance_valid(_player):
 		_player = null
@@ -488,6 +518,7 @@ func _refresh() -> void:
 		_infection_label.visible = false
 
 	# Ability bar
+	_update_channel_hud()
 	if show_ability_bar and _ability_sys and _ability_sys.get("abilities") != null:
 		var lines: PackedStringArray = PackedStringArray()
 		var keys := ["Q", "E", "R", "F"]
@@ -669,3 +700,72 @@ func _refresh_ability_bar() -> void:
 		else:
 			parts.append("%s %s" % [keys[i], nm])
 	_ability_label.text = "  ·  ".join(parts)
+
+
+
+func _on_econ_tick(_v: float = 0.0) -> void:
+	if GameManager == null:
+		return
+	var cur := GameManager.biomass if GameManager.get_faction_name() == "gROT" else GameManager.contribution
+	if _econ_last >= 0.0:
+		_econ_delta = cur - _econ_last
+		if absf(_econ_delta) > 0.01:
+			_econ_flash = 1.2
+	_econ_last = cur
+	_refresh_economy()
+
+
+func _refresh_economy() -> void:
+	if _econ_label == null or GameManager == null:
+		return
+	var fac := GameManager.get_faction_name()
+	var cur: float = GameManager.biomass if fac == "gROT" else GameManager.contribution
+	var label_n := "BIOMASS" if fac == "gROT" else "CONTRIB"
+	var rank: int = int(GameManager.alliance_rank) if "alliance_rank" in GameManager else 0
+	var next_cost: float = float(_AllianceRanks.next_rank_cost_contribution(rank))
+	var rname: String = str(_AllianceRanks.rank_name(rank))
+	var ratio := 1.0
+	if next_cost > 0.0:
+		ratio = clampf(cur / next_cost, 0.0, 1.0)
+	var delta_s := ""
+	if _econ_flash > 0.0 and absf(_econ_delta) > 0.01:
+		delta_s = "  %+0.1f" % _econ_delta
+	_econ_label.text = "%s %.1f%s  ·  %s  → next %.0f  ·  soft only (no P2W)" % [
+		label_n, cur, delta_s, rname, next_cost
+	]
+	if _econ_flash > 0.0:
+		var pulse := 0.5 + 0.5 * (_econ_flash / 1.2)
+		_econ_label.modulate = Color(0.55, 1.0, 0.75).lerp(Color(1.0, 1.0, 0.5), pulse)
+	else:
+		_econ_label.modulate = Color(0.55, 1.0, 0.75) if fac != "gROT" else Color(1.0, 0.55, 0.7)
+	if _econ_bar:
+		_econ_bar.value = ratio
+		_econ_bar.modulate = Color(0.35, 0.95, 0.65) if fac != "gROT" else Color(0.95, 0.35, 0.55)
+
+
+
+func _update_channel_hud() -> void:
+	if _channel_bar == null and _channel_label == null:
+		return
+	var ratio := 0.0
+	var name := ""
+	var ch: Node = null
+	if _player:
+		ch = _player.get_node_or_null("ChannelController")
+		if ch == null and _ability_sys:
+			# channel lives on owner
+			pass
+	if ch and ch.has_method("is_channeling") and ch.is_channeling():
+		ratio = float(ch.get_ratio()) if ch.has_method("get_ratio") else 0.0
+		name = str(ch.ability_name) if "ability_name" in ch else "Channel"
+	elif _ability_sys and _ability_sys.has_method("get_channel_ratio"):
+		ratio = float(_ability_sys.get_channel_ratio())
+		if ratio > 0.01:
+			name = "Channel"
+	if _channel_bar:
+		_channel_bar.visible = ratio > 0.0
+		_channel_bar.value = ratio
+	if _channel_label:
+		_channel_label.visible = ratio > 0.0
+		if ratio > 0.0:
+			_channel_label.text = "%s  %d%%" % [name, int(ratio * 100.0)]

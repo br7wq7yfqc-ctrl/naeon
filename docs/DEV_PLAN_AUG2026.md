@@ -1,22 +1,18 @@
 # NAEON Dev Plan — Aug 2026
 
 ## Mode
-holistic-economical + sequential + parallel Tripo
+holistic-economical + sequential
 
-## Done
+## Done this turn
 | Item | Status |
 |------|--------|
-| Ability toast fail/success | done |
-| Precise CD/energy/faction reasons | done |
-| HUD Q/E/R/F CD bar | done |
-| Walker Q/E/R/F abilities | done |
-| shield_emitter + cargo_container | dual-theme LODs |
-| Tripo ~4720 | |
+| Channel ring faction polish + burst | done |
+| Soft economy HUD + delta flash + rank bar | done |
+| Channel progress HUD bar | done |
 
 ## Next
-1. Channel ring visual polish
-2. Soft economy HUD tick readability
-3. SoftNet only if clean
-4. B props only if still sparse
+1. SoftNet audit (only if clean)
+2. Economy rank cost align with AllianceRanks
+3. B props if pad sparse
 
-Updated: 2026-08-07T23:35:35.579344+00:00
+Updated: 2026-08-07T23:37:55.829940+00:00
