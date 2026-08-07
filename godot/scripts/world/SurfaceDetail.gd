@@ -1,11 +1,12 @@
 extends Node3D
 class_name SurfaceDetail
 ## Procedural surface height patches around observer when near planet.
-## Cheap ArrayMesh displacement — no Tripo. Optimized for 1060+.
+## Cheap ArrayMesh displacement — no Tripo. Patches SNAP, do not drift/swim.
 
-const PATCH_COUNT := 8
-const PATCH_RES := 12  # verts per side
+const PATCH_COUNT := 6
+const PATCH_RES := 10
 const PATCH_SIZE := 48.0
+const REPOS_DIST := 18.0  ## meters of observer move before re-snap
 
 var _planet: Node3D
 var _radius: float = 1200.0
@@ -15,22 +16,27 @@ var _observer: Node3D
 var _built: bool = false
 var _accum: float = 0.0
 var _seed: int = 1
+var _last_snap_pos: Vector3 = Vector3.ZERO
+var _has_snap: bool = false
+var _ang_base: float = 0.0
 
 func setup(planet: Node3D, radius: float, color: Color, seed_i: int = 1) -> void:
 	_planet = planet
 	_radius = radius
 	_surface_color = color
 	_seed = seed_i
+	_ang_base = float(seed_i) * 0.37
 
 func set_observer(n: Node3D) -> void:
 	_observer = n
+	_has_snap = false
 
 func _ready() -> void:
 	set_process(true)
 
 func _process(delta: float) -> void:
 	_accum += delta
-	if _accum < 0.35:
+	if _accum < 0.5:
 		return
 	_accum = 0.0
 	if _planet == null or _observer == null or not is_instance_valid(_observer):
@@ -42,7 +48,11 @@ func _process(delta: float) -> void:
 	_set_patches_visible(true)
 	if not _built:
 		_build_patches()
-	_update_patch_positions()
+	# Only re-place when player moved enough — no continuous orbit
+	if (not _has_snap) or _observer.global_position.distance_to(_last_snap_pos) > REPOS_DIST:
+		_update_patch_positions()
+		_last_snap_pos = _observer.global_position
+		_has_snap = true
 
 func _set_patches_visible(v: bool) -> void:
 	for p in _patches:
@@ -58,10 +68,10 @@ func _build_patches() -> void:
 		match int(gq.tier):
 			0:
 				res = 8
-				count = 5
+				count = 4
 			2, 3:
-				res = 16
-				count = 10
+				res = 12
+				count = 8
 	for i in count:
 		var mi := MeshInstance3D.new()
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -72,7 +82,6 @@ func _build_patches() -> void:
 		mat.roughness = 0.95
 		mat.metallic = 0.0
 		mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-		# Vertex shading cheaper on LOW
 		if gq and int(gq.tier) <= 0:
 			mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
 		mi.material_override = mat
@@ -87,14 +96,13 @@ func _make_patch_mesh(res: int, patch_i: int) -> ArrayMesh:
 	rng.seed = _seed * 997 + patch_i * 31
 	var half := PATCH_SIZE * 0.5
 	var step := PATCH_SIZE / float(res - 1)
-	# Build grid in local XZ, Y = noise height
 	var verts: Array[Vector3] = []
 	for z in res:
 		for x in res:
 			var px := -half + x * step
 			var pz := -half + z * step
 			var n := _fbm(px * 0.08 + patch_i * 3.1, pz * 0.08 + patch_i * 1.7, rng)
-			var py := n * 3.2  # height meters
+			var py := n * 3.2
 			verts.append(Vector3(px, py, pz))
 	for z in res - 1:
 		for x in res - 1:
@@ -114,7 +122,6 @@ func _add_tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
 	st.add_vertex(c)
 
 func _fbm(x: float, z: float, rng: RandomNumberGenerator) -> float:
-	# Deterministic-ish value noise via sin hash (no texture)
 	var v := 0.0
 	var amp := 1.0
 	var freq := 1.0
@@ -129,10 +136,10 @@ func _update_patch_positions() -> void:
 		return
 	var to_obs: Vector3 = _observer.global_position - _planet.global_position
 	var up: Vector3 = to_obs.normalized()
-	# Place patches in a ring around observer projected on surface
 	var n := _patches.size()
+	# FIXED angles — no Time.get_ticks drift (was causing "swimming" terrain)
 	for i in n:
-		var ang := TAU * float(i) / float(n) + Time.get_ticks_msec() * 0.00001
+		var ang := TAU * float(i) / float(maxi(n, 1)) + _ang_base
 		var right := up.cross(Vector3.FORWARD)
 		if right.length_squared() < 0.01:
 			right = up.cross(Vector3.RIGHT)
@@ -140,7 +147,6 @@ func _update_patch_positions() -> void:
 		var forward := right.cross(up).normalized()
 		var offset := (right * cos(ang) + forward * sin(ang)) * (28.0 + float(i % 3) * 18.0)
 		var center: Vector3 = up * (_radius + 0.4) + offset
-		# Orient patch: Y = radial out
 		var y := up
 		var x := y.cross(forward)
 		if x.length_squared() < 0.01:

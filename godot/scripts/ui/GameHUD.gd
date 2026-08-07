@@ -26,6 +26,11 @@ var _edu_quest: Node = null
 var _toast_label: Label
 var _claim_bar: ProgressBar
 var _player: Node
+var _hud_accum: float = 0.0
+var _host_hint_cache: String = ""
+var _host_hint_t: float = 999.0
+var _terrain_cache: String = ""
+var _terrain_t: float = 999.0
 var _ability_sys: Node
 var _toast_ttl: float = 0.0
 var _toast_queue: Array = []
@@ -312,6 +317,11 @@ func _process(d: float) -> void:
 		_toast_ttl -= d
 		if _toast_ttl <= 0.0:
 			_pop_toast()
+	_hud_accum += d
+	# Full HUD refresh ~8 Hz (was every frame — FileAccess + group scans)
+	if _hud_accum < 0.12:
+		return
+	_hud_accum = 0.0
 	_refresh()
 
 func _refresh() -> void:
@@ -338,40 +348,48 @@ func _refresh() -> void:
 	var net := ""
 	if SoftENet and SoftENet.has_method("status_line"):
 		net = "  |  " + str(SoftENet.status_line())
-	var host_hint := ""
-	if SoftENet and SoftENet.is_host and FileAccess.file_exists("user://softnet_host_info.txt"):
-		var hf := FileAccess.open("user://softnet_host_info.txt", FileAccess.READ)
-		if hf:
-			var lines := hf.get_as_text().strip_edges().split("\n")
-			var ip_show: PackedStringArray = []
-			for ln in lines:
-				if ln.begins_with("port=") or ln.begins_with("transport="):
-					continue
-				if ln != "":
-					ip_show.append(ln)
-					if ip_show.size() >= 2:
-						break
-			if ip_show.size() > 0:
-				host_hint = "  LAN " + ", ".join(ip_show)
+	var host_hint := _host_hint_cache
+	_host_hint_t += 0.12
+	if SoftENet and SoftENet.is_host and _host_hint_t >= 2.0:
+		_host_hint_t = 0.0
+		host_hint = ""
+		if FileAccess.file_exists("user://softnet_host_info.txt"):
+			var hf := FileAccess.open("user://softnet_host_info.txt", FileAccess.READ)
+			if hf:
+				var lines := hf.get_as_text().strip_edges().split("\n")
+				var ip_show: PackedStringArray = []
+				for ln in lines:
+					if ln.begins_with("port=") or ln.begins_with("transport="):
+						continue
+					if ln != "":
+						ip_show.append(ln)
+						if ip_show.size() >= 2:
+							break
+				if ip_show.size() > 0:
+					host_hint = "  LAN " + ", ".join(ip_show)
+		_host_hint_cache = host_hint
+	elif not (SoftENet and SoftENet.is_host):
+		_host_hint_cache = ""
+		host_hint = ""
 	_status_label.text = "HP %s  EN %s  |  %s %s%s%s\nCONTRIB %.0f  ·  4=form F9=fac F10=host F11=join  (no P2W)" % [hp, en, fac, form, net, host_hint, contrib]
 
 	# Terrain budget + interior status (soft info only)
 	if _terrain_label:
-		var tline := ""
-		var tree := get_tree()
-		if tree and _player:
-			for n in tree.get_nodes_in_group("terrain_edit"):
-				if n.has_method("get_budget_ratio") and n.has_method("remaining_volume"):
-					var ratio := float(n.get_budget_ratio())
-					var rem := float(n.remaining_volume())
-					var pct := int((1.0 - ratio) * 100.0) if ratio <= 1.0 else 0
-					# get_budget_ratio = used/max typically
-					if n.has_method("get_budget_ratio"):
-						pct = int(clampf(float(n.get_budget_ratio()), 0.0, 1.0) * 100.0)
-					tline = "TERRAIN  used %d%%  rem %.0f m³  ·  G raise B dig U undo" % [pct, rem]
-					break
-		_terrain_label.text = tline
-		_terrain_label.visible = tline != ""
+		_terrain_t += 0.12
+		if _terrain_t >= 0.5:
+			_terrain_t = 0.0
+			var tline := ""
+			var tree := get_tree()
+			if tree and _player:
+				for n in tree.get_nodes_in_group("terrain_edit"):
+					if n.has_method("get_budget_ratio") and n.has_method("remaining_volume"):
+						var pct := int(clampf(float(n.get_budget_ratio()), 0.0, 1.0) * 100.0)
+						var rem := float(n.remaining_volume())
+						tline = "TERRAIN  used %d%%  rem %.0f m³  ·  G raise B dig U undo" % [pct, rem]
+						break
+			_terrain_cache = tline
+		_terrain_label.text = _terrain_cache
+		_terrain_label.visible = _terrain_cache != ""
 	if _interior_label:
 		var iline := ""
 		if LayerContext and str(LayerContext.current_layer).to_lower() in ["interior", "station", "ship_int"]:

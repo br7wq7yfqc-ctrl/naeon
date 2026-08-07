@@ -1,30 +1,58 @@
 extends Node
 ## Soft local multiplayer prep — authority snapshots, optional ghost peer.
-## No real net yet; validates LayerContextAuthority export/import + lag ghost.
-## Never syncs combat power multipliers.
+## DEFAULT OFF — was allocating Dictionary snapshots @20Hz (FPS killer / GC pressure).
+## Enable via --softnet-loopback or SoftENet host/join or SoftNetSession.enable().
 
 signal snapshot_published(snap: Dictionary)
 
-var enabled: bool = true
-var ghost_enabled: bool = true
-var lag_ms: int = 120  ## simulated RTT half for ghost
-var _history: Array = []  ## {t, snap}
+var enabled: bool = false
+var ghost_enabled: bool = false
+var lag_ms: int = 120
+var _history: Array = []
 var _player: Node3D = null
 var _ghost: Node3D = null
 var _tick: float = 0.0
 var _ghost_pending: bool = false
+const SNAP_INTERVAL := 0.25  ## was 0.05 — 5× less GC pressure
+const HISTORY_MS := 1500
+
+func _ready() -> void:
+	var args := OS.get_cmdline_user_args()
+	for a in args:
+		if a == "--softnet-loopback" or a == "softnet-loopback":
+			enable(true, true)
+	# SoftENet may enable when session starts
+	if SoftENet:
+		if SoftENet.has_signal("host_started"):
+			SoftENet.host_started.connect(func(_p): enable(true, false))
+		if SoftENet.has_signal("joined"):
+			SoftENet.joined.connect(func(_a, _p): enable(true, false))
+
+func enable(on: bool = true, with_ghost: bool = false) -> void:
+	enabled = on
+	ghost_enabled = with_ghost and on
+	if not on:
+		_history.clear()
+		if _ghost and is_instance_valid(_ghost):
+			_ghost.queue_free()
+			_ghost = null
+		print("[SoftNetSession] disabled (perf)")
+	else:
+		print("[SoftNetSession] enabled ghost=", ghost_enabled)
+		if ghost_enabled and _player:
+			_ghost_pending = true
+			call_deferred("_ensure_ghost")
 
 func bind_player(p: Node3D) -> void:
 	_player = p
 	if SoftENet and SoftENet.has_method("bind_player"):
 		SoftENet.bind_player(p)
-	if ghost_enabled:
+	if enabled and ghost_enabled:
 		_ghost_pending = true
-		# Wait until scene tree is idle (avoids busy parent during TestArena _ready)
 		get_tree().create_timer(0.05).timeout.connect(_ensure_ghost)
 
 func _ensure_ghost() -> void:
-	if not _ghost_pending:
+	if not _ghost_pending or not ghost_enabled:
 		return
 	if _player == null or not is_instance_valid(_player):
 		return
@@ -33,7 +61,6 @@ func _ensure_ghost() -> void:
 		return
 	var parent := _player.get_parent()
 	if parent == null:
-		# try next frame
 		call_deferred("_ensure_ghost")
 		return
 	_ghost = Node3D.new()
@@ -71,22 +98,25 @@ func _finish_ghost_visual() -> void:
 	_ghost.add_child(lab)
 	if _player and is_instance_valid(_player):
 		_ghost.global_position = _player.global_position + Vector3(1.5, 0, 1.5)
-	print("[SoftNetSession] ghost spawned (local lag sim ", lag_ms, "ms)")
 
 func _process(delta: float) -> void:
 	if not enabled or _player == null or not is_instance_valid(_player):
 		return
 	_tick += delta
-	if _tick < 0.05:
+	if _tick < SNAP_INTERVAL:
 		return
 	_tick = 0.0
 	var snap := _capture()
 	_history.append({"t": Time.get_ticks_msec(), "snap": snap})
 	var now := Time.get_ticks_msec()
-	while _history.size() > 0 and now - int(_history[0]["t"]) > 2000:
+	while _history.size() > 0 and now - int(_history[0]["t"]) > HISTORY_MS:
+		_history.pop_front()
+	# Cap hard (GC safety)
+	while _history.size() > 24:
 		_history.pop_front()
 	snapshot_published.emit(snap)
-	_apply_ghost(now)
+	if ghost_enabled:
+		_apply_ghost(now)
 
 func _capture() -> Dictionary:
 	var form := ""
@@ -97,19 +127,12 @@ func _capture() -> Dictionary:
 		form = str(_player.form_name)
 	if "faction" in _player:
 		fac = str(_player.faction)
-	var ctx := {}
-	if LayerContext:
-		ctx = LayerContext.snapshot()
-	var auth := {}
-	if LayerContextAuthority:
-		auth = LayerContextAuthority.export_bundle()
+	# Lightweight — skip LayerContextAuthority bundle every tick (was heavy)
 	return {
 		"pos": [_player.global_position.x, _player.global_position.y, _player.global_position.z],
 		"yaw": _player.rotation.y,
 		"form": form,
 		"faction": fac,
-		"context": ctx,
-		"authority": auth,
 	}
 
 func _apply_ghost(now_ms: int) -> void:

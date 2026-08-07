@@ -201,9 +201,16 @@ func _on_dummy_died() -> void:
 			extra = "  |  " + str(_clash.status_line())
 		kills_label.text = "Kills: %d%s" % [kills, extra]
 
+var _ui_accum: float = 0.0
+
 func _process(_delta: float) -> void:
 	if player == null:
 		return
+	_ui_accum += _delta
+	# Radar + labels ~10 Hz (was every frame)
+	if _ui_accum < 0.1:
+		return
+	_ui_accum = 0.0
 	_update_clash_radar()
 	if not ("health" in player):
 		return

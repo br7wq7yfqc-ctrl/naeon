@@ -119,6 +119,8 @@ func _host_udp(p: int) -> Error:
 	_ensure_puppet_root()
 	host_started.emit(p)
 	print("[SoftENet] host port=", p, " unique_id=1 transport=udp bind_ok")
+	if SoftNetSession and SoftNetSession.has_method("enable"):
+		SoftNetSession.enable(true, false)
 	_write_host_info(p)
 	if GameManager:
 		GameManager.toast_requested.emit("SoftENet UDP HOST :%d" % p)
@@ -202,6 +204,8 @@ func leave() -> void:
 	is_joining = false
 	loopback_enabled = false
 	print("[SoftENet] left session")
+	if SoftNetSession and SoftNetSession.has_method("enable"):
+		SoftNetSession.enable(false, false)
 	if GameManager:
 		GameManager.toast_requested.emit("SoftENet left")
 
@@ -240,9 +244,10 @@ func _process(delta: float) -> void:
 	if not is_connected and not is_host and not is_joining and not loopback_enabled:
 		return
 	_peer_log_tick += delta
-	if _peer_log_tick >= 2.0:
+	if _peer_log_tick >= 8.0:
 		_peer_log_tick = 0.0
-		print("[SoftENet] ", status_line(), " local_id=", local_peer_id)
+		if OS.is_debug_build():
+			print("[SoftENet] ", status_line(), " local_id=", local_peer_id)
 	if is_joining and _udp:
 		_hello_tick += delta
 		if _hello_tick >= 0.5:
@@ -397,6 +402,8 @@ func _handle_client_packet(kind: int, d: Dictionary) -> void:
 		is_joining = false
 		joined.emit(join_address, port)
 		print("[SoftENet] connected as ", local_peer_id, " transport=udp")
+		if SoftNetSession and SoftNetSession.has_method("enable"):
+			SoftNetSession.enable(true, false)
 		if GameManager:
 			GameManager.toast_requested.emit("SoftENet UDP connected id=%d" % local_peer_id)
 		return

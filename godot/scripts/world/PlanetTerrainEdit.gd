@@ -31,6 +31,9 @@ var _observer: Node3D
 var _plate_up: Vector3 = Vector3.UP
 var _plate_origin: Vector3 = Vector3.ZERO
 var _dirty: bool = true
+var _last_plate_obs: Vector3 = Vector3.ZERO
+var _plate_snapped: bool = false
+const PLATE_REPOS_DIST := 14.0
 var _accum: float = 0.0
 var _edit_accum: float = 0.0
 var _mat: StandardMaterial3D
@@ -177,9 +180,15 @@ func _process(delta: float) -> void:
 		visible = false
 		return
 	visible = true
-	if _accum >= 0.2:
+	if _accum >= 0.35:
 		_accum = 0.0
-		_reposition_plate()
+		# Only re-anchor plate when observer moved far — prevents terrain "swimming"
+		if (not _plate_snapped) or _observer.global_position.distance_to(_last_plate_obs) > PLATE_REPOS_DIST:
+			# freeze while actively editing
+			if not _stroke_active:
+				_reposition_plate()
+				_last_plate_obs = _observer.global_position
+				_plate_snapped = true
 	# Undo: U key
 	if _observer.is_in_group("player") and Input.is_physical_key_pressed(KEY_U):
 		# edge via timer
@@ -335,9 +344,18 @@ func _rebuild_mesh() -> void:
 			st.add_vertex(verts[i01])
 	st.generate_normals()
 	var mesh := st.commit()
+	# Drop previous mesh/shape refs so RID memory is reclaimed
+	if _mesh_inst.mesh:
+		_mesh_inst.mesh = null
+	if _col and _col.shape:
+		_col.shape = null
 	_mesh_inst.mesh = mesh
-	if mesh:
-		_col.shape = mesh.create_trimesh_shape()
+	if mesh and _col:
+		# Convex cheaper than trimesh for soft edit plate
+		var sh: Shape3D = mesh.create_convex_shape(true, true)
+		if sh == null:
+			sh = mesh.create_trimesh_shape()
+		_col.shape = sh
 
 func _save_path() -> String:
 	return "user://terrain_%s.dat" % planet_id
