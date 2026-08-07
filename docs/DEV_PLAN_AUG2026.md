@@ -3,17 +3,15 @@
 ## Mode
 holistic-economical + sequential
 
-## Done
+## Done this turn
 | Item | Status |
 |------|--------|
-| Channel + economy HUD | done |
-| SoftNet continuum fields (op/morph/amode) | **done** |
-| SoftNet stale puppet prune 8s | **done** |
-| AllianceRanks cost via GameManager | **done** |
+| SoftNet loopback continuum mirror + orbit ghost | done |
+| PadAmbientLife faction + idle wander + quality count | done |
 
 ## Next
-1. SoftNet loopback playtest polish
-2. Pad ambient life if sparse
-3. No SoftNet combat authority (locked)
+1. Contested claim audio/juice consistency
+2. SoftNet multiplayer RPC pitch/roll parity (optional)
+3. Keep no combat authority on SoftNet
 
-Updated: 2026-08-07T23:40:44.258474+00:00
+Updated: 2026-08-07T23:51:54.275356+00:00

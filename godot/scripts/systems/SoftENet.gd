@@ -232,13 +232,16 @@ func status_line() -> String:
 	return "NET %s peers=%d puppets=%d :%d %s" % [st, n, _puppets.size(), port, _transport_name()]
 
 func enable_loopback() -> void:
+	if loopback_enabled and _puppets.has(LOOPBACK_PEER_ID):
+		return
 	loopback_enabled = true
 	is_host = true
 	is_connected = true
+	local_peer_id = 1
 	_ensure_puppet_root()
 	print("[SoftENet] loopback peer enabled (puppet stress, no OS socket)")
 	if GameManager:
-		GameManager.toast_requested.emit("SoftENet loopback puppet on")
+		GameManager.toast_requested.emit("SoftNet LOOP — ghost peer (visual only, no combat)")
 
 func _process(delta: float) -> void:
 	_poll_udp()
@@ -499,10 +502,13 @@ func _loopback_tick_process(delta: float) -> void:
 	_loopback_tick = 0.0
 	_ensure_puppet_root()
 	var pup = _get_or_create_puppet(LOOPBACK_PEER_ID)
-	if pup == null or not pup.has_method("apply_state"):
+	if pup == null:
 		return
+	# Mirror continuum fields for local visual stress (no network, no combat)
 	var form := "Canine"
 	var fac := "Cybernex"
+	var mode := ""
+	var landed := false
 	if "current_form" in _player_ref:
 		form = str(_player_ref.current_form)
 	elif "form_name" in _player_ref:
@@ -511,8 +517,36 @@ func _loopback_tick_process(delta: float) -> void:
 		form = "Ship"
 	if "faction" in _player_ref:
 		fac = str(_player_ref.faction)
-	var pos: Vector3 = _player_ref.global_position + Vector3(2.0, 0, 1.2)
-	pup.call("apply_state", pos, _player_ref.rotation.y, form, fac)
+	if form == "Ship" and _player_ref.has_method("flight_mode_name"):
+		mode = str(_player_ref.flight_mode_name())
+	if "is_landed" in _player_ref:
+		landed = bool(_player_ref.is_landed)
+	var op_mode := 0
+	var morph_t := 0.0
+	var amode := "surface"
+	if "op_mode" in _player_ref:
+		op_mode = int(_player_ref.op_mode)
+	if form == "Ship":
+		amode = "pilot"
+	elif "eva_mode" in _player_ref and bool(_player_ref.eva_mode):
+		amode = "eva"
+	var hm = _player_ref.get_node_or_null("HullMorph")
+	if hm and "morph_t" in hm:
+		morph_t = float(hm.morph_t)
+	# Soft orbit offset so ghost is readable beside local actor
+	var tsec := Time.get_ticks_msec() * 0.001
+	var orbit := Vector3(cos(tsec * 0.7) * 2.4, 0.15, sin(tsec * 0.7) * 2.4)
+	var pos: Vector3 = _player_ref.global_position + orbit
+	var yaw: float = _player_ref.rotation.y + 0.4
+	var pitch: float = _player_ref.rotation.x
+	var roll: float = _player_ref.rotation.z
+	if pup.has_method("apply_state_ex"):
+		pup.call("apply_state_ex", pos, yaw, pitch, roll, form, fac, mode, landed)
+	elif pup.has_method("apply_state"):
+		pup.call("apply_state", pos, yaw, form, fac)
+	if pup.has_method("apply_soft_extra"):
+		pup.call("apply_soft_extra", op_mode, morph_t, amode)
+	_last_seen[LOOPBACK_PEER_ID] = Time.get_ticks_msec()
 
 @rpc("any_peer", "unreliable_ordered")
 func rpc_soft_state(x: float, y: float, z: float, yaw: float, form: String, faction: String) -> void:
