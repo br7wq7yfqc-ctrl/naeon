@@ -3,26 +3,20 @@
 ## Mode
 holistic-economical + sequential + parallel Tripo
 
-## Latest complete
-| Track | Status |
-|-------|--------|
-| AbilityKitCatalog | done |
-| PlanetProfileCatalog | done (3 bodies) |
-| Walker energy/health | done |
-| HullMorph siege radiators | done |
-| PadDensity new props | done |
-| Tripo balance | ~4760 |
-
-## Assets this session
-- ship_siege_radiator
-- pad_control_obelisk  
-- grot_biomass_spire
-- (+ earlier pylon, rover)
+## Done
+| Item | Status |
+|------|--------|
+| Ability toast fail/success | done |
+| Precise CD/energy/faction reasons | done |
+| HUD Q/E/R/F CD bar | done |
+| Walker Q/E/R/F abilities | done |
+| shield_emitter + cargo_container | dual-theme LODs |
+| Tripo ~4720 | |
 
 ## Next
-1. Ability juice / fail toast UI
-2. Contested claim balance playtest
-3. More B props only if pad still sparse
-4. SoftNet only if clean
+1. Channel ring visual polish
+2. Soft economy HUD tick readability
+3. SoftNet only if clean
+4. B props only if still sparse
 
-Updated: 2026-08-07T23:31:16.696009+00:00
+Updated: 2026-08-07T23:35:35.579344+00:00

@@ -349,6 +349,7 @@ func _process(d: float) -> void:
 	_refresh()
 
 func _refresh() -> void:
+	_refresh_ability_bar()
 	if _player != null and not is_instance_valid(_player):
 		_player = null
 	if _obj_label and SessionObjectives:
@@ -644,3 +645,27 @@ func _on_gm_toast(msg: String) -> void:
 func _soft_infection_text(stacks: int) -> String:
 	# CONCEPT §7.3 Biology mastery — stage labels only
 	return _SoftK.infection_label(stacks)
+
+
+func _refresh_ability_bar() -> void:
+	if _ability_label == null:
+		return
+	if _ability_sys == null and _player:
+		_ability_sys = _player.get_node_or_null("AbilitySystem")
+	if _ability_sys == null:
+		_ability_label.text = ""
+		return
+	var keys := ["Q", "E", "R", "F"]
+	var parts: PackedStringArray = []
+	for i in range(4):
+		var nm := "—"
+		var cd_r := 0.0
+		if _ability_sys.has_method("get_slot_label"):
+			nm = str(_ability_sys.get_slot_label(i))
+		if _ability_sys.has_method("get_cooldown_ratio"):
+			cd_r = float(_ability_sys.get_cooldown_ratio(i))
+		if cd_r > 0.05:
+			parts.append("%s[%s]" % [keys[i], nm])
+		else:
+			parts.append("%s %s" % [keys[i], nm])
+	_ability_label.text = "  ·  ".join(parts)

@@ -19,6 +19,10 @@ func _ready() -> void:
 	for ability in abilities:
 		if ability:
 			current_cooldowns[ability] = 0.0
+	if not ability_failed.is_connected(_on_ability_failed):
+		ability_failed.connect(_on_ability_failed)
+	if not ability_activated.is_connected(_on_ability_activated):
+		ability_activated.connect(_on_ability_activated)
 
 func _process(delta: float) -> void:
 	for ability in current_cooldowns.keys():
@@ -31,11 +35,13 @@ func try_activate(index: int, target = null) -> bool:
 	var ability: Ability = abilities[index]
 	if ability == null:
 		return false
-	if current_cooldowns.get(ability, 0.0) > 0.0:
-		ability_failed.emit(ability, "On cooldown")
+	var cd_left: float = float(current_cooldowns.get(ability, 0.0))
+	if cd_left > 0.0:
+		ability_failed.emit(ability, "Cooldown %.1fs" % cd_left)
 		return false
-	if not ability.can_activate(owner_character):
-		ability_failed.emit(ability, "Cannot activate")
+	var why := _cannot_reason(ability)
+	if why != "":
+		ability_failed.emit(ability, why)
 		return false
 	var ch := _ensure_channel()
 	if ch and ch.has_method("is_channeling") and ch.is_channeling():
@@ -132,4 +138,70 @@ func setup_default_loadout(faction: String = "Cybernex") -> void:
 		if a:
 			add_ability(a)
 	print("[AbilitySystem] kit ", faction, " n=", abilities.size())
+	# Rebind feedback if _ready already ran
+	if not ability_failed.is_connected(_on_ability_failed):
+		ability_failed.connect(_on_ability_failed)
+	if not ability_activated.is_connected(_on_ability_activated):
+		ability_activated.connect(_on_ability_activated)
 
+
+
+
+func _cannot_reason(ability: Ability) -> String:
+	if ability == null or owner_character == null:
+		return "No caster"
+	if owner_character.has_method("get_energy") and ability.energy_cost > 0.0:
+		if float(owner_character.get_energy()) < ability.energy_cost:
+			return "Need %.0f energy" % ability.energy_cost
+	if ability.biomass_cost > 0.0 and owner_character.has_method("get_biomass"):
+		if float(owner_character.get_biomass()) < ability.biomass_cost:
+			return "Need biomass"
+	if ability.faction_restriction != Ability.FactionRestriction.ANY and owner_character.has_method("get_faction"):
+		var f := str(owner_character.get_faction())
+		if ability.faction_restriction == Ability.FactionRestriction.CYBERNEX_ONLY and f != "Cybernex":
+			return "Cybernex only"
+		if ability.faction_restriction == Ability.FactionRestriction.GROT_ONLY and f != "gROT":
+			return "gROT only"
+	if not ability.can_activate(owner_character):
+		return "Cannot activate"
+	return ""
+
+
+func _on_ability_failed(ability: Ability, reason: String) -> void:
+	var name := ability.ability_name if ability else "Ability"
+	_toast("%s — %s" % [name, reason], 2.0)
+	if AudioDirector and AudioDirector.has_method("play_ui_deny"):
+		AudioDirector.play_ui_deny()
+	elif AudioDirector:
+		AudioDirector.play_hit(false)
+
+
+func _on_ability_activated(ability: Ability) -> void:
+	if ability == null:
+		return
+	var tag := "CHANNEL" if ability.is_channeled else "CAST"
+	_toast("%s  %s" % [tag, ability.ability_name], 1.4)
+	if CombatJuice and owner_character is Node3D:
+		CombatJuice.hit_feedback(3.0, (owner_character as Node3D).global_position)
+
+
+func _toast(msg: String, ttl: float = 2.5) -> void:
+	var tree := get_tree()
+	if tree == null:
+		return
+	for n in tree.get_nodes_in_group("game_hud"):
+		if n.has_method("push_toast"):
+			n.push_toast(msg, ttl)
+			return
+	# fallback print
+	print("[Ability] ", msg)
+
+
+func get_slot_label(index: int) -> String:
+	if index < 0 or index >= abilities.size() or abilities[index] == null:
+		return "—"
+	var a: Ability = abilities[index]
+	var cd := float(current_cooldowns.get(a, 0.0))
+	if cd > 0.05:
+		return "%s %.0f" % [a.ability_name.substr(0, 8), cd]
+	return a.ability_name.substr(0, 10)

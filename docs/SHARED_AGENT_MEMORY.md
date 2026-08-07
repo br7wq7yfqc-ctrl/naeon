@@ -104,3 +104,8 @@
 - Parallel content: Tripo A ownership_claim_pylon (high) + B ground_rover_chassis (standard); balance was ~4870.
 - Code: ship bolts → Area3D + ProjectileRunner hits; pad claim particles + claim_beacon mesh; siege energy cost up.
 - No DMG micro-release.
+
+
+## 2026-08-07T23:35:35.579344+00:00
+- Ability feedback toasts + HUD CD bar; walker full kit keys.
+- Tripo B: cybernex_shield_emitter + cargo_landing_container (−40 cr). Balance ~4720.

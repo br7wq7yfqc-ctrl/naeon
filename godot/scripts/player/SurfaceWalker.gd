@@ -284,11 +284,16 @@ func _input(event: InputEvent) -> void:
 			_cycle_form()
 		elif event.keycode == KEY_Q:
 			_try_ability(0)
+		elif event.keycode == KEY_E:
+			if eva_mode:
+				mag_boot = not mag_boot
+				print("[SurfaceWalker] mag-boot ", mag_boot)
+			else:
+				_try_ability(1)
 		elif event.keycode == KEY_R:
 			_try_ability(2)
-		elif event.keycode == KEY_E and eva_mode:
-			mag_boot = not mag_boot
-			print("[SurfaceWalker] mag-boot ", mag_boot)
+		elif event.keycode == KEY_F:
+			_try_ability(3)
 		# G/B terrain edit handled by PlanetTerrainEdit while in player group
 	if event.is_action_pressed("ui_cancel"):
 		Input.set_mouse_mode(
