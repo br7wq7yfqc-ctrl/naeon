@@ -55,7 +55,11 @@ func enter_ship(player: Node3D, ship: Node3D) -> void:
 	var fac := "Cybernex"
 	if ship.get("faction") != null:
 		fac = str(ship.faction)
-	_begin(player, "ship", _Gen.build_ship(fac), ship.global_position, Vector3.UP)
+	var pid := "scout_single"
+	if ship.has_method("get_interior_profile_id"):
+		pid = str(ship.get_interior_profile_id())
+	var interior: Node3D = _Gen.build_from_profile(pid, fac)
+	_begin(player, "ship", interior, ship.global_position, Vector3.UP)
 
 func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, ret_up: Vector3) -> void:
 	if _active:

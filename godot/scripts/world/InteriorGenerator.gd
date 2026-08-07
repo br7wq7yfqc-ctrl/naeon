@@ -202,3 +202,57 @@ static func _interior_point_lights(root: Node3D, neon: Color) -> void:
 		o.shadow_enabled = false
 		o.position = pos
 		root.add_child(o)
+
+
+
+static func build_from_profile(profile_id: String, faction: String = "Cybernex") -> Node3D:
+	var cat = load("res://scripts/ship/ShipInteriorProfiles.gd")
+	var prof: Dictionary = cat.profile(profile_id)
+	var root := Node3D.new()
+	root.name = "ShipInterior_%s" % str(prof.get("id", profile_id))
+	var neon := _NEON_GR if faction == "gROT" else _NEON_CX
+	var fx := "grot" if faction == "gROT" else "cybernex"
+	for room in prof.get("rooms", []):
+		_room(root, room["pos"], room["size"], str(room["name"]), neon)
+	for pr in prof.get("props", []):
+		var tmpl: String = str(pr["rel"])
+		var rel: String = tmpl % fx if "%s" in tmpl else tmpl.replace("cybernex", fx)
+		_try_glb(root, rel, pr["pos"], float(pr.get("s", 1.0)))
+	var seat_pos: Vector3 = prof.get("seat", Vector3(0, 1, 0))
+	var hatch_pos: Vector3 = prof.get("hatch", Vector3(0, 1, 6))
+	var seat := Marker3D.new()
+	seat.name = "Seat"
+	seat.position = seat_pos
+	root.add_child(seat)
+	var seat_area := Area3D.new()
+	seat_area.name = "SeatVolume"
+	var scs := CollisionShape3D.new()
+	var sbox := BoxShape3D.new()
+	sbox.size = Vector3(1.6, 2.0, 1.6)
+	scs.shape = sbox
+	seat_area.add_child(scs)
+	seat_area.position = seat_pos
+	root.add_child(seat_area)
+	var exit := Area3D.new()
+	exit.name = "ExitVolume"
+	var cs := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(2.5, 2.2, 1.5)
+	cs.shape = box
+	exit.add_child(cs)
+	exit.position = hatch_pos
+	root.add_child(exit)
+	var spawn := Marker3D.new()
+	spawn.name = "Spawn"
+	spawn.position = seat_pos + Vector3(0, 0, 1.2)
+	root.add_child(spawn)
+	var elabel := Label3D.new()
+	elabel.text = "HATCH [I]  SEAT [F]"
+	elabel.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	elabel.font_size = 36
+	elabel.position = hatch_pos + Vector3(0, 1.2, 0)
+	elabel.modulate = neon
+	root.add_child(elabel)
+	_add_neon_strips(root, faction)
+	_interior_point_lights(root, neon)
+	return root

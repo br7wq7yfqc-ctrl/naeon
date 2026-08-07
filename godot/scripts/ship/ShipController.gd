@@ -51,6 +51,10 @@ var _landing_gear: Node3D = null
 var _thruster_fx: GPUParticles3D = null
 var _cargo_hold: Node = null
 var _cargo_ramp: Node3D = null
+var _hull_morph: Node3D = null
+var _role = null
+var op_mode: int = 0  # 0 cruise 1 siege 2 scan
+var _deployed_rover: Node3D = null
 var _engine_pulse_t: float = 0.0
 
 func _ready() -> void:
@@ -64,6 +68,8 @@ func _ready() -> void:
 	call_deferred("_ensure_landing_gear")
 	call_deferred("_ensure_thruster_fx")
 	call_deferred("_ensure_cargo_systems")
+	call_deferred("_ensure_morph_and_hatch")
+	_role = _load_role_sniper()
 	if pilot_active:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	print("[Ship] Ready modules=", modules.size())
@@ -130,11 +136,18 @@ func _input(event: InputEvent) -> void:
 			_set_mode(FlightMode.NAV)
 		elif event.keycode == KEY_3:
 			_set_mode(FlightMode.HOVER)
+		elif event.keycode == KEY_4:
+			_toggle_siege()
+		elif event.keycode == KEY_5:
+			_toggle_cargo_ramp()
+		elif event.keycode == KEY_6:
+			_try_deploy_rover()
 	if is_landed:
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		_yaw -= event.relative.x * mouse_sensitivity  # mouse right → look right (RH basis)
-		_pitch -= event.relative.y * mouse_sensitivity
+		var sens := mouse_sensitivity * (float(_role.siege_turn_mult) if op_mode == 1 and _role else 1.0)
+		_yaw -= event.relative.x * sens  # mouse right → look right (RH basis)
+		_pitch -= event.relative.y * sens
 		# Full 3D flight plane: ship body pitches + yaws (not camera-only)
 		_pitch = clamp(_pitch, deg_to_rad(-89), deg_to_rad(89))
 		_apply_attitude()
@@ -156,16 +169,24 @@ func _max_speed() -> float:
 		_: return max_speed_scm
 
 func _thrust_mult() -> float:
+	var m := 1.0
 	match flight_mode:
-		FlightMode.NAV: return 1.55
-		FlightMode.HOVER: return 0.55
-		_: return 1.0
+		FlightMode.NAV: m = 1.55
+		FlightMode.HOVER: m = 0.55
+		_: m = 1.0
+	if op_mode == 1 and _role:
+		m *= float(_role.siege_thrust_mult)
+	return m
 
 func _damp_mult() -> float:
+	var m := 1.0
 	match flight_mode:
-		FlightMode.NAV: return 0.45
-		FlightMode.HOVER: return 2.4
-		_: return 1.0
+		FlightMode.NAV: m = 0.45
+		FlightMode.HOVER: m = 2.4
+		_: m = 1.0
+	if op_mode == 1:
+		m *= 1.8
+	return m
 
 func _ship_axis() -> Vector3:
 	var thrust := 0.0
@@ -305,8 +326,9 @@ func _physics_process(delta: float) -> void:
 
 func _update_status() -> void:
 	if status_label:
-		status_label.text = "%s  SPD %d  SHD %d  E %d  %s" % [
-			flight_mode_name(), int(velocity.length()), int(shields), int(energy),
+		var opn := "SIEGE" if op_mode == 1 else ("SCAN" if op_mode == 2 else "CRUISE")
+		status_label.text = "%s  OP:%s  SPD %d  SHD %d  E %d  %s" % [
+			flight_mode_name(), opn, int(velocity.length()), int(shields), int(energy),
 			("LANDED" if is_landed else "FLIGHT")
 		]
 
@@ -702,3 +724,96 @@ func _ensure_cargo_systems() -> void:
 	_cargo_ramp.position = Vector3(0, -0.5, 3.5)
 	add_child(_cargo_ramp)
 	print("[Ship] CargoHold + Ramp scaffold")
+
+
+func _ensure_morph_and_hatch() -> void:
+	if get_node_or_null("HatchPoint") == null:
+		var h := Marker3D.new()
+		h.name = "HatchPoint"
+		h.position = Vector3(3.2, 0.8, 0.5)
+		add_child(h)
+	if _hull_morph and is_instance_valid(_hull_morph):
+		return
+	_hull_morph = Node3D.new()
+	_hull_morph.set_script(load("res://scripts/ship/ShipHullMorph.gd"))
+	_hull_morph.name = "HullMorph"
+	add_child(_hull_morph)
+	print("[Ship] Hatch + HullMorph")
+
+
+func _toggle_siege() -> void:
+	if _role == null or not bool(_role.allows_siege):
+		_role = _load_role_sniper()
+	if op_mode == 1:
+		op_mode = 0
+		var exit_s := 0.8
+		if _role:
+			exit_s = float(_role.siege_exit_sec)
+		if _hull_morph and is_instance_valid(_hull_morph) and _hull_morph.has_method("set_op_mode"):
+			_hull_morph.set_op_mode(0, exit_s)
+		print("[Ship] CRUISE mode")
+	else:
+		op_mode = 1
+		var enter_s := 1.2
+		if _role:
+			enter_s = float(_role.siege_enter_sec)
+		if _hull_morph and is_instance_valid(_hull_morph) and _hull_morph.has_method("set_op_mode"):
+			_hull_morph.set_op_mode(1, enter_s)
+		print("[Ship] SIEGE mode — mobility down, main gun up")
+
+
+
+func _toggle_cargo_ramp() -> void:
+	if _cargo_ramp == null or not is_instance_valid(_cargo_ramp):
+		return
+	if not is_landed and velocity.length() > 6.0:
+		print("[Ship] Ramp needs land/slow hover")
+		return
+	if _cargo_ramp.has_method("toggle"):
+		_cargo_ramp.toggle()
+		print("[Ship] Cargo ramp toggled")
+
+
+func _try_deploy_rover() -> void:
+	if not is_landed:
+		print("[Ship] Land before deploying rover")
+		return
+	if _deployed_rover and is_instance_valid(_deployed_rover):
+		print("[Ship] Rover already out — board with F near it later")
+		return
+	if _cargo_ramp and _cargo_ramp.has_method("deploy"):
+		_cargo_ramp.deploy()
+	var hold = _cargo_hold
+	var entry := {"class_id": "rover", "volume": 8.0, "mass": 2.0, "health": 100.0}
+	if hold and hold.has_method("store_vehicle"):
+		# ensure one stored then retrieve
+		if hold.vehicles.is_empty():
+			hold.store_vehicle(entry)
+		entry = hold.retrieve_vehicle(0)
+	var rover: Node3D = CharacterBody3D.new()
+	rover.set_script(load("res://scripts/vehicle/GroundVehicle.gd"))
+	var parent_n: Node = get_parent()
+	if parent_n:
+		parent_n.add_child(rover)
+	else:
+		add_child(rover)
+	var up := global_transform.basis.y
+	var aft := global_transform.basis.z
+	rover.global_position = global_position + aft * 6.0 + up * 1.0
+	if rover.has_method("set_planet_provider") and _open_space:
+		rover.set_planet_provider(_open_space)
+	_deployed_rover = rover
+	print("[Ship] Rover deployed")
+
+
+func get_interior_profile_id() -> String:
+	if _role:
+		return str(_role.interior_profile_id)
+	return "scout_single"
+
+
+func _load_role_sniper():
+	var scr = load("res://scripts/ship/ShipRoleProfile.gd")
+	if scr and scr.has_method("make_sniper"):
+		return scr.make_sniper()
+	return null

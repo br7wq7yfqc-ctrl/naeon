@@ -29,12 +29,34 @@ var _arm_r: MeshInstance3D
 var _limb_rig: Node3D
 var _form_skel: Skeleton3D = null
 var _move_amount: float = 0.0
+var eva_mode: bool = false
+var thruster_accel: float = 14.0
 var _up: Vector3 = Vector3.UP
 var cam_pivot: Node3D
 var camera: Camera3D
 
 func set_planet_gravity_provider(p: Node) -> void:
 	_provider = p
+
+
+func set_eva_profile(enabled: bool) -> void:
+	eva_mode = enabled
+	if enabled:
+		speed = 5.5
+		sprint_mult = 1.2
+		jump_velocity = 0.0
+		print("[SurfaceWalker] EVA thruster suit")
+		if _body_mesh and _body_mesh.material_override is StandardMaterial3D:
+			var m: StandardMaterial3D = _body_mesh.material_override
+			m.emission_enabled = true
+			m.emission = Color(0.3, 0.8, 1.0)
+			m.emission_energy_multiplier = 0.8
+	else:
+		speed = 6.5
+		sprint_mult = 1.75
+		jump_velocity = 7.0
+		print("[SurfaceWalker] surface profile")
+
 
 func _ready() -> void:
 	add_to_group("player")
@@ -291,6 +313,23 @@ func _physics_process(delta: float) -> void:
 		right = right.normalized()
 	# input.y: W=-1 S=+1  →  wish along forward when W
 	var wish := right * input.x + forward * (-input.y)
+	if eva_mode:
+		# Zero-G thruster: WASD plane + Space/Shift vertical, light damp
+		var lift := 0.0
+		if Input.is_physical_key_pressed(KEY_SPACE):
+			lift += 1.0
+		if Input.is_physical_key_pressed(KEY_SHIFT):
+			lift -= 1.0
+		var wish3 := wish * thruster_accel + _up * lift * thruster_accel
+		velocity += wish3 * delta
+		velocity = velocity.lerp(Vector3.ZERO, 0.65 * delta)
+		if velocity.length() > 18.0:
+			velocity = velocity.normalized() * 18.0
+		_move_amount = velocity.length() / 12.0
+		_apply_body_basis()
+		move_and_slide()
+		_update_anim(delta)
+		return
 	var sp := speed * (sprint_mult if Input.is_physical_key_pressed(KEY_SHIFT) else 1.0) * _infection_move_mult()
 	var planar := wish * sp
 	_move_amount = planar.length() / maxf(speed, 0.01)
@@ -301,9 +340,9 @@ func _physics_process(delta: float) -> void:
 		v_up += g_vec.dot(_up) * delta  # g_vec points down (to center)
 	else:
 		v_up = minf(v_up, 0.0)
-		if Input.is_physical_key_pressed(KEY_SPACE):
-			v_up = jump_velocity
-			_spawn_jump_fx()
+	if Input.is_physical_key_pressed(KEY_SPACE):
+		v_up = jump_velocity
+		_spawn_jump_fx()
 
 	velocity = planar + _up * v_up
 	_apply_body_basis()

@@ -15,6 +15,7 @@ var player: CharacterBody3D
 var planets: Array = []
 var _in_ship: bool = true
 var _interior: Node = null
+var _eva_mode: bool = false
 var _spawn_ship_pos := Vector3(0, 0, 2800)
 
 func _ready() -> void:
@@ -286,13 +287,24 @@ func _on_ship_launched() -> void:
 func try_exit_ship() -> void:
 	if not _in_ship or ship == null or not is_instance_valid(ship):
 		return
-	if not bool(ship.get("is_landed")):
-		print("[OpenSpace] Exit only when landed")
+	var landed := bool(ship.get("is_landed"))
+	var spd := 0.0
+	if ship.get("velocity") != null:
+		spd = float(ship.velocity.length()) if ship.velocity is Vector3 else 0.0
+	elif "velocity" in ship:
+		spd = float(ship.velocity.length())
+	# Soft speed gate for EVA (not landed)
+	if not landed and spd > 42.0:
+		print("[OpenSpace] Slow down to EVA (spd=", int(spd), ")")
 		return
 	_in_ship = false
+	_eva_mode = not landed
 	if LayerContext:
 		LayerContext.set_layer("TPS")
-	_spawn_player_near_ship()
+	if landed:
+		_spawn_player_near_ship()
+	else:
+		_spawn_eva_near_ship()
 	if is_instance_valid(ship) and ship.has_method("set_pilot_active"):
 		ship.set_pilot_active(false)
 	if floating and is_instance_valid(floating) and floating.has_method("set_target") and player and is_instance_valid(player):
@@ -301,6 +313,7 @@ func try_exit_ship() -> void:
 		if pl and is_instance_valid(pl) and pl.has_method("set_observer") and player and is_instance_valid(player):
 			pl.set_observer(player)
 	_bind_soft_net_actor(player)
+	print("[OpenSpace] exited ship  eva=", _eva_mode)
 
 
 func try_enter_ship() -> void:
@@ -311,10 +324,12 @@ func try_enter_ship() -> void:
 		player = null
 		print("[OpenSpace] No walker to board")
 		return
-	if player.global_position.distance_to(ship.global_position) > 14.0:
-		print("[OpenSpace] Too far from ship")
+	var board_r := 22.0 if _eva_mode else 14.0
+	if player.global_position.distance_to(ship.global_position) > board_r:
+		print("[OpenSpace] Too far from hatch")
 		return
 	_in_ship = true
+	_eva_mode = false
 	if LayerContext:
 		LayerContext.set_layer("Space")
 	# Point systems at ship BEFORE freeing walker
@@ -342,7 +357,36 @@ func try_enter_ship() -> void:
 	print("[OpenSpace] boarded ship")
 
 
+func _spawn_eva_near_ship() -> void:
+	## Open-space EVA: hatch offset, thruster suit, no floor snap.
+	if ship == null or not is_instance_valid(ship):
+		return
+	player = _make_fallback_player()
+	world_root.add_child(player)
+	var hatch: Node3D = ship.get_node_or_null("HatchPoint") as Node3D
+	var side: Vector3 = ship.global_transform.basis.x
+	var up: Vector3 = ship.global_transform.basis.y
+	if hatch:
+		player.global_position = hatch.global_position
+	else:
+		player.global_position = ship.global_position + side * 4.0 + up * 1.2
+	if player.has_method("set_planet_gravity_provider"):
+		player.set_planet_gravity_provider(self)
+	if player.has_method("set_eva_profile"):
+		player.set_eva_profile(true)
+	if player.has_method("set_spawn_basis"):
+		var nose: Vector3 = -ship.global_transform.basis.z
+		player.set_spawn_basis(up, atan2(-nose.x, -nose.z))
+	# Match ship velocity soft so no instant relative slam
+	if player is CharacterBody3D and ship.get("velocity") != null:
+		(player as CharacterBody3D).velocity = ship.velocity * 0.85
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	print("[OpenSpace] EVA deployed")
+
+
 func _spawn_player_near_ship() -> void:
+	_eva_mode = false
+
 	# SurfaceWalker + safe pad spawn (clear of density props / terrain embed).
 	if ship == null or not is_instance_valid(ship):
 		return
@@ -367,6 +411,8 @@ func _spawn_player_near_ship() -> void:
 	player.global_position = ship.global_position + pad_up * 4.5 + side * 7.0
 	if player.has_method("set_planet_gravity_provider"):
 		player.set_planet_gravity_provider(self)
+	if player.has_method("set_eva_profile"):
+		player.set_eva_profile(false)
 	# Face same way as ship nose (−Z of ship)
 	var nose: Vector3 = -ship.global_transform.basis.z
 	nose = (nose - pad_up * nose.dot(pad_up)).normalized()
@@ -435,7 +481,7 @@ func _update_hud() -> void:
 		spd = player.velocity.length()
 	hud_label.text = (
 		"NAEON OpenSpace  |  free flight · seamless land · surface walk\n"
-		+ "WASD thrust  Space/Shift lift  Mouse=flight plane  Z/X roll  |  1/2/3 modes  |  E land  F exit  C claim  G/B terra  U undo  I interior  Q hack\n"
+		+ "WASD thrust  Space/Shift lift  Mouse=flight plane  Z/X roll  |  1/2/3 flight  4 siege  5 ramp  6 rover  |  E land  F exit/EVA/board  C claim  G/B terra  U undo  I interior  Q hack\n"
 		+ "F1 cycle quality  |  Tab → TestArena (combat sandbox)\n"
 		+ "Mode: %s  Planet: %s  Alt: %dm  Spd: %d  HP:%d SHD:%d  PLOD:%s  CONTRIB:%.0f" % [
 			mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields), (pl.current_lod_name() if pl and is_instance_valid(pl) and pl.has_method("current_lod_name") else "-"), (GameManager.contribution if GameManager else 0.0)

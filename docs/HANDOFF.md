@@ -1,13 +1,12 @@
-# Handoff — 0.3.18
+# Handoff — EVA / Siege / Interior / Rover
+
+## Dev tip (post 0.3.18)
+- **F** in flight (slow) = EVA; near ship = reboard; landed = surface
+- **4** = Siege morph + mults
+- **I** = ship interior from profile (scout/sniper/hauler)
+- **5** ramp · **6** rover (landed)
 
 ## Desktop
-NAEON-0.3.18-Installer.dmg
+Still 0.3.18 until acceptance → then 0.3.19 batch.
 
-## Includes
-- CombatJuice readability (CRIT, marker, impact, soft hitstop)
-- SurfaceFlora density
-- GROUND_VEHICLES_HANGARS plan + CargoHold/CargoRamp/GroundVehicle
-- Ship cargo scaffold
-
-## Next
-S-EVA mid-space exit, S-MORPH siege, V1 ramp deploy input
+Updated: 2026-08-07T11:27:49.630635+00:00

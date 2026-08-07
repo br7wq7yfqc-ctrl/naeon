@@ -1,27 +1,14 @@
 # NAEON Dev Plan — Aug 2026
 
-## Current tip → **0.3.18** batch
+## Tip after 0.3.18
+S-EVA · S-MORPH · S-INT · V1-V2 implemented in code (dev). Next batch **0.3.19** after playtest acceptance.
 
-### This wave
-- Combat hit readability (marker, CRIT, impact FX, soft hitstop)
-- Surface flora/rock density (SurfaceFlora)
-- Ground vehicles / hangars / ramps **planned + scaffold**
-- Vehicle: GroundVehicle, CargoHold, CargoRamp stubs
-
-### Authority docs
-- docs/systems/SHIP_EVA_INTERIOR_MORPH.md
-- docs/systems/GROUND_VEHICLES_HANGARS.md
-
-### Sprint queue
 | Sprint | Status |
 |--------|--------|
-| Combat readability | **done** (this) |
-| Surface flora | **done** (this) |
-| S-EVA | next implement |
-| S-MORPH | queued |
-| S-INT | queued |
-| V0–V2 hangar/rover | planned scaffold |
-| 0.3.18 batch | **building** |
+| S-EVA | **done** F mid-space → thruster suit → reboard |
+| S-MORPH | **done** KEY4 SIEGE + HullMorph + dps/mobility |
+| S-INT | **done** ShipInteriorProfiles + seat/hatch |
+| V1-V2 | **done** KEY5 ramp · KEY6 rover deploy |
+| Batch | 0.3.19 when accepted |
 
-### Economical
-Tripo recheck each iter; flora/vehicles procedural first.
+Updated: 2026-08-07T11:27:49.630635+00:00
