@@ -1,141 +1,248 @@
 extends Node3D
 class_name SurfaceDetail
-## Procedural height patches snapped to a FIXED planet surface grid.
-## Never orbits the player (that caused "dancing/swimming" terrain).
+## Grid-chunk heightfield streamer.
+## - Stable lat/lon cells (no orbit / swim)
+## - Object pool + mesh cache
+## - Per-tick load budget
+## - Load ring + hysteresis unload ring
 
-const PATCH_COUNT := 9
-const PATCH_RES := 10
-const PATCH_SIZE := 40.0
-## Cell size on sphere (meters along surface) — only stream when crossing cell
-const CELL_M := 36.0
+const _Math = preload("res://scripts/world/SurfaceChunkMath.gd")
+
+const CELL_M := 40.0
+const PATCH_SIZE := 38.0
+const DEFAULT_RES := 10
+const LOAD_BUDGET := 2          ## meshes built per stream tick
+const STREAM_HZ := 0.2          ## 5 Hz stream tick
+const MESH_CACHE_MAX := 48
 
 var _planet: Node3D
 var _radius: float = 1200.0
 var _surface_color: Color = Color(0.12, 0.2, 0.16)
-var _patches: Array[MeshInstance3D] = []
-var _observer: Node3D
-var _built: bool = false
-var _accum: float = 0.0
 var _seed: int = 1
-var _last_cell: Vector2i = Vector2i(999999, 999999)
+var _observer: Node3D
+
+var _accum: float = 0.0
+var _center_cell: Vector2i = Vector2i(999999, 999999)
+var _load_ring: int = 1         ## chebyshev radius to keep loaded
+var _unload_ring: int = 2       ## hysteresis: keep until outside this
+var _res: int = DEFAULT_RES
+
+## cell -> MeshInstance3D currently in world
+var _live: Dictionary = {}
+## free MeshInstance3D pool
+var _pool: Array = []
+## cell key "x,y" -> ArrayMesh cache
+var _mesh_cache: Dictionary = {}
+## FIFO keys for cache eviction
+var _mesh_cache_order: Array = []
+## cells waiting to build this tick
+var _queue: Array = []
 var _active: bool = false
+var _xform_accum: float = 0.0
+
 
 func setup(planet: Node3D, radius: float, color: Color, seed_i: int = 1) -> void:
 	_planet = planet
 	_radius = radius
 	_surface_color = color
 	_seed = seed_i
+	_apply_quality()
 
 
 func set_observer(n: Node3D) -> void:
 	_observer = n
-	_last_cell = Vector2i(999999, 999999)
+	_center_cell = Vector2i(999999, 999999)
+	_queue.clear()
 
 
 func _ready() -> void:
 	set_process(true)
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	if gq and gq.has_signal("tier_changed"):
+		gq.tier_changed.connect(func(_t): _apply_quality())
+
+
+func _apply_quality() -> void:
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	var tier := 1
+	if gq:
+		tier = int(gq.tier)
+	match tier:
+		0:
+			_load_ring = 1
+			_unload_ring = 2
+			_res = 8
+		2:
+			_load_ring = 2
+			_unload_ring = 3
+			_res = 12
+		3:
+			_load_ring = 2
+			_unload_ring = 3
+			_res = 14
+		_:
+			_load_ring = 1
+			_unload_ring = 2
+			_res = DEFAULT_RES
+	# Quality change: drop mesh cache (res may differ)
+	_mesh_cache.clear()
+	_mesh_cache_order.clear()
 
 
 func _process(delta: float) -> void:
 	_accum += delta
-	if _accum < 0.4:
+	if _accum < STREAM_HZ:
 		return
 	_accum = 0.0
 	if _planet == null or _observer == null or not is_instance_valid(_observer):
 		return
 	var alt: float = _observer.global_position.distance_to(_planet.global_position) - _radius
-	if alt > 160.0 or alt < -8.0:
+	if alt > 160.0 or alt < -10.0:
 		if _active:
-			_set_patches_visible(false)
+			_park_all()
 			_active = false
 		return
-	if not _built:
-		_build_patches()
-	_set_patches_visible(true)
 	_active = true
-	var cell := _surface_cell(_observer.global_position)
-	if cell != _last_cell:
-		_last_cell = cell
-		_place_grid(cell)
+	var cell: Vector2i = _Math.cell_of(_planet.global_position, _radius, _observer.global_position, CELL_M)
+	if cell != _center_cell:
+		_center_cell = cell
+		_enqueue_needed(cell)
+		_unload_far(cell)
+	# FloatingOrigin may shift planet — cheap refresh of live xforms
+	_xform_accum += STREAM_HZ
+	if _xform_accum >= 1.0:
+		_xform_accum = 0.0
+		for c in _live.keys():
+			_refresh_xform(c)
+	# Budgeted builds
+	var built := 0
+	while built < LOAD_BUDGET and not _queue.is_empty():
+		var c: Vector2i = _queue.pop_front()
+		if _live.has(c):
+			continue
+		if _Math.chebyshev(c, _center_cell) > _load_ring:
+			continue
+		_spawn_cell(c)
+		built += 1
 
 
-func _surface_cell(global_pos: Vector3) -> Vector2i:
-	## Stable UV-ish grid on sphere from lat/lon quantized by CELL_M.
-	var local: Vector3 = (global_pos - _planet.global_position).normalized()
-	var lat := asin(clampf(local.y, -1.0, 1.0))
-	var lon := atan2(local.x, local.z)
-	var meters_per_rad := _radius
-	var cell_ang := CELL_M / maxf(meters_per_rad, 1.0)
-	return Vector2i(int(floor(lon / cell_ang)), int(floor(lat / cell_ang)))
+func _enqueue_needed(center: Vector2i) -> void:
+	var want: Array[Vector2i] = _Math.ring_cells(center, _load_ring)
+	# Prioritize center first, then nearest
+	want.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return _Math.chebyshev(a, center) < _Math.chebyshev(b, center)
+	)
+	for c in want:
+		if _live.has(c):
+			# refresh transform only (planet may have floating-origin shifted)
+			_refresh_xform(c)
+			continue
+		if c in _queue:
+			continue
+		_queue.append(c)
 
 
-func _set_patches_visible(v: bool) -> void:
-	for p in _patches:
-		if p:
-			p.visible = v
+func _unload_far(center: Vector2i) -> void:
+	var to_drop: Array = []
+	for k in _live.keys():
+		var c: Vector2i = k
+		if _Math.chebyshev(c, center) > _unload_ring:
+			to_drop.append(c)
+	for c in to_drop:
+		_recycle(c)
 
 
-func _build_patches() -> void:
-	_built = true
-	var gq := get_node_or_null("/root/GraphicsQuality")
-	var res := PATCH_RES
-	var count := PATCH_COUNT
-	if gq:
-		match int(gq.tier):
-			0:
-				res = 8
-				count = 5
-			2, 3:
-				res = 12
-				count = 9
-	for i in count:
-		var mi := MeshInstance3D.new()
+func _park_all() -> void:
+	_queue.clear()
+	var keys: Array = _live.keys()
+	for k in keys:
+		_recycle(k)
+
+
+func _spawn_cell(cell: Vector2i) -> void:
+	var mi: MeshInstance3D
+	if not _pool.is_empty():
+		mi = _pool.pop_back()
+	else:
+		mi = MeshInstance3D.new()
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-		mi.mesh = _make_patch_mesh(res, i)
 		var mat := StandardMaterial3D.new()
-		mat.albedo_color = _surface_color.lightened(0.04 + 0.02 * (i % 3))
+		mat.albedo_color = _surface_color.lightened(0.04)
 		mat.roughness = 0.96
 		mat.metallic = 0.0
 		mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 		mat.emission_enabled = false
+		var gq := get_node_or_null("/root/GraphicsQuality")
 		if gq and int(gq.tier) <= 0:
 			mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
 		mi.material_override = mat
 		add_child(mi)
-		_patches.append(mi)
-	print("[SurfaceDetail] grid patches=", _patches.size())
+	mi.mesh = _mesh_for_cell(cell)
+	mi.visible = true
+	_live[cell] = mi
+	_refresh_xform(cell)
 
 
-func _make_patch_mesh(res: int, patch_i: int) -> ArrayMesh:
+func _recycle(cell: Vector2i) -> void:
+	if not _live.has(cell):
+		return
+	var mi: MeshInstance3D = _live[cell]
+	_live.erase(cell)
+	if mi and is_instance_valid(mi):
+		mi.visible = false
+		mi.mesh = null  # drop RID ref; mesh may stay in cache
+		_pool.append(mi)
+
+
+func _refresh_xform(cell: Vector2i) -> void:
+	if not _live.has(cell) or _planet == null:
+		return
+	var mi: MeshInstance3D = _live[cell]
+	mi.global_transform = _Math.cell_transform(_planet.global_position, _radius, cell, CELL_M, 0.35)
+
+
+func _mesh_for_cell(cell: Vector2i) -> ArrayMesh:
+	var key := "%d:%d:r%d" % [cell.x, cell.y, _res]
+	if _mesh_cache.has(key):
+		return _mesh_cache[key]
+	var mesh := _build_height_mesh(cell)
+	_mesh_cache[key] = mesh
+	_mesh_cache_order.append(key)
+	while _mesh_cache_order.size() > MESH_CACHE_MAX:
+		var old: String = _mesh_cache_order.pop_front()
+		_mesh_cache.erase(old)
+	return mesh
+
+
+func _build_height_mesh(cell: Vector2i) -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var half := PATCH_SIZE * 0.5
-	var step := PATCH_SIZE / float(res - 1)
+	var step := PATCH_SIZE / float(_res - 1)
+	var seed_off := float(_seed) * 0.013 + float(cell.x) * 1.7 + float(cell.y) * 2.3
 	var verts: Array[Vector3] = []
-	for z in res:
-		for x in res:
-			var px := -half + x * step
-			var pz := -half + z * step
-			# Deterministic height from world seed + patch index (no Time)
-			var n := _fbm(px * 0.08 + float(patch_i) * 3.1 + float(_seed) * 0.01, pz * 0.08 + float(patch_i) * 1.7)
-			verts.append(Vector3(px, n * 2.6, pz))
-	for z in res - 1:
-		for x in res - 1:
-			var i00 := z * res + x
+	verts.resize(_res * _res)
+	for z in _res:
+		for x in _res:
+			var px := -half + float(x) * step
+			var pz := -half + float(z) * step
+			var h := _fbm(px * 0.09 + seed_off, pz * 0.09 + seed_off * 0.7) * 2.4
+			verts[z * _res + x] = Vector3(px, h, pz)
+	for z in _res - 1:
+		for x in _res - 1:
+			var i00 := z * _res + x
 			var i10 := i00 + 1
-			var i01 := i00 + res
+			var i01 := i00 + _res
 			var i11 := i01 + 1
-			_add_tri(st, verts[i00], verts[i10], verts[i11])
-			_add_tri(st, verts[i00], verts[i11], verts[i01])
+			st.add_vertex(verts[i00])
+			st.add_vertex(verts[i10])
+			st.add_vertex(verts[i11])
+			st.add_vertex(verts[i00])
+			st.add_vertex(verts[i11])
+			st.add_vertex(verts[i01])
 	st.generate_normals()
 	return st.commit()
-
-
-func _add_tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
-	st.add_vertex(a)
-	st.add_vertex(b)
-	st.add_vertex(c)
 
 
 func _fbm(x: float, z: float) -> float:
@@ -149,50 +256,9 @@ func _fbm(x: float, z: float) -> float:
 	return v * 0.5
 
 
-func _stable_tangent(up: Vector3) -> Array:
-	## Fixed reference → no basis flip near poles (was a big "dance" source).
-	up = up.normalized()
-	var ref := Vector3.UP
-	if absf(up.dot(ref)) > 0.92:
-		ref = Vector3.RIGHT
-	var east := ref.cross(up).normalized()
-	var north := up.cross(east).normalized()
-	return [east, north]
+func live_count() -> int:
+	return _live.size()
 
 
-func _place_grid(cell: Vector2i) -> void:
-	if _planet == null or _patches.is_empty():
-		return
-	# Center of current cell on sphere
-	var meters_per_rad := _radius
-	var cell_ang := CELL_M / maxf(meters_per_rad, 1.0)
-	var lon := (float(cell.x) + 0.5) * cell_ang
-	var lat := (float(cell.y) + 0.5) * cell_ang
-	var clat := cos(lat)
-	var center_dir := Vector3(sin(lon) * clat, sin(lat), cos(lon) * clat).normalized()
-	var up := center_dir
-	var t := _stable_tangent(up)
-	var east: Vector3 = t[0]
-	var north: Vector3 = t[1]
-	# 3x3 grid of patches around cell center — FIXED offsets in meters (planet space)
-	var n := _patches.size()
-	var idx := 0
-	for gz in range(-1, 2):
-		for gx in range(-1, 2):
-			if idx >= n:
-				return
-			var offset := east * (float(gx) * PATCH_SIZE * 0.95) + north * (float(gz) * PATCH_SIZE * 0.95)
-			var dir := (center_dir * _radius + offset).normalized()
-			var pos: Vector3 = _planet.global_position + dir * (_radius + 0.35)
-			var pup := dir
-			var tt := _stable_tangent(pup)
-			var e: Vector3 = tt[0]
-			var nr: Vector3 = tt[1]
-			# Basis: X=east, Y=up, Z=-north so local patch +Y is radial
-			var xf := Transform3D(Basis(e, pup, -nr), pos)
-			_patches[idx].global_transform = xf
-			idx += 1
-	# Hide extras
-	while idx < n:
-		_patches[idx].visible = false
-		idx += 1
+func queue_depth() -> int:
+	return _queue.size()

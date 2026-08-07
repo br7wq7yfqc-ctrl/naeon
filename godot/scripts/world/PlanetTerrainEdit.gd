@@ -7,6 +7,8 @@ signal edit_applied(raised: bool, cost: float)
 signal budget_exhausted(reason: String)
 signal undo_done()
 
+const _Math = preload("res://scripts/world/SurfaceChunkMath.gd")
+
 const RES := 33
 const WORLD_SIZE := 72.0
 const MAX_DELTA := 8.0
@@ -206,42 +208,19 @@ func _process(delta: float) -> void:
 		_dirty = false
 
 func _surface_cell(global_pos: Vector3) -> Vector2i:
-	var local: Vector3 = (global_pos - planet.global_position).normalized()
-	var lat := asin(clampf(local.y, -1.0, 1.0))
-	var lon := atan2(local.x, local.z)
-	var cell_ang := CELL_M / maxf(radius, 1.0)
-	return Vector2i(int(floor(lon / cell_ang)), int(floor(lat / cell_ang)))
-
-
-func _stable_tangent(up: Vector3) -> Array:
-	up = up.normalized()
-	var ref := Vector3.UP
-	if absf(up.dot(ref)) > 0.92:
-		ref = Vector3.RIGHT
-	var east := ref.cross(up).normalized()
-	var north := up.cross(east).normalized()
-	return [east, north]
+	return _Math.cell_of(planet.global_position, radius, global_pos, CELL_M)
 
 
 func _reposition_plate() -> void:
-	# Back-compat: snap to observer cell
 	if _observer:
 		_reposition_plate_to_cell(_surface_cell(_observer.global_position))
 
 
 func _reposition_plate_to_cell(cell: Vector2i) -> void:
-	var cell_ang := CELL_M / maxf(radius, 1.0)
-	var lon := (float(cell.x) + 0.5) * cell_ang
-	var lat := (float(cell.y) + 0.5) * cell_ang
-	var clat := cos(lat)
-	var dir := Vector3(sin(lon) * clat, sin(lat), cos(lon) * clat).normalized()
-	_plate_up = dir
-	_plate_origin = planet.global_position + dir * (radius + 0.12)
-	var t := _stable_tangent(dir)
-	var east: Vector3 = t[0]
-	var north: Vector3 = t[1]
-	# Fixed basis — no forward-from-observer (was flipping / sliding)
-	global_transform = Transform3D(Basis(east, dir, -north), _plate_origin)
+	var xf := _Math.cell_transform(planet.global_position, radius, cell, CELL_M, 0.12)
+	_plate_up = xf.basis.y
+	_plate_origin = xf.origin
+	global_transform = xf
 
 func _snapshot() -> void:
 	var snap := PackedFloat32Array()
