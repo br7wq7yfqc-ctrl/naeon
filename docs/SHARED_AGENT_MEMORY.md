@@ -96,3 +96,5 @@
 
 | 2026-08-07 | Ground vehicles hangars/ramps planned + CargoHold/Ramp/Rover scaffold | Holistic |
 | 2026-08-07 | 0.3.18 combat readability + SurfaceFlora | Holistic |
+
+| 2026-08-07 | S-EVA / S-MORPH / S-INT / V1-V2 code landed; Desktop still 0.3.18 until acceptance → 0.3.19 | Holistic |
