@@ -44,12 +44,16 @@ func enable(on: bool = true, with_ghost: bool = false) -> void:
 			call_deferred("_ensure_ghost")
 
 func bind_player(p: Node3D) -> void:
-	_player = p
+	_player = p if p != null and is_instance_valid(p) else null
 	if SoftENet and SoftENet.has_method("bind_player"):
-		SoftENet.bind_player(p)
+		SoftENet.bind_player(_player)
+	if _player == null:
+		_history.clear()
+		return
 	if enabled and ghost_enabled:
 		_ghost_pending = true
 		get_tree().create_timer(0.05).timeout.connect(_ensure_ghost)
+
 
 func _ensure_ghost() -> void:
 	if not _ghost_pending or not ghost_enabled:

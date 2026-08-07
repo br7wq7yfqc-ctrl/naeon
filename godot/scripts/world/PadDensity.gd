@@ -33,7 +33,7 @@ func build(faction: String = "Cybernex", radius: float = 28.0, count: int = 16) 
 		p.set_script(prop_script)
 		p.set("relative_path", rel)
 		p.set("scale_factor", rng.randf_range(0.7, 1.35))
-		p.set("add_static_collision", true)
+		p.set("add_static_collision", false)  # visual density only — avoid walker embed
 		add_child(p)
 		p.position = Vector3(cos(ang) * r, 0.0, sin(ang) * r)
 		p.rotation.y = rng.randf() * TAU

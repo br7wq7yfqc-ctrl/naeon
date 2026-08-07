@@ -53,8 +53,8 @@ func _ready() -> void:
 	call_deferred("_maybe_cmdline_net")
 
 func bind_player(p: Node3D) -> void:
-	_player_ref = p
-	_ensure_puppet_root()
+	_player_ref = p if p != null and is_instance_valid(p) else null
+
 
 func _ensure_puppet_root() -> void:
 	if _puppet_root and is_instance_valid(_puppet_root):
@@ -277,7 +277,7 @@ func _broadcast_state() -> void:
 	if "faction" in _player_ref:
 		fac = str(_player_ref.faction)
 	if _player_ref.is_in_group("ship"):
-		if _player_ref.has_method("flight_mode_name"):
+		if is_instance_valid(_player_ref) and _player_ref.has_method("flight_mode_name"):
 			mode = str(_player_ref.flight_mode_name())
 		elif "flight_mode" in _player_ref:
 			mode = str(_player_ref.flight_mode)

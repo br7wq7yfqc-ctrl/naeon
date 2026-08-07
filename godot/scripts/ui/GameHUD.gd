@@ -349,6 +349,8 @@ func _process(d: float) -> void:
 	_refresh()
 
 func _refresh() -> void:
+	if _player != null and not is_instance_valid(_player):
+		_player = null
 	if _obj_label and SessionObjectives:
 		_obj_label.text = SessionObjectives.briefing()
 		_obj_label.visible = true

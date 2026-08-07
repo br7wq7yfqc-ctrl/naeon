@@ -1,4 +1,5 @@
 extends CharacterBody3D
+const _MeshOrient = preload("res://scripts/assets/MeshOrient.gd")
 const _AP = preload("res://scripts/assets/AssetPaths.gd")
 
 ## Semi-Newtonian ship with SCM / NAV / HOVER modes + seamless landing (no scene swap).
@@ -66,7 +67,7 @@ func set_open_space_context(ctx: Node) -> void:
 
 func set_pilot_active(active: bool) -> void:
 	pilot_active = active
-	if camera:
+	if camera and is_instance_valid(camera):
 		camera.current = active
 	if active:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -101,7 +102,7 @@ func try_load_hull() -> void:
 	add_child(root)
 	root.name = "HullGLB"
 	root.scale = Vector3.ONE * 1.2
-	root.rotation.y = PI
+	_MeshOrient.face_neg_z(root as Node3D, true)
 	print("[Ship] Loaded hull ", path)
 
 func _asset_path(rel: String) -> String:

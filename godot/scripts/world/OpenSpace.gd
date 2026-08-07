@@ -267,71 +267,111 @@ func _on_ship_launched() -> void:
 	print("[OpenSpace] ship launched")
 
 func try_exit_ship() -> void:
-	if not _in_ship or ship == null:
+	if not _in_ship or ship == null or not is_instance_valid(ship):
 		return
-	if not ship.get("is_landed"):
+	if not bool(ship.get("is_landed")):
 		print("[OpenSpace] Exit only when landed")
 		return
 	_in_ship = false
 	if LayerContext:
 		LayerContext.set_layer("TPS")
 	_spawn_player_near_ship()
-	if ship.has_method("set_pilot_active"):
+	if is_instance_valid(ship) and ship.has_method("set_pilot_active"):
 		ship.set_pilot_active(false)
-	if floating and floating.has_method("set_target") and player:
+	if floating and is_instance_valid(floating) and floating.has_method("set_target") and player and is_instance_valid(player):
 		floating.set_target(player)
 	for pl in planets:
-		if pl.has_method("set_observer"):
+		if pl and is_instance_valid(pl) and pl.has_method("set_observer") and player and is_instance_valid(player):
 			pl.set_observer(player)
+	_bind_soft_net_actor(player)
+
 
 func try_enter_ship() -> void:
-	if _in_ship or ship == null or player == null:
+	# Hardened: never has_method on queue_freed walker (SIGSEGV ClassDB::get_method).
+	if _in_ship or ship == null or not is_instance_valid(ship):
 		return
-	if player.global_position.distance_to(ship.global_position) > 12.0:
+	if player == null or not is_instance_valid(player):
+		player = null
+		print("[OpenSpace] No walker to board")
+		return
+	if player.global_position.distance_to(ship.global_position) > 14.0:
 		print("[OpenSpace] Too far from ship")
 		return
 	_in_ship = true
 	if LayerContext:
 		LayerContext.set_layer("Space")
-	if player:
-		player.queue_free()
-		player = null
-	if ship.has_method("set_pilot_active"):
-		ship.set_pilot_active(true)
-	if floating and floating.has_method("set_target"):
+	# Point systems at ship BEFORE freeing walker
+	for pl in planets:
+		if pl and is_instance_valid(pl) and pl.has_method("set_observer"):
+			pl.set_observer(ship)
+	if floating and is_instance_valid(floating) and floating.has_method("set_target"):
 		floating.set_target(ship)
 	_bind_soft_net_actor(ship)
+	# Disable walker ticks then free safely
+	var old: Node = player
+	player = null
+	if is_instance_valid(old):
+		old.set_process(false)
+		old.set_physics_process(false)
+		old.set_process_input(false)
+		old.set_process_unhandled_input(false)
+		if old is CollisionObject3D:
+			(old as CollisionObject3D).collision_layer = 0
+			(old as CollisionObject3D).collision_mask = 0
+		old.queue_free()
+	if is_instance_valid(ship) and ship.has_method("set_pilot_active"):
+		ship.set_pilot_active(true)
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	print("[OpenSpace] boarded ship")
+
 
 func _spawn_player_near_ship() -> void:
-	# Always use SurfaceWalker for planetary gravity (PlayerController is flat-world TPS).
+	# SurfaceWalker + safe pad spawn (clear of density props / terrain embed).
+	if ship == null or not is_instance_valid(ship):
+		return
 	player = _make_fallback_player()
 	world_root.add_child(player)
 	var pad_up := Vector3.UP
 	var pad: Node3D = nearest_pad(ship.global_position)
-	if pad and pad.has_meta("pad_up"):
+	if pad and is_instance_valid(pad) and pad.has_meta("pad_up"):
 		pad_up = pad.get_meta("pad_up")
-	elif nearest_planet(ship.global_position):
+	else:
 		var pl = nearest_planet(ship.global_position)
-		pad_up = (ship.global_position - pl.global_position).normalized()
-	# Spawn beside ship, clearly above pad/surface
+		if pl and is_instance_valid(pl):
+			pad_up = (ship.global_position - pl.global_position).normalized()
 	var side: Vector3 = ship.global_transform.basis.x
-	side = (side - pad_up * side.dot(pad_up)).normalized()
+	side = (side - pad_up * side.dot(pad_up))
 	if side.length_squared() < 0.01:
-		side = pad_up.cross(Vector3.FORWARD).normalized()
-	player.global_position = ship.global_position + pad_up * 2.5 + side * 5.0
+		side = pad_up.cross(Vector3(0, 0, -1))
+		if side.length_squared() < 0.01:
+			side = pad_up.cross(Vector3.RIGHT)
+	side = side.normalized()
+	# High clear spawn — away from pad props (density cluster)
+	player.global_position = ship.global_position + pad_up * 4.5 + side * 7.0
 	if player.has_method("set_planet_gravity_provider"):
 		player.set_planet_gravity_provider(self)
+	# Face same way as ship nose (−Z of ship)
+	var nose: Vector3 = -ship.global_transform.basis.z
+	nose = (nose - pad_up * nose.dot(pad_up)).normalized()
+	var yaw := atan2(-nose.x, -nose.z)
 	if player.has_method("set_spawn_basis"):
-		var yaw := atan2(-side.x, -side.z)
 		player.set_spawn_basis(pad_up, yaw)
 	if player.has_method("snap_to_surface"):
 		player.call_deferred("snap_to_surface")
-	# Ensure ship camera off
-	if ship.has_method("set_pilot_active"):
+		# Second snap next frames for physics settle
+		get_tree().create_timer(0.05).timeout.connect(func():
+			if player and is_instance_valid(player) and player.has_method("snap_to_surface"):
+				player.snap_to_surface()
+		)
+		get_tree().create_timer(0.15).timeout.connect(func():
+			if player and is_instance_valid(player) and player.has_method("safe_unground"):
+				player.safe_unground()
+		)
+	if is_instance_valid(ship) and ship.has_method("set_pilot_active"):
 		ship.set_pilot_active(false)
 	_bind_soft_net_actor(player)
 	print("[OpenSpace] TPS exit at ", player.global_position, " up=", pad_up)
+
 
 func _make_fallback_player() -> CharacterBody3D:
 	var p := CharacterBody3D.new()
@@ -361,23 +401,27 @@ func _update_hud() -> void:
 	var pl: Node3D = nearest_planet(ship.global_position)
 	var alt := 0.0
 	var pname := "-"
-	if pl and pl.has_method("altitude_of"):
+	if pl and is_instance_valid(pl) and pl.has_method("altitude_of"):
 		alt = pl.altitude_of(ship.global_position)
 		pname = str(pl.get("planet_name"))
 	var mode := "SHIP"
 	if ship.get("flight_mode") != null:
-		mode = str(ship.call("flight_mode_name")) if ship.has_method("flight_mode_name") else mode
+		mode = str(ship.call("flight_mode_name")) if is_instance_valid(ship) and ship.has_method("flight_mode_name") else mode
 	if not _in_ship:
 		mode = "ON FOOT"
 	var gq := get_node_or_null("/root/GraphicsQuality")
 	var gqn: String = gq.tier_name() if gq else "?"
-	var spd: float = ship.velocity.length() if _in_ship else (player.velocity.length() if player else 0.0)
+	var spd: float = 0.0
+	if _in_ship and is_instance_valid(ship):
+		spd = ship.velocity.length()
+	elif player != null and is_instance_valid(player):
+		spd = player.velocity.length()
 	hud_label.text = (
 		"NAEON OpenSpace  |  free flight · seamless land · surface walk\n"
 		+ "WASD thrust  Space/Shift lift  Mouse=flight plane  Z/X roll  |  1/2/3 modes  |  E land  F exit  C claim  G/B terra  U undo  I interior  Q hack\n"
 		+ "F1 cycle quality  |  Tab → TestArena (combat sandbox)\n"
 		+ "Mode: %s  Planet: %s  Alt: %dm  Spd: %d  HP:%d SHD:%d  PLOD:%s  CONTRIB:%.0f" % [
-			mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields), (pl.current_lod_name() if pl and pl.has_method("current_lod_name") else "-"), (GameManager.contribution if GameManager else 0.0)
+			mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields), (pl.current_lod_name() if pl and is_instance_valid(pl) and pl.has_method("current_lod_name") else "-"), (GameManager.contribution if GameManager else 0.0)
 		]
 	)
 	if mode_label:

@@ -1,6 +1,7 @@
 extends CharacterBody3D
 const _AP = preload("res://scripts/assets/AssetPaths.gd")
 const _HeroForms = preload("res://scripts/player/HeroFormCatalog.gd")
+const _MeshOrient = preload("res://scripts/assets/MeshOrient.gd")
 const _FormAnim = preload("res://scripts/player/FormAnimator.gd")
 const _FormFX = preload("res://scripts/player/FormSwitchFX.gd")
 var _form_skel: Skeleton3D = null
@@ -372,6 +373,7 @@ func try_load_form_mesh() -> void:
 	if body_mesh:
 		body_mesh.visible = false
 	root.name = "FormGLB"
+	_MeshOrient.face_neg_z(root as Node3D, false)
 	add_child.call_deferred(root)
 	root.scale = Vector3.ONE * 0.85
 	root.position = Vector3(0, 0, 0)

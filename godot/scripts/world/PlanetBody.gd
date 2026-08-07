@@ -210,8 +210,10 @@ func _process(delta: float) -> void:
 		_body.set_collision_layer_value(1, need_col)
 
 func _resolve_observer() -> Node3D:
-	if _observer and is_instance_valid(_observer):
-		return _observer
+	if _observer != null:
+		if is_instance_valid(_observer):
+			return _observer
+		_observer = null
 	var cam := get_viewport().get_camera_3d()
 	if cam:
 		return cam

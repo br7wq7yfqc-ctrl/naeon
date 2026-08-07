@@ -1,26 +1,16 @@
-# Handoff — Phase 0 feel foundation (no micro-DMG)
+# Handoff — reboard crash + stuck + orientation
 
-## Owner contract
-- Phase 0 ~**5%** — prototype ≠ game
-- Batch Desktop installers only at gates
-- Benchmarks: SC/NMS + EVE/Stellaris + Predecessor
-- Tripo: check balance each iter; code-first when dry
+## Crash (0.3.16 shipped)
+SIGSEGV ClassDB::get_method / has_method while re-boarding.
+Cause: walker queue_free while SoftNet/observers/HUD still touched it mid-frame.
 
-## This iteration
-- MainMenu boot (Open Space / Clash)
-- AudioDirector + CombatJuice
-- SessionObjectives first-loop briefing
-- PadDensity reuses existing GLBs on planet pads
-- ESC → menu; objectives wired land/claim/kill/economy
+## Fixes (code tip, no micro-DMG)
+1. try_enter_ship: rebind SoftNet + planet observers to ship **before** free; disable walker process; null player; queue_free
+2. SoftENet/SoftNetSession.bind_player(null-safe)
+3. Spawn higher + double snap + safe_unground; PadDensity collision off
+4. MeshOrient: align hull/form to −Z (long-X → −90°, else 180° for Tripo +Z)
 
-## Tripo
-Agent rechecks live balance each loop. Prefer code density before new gens.
+## Dev play
+godot --path godot → Open Space → land E → F exit → F board
 
-## Next
-- Clash lane readability + spawn waves
-- OpenSpace ambient life + better landing FX
-- Lighting pass both modes
-- A-tier Tripo only for empty hero gaps
-- DMG only at Phase0 checklist ≥70%
-
-Updated: 2026-08-07T00:27:44.823402+00:00
+Updated: 2026-08-07T00:42:38.942798+00:00

@@ -1,5 +1,6 @@
 extends CharacterBody3D
 const _HeroForms = preload("res://scripts/player/HeroFormCatalog.gd")
+const _MeshOrient = preload("res://scripts/assets/MeshOrient.gd")
 const _FormAnim = preload("res://scripts/player/FormAnimator.gd")
 const _FormFX = preload("res://scripts/player/FormSwitchFX.gd")
 ## Planet-surface TPS walker: radial gravity, floor snap, procedural anim.
@@ -38,7 +39,7 @@ func _ready() -> void:
 	add_to_group("player")
 	collision_layer = 2
 	collision_mask = 1
-	floor_snap_length = 0.45
+	floor_snap_length = 0.25
 	floor_max_angle = deg_to_rad(60.0)
 	up_direction = Vector3.UP
 	motion_mode = CharacterBody3D.MOTION_MODE_GROUNDED
@@ -125,8 +126,8 @@ func _load_form_visual() -> void:
 	# Strip rigid bodies from form mesh
 	_strip_colliders(root)
 	_visual.add_child(root)
-	root.rotation.y = PI  # face −Z
 	root.name = "FormGLB"
+	_MeshOrient.face_neg_z(root as Node3D, false)
 	_form_skel = _FormAnim.find_skeleton(root)
 	root.scale = Vector3.ONE * 1.1
 	root.position = Vector3(0, 0, 0)
@@ -183,24 +184,39 @@ func on_hacked(caster: Node, amount: float = 1.0) -> void:
 
 func snap_to_surface() -> void:
 	_update_up()
-	# Raycast along gravity to find ground
-	var space := get_world_3d().direct_space_state
+	var space := get_world_3d().direct_space_state if get_world_3d() else null
 	if space == null:
+		global_position += _up * 3.0
 		return
-	var origin := global_position + _up * 8.0
-	var end := global_position - _up * 40.0
+	# Cast from high above to avoid starting inside prop volumes
+	var origin := global_position + _up * 25.0
+	var end := global_position - _up * 80.0
 	var q := PhysicsRayQueryParameters3D.create(origin, end)
 	q.collision_mask = 1
 	q.exclude = [get_rid()]
 	var hit := space.intersect_ray(q)
 	if hit:
-		global_position = hit.position + _up * 1.05
+		# Stand clearly above hit (props + terrain)
+		global_position = hit.position + _up * 1.85
 		velocity = Vector3.ZERO
 		print("[SurfaceWalker] snapped to ", hit.position)
 	else:
-		# Fallback: push up along pad
-		global_position += _up * 2.0
+		global_position += _up * 4.0
 		print("[SurfaceWalker] no hit — boost along up")
+
+
+func safe_unground() -> void:
+	## If embedded in geometry after spawn, push out along up.
+	_update_up()
+	if test_move(global_transform, -_up * 0.05):
+		# stuck — rise until free or cap
+		for i in 12:
+			global_position += _up * 0.45
+			if not test_move(global_transform, -_up * 0.05):
+				break
+		velocity = Vector3.ZERO
+		print("[SurfaceWalker] safe_unground lifted")
+
 
 func set_spawn_basis(up: Vector3, yaw: float) -> void:
 	_up = up.normalized()
@@ -258,11 +274,21 @@ func _physics_process(delta: float) -> void:
 	if input.length_squared() > 1.0:
 		input = input.normalized()
 
-	# Movement plane = perpendicular to planet up; yaw around planet up
-	var forward := (-_basis_from_up().z)
-	var right := _basis_from_up().x
-	forward = (forward - _up * forward.dot(_up)).normalized()
-	right = (right - _up * right.dot(_up)).normalized()
+	# Movement relative to look: W = body forward (−Z), D = body right (+X)
+	var blook := _basis_from_up()
+	var forward := (-blook.z)
+	var right := blook.x
+	forward = (forward - _up * forward.dot(_up))
+	right = (right - _up * right.dot(_up))
+	if forward.length_squared() < 1e-6:
+		forward = Vector3(0, 0, -1)
+	else:
+		forward = forward.normalized()
+	if right.length_squared() < 1e-6:
+		right = forward.cross(_up).normalized()
+	else:
+		right = right.normalized()
+	# input.y: W=-1 S=+1  →  wish along forward when W
 	var wish := right * input.x + forward * (-input.y)
 	var sp := speed * (sprint_mult if Input.is_physical_key_pressed(KEY_SHIFT) else 1.0) * _infection_move_mult()
 	var planar := wish * sp
