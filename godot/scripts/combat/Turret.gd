@@ -6,7 +6,7 @@ const _AP = preload("res://scripts/assets/AssetPaths.gd")
 
 signal killed_target
 
-@export var _ai_accum: float = 0.0
+var _ai_accum: float = 0.0
 var faction: String = "gROT"
 @export var aggro_range: float = 18.0
 @export var fire_rate: float = 1.1
