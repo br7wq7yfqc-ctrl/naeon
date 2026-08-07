@@ -258,6 +258,33 @@ func gravity_at(global_pos: Vector3) -> Vector3:
 			g += pl.gravity_at(global_pos)
 	return g
 
+
+
+func atmosphere_density_at(global_pos: Vector3) -> float:
+	var pl: Node3D = nearest_planet(global_pos)
+	if pl == null or not is_instance_valid(pl):
+		return 0.0
+	var alt := 99999.0
+	if pl.has_method("altitude_of"):
+		alt = float(pl.altitude_of(global_pos))
+	var ah := 280.0
+	if "atmosphere_height" in pl:
+		ah = float(pl.atmosphere_height)
+	# Same curve as ShipFlightModel
+	if ah <= 1.0 or alt >= ah * 1.6:
+		return 0.0
+	if alt <= 0.0:
+		return 1.0
+	var t := 1.0 - alt / (ah * 1.6)
+	return clampf(t * t, 0.0, 1.0)
+
+
+func radial_up_at(global_pos: Vector3) -> Vector3:
+	var g := gravity_at(global_pos)
+	if g.length() > 0.2:
+		return (-g).normalized()
+	return Vector3.UP
+
 func nearest_planet(global_pos: Vector3) -> Node3D:
 	var best: Node3D = null
 	var best_d := INF

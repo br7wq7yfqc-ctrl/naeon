@@ -1,5 +1,6 @@
 extends CharacterBody3D
 const _MeshOrient = preload("res://scripts/assets/MeshOrient.gd")
+const _Flight = preload("res://scripts/ship/ShipFlightModel.gd")
 const _AP = preload("res://scripts/assets/AssetPaths.gd")
 
 ## Semi-Newtonian ship with SCM / NAV / HOVER modes + seamless landing (no scene swap).
@@ -168,7 +169,13 @@ func _input(event: InputEvent) -> void:
 	if is_landed:
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		var sens := mouse_sensitivity * (float(_role.siege_turn_mult) if op_mode == 1 and _role else 1.0)
+		var sens := mouse_sensitivity
+	if flight_mode == FlightMode.NAV:
+		sens *= 0.55
+	elif flight_mode == FlightMode.HOVER:
+		sens *= 0.85
+	if op_mode == 1 and _role:
+		sens *= float(_role.siege_turn_mult)
 		_yaw -= event.relative.x * sens  # mouse right → look right (RH basis)
 		_pitch -= event.relative.y * sens
 		# Full 3D flight plane: ship body pitches + yaws (not camera-only)
@@ -186,17 +193,10 @@ func _set_mode(m: int) -> void:
 	print("[Ship] Flight mode ", flight_mode_name())
 
 func _max_speed() -> float:
-	match flight_mode:
-		FlightMode.NAV: return max_speed_nav
-		FlightMode.HOVER: return max_speed_hover
-		_: return max_speed_scm
+	return _Flight.max_speed(flight_mode, max_speed_scm, max_speed_nav, max_speed_hover)
 
 func _thrust_mult() -> float:
-	var m := 1.0
-	match flight_mode:
-		FlightMode.NAV: m = 1.55
-		FlightMode.HOVER: m = 0.55
-		_: m = 1.0
+	var m: float = _Flight.thrust_mult(flight_mode)
 	if op_mode == 1 and _role:
 		m *= float(_role.siege_thrust_mult)
 	elif op_mode == 2:
@@ -204,13 +204,11 @@ func _thrust_mult() -> float:
 	return m
 
 func _damp_mult() -> float:
-	var m := 1.0
-	match flight_mode:
-		FlightMode.NAV: m = 0.45
-		FlightMode.HOVER: m = 2.4
-		_: m = 1.0
+	var m: float = _Flight.base_damp(flight_mode)
 	if op_mode == 1:
 		m *= 1.8
+	elif op_mode == 2:
+		m *= 1.25
 	return m
 
 func _ship_axis() -> Vector3:
@@ -291,8 +289,13 @@ func _update_roll_input(delta: float) -> void:
 	if roll_in != 0.0:
 		_roll = clampf(_roll + roll_in * 1.8 * delta, -deg_to_rad(80), deg_to_rad(80))
 	else:
-		# Auto-level roll gently in free flight
-		_roll = lerpf(_roll, 0.0, 2.0 * delta)
+		# Gentle auto-level + slight bank from A/D for readable turn feel
+		var bank_t := 0.0
+		if Input.is_physical_key_pressed(KEY_A):
+			bank_t += 0.35
+		if Input.is_physical_key_pressed(KEY_D):
+			bank_t -= 0.35
+		_roll = lerpf(_roll, bank_t, 2.4 * delta)
 
 func _physics_process(delta: float) -> void:
 	if not pilot_active:
@@ -319,31 +322,44 @@ func _physics_process(delta: float) -> void:
 	var forward: Vector3 = -global_transform.basis.z
 	var right: Vector3 = global_transform.basis.x
 	var up: Vector3 = global_transform.basis.y
+	# Strafe weaker than main; lift medium — readable flight envelope
 	var accel: Vector3 = forward * axes.z * thrust \
-		+ right * axes.x * thrust * 0.55 \
-		+ up * axes.y * thrust * 0.5
+		+ right * axes.x * thrust * 0.5 \
+		+ up * axes.y * thrust * 0.55
 
-	# Planetary gravity (g points toward planet center). Never invent lift here.
-	if _open_space and _open_space.has_method("gravity_at"):
-		var g: Vector3 = _open_space.gravity_at(global_position)
-		if g.length() > 0.01:
-			if flight_mode == FlightMode.HOVER:
-				# Hold altitude: cancel gravity; residual damp only — no boost up
-				accel -= g
-				# kill residual vertical drift along -g
-				var up_dir: Vector3 = (-g).normalized()
-				var v_up: float = velocity.dot(up_dir)
-				velocity -= up_dir * v_up * 0.08
-			elif flight_mode == FlightMode.SCM:
-				accel += g * 0.35
-			else:
-				accel += g * 0.15
+	var atmo := 0.0
+	var g := Vector3.ZERO
+	if _open_space:
+		if _open_space.has_method("atmosphere_density_at"):
+			atmo = float(_open_space.atmosphere_density_at(global_position))
+		if _open_space.has_method("gravity_at"):
+			g = _open_space.gravity_at(global_position)
 
-	velocity += accel * delta
-	velocity = velocity.lerp(Vector3.ZERO, linear_damp_custom * _damp_mult() * delta)
-	var ms := _max_speed()
-	if velocity.length() > ms:
-		velocity = velocity.normalized() * ms
+	# Gravity by mode (g toward planet)
+	if g.length() > 0.01:
+		if flight_mode == FlightMode.HOVER:
+			var hh: Array = _Flight.hover_hold(velocity, g, accel, delta, 1.0)
+			accel = hh[0]
+			velocity = hh[1]
+		elif flight_mode == FlightMode.SCM:
+			# Partial gravity in atmo; almost free in vacuum
+			accel += g * lerpf(0.08, 0.45, atmo)
+		else:
+			# NAV: light gravity bias only near surface
+			accel += g * lerpf(0.02, 0.2, atmo)
+
+	# Soft pad approach brake (assist, not autopilot)
+	if _open_space and _open_space.has_method("nearest_pad"):
+		var pad: Node3D = _open_space.nearest_pad(global_position)
+		if pad and is_instance_valid(pad):
+			var dpad: float = pad.global_position.distance_to(global_position)
+			velocity = _Flight.approach_assist(velocity, pad.global_position - global_position, dpad, land_pad_snap_distance)
+
+	velocity = _Flight.integrate(velocity, accel, delta, linear_damp_custom, _damp_mult(), atmo, _max_speed())
+
+	# CharacterBody free-flight — do not stick to floors mid-air
+	floor_stop_on_slope = false
+	floor_block_on_wall = false
 	move_and_slide()
 	_update_thruster_fx(axes, delta)
 	if velocity.length() > 5.0 and SessionObjectives:
@@ -373,6 +389,16 @@ func _toggle_landing() -> void:
 		_do_land()
 
 func _do_land() -> void:
+	# Speed gate — hard landings rejected (clear feedback)
+	var spd := velocity.length()
+	var v_rad := 0.0
+	if _open_space and _open_space.has_method("gravity_at"):
+		var gg: Vector3 = _open_space.gravity_at(global_position)
+		if gg.length() > 0.01:
+			v_rad = velocity.dot(gg.normalized())  # positive = sinking toward planet
+	if not _Flight.land_ok(spd, v_rad, 22.0, 14.0):
+		print("[Ship] Land denied — too fast (spd=", int(spd), " sink=", int(v_rad), "). Slow to HOVER.")
+		return
 	# Prefer pad snap within range; else surface land if altitude low
 	var pad: Node3D = null
 	if _open_space and _open_space.has_method("nearest_pad"):

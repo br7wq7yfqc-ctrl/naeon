@@ -1,12 +1,14 @@
 extends CharacterBody3D
 class_name GroundVehicle
-## Surface rover stub — full drive loop in sprint V2.
-## Board/exit F; gravity along planet up when provider set.
+## Surface rover — radial gravity drive, nose = −Z, board/exit F.
 
 @export var class_id: String = "rover"
 @export var display_name: String = "Rover"
-@export var speed: float = 12.0
-@export var turn_speed: float = 1.8
+@export var speed: float = 14.0
+@export var reverse_mult: float = 0.45
+@export var turn_speed: float = 1.9
+@export var accel: float = 18.0
+@export var brake: float = 28.0
 @export var volume_m3: float = 8.0
 @export var mass_t: float = 2.0
 
@@ -15,11 +17,15 @@ var _provider: Node = null
 var _up: Vector3 = Vector3.UP
 var _yaw: float = 0.0
 var _cam: Camera3D
+var _speed_along: float = 0.0
+
 
 func _ready() -> void:
 	add_to_group("ground_vehicle")
 	collision_layer = 2
 	collision_mask = 1
+	motion_mode = MOTION_MODE_GROUNDED
+	floor_snap_length = 0.4
 	_build_proxy()
 	var col := CollisionShape3D.new()
 	var box := BoxShape3D.new()
@@ -27,6 +33,7 @@ func _ready() -> void:
 	col.shape = box
 	col.position.y = 0.5
 	add_child(col)
+
 
 func _build_proxy() -> void:
 	var body := MeshInstance3D.new()
@@ -52,11 +59,14 @@ func _build_proxy() -> void:
 			add_child(w)
 	_cam = Camera3D.new()
 	_cam.position = Vector3(0, 2.2, 5.5)
+	_cam.look_at_from_position(_cam.position, Vector3(0, 1.0, 0), Vector3.UP)
 	add_child(_cam)
 	_cam.current = false
 
+
 func set_planet_provider(p: Node) -> void:
 	_provider = p
+
 
 func board(actor: Node3D) -> void:
 	pilot = actor
@@ -68,17 +78,20 @@ func board(actor: Node3D) -> void:
 		_cam.current = true
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
+
 func unboard() -> Node3D:
 	var a := pilot
 	pilot = null
+	_speed_along = 0.0
 	if _cam:
 		_cam.current = false
 	if a and is_instance_valid(a):
 		a.visible = true
-		a.global_position = global_position + _up * 1.5 + global_transform.basis.x * 2.0
+		a.global_position = global_position + _up * 1.6 + global_transform.basis.x * 2.2
 		if a is CollisionObject3D:
 			(a as CollisionObject3D).collision_layer = 2
 	return a
+
 
 func as_storage_entry() -> Dictionary:
 	return {
@@ -89,34 +102,70 @@ func as_storage_entry() -> Dictionary:
 		"health": 100.0,
 	}
 
+
 func _physics_process(delta: float) -> void:
-	if pilot == null or not is_instance_valid(pilot):
-		velocity = velocity.lerp(Vector3.ZERO, 4.0 * delta)
-		move_and_slide()
-		return
+	# Radial up
 	if _provider and _provider.has_method("gravity_at"):
 		var g: Vector3 = _provider.gravity_at(global_position)
 		if g.length() > 0.2:
 			_up = (-g).normalized()
+	up_direction = _up
+
+	if pilot == null or not is_instance_valid(pilot):
+		_speed_along = move_toward(_speed_along, 0.0, brake * delta)
+		_apply_velocity(delta)
+		return
+
+	# Turn only when moving a bit (tank-ish)
+	var turn := 0.0
 	if Input.is_physical_key_pressed(KEY_A):
-		_yaw += turn_speed * delta
+		turn += 1.0
 	if Input.is_physical_key_pressed(KEY_D):
-		_yaw -= turn_speed * delta
-	var right := _up.cross(Vector3(0, 0, -1))
-	if right.length_squared() < 0.01:
-		right = _up.cross(Vector3.RIGHT)
-	right = right.normalized()
-	var fwd := right.cross(_up).normalized()
-	var b := Basis(right, _up, -fwd)
+		turn -= 1.0
+	var turn_scale := clampf(absf(_speed_along) / maxf(speed * 0.35, 0.01), 0.25, 1.0)
+	_yaw += turn * turn_speed * turn_scale * delta
+
+	# Throttle
+	var throttle := 0.0
+	if Input.is_physical_key_pressed(KEY_W):
+		throttle += 1.0
+	if Input.is_physical_key_pressed(KEY_S):
+		throttle -= reverse_mult
+	var target := throttle * speed
+	if absf(throttle) > 0.01:
+		_speed_along = move_toward(_speed_along, target, accel * delta)
+	else:
+		_speed_along = move_toward(_speed_along, 0.0, brake * delta)
+
+	_apply_basis()
+	_apply_velocity(delta)
+
+
+func _apply_basis() -> void:
+	var t: Array = []
+	# stable tangent like SurfaceChunkMath
+	var ref := Vector3.UP
+	if absf(_up.dot(ref)) > 0.92:
+		ref = Vector3.RIGHT
+	var east := ref.cross(_up).normalized()
+	var north := _up.cross(east).normalized()
+	var b := Basis(east, _up, -north)
 	b = Basis(_up, _yaw) * b
 	global_transform = Transform3D(b.orthonormalized(), global_position)
-	var input_v := 0.0
-	if Input.is_physical_key_pressed(KEY_W):
-		input_v -= 1.0
-	if Input.is_physical_key_pressed(KEY_S):
-		input_v += 1.0
-	var wish := (-global_transform.basis.z) * (-input_v) * speed
-	velocity = wish + _up * velocity.dot(_up)
+
+
+func _apply_velocity(delta: float) -> void:
+	_apply_basis()
+	var forward := -global_transform.basis.z
+	# Project to tangent
+	forward = (forward - _up * forward.dot(_up)).normalized()
+	var planar := forward * _speed_along
+	var v_up := velocity.dot(_up)
 	if not is_on_floor():
-		velocity += -_up * 12.0 * delta
+		v_up -= 14.0 * delta
+	else:
+		v_up = minf(v_up, -0.5)
+	velocity = planar + _up * v_up
 	move_and_slide()
+	if is_on_floor():
+		apply_floor_snap()

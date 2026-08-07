@@ -339,23 +339,34 @@ func _physics_process(delta: float) -> void:
 		_update_anim(delta)
 		return
 	var sp := speed * (sprint_mult if Input.is_physical_key_pressed(KEY_SHIFT) else 1.0) * _infection_move_mult()
-	var planar := wish * sp
+	var target_planar := wish * sp
+	# Smooth accel on ground, weaker air control (not ice-skating)
+	var planar := velocity - _up * velocity.dot(_up)
+	var accel_rate := 28.0 if is_on_floor() else 8.0
+	var decel_rate := 32.0 if is_on_floor() else 4.0
+	if target_planar.length_squared() > 0.01:
+		planar = planar.move_toward(target_planar, accel_rate * delta)
+	else:
+		planar = planar.move_toward(Vector3.ZERO, decel_rate * delta)
 	_move_amount = planar.length() / maxf(speed, 0.01)
 
-	# Gravity integrate along up
+	# Gravity integrate along radial up
 	var v_up := velocity.dot(_up)
 	if not is_on_floor():
-		v_up += g_vec.dot(_up) * delta  # g_vec points down (to center)
+		v_up += g_vec.dot(_up) * delta
 	else:
-		v_up = minf(v_up, 0.0)
-	if Input.is_physical_key_pressed(KEY_SPACE):
+		# stick: small downward bias helps floor contact on spheres
+		v_up = minf(v_up, -0.4)
+	if Input.is_physical_key_pressed(KEY_SPACE) and (is_on_floor() or eva_mode):
 		v_up = jump_velocity
 		_spawn_jump_fx()
 
 	velocity = planar + _up * v_up
+	up_direction = _up
+	floor_snap_length = 0.35
+	floor_max_angle = deg_to_rad(55.0)
 	_apply_body_basis()
 	move_and_slide()
-	# Stick to floor
 	if is_on_floor():
 		apply_floor_snap()
 
