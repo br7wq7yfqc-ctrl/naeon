@@ -25,6 +25,8 @@ func _ready() -> void:
 	ensure_default_input()
 	session_started_at = int(Time.get_unix_time_from_system())
 	print("[GameManager] NAEON initialized")
+	if not toast_requested.is_connected(_on_toast_audio):
+		toast_requested.connect(_on_toast_audio)
 
 func get_faction_name() -> String:
 	match player_faction:
@@ -64,6 +66,8 @@ func deposit_economy(amount: float) -> void:
 	else:
 		add_contribution(amount)
 		add_mastery("colony_ops", amount * 0.02)
+	if SessionObjectives:
+		SessionObjectives.on_economy()
 
 func get_alliance_rank_name() -> String:
 	return _AllianceRanks.rank_name(alliance_rank)
@@ -146,3 +150,7 @@ func ensure_default_input() -> void:
 				ev.keycode = k
 				InputMap.action_add_event(action, ev)
 	print("[GameManager] Input ready; move_forward events=", InputMap.action_get_events("move_forward").size())
+
+func _on_toast_audio(_msg: String) -> void:
+	if AudioDirector:
+		AudioDirector.play_toast()

@@ -499,7 +499,7 @@ func _skip_edu_quest() -> void:
 
 
 func _phase0_space_feel() -> void:
-	var we := get_node_or_null(WorldEnvironment) as WorldEnvironment
+	var we := get_node_or_null("WorldEnvironment") as WorldEnvironment
 	if we and we.environment:
 		var e := we.environment
 		e.glow_enabled = true
@@ -511,10 +511,10 @@ func _phase0_space_feel() -> void:
 		e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 		e.ambient_light_color = Color(0.08, 0.1, 0.16)
 		e.ambient_light_energy = 0.35
-	var sun := get_node_or_null(Sun) as DirectionalLight3D
+	var sun := get_node_or_null("Sun") as DirectionalLight3D
 	if sun:
 		sun.light_energy = 1.35
 		sun.shadow_enabled = true
 	if SessionObjectives:
-		SessionObjectives.on_entered_mode(space)
-	print([OpenSpace] Phase0 space feel)
+		SessionObjectives.on_entered_mode("space")
+	print("[OpenSpace] Phase0 space feel")
