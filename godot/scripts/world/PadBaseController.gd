@@ -102,7 +102,15 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 		if SessionObjectives:
 			SessionObjectives.on_claim_or_obj()
 		if AudioDirector:
-			AudioDirector.play_claim()
+			if AudioDirector.has_method("play_contest"):
+				AudioDirector.play_contest()
+			else:
+				AudioDirector.play_claim()
+		if CombatJuice:
+			CombatJuice.hit_feedback(6.0, global_position, false)
+		_spawn_claim_fx(Color(1.0, 0.55, 0.15))
+		if _contest_ring and _contest_ring.has_method("pulse"):
+			_contest_ring.pulse()
 		claimed.emit("Contested")
 		print("[PadBase] CONTESTED ", ownership.previous_faction, " vs ", f, " @ ", name)
 		_notify_hud("CONTESTED — Dynamic Ownership open. Soft Knowledge only.")
