@@ -56,6 +56,10 @@ func try_activate(index: int, target = null) -> bool:
 		# Short anti-spam lock; full CD applied on complete
 		current_cooldowns[ability] = minf(ability.cooldown * 0.25, 2.0)
 		ability_activated.emit(ability)
+	if AudioDirector:
+		AudioDirector.play_hit(false)
+	if owner_character and is_instance_valid(owner_character) and CombatJuice:
+		CombatJuice.hit_feedback(4.0, owner_character.global_position if owner_character is Node3D else Vector3.ZERO)
 		return true
 	ability.activate(owner_character, target)
 	current_cooldowns[ability] = ability.cooldown

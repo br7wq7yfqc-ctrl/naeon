@@ -1,19 +1,20 @@
-# Handoff — 0.3.17 batch release
+# Handoff — post 0.3.17 feel continue
 
-## Desktop
-**~/Desktop/NAEON-0.3.17-Installer.dmg** (~795M, hdiutil VALID)
+## Desktop still
+NAEON-0.3.17-Installer.dmg (no new micro-DMG this pass)
 
-## Shipped
-- Reboard SIGSEGV fix + surface stuck + MeshOrient
-- MainMenu, CombatJuice, AudioDirector, SessionObjectives
-- ClashMatchDirector + nexus/tower landmarks
-- Pad density + ambient life
-- Full noon Tripo wave dual-theme LODs rebundled
+## This iteration (dev tip)
+- PadDensity flood/crystal OmniLights
+- OpenSpace altitude fog + sun limb + ambient
+- Ship thruster FX + engine audio pulse
+- Interiors: cockpit console, spire, omni lights
+- Clash dual nexus Cybernex/gROT + lights
+- Orbital station_habitat_ring ×3
 
-## Tripo
-5040 → 4890 (−150). Assets: clash_nexus_core, clash_lane_tower, station_habitat_ring, surface_crystal_spire, ship_cockpit_console, pad_floodlight
+## Play (dev)
+`godot --path godot` — thrust trails, pad night lights, I interiors lit
 
-## Play
-Install DMG → Open Space / Clash. E land, F exit/board (no crash), WASD forward.
+## Next
+Weapon projectile juice, surface flora, then batch 0.3.18
 
-Updated: 2026-08-07T01:00:49.041251+00:00
+Updated: 2026-08-07T10:49:09.293249+00:00

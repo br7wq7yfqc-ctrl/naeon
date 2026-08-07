@@ -21,6 +21,7 @@ var _provider: Node = null
 var _visual: Node3D
 var _body_mesh: MeshInstance3D
 var _anim_time: float = 0.0
+var _step_t: float = 0.0
 var _leg_l: MeshInstance3D
 var _leg_r: MeshInstance3D
 var _arm_l: MeshInstance3D
@@ -339,6 +340,12 @@ func _apply_body_basis() -> void:
 		cam_pivot.rotation.x = _pitch
 
 func _update_anim(delta: float) -> void:
+	if _move_amount > 0.25:
+		_step_t += delta * (2.2 + _move_amount * 2.0)
+		if _step_t >= 1.0:
+			_step_t = 0.0
+			if AudioDirector:
+				AudioDirector.play_ui()
 	if _visual == null:
 		return
 	_anim_time += delta * (1.0 + _move_amount * 6.0)

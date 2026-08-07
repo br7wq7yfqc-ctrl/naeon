@@ -1,27 +1,31 @@
 # NAEON Dev Plan — Aug 2026
 
 ## Honesty
-Phase 0 still early; feel foundation + crash fixes + batch **0.3.17**.
+Phase 0 still early (~5–10% feel). **0.3.17** shipped Desktop; tip continues code-first.
 
 ## Contract
-SESSION_CONTRACT — batch DMG for milestones; Tripo check each iter.
+Batch DMG only at gates. Tripo check each iter (floor 800).
 
-## Benchmarks
-SC/NMS · EVE/Stellaris soft · Predecessor lanes · dual-theme
+## Current tip (post-0.3.17)
+- Pad lights + density
+- Altitude fog / ambient limb polish
+- Ship thruster GPU particles + engine pulse
+- Interior lights + cockpit console props
+- Dual-nexus Clash landmarks
+- Orbital habitat rings
 
-## Current
-**0.3.17** — reboard crash fix, surface stuck, MeshOrient, MainMenu, CombatJuice, ClashMatchDirector, pad density/life, noon Tripo wave
-
-## Phase 0 queue
+## Queue
 | # | Item | Status |
 |---|------|--------|
-| 1–5 | menu, juice, objectives, density | **done** |
-| 6 | Clash match presentation | **done** |
-| 7 | Lighting/atmosphere | partial |
-| 8 | Tripo noon wave A-fill | **running** |
-| 9 | Batch DMG 0.3.17 | **building** |
+| 7 | Lighting/atmosphere | **done** (this pass) |
+| 8 | Tripo noon wave | **done** |
+| 9 | DMG 0.3.17 | **done** |
+| 10 | Combat readability (VFX/hitstop soft) | next |
+| 11 | Ship weapon projectile juice | next |
+| 12 | Surface flora/rocks density | next |
+| 13 | Batch 0.3.18 when feel gate | blocked |
 
 ## Tripo
-Reserve floor 800; check balance every gen.
+Balance rechecked each session. Prefer code until visual holes.
 
-Updated: 2026-08-07T00:48:33.362262+00:00
+Updated: 2026-08-07T10:49:09.293249+00:00

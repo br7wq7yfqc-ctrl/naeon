@@ -26,6 +26,7 @@ func _ready() -> void:
 		LayerContext.seamless_stage = "S1"
 	_spawn_starfield()
 	_spawn_planets()
+	_spawn_orbital_stations()
 	_spawn_ship()
 	_setup_interior()
 	if floating and floating.has_method("set_target"):
@@ -195,39 +196,55 @@ func _sync_planet_sun() -> void:
 
 
 func _update_altitude_fog() -> void:
-	## Cheap height fog denser inside atmosphere (tier-aware).
+	## Height fog + ambient tint near planets (SC-lite continuum, min-spec safe).
 	var we := $WorldEnvironment as WorldEnvironment
-	if we == null or we.environment == null or ship == null:
+	if we == null or we.environment == null or ship == null or not is_instance_valid(ship):
 		return
 	var env := we.environment
 	var pl: Node3D = nearest_planet(ship.global_position)
-	if pl == null or not pl.has_method("altitude_of"):
+	if pl == null or not is_instance_valid(pl) or not pl.has_method("altitude_of"):
 		env.fog_enabled = false
+		env.ambient_light_energy = 0.32
 		return
 	var alt: float = float(pl.altitude_of(ship.global_position))
 	var h_val = pl.get("atmosphere_height")
 	var h: float = float(h_val) if h_val != null else 300.0
 	var col = pl.get("atmosphere_color")
-	var fog_col := Color(0.15, 0.25, 0.45)
+	var fog_col := Color(0.18, 0.32, 0.55)
 	if col is Color:
-		fog_col = Color(col.r, col.g, col.b)
-	if alt > h * 1.6:
+		fog_col = Color(col.r, col.g, col.b).lerp(Color(0.55, 0.7, 0.95), 0.25)
+	var depth: float = clampf(1.0 - maxf(alt, 0.0) / maxf(h * 1.65, 1.0), 0.0, 1.0)
+	if alt > h * 1.65:
 		env.fog_enabled = false
+		env.ambient_light_energy = 0.28
+		env.glow_intensity = 0.55
 		return
 	env.fog_enabled = true
 	env.fog_light_color = fog_col
-	var depth: float = clampf(1.0 - maxf(alt, 0.0) / maxf(h * 1.6, 1.0), 0.0, 1.0)
-	var dens: float = 0.00015 + depth * depth * 0.0022
+	env.fog_aerial_perspective = depth * 0.45
+	var dens: float = 0.00018 + depth * depth * 0.0028
+	# Surface haze denser when walking
+	if not _in_ship:
+		dens *= 1.25
+		env.ambient_light_energy = 0.45 + depth * 0.35
+	else:
+		env.ambient_light_energy = 0.3 + depth * 0.4
 	var gq := get_node_or_null("/root/GraphicsQuality")
 	if gq:
 		match int(gq.tier):
 			0:
-				dens *= 0.55
+				dens *= 0.5
 			2:
-				dens *= 1.15
+				dens *= 1.2
 			3:
-				dens *= 1.35
+				dens *= 1.4
 	env.fog_density = dens
+	env.glow_intensity = 0.5 + depth * 0.35
+	# Sun warm-up near limb
+	var sun := get_node_or_null("Sun") as DirectionalLight3D
+	if sun:
+		sun.light_color = Color(1, 0.96, 0.9).lerp(fog_col.lightened(0.4), depth * 0.35)
+		sun.light_energy = 1.15 + depth * 0.45
 
 
 func gravity_at(global_pos: Vector3) -> Vector3:
@@ -562,3 +579,36 @@ func _phase0_space_feel() -> void:
 	if SessionObjectives:
 		SessionObjectives.on_entered_mode("space")
 	print("[OpenSpace] Phase0 space feel")
+
+
+func _spawn_orbital_stations() -> void:
+	## Habitat modules in orbit near first planet — free continuum density.
+	if planets.is_empty():
+		return
+	var pl: Node3D = planets[0]
+	if pl == null or not is_instance_valid(pl):
+		return
+	var prop_script: Script = load("res://scripts/assets/GlbProp.gd")
+	var root := Node3D.new()
+	root.name = "OrbitalStations"
+	world_root.add_child(root)
+	var center: Vector3 = pl.global_position
+	var rad_v = pl.get("radius")
+	var rad: float = float(rad_v) if rad_v != null else 400.0
+	for i in 3:
+		var ang := TAU * float(i) / 3.0
+		var pos := center + Vector3(cos(ang), 0.15 * sin(ang * 2.0), sin(ang)) * (rad + 90.0)
+		var n: Node3D = Node3D.new()
+		n.set_script(prop_script)
+		n.set("relative_path", "colony/station_habitat_ring/station_habitat_ring_cybernex_lod1.glb")
+		n.set("scale_factor", 8.0)
+		n.set("add_static_collision", false)
+		root.add_child(n)
+		n.global_position = pos
+		n.look_at(center, Vector3.UP)
+		var o := OmniLight3D.new()
+		o.light_energy = 4.0
+		o.omni_range = 80.0
+		o.light_color = Color(0.4, 0.85, 1.0)
+		n.add_child(o)
+	print("[OpenSpace] orbital stations x3")

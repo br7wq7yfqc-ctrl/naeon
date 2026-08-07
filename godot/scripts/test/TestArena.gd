@@ -437,10 +437,11 @@ func _phase0_arena_feel() -> void:
 func _spawn_clash_landmarks() -> void:
 	var prop_script: Script = load("res://scripts/assets/GlbProp.gd")
 	var specs: Array = [
-		{"rel": "environments/clash_nexus_core/clash_nexus_core_cybernex_lod1.glb", "pos": Vector3(0, 0, -48), "s": 2.2},
+		{"rel": "environments/clash_nexus_core/clash_nexus_core_cybernex_lod1.glb", "pos": Vector3(0, 0, -48), "s": 2.4},
+		{"rel": "environments/clash_nexus_core/clash_nexus_core_grot_lod1.glb", "pos": Vector3(0, 0, 48), "s": 2.4},
 		{"rel": "environments/clash_lane_tower/clash_lane_tower_cybernex_lod1.glb", "pos": Vector3(-28, 0, -10), "s": 1.6},
 		{"rel": "environments/clash_lane_tower/clash_lane_tower_cybernex_lod1.glb", "pos": Vector3(0, 0, -10), "s": 1.6},
-		{"rel": "environments/clash_lane_tower/clash_lane_tower_cybernex_lod1.glb", "pos": Vector3(28, 0, -10), "s": 1.6},
+		{"rel": "environments/clash_lane_tower/clash_lane_tower_grot_lod1.glb", "pos": Vector3(28, 0, -10), "s": 1.6},
 	]
 	for s in specs:
 		var node: Node3D = Node3D.new()
@@ -451,6 +452,13 @@ func _spawn_clash_landmarks() -> void:
 		add_child(node)
 		node.position = s["pos"]
 	print("[TestArena] clash landmarks placed")
+	for pos in [Vector3(0, 6, -48), Vector3(0, 6, 48), Vector3(-28, 5, -10), Vector3(28, 5, -10)]:
+		var o := OmniLight3D.new()
+		o.light_energy = 3.5
+		o.omni_range = 24.0
+		o.light_color = Color(0.4, 0.85, 1.0) if pos.z < 0 else Color(1.0, 0.3, 0.45)
+		o.position = pos
+		add_child(o)
 
 
 func _ensure_clash_director() -> void:

@@ -1,6 +1,6 @@
 extends Node3D
 class_name PadDensity
-## Fills a landing pad / base footprint with existing dual-theme props (0 Tripo).
+## Fills a landing pad / base footprint with dual-theme props + soft flood lights.
 
 const PROPS := [
 	"colony/colony_habitat/colony_habitat_cybernex_lod1.glb",
@@ -20,31 +20,51 @@ const PROPS := [
 	"colony/station_habitat_ring/station_habitat_ring_cybernex_lod1.glb",
 	"props/pad_floodlight/pad_floodlight_cybernex_lod2.glb",
 	"colony/surface_crystal_spire/surface_crystal_spire_cybernex_lod2.glb",
+	"environments/surface_rock_cluster/surface_rock_cluster_cybernex_lod2.glb",
 ]
 
-func build(faction: String = "Cybernex", radius: float = 28.0, count: int = 16) -> void:
+func build(faction: String = "Cybernex", radius: float = 28.0, count: int = 18) -> void:
 	var prop_script: Script = load("res://scripts/assets/GlbProp.gd")
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 40401
 	var fx := "grot" if faction == "gROT" else "cybernex"
+	var neon := Color(0.95, 0.2, 0.4) if faction == "gROT" else Color(0.25, 0.75, 1.0)
 	for i in count:
 		var rel: String = PROPS[i % PROPS.size()]
 		rel = rel.replace("_cybernex_", "_%s_" % fx)
-		var ang := TAU * float(i) / float(count) + rng.randf() * 0.15
+		var ang := TAU * float(i) / float(count) + rng.randf() * 0.12
 		var r := radius * (0.35 + 0.55 * rng.randf())
 		var p: Node3D = Node3D.new()
 		p.set_script(prop_script)
 		p.set("relative_path", rel)
-		p.set("scale_factor", rng.randf_range(0.7, 1.35))
-		p.set("add_static_collision", false)  # visual density only — avoid walker embed
+		var is_station := "station_habitat" in rel
+		var is_flood := "floodlight" in rel
+		var is_spire := "crystal_spire" in rel
+		p.set("scale_factor", 1.6 if is_station else (1.2 if is_flood else (1.35 if is_spire else rng.randf_range(0.75, 1.3))))
+		p.set("add_static_collision", false)
 		add_child(p)
 		p.position = Vector3(cos(ang) * r, 0.0, sin(ang) * r)
 		p.rotation.y = rng.randf() * TAU
-	# central beacon
+		# Soft flood / crystal lights (readable pad night feel)
+		if is_flood or is_spire or i % 5 == 0:
+			var o := OmniLight3D.new()
+			o.light_color = neon if is_spire else Color(1.0, 0.92, 0.75)
+			o.light_energy = 2.8 if is_flood else 1.6
+			o.omni_range = 22.0 if is_flood else 12.0
+			o.omni_attenuation = 1.4
+			o.shadow_enabled = false
+			o.position = Vector3(0, 4.5 if is_flood else 2.2, 0)
+			p.add_child(o)
 	var core: Node3D = Node3D.new()
 	core.set_script(prop_script)
 	core.set("relative_path", "props/claim_beacon/claim_beacon_%s_lod1.glb" % fx)
-	core.set("scale_factor", 1.4)
+	core.set("scale_factor", 1.5)
 	core.set("add_static_collision", false)
 	add_child(core)
-	print("[PadDensity] props=", count, " faction=", faction)
+	var core_l := OmniLight3D.new()
+	core_l.light_color = neon
+	core_l.light_energy = 3.2
+	core_l.omni_range = 18.0
+	core_l.position = Vector3(0, 3.0, 0)
+	core.add_child(core_l)
+	print("[PadDensity] props=", count, " faction=", faction, " lights=on")

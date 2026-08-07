@@ -48,6 +48,8 @@ var pilot_active: bool = true
 var _open_space: Node = null
 var _landed_pad: Node3D = null
 var _landing_gear: Node3D = null
+var _thruster_fx: GPUParticles3D = null
+var _engine_pulse_t: float = 0.0
 
 func _ready() -> void:
 	add_to_group("ship")
@@ -58,6 +60,7 @@ func _ready() -> void:
 	_apply_faction_skin()
 	call_deferred("try_load_hull")
 	call_deferred("_ensure_landing_gear")
+	call_deferred("_ensure_thruster_fx")
 	if pilot_active:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	print("[Ship] Ready modules=", modules.size())
@@ -284,6 +287,7 @@ func _physics_process(delta: float) -> void:
 	if velocity.length() > ms:
 		velocity = velocity.normalized() * ms
 	move_and_slide()
+	_update_thruster_fx(axes, delta)
 	if velocity.length() > 5.0 and SessionObjectives:
 		SessionObjectives.on_moved()
 
@@ -400,6 +404,22 @@ func _recompute_stats() -> void:
 	shields = min(shields, max_shields)
 
 func _fire_weapon() -> void:
+
+	# Soft muzzle flash (presentation)
+	var flash := OmniLight3D.new()
+	flash.light_energy = 6.0
+	flash.omni_range = 8.0
+	flash.light_color = Color(0.5, 0.85, 1.0) if faction != "gROT" else Color(1.0, 0.3, 0.4)
+	flash.position = Vector3(0, 0, -2.0)
+	add_child(flash)
+	get_tree().create_timer(0.07).timeout.connect(func():
+		if is_instance_valid(flash):
+			flash.queue_free()
+	)
+	if AudioDirector:
+		AudioDirector.play_hit(false)
+	if CombatJuice:
+		CombatJuice.hit_feedback(2.0, global_position - global_transform.basis.z * 3.0)
 	var dps: float = 8.0
 	for m in modules:
 		dps += m.weapon_dps
@@ -614,3 +634,48 @@ func _sync_landing_gear() -> void:
 		_ensure_landing_gear()
 	if _landing_gear and _landing_gear.has_method("set_deployed"):
 		_landing_gear.call("set_deployed", is_landed)
+
+
+func _ensure_thruster_fx() -> void:
+	if _thruster_fx and is_instance_valid(_thruster_fx):
+		return
+	_thruster_fx = GPUParticles3D.new()
+	_thruster_fx.name = "ThrusterFX"
+	_thruster_fx.amount = 48
+	_thruster_fx.lifetime = 0.35
+	_thruster_fx.emitting = false
+	_thruster_fx.position = Vector3(0, 0, 2.2)  # behind hull (+Z = aft if nose −Z)
+	var pm := ParticleProcessMaterial.new()
+	pm.direction = Vector3(0, 0, 1)
+	pm.spread = 12.0
+	pm.initial_velocity_min = 6.0
+	pm.initial_velocity_max = 14.0
+	pm.gravity = Vector3.ZERO
+	pm.scale_min = 0.06
+	pm.scale_max = 0.18
+	pm.color = Color(0.35, 0.75, 1.0, 0.85)
+	_thruster_fx.process_material = pm
+	var dm := SphereMesh.new()
+	dm.radius = 0.08
+	dm.height = 0.16
+	_thruster_fx.draw_pass_1 = dm
+	add_child(_thruster_fx)
+
+
+func _update_thruster_fx(axes: Vector3, delta: float) -> void:
+	if _thruster_fx == null or not is_instance_valid(_thruster_fx):
+		return
+	var power: float = clampf(absf(axes.z) + absf(axes.x) * 0.4 + absf(axes.y) * 0.3, 0.0, 1.5)
+	_thruster_fx.emitting = power > 0.08 and pilot_active and not is_landed
+	if _thruster_fx.emitting:
+		_thruster_fx.amount = int(32 + power * 40)
+		var pm := _thruster_fx.process_material as ParticleProcessMaterial
+		if pm:
+			pm.initial_velocity_min = 5.0 + power * 8.0
+			pm.initial_velocity_max = 10.0 + power * 16.0
+			var fac_col := Color(0.95, 0.25, 0.4) if faction == "gROT" else Color(0.3, 0.8, 1.0)
+			pm.color = fac_col
+		_engine_pulse_t += delta
+		if _engine_pulse_t > 0.35 and AudioDirector and power > 0.5:
+			_engine_pulse_t = 0.0
+			AudioDirector.play_engine_pulse()

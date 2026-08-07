@@ -40,6 +40,10 @@ static func build_station(faction: String = "Cybernex") -> Node3D:
 	_try_glb(root, "props/control_console/control_console_%s_lod1.glb" % fx, Vector3(0, 0, 30), 1.2)
 	_try_glb(root, "props/med_station/med_station_%s_lod1.glb" % fx, Vector3(8, 0, 2), 1.0)
 	_try_glb(root, "colony/resource_crystal/resource_crystal_%s_lod2.glb" % fx, Vector3(-6, 0, 28), 0.8)
+	_try_glb(root, "props/ship_cockpit_console/ship_cockpit_console_%s_lod1.glb" % fx, Vector3(-4, 0, 30), 1.0)
+	_try_glb(root, "colony/surface_crystal_spire/surface_crystal_spire_%s_lod2.glb" % fx, Vector3(5, 0, 32), 0.9)
+	_try_glb(root, "props/holo_projector/holo_projector_%s_lod2.glb" % fx, Vector3(0, 0, 28), 1.1)
+	_interior_point_lights(root, neon)
 	# Exit marker at foyer back
 	var exit := Area3D.new()
 	exit.name = "ExitVolume"
@@ -79,6 +83,9 @@ static func build_ship(faction: String = "Cybernex") -> Node3D:
 	var fx2 := "grot" if faction == "gROT" else "cybernex"
 	_try_glb(root, "props/storage_barrel/storage_barrel_%s_lod2.glb" % fx2, Vector3(1.2, 0, 14), 0.6)
 	_try_glb(root, "props/control_console/control_console_%s_lod2.glb" % fx2, Vector3(0, 0, 0.5), 0.7)
+	_try_glb(root, "props/ship_cockpit_console/ship_cockpit_console_%s_lod1.glb" % fx2, Vector3(0, 0, -0.2), 0.85)
+	_try_glb(root, "props/sci_fi_crate/sci_fi_crate_%s_lod2.glb" % fx2, Vector3(-1.4, 0, 13), 0.55)
+	_interior_point_lights(root, neon)
 
 	var exit := Area3D.new()
 	exit.name = "ExitVolume"
@@ -175,3 +182,23 @@ static func _add_neon_strips(root: Node3D, fac: String) -> void:
 	light.omni_range = 18.0
 	light.position = Vector3(0, 3.0, 0)
 	root.add_child(light)
+
+
+static func _interior_point_lights(root: Node3D, neon: Color) -> void:
+	## Soft readable interiors (RTX 1060 friendly — few omnis).
+	var spots := [
+		Vector3(0, 2.6, 0),
+		Vector3(0, 2.8, 14),
+		Vector3(0, 3.0, 30),
+		Vector3(8, 2.4, 14),
+		Vector3(-8, 2.4, 14),
+	]
+	for pos in spots:
+		var o := OmniLight3D.new()
+		o.light_color = neon.lerp(Color(1, 0.95, 0.85), 0.35)
+		o.light_energy = 1.8
+		o.omni_range = 11.0
+		o.omni_attenuation = 1.6
+		o.shadow_enabled = false
+		o.position = pos
+		root.add_child(o)
