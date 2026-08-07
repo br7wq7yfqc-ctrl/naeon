@@ -98,3 +98,9 @@
 | 2026-08-07 | 0.3.18 combat readability + SurfaceFlora | Holistic |
 
 | 2026-08-07 | S-EVA / S-MORPH / S-INT / V1-V2 code landed; Desktop still 0.3.18 until acceptance → 0.3.19 | Holistic |
+
+
+## Decision Log — 2026-08-07T23:22:10.485908+00:00
+- Parallel content: Tripo A ownership_claim_pylon (high) + B ground_rover_chassis (standard); balance was ~4870.
+- Code: ship bolts → Area3D + ProjectileRunner hits; pad claim particles + claim_beacon mesh; siege energy cost up.
+- No DMG micro-release.

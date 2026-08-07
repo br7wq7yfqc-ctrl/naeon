@@ -26,7 +26,7 @@ func _process(delta: float) -> void:
 
 func try_activate(index: int, target = null) -> bool:
 	if index < 0 or index >= abilities.size():
-		return false
+		return false  # soft fail
 	var ability: Ability = abilities[index]
 	if ability == null:
 		return false

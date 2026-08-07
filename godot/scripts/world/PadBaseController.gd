@@ -20,6 +20,7 @@ var _contest_ring: Node3D = null
 var _claim_cd: float = 0.0
 
 func _ready() -> void:
+	call_deferred("_ensure_claim_beacon")
 	ownership = OwnershipData.new()
 	ownership.object_id = "%s/%s" % [get_parent().name if get_parent() else "pad", name]
 	ownership.current_faction = OwnershipData.Faction.NEUTRAL
@@ -142,6 +143,9 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 		AudioDirector.play_claim()
 	claimed.emit(ownership.faction_name())
 	_notify_hud("Claim resolved → %s. Harvest = Contribution (no combat power)." % ownership.faction_name())
+	var ccol := Color(0.15, 0.85, 1.0) if ownership.faction_name() == "Cybernex" else Color(0.95, 0.12, 0.42)
+	_spawn_claim_fx(ccol)
+	call_deferred("_ensure_claim_beacon")
 	print("[PadBase] claim → ", ownership.faction_name(), " @ ", name)
 
 func _tick_harvest(delta: float) -> void:
@@ -240,3 +244,84 @@ func _notify_hud(msg: String) -> void:
 		if n.has_method("push_toast"):
 			n.push_toast(msg, 3.2)
 			return
+
+
+
+func _ensure_claim_beacon() -> void:
+	if has_node("ClaimBeaconVis"):
+		return
+	var root := Node3D.new()
+	root.name = "ClaimBeaconVis"
+	add_child(root)
+	var loaded := false
+	var fac := "cybernex"
+	if ownership:
+		var fn := ownership.faction_name().to_lower()
+		if fn == "grot":
+			fac = "grot"
+	var rels := [
+		"props/claim_beacon/claim_beacon_%s_lod1.glb" % fac,
+		"props/claim_beacon/claim_beacon_%s_lod2.glb" % fac,
+		"props/ownership_claim_pylon/ownership_claim_pylon_%s_lod1.glb" % fac,
+	]
+	var AP = load("res://scripts/assets/AssetPaths.gd")
+	for rel in rels:
+		var path := ""
+		if AP and AP.has_method("resolve"):
+			path = AP.resolve(rel)
+		if path == "" or not FileAccess.file_exists(path):
+			continue
+		var doc := GLTFDocument.new()
+		var st := GLTFState.new()
+		if doc.append_from_file(path, st) != OK:
+			continue
+		var scn := doc.generate_scene(st)
+		if scn:
+			root.add_child(scn)
+			scn.scale = Vector3.ONE * 1.4
+			scn.position = Vector3(0, 0.2, 0)
+			loaded = true
+			break
+	if not loaded:
+		# procedural pylon fallback
+		var mi := MeshInstance3D.new()
+		var cyl := CylinderMesh.new()
+		cyl.top_radius = 0.15
+		cyl.bottom_radius = 0.35
+		cyl.height = 4.5
+		mi.mesh = cyl
+		var mat := StandardMaterial3D.new()
+		mat.emission_enabled = true
+		mat.emission = Color(0.2, 0.85, 1.0)
+		mat.emission_energy_multiplier = 1.5
+		mat.albedo_color = Color(0.1, 0.15, 0.2)
+		mi.material_override = mat
+		mi.position.y = 2.25
+		root.add_child(mi)
+
+
+func _spawn_claim_fx(col: Color) -> void:
+	var p := GPUParticles3D.new()
+	p.amount = 24
+	p.lifetime = 0.7
+	p.one_shot = true
+	p.explosiveness = 0.95
+	p.emitting = true
+	var pm := ParticleProcessMaterial.new()
+	pm.direction = Vector3(0, 1, 0)
+	pm.spread = 70.0
+	pm.initial_velocity_min = 2.0
+	pm.initial_velocity_max = 7.0
+	pm.gravity = Vector3(0, -3, 0)
+	pm.color = col
+	p.process_material = pm
+	var dm := SphereMesh.new()
+	dm.radius = 0.08
+	dm.height = 0.16
+	p.draw_pass_1 = dm
+	p.position = Vector3(0, 1.5, 0)
+	add_child(p)
+	get_tree().create_timer(1.0).timeout.connect(func():
+		if is_instance_valid(p):
+			p.queue_free()
+	)

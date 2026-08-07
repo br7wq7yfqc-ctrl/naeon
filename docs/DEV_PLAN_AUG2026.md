@@ -1,23 +1,24 @@
 # NAEON Dev Plan — Aug 2026
 
 ## Mode
-**Mechanics + physics depth**, iterative, no flashy bugs. Not playability-theater.
+holistic-economical + sequential mechanics/physics + parallel Tripo
 
-## Done this track
-| Item | Notes |
-|------|-------|
-| Terrain grid + no dance | lat/lon cells |
-| Chunk stream opt | pool/budget/hysteresis |
-| ShipFlightModel | atmo density, drag, hover, land gate |
-| Walker ground accel | planar smooth + radial g |
-| Rover drive envelope | throttle/turn/gravity |
+## Latest
+| Item | Status |
+|------|--------|
+| Ship Area3D bolts + damage | done |
+| Pad claim FX + ownership pylon mesh | done (new asset) |
+| Rover chassis GLB | done (new asset) |
+| Tripo balance | ~4820 after −50 |
 
-## Next iterations (in order)
-1. Pad claim / contribution feel + audio/FX consistency
-2. Weapon projectile lifetime/collision layers audit
-3. Ability energy costs + cooldowns cross-mode
-4. Planet gravity/atmo parameter tuning table
-5. SoftNet state fields only if free of bugs
-6. 0.3.19 batch when continuum stable under real play
+## Assets this session
+-  dual-theme LOD0–2
+-  dual-theme LOD0–2
 
-Updated: 2026-08-07T23:18:08.396968+00:00
+## Next
+1. Ability data-driven costs table
+2. Planet gravity/atmo tuning table  
+3. Optional: siege radiator / habitat module gen
+4. Contested claim multi-pulse balance
+
+Updated: 2026-08-07T23:23:30.587220+00:00

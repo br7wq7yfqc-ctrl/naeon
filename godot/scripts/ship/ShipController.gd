@@ -507,33 +507,45 @@ func _fire_weapon() -> void:
 		AudioDirector.play_hit(false)
 	if CombatJuice:
 		CombatJuice.hit_feedback(2.0, global_position - global_transform.basis.z * 3.0)
+	var e_cost := 4.0 if flight_mode != FlightMode.NAV else 5.5
+	if op_mode == 1:
+		e_cost *= 1.35
+	if energy < e_cost:
+		return
+	energy -= e_cost
+	_fire_cd = 0.22 if op_mode == 1 else (0.14 if flight_mode == FlightMode.NAV else 0.18)
 	var dps: float = 8.0
 	for m in modules:
 		dps += m.weapon_dps
-	if energy < 4.0:
-		return
-	energy -= 4.0
-	_fire_cd = 0.18
-	var bolt := MeshInstance3D.new()
+	if op_mode == 1 and _role:
+		dps *= float(_role.siege_dps_mult) if "siege_dps_mult" in _role else 1.35
+	var bolt := Area3D.new()
+	bolt.name = "ShipBolt"
+	var mi := MeshInstance3D.new()
 	var mesh := SphereMesh.new()
-	mesh.radius = 0.12
-	mesh.height = 0.24
-	bolt.mesh = mesh
+	mesh.radius = 0.14
+	mesh.height = 0.28
+	mi.mesh = mesh
 	var mat := StandardMaterial3D.new()
 	mat.emission_enabled = true
 	mat.emission = Color(0.3, 0.95, 1.0) if faction == "Cybernex" else Color(1.0, 0.2, 0.4)
 	mat.emission_energy_multiplier = 3.0
 	mat.albedo_color = mat.emission
-	bolt.material_override = mat
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mi.material_override = mat
+	bolt.add_child(mi)
 	var dir: Vector3 = -global_transform.basis.z
 	bolt.set_meta("direction", dir)
-	bolt.set_meta("speed", 90.0 if flight_mode == FlightMode.NAV else 70.0)
+	bolt.set_meta("speed", 95.0 if flight_mode == FlightMode.NAV else (55.0 if flight_mode == FlightMode.HOVER else 72.0))
+	bolt.set_meta("damage", dps * 0.55)
+	bolt.set_meta("life", 1.6 if flight_mode == FlightMode.NAV else 1.25)
+	bolt.set_meta("faction", faction)
 	var scene := get_tree().current_scene
 	if scene:
 		scene.add_child(bolt)
 	else:
 		get_parent().add_child(bolt)
-	bolt.global_position = global_position - global_transform.basis.z * 2.0
+	bolt.global_position = global_position - global_transform.basis.z * 2.2
 	var runner := Node.new()
 	runner.set_script(preload("res://scripts/abilities/ProjectileRunner.gd"))
 	bolt.add_child(runner)
