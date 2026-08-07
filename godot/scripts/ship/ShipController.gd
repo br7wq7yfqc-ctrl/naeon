@@ -116,15 +116,24 @@ func try_load_hull() -> void:
 	root.scale = Vector3.ONE * 1.2
 	# Align GLB nose to Godot −Z (thrust / camera forward)
 	_MeshOrient.face_neg_z(root as Node3D, true)
-	# Scout hull Tripo often still long-on-X after auto — hard correct if needed
-	var aabb_fix := _hull_local_size(root)
-	if aabb_fix.x > aabb_fix.z * 1.1:
-		root.rotate_y(PI * 0.5)
-	# Keep mesh slightly above cargo hardpoints
+	# Pick yaw maximizing length on Z (nose along −Z after MeshOrient)
+	var best_y := root.rotation.y
+	var best_len := -1.0
+	for y in [0.0, PI * 0.5, PI, PI * 1.5]:
+		root.rotation.y = y
+		var sz: Vector3 = _hull_local_size(root)
+		if sz.z > best_len:
+			best_len = sz.z
+			best_y = y
+	root.rotation.y = best_y
 	root.position = Vector3(0, 0.15, 0)
 	if hull_mesh:
 		hull_mesh.visible = false
-	print("[Ship] Loaded hull ", path, " yaw=", root.rotation_degrees.y)
+	# Hide any leftover placeholder dark hull collision mesh
+	var ph := get_node_or_null("HullMesh")
+	if ph:
+		ph.visible = false
+	print("[Ship] Loaded hull ", path, " yaw=", rad_to_deg(best_y), " lenZ=", best_len)
 
 func _asset_path(rel: String) -> String:
 	return _AP.resolve(rel)
@@ -907,21 +916,8 @@ func _stick_to_pad() -> void:
 
 
 func _hull_local_size(n: Node3D) -> Vector3:
-	var mi_count := 0
-	var sx := 0.0
-	var sy := 0.0
-	var sz := 0.0
-	var stack: Array = [n]
-	while not stack.is_empty():
-		var cur: Node = stack.pop_back()
-		if cur is MeshInstance3D and (cur as MeshInstance3D).mesh:
-			var a: AABB = (cur as MeshInstance3D).mesh.get_aabb()
-			var xf: Transform3D = (cur as Node3D).global_transform
-			# approximate size in root via scale only
-			sx = maxf(sx, a.size.x * absf((cur as Node3D).scale.x))
-			sy = maxf(sy, a.size.y * absf((cur as Node3D).scale.y))
-			sz = maxf(sz, a.size.z * absf((cur as Node3D).scale.z))
-			mi_count += 1
-		for c in cur.get_children():
-			stack.append(c)
-	return Vector3(sx, sy, sz)
+	# Use MeshOrient-style AABB in root local space
+	var a: AABB = _MeshOrient._aabb_in_root(n) if _MeshOrient.has_method("_aabb_in_root") else AABB()
+	if a.size.length_squared() < 1e-6:
+		return Vector3.ONE
+	return a.size
