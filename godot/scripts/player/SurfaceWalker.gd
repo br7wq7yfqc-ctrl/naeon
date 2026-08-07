@@ -152,7 +152,10 @@ func _load_form_visual() -> void:
 	_strip_colliders(root)
 	_visual.add_child(root)
 	root.name = "FormGLB"
-	_MeshOrient.face_neg_z(root as Node3D, false)
+	_MeshOrient.face_neg_z(root as Node3D, true)
+	# Character sheets often face +X; if still wide, yaw +90
+	var _vs := root.rotation
+	# second pass already in MeshOrient
 	_form_skel = _FormAnim.find_skeleton(root)
 	root.scale = Vector3.ONE * 1.1
 	root.position = Vector3(0, 0, 0)

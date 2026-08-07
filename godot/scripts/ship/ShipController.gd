@@ -114,8 +114,17 @@ func try_load_hull() -> void:
 	add_child(root)
 	root.name = "HullGLB"
 	root.scale = Vector3.ONE * 1.2
+	# Align GLB nose to Godot −Z (thrust / camera forward)
 	_MeshOrient.face_neg_z(root as Node3D, true)
-	print("[Ship] Loaded hull ", path)
+	# Scout hull Tripo often still long-on-X after auto — hard correct if needed
+	var aabb_fix := _hull_local_size(root)
+	if aabb_fix.x > aabb_fix.z * 1.1:
+		root.rotate_y(PI * 0.5)
+	# Keep mesh slightly above cargo hardpoints
+	root.position = Vector3(0, 0.15, 0)
+	if hull_mesh:
+		hull_mesh.visible = false
+	print("[Ship] Loaded hull ", path, " yaw=", root.rotation_degrees.y)
 
 func _asset_path(rel: String) -> String:
 	return _AP.resolve(rel)
@@ -730,6 +739,13 @@ func _update_thruster_fx(axes: Vector3, delta: float) -> void:
 func _ensure_cargo_systems() -> void:
 	if _cargo_hold != null:
 		return
+	# Scout/sniper must NOT spawn a belly ramp (was a black monolith under the hull)
+	var want_ramp := false
+	if _role != null:
+		want_ramp = bool(_role.has_cargo_ramp) or bool(_role.allows_cargo_open)
+	if not want_ramp:
+		print("[Ship] Cargo/ramp skipped (role has no hangar)")
+		return
 	_cargo_hold = Node.new()
 	_cargo_hold.set_script(load("res://scripts/ship/CargoHold.gd"))
 	_cargo_hold.name = "CargoHold"
@@ -761,7 +777,7 @@ func _ensure_morph_and_hatch() -> void:
 	var door := MeshInstance3D.new()
 	door.name = "HatchDoor"
 	var db := BoxMesh.new()
-	db.size = Vector3(1.2, 1.8, 0.08)
+	db.size = Vector3(0.9, 1.2, 0.06)
 	door.mesh = db
 	var dm := StandardMaterial3D.new()
 	dm.albedo_color = Color(0.2, 0.55, 0.7)
@@ -888,3 +904,24 @@ func _stick_to_pad() -> void:
 		return
 	# Surface land: freeze in place
 	velocity = Vector3.ZERO
+
+
+func _hull_local_size(n: Node3D) -> Vector3:
+	var mi_count := 0
+	var sx := 0.0
+	var sy := 0.0
+	var sz := 0.0
+	var stack: Array = [n]
+	while not stack.is_empty():
+		var cur: Node = stack.pop_back()
+		if cur is MeshInstance3D and (cur as MeshInstance3D).mesh:
+			var a: AABB = (cur as MeshInstance3D).mesh.get_aabb()
+			var xf: Transform3D = (cur as Node3D).global_transform
+			# approximate size in root via scale only
+			sx = maxf(sx, a.size.x * absf((cur as Node3D).scale.x))
+			sy = maxf(sy, a.size.y * absf((cur as Node3D).scale.y))
+			sz = maxf(sz, a.size.z * absf((cur as Node3D).scale.z))
+			mi_count += 1
+		for c in cur.get_children():
+			stack.append(c)
+	return Vector3(sx, sy, sz)

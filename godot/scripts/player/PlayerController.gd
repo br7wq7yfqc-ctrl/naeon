@@ -373,7 +373,7 @@ func try_load_form_mesh() -> void:
 	if body_mesh:
 		body_mesh.visible = false
 	root.name = "FormGLB"
-	_MeshOrient.face_neg_z(root as Node3D, false)
+	_MeshOrient.face_neg_z(root as Node3D, true)
 	add_child.call_deferred(root)
 	root.scale = Vector3.ONE * 0.85
 	root.position = Vector3(0, 0, 0)

@@ -38,6 +38,7 @@ func _build_proxy_plates() -> void:
 		mi.material_override = mat
 		add_child(mi)
 		mi.position = s["pos"]
+		mi.visible = false  # show only while morphing/siege
 		var base_xf := mi.transform
 		var siege_xf := base_xf
 		if s.has("siege_pos"):
@@ -76,6 +77,7 @@ func _apply_morph_t(t: float) -> void:
 		var a: Transform3D = p["base"]
 		var b: Transform3D = p["siege"]
 		n.transform = a.interpolate_with(b, morph_t)
+		n.visible = morph_t > 0.02
 
 
 func op_mode_name() -> String:
