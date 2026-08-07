@@ -10,11 +10,11 @@
 
 | Track | Status |
 |-------|--------|
-| Rules 00–25 | **On main** (25 = performance permanent) |
-| Lore depth + core bios + sites + rituals + slang + VO barks | **On main** |
-| Act I + **Act II** quest starters | **On main** |
-| VS schemas v0.2 (site pins) | **On main** |
-| Code P0 | Open (see below) |
+| Rules 00–26 | **On main** (25 perf, 26 alliance UI copy) |
+| Lore Act I–**III** starters | **On main** |
+| SITE_PIN_CATALOG enum | **On main** |
+| Schemas v0.2 | **On main** |
+| Code P0 | Open |
 
 ---
 
@@ -22,32 +22,20 @@
 
 | Priority | Owner | Task |
 |----------|--------|------|
-| **P0** | Session A | Infection **5** pips; Ability data 04/16; interruptible Hack; **perf smoke** rules/25 |
-| **P0** | Session B | TransitionContext round-trip; **S1** <3s no drop quest/cargo/**site_pin**; no land hitch |
-| **P0** | All code | Min-preset ~60 FPS; no memory climb 5 min; free on exit — **even primitive scenes** |
-| P1 | Session E | Quest Resources CQ-CX-I-01 + CQ-GR-I-01 (then Act II) |
-| P1 | Session A/E | Act I tutorial wiring + VO optional keys |
-| P2 | Session D | Contribution/Biomass soft caps |
-| Ops | Owner | Tripo credits; neon rclone |
+| **P0** | A | Infection 5; Ability 04/16; **perf smoke** |
+| **P0** | B | TransitionContext S1 + site_pin; no hitch |
+| **P0** | All | ~60 FPS min preset; no memory climb — even primitive |
+| P1 | E | Quest Resources Act I → II → III data |
+| P1 | A/E | Tutorial wiring + optional VO keys |
+| P2 | D | Alliance permissions UI from rules/26; pools |
+| Ops | Owner | Tripo; neon rclone |
 
 ---
 
 ## Non-negotiables
 
-No P2W · soft Knowledge · Infection max 5 · Arena soft caps · freemium labels · Tripo-first · no secrets in git · Godot 4 Mac+Windows · **permanent performance (rules/25)** · narrative ≠ power
+No P2W · soft Knowledge · Infection max 5 · freemium labels · Tripo-first · no secrets · Godot 4 Mac+Windows · **rules/25 performance** · narrative ≠ power · site_pin IDs from SITE_PIN_CATALOG only
 
 ---
 
-## Canon paths (quick)
-
-- Combat: rules/02, 04, 16, 20, 21  
-- Space/modules: 14, 22, 18  
-- Social/diplomacy: 11, 23, 24  
-- Economy: 05, 12, 15  
-- Perf: **25**  
-- Lore/quests: docs/lore/*  
-- Skill mirror: docs/HOLISTIC_DEV_SKILL.md
-
----
-
-*Code implements against rules; design continues only for gaps, not silent balance rewrites.*
+*Sequential design queue Act III + sites + UI copy closed this pass.*
