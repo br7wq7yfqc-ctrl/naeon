@@ -1,27 +1,26 @@
 # NAEON — Shared Agent Memory
 
-**Last updated:** 2026-08-06 (core bios + sites + rituals + slang)
+**Last updated:** 2026-08-06 (skill v2.0 performance + VO barks)
 
 ## Core constraints
-No P2W · soft Knowledge · Infection max 5 · S1 · freemium ≠ power · Tripo-first · one-lever retune · narrative never grants exclusive permanent DPS
+No P2W · soft Knowledge · Infection max 5 · S1 · freemium ≠ power · Tripo-first · one-lever retune · narrative ≠ power · **permanent performance: ~60 FPS min preset, no memory leaks even in primitive scenes**
 
 ## Design corpus
-rules/00–24 · lore (timeline, forms, culture, relics, glossary, neutrals, **bios core, legendary sites, seasonal rituals, slang**) · skill **v1.9**
+rules/00–**25** · lore (bios, sites, rituals, slang, **VO barks**) · skill **v2.0**
 
 ### This pass
-- CHARACTER_BIOS_CORE (Aegis, Sera, Helix, Graft, Third Throat, Kiln-Nine)
-- LEGENDARY_SITES (1–2 per system)
-- SEASONAL_RITUALS (Wake Drill, Spore Feast, Lattice Storm)
-- FACTION_SLANG_AND_VOICE
+- Skill **v2.0** / rules/**25_PERFORMANCE_AND_MEMORY** — FPS/memory discipline always-on
+- lore/VO_BARKS_CORE_CAST.md
 
 ## Implementation P0
-A: Infection 5 UI · B: TransitionContext S1 · E: Act I quests · Ops: Tripo/neon
+A: Infection 5 UI + perf smoke · B: TransitionContext S1 + no land hitch · E: Act I quests · Ops: Tripo/neon
 
 ## Decision log
 | Date | Decision |
 |------|----------|
-| 2026-08-06 | Lore depth pack (timeline/forms/culture/relics/glossary/neutrals) |
-| 2026-08-06 | **Core bios + legendary sites + seasonal + slang** |
+| 2026-08-06 | Core bios + sites + rituals + slang |
+| 2026-08-06 | **Permanent performance canon** skill v2.0 + rules/25 |
+| 2026-08-06 | VO barks core cast seed |
 
 ## Protocol
-HANDOFF → rules/lore → skill → code. Narrative does not override 04/15/16.
+HANDOFF → rules/lore → skill (§25 on every code touch) → code.
