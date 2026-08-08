@@ -1,15 +1,18 @@
 # NAEON Dev Plan — Aug 2026
 
-## sequential + holistic-economical · 0 micro-DMG · Tripo ~4680
+## sequential + living neon · Tripo wave in progress
 
 | Item | Status |
 |------|--------|
-| Contest camera readability (meter/pillars/spokes/HUD) | done |
-| Wildlife idle (hop/flap/swim/space + face) | done |
-| Contest soft FOV + fauna chirps | done |
+| NeonParticles (burst/trail/thruster/claim/muzzle) | done |
+| LivingConfig Cybernex/gROT morph modes | done |
+| FormAnimator full walk/run/idle/air/wings | done |
+| TurretAnimator aim/recoil/muzzle | done |
+| Ship thruster plume + living sync | done |
+| Tripo living-config asset wave (~20) | running |
 
 ## Next
-1. Soft pad claim radial particles budget
-2. Batch DMG **only** on owner request
+1. Wire new GLBs into ship/weapon hardpoints after process
+2. Batch DMG only on owner request
 
-Updated: 2026-08-08T11:56:58.667137+00:00
+Updated: 2026-08-08T13:58:05.968391+00:00

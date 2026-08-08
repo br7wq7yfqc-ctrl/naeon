@@ -159,6 +159,10 @@ func _spawn_projectile(caster: Node, dmg: float, color: Color) -> void:
 	body.set_meta("direction", dir)
 	body.set_meta("speed", 28.0)
 	caster.get_tree().current_scene.add_child(body)
+	var NP = load("res://scripts/fx/NeonParticles.gd")
+	if NP:
+		NP.muzzle_flash(origin, dir, color, caster.get_tree())
+		NP.trail_attach(body, color, Vector3.ZERO)
 	body.global_position = origin
 	body.monitoring = true
 	body.monitorable = true

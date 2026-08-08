@@ -81,6 +81,9 @@ func _apply_morph_t(t: float) -> void:
 		var b: Transform3D = p["siege"]
 		n.transform = a.interpolate_with(b, morph_t)
 		n.visible = morph_t > 0.02
+		if n is MeshInstance3D and (n as MeshInstance3D).material_override is StandardMaterial3D:
+			var mat: StandardMaterial3D = (n as MeshInstance3D).material_override
+			mat.emission_energy_multiplier = 0.4 + morph_t * 2.2
 
 
 func op_mode_name() -> String:
@@ -98,6 +101,7 @@ func op_mode_name() -> String:
 
 
 func _try_load_radiator_meshes() -> void:
+	_try_load_variable_wing()
 	var AP = load("res://scripts/assets/AssetPaths.gd")
 	if AP == null:
 		return
@@ -139,3 +143,33 @@ func _strip_empty_meshes(n: Node) -> void:
 			return
 	for c in n.get_children():
 		_strip_empty_meshes(c)
+
+
+func _try_load_variable_wing() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	var AP = load("res://scripts/assets/AssetPaths.gd")
+	if AP == null:
+		return
+	var fac := "cybernex"
+	var ship := get_parent()
+	if ship and "faction" in ship and str(ship.faction) == "gROT":
+		fac = "grot"
+	var rel := "ships/ship_variable_wing/ship_variable_wing_%s_lod1.glb" % fac
+	var path: String = str(AP.resolve(rel)) if AP.has_method("resolve") else ""
+	if path == "" or not FileAccess.file_exists(path):
+		return
+	for side in [-1.0, 1.0]:
+		var doc := GLTFDocument.new()
+		var st2 := GLTFState.new()
+		if doc.append_from_file(path, st2) != OK:
+			continue
+		var scn := doc.generate_scene(st2)
+		if scn == null:
+			continue
+		add_child(scn)
+		scn.position = Vector3(side * 1.4, 0.1, 0.2)
+		scn.scale = Vector3.ONE * 0.45
+		scn.scale.x *= side
+		_plates.append({"node": scn, "base": scn.transform, "siege": scn.transform.translated(Vector3(side * 0.4, 0, -0.3))})
+	print("[HullMorph] variable wing loaded")

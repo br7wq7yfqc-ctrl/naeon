@@ -209,6 +209,9 @@ func set_contested(on: bool, claim_strength: float = 0.0) -> void:
 
 func pulse() -> void:
 	_pulse_boost = 1.25
+	var NP = load("res://scripts/fx/NeonParticles.gd")
+	if NP and is_inside_tree():
+		NP.claim_radial(global_position, Color(1.0, 0.55, 0.15, 0.9), get_tree())
 
 
 func get_progress() -> float:

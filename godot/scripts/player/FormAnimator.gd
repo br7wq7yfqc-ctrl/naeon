@@ -1,8 +1,7 @@
 extends RefCounted
 class_name FormAnimator
-## Sprint C: if FormGLB has Skeleton3D, drive simple walk/idle bone poses.
-## Else returns false so caller keeps procedural limb/bob path.
-## No combat power — visual locomotion only.
+## Full soft locomotion: walk/run/idle/jump/air for Skeleton3D forms.
+## Name-heuristic bones — works without AnimationPlayer clips. Visual only.
 
 static func find_skeleton(root: Node) -> Skeleton3D:
 	if root == null:
@@ -22,34 +21,74 @@ static func apply_locomotion(skel: Skeleton3D, move_amount: float, anim_time: fl
 	var n := skel.get_bone_count()
 	if n < 3:
 		return false
-	# Soft procedural bone sway by name heuristics (works without AnimationPlayer clips)
-	var amp := clampf(move_amount, 0.0, 1.5)
+	var amp := clampf(move_amount, 0.0, 1.8)
 	var phase := anim_time * TAU
+	var run := clampf((amp - 0.55) / 0.9, 0.0, 1.0)
+	var idle_breathe := sin(Time.get_ticks_msec() * 0.0025) * 0.025
 	for i in n:
 		var bname := skel.get_bone_name(i).to_lower()
 		var base: Transform3D = skel.get_bone_rest(i)
 		var extra := Transform3D.IDENTITY
-		if "leg" in bname or "thigh" in bname or "calf" in bname or "shin" in bname or "foot" in bname:
-			var side := 1.0 if ("r" in bname or "right" in bname) else -1.0
-			if "l" in bname or "left" in bname:
-				side = -1.0
-			if "r" in bname or "right" in bname:
-				side = 1.0
-			var swing := sin(phase + (0.0 if side > 0.0 else PI)) * 0.45 * amp
+		var side := _side(bname)
+		if _is_leg(bname):
+			var swing := sin(phase + (0.0 if side > 0.0 else PI)) * (0.5 + run * 0.35) * amp
+			var knee := maxf(0.0, -sin(phase + (0.0 if side > 0.0 else PI))) * 0.35 * amp
 			if not grounded:
-				swing *= 0.25
-			extra = Transform3D(Basis.from_euler(Vector3(swing, 0, 0)), Vector3.ZERO)
-		elif "arm" in bname or "hand" in bname or "fore" in bname or "upper_arm" in bname:
-			var side2 := 1.0 if ("r" in bname or "right" in bname) else -1.0
-			if "l" in bname or "left" in bname:
-				side2 = -1.0
-			var swing2 := sin(phase + (PI if side2 > 0.0 else 0.0)) * 0.35 * amp
-			extra = Transform3D(Basis.from_euler(Vector3(swing2, 0, 0)), Vector3.ZERO)
-		elif "spine" in bname or "chest" in bname or "torso" in bname or "hip" in bname or "pelvis" in bname:
-			var bob := sin(phase * 2.0) * 0.03 * amp
-			extra = Transform3D(Basis.from_euler(Vector3(bob, 0, 0)), Vector3(0, bob * 0.02, 0))
+				swing *= 0.2
+				knee = 0.4
+			if "calf" in bname or "shin" in bname or "lower" in bname:
+				extra = Transform3D(Basis.from_euler(Vector3(knee, 0, 0)), Vector3.ZERO)
+			elif "foot" in bname or "toe" in bname:
+				extra = Transform3D(Basis.from_euler(Vector3(-swing * 0.3, 0, 0)), Vector3.ZERO)
+			else:
+				extra = Transform3D(Basis.from_euler(Vector3(swing, 0, side * 0.05 * amp)), Vector3.ZERO)
+		elif _is_arm(bname):
+			var swing2 := sin(phase + (PI if side > 0.0 else 0.0)) * (0.4 + run * 0.2) * amp
+			if not grounded:
+				swing2 = -0.6
+			if "hand" in bname or "wrist" in bname:
+				extra = Transform3D(Basis.from_euler(Vector3(swing2 * 0.3, 0, 0)), Vector3.ZERO)
+			else:
+				extra = Transform3D(Basis.from_euler(Vector3(swing2, 0, -side * 0.08)), Vector3.ZERO)
+		elif "spine" in bname or "chest" in bname or "torso" in bname or "hip" in bname or "pelvis" in bname or "root" in bname:
+			var bob := sin(phase * 2.0) * 0.04 * amp + idle_breathe
+			var lean := -0.06 * amp - run * 0.08
+			extra = Transform3D(Basis.from_euler(Vector3(lean + bob, 0, sin(phase) * 0.03 * amp)), Vector3(0, bob * 0.03, 0))
 		elif "head" in bname or "neck" in bname:
-			var breathe := sin(Time.get_ticks_msec() * 0.003) * 0.02
-			extra = Transform3D(Basis.from_euler(Vector3(breathe, 0, 0)), Vector3.ZERO)
+			var look := idle_breathe + sin(phase * 0.5) * 0.02 * amp
+			extra = Transform3D(Basis.from_euler(Vector3(look, sin(Time.get_ticks_msec() * 0.001) * 0.03, 0)), Vector3.ZERO)
+		elif "wing" in bname or "tail" in bname or "ear" in bname:
+			var flap := sin(phase * (2.0 if "wing" in bname else 1.2) + side) * (0.4 + amp * 0.5)
+			extra = Transform3D(Basis.from_euler(Vector3(flap * 0.3, 0, flap)), Vector3.ZERO)
 		skel.set_bone_pose_rotation(i, (base * extra).basis.get_rotation_quaternion())
 	return true
+
+
+static func apply_idle(skel: Skeleton3D, anim_time: float) -> bool:
+	return apply_locomotion(skel, 0.0, anim_time, true)
+
+
+static func _side(bname: String) -> float:
+	if "right" in bname or bname.begins_with("r_") or "_r" in bname or bname.ends_with(".r") or bname.ends_with("_r"):
+		return 1.0
+	if "left" in bname or bname.begins_with("l_") or "_l" in bname or bname.ends_with(".l") or bname.ends_with("_l"):
+		return -1.0
+	if " r" in bname:
+		return 1.0
+	if " l" in bname:
+		return -1.0
+	return 1.0
+
+
+static func _is_leg(bname: String) -> bool:
+	for k in ["leg", "thigh", "calf", "shin", "foot", "toe", "hip", "upperleg", "lowerleg"]:
+		if k in bname:
+			return true
+	return false
+
+
+static func _is_arm(bname: String) -> bool:
+	for k in ["arm", "hand", "fore", "upper_arm", "lower_arm", "wrist", "finger", "shoulder"]:
+		if k in bname:
+			return true
+	return false

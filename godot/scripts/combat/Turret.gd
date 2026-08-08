@@ -22,6 +22,7 @@ var _label: Label3D
 var _barrel: Node3D
 
 func _ready() -> void:
+	_ensure_animator()
 	health = max_health
 	add_to_group("enemy" if faction == "gROT" else "ally")
 	add_to_group("hackable")
@@ -82,6 +83,7 @@ func _find_target() -> Node3D:
 	return best
 
 func _fire(target: Node3D) -> void:
+	_living_fire()
 	var bolt := MeshInstance3D.new()
 	var sphere := SphereMesh.new()
 	sphere.radius = 0.12
@@ -162,3 +164,29 @@ func _load_mesh() -> void:
 	if root:
 		add_child(root)
 		root.scale = Vector3.ONE * 0.9
+
+
+
+var _anim: Node = null
+
+
+func _ensure_animator() -> void:
+	if _anim:
+		return
+	_anim = Node.new()
+	_anim.set_script(load("res://scripts/combat/TurretAnimator.gd"))
+	_anim.name = "TurretAnimator"
+	add_child(_anim)
+	var fac := str(faction) if "faction" in self else "Cybernex"
+	if _anim.has_method("setup"):
+		_anim.setup(self, fac)
+
+
+func _living_aim(target: Vector3, delta: float) -> void:
+	if _anim and _anim.has_method("aim_at"):
+		_anim.aim_at(target, delta)
+
+
+func _living_fire() -> void:
+	if _anim and _anim.has_method("fire_kick"):
+		_anim.fire_kick()

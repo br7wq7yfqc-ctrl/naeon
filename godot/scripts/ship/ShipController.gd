@@ -64,6 +64,7 @@ var _hull_ambient: Node3D = null
 
 func _ready() -> void:
 	add_to_group("ship")
+	_ensure_living_fx()
 	_ensure_soft_systems()
 	attach_module(ShipModule.make_engine())
 	attach_module(ShipModule.make_weapon())
@@ -567,6 +568,11 @@ func _fire_weapon() -> void:
 	else:
 		get_parent().add_child(bolt)
 	bolt.global_position = global_position - global_transform.basis.z * 2.2
+	var NP = load("res://scripts/fx/NeonParticles.gd")
+	if NP:
+		var col = NP.faction_color(str(faction))
+		NP.muzzle_flash(bolt.global_position, -global_transform.basis.z, col, get_tree())
+		NP.trail_attach(bolt, col, Vector3.ZERO)
 	var runner := Node.new()
 	runner.set_script(preload("res://scripts/abilities/ProjectileRunner.gd"))
 	bolt.add_child(runner)
@@ -580,12 +586,16 @@ func _spawn_module_visual(module: ShipModule) -> void:
 	match module.module_type:
 		ShipModule.ModuleType.ENGINE:
 			pos = Vector3(0, 0, 1.25)
-			rel = "ships/ship_module_engine/ship_module_engine_cybernex_lod1.glb"
+			rel = "ships/thruster_cluster_neon/thruster_cluster_neon_cybernex_lod1.glb"
 			scale_v = 0.5
 		ShipModule.ModuleType.WEAPON:
 			pos = Vector3(0.75, 0.05, -0.35)
-			rel = "ships/ship_module_weapon/ship_module_weapon_cybernex_lod1.glb"
-			scale_v = 0.45
+			# Prefer HQ living weapons (Tripo wave); fallback module
+			if faction == "gROT":
+				rel = "props/weapon_biomass_spitter/weapon_biomass_spitter_grot_lod1.glb"
+			else:
+				rel = "props/weapon_pulse_cannon/weapon_pulse_cannon_cybernex_lod1.glb"
+			scale_v = 0.55
 		ShipModule.ModuleType.SHIELD:
 			pos = Vector3(-0.75, 0.15, 0.1)
 			rel = "ships/shield_module/shield_module_cybernex_lod1.glb"
@@ -596,10 +606,18 @@ func _spawn_module_visual(module: ShipModule) -> void:
 			scale_v = 0.35
 		_:
 			pos = Vector3(randf_range(-0.4, 0.4), 0.35, 0)
-	if faction == "gROT" and rel != "":
+	if faction == "gROT" and rel != "" and "_cybernex_" in rel:
 		rel = rel.replace("_cybernex_", "_grot_")
 	if rel != "" and DisplayServer.get_name() != "headless":
 		var path: String = _asset_path(rel)
+		if path == "" or not FileAccess.file_exists(path):
+			# fallbacks
+			if module.module_type == ShipModule.ModuleType.WEAPON:
+				rel = "ships/ship_module_weapon/ship_module_weapon_%s_lod1.glb" % ("grot" if faction == "gROT" else "cybernex")
+				path = _asset_path(rel)
+			elif module.module_type == ShipModule.ModuleType.ENGINE:
+				rel = "ships/ship_module_engine/ship_module_engine_%s_lod1.glb" % ("grot" if faction == "gROT" else "cybernex")
+				path = _asset_path(rel)
 		if path != "" and FileAccess.file_exists(path):
 			var doc := GLTFDocument.new()
 			var state := GLTFState.new()
@@ -1101,3 +1119,39 @@ func get_soft_systems_line() -> String:
 	if n and n.has_method("status_line"):
 		return str(n.status_line())
 	return ""
+
+
+var _living: Node = null
+
+
+func _ensure_living_fx() -> void:
+	if get_node_or_null("LivingConfig") != null:
+		return
+	var fac := str(faction) if "faction" in self else "Cybernex"
+	_living = Node3D.new()
+	_living.set_script(load("res://scripts/ship/LivingConfig.gd"))
+	_living.name = "LivingConfig"
+	add_child(_living)
+	if _living.has_method("setup_from_faction"):
+		_living.setup_from_faction(fac)
+	# Neon boost existing thruster
+	var NP = load("res://scripts/fx/NeonParticles.gd")
+	if NP and _thruster_fx and is_instance_valid(_thruster_fx):
+		var pm := _thruster_fx.process_material as ParticleProcessMaterial
+		if pm:
+			pm.color = NP.faction_color(fac)
+
+
+func sync_living_mode() -> void:
+	if _living == null:
+		_living = get_node_or_null("LivingConfig")
+	if _living == null or not _living.has_method("set_mode"):
+		return
+	var m := 0
+	if "op_mode" in self:
+		var om = int(op_mode)
+		if om == 1:
+			m = 2
+		elif om == 2:
+			m = 1
+	_living.set_mode(m, 0.7)
