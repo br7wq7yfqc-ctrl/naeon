@@ -50,6 +50,7 @@ func _process(delta: float) -> void:
 	var to: Vector3 = target.global_position - global_position
 	to.y = 0.0
 	if to.length() > 0.1:
+		_living_aim(target.global_position, 0.12)
 		look_at(global_position + to.normalized(), Vector3.UP)
 	if _cd <= 0.0 and global_position.distance_to(target.global_position) <= aggro_range:
 		_fire(target)
