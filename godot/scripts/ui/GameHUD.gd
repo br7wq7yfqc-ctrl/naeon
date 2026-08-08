@@ -412,21 +412,7 @@ func _refresh() -> void:
 	_host_hint_t += 0.12
 	if SoftENet and SoftENet.is_host and _host_hint_t >= 2.0:
 		_host_hint_t = 0.0
-		host_hint = ""
-		if FileAccess.file_exists("user://softnet_host_info.txt"):
-			var hf := FileAccess.open("user://softnet_host_info.txt", FileAccess.READ)
-			if hf:
-				var lines := hf.get_as_text().strip_edges().split("\n")
-				var ip_show: PackedStringArray = []
-				for ln in lines:
-					if ln.begins_with("port=") or ln.begins_with("transport="):
-						continue
-					if ln != "":
-						ip_show.append(ln)
-						if ip_show.size() >= 2:
-							break
-				if ip_show.size() > 0:
-					host_hint = "  LAN " + ", ".join(ip_show)
+		host_hint = SoftScanCache.host_hint() if SoftScanCache else ""
 		_host_hint_cache = host_hint
 	elif not (SoftENet and SoftENet.is_host):
 		_host_hint_cache = ""
@@ -441,7 +427,7 @@ func _refresh() -> void:
 			var tline := ""
 			var tree := get_tree()
 			if tree and _player:
-				for n in tree.get_nodes_in_group("terrain_edit"):
+				for n in (SoftScanCache.get_terrain_edits() if SoftScanCache else tree.get_nodes_in_group("terrain_edit")):
 					if n.has_method("get_budget_ratio") and n.has_method("remaining_volume"):
 						var pct := int(clampf(float(n.get_budget_ratio()), 0.0, 1.0) * 100.0)
 						var rem := float(n.remaining_volume())
@@ -545,7 +531,7 @@ func _refresh() -> void:
 	if tree and _player and _player is Node3D:
 		var best_d := 80.0
 		var best_txt := ""
-		for n in tree.get_nodes_in_group("pad_bases"):
+		for n in (SoftScanCache.get_pads() if SoftScanCache else tree.get_nodes_in_group("pad_bases")):
 			if n is Node3D and n.has_method("get_faction"):
 				var d: float = (_player as Node3D).global_position.distance_to((n as Node3D).global_position)
 				if d < best_d:
@@ -563,7 +549,7 @@ func _refresh() -> void:
 	# Terrain budget
 	var terra := ""
 	if _player and _player is Node3D and get_tree():
-		for n in get_tree().get_nodes_in_group("terrain_edit"):
+		for n in (SoftScanCache.get_terrain_edits() if SoftScanCache else get_tree().get_nodes_in_group("terrain_edit")):
 			if n.has_method("get_budget_ratio") and n.visible:
 				terra = "TERRA %.0f%% used  G/B edit  U undo" % (float(n.get_budget_ratio()) * 100.0)
 				break
@@ -622,7 +608,7 @@ func _refresh() -> void:
 	if _radar and _player and _player is Node3D and get_tree():
 		var origin: Vector3 = (_player as Node3D).global_position
 		var pads: Array = []
-		for n in get_tree().get_nodes_in_group("pad_bases"):
+		for n in (SoftScanCache.get_pads() if SoftScanCache else get_tree().get_nodes_in_group("pad_bases")):
 			if n is Node3D:
 				pads.append(n)
 		for a in range(pads.size()):

@@ -26,7 +26,42 @@ static func height_at(x: float, z: float, seed: int, profile: Dictionary = {}) -
 	if river_line < 0.05 * river_w:
 		var rt := 1.0 - river_line / maxf(0.05 * river_w, 0.001)
 		river = -1.6 * rt * rt * (1.1 - basin * 0.4)
-	var h := hills + mountains * basin + canyon + river
+	# Dunes (arid plains)
+	var dune_amp: float = float(profile.get("dune_amp", 0.0))
+	var dunes := 0.0
+	if dune_amp > 0.01 and basin > 0.4 and ridge < 0.55:
+		var dphase := sx * 2.4 + _fbm(sx * 0.5, sz * 0.5, 1) * 1.2
+		dunes = sin(dphase) * cos(sz * 1.7) * dune_amp * (0.5 + 0.5 * basin)
+	# Mesa plateaus
+	var mesa_amp: float = float(profile.get("mesa_amp", 0.0))
+	var mesa := 0.0
+	if mesa_amp > 0.01:
+		var mmask := _mask(sx * 0.22 + 1.7, sz * 0.22 - 0.9, 0.58)
+		if mmask > 0.55:
+			mesa = mesa_amp * mmask
+			# Steep mesa skirts
+			var edge := absf(mmask - 0.55)
+			if edge < 0.12:
+				mesa *= 0.7 + edge * 2.0
+	# Impact craters
+	var crater_amp: float = float(profile.get("crater_amp", 0.0))
+	var crater := 0.0
+	if crater_amp > 0.01:
+		var cx := _fbm(sx * 0.08 + 9.0, sz * 0.08, 1)
+		var cz := _fbm(sx * 0.08, sz * 0.08 + 4.0, 1)
+		var cr := sqrt(cx * cx + cz * cz)
+		var cell := Vector2(floorf(sx * 0.35), floorf(sz * 0.35))
+		var ch := absf(sin(cell.x * 12.9898 + cell.y * 78.233 + float(seed))) 
+		if ch > 0.82:
+			var lx := fract(sx * 0.35) - 0.5
+			var lz := fract(sz * 0.35) - 0.5
+			var rd := sqrt(lx * lx + lz * lz)
+			if rd < 0.28:
+				var bowl := (1.0 - rd / 0.28)
+				crater = -crater_amp * bowl * bowl
+				if rd > 0.18:
+					crater += crater_amp * 0.35 * (1.0 - absf(rd - 0.22) / 0.06)  # rim
+	var h := hills + mountains * basin + canyon + river + dunes + mesa + crater
 	if basin < 0.35:
 		var ocean_pull := (0.35 - basin) / 0.35
 		h = lerpf(h, sea - 0.8 - ocean_pull * 1.4, clampf(ocean_pull * 1.2, 0.0, 1.0))
@@ -72,6 +107,15 @@ static func biome_hint(x: float, z: float, h: float, seed: int, profile: Diction
 		return "river"
 	if is_canyon(x, z, seed):
 		return "canyon"
+	if float(profile.get("crater_amp", 0.0)) > 0.5 and h < sea + 0.2:
+		return "crater"
+	if float(profile.get("mesa_amp", 0.0)) > 1.0 and h > 3.5:
+		var sx2 := x * 0.07 + float(seed) * 0.017
+		var sz2 := z * 0.07 + float(seed) * 0.013
+		if _mask(sx2 * 0.22 + 1.7, sz2 * 0.22 - 0.9, 0.58) > 0.55:
+			return "mesa"
+	if float(profile.get("dune_amp", 0.0)) > 0.4 and h > sea + 0.5 and h < 2.5:
+		return "dunes"
 	if h > 4.5:
 		return "alpine"
 	if h > 2.0:
@@ -81,11 +125,11 @@ static func biome_hint(x: float, z: float, h: float, seed: int, profile: Diction
 static func profile_for_planet(planet_id: String) -> Dictionary:
 	match planet_id:
 		"Nex-Prime":
-			return {"sea_level": -0.25, "mountain_amp": 7.2, "hill_amp": 2.0, "canyon_amp": 3.8, "river_width": 1.25, "caves": true}
+			return {"sea_level": -0.25, "mountain_amp": 7.2, "hill_amp": 2.0, "canyon_amp": 3.8, "river_width": 1.25, "caves": true, "dune_amp": 0.35, "mesa_amp": 2.2, "crater_amp": 0.8}
 		"ROT-Hive":
-			return {"sea_level": -0.45, "mountain_amp": 5.0, "hill_amp": 2.4, "canyon_amp": 5.5, "river_width": 1.4, "caves": true}
+			return {"sea_level": -0.45, "mountain_amp": 5.0, "hill_amp": 2.4, "canyon_amp": 5.5, "river_width": 1.4, "caves": true, "dune_amp": 1.1, "mesa_amp": 1.5, "crater_amp": 1.2}
 		"Shard-Moon":
-			return {"sea_level": -1.8, "mountain_amp": 4.0, "hill_amp": 1.1, "canyon_amp": 6.0, "river_width": 0.4, "caves": true}
+			return {"sea_level": -1.8, "mountain_amp": 4.0, "hill_amp": 1.1, "canyon_amp": 6.0, "river_width": 0.4, "caves": true, "dune_amp": 0.0, "mesa_amp": 3.5, "crater_amp": 3.2}
 		_:
 			return {"sea_level": -0.35, "mountain_amp": 6.0, "hill_amp": 1.8, "canyon_amp": 4.0, "river_width": 1.0, "caves": true}
 
@@ -113,3 +157,7 @@ static func _mask(x: float, z: float, threshold: float) -> float:
 static func _smoothstep(e0: float, e1: float, x: float) -> float:
 	var t := clampf((x - e0) / maxf(e1 - e0, 0.0001), 0.0, 1.0)
 	return t * t * (3.0 - 2.0 * t)
+
+
+static func fract(x: float) -> float:
+	return x - floorf(x)

@@ -211,7 +211,7 @@ func _refresh_xform(cell: Vector2i) -> void:
 
 
 func _mesh_for_cell(cell: Vector2i) -> ArrayMesh:
-	var key := "%d:%d:r%d" % [cell.x, cell.y, _res]
+	var key := "%d:%d:r%d:v2" % [cell.x, cell.y, _res]
 	if _mesh_cache.has(key):
 		return _mesh_cache[key]
 	var mesh := _build_height_mesh(cell)
@@ -243,16 +243,23 @@ func _build_height_mesh(cell: Vector2i) -> ArrayMesh:
 			var wz := pz + oz
 			var h: float = float(_Relief.height_at(wx, wz, _seed, _relief_profile))
 			var col: Color = _surface_color
-			if h < sea:
+			var biome: String = str(_Relief.biome_hint(wx, wz, h, _seed, _relief_profile))
+			if h < sea or biome == "ocean":
 				h = sea
 				col = Color(0.12, 0.28, 0.48).lerp(Color(0.08, 0.4, 0.55), 0.4)
-			elif h < sea + 0.55:
+			elif biome == "shore" or h < sea + 0.55:
 				col = Color(0.45, 0.4, 0.28).lerp(_surface_color, 0.35)
-			elif h > 5.0:
+			elif biome == "mesa":
+				col = Color(0.55, 0.38, 0.22).lerp(_surface_color, 0.3)
+			elif biome == "dunes":
+				col = Color(0.72, 0.62, 0.35).lerp(_surface_color, 0.25)
+			elif biome == "crater":
+				col = Color(0.25, 0.22, 0.2).lerp(_surface_color, 0.35)
+			elif biome == "alpine" or h > 5.0:
 				col = Color(0.55, 0.55, 0.58).lerp(_surface_color, 0.25)
-			elif bool(_Relief.is_canyon(wx, wz, _seed)):
+			elif biome == "canyon" or bool(_Relief.is_canyon(wx, wz, _seed)):
 				col = Color(0.35, 0.22, 0.15).lerp(_surface_color, 0.4)
-			elif bool(_Relief.is_river(wx, wz, _seed, _relief_profile)):
+			elif biome == "river" or bool(_Relief.is_river(wx, wz, _seed, _relief_profile)):
 				col = Color(0.15, 0.35, 0.5).lerp(_surface_color, 0.3)
 			verts[z * _res + x] = Vector3(px, h, pz)
 			colors[z * _res + x] = col

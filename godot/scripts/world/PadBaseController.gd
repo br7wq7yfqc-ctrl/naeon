@@ -81,12 +81,25 @@ func _try_player_claim() -> void:
 	_claim_cd = 0.7
 
 func _find_actor() -> Node3D:
-	for s in get_tree().get_nodes_in_group("ship"):
-		if s is Node3D:
-			return s
-	for p in get_tree().get_nodes_in_group("player"):
+	_actor_cache_t -= get_process_delta_time() if is_inside_tree() else 0.0
+	if _actor_cache != null and is_instance_valid(_actor_cache) and _actor_cache_t > 0.0:
+		return _actor_cache
+	_actor_cache_t = 0.4
+	if SoftScanCache:
+		_actor_cache = SoftScanCache.get_player()
+		return _actor_cache
+	var tree := get_tree()
+	if tree == null:
+		return null
+	for p in tree.get_nodes_in_group("player"):
 		if p is Node3D:
-			return p
+			_actor_cache = p as Node3D
+			return _actor_cache
+	for s in tree.get_nodes_in_group("ship"):
+		if s is Node3D:
+			_actor_cache = s as Node3D
+			return _actor_cache
+	_actor_cache = null
 	return null
 
 func claim(faction_name: String, strength: float = 1.0) -> void:
@@ -391,6 +404,8 @@ func _update_city_density() -> void:
 
 
 var _pad_scan_cd: float = 0.0
+var _actor_cache: Node3D = null
+var _actor_cache_t: float = 0.0
 
 func _try_pad_scan() -> void:
 	_pad_scan_cd = maxf(0.0, _pad_scan_cd - get_process_delta_time())

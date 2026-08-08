@@ -17,6 +17,7 @@ config/features=PackedStringArray("4.3", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
+SoftScanCache="*res://scripts/systems/SoftScanCache.gd"
 LayerContext="*res://scripts/systems/LayerContext.gd"
 LayerContextAuthority="*res://scripts/systems/LayerContextAuthority.gd"
 SoftSession="*res://scripts/systems/SoftSession.gd"

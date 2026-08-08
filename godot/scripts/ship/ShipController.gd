@@ -56,6 +56,8 @@ var _hull_morph: Node3D = null
 var _role = null
 var op_mode: int = 0
 var _palette_accum: float = 0.0
+var _scan_pulse_t: float = 0.0
+var _scan_last_report: String = ""
 var _deployed_rover: Node3D = null
 var _engine_pulse_t: float = 0.0
 
@@ -302,6 +304,7 @@ func _physics_process(delta: float) -> void:
 	if _palette_accum > 1.5:
 		_palette_accum = 0.0
 		_sync_planet_palette()
+	_tick_scan_pulse(delta)
 	if not pilot_active:
 		velocity = Vector3.ZERO
 		return
@@ -965,17 +968,18 @@ func _hull_local_size(n: Node3D) -> Vector3:
 
 
 func _sync_planet_palette() -> void:
-	var tree := get_tree()
-	if tree == null:
-		return
-	var best: Node3D = null
-	var best_d := 1.0e12
-	for n in tree.get_nodes_in_group("planets"):
-		if n is Node3D:
-			var d: float = global_position.distance_to((n as Node3D).global_position)
-			if d < best_d:
-				best_d = d
-				best = n as Node3D
+	var best: Node3D = SoftScanCache.nearest_planet(global_position) if SoftScanCache else null
+	if best == null:
+		var tree := get_tree()
+		if tree == null:
+			return
+		var best_d := 1.0e12
+		for n in tree.get_nodes_in_group("planets"):
+			if n is Node3D:
+				var d: float = global_position.distance_to((n as Node3D).global_position)
+				if d < best_d:
+					best_d = d
+					best = n as Node3D
 	if best == null:
 		return
 	# Only near-surface influence
@@ -997,3 +1001,34 @@ func _sync_planet_palette() -> void:
 			sm.emission = col * 0.15
 			sm.emission_energy_multiplier = 0.25
 			break
+
+
+func _tick_scan_pulse(delta: float) -> void:
+	if op_mode != 2:
+		return
+	_scan_pulse_t += delta
+	if _scan_pulse_t < 0.55:
+		return
+	_scan_pulse_t = 0.0
+	# Soft intel only — cached pads/planets, no full tree walk
+	var pad: Node3D = SoftScanCache.nearest_pad(global_position, 350.0) if SoftScanCache else null
+	var planet: Node3D = SoftScanCache.nearest_planet(global_position) if SoftScanCache else null
+	var bits: PackedStringArray = PackedStringArray()
+	if planet and "planet_name" in planet:
+		var alt := global_position.distance_to(planet.global_position) - float(planet.radius) if "radius" in planet else 0.0
+		bits.append("%s alt=%.0f" % [str(planet.planet_name), alt])
+	if pad:
+		var fac := "?"
+		if "ownership" in pad and pad.ownership:
+			fac = str(pad.ownership.faction_name()) if pad.ownership.has_method("faction_name") else "?"
+		bits.append("pad@%.0fm %s" % [global_position.distance_to(pad.global_position), fac])
+	var report := "SCAN · " + (" · ".join(bits) if bits.size() > 0 else "no contacts")
+	if report == _scan_last_report:
+		return
+	_scan_last_report = report
+	var tree := get_tree()
+	if tree:
+		for n in tree.get_nodes_in_group("game_hud"):
+			if n.has_method("push_toast"):
+				n.push_toast(report, 1.6)
+				break
