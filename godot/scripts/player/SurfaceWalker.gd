@@ -1045,3 +1045,18 @@ func _toast_self(msg: String) -> void:
 		if n.has_method("push_toast"):
 			n.push_toast(msg, 2.0)
 			return
+
+
+
+func take_damage(amount: float) -> void:
+	health = maxf(0.0, health - amount)
+	if CombatJuice:
+		CombatJuice.damage_taken(amount)
+		CombatJuice.hit_feedback(amount, global_position + Vector3(0, 1.2, 0), amount >= 20.0)
+	if health <= 0.0:
+		# Soft respawn at current planet pad-ish — no permadeath Phase 0
+		health = max_health
+		energy = max_energy
+		if has_method("snap_to_surface"):
+			call_deferred("snap_to_surface")
+		print("[SurfaceWalker] soft down → recover")

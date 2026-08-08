@@ -65,6 +65,31 @@ func play_toast() -> void:
 	_beep(990.0, 0.04, -12.0)
 
 
+func play_interior_enter() -> void:
+	_beep(180.0, 0.08, -14.0)
+	_beep(360.0, 0.1, -12.0, 0.05)
+	_beep(540.0, 0.08, -14.0, 0.12)
+
+
+func play_interior_exit() -> void:
+	_beep(400.0, 0.06, -12.0)
+	_beep(200.0, 0.1, -14.0, 0.06)
+
+
+func play_interior_hum() -> void:
+	_beep(70.0, 0.12, -20.0)
+	_beep(105.0, 0.1, -22.0, 0.04)
+
+
+func play_channel_tick() -> void:
+	_beep(500.0, 0.03, -16.0)
+
+
+func play_channel_done() -> void:
+	_beep(660.0, 0.05, -10.0)
+	_beep(990.0, 0.07, -12.0, 0.05)
+
+
 func _beep(freq: float, dur: float, vol_db: float, delay: float = 0.0) -> void:
 	if delay > 0.0:
 		get_tree().create_timer(delay).timeout.connect(func(): _beep(freq, dur, vol_db, 0.0))

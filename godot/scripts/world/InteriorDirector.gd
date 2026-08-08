@@ -15,6 +15,7 @@ var _return_up: Vector3 = Vector3.UP
 var _player: Node3D
 var _open_space: Node
 var _inside: bool = false
+var _exit_hint_t: float = 0.0
 
 func setup(world_root: Node3D, open_space: Node) -> void:
 	add_to_group("interior_director")
@@ -96,6 +97,9 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	entered.emit(kind)
 	_toast("Entered %s · I exit · F seat (ship)" % kind)
 	print("[Interior] entered ", kind)
+	set_process(true)
+	if AudioDirector and AudioDirector.has_method("play_interior_enter"):
+		AudioDirector.play_interior_enter()
 
 func gravity_at(global_pos: Vector3) -> Vector3:
 	# Flat down for interiors
@@ -197,3 +201,20 @@ func exit_for_pilot() -> void:
 	exited.emit("ship_to_pilot")
 	print("[Interior] exit_for_pilot")
 	_kind = ""
+
+
+
+func _process(delta: float) -> void:
+	if not _inside or _player == null or not is_instance_valid(_player) or _active == null:
+		return
+	# Soft exit-volume proximity (walk into hatch area)
+	var exit_v = _active.get_node_or_null("ExitVolume")
+	if exit_v is Node3D:
+		var d: float = _player.global_position.distance_to((exit_v as Node3D).global_position)
+		if d < 2.2:
+			_exit_hint_t += delta
+			if _exit_hint_t > 0.6:
+				_exit_hint_t = -2.0
+				_toast("HATCH — press I to exit")
+		else:
+			_exit_hint_t = maxf(0.0, _exit_hint_t - delta)

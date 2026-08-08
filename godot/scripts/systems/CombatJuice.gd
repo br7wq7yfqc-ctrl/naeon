@@ -10,6 +10,8 @@ var _hitstop_left: float = 0.0
 var _marker: Control
 var _marker_t: float = 0.0
 var _impact_budget: int = 0
+var _hurt_t: float = 0.0
+var _hurt_flash: ColorRect
 
 func _ready() -> void:
 	_layer = CanvasLayer.new()
@@ -45,10 +47,19 @@ func _ready() -> void:
 	v.size = Vector2(3, 18)
 	v.position = Vector2(-1.5, -9)
 	_marker.add_child(v)
+	_hurt_flash = ColorRect.new()
+	_hurt_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_hurt_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hurt_flash.color = Color(0.7, 0.05, 0.08, 0)
+	_layer.add_child(_hurt_flash)
 	set_process(true)
 
 func _process(delta: float) -> void:
-	if _flash_t <= 0.0 and _marker_t <= 0.0:
+	if _hurt_t > 0.0:
+		_hurt_t = maxf(0.0, _hurt_t - delta)
+		if _hurt_flash:
+			_hurt_flash.color.a = clampf(_hurt_t * 0.55, 0.0, 0.35)
+	if _flash_t <= 0.0 and _marker_t <= 0.0 and _hurt_t <= 0.0:
 		return
 	if _flash_t > 0.0:
 		_flash_t = maxf(0.0, _flash_t - delta)
@@ -170,3 +181,41 @@ func _spawn_hit_ring(world_pos: Vector3, crit: bool) -> void:
 	tw.tween_property(mi, "scale", Vector3.ONE * (1.6 if crit else 1.2), 0.28)
 	tw.tween_property(mat, "albedo_color:a", 0.0, 0.28)
 	tw.chain().tween_callback(mi.queue_free)
+
+
+
+func damage_taken(amount: float = 5.0) -> void:
+	## Red edge when local player is hit.
+	_hurt_t = clampf(0.12 + amount * 0.008, 0.12, 0.35)
+	if AudioDirector:
+		AudioDirector.play_hit(false)
+
+
+func kill_pop(world_pos: Vector3) -> void:
+	_flash_col = Color(1.0, 0.9, 0.3, 0)
+	_flash_t = 0.2
+	_marker_t = 0.25
+	_marker.visible = true
+	if AudioDirector:
+		AudioDirector.play_hit(true)
+	_spawn_impact(world_pos, true)
+	_spawn_hit_ring(world_pos, true)
+	var cam := get_viewport().get_camera_3d()
+	if cam == null:
+		return
+	if cam.is_position_behind(world_pos):
+		return
+	var sp: Vector2 = cam.unproject_position(world_pos)
+	var lab := Label.new()
+	lab.text = "DOWN"
+	lab.add_theme_font_size_override("font_size", 28)
+	lab.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	lab.add_theme_constant_override("outline_size", 6)
+	lab.modulate = Color(1.0, 0.85, 0.3)
+	lab.position = sp + Vector2(-20, -40)
+	_layer.add_child(lab)
+	var tw := get_tree().create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(lab, "position", lab.position + Vector2(0, -50), 0.7)
+	tw.tween_property(lab, "modulate:a", 0.0, 0.7)
+	tw.chain().tween_callback(lab.queue_free)

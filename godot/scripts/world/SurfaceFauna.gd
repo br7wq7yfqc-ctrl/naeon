@@ -8,7 +8,8 @@ const _Relief = preload("res://scripts/world/PlanetRelief.gd")
 const _AP = preload("res://scripts/assets/AssetPaths.gd")
 
 const CELL_M := 48.0
-const COUNT_BASE := 10
+const COUNT_BASE := 8
+const FAUNA_BUDGET := true
 const STREAM_HZ := 0.4
 
 var _planet: Node3D

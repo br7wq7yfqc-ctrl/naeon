@@ -77,6 +77,8 @@ func set_contested(on: bool, claim_strength: float = 0.0) -> void:
 	progress = clampf(claim_strength / CLAIM_NEED, 0.0, 1.0)
 	if on and (not was or claim_strength > 0.01):
 		_pulse_boost = 1.0
+		if not was and AudioDirector and AudioDirector.has_method("play_contest"):
+			AudioDirector.play_contest()
 	if not on:
 		_pulse_boost = 0.0
 		if _light:

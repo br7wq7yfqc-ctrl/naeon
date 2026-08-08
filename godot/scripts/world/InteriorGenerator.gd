@@ -110,6 +110,7 @@ static func build_ship(faction: String = "Cybernex") -> Node3D:
 	elabel.modulate = neon
 	root.add_child(elabel)
 	_add_neon_strips(root, faction)
+	_attach_ambient(root, "ship", neon)
 	return root
 
 static func _room(parent: Node3D, pos: Vector3, size: Vector3, rname: String, neon: Color) -> void:
@@ -128,6 +129,10 @@ static func _room(parent: Node3D, pos: Vector3, size: Vector3, rname: String, ne
 	# Neon edge trim
 	_box_mesh(room, Vector3(0, 0.15, -size.z * 0.48), Vector3(size.x * 0.9, 0.06, 0.08), neon, false, true)
 	_box_mesh(room, Vector3(0, size.y - 0.2, 0), Vector3(size.x * 0.5, 0.05, size.z * 0.5), neon, false, true)
+	# Wall vent / panel detail
+	_box_mesh(room, Vector3(-size.x * 0.48, size.y * 0.65, 0), Vector3(0.08, 0.35, size.z * 0.35), Color(0.12, 0.13, 0.15), false)
+	_box_mesh(room, Vector3(size.x * 0.48, size.y * 0.65, 0), Vector3(0.08, 0.35, size.z * 0.35), Color(0.12, 0.13, 0.15), false)
+	_box_mesh(room, Vector3(0, size.y * 0.55, -size.z * 0.48), Vector3(size.x * 0.25, 0.3, 0.06), neon.darkened(0.3), false, true)
 
 static func _strip_light(parent: Node3D, pos: Vector3, size: Vector3, neon: Color) -> void:
 	_box_mesh(parent, pos, size, neon, false, true)
@@ -264,6 +269,7 @@ static func build_from_profile(profile_id: String, faction: String = "Cybernex")
 	_seat_glow(root, seat_pos, neon)
 	_interior_point_lights(root, neon)
 	_add_neon_strips(root, faction)
+	_attach_ambient(root, "ship", neon)
 	return root
 
 
@@ -317,3 +323,12 @@ static func _seat_glow(root: Node3D, seat_pos: Vector3, neon: Color) -> void:
 	lab.modulate = neon
 	lab.position = seat_pos + Vector3(0, 1.8, 0)
 	root.add_child(lab)
+
+
+
+static func _attach_ambient(root: Node3D, kind: String, neon: Color) -> void:
+	var amb := Node3D.new()
+	amb.set_script(load("res://scripts/world/InteriorAmbient.gd"))
+	root.add_child(amb)
+	if amb.has_method("setup"):
+		amb.setup(kind, neon)

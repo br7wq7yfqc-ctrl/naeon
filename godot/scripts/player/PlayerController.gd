@@ -257,6 +257,8 @@ func take_damage(amount: float) -> void:
 	if firewall_timer > 0.0:
 		amount *= 0.35
 	health = max(0.0, health - amount)
+	if CombatJuice:
+		CombatJuice.damage_taken(amount)
 	# Interrupt own channel on any damage (Hack is fully interruptible)
 	var ch = get_node_or_null("ChannelController")
 	if ch and ch.has_method("notify_damage"):

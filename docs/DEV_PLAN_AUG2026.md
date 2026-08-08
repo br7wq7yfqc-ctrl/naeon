@@ -1,17 +1,22 @@
 # NAEON Dev Plan — Aug 2026
 
-## sequential + holistic-economical · 0 micro-DMG
+## sequential + holistic-economical · 0 micro-DMG · Tripo ~4680
 
+### Big session complete
 | Item | Status |
 |------|--------|
-| Mag-boot feel (ship frame, pull, ring, steps) | **done** |
-| HUD EVA/MAG status | **done** |
-| Form Cycle ability → _cycle_form | **done** |
-| Prior EVA/crystal/VFX | done |
+| InteriorAmbient + vents + hatch hint | done |
+| CombatJuice hurt/DOWN | done |
+| Channel + contest + claim audio | done |
+| Arena cover ×6 | done |
+| HUD life-support + ship systems | done |
+| SoftShipSystems | done |
+| Walker soft damage/recover | done |
+| Fauna COUNT_BASE 8 | done |
 
 ## Next
-1. Soft combat juice from Ability impact_burst wire
-2. Interior ambient audio/light polish
+1. Pad contest camera readability
+2. Wildlife idle anim polish
 3. Batch DMG **only** on owner request
 
-Updated: 2026-08-08T01:44:36.399661+00:00
+Updated: 2026-08-08T01:57:14.749266+00:00

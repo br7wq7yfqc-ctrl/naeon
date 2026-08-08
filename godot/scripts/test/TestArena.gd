@@ -38,6 +38,7 @@ func _ready() -> void:
 	_upgrade_environment_materials()
 	_spawn_dummies()
 	_spawn_props()
+	_spawn_cover()
 	_spawn_turrets()
 	_spawn_claim_nodes()
 	if kills_label:
@@ -161,6 +162,64 @@ func _spawn_props() -> void:
 		prop.global_position = entry[0]
 
 
+
+
+
+
+func _spawn_cover() -> void:
+	## Procedural low walls + crates for TPS cover readability (no Tripo).
+	var spots: Array = [
+		[Vector3(4, 0, -4), Vector3(3.2, 1.1, 0.45)],
+		[Vector3(-5, 0, -5), Vector3(2.8, 1.0, 0.4)],
+		[Vector3(0, 0, -11), Vector3(4.0, 1.25, 0.5)],
+		[Vector3(10, 0, -2), Vector3(0.45, 1.3, 2.5)],
+		[Vector3(-10, 0, -1), Vector3(0.45, 1.2, 2.8)],
+		[Vector3(7, 0, 6), Vector3(2.0, 0.9, 0.4)],
+	]
+	var root_c := Node3D.new()
+	root_c.name = "CoverField"
+	add_child(root_c)
+	for i in spots.size():
+		var e = spots[i]
+		var body := StaticBody3D.new()
+		body.collision_layer = 1
+		body.collision_mask = 0
+		body.position = e[0]
+		var cs := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = e[1]
+		cs.shape = box
+		body.add_child(cs)
+		var mi := MeshInstance3D.new()
+		var bm := BoxMesh.new()
+		bm.size = e[1]
+		mi.mesh = bm
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(0.14, 0.16, 0.2)
+		mat.metallic = 0.55
+		mat.roughness = 0.55
+		mat.emission_enabled = true
+		mat.emission = Color(0.1, 0.45, 0.65) if i % 2 == 0 else Color(0.55, 0.12, 0.28)
+		mat.emission_energy_multiplier = 0.45
+		mi.material_override = mat
+		body.add_child(mi)
+		# Neon edge top
+		var edge := MeshInstance3D.new()
+		var eb := BoxMesh.new()
+		eb.size = Vector3(e[1].x * 0.95, 0.06, e[1].z * 0.95)
+		edge.mesh = eb
+		var em := StandardMaterial3D.new()
+		em.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		em.albedo_color = Color(0.2, 0.85, 1.0) if i % 2 == 0 else Color(0.95, 0.2, 0.4)
+		em.emission_enabled = true
+		em.emission = em.albedo_color
+		em.emission_energy_multiplier = 1.6
+		edge.material_override = em
+		edge.position = Vector3(0, e[1].y * 0.5 + 0.02, 0)
+		edge.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		body.add_child(edge)
+		root_c.add_child(body)
+	print("[TestArena] cover blocks ", spots.size())
 
 func _spawn_turrets() -> void:
 	var tscn: PackedScene = load("res://scenes/combat/Turret.tscn")

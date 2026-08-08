@@ -64,6 +64,7 @@ var _hull_ambient: Node3D = null
 
 func _ready() -> void:
 	add_to_group("ship")
+	_ensure_soft_systems()
 	attach_module(ShipModule.make_engine())
 	attach_module(ShipModule.make_weapon())
 	attach_module(ShipModule.make_shield())
@@ -1082,3 +1083,21 @@ func get_energy() -> float:
 
 func spend_energy(amount: float) -> void:
 	energy = maxf(0.0, energy - amount)
+
+
+
+func _ensure_soft_systems() -> void:
+	if get_node_or_null("SoftShipSystems"):
+		return
+	var n := Node.new()
+	n.set_script(load("res://scripts/ship/SoftShipSystems.gd"))
+	add_child(n)
+	if n.has_method("setup"):
+		n.setup(self)
+
+
+func get_soft_systems_line() -> String:
+	var n = get_node_or_null("SoftShipSystems")
+	if n and n.has_method("status_line"):
+		return str(n.status_line())
+	return ""

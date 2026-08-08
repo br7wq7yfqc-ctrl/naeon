@@ -72,6 +72,9 @@ func _process(delta: float) -> void:
 	if not active:
 		return
 	elapsed += delta
+	if int(elapsed * 4.0) != int((elapsed - delta) * 4.0):
+		if AudioDirector and AudioDirector.has_method("play_channel_tick"):
+			AudioDirector.play_channel_tick()
 	channel_progress.emit(get_ratio())
 	_update_vfx()
 	if elapsed >= duration:

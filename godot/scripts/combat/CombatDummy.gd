@@ -116,6 +116,8 @@ func _die() -> void:
 		CombatJuice.hit_feedback(max_health, global_position + Vector3(0, 1.2, 0), true)
 	_alive = false
 	died.emit()
+	if CombatJuice:
+		CombatJuice.kill_pop(global_position)
 	visible = false
 	collision_layer = 0
 	velocity = Vector3.ZERO

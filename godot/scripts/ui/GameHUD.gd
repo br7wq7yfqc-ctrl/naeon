@@ -184,7 +184,7 @@ func _build() -> void:
 	_interior_label.offset_left = 12
 	_interior_label.offset_right = 360
 	_interior_label.offset_top = 48
-	_interior_label.offset_bottom = 76
+	_interior_label.offset_bottom = 100
 	_interior_label.add_theme_font_size_override("font_size", 16)
 	_interior_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.45))
 	_interior_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
@@ -428,7 +428,17 @@ func _refresh() -> void:
 			else:
 				mag_s = " MAG:off"
 		eva_line = "  |  EVA%s" % mag_s
-	_status_label.text = "HP %s  EN %s  |  %s %s%s%s%s\nCONTRIB %.0f  ·  4=form F9=fac F10=host F11=join  (no P2W)" % [hp, en, fac, form, net, host_hint, eva_line, contrib]
+	var sys_line := ""
+	if LayerContext and str(LayerContext.current_layer) in ["Space", "space"]:
+		var tree_s := get_tree()
+		if tree_s:
+			for sh in tree_s.get_nodes_in_group("ship"):
+				if sh.has_method("get_soft_systems_line"):
+					var sl := str(sh.get_soft_systems_line())
+					if sl != "":
+						sys_line = "\nSHIP  " + sl
+						break
+	_status_label.text = "HP %s  EN %s  |  %s %s%s%s%s\nCONTRIB %.0f  ·  4=form F9=fac F10=host F11=join  (no P2W)%s" % [hp, en, fac, form, net, host_hint, eva_line, contrib, sys_line]
 
 	# Terrain budget + interior status (soft info only)
 	if _terrain_label:
@@ -458,7 +468,10 @@ func _refresh() -> void:
 					var k := "pocket"
 					if n.has_method("get_kind"):
 						k = str(n.get_kind())
-					iline = "INTERIOR · %s · press I to exit" % k
+					var seat_hint := ""
+					if str(k) == "ship" and n.has_method("is_near_seat") and _player and n.is_near_seat(_player):
+						seat_hint = " · SEAT [F] pilot"
+					iline = "INTERIOR · %s · I exit%s\nLIFE SUPPORT OK · ATMO 1.00 · POWER BUS STABLE" % [k, seat_hint]
 					break
 		_interior_label.text = iline
 		_interior_label.visible = iline != ""
