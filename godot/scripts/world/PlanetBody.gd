@@ -170,6 +170,8 @@ func _build_shell() -> void:
 	add_child(_surface_detail)
 	if _surface_detail.has_method("setup"):
 		_surface_detail.setup(self, radius, surface_color, planet_name.hash() % 10000)
+	call_deferred("_ensure_surface_fauna")
+	call_deferred("_ensure_surface_flora")
 
 	_terrain_edit = Node3D.new()
 	_terrain_edit.set_script(_TerrainEdit)
