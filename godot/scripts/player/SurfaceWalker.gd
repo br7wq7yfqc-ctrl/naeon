@@ -689,3 +689,61 @@ func _relief_floor_assist(delta: float) -> void:
 	var err: float = target_r - cur_r
 	if not is_on_floor() and err < -0.3 and err > -4.0:
 		global_position += dir * err * clampf(delta * 6.0, 0.0, 1.0)
+
+
+var _wade_cd: float = 0.0
+
+func _wade_splash(delta: float) -> void:
+	_wade_cd = maxf(0.0, _wade_cd - delta)
+	if eva_mode or _provider == null or not ("radius" in _provider):
+		return
+	if _wade_cd > 0.0:
+		return
+	var pid: String = str(_provider.planet_name) if "planet_name" in _provider else "Nex-Prime"
+	var prof: Dictionary = _Relief.profile_for_planet(pid)
+	var sea: float = float(prof.get("sea_level", -0.35))
+	var rad: float = float(_provider.radius)
+	var dir: Vector3 = (global_position - _provider.global_position).normalized()
+	var east: Vector3 = dir.cross(Vector3.UP)
+	if east.length_squared() < 1e-6:
+		east = dir.cross(Vector3.RIGHT)
+	east = east.normalized()
+	var north: Vector3 = east.cross(dir).normalized()
+	var to: Vector3 = global_position - _provider.global_position
+	var h: float = float(_Relief.height_at(to.dot(east), to.dot(north), int(absi(pid.hash()) % 10000), prof))
+	var alt_r: float = to.length() - rad
+	# Near sea surface band
+	if h <= sea + 0.4 and alt_r < sea + 2.5 and _move_amount > 0.15:
+		_wade_cd = 0.35
+		_spawn_wade_fx(dir)
+		if AudioDirector and AudioDirector.has_method("play_ui"):
+			AudioDirector.play_ui()
+
+
+func _spawn_wade_fx(up: Vector3) -> void:
+	var p := GPUParticles3D.new()
+	p.amount = 10
+	p.lifetime = 0.4
+	p.one_shot = true
+	p.explosiveness = 0.9
+	p.emitting = true
+	var pm := ParticleProcessMaterial.new()
+	pm.direction = up
+	pm.spread = 60.0
+	pm.initial_velocity_min = 1.0
+	pm.initial_velocity_max = 3.5
+	pm.gravity = -up * 6.0
+	pm.color = Color(0.55, 0.75, 0.95, 0.7)
+	p.process_material = pm
+	var sm := SphereMesh.new()
+	sm.radius = 0.05
+	sm.height = 0.1
+	p.draw_pass_1 = sm
+	add_child(p)
+	p.position = Vector3(0, 0.2, 0)
+	var tree := get_tree()
+	if tree:
+		tree.create_timer(0.55).timeout.connect(func():
+			if is_instance_valid(p):
+				p.queue_free()
+		)

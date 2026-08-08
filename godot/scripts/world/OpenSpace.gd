@@ -94,7 +94,7 @@ func _spawn_starfield() -> void:
 		mm.set_instance_transform(i, xf)
 
 func _spawn_planets() -> void:
-	var script := preload("res://scripts/world/PlanetBody.gd")
+	var script: Script = preload("res://scripts/world/PlanetBody.gd") as Script
 	for pid in ["Nex-Prime", "ROT-Hive", "Shard-Moon"]:
 		var pl: Node3D = Node3D.new()
 		pl.set_script(script)

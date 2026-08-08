@@ -5,6 +5,7 @@ class_name PlanetBody
 
 const _Cache = preload("res://scripts/world/PlanetMeshCache.gd")
 const _ATMO_SHADER = preload("res://shaders/planet_atmosphere.gdshader")
+const _SURFACE_SHADER = preload("res://shaders/planet_surface.gdshader")
 const _ATMO_INNER_SHADER = preload("res://shaders/planet_atmosphere_inner.gdshader")
 const _BaseBuilder = preload("res://scripts/world/BaseBuilder.gd")
 const _SurfaceDetail = preload("res://scripts/world/SurfaceDetail.gd")
@@ -33,6 +34,8 @@ var _body: StaticBody3D
 var _pads_root: Node3D
 var _pads: Array[Node3D] = []
 var _surface_mat: StandardMaterial3D
+var _surface_shader_mat: ShaderMaterial
+var _impostor_mat: ShaderMaterial
 var _atmo_mat: ShaderMaterial
 var _atmo_inner: MeshInstance3D
 var _atmo_inner_mat: ShaderMaterial
@@ -92,21 +95,12 @@ func _build_shell() -> void:
 	_mesh.name = "Surface"
 	_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_mesh.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-	_surface_mat = StandardMaterial3D.new()
-	_surface_mat.albedo_color = surface_color
-	_surface_mat.roughness = 0.95
-	_surface_mat.metallic = 0.02
-	_surface_mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-	# Vertex shading is lighter on low tiers
-	var gq := get_node_or_null("/root/GraphicsQuality")
-	if gq and int(gq.tier) <= 0:
-		_surface_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
-	else:
-		_surface_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
-	_surface_mat.emission_enabled = true
-	_surface_mat.emission = surface_color * 0.06
-	_surface_mat.emission_energy_multiplier = 0.25
-	_mesh.material_override = _surface_mat
+	# Land/ocean procedural albedo (R4) — far & mid sphere readable
+	var smat := ShaderMaterial.new()
+	smat.shader = _SURFACE_SHADER
+	_apply_surface_uniforms(smat)
+	_mesh.material_override = smat
+	_surface_shader_mat = smat
 	add_child(_mesh)
 
 	# Atmosphere outer shell — fresnel limb shader (space view)
@@ -140,13 +134,11 @@ func _build_shell() -> void:
 	_impostor.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_impostor.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
 	_impostor.mesh = _Cache.sphere(radius * 1.02, 8)
-	var imat := StandardMaterial3D.new()
-	imat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	imat.albedo_color = surface_color.lightened(0.15)
-	imat.emission_enabled = true
-	imat.emission = atmosphere_color
-	imat.emission_energy_multiplier = 0.35
-	_impostor.material_override = imat
+	_impostor_mat = ShaderMaterial.new()
+	_impostor_mat.shader = _SURFACE_SHADER
+	_apply_surface_uniforms(_impostor_mat)
+	_impostor_mat.set_shader_parameter("emission_strength", 0.18)
+	_impostor.material_override = _impostor_mat
 	_impostor.visible = false
 	add_child(_impostor)
 
@@ -277,11 +269,7 @@ func _apply_lod_visual(lod: int) -> void:
 		2:
 			segs = _segs_far
 	_mesh.mesh = _Cache.sphere(radius, segs)
-	# Near LOD: pixel shading; far: vertex
-	if lod == 0:
-		_surface_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
-	else:
-		_surface_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
+	# Surface land/ocean via ShaderMaterial (R4) — no per-LOD mat swap
 
 func _apply_lod(lod: int) -> void:
 	_apply_lod_visual(lod)
@@ -428,6 +416,10 @@ func _apply_atmo_uniforms() -> void:
 		_atmo_inner_mat.set_shader_parameter("sun_direction", _sun_dir)
 
 func set_sun_direction(dir: Vector3) -> void:
+	if _surface_shader_mat:
+		_surface_shader_mat.set_shader_parameter("sun_direction", dir)
+	if _impostor_mat:
+		_impostor_mat.set_shader_parameter("sun_direction", dir)
 	_sun_dir = dir.normalized()
 	_apply_atmo_uniforms()
 
@@ -626,3 +618,21 @@ func _ensure_surface_flora() -> void:
 			fl.set_observer(obs)
 	print("[PlanetBody] SurfaceFlora")
 
+
+
+func _apply_surface_uniforms(mat: ShaderMaterial) -> void:
+	if mat == null:
+		return
+	mat.set_shader_parameter("land_color", surface_color)
+	var ocean := Color(0.05, 0.18, 0.38)
+	if str(planet_name) == "ROT-Hive":
+		ocean = Color(0.25, 0.05, 0.12)
+	elif str(planet_name) == "Shard-Moon":
+		ocean = Color(0.12, 0.14, 0.18)
+		mat.set_shader_parameter("sea_threshold", -0.15)
+		mat.set_shader_parameter("ice_lat", 0.55)
+	mat.set_shader_parameter("ocean_color", ocean)
+	mat.set_shader_parameter("shore_color", Color(0.42, 0.38, 0.22))
+	mat.set_shader_parameter("seed", float(absi(str(planet_name).hash()) % 97))
+	mat.set_shader_parameter("sun_direction", _sun_dir if "_sun_dir" in self else Vector3(0.55, 0.75, 0.35))
+	mat.set_shader_parameter("emission_strength", 0.08)

@@ -4,6 +4,7 @@ class_name SurfaceFauna
 
 const _Math = preload("res://scripts/world/SurfaceChunkMath.gd")
 const _Cat = preload("res://scripts/world/FaunaCatalog.gd")
+const _Relief = preload("res://scripts/world/PlanetRelief.gd")
 const _AP = preload("res://scripts/assets/AssetPaths.gd")
 
 const CELL_M := 48.0
@@ -21,6 +22,7 @@ var _seed: int = 1
 var _built: bool = false
 var _planet_id: String = "Nex-Prime"
 var _biomes: PackedStringArray = PackedStringArray()
+var _relief_profile: Dictionary = {}
 
 
 func setup(planet: Node3D, radius: float, atmosphere_height: float, planet_id: String, seed_i: int = 2) -> void:
@@ -30,6 +32,7 @@ func setup(planet: Node3D, radius: float, atmosphere_height: float, planet_id: S
 	_planet_id = planet_id
 	_seed = seed_i
 	_biomes = _Cat.planet_biomes(planet_id)
+	_relief_profile = _Relief.profile_for_planet(planet_id)
 
 
 func set_observer(n: Node3D) -> void:
@@ -188,6 +191,18 @@ func _place_cell(cell: Vector2i, alt: float) -> void:
 			h = rng.randf_range(40.0, 90.0)
 		if domain == _Cat.Domain.AQUATIC and alt > 40.0:
 			h = rng.randf_range(0.0, 2.0)
+		var wx_s: float = float(cell.x) * CELL_M + ox
+		var wz_s: float = float(cell.y) * CELL_M + oz
+		var rh: float = float(_Relief.height_at(wx_s, wz_s, _seed, _relief_profile))
+		var sea_l: float = float(_relief_profile.get("sea_level", -0.35))
+		# Non-aquatic: skip deep ocean cells; aquatic: skip dry inland
+		if domain != _Cat.Domain.AQUATIC and rh < sea_l - 0.15:
+			node.visible = false
+			continue
+		if domain == _Cat.Domain.AQUATIC and rh > sea_l + 1.2:
+			node.visible = false
+			continue
+		node.visible = true
 		var pos: Vector3 = center + east * ox + north * oz + up * h
 		node.global_position = pos
 		var look: Vector3 = pos + east * cos(float(a["phase"])) + north * sin(float(a["phase"]))
