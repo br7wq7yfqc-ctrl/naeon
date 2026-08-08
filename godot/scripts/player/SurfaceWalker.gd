@@ -227,7 +227,6 @@ func snap_to_surface() -> void:
 	if space == null:
 		global_position += _up * 3.0
 		return
-	# Cast from high above to avoid starting inside prop volumes
 	var origin := global_position + _up * 25.0
 	var end := global_position - _up * 80.0
 	var q := PhysicsRayQueryParameters3D.create(origin, end)
@@ -235,13 +234,14 @@ func snap_to_surface() -> void:
 	q.exclude = [get_rid()]
 	var hit := space.intersect_ray(q)
 	if hit:
-		# Stand clearly above hit (props + terrain)
 		global_position = hit.position + _up * 1.85
 		velocity = Vector3.ZERO
 		print("[SurfaceWalker] snapped to ", hit.position)
-	else:
-		global_position += _up * 4.0
-		print("[SurfaceWalker] no hit — boost along up")
+		return
+	if _relief_snap_fallback():
+		return
+	global_position += _up * 4.0
+	print("[SurfaceWalker] no hit — boost along up")
 
 
 func safe_unground() -> void:
@@ -442,6 +442,7 @@ func _update_anim(delta: float) -> void:
 	_update_limbs()
 
 const FORMS := ["Canine", "Feline", "Avian", "Human"]
+const _Relief = preload("res://scripts/world/PlanetRelief.gd")
 
 func _infection_move_mult() -> float:
 	var inf = get_node_or_null("InfectionStatus")
@@ -616,3 +617,75 @@ func toggle_faction() -> void:
 		SoftSession.remember_player(self)
 	if GameManager:
 		GameManager.toast_requested.emit("Faction → %s (surface dual-theme)" % faction)
+
+
+func _relief_snap_fallback() -> bool:
+	var tree := get_tree()
+	if tree == null:
+		return false
+	var best: Node3D = null
+	var best_d := 1.0e12
+	for n in tree.get_nodes_in_group("planets"):
+		if n is Node3D:
+			var d: float = global_position.distance_to((n as Node3D).global_position)
+			if d < best_d:
+				best_d = d
+				best = n as Node3D
+	if best == null:
+		var root = tree.current_scene
+		if root:
+			for n in root.get_children():
+				if n is Node3D and n.has_method("altitude_of"):
+					var d2: float = global_position.distance_to((n as Node3D).global_position)
+					if d2 < best_d:
+						best_d = d2
+						best = n as Node3D
+	if best == null or not ("radius" in best):
+		return false
+	var rad: float = float(best.radius)
+	var pid: String = str(best.planet_name) if "planet_name" in best else "Nex-Prime"
+	var seed_i: int = int(absi(pid.hash()) % 10000)
+	var prof: Dictionary = _Relief.profile_for_planet(pid)
+	var dir: Vector3 = (global_position - best.global_position).normalized()
+	var east: Vector3 = dir.cross(Vector3.UP)
+	if east.length_squared() < 1e-6:
+		east = dir.cross(Vector3.RIGHT)
+	east = east.normalized()
+	var north: Vector3 = east.cross(dir).normalized()
+	var to: Vector3 = global_position - best.global_position
+	var h: float = float(_Relief.height_at(to.dot(east), to.dot(north), seed_i, prof))
+	var sea: float = float(prof.get("sea_level", -0.35))
+	if h < sea:
+		h = sea
+	var surf: Vector3 = best.global_position + dir * (rad + h)
+	global_position = surf + dir * 1.85
+	velocity = Vector3.ZERO
+	print("[SurfaceWalker] relief snap h=", h, " planet=", pid)
+	return true
+
+
+func _relief_floor_assist(delta: float) -> void:
+	if eva_mode or _provider == null:
+		return
+	if not ("radius" in _provider):
+		return
+	var rad: float = float(_provider.radius)
+	var pid: String = str(_provider.planet_name) if "planet_name" in _provider else "Nex-Prime"
+	var seed_i: int = int(absi(pid.hash()) % 10000)
+	var prof: Dictionary = _Relief.profile_for_planet(pid)
+	var dir: Vector3 = (global_position - _provider.global_position).normalized()
+	var east: Vector3 = dir.cross(Vector3.UP)
+	if east.length_squared() < 1e-6:
+		east = dir.cross(Vector3.RIGHT)
+	east = east.normalized()
+	var north: Vector3 = east.cross(dir).normalized()
+	var to: Vector3 = global_position - _provider.global_position
+	var h: float = float(_Relief.height_at(to.dot(east), to.dot(north), seed_i, prof))
+	var sea: float = float(prof.get("sea_level", -0.35))
+	if h < sea:
+		h = sea
+	var target_r: float = rad + h + 1.0
+	var cur_r: float = to.length()
+	var err: float = target_r - cur_r
+	if not is_on_floor() and err < -0.3 and err > -4.0:
+		global_position += dir * err * clampf(delta * 6.0, 0.0, 1.0)

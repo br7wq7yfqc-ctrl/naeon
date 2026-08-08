@@ -52,6 +52,7 @@ var _surface_detail: Node3D = null
 var _terrain_edit: Node3D = null
 
 func _ready() -> void:
+	add_to_group("planets")
 	_configure_from_quality()
 	_build_shell()
 	# Pads deferred until approach
@@ -172,6 +173,8 @@ func _build_shell() -> void:
 		_surface_detail.setup(self, radius, surface_color, planet_name.hash() % 10000)
 	call_deferred("_ensure_surface_fauna")
 	call_deferred("_ensure_surface_flora")
+	call_deferred("_ensure_surface_water")
+	call_deferred("_ensure_cave_mouths")
 
 	_terrain_edit = Node3D.new()
 	_terrain_edit.set_script(_TerrainEdit)
@@ -184,6 +187,12 @@ func _build_shell() -> void:
 	_apply_lod_visual(1)  # start mid until first observer update
 
 func set_observer(node: Node3D) -> void:
+	var w = get_node_or_null("SurfaceWater")
+	if w and w.has_method("set_observer"):
+		w.set_observer(node)
+	var cv = get_node_or_null("CaveMouthField")
+	if cv and cv.has_method("set_observer"):
+		cv.set_observer(node)
 	var _fl := get_node_or_null("SurfaceFlora")
 	if _fl and _fl.has_method("set_observer"):
 		_fl.set_observer(node)
@@ -555,6 +564,45 @@ func _ensure_surface_fauna() -> void:
 		f.call("set_observer", obs)
 	print("[PlanetBody] SurfaceFauna ", pid)
 
+
+
+
+func _ensure_surface_water() -> void:
+	if has_node("SurfaceWater"):
+		return
+	var w := Node3D.new()
+	var scr: Script = load("res://scripts/world/SurfaceWater.gd") as Script
+	w.set_script(scr)
+	w.name = "SurfaceWater"
+	add_child(w)
+	var pid: String = str(planet_name)
+	if w.has_method("setup"):
+		w.call("setup", self, radius, pid, int(absi(pid.hash()) % 10000))
+	var obs: Node3D = null
+	if has_method("_resolve_observer"):
+		obs = _resolve_observer()
+	if obs and w.has_method("set_observer"):
+		w.call("set_observer", obs)
+	print("[PlanetBody] SurfaceWater ", pid)
+
+
+func _ensure_cave_mouths() -> void:
+	if has_node("CaveMouthField"):
+		return
+	var c := Node3D.new()
+	var scr: Script = load("res://scripts/world/CaveMouthField.gd") as Script
+	c.set_script(scr)
+	c.name = "CaveMouthField"
+	add_child(c)
+	var pid: String = str(planet_name)
+	if c.has_method("setup"):
+		c.call("setup", self, radius, pid, int(absi(pid.hash()) % 10000) + 3)
+	var obs: Node3D = null
+	if has_method("_resolve_observer"):
+		obs = _resolve_observer()
+	if obs and c.has_method("set_observer"):
+		c.call("set_observer", obs)
+	print("[PlanetBody] CaveMouthField ", pid)
 
 func _ensure_surface_flora() -> void:
 	if has_node("SurfaceFlora"):
