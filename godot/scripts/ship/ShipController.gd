@@ -65,6 +65,8 @@ var _hull_ambient: Node3D = null
 func _ready() -> void:
 	add_to_group("ship")
 	_ensure_living_fx()
+	_ensure_shield_bubble()
+	_ensure_scan_ring()
 	_ensure_soft_systems()
 	attach_module(ShipModule.make_engine())
 	attach_module(ShipModule.make_weapon())
@@ -590,12 +592,18 @@ func _spawn_module_visual(module: ShipModule) -> void:
 			scale_v = 0.5
 		ShipModule.ModuleType.WEAPON:
 			pos = Vector3(0.75, 0.05, -0.35)
-			# Prefer HQ living weapons (Tripo wave); fallback module
+			# HQ weapons: siege uses organic/rail heavies; cruise pulse/biomass
 			if faction == "gROT":
-				rel = "props/weapon_biomass_spitter/weapon_biomass_spitter_grot_lod1.glb"
+				if op_mode == 1:
+					rel = "props/grot_organic_cannon/grot_organic_cannon_grot_lod1.glb"
+				else:
+					rel = "props/weapon_biomass_spitter/weapon_biomass_spitter_grot_lod1.glb"
 			else:
-				rel = "props/weapon_pulse_cannon/weapon_pulse_cannon_cybernex_lod1.glb"
-			scale_v = 0.55
+				if op_mode == 1:
+					rel = "props/cybernex_rail_slug/cybernex_rail_slug_cybernex_lod1.glb"
+				else:
+					rel = "props/weapon_pulse_cannon/weapon_pulse_cannon_cybernex_lod1.glb"
+			scale_v = 0.55 if op_mode != 1 else 0.7
 		ShipModule.ModuleType.SHIELD:
 			pos = Vector3(-0.75, 0.15, 0.1)
 			rel = "props/shield_bubble_emitter/shield_bubble_emitter_cybernex_lod1.glb"
@@ -834,6 +842,7 @@ func _ensure_thruster_fx() -> void:
 
 
 func _update_thruster_fx(axes: Vector3, delta: float) -> void:
+	_process_scan_ring(delta)
 	if _thruster_fx == null or not is_instance_valid(_thruster_fx):
 		return
 	var power: float = clampf(absf(axes.z) + absf(axes.x) * 0.4 + absf(axes.y) * 0.3, 0.0, 1.5)
@@ -918,6 +927,7 @@ func _toggle_siege() -> void:
 			exit_s = float(_role.siege_exit_sec)
 		if _hull_morph and is_instance_valid(_hull_morph) and _hull_morph.has_method("set_op_mode"):
 			_hull_morph.set_op_mode(0, exit_s)
+		_on_op_mode_changed(0)
 		print("[Ship] CRUISE mode")
 	else:
 		op_mode = 1
@@ -926,6 +936,7 @@ func _toggle_siege() -> void:
 			enter_s = float(_role.siege_enter_sec)
 		if _hull_morph and is_instance_valid(_hull_morph) and _hull_morph.has_method("set_op_mode"):
 			_hull_morph.set_op_mode(1, enter_s)
+		_on_op_mode_changed(1)
 		print("[Ship] SIEGE mode — mobility down, main gun up")
 
 
@@ -991,11 +1002,13 @@ func _toggle_scan() -> void:
 		op_mode = 0
 		if _hull_morph and is_instance_valid(_hull_morph) and _hull_morph.has_method("set_op_mode"):
 			_hull_morph.set_op_mode(0, 0.6)
+		_on_op_mode_changed(0)
 		print("[Ship] CRUISE (left SCAN)")
 	else:
 		op_mode = 2
 		if _hull_morph and is_instance_valid(_hull_morph) and _hull_morph.has_method("set_op_mode"):
 			_hull_morph.set_op_mode(2, 0.7)
+		_on_op_mode_changed(2)
 		print("[Ship] SCAN mode — sensors fantasy, mobility soft down")
 
 
@@ -1182,3 +1195,124 @@ func sync_living_mode() -> void:
 		elif om == 2:
 			m = 1
 	_living.set_mode(m, 0.7)
+
+
+
+func _on_op_mode_changed(mode: int) -> void:
+	## Sync living config, ambient, neon feedback, weapon hardpoint refresh.
+	sync_living_mode()
+	if _hull_ambient and is_instance_valid(_hull_ambient) and _hull_ambient.has_method("set_op_mode"):
+		_hull_ambient.call("set_op_mode", mode)
+	_refresh_weapon_visual()
+	_toast_op(mode)
+	if DisplayServer.get_name() == "headless":
+		return
+	var NP = load("res://scripts/fx/NeonParticles.gd")
+	if NP and is_inside_tree():
+		var col = NP.faction_color(str(faction))
+		if mode == 1:
+			col = Color(1.0, 0.45, 0.15, 0.9)  # amber siege
+		elif mode == 2:
+			col = Color(0.4, 1.0, 0.7, 0.9)  # scan green-cyan
+		NP.burst(global_position, col, get_tree(), 8, 4.0)
+
+
+func _toast_op(mode: int) -> void:
+	var msg := "CRUISE"
+	if mode == 1:
+		msg = "SIEGE — thrusters damped · main gun charged"
+	elif mode == 2:
+		msg = "SCAN — sensors open · soft mobility cut"
+	var tree := get_tree()
+	if tree == null:
+		return
+	for n in tree.get_nodes_in_group("game_hud"):
+		if n.has_method("push_toast"):
+			n.push_toast(msg, 2.2)
+			return
+
+
+func _refresh_weapon_visual() -> void:
+	## Rebuild weapon hardpoint for siege/cruise skin (visual only).
+	if module_root == null or DisplayServer.get_name() == "headless":
+		return
+	for c in module_root.get_children():
+		var nm := str(c.name).to_lower()
+		if "weapon" in nm or "cannon" in nm or "rail" in nm or "biomass" in nm or "organic" in nm or "spitter" in nm or "slug" in nm or "pulse" in nm or "wep" in nm:
+			c.queue_free()
+	var dps := 14.0
+	if op_mode == 1:
+		dps = 22.0
+	var w := ShipModule.make_weapon("Siege Lance" if op_mode == 1 else "Pulse Cannon", dps)
+	_spawn_module_visual(w)
+
+
+func get_op_mode_name() -> String:
+	if op_mode == 1:
+		return "SIEGE"
+	if op_mode == 2:
+		return "SCAN"
+	return "CRUISE"
+
+
+func get_flight_status_line() -> String:
+	return "%s · %s · SPD %d" % [flight_mode_name(), get_op_mode_name(), int(velocity.length())]
+
+
+
+func _ensure_shield_bubble() -> void:
+	if get_node_or_null("SoftShieldBubble"):
+		return
+	if DisplayServer.get_name() == "headless":
+		return
+	var n := Node3D.new()
+	n.set_script(load("res://scripts/ship/SoftShieldBubble.gd"))
+	add_child(n)
+	if n.has_method("setup"):
+		n.setup(self)
+
+
+var _scan_ring: MeshInstance3D = null
+
+
+func _ensure_scan_ring() -> void:
+	if _scan_ring and is_instance_valid(_scan_ring):
+		return
+	if DisplayServer.get_name() == "headless":
+		return
+	_scan_ring = MeshInstance3D.new()
+	_scan_ring.name = "SoftScanRing"
+	var tm := TorusMesh.new()
+	tm.inner_radius = 3.2
+	tm.outer_radius = 3.5
+	tm.rings = 8
+	tm.ring_segments = 20
+	_scan_ring.mesh = tm
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color = Color(0.35, 1.0, 0.75, 0.0)
+	mat.emission_enabled = true
+	mat.emission = Color(0.35, 1.0, 0.75)
+	mat.emission_energy_multiplier = 1.8
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_scan_ring.material_override = mat
+	_scan_ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_scan_ring.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	_scan_ring.visible = false
+	add_child(_scan_ring)
+
+
+func _process_scan_ring(delta: float) -> void:
+	if _scan_ring == null or not is_instance_valid(_scan_ring):
+		return
+	var on := op_mode == 2 and pilot_active
+	_scan_ring.visible = on
+	if not on:
+		return
+	_scan_ring.rotate_y(delta * 1.4)
+	var mat := _scan_ring.material_override as StandardMaterial3D
+	if mat:
+		var a := 0.25 + 0.2 * sin(Time.get_ticks_msec() * 0.006)
+		mat.albedo_color.a = a
+		mat.emission_energy_multiplier = 1.4 + a * 2.0

@@ -4,13 +4,12 @@
 
 | Item | Status |
 |------|--------|
-| Wire wave: thruster/wing/shield/gear/ramp/turret/totem/vents | **done** |
-| Soft combat neon (projectile burst) | **done** |
-| Particle opt | done |
+| Op-mode sync + siege weapon skins | done |
+| SoftShieldBubble + Scan ring | done |
+| HUD flight/op line | done |
 
 ## Next
-1. Scout nose cone re-gen if needed (timed out)
-2. Arena soft neon ambient under budget
-3. Batch DMG **only** on owner request
+1. Soft pad extract VFX under budget
+2. Batch DMG **only** on owner request
 
-Updated: 2026-08-08T16:54:14.986058+00:00
+Updated: 2026-08-08T17:01:03.436226+00:00

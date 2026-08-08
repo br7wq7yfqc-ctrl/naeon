@@ -434,9 +434,12 @@ func _refresh() -> void:
 		if tree_s:
 			for sh in tree_s.get_nodes_in_group("ship"):
 				if sh.has_method("get_soft_systems_line"):
-					var sl := str(sh.get_soft_systems_line())
-					if sl != "":
-						sys_line = "\nSHIP  " + sl
+					var sl := str(sh.get_soft_systems_line()) if sh.has_method("get_soft_systems_line") else ""
+					var fl := str(sh.get_flight_status_line()) if sh.has_method("get_flight_status_line") else ""
+					if fl != "" or sl != "":
+						sys_line = "\nSHIP  " + fl
+						if sl != "":
+							sys_line += "  ·  " + sl
 						break
 	_status_label.text = "HP %s  EN %s  |  %s %s%s%s%s\nCONTRIB %.0f  ·  4=form F9=fac F10=host F11=join  (no P2W)%s" % [hp, en, fac, form, net, host_hint, eva_line, contrib, sys_line]
 
