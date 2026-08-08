@@ -222,7 +222,7 @@ func _place_cell(cell: Vector2i, alt: float) -> void:
 		_actors[i] = a
 
 
-func _animate(_delta: float) -> void:
+func _animate(delta: float) -> void:
 	var t: float = Time.get_ticks_msec() * 0.001
 	for i in _actors.size():
 		var a: Dictionary = _actors[i]
@@ -238,12 +238,36 @@ func _animate(_delta: float) -> void:
 		var ph: float = float(a["phase"])
 		var sp: float = float(a["speed"])
 		var domain: int = int(a["domain"])
+		var prev: Vector3 = node.global_position
 		var wobble: Vector3 = east * cos(t * sp + ph) * 1.8 + north * sin(t * sp * 0.7 + ph) * 1.8
-		var bob_amp: float = 0.15
-		if domain == _Cat.Domain.AERIAL:
-			bob_amp = 0.8
-		var bob: Vector3 = up * sin(t * (1.2 + sp * 0.3) + ph) * bob_amp
-		if domain == _Cat.Domain.SPACE:
-			wobble *= 2.2
-			bob = up * sin(t * 0.5 + ph) * 1.5
-		node.global_position = base + wobble + bob
+		var bob_amp: float = 0.12
+		var hop: float = 0.0
+		match domain:
+			_Cat.Domain.AERIAL:
+				bob_amp = 0.85
+				# Wing-ish scale pulse on first mesh child
+				var flap := 1.0 + 0.12 * sin(t * (4.0 + sp) + ph) * float(a.get("wing", 1.0))
+				node.scale = Vector3(flap, 1.0 / maxf(flap, 0.7), flap)
+			_Cat.Domain.AQUATIC:
+				bob_amp = 0.35
+				wobble *= 1.35
+				# Body roll undulation
+				node.rotation.z = sin(t * (2.0 + sp) + ph) * 0.25
+			_Cat.Domain.TERRESTRIAL:
+				# Soft hop cycle
+				hop = maxf(0.0, sin(t * (2.4 + sp * 0.5) + ph)) * 0.55
+				node.scale = Vector3(1.0, 1.0 + hop * 0.12, 1.0)
+			_Cat.Domain.SPACE:
+				wobble *= 2.4
+				bob_amp = 1.6
+				node.rotate(up.normalized() if up.length_squared() > 0.01 else Vector3.UP, delta * 0.35)
+		var bob: Vector3 = up * (sin(t * (1.2 + sp * 0.3) + ph) * bob_amp + hop)
+		var next: Vector3 = base + wobble + bob
+		node.global_position = next
+		# Face travel direction (domain-aware up)
+		var vel: Vector3 = next - prev
+		var planar := vel - up * vel.dot(up)
+		if planar.length_squared() > 1e-6:
+			var look := next + planar.normalized()
+			if look.distance_to(next) > 0.01:
+				node.look_at(look, up)

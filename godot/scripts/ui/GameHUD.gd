@@ -476,6 +476,36 @@ func _refresh() -> void:
 		_interior_label.text = iline
 		_interior_label.visible = iline != ""
 
+	# Contested pad readability (nearest active ring)
+	if _contest_banner and _contest_label:
+		var best_d := 90.0
+		var best_pct := -1.0
+		var best_name := ""
+		var tree_c := get_tree()
+		if tree_c and _player:
+			for n in tree_c.get_nodes_in_group("contested_ring"):
+				if n is Node3D and n.get("active") == true:
+					var d: float = _player.global_position.distance_to((n as Node3D).global_position)
+					if d < best_d:
+						best_d = d
+						best_pct = float(n.get_progress()) * 100.0 if n.has_method("get_progress") else float(n.get("progress")) * 100.0
+						best_name = str(n.get_parent().name) if n.get_parent() else "PAD"
+			# also rings not in group
+			if best_pct < 0.0:
+				for n in tree_c.get_nodes_in_group("pad_base"):
+					var ring = n.get_node_or_null("ContestedRing")
+					if ring and ring.get("active") == true and n is Node3D:
+						var d2: float = _player.global_position.distance_to((n as Node3D).global_position)
+						if d2 < best_d:
+							best_d = d2
+							best_pct = float(ring.get("progress")) * 100.0
+							best_name = str(n.name)
+		if best_pct >= 0.0:
+			_contest_banner.visible = true
+			_contest_label.text = "⚠ CONTESTED  %s  ·  %d%%  ·  %.0fm  ·  C pulse" % [best_name, int(best_pct), best_d]
+		else:
+			_contest_banner.visible = false
+
 	# Layer chip + context (S1 seamless)
 	if _layer_label and LayerContext:
 		_layer_label.text = "LAYER · %s  [%s]" % [LayerContext.current_layer.to_upper(), LayerContext.seamless_stage]

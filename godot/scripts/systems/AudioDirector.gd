@@ -90,6 +90,12 @@ func play_channel_done() -> void:
 	_beep(990.0, 0.07, -12.0, 0.05)
 
 
+func play_fauna_chirp() -> void:
+	## Soft wildlife tick — very quiet, non-combat.
+	_beep(1200.0 + randf() * 400.0, 0.035, -22.0)
+	_beep(900.0 + randf() * 200.0, 0.04, -24.0, 0.03)
+
+
 func _beep(freq: float, dur: float, vol_db: float, delay: float = 0.0) -> void:
 	if delay > 0.0:
 		get_tree().create_timer(delay).timeout.connect(func(): _beep(freq, dur, vol_db, 0.0))

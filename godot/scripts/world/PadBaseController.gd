@@ -22,6 +22,7 @@ var _harvest_fx_cd: float = 0.0
 var _harvest_accum_fx: float = 0.0
 
 func _ready() -> void:
+	add_to_group("pad_base")
 	call_deferred("_ensure_claim_beacon")
 	ownership = OwnershipData.new()
 	ownership.object_id = "%s/%s" % [get_parent().name if get_parent() else "pad", name]

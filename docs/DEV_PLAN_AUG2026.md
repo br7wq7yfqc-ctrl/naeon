@@ -2,21 +2,14 @@
 
 ## sequential + holistic-economical · 0 micro-DMG · Tripo ~4680
 
-### Big session complete
 | Item | Status |
 |------|--------|
-| InteriorAmbient + vents + hatch hint | done |
-| CombatJuice hurt/DOWN | done |
-| Channel + contest + claim audio | done |
-| Arena cover ×6 | done |
-| HUD life-support + ship systems | done |
-| SoftShipSystems | done |
-| Walker soft damage/recover | done |
-| Fauna COUNT_BASE 8 | done |
+| Contest camera readability (meter/pillars/spokes/HUD) | done |
+| Wildlife idle (hop/flap/swim/space + face) | done |
+| Contest soft FOV + fauna chirps | done |
 
 ## Next
-1. Pad contest camera readability
-2. Wildlife idle anim polish
-3. Batch DMG **only** on owner request
+1. Soft pad claim radial particles budget
+2. Batch DMG **only** on owner request
 
-Updated: 2026-08-08T01:57:14.749266+00:00
+Updated: 2026-08-08T11:56:58.667137+00:00
