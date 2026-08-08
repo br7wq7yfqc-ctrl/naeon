@@ -159,6 +159,7 @@ func _bind_planet_observers() -> void:
 	for pl in planets:
 		if pl and pl.has_method("set_observer") and ship:
 			pl.set_observer(ship)
+		_set_planet_observers(ship)
 
 
 func _sync_planet_sun() -> void:
@@ -314,6 +315,7 @@ func try_exit_ship() -> void:
 	for pl in planets:
 		if pl and is_instance_valid(pl) and pl.has_method("set_observer") and player and is_instance_valid(player):
 			pl.set_observer(player)
+		_set_planet_observers(player)
 	_bind_soft_net_actor(player)
 	print("[OpenSpace] exited ship  eva=", _eva_mode)
 
@@ -837,3 +839,19 @@ func _spawn_orbital_stations() -> void:
 		o.light_color = Color(0.4, 0.85, 1.0)
 		n.add_child(o)
 	print("[OpenSpace] orbital stations x3")
+
+
+func _set_planet_observers(obs: Node3D) -> void:
+	if obs == null or not is_instance_valid(obs):
+		return
+	for n in get_children():
+		_walk_set_obs(n, obs)
+
+
+func _walk_set_obs(n: Node, obs: Node3D) -> void:
+	if n == null:
+		return
+	if n.has_method("set_observer"):
+		n.set_observer(obs)
+	for c in n.get_children():
+		_walk_set_obs(c, obs)

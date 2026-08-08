@@ -18,6 +18,8 @@ var _label: Label3D
 var _status: String = "unclaimed"
 var _contest_ring: Node3D = null
 var _claim_cd: float = 0.0
+var _harvest_fx_cd: float = 0.0
+var _harvest_accum_fx: float = 0.0
 
 func _ready() -> void:
 	call_deferred("_ensure_claim_beacon")
@@ -187,6 +189,14 @@ func _tick_harvest(delta: float) -> void:
 	if GameManager:
 		# Asymmetric soft economy (CONCEPT): Cybernex Contribution vs gROT Biomass
 		GameManager.deposit_economy(econ)
+		_harvest_accum_fx += econ
+		_harvest_fx_cd -= delta
+		if _harvest_fx_cd <= 0.0 and _harvest_accum_fx > 0.4:
+			_harvest_fx_cd = 1.8
+			if AudioDirector and AudioDirector.has_method("play_ui"):
+				AudioDirector.play_ui()
+			_notify_hud("HARVEST +%.1f  %s" % [_harvest_accum_fx, GameManager.economy_label()])
+			_harvest_accum_fx = 0.0
 	harvested.emit(got, total_extracted)
 	_status = "extracting"
 	_refresh_label()

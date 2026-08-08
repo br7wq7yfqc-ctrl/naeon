@@ -497,11 +497,11 @@ func current_lod_name() -> String:
 		1: return "MID"
 		2: return "FAR"
 		3: return "IMPOSTOR"
-	return "?"
-
+	
 
 func _spawn_pad_density() -> void:
 	_ensure_surface_flora()
+	_ensure_surface_fauna()
 	if _pads_root == null:
 		return
 	if _pads_root.has_node("PadDensityCluster"):
@@ -521,8 +521,29 @@ func _spawn_pad_density() -> void:
 		life.name = "PadAmbientLife"
 		_pads_root.add_child(life)
 		if life.has_method("build"):
-			life.build(5)
+			life.build(6, fac)
 
+
+
+func _ensure_surface_fauna() -> void:
+	if has_node("SurfaceFauna"):
+		return
+	var f := Node3D.new()
+	f.set_script(load("res://scripts/world/SurfaceFauna.gd"))
+	f.name = "SurfaceFauna"
+	add_child(f)
+	var pid := str(planet_name) if "planet_name" in self else name
+	var atm := float(atmosphere_height) if "atmosphere_height" in self else 300.0
+	if f.has_method("setup"):
+		f.setup(self, radius, atm, pid, int(hash(pid) % 10000))
+	var obs = get_tree().get_first_node_in_group("player") if get_tree() else null
+	if obs == null:
+		var ships = get_tree().get_nodes_in_group("ship") if get_tree() else []
+		if ships.size() > 0:
+			obs = ships[0]
+	if obs and f.has_method("set_observer"):
+		f.set_observer(obs)
+	print("[PlanetBody] SurfaceFauna ", pid)
 
 
 func _ensure_surface_flora() -> void:
