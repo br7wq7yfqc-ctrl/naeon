@@ -68,6 +68,7 @@ func hit_feedback(amount: float, world_pos: Vector3, crit: bool = false) -> void
 		AudioDirector.play_hit(crit)
 	_spawn_number(amount, world_pos, crit)
 	_spawn_impact(world_pos, crit)
+	_spawn_hit_ring(world_pos, crit)
 	# Hitstop disabled — was tanking Arena FPS with time_scale thrash
 
 
@@ -134,3 +135,38 @@ func _spawn_impact(world_pos: Vector3, crit: bool) -> void:
 		if is_instance_valid(p):
 			p.queue_free()
 	)
+
+
+func _spawn_hit_ring(world_pos: Vector3, crit: bool) -> void:
+	var tree := get_tree()
+	if tree == null or tree.current_scene == null:
+		return
+	var mi := MeshInstance3D.new()
+	var tm := TorusMesh.new()
+	tm.inner_radius = 0.08 if not crit else 0.12
+	tm.outer_radius = 0.55 if not crit else 0.95
+	tm.rings = 8
+	tm.ring_segments = 12
+	mi.mesh = tm
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(1.0, 0.85, 0.25, 0.85) if crit else Color(1.0, 0.4, 0.25, 0.7)
+	mat.emission_enabled = true
+	mat.emission = mat.albedo_color
+	mat.emission_energy_multiplier = 2.2 if crit else 1.4
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	tree.current_scene.add_child(mi)
+	mi.global_position = world_pos
+	# Face camera soft
+	var cam := get_viewport().get_camera_3d()
+	if cam:
+		mi.look_at(cam.global_position, Vector3.UP)
+	var tw := tree.create_tween()
+	tw.set_parallel(true)
+	var s0 := 0.4 if not crit else 0.55
+	mi.scale = Vector3.ONE * s0
+	tw.tween_property(mi, "scale", Vector3.ONE * (1.6 if crit else 1.2), 0.28)
+	tw.tween_property(mat, "albedo_color:a", 0.0, 0.28)
+	tw.chain().tween_callback(mi.queue_free)

@@ -60,6 +60,7 @@ var _scan_pulse_t: float = 0.0
 var _scan_last_report: String = ""
 var _deployed_rover: Node3D = null
 var _engine_pulse_t: float = 0.0
+var _hull_ambient: Node3D = null
 
 func _ready() -> void:
 	add_to_group("ship")
@@ -73,6 +74,7 @@ func _ready() -> void:
 	call_deferred("_ensure_thruster_fx")
 	call_deferred("_ensure_cargo_systems")
 	call_deferred("_ensure_morph_and_hatch")
+	call_deferred("_ensure_hull_ambient")
 	_role = _load_role_sniper()
 	if pilot_active:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -373,6 +375,7 @@ func _physics_process(delta: float) -> void:
 	floor_block_on_wall = false
 	move_and_slide()
 	_update_thruster_fx(axes, delta)
+	_tick_hull_ambient(axes, delta)
 	if velocity.length() > 5.0 and SessionObjectives:
 		SessionObjectives.on_moved()
 
@@ -628,6 +631,8 @@ func _apply_faction_skin() -> void:
 		mat.emission = Color(0.15, 0.75, 1.0)
 	mat.emission_energy_multiplier = 1.2
 	hull_mesh.material_override = mat
+	if _hull_ambient and is_instance_valid(_hull_ambient) and _hull_ambient.has_method("set_faction"):
+		_hull_ambient.call("set_faction", faction)
 
 
 func _claim_nearby_pad() -> void:
@@ -1036,3 +1041,31 @@ func _tick_scan_pulse(delta: float) -> void:
 			if n.has_method("push_toast"):
 				n.push_toast(report, 1.6)
 				break
+
+
+func _ensure_hull_ambient() -> void:
+	if _hull_ambient and is_instance_valid(_hull_ambient):
+		return
+	_hull_ambient = Node3D.new()
+	_hull_ambient.set_script(load("res://scripts/ship/ShipHullAmbient.gd"))
+	_hull_ambient.name = "HullAmbient"
+	add_child(_hull_ambient)
+	if _hull_ambient.has_method("setup"):
+		_hull_ambient.call("setup", self)
+	if _hull_ambient.has_method("set_faction"):
+		_hull_ambient.call("set_faction", faction)
+	print("[Ship] HullAmbient")
+
+
+func _tick_hull_ambient(axes: Vector3, _delta: float) -> void:
+	if _hull_ambient == null or not is_instance_valid(_hull_ambient):
+		return
+	var power: float = clampf(absf(axes.z) + absf(axes.x) * 0.4 + absf(axes.y) * 0.3, 0.0, 1.5)
+	if not pilot_active:
+		power = 0.0
+	if _hull_ambient.has_method("set_engine_power"):
+		_hull_ambient.call("set_engine_power", power)
+	if _hull_ambient.has_method("set_op_mode"):
+		_hull_ambient.call("set_op_mode", op_mode)
+	if _hull_ambient.has_method("set_landed"):
+		_hull_ambient.call("set_landed", is_landed)

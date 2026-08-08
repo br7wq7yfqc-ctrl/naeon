@@ -154,6 +154,7 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 				win_c = Color(0.95, 0.12, 0.42)
 			_spawn_claim_fx(win_c)
 			_notify_hud("Claim locked → transition · soft economy only")
+	_claim_pylon_pulse(true)
 		else:
 			_status = "contested"
 			_set_contested_ring(true)
@@ -165,6 +166,7 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 				_contest_ring.pulse()
 			_spawn_claim_fx(Color(1.0, 0.6, 0.2))
 			_notify_hud("CLAIM PULSE %.2f / 1.75 — stay in zone, C again" % ownership.claim_strength)
+	_claim_pylon_pulse()
 		_apply_faction_visual()
 		_refresh_label()
 		claimed.emit(ownership.faction_name())
@@ -424,3 +426,19 @@ func _try_pad_scan() -> void:
 	_notify_hud("Pad scan: %s  claim=%.2f  reserves=%.0f  (soft intel)" % [fac, stren, crystal_reserves])
 	if AudioDirector and AudioDirector.has_method("play_ui"):
 		AudioDirector.play_ui()
+
+
+func _claim_pylon_pulse(strong: bool = false) -> void:
+	var light := OmniLight3D.new()
+	light.omni_range = 22.0 if strong else 14.0
+	light.light_energy = 4.5 if strong else 2.2
+	var fac := "Cybernex"
+	if ownership:
+		fac = ownership.faction_name() if ownership.has_method("faction_name") else fac
+	light.light_color = Color(0.95, 0.25, 0.4) if fac == "gROT" else Color(0.25, 0.8, 1.0)
+	light.shadow_enabled = false
+	add_child(light)
+	light.position = Vector3(0, 6.0, 0)
+	var tw := create_tween()
+	tw.tween_property(light, "light_energy", 0.0, 0.55 if strong else 0.35)
+	tw.tween_callback(light.queue_free)

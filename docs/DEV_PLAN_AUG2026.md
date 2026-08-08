@@ -1,17 +1,20 @@
 # NAEON Dev Plan — Aug 2026
 
-## Continuous improve slice
+## Mode
+holistic-economical + sequential · **code-first, 0 Tripo**
+
+## This session
 | Item | Status |
 |------|--------|
-| SoftScanCache + HUD/Pad/Ship | done |
-| Ship SCAN soft pulse | done |
-| Procedural dunes/mesa/craters | done |
-| SurfaceDetail biome colors v2 | done |
-| LandscapeFeatures props stream | done |
+| ShipHullAmbient (rim/engine/cabin + modes) | done |
+| CombatJuice hit ring (CRIT/normal) | done |
+| CombatDummy stagger + hit pop | done |
+| Pad claim pylon pulse light | done |
 
-## Next
-1. Ship hull ambient
-2. Credit-check Tripo crystal
-3. Batch DMG on request
+## Next (queue)
+1. Ability energy cost consistency pass
+2. Ship interior pocket (S-INT) scaffold deepen
+3. Credit-check Tripo cave crystal only if balance allows
+4. Batch DMG on owner request only
 
-Updated: 2026-08-08T00:57:50.941688+00:00
+Updated: 2026-08-08T01:18:11.633894+00:00

@@ -109,3 +109,7 @@
 ## 2026-08-07T23:35:35.579344+00:00
 - Ability feedback toasts + HUD CD bar; walker full kit keys.
 - Tripo B: cybernex_shield_emitter + cargo_landing_container (−40 cr). Balance ~4720.
+
+### 2026-08-08 — ShipHullAmbient
+- Code-first hull rim/engine/cabin lights + op_mode pulse (SIEGE/SCAN/land).
+- 0 Tripo. Sequential after scan/landscape.

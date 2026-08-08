@@ -29,6 +29,7 @@ var _ai_accum: float = 0.0
 var _spawn_pos: Vector3
 var _mat: StandardMaterial3D
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
+var _stagger: float = 0.0
 
 func _ready() -> void:
 	health = max_health
@@ -52,6 +53,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if not _alive:
 		return
+	_stagger = maxf(0.0, _stagger - delta)
 	_cd = max(0.0, _cd - delta)
 	if not is_on_floor():
 		velocity.y -= gravity * delta
@@ -89,7 +91,9 @@ func take_damage(amount: float) -> void:
 		return
 	health = max(0.0, health - amount)
 	damaged.emit(amount, health)
+	_stagger = maxf(_stagger, 0.18 + minf(amount * 0.012, 0.35))
 	_flash()
+	_hit_pop(amount)
 	_update_labels()
 	if health <= 0.0:
 		_die()
@@ -166,6 +170,11 @@ func _find_player() -> Node3D:
 	if tree == null:
 		return null
 	# Prefer group once
+	if SoftScanCache:
+		var sp = SoftScanCache.get_player()
+		if sp is Node3D:
+			_player_cache = sp as Node3D
+			return _player_cache
 	var nodes := tree.get_nodes_in_group("player")
 	if nodes.size() > 0 and nodes[0] is Node3D:
 		_player_cache = nodes[0]
@@ -201,6 +210,8 @@ func _update_labels() -> void:
 		health_bar.text = "HP %d/%d" % [int(health), int(max_health)]
 
 func try_load_drone() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	var path: String = _AP.resolve("characters/grot_infector/grot_infector_grot_lod0.glb")
 	if not FileAccess.file_exists(path):
 		path = _AP.resolve("characters/grot_thrall/grot_thrall_grot_lod0.glb")
@@ -220,3 +231,18 @@ func try_load_drone() -> void:
 	root.scale = Vector3.ONE * 0.9
 	print("[CombatDummy] drone mesh loaded")
 
+
+
+func _hit_pop(amount: float) -> void:
+	if mesh == null or not is_instance_valid(mesh):
+		return
+	var base := mesh.scale
+	var tw := get_tree().create_tween()
+	tw.tween_property(mesh, "scale", base * 1.12, 0.05)
+	tw.tween_property(mesh, "scale", base, 0.12)
+	if _mat:
+		_mat.emission_energy_multiplier = 2.8 if amount >= 20.0 else 1.8
+		get_tree().create_timer(0.1).timeout.connect(func():
+			if is_instance_valid(self) and _mat:
+				_mat.emission_energy_multiplier = 1.2
+		)
