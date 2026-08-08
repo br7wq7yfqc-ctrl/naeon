@@ -112,9 +112,7 @@ func _spawn_pool() -> void:
 func _make_actor(spec: Dictionary, rng: RandomNumberGenerator) -> Node3D:
 	var mesh_rel: String = str(spec.get("mesh", ""))
 	if mesh_rel != "":
-		var path: String = ""
-		if _AP != null and _AP.has_method("resolve"):
-			path = str(_AP.resolve(mesh_rel))
+		var path: String = str(_AP.resolve(mesh_rel))
 		if path != "" and FileAccess.file_exists(path):
 			var prop := Node3D.new()
 			var ps: Script = load("res://scripts/assets/GlbProp.gd")

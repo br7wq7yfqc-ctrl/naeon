@@ -497,6 +497,7 @@ func current_lod_name() -> String:
 		1: return "MID"
 		2: return "FAR"
 		3: return "IMPOSTOR"
+	return "?"
 	
 
 func _spawn_pad_density() -> void:
@@ -529,20 +530,27 @@ func _ensure_surface_fauna() -> void:
 	if has_node("SurfaceFauna"):
 		return
 	var f := Node3D.new()
-	f.set_script(load("res://scripts/world/SurfaceFauna.gd"))
+	var scr: Script = load("res://scripts/world/SurfaceFauna.gd") as Script
+	f.set_script(scr)
 	f.name = "SurfaceFauna"
 	add_child(f)
-	var pid := str(planet_name) if "planet_name" in self else name
-	var atm := float(atmosphere_height) if "atmosphere_height" in self else 300.0
+	var pid: String = str(planet_name)
+	var atm: float = float(atmosphere_height)
+	var seed_i: int = int(absi(pid.hash()) % 10000)
 	if f.has_method("setup"):
-		f.setup(self, radius, atm, pid, int(hash(pid) % 10000))
-	var obs = get_tree().get_first_node_in_group("player") if get_tree() else null
-	if obs == null:
-		var ships = get_tree().get_nodes_in_group("ship") if get_tree() else []
-		if ships.size() > 0:
-			obs = ships[0]
-	if obs and f.has_method("set_observer"):
-		f.set_observer(obs)
+		f.call("setup", self, radius, atm, pid, seed_i)
+	var obs: Node3D = null
+	var tree := get_tree()
+	if tree:
+		var pnode = tree.get_first_node_in_group("player")
+		if pnode is Node3D:
+			obs = pnode as Node3D
+		if obs == null:
+			var ships: Array = tree.get_nodes_in_group("ship")
+			if ships.size() > 0 and ships[0] is Node3D:
+				obs = ships[0] as Node3D
+	if obs != null and f.has_method("set_observer"):
+		f.call("set_observer", obs)
 	print("[PlanetBody] SurfaceFauna ", pid)
 
 
