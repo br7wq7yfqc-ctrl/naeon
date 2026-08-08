@@ -15,7 +15,7 @@ static func height_at(x: float, z: float, seed: int, profile: Dictionary = {}) -
 	ridge = pow(clampf(ridge, 0.0, 1.0), 1.6)
 	var mountains := ridge * mtn_amp * _mask(sx * 0.15 + 0.3, sz * 0.15, 0.42)
 	var continent := _fbm(sx * 0.12, sz * 0.12, 2)
-	var basin := smoothstep(-0.15, 0.25, continent)
+	var basin := _smoothstep(-0.15, 0.25, continent)
 	var canyon_line := absf(_warp_noise(sx * 0.55, sz * 0.55, seed))
 	var canyon := 0.0
 	if canyon_line < 0.085:
@@ -108,8 +108,8 @@ static func _warp_noise(x: float, z: float, seed: int) -> float:
 
 static func _mask(x: float, z: float, threshold: float) -> float:
 	var m := _fbm(x, z, 2)
-	return smoothstep(threshold - 0.15, threshold + 0.25, m)
+	return _smoothstep(threshold - 0.15, threshold + 0.25, m)
 
-static func smoothstep(e0: float, e1: float, x: float) -> float:
+static func _smoothstep(e0: float, e1: float, x: float) -> float:
 	var t := clampf((x - e0) / maxf(e1 - e0, 0.0001), 0.0, 1.0)
 	return t * t * (3.0 - 2.0 * t)

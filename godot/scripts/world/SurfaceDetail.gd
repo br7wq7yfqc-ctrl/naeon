@@ -175,7 +175,7 @@ func _spawn_cell(cell: Vector2i) -> void:
 		mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
 		var mat := StandardMaterial3D.new()
 		mat.vertex_color_use_as_albedo = true
-	mat.albedo_color = _surface_color.lightened(0.04)
+		mat.albedo_color = _surface_color.lightened(0.04)
 		mat.roughness = 0.96
 		mat.metallic = 0.0
 		mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
