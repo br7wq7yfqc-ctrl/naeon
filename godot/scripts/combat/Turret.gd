@@ -145,12 +145,19 @@ func _update_label() -> void:
 			_label.text = "TURRET %s\nHP %.0f" % [faction, health]
 
 func _load_mesh() -> void:
-	var rel := "props/turret_emplacement/turret_emplacement_grot_lod1.glb"
-	if faction == "Cybernex":
-		rel = "props/turret_emplacement/turret_emplacement_cybernex_lod1.glb"
-	var path: String = _AP.resolve(rel)
-	if not FileAccess.file_exists(path):
-		# placeholder
+	var fac := "grot" if faction == "gROT" else "cybernex"
+	# Prefer rotating barrel HQ; fallback emplacement
+	var candidates: Array = [
+		"props/turret_rotating_barrel/turret_rotating_barrel_%s_lod1.glb" % fac,
+		"props/turret_emplacement/turret_emplacement_%s_lod1.glb" % fac,
+	]
+	var path: String = ""
+	for rel in candidates:
+		var p: String = _AP.resolve(str(rel))
+		if p != "" and FileAccess.file_exists(p):
+			path = p
+			break
+	if path == "":
 		var mi := MeshInstance3D.new()
 		var box := BoxMesh.new()
 		box.size = Vector3(1.2, 1.0, 1.2)
@@ -161,10 +168,10 @@ func _load_mesh() -> void:
 	var state := GLTFState.new()
 	if doc.append_from_file(path, state) != OK:
 		return
-	var root := doc.generate_scene(state)
-	if root:
-		add_child(root)
-		root.scale = Vector3.ONE * 0.9
+	var root_n := doc.generate_scene(state)
+	if root_n:
+		add_child(root_n)
+		root_n.scale = Vector3.ONE * 0.9
 
 
 

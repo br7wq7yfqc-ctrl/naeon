@@ -33,6 +33,7 @@ func _build() -> void:
 	mat.roughness = 0.45
 	_mesh.material_override = mat
 	add_child(_mesh)
+	_try_glb_skin()
 	_body = StaticBody3D.new()
 	_body.collision_layer = 0
 	_body.collision_mask = 0
@@ -100,3 +101,36 @@ func _apply_angle(t: float) -> void:
 
 func is_driveable() -> bool:
 	return state == State.DEPLOYED
+
+
+
+func _try_glb_skin() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	var AP = load("res://scripts/assets/AssetPaths.gd")
+	if AP == null or not AP.has_method("resolve"):
+		return
+	var fac := "cybernex"
+	var ship := get_parent()
+	while ship and not ("faction" in ship):
+		ship = ship.get_parent()
+	if ship and "faction" in ship and str(ship.faction) == "gROT":
+		fac = "grot"
+	var rel := "ships/cargo_ramp_segment/cargo_ramp_segment_%s_lod1.glb" % fac
+	var path: String = str(AP.resolve(rel))
+	if path == "" or not FileAccess.file_exists(path):
+		return
+	var doc := GLTFDocument.new()
+	var st2 := GLTFState.new()
+	if doc.append_from_file(path, st2) != OK:
+		return
+	var scn := doc.generate_scene(st2)
+	if scn == null:
+		return
+	# Hide procedural plate mesh, show GLB under same hinge
+	if _mesh:
+		_mesh.visible = false
+	add_child(scn)
+	scn.name = "RampGLB"
+	scn.position = Vector3(0, 0, ramp_length * 0.35)
+	scn.scale = Vector3(ramp_width / 2.0, 1.0, ramp_length / 4.0) * 0.35

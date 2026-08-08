@@ -102,6 +102,7 @@ func op_mode_name() -> String:
 
 func _try_load_radiator_meshes() -> void:
 	_try_load_variable_wing()
+	_try_load_morph_plates()
 	var AP = load("res://scripts/assets/AssetPaths.gd")
 	if AP == null:
 		return
@@ -173,3 +174,36 @@ func _try_load_variable_wing() -> void:
 		scn.scale.x *= side
 		_plates.append({"node": scn, "base": scn.transform, "siege": scn.transform.translated(Vector3(side * 0.4, 0, -0.3))})
 	print("[HullMorph] variable wing loaded")
+
+
+
+func _try_load_morph_plates() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	var AP = load("res://scripts/assets/AssetPaths.gd")
+	if AP == null or not AP.has_method("resolve"):
+		return
+	var fac := "cybernex"
+	var ship := get_parent()
+	if ship and "faction" in ship and str(ship.faction) == "gROT":
+		fac = "grot"
+	var rel := "ships/morph_armor_plate/morph_armor_plate_%s_lod1.glb" % fac
+	var path: String = str(AP.resolve(rel))
+	if path == "" or not FileAccess.file_exists(path):
+		return
+	for side in [-1.0, 1.0]:
+		var doc := GLTFDocument.new()
+		var st2 := GLTFState.new()
+		if doc.append_from_file(path, st2) != OK:
+			continue
+		var scn := doc.generate_scene(st2)
+		if scn == null:
+			continue
+		add_child(scn)
+		var base_xf := Transform3D(Basis.IDENTITY, Vector3(side * 0.9, 0.25, 0.0))
+		scn.transform = base_xf
+		scn.scale = Vector3.ONE * 0.4
+		var siege_xf := base_xf.translated(Vector3(side * 0.35, 0.1, -0.25))
+		siege_xf.basis = Basis.from_euler(Vector3(0, 0, side * 0.5)) * base_xf.basis
+		_plates.append({"node": scn, "base": base_xf, "siege": siege_xf})
+	print("[HullMorph] morph armor plates")

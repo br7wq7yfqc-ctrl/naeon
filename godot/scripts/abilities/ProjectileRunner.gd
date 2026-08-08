@@ -89,3 +89,16 @@ func _expire(p: Node) -> void:
 		p.queue_free()
 	else:
 		queue_free()
+
+
+func _neon_pop() -> void:
+	var NP = load("res://scripts/fx/NeonParticles.gd")
+	if NP == null or not is_inside_tree():
+		return
+	var host := get_parent() as Node3D
+	if host == null:
+		return
+	var col := Color(0.3, 0.9, 1.0, 0.9)
+	if host.has_meta("faction") and str(host.get_meta("faction")) == "gROT":
+		col = Color(0.95, 0.2, 0.45, 0.9)
+	NP.burst(host.global_position, col, get_tree(), 6, 5.0)

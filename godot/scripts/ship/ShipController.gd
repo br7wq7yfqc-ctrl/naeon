@@ -598,8 +598,8 @@ func _spawn_module_visual(module: ShipModule) -> void:
 			scale_v = 0.55
 		ShipModule.ModuleType.SHIELD:
 			pos = Vector3(-0.75, 0.15, 0.1)
-			rel = "ships/shield_module/shield_module_cybernex_lod1.glb"
-			scale_v = 0.4
+			rel = "props/shield_bubble_emitter/shield_bubble_emitter_cybernex_lod1.glb"
+			scale_v = 0.45
 		ShipModule.ModuleType.EXTRACTOR:
 			pos = Vector3(0, -0.4, 0.15)
 			rel = "colony/extractor_unit/extractor_unit_cybernex_lod1.glb"
@@ -617,6 +617,9 @@ func _spawn_module_visual(module: ShipModule) -> void:
 				path = _asset_path(rel)
 			elif module.module_type == ShipModule.ModuleType.ENGINE:
 				rel = "ships/ship_module_engine/ship_module_engine_%s_lod1.glb" % ("grot" if faction == "gROT" else "cybernex")
+				path = _asset_path(rel)
+			elif module.module_type == ShipModule.ModuleType.SHIELD:
+				rel = "ships/shield_module/shield_module_%s_lod1.glb" % ("grot" if faction == "gROT" else "cybernex")
 				path = _asset_path(rel)
 		if path != "" and FileAccess.file_exists(path):
 			var doc := GLTFDocument.new()

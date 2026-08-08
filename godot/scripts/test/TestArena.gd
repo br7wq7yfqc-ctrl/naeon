@@ -39,6 +39,7 @@ func _ready() -> void:
 	_spawn_dummies()
 	_spawn_props()
 	_spawn_cover()
+	_soft_neon_ambient()
 	_spawn_turrets()
 	_spawn_claim_nodes()
 	if kills_label:
@@ -536,3 +537,28 @@ func _ensure_clash_director() -> void:
 	d.name = "ClashMatchDirector"
 	add_child(d)
 	print("[TestArena] ClashMatchDirector")
+
+
+func _soft_neon_ambient() -> void:
+	## Cheap neon pillars (no particles) for Arena readability under budget.
+	var spots := [Vector3(0,0,-14), Vector3(12,0,2), Vector3(-12,0,2)]
+	var root_n := Node3D.new()
+	root_n.name = "NeonAmbient"
+	add_child(root_n)
+	for i in spots.size():
+		var mi := MeshInstance3D.new()
+		var bm := BoxMesh.new()
+		bm.size = Vector3(0.15, 3.2, 0.15)
+		mi.mesh = bm
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		var col := Color(0.2, 0.85, 1.0) if i % 2 == 0 else Color(0.95, 0.2, 0.42)
+		mat.albedo_color = col
+		mat.emission_enabled = true
+		mat.emission = col
+		mat.emission_energy_multiplier = 1.6
+		mi.material_override = mat
+		mi.position = spots[i] + Vector3(0, 1.6, 0)
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		root_n.add_child(mi)
+	print("[TestArena] soft neon ambient")

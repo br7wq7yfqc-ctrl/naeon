@@ -16,6 +16,7 @@ var _pulse_t: float = 0.0
 
 
 func setup_from_faction(fac: String) -> void:
+	call_deferred("_try_actuator_glb")
 	faction_style = FactionStyle.GROT if fac == "gROT" else FactionStyle.CYBERNEX
 	_ensure_proxy_if_empty()
 	_apply_faction_materials()
@@ -156,3 +157,28 @@ func _process(delta: float) -> void:
 			m.emission = col
 			m.emission_energy_multiplier = pulse
 			n.rotate_y(delta * (1.2 + morph))
+
+
+
+func _try_actuator_glb() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	var AP = load("res://scripts/assets/AssetPaths.gd")
+	if AP == null or not AP.has_method("resolve"):
+		return
+	var fac := "grot" if faction_style == FactionStyle.GROT else "cybernex"
+	var rel := "ships/living_config_actuator/living_config_actuator_%s_lod2.glb" % fac
+	var path: String = str(AP.resolve(rel))
+	if path == "" or not FileAccess.file_exists(path):
+		return
+	var doc := GLTFDocument.new()
+	var st2 := GLTFState.new()
+	if doc.append_from_file(path, st2) != OK:
+		return
+	var scn := doc.generate_scene(st2)
+	if scn == null:
+		return
+	add_child(scn)
+	scn.position = Vector3(0, 0.2, 0.5)
+	scn.scale = Vector3.ONE * 0.35
+	_parts.append({"node": scn, "idle": scn.transform, "combat": scn.transform.translated(Vector3(0, 0.1, 0.15)), "siege": scn.transform.translated(Vector3(0, 0.2, 0.35)), "scan": scn.transform})

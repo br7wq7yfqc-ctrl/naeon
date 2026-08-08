@@ -4,14 +4,13 @@
 
 | Item | Status |
 |------|--------|
-| Particle shader opt (quad+additive+budget) | **done** |
-| Thruster amount thrash removed | **done** |
-| Prior living neon / contest / fauna | done |
-| Tripo wave (~460 spent) | complete |
+| Wire wave: thruster/wing/shield/gear/ramp/turret/totem/vents | **done** |
+| Soft combat neon (projectile burst) | **done** |
+| Particle opt | done |
 
 ## Next
-1. Wire remaining wave assets (wing/thruster/shield emitter)
-2. Soft combat neon pass under budget
+1. Scout nose cone re-gen if needed (timed out)
+2. Arena soft neon ambient under budget
 3. Batch DMG **only** on owner request
 
-Updated: 2026-08-08T16:06:26.845984+00:00
+Updated: 2026-08-08T16:54:14.986058+00:00

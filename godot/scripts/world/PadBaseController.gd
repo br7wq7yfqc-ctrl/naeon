@@ -321,6 +321,7 @@ func _ensure_claim_beacon() -> void:
 	var rels := [
 		"props/ownership_claim_pylon/ownership_claim_pylon_%s_lod1.glb" % fac,
 		"props/ownership_claim_pylon/ownership_claim_pylon_%s_lod2.glb" % fac,
+		"props/faction_claim_totem/faction_claim_totem_%s_lod1.glb" % fac,
 		"props/claim_beacon/claim_beacon_%s_lod1.glb" % fac,
 	]
 	var AP = load("res://scripts/assets/AssetPaths.gd")

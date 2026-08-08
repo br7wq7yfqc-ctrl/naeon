@@ -327,8 +327,38 @@ static func _seat_glow(root: Node3D, seat_pos: Vector3, neon: Color) -> void:
 
 
 static func _attach_ambient(root: Node3D, kind: String, neon: Color) -> void:
+	_try_neon_props(root, kind)
 	var amb := Node3D.new()
 	amb.set_script(load("res://scripts/world/InteriorAmbient.gd"))
 	root.add_child(amb)
 	if amb.has_method("setup"):
 		amb.setup(kind, neon)
+
+
+
+static func _try_neon_props(root: Node3D, kind: String) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	var AP = load("res://scripts/assets/AssetPaths.gd")
+	if AP == null or not AP.has_method("resolve"):
+		return
+	var fac := "cybernex"
+	var vents := [
+		["props/neon_vent_module/neon_vent_module_%s_lod2.glb", Vector3(2.1, 1.4, 1.0), 0.7],
+		["props/neon_holo_emitter/neon_holo_emitter_%s_lod2.glb", Vector3(-2.0, 0.9, 3.0), 0.55],
+	]
+	for e in vents:
+		var rel: String = str(e[0]) % fac
+		var path: String = str(AP.resolve(rel))
+		if path == "" or not FileAccess.file_exists(path):
+			continue
+		var doc := GLTFDocument.new()
+		var st2 := GLTFState.new()
+		if doc.append_from_file(path, st2) != OK:
+			continue
+		var scn := doc.generate_scene(st2)
+		if scn == null:
+			continue
+		root.add_child(scn)
+		scn.position = e[1]
+		scn.scale = Vector3.ONE * float(e[2])
