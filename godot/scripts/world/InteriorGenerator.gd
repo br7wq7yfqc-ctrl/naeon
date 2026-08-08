@@ -213,7 +213,7 @@ static func _interior_point_lights(root: Node3D, neon: Color) -> void:
 
 
 
-static static func _ensure_seat_markers(root: Node3D) -> void:
+static func _ensure_seat_markers(root: Node3D) -> void:
 	if root == null:
 		return
 	if root.get_node_or_null("SeatVolume") == null:

@@ -445,6 +445,7 @@ func _do_land() -> void:
 		# Face roughly along pad
 		velocity = Vector3.ZERO
 		is_landed = true
+		_land_lock_t = 0.85
 	velocity = Vector3.ZERO
 	if _thruster_fx and is_instance_valid(_thruster_fx):
 		_thruster_fx.emitting = false

@@ -37,10 +37,10 @@ func enable(on: bool = true, with_ghost: bool = false) -> void:
 			_ghost.queue_free()
 			_ghost = null
 		print("[SoftNetSession] disabled (perf)")
-	set_process(false)
+		set_process(false)
 	else:
 		print("[SoftNetSession] enabled ghost=", ghost_enabled)
-	set_process(enabled)
+		set_process(true)
 		if ghost_enabled and _player:
 			_ghost_pending = true
 			call_deferred("_ensure_ghost")

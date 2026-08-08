@@ -975,7 +975,7 @@ func _park_far_planets() -> void:
 		if pl == null or not is_instance_valid(pl):
 			continue
 		var d: float = obs.global_position.distance_to(pl.global_position)
-		var near := pl == best or d < 4500.0
+		var near: bool = (pl == best) or (d < 4500.0)
 		# Far: stop process entirely (LOD visual freezes on last impostor — OK at distance)
 		if pl.has_method("set_process"):
 			pl.set_process(near)
