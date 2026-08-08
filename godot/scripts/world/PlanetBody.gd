@@ -168,6 +168,7 @@ func _build_shell() -> void:
 	call_deferred("_ensure_surface_water")
 	call_deferred("_ensure_cave_mouths")
 	call_deferred("_ensure_cave_interior")
+	call_deferred("_ensure_landscape_features")
 
 	_terrain_edit = Node3D.new()
 	_terrain_edit.set_script(_TerrainEdit)
@@ -189,6 +190,9 @@ func set_observer(node: Node3D) -> void:
 	var ci = get_node_or_null("CaveInterior")
 	if ci and ci.has_method("set_observer"):
 		ci.set_observer(node)
+	var lf = get_node_or_null("LandscapeFeatures")
+	if lf and lf.has_method("set_observer"):
+		lf.set_observer(node)
 	var _fl := get_node_or_null("SurfaceFlora")
 	if _fl and _fl.has_method("set_observer"):
 		_fl.set_observer(node)
