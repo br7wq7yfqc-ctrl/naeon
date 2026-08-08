@@ -1,21 +1,18 @@
 # NAEON Dev Plan — Aug 2026
 
-## Phase 0 sequential · loop first
+## Phase 0 sequential
 
-### P1 Loop blockers
-| Item | Status |
-|------|--------|
-| Land climb / launch lock | done |
-| Exit embed multi-snap | done |
-| Walker face / grace | done |
-| Safe free walker (no SIGSEGV) | done |
-| EVA ship soft coast for reboard | done |
+| Track | Status |
+|-------|--------|
+| P1 facing markers + wish re-ortho + selftest | **done** |
+| P2 water shore score + no-dance wave | **done** |
+| P2 flora density/shore + FPS alt cut | **done** |
+| P3 seat glow/volume/proximity | **done** |
+| P4 pad extract neon VFX | **done** |
 
-### P1 residual
-- Real-client playtest of facing/WASD
-- Interior seat residual
+## Next
+1. Real-client confirm face arrow vs WASD
+2. Arena FPS profile pass
+3. Batch DMG only after 10‑min loop
 
-### P2+
-Water R2 · flora · FPS · extract VFX · batch DMG after loop
-
-Updated: 2026-08-08T17:17:42.114805+00:00
+Updated: 2026-08-08T17:27:07.998005+00:00

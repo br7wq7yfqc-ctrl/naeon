@@ -497,3 +497,49 @@ func _restore_fov(delta: float) -> void:
 		cam = actor.get_node("CamPivot/Camera3D") as Camera3D
 	if cam and _base_fov > 1.0:
 		cam.fov = lerpf(cam.fov, _base_fov, clampf(delta * 2.5, 0.0, 1.0))
+
+
+
+func _harvest_vfx() -> void:
+	## Soft neon extract burst + rising motes (budget via NeonParticles pool).
+	if DisplayServer.get_name() == "headless":
+		return
+	var host: Node3D = get_parent() as Node3D
+	if host == null:
+		host = self
+	var pos: Vector3 = host.global_position + Vector3(0, 1.2, 0)
+	if has_meta("pad_up"):
+		pos = host.global_position + (get_meta("pad_up") as Vector3) * 1.4
+	var fac := ownership.faction_name() if ownership else "Neutral"
+	var col := Color(0.3, 0.9, 1.0, 0.9)
+	if fac == "gROT":
+		col = Color(0.95, 0.2, 0.45, 0.9)
+	elif fac == "Contested":
+		col = Color(1.0, 0.75, 0.2, 0.9)
+	var NP = load("res://scripts/fx/NeonParticles.gd")
+	if NP:
+		NP.burst(pos, col, get_tree(), 10, 3.5)
+		if NP.has_method("claim_pulse"):
+			NP.claim_radial(pos, col, get_tree())
+	# Soft pillar flash
+	var flash := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.15
+	cyl.bottom_radius = 0.35
+	cyl.height = 2.4
+	flash.mesh = cyl
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color = Color(col.r, col.g, col.b, 0.55)
+	mat.emission_enabled = true
+	mat.emission = col
+	mat.emission_energy_multiplier = 3.0
+	flash.material_override = mat
+	flash.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	host.add_child(flash)
+	flash.global_position = pos
+	var tw := host.create_tween()
+	tw.tween_property(mat, "albedo_color:a", 0.0, 0.55)
+	tw.parallel().tween_property(mat, "emission_energy_multiplier", 0.0, 0.55)
+	tw.tween_callback(flash.queue_free)

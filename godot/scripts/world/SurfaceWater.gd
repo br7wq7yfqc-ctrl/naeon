@@ -6,8 +6,8 @@ const _Math = preload("res://scripts/world/SurfaceChunkMath.gd")
 const _Relief = preload("res://scripts/world/PlanetRelief.gd")
 
 const CELL_M := 48.0
-const STREAM_HZ := 0.45
-const POOL_N := 8
+const STREAM_HZ := 0.55
+const POOL_N := 10
 
 var _planet: Node3D
 var _radius: float = 1200.0
@@ -128,25 +128,36 @@ func _place_around(center: Vector2i) -> void:
 	if sea < -1.2:
 		_hide_all()
 		return
-	var cells: Array = _Math.ring_cells(center, 1)
+	var cells: Array = _Math.ring_cells(center, 2)
 	var used := 0
+	# Score wet cells: shore band preferred for readability
+	var scored: Array = []
 	for c in cells:
-		if used >= _planes.size():
-			break
 		var cell: Vector2i = c
 		var wx: float = float(cell.x) * CELL_M
 		var wz: float = float(cell.y) * CELL_M
 		var h: float = float(_Relief.height_at(wx, wz, _seed, _profile))
-		var wet: bool = h <= sea + 0.15 or bool(_Relief.is_river(wx, wz, _seed, _profile))
+		var river: bool = bool(_Relief.is_river(wx, wz, _seed, _profile))
+		var wet: bool = h <= sea + 0.25 or river
 		if not wet:
 			continue
+		var shore: float = 1.0 - clampf(absf(h - sea) / 1.2, 0.0, 1.0)
+		scored.append({"cell": cell, "wx": wx, "wz": wz, "h": h, "river": river, "score": shore + (0.3 if river else 0.0)})
+	scored.sort_custom(func(a, b): return float(a["score"]) > float(b["score"]))
+	for item in scored:
+		if used >= _planes.size():
+			break
+		var cell: Vector2i = item["cell"]
+		var wx: float = float(item["wx"])
+		var wz: float = float(item["wz"])
+		var h: float = float(item["h"])
 		var xform: Transform3D = _Math.cell_transform(_planet.global_position, _radius, cell, CELL_M, sea + 0.08)
 		var mi: MeshInstance3D = _planes[used]
 		mi.global_transform = xform
 		mi.visible = true
 		var mat := mi.material_override as StandardMaterial3D
 		if mat:
-			if bool(_Relief.is_river(wx, wz, _seed, _profile)) and h > sea:
+			if bool(item.get("river", false)) and h > sea:
 				mat.albedo_color = Color(0.12, 0.38, 0.48, 0.45)
 				mi.scale = Vector3(0.45, 1.0, 0.45)
 			else:
@@ -165,14 +176,26 @@ func _place_around(center: Vector2i) -> void:
 
 
 func _wave(_delta: float) -> void:
+	## Emission/alpha only — never mutate position after global_transform (terrain "dance").
 	var t: float = Time.get_ticks_msec() * 0.001
 	for mi in _planes:
 		if mi == null or not is_instance_valid(mi) or not mi.visible:
 			continue
 		var mat := mi.material_override as StandardMaterial3D
 		if mat:
-			mat.emission_energy_multiplier = 0.45 + 0.25 * sin(t * 1.4 + float(mi.get_instance_id() % 97) * 0.1)
+			mat.emission_energy_multiplier = 0.4 + 0.3 * sin(t * 1.1 + float(mi.get_instance_id() % 97) * 0.1)
 			var c := mat.albedo_color
-			c.a = 0.48 + 0.1 * sin(t * 0.9)
+			c.a = 0.5 + 0.08 * sin(t * 0.85)
 			mat.albedo_color = c
-		mi.position.y = 0.02 * sin(t * 1.2 + float(mi.get_instance_id() % 7))
+	for foam in _foams:
+		if foam == null or not is_instance_valid(foam) or not foam.visible:
+			continue
+		var fm := foam.material_override as StandardMaterial3D
+		if fm:
+			fm.emission_energy_multiplier = 0.9 + 0.6 * sin(t * 2.2 + float(foam.get_instance_id() % 13))
+			var fc := fm.albedo_color
+			fc.a = 0.28 + 0.12 * sin(t * 1.7)
+			fm.albedo_color = fc
+		# Soft scale pulse only (local scale — OK)
+		var s := 1.0 + 0.04 * sin(t * 1.5)
+		foam.scale = Vector3(s, 1.0, s)

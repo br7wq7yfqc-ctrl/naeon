@@ -168,7 +168,7 @@ func _hatch_fx(entering: bool) -> void:
 
 
 
-func is_near_seat(player: Node3D, max_dist: float = 3.8) -> bool:
+func is_near_seat(player: Node3D, max_dist: float = 5.5) -> bool:
 	if player == null or not is_instance_valid(player) or not _inside or _active == null:
 		return false
 	if not is_instance_valid(_active):
@@ -207,6 +207,15 @@ func exit_for_pilot() -> void:
 func _process(delta: float) -> void:
 	if not _inside or _player == null or not is_instance_valid(_player) or _active == null:
 		return
+	# Pulse seat label when close
+	var near_seat := is_near_seat(_player, 5.5)
+	var lab = _active.get_node_or_null("SeatLabel")
+	if lab is Label3D:
+		(lab as Label3D).modulate.a = 1.0 if near_seat else 0.55
+		if near_seat:
+			(lab as Label3D).font_size = 56
+		else:
+			(lab as Label3D).font_size = 42
 	# Soft exit-volume proximity (walk into hatch area)
 	var exit_v = _active.get_node_or_null("ExitVolume")
 	if exit_v is Node3D:

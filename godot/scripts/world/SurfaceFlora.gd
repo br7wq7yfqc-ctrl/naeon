@@ -5,8 +5,8 @@ class_name SurfaceFlora
 const _Math = preload("res://scripts/world/SurfaceChunkMath.gd")
 const _Relief = preload("res://scripts/world/PlanetRelief.gd")
 const CELL_M := 40.0
-const COUNT_BASE := 12
-const STREAM_HZ := 0.35
+const COUNT_BASE := 18
+const STREAM_HZ := 0.5
 
 var _planet: Node3D
 var _radius: float = 1200.0
@@ -53,7 +53,7 @@ func _process(delta: float) -> void:
 		return
 	var dist := _observer.global_position.distance_to(_planet.global_position)
 	var alt := dist - _radius
-	if alt > 120.0 or alt < -8.0:
+	if alt > 100.0 or alt < -8.0:
 		_set_vis(false)
 		return
 	_set_vis(true)
@@ -134,22 +134,32 @@ func _place_cell(cell: Vector2i) -> void:
 	var center: Vector3 = up
 	var rng := RandomNumberGenerator.new()
 	rng.seed = _seed * 10007 + cell.x * 131 + cell.y * 9176
+	var sea_l: float = float(_relief_profile.get("sea_level", -0.35))
+	var mtn: float = float(_relief_profile.get("mountain_amp", 6.0))
 	for p in _props:
 		if p == null or not is_instance_valid(p):
 			continue
 		var ang := rng.randf() * TAU
-		var r := 3.0 + rng.randf() * 20.0
+		var r := 2.0 + rng.randf() * 24.0
 		var offset := (east * cos(ang) + north * sin(ang)) * r
 		var dir := (center * _radius + offset).normalized()
 		var wx := float(cell.x) * CELL_M + offset.dot(east)
 		var wz := float(cell.y) * CELL_M + offset.dot(north)
 		var rh: float = float(_Relief.height_at(wx, wz, _seed, _relief_profile))
-		var sea_l: float = float(_relief_profile.get("sea_level", -0.35))
-		if rh < sea_l + 0.1:
+		# No flora in deep water or high alpine peaks
+		if rh < sea_l + 0.12 or rh > mtn * 0.85:
+			(p as Node3D).visible = false
+			continue
+		# Prefer mid slopes / shore band density
+		var shore_band := absf(rh - sea_l) < 1.5
+		if not shore_band and rng.randf() > 0.55:
 			(p as Node3D).visible = false
 			continue
 		(p as Node3D).visible = true
-		var pos: Vector3 = _planet.global_position + dir * (_radius + 0.2 + maxf(rh, 0.0) * 0.05)
+		var pos: Vector3 = _planet.global_position + dir * (_radius + 0.25 + maxf(rh, 0.0) * 0.05)
 		var pup := dir
 		var tt: Array = _Math.stable_tangent(pup)
-		(p as Node3D).global_transform = Transform3D(Basis(tt[0], pup, -tt[1]), pos)
+		var sc := 0.85 + rng.randf() * 0.5
+		if shore_band:
+			sc *= 1.15
+		(p as Node3D).global_transform = Transform3D(Basis(tt[0], pup, -tt[1]).scaled(Vector3.ONE * sc), pos)

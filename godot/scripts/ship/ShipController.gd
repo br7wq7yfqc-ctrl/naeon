@@ -67,6 +67,7 @@ var _hull_ambient: Node3D = null
 func _ready() -> void:
 	add_to_group("ship")
 	_ensure_living_fx()
+	_ensure_nose_marker()
 	_ensure_shield_bubble()
 	_ensure_scan_ring()
 	_ensure_soft_systems()
@@ -1349,3 +1350,26 @@ func _process_scan_ring(delta: float) -> void:
 		var a := 0.25 + 0.2 * sin(Time.get_ticks_msec() * 0.006)
 		mat.albedo_color.a = a
 		mat.emission_energy_multiplier = 1.4 + a * 2.0
+
+
+
+func _ensure_nose_marker() -> void:
+	if get_node_or_null("NoseMarker"):
+		return
+	if DisplayServer.get_name() == "headless":
+		return
+	var n := MeshInstance3D.new()
+	n.name = "NoseMarker"
+	var bm := BoxMesh.new()
+	bm.size = Vector3(0.12, 0.12, 1.6)
+	n.mesh = bm
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(0.15, 0.95, 1.0)
+	mat.emission_enabled = true
+	mat.emission = Color(0.15, 0.95, 1.0)
+	mat.emission_energy_multiplier = 2.5
+	n.material_override = mat
+	n.position = Vector3(0, 0.4, -2.2)  # local −Z = thrust nose
+	n.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(n)

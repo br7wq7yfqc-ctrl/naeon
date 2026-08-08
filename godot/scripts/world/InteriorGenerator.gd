@@ -233,6 +233,8 @@ static func build_from_profile(profile_id: String, faction: String = "Cybernex")
 	root.add_child(seat)
 	var seat_area := Area3D.new()
 	seat_area.name = "SeatVolume"
+	seat_area.monitoring = false
+	seat_area.monitorable = false
 	var scs := CollisionShape3D.new()
 	var sbox := BoxShape3D.new()
 	sbox.size = Vector3(1.6, 2.0, 1.6)
@@ -315,16 +317,54 @@ static func _hatch_arch(root: Node3D, hatch_pos: Vector3, neon: Color) -> void:
 
 static func _seat_glow(root: Node3D, seat_pos: Vector3, neon: Color) -> void:
 	var seat_v := root.get_node_or_null("SeatVolume")
-	_box_mesh(root, seat_pos + Vector3(0, -0.05, 0), Vector3(1.4, 0.08, 1.4), neon.darkened(0.2), false, true)
+	# Pillar + ring + label — high readability for F pilot
+	var pillar := MeshInstance3D.new()
+	pillar.name = "SeatPillar"
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.08
+	cyl.bottom_radius = 0.12
+	cyl.height = 1.8
+	pillar.mesh = cyl
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = neon
+	mat.emission_enabled = true
+	mat.emission = neon
+	mat.emission_energy_multiplier = 2.2
+	pillar.material_override = mat
+	pillar.position = seat_pos + Vector3(0, 0.9, 0)
+	pillar.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(pillar)
+	var ring := MeshInstance3D.new()
+	ring.name = "SeatRing"
+	var tm := TorusMesh.new()
+	tm.inner_radius = 0.55
+	tm.outer_radius = 0.72
+	tm.rings = 6
+	tm.ring_segments = 16
+	ring.mesh = tm
+	var rm := StandardMaterial3D.new()
+	rm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	rm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	rm.albedo_color = Color(neon.r, neon.g, neon.b, 0.55)
+	rm.emission_enabled = true
+	rm.emission = neon
+	rm.emission_energy_multiplier = 1.8
+	ring.material_override = rm
+	ring.position = seat_pos + Vector3(0, 0.05, 0)
+	ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(ring)
 	var lab := Label3D.new()
+	lab.name = "SeatLabel"
 	lab.text = "PILOT SEAT  [F]"
-	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lab.font_size = 28
+	lab.font_size = 48
 	lab.modulate = neon
-	lab.position = seat_pos + Vector3(0, 1.8, 0)
+	lab.position = seat_pos + Vector3(0, 2.1, 0)
+	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lab.no_depth_test = true
 	root.add_child(lab)
-
-
+	if seat_v is Node3D:
+		pass
 
 static func _attach_ambient(root: Node3D, kind: String, neon: Color) -> void:
 	_try_neon_props(root, kind)

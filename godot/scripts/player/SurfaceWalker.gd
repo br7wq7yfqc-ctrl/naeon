@@ -29,6 +29,7 @@ var _arm_r: MeshInstance3D
 var _limb_rig: Node3D
 var _form_skel: Skeleton3D = null
 var _spawn_grace_t: float = 0.0
+var _face_arrow: MeshInstance3D = null
 var _move_amount: float = 0.0
 var eva_mode: bool = false
 var thruster_accel: float = 14.0
@@ -102,6 +103,7 @@ func _ready() -> void:
 	_ensure_rig()
 	_ensure_limb_rig()
 	_load_form_visual()
+	_ensure_face_arrow()
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	# Snap to floor next frame
 	if not eva_mode:
@@ -392,6 +394,10 @@ func _physics_process(delta: float) -> void:
 		right = forward.cross(_up).normalized()
 	else:
 		right = right.normalized()
+	# Re-orthogonalize right from forward×up so A/D never shear into sideways "strafe nose"
+	right = forward.cross(_up).normalized()
+	if right.length_squared() < 1e-6:
+		right = blook.x
 	# input.y: W=-1 S=+1  →  wish along forward when W
 	var wish := right * input.x + forward * (-input.y)
 	if eva_mode:
@@ -514,6 +520,7 @@ func _cycle_form() -> void:
 	if _body_mesh:
 		_body_mesh.visible = true
 	_load_form_visual()
+	_ensure_face_arrow()
 	print("[SurfaceWalker] form → ", form_name)
 
 func _try_ability(idx: int) -> void:
@@ -657,6 +664,7 @@ func toggle_faction() -> void:
 	if _body_mesh:
 		_body_mesh.visible = true
 	_load_form_visual()
+	_ensure_face_arrow()
 	_FormFX.play_at(self, faction, form_name)
 	if SoftSession:
 		SoftSession.remember_player(self)
@@ -1088,3 +1096,48 @@ func take_damage(amount: float) -> void:
 		if has_method("snap_to_surface"):
 			call_deferred("snap_to_surface")
 		print("[SurfaceWalker] soft down → recover")
+
+
+
+func _ensure_face_arrow() -> void:
+	## Thin cyan nose marker along local −Z so facing bugs are obvious in-client.
+	if _face_arrow and is_instance_valid(_face_arrow):
+		return
+	if DisplayServer.get_name() == "headless":
+		return
+	_face_arrow = MeshInstance3D.new()
+	_face_arrow.name = "FaceArrow"
+	var bm := BoxMesh.new()
+	bm.size = Vector3(0.08, 0.08, 0.9)
+	_face_arrow.mesh = bm
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(0.2, 1.0, 0.85)
+	mat.emission_enabled = true
+	mat.emission = Color(0.2, 1.0, 0.85)
+	mat.emission_energy_multiplier = 2.0
+	_face_arrow.material_override = mat
+	_face_arrow.position = Vector3(0, 1.1, -0.55)  # local −Z = face
+	_face_arrow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(_face_arrow)
+
+
+static func compute_wish(input: Vector2, up: Vector3, yaw: float) -> Vector3:
+	## Pure helper: W(input.y=-1) → tangent forward from yaw. det(+1) basis.
+	var u := up.normalized()
+	var f0 := Vector3(0, 0, -1)
+	if absf(u.dot(f0)) > 0.95:
+		f0 = Vector3(1, 0, 0)
+	f0 = (f0 - u * f0.dot(u)).normalized()
+	var right0 := f0.cross(u).normalized()
+	var forward0 := u.cross(right0).normalized()
+	var b0 := Basis(right0, u, -forward0)
+	var b := Basis(u, yaw) * b0
+	var forward := (-b.z)
+	forward = (forward - u * forward.dot(u))
+	if forward.length_squared() < 1e-8:
+		return Vector3.ZERO
+	forward = forward.normalized()
+	var right := b.x
+	right = (right - u * right.dot(u)).normalized()
+	return (right * input.x + forward * (-input.y)).normalized() if input.length_squared() > 0 else Vector3.ZERO
