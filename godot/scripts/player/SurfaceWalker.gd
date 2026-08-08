@@ -286,6 +286,7 @@ func _input(event: InputEvent) -> void:
 		elif event.keycode == KEY_Q:
 			_try_ability(0)
 		elif event.keycode == KEY_E:
+			if eva_mode:
 				mag_boot = not mag_boot
 				print("[SurfaceWalker] mag-boot ", mag_boot)
 			else:
