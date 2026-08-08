@@ -17,6 +17,8 @@ var total_extracted: float = 0.0
 var _label: Label3D
 var _status: String = "unclaimed"
 var _contest_ring: Node3D = null
+var _contest_fov_t: float = 0.0
+var _base_fov: float = 70.0
 var _claim_cd: float = 0.0
 var _harvest_fx_cd: float = 0.0
 var _harvest_accum_fx: float = 0.0
@@ -48,6 +50,7 @@ func _ensure_label() -> void:
 	_refresh_label()
 
 func _process(delta: float) -> void:
+	_tick_contest_fov(delta)
 	_claim_cd = maxf(0.0, _claim_cd - delta)
 	if ownership and ownership.transition_progress < 1.0:
 		ownership.advance_transition(delta, 5.0)
@@ -443,3 +446,49 @@ func _claim_pylon_pulse(strong: bool = false) -> void:
 	var tw := create_tween()
 	tw.tween_property(light, "light_energy", 0.0, 0.55 if strong else 0.35)
 	tw.tween_callback(light.queue_free)
+
+
+func _tick_contest_fov(delta: float) -> void:
+	## Soft FOV widen while player stands in contested pad — camera readability only.
+	if _status != "contested":
+		_restore_fov(delta)
+		return
+	var actor := _find_actor()
+	if actor == null or not is_instance_valid(actor):
+		_restore_fov(delta)
+		return
+	if actor.global_position.distance_to(global_position) > claim_radius:
+		_restore_fov(delta)
+		return
+	var cam: Camera3D = null
+	if actor.has_node("CameraPivot/Camera3D"):
+		cam = actor.get_node("CameraPivot/Camera3D") as Camera3D
+	elif actor.has_node("CamPivot/Camera3D"):
+		cam = actor.get_node("CamPivot/Camera3D") as Camera3D
+	else:
+		for c in actor.find_children("*", "Camera3D", true, false):
+			cam = c as Camera3D
+			break
+	if cam == null:
+		return
+	if _contest_fov_t <= 0.0:
+		_base_fov = cam.fov
+	_contest_fov_t = 0.5
+	var target := minf(_base_fov + 6.0, 85.0)
+	cam.fov = lerpf(cam.fov, target, clampf(delta * 3.0, 0.0, 1.0))
+
+
+func _restore_fov(delta: float) -> void:
+	if _contest_fov_t <= 0.0:
+		return
+	_contest_fov_t = maxf(0.0, _contest_fov_t - delta)
+	var actor := _find_actor()
+	if actor == null:
+		return
+	var cam: Camera3D = null
+	if actor.has_node("CameraPivot/Camera3D"):
+		cam = actor.get_node("CameraPivot/Camera3D") as Camera3D
+	elif actor.has_node("CamPivot/Camera3D"):
+		cam = actor.get_node("CamPivot/Camera3D") as Camera3D
+	if cam and _base_fov > 1.0:
+		cam.fov = lerpf(cam.fov, _base_fov, clampf(delta * 2.5, 0.0, 1.0))
