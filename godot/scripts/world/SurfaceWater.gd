@@ -27,6 +27,8 @@ func setup(planet: Node3D, radius: float, planet_id: String, seed_i: int = 3) ->
 	_planet_id = planet_id
 	_seed = seed_i
 	_profile = _Relief.profile_for_planet(planet_id)
+	if _planes.is_empty():
+		_spawn_pool()
 
 
 func set_observer(n: Node3D) -> void:
@@ -36,7 +38,8 @@ func set_observer(n: Node3D) -> void:
 
 func _ready() -> void:
 	set_process(true)
-	_spawn_pool()
+	if _planet != null and _planes.is_empty():
+		_spawn_pool()
 
 
 func _spawn_pool() -> void:

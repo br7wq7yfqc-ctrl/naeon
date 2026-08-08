@@ -25,6 +25,8 @@ func setup(planet: Node3D, radius: float, planet_id: String, seed_i: int = 5) ->
 	_planet_id = planet_id
 	_seed = seed_i
 	_profile = _Relief.profile_for_planet(planet_id)
+	if _mouths.is_empty():
+		_build_mouths()
 
 
 func set_observer(n: Node3D) -> void:
@@ -33,6 +35,11 @@ func set_observer(n: Node3D) -> void:
 
 func _ready() -> void:
 	set_process(true)
+	if _mouths.is_empty() and _planet != null:
+		_build_mouths()
+
+
+func _build_mouths() -> void:
 	for i in MAX_MOUTHS:
 		var root := Node3D.new()
 		var mi := MeshInstance3D.new()
@@ -61,7 +68,7 @@ func _ready() -> void:
 		root.visible = false
 		add_child(root)
 		_mouths.append(root)
-	print("[CaveMouthField] prototype n=", MAX_MOUTHS)
+	print("[CaveMouthField] prototype n=", MAX_MOUTHS, " planet=", _planet_id)
 
 
 func _process(delta: float) -> void:
