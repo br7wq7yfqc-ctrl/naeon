@@ -11,59 +11,56 @@ func _ready() -> void:
 
 
 func _load_prop() -> void:
+	# Headless/dummy mesh storage cannot register glTF RIDs → ERROR Parameter m is null spam
+	if DisplayServer.get_name() == "headless":
+		_spawn_proxy()
+		return
 	var path: String = _AP.resolve(relative_path)
 	if not FileAccess.file_exists(path):
 		push_warning("[GlbProp] Missing: %s" % path)
+		_spawn_proxy()
 		return
 	var doc := GLTFDocument.new()
 	var state := GLTFState.new()
 	var err: Error = doc.append_from_file(path, state)
 	if err != OK:
 		push_warning("[GlbProp] GLTF fail %s: %s" % [path, err])
+		_spawn_proxy()
 		return
 	var root: Node = doc.generate_scene(state)
 	if root == null:
+		_spawn_proxy()
 		return
 	add_child(root)
 	root.scale = Vector3.ONE * scale_factor
-	_sanitize_meshes(root)
 	if add_static_collision:
-		_add_collision_from_meshes(root)
+		_add_simple_collision()
 	print("[GlbProp] Loaded ", path)
 
 
-func _sanitize_meshes(n: Node) -> void:
-	## Drop empty MeshInstance3D (prevents mesh_get_surface_count null RID spam).
-	if n is MeshInstance3D:
-		var mi: MeshInstance3D = n
-		if mi.mesh == null:
-			mi.queue_free()
-			return
-	for c in n.get_children():
-		_sanitize_meshes(c)
+func _spawn_proxy() -> void:
+	var mi := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = Vector3.ONE * 0.8
+	mi.mesh = box
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.3, 0.55, 0.7)
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+	mi.scale = Vector3.ONE * scale_factor
+	if add_static_collision:
+		_add_simple_collision()
 
 
-func _add_collision_from_meshes(n: Node) -> void:
-	# Headless dummy renderer has invalid mesh RIDs — skip trimesh/convex entirely
-	if DisplayServer.get_name() == "headless":
-		return
-	if n is MeshInstance3D:
-		var mi: MeshInstance3D = n
-		if mi.mesh != null:
-			var body := StaticBody3D.new()
-			var col := CollisionShape3D.new()
-			var sh: Shape3D = null
-			# Convex can still touch surface_count; wrap carefully
-			sh = mi.mesh.create_convex_shape(true, true)
-			if sh == null:
-				var box := BoxShape3D.new()
-				box.size = Vector3(1.2, 1.2, 1.2)
-				sh = box
-			col.shape = sh
-			body.add_child(col)
-			mi.add_child(body)
-	for c in n.get_children():
-		_add_collision_from_meshes(c)
+func _add_simple_collision() -> void:
+	var body := StaticBody3D.new()
+	var col := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3.ONE * 0.9 * scale_factor
+	col.shape = box
+	body.add_child(col)
+	add_child(body)
 
 
 func reload_for_faction(faction: String) -> void:

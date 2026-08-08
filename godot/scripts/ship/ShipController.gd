@@ -99,6 +99,10 @@ func flight_mode_name() -> String:
 	return "?"
 
 func try_load_hull() -> void:
+	# Headless dummy renderer cannot host glTF mesh RIDs (Parameter m is null flood)
+	if DisplayServer.get_name() == "headless":
+		print("[Ship] Hull GLB skipped (headless)")
+		return
 	var rel := "ships/ship_hull_scout/ship_hull_scout_cybernex_lod0.glb"
 	if faction == "gROT":
 		rel = "ships/ship_hull_scout/ship_hull_scout_grot_lod0.glb"

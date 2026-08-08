@@ -5,6 +5,8 @@ class_name MeshOrient
 static func face_neg_z(root: Node3D, for_ship: bool = true) -> void:
 	if root == null:
 		return
+	if DisplayServer.get_name() == "headless":
+		return
 	root.rotation = Vector3.ZERO
 	# Unrotated mesh AABB in root-local (children only)
 	var base := _aabb_children(root)
