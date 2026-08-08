@@ -89,7 +89,14 @@ func _spawn_dummies() -> void:
 			[Vector3(14, 0.1, 4), "TOP", "gROT"],
 			[Vector3(-12, 0.1, 3), "BOT", "gROT"],
 		]
-	for i in table.size():
+	var cap := table.size()
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	if gq:
+		match int(gq.tier):
+			0: cap = mini(cap, 4)
+			1: cap = mini(cap, 6)
+			_: cap = table.size()
+	for i in mini(table.size(), cap):
 		var entry = table[i]
 		var d: Node = dummy_scene.instantiate()
 		add_child(d)
