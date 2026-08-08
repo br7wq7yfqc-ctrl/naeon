@@ -55,6 +55,7 @@ func _process(delta: float) -> void:
 			_status = "owned"
 			_set_contested_ring(false)
 			swap_cluster_theme(ownership.faction_name())
+	_update_city_density()
 			_refresh_label()
 	if running and ownership and ownership.is_fully_owned():
 		_tick_harvest(delta)
@@ -164,6 +165,7 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 	_set_contested_ring(false)
 	_apply_faction_visual()
 	_refresh_label()
+	_update_city_density()
 	if SessionObjectives:
 		SessionObjectives.on_claim_or_obj()
 	if AudioDirector:
@@ -362,3 +364,26 @@ func _spawn_claim_fx(col: Color) -> void:
 		if is_instance_valid(p):
 			p.queue_free()
 	)
+
+
+func _update_city_density() -> void:
+	var parent := get_parent()
+	if parent == null:
+		return
+	var city = parent.get_node_or_null("CityNightLights")
+	if city == null:
+		# pads_root may be parent of this pad; go up
+		var pr = parent.get_parent()
+		if pr:
+			city = pr.get_node_or_null("CityNightLights")
+	if city == null or not city.has_method("set_density"):
+		return
+	var fac := ownership.faction_name() if ownership else "Neutral"
+	var dens := 0.45
+	if fac == "Contested":
+		dens = 0.7
+	elif fac != "Neutral" and fac != "":
+		dens = 1.0
+		if ownership and ownership.claim_strength > 0.0:
+			dens = 1.0 + clampf(ownership.claim_strength / 1.75, 0.0, 0.4)
+	city.call("set_density", dens, fac)

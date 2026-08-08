@@ -1,20 +1,77 @@
 extends Node3D
 class_name CityNightLights
-## Pad-cluster night city glow — emissive towers + omnis. Quality-scaled.
-
-const MAX_TOWERS := 12
+## Pad-cluster night city — density scales with claim. Quality-scaled.
 
 var _built: bool = false
 var _faction: String = "Cybernex"
 var _towers: Array = []
 var _lights: Array = []
+var _wins: Array = []
+var _radius: float = 28.0
+var _base_count: int = 10
+var _density: float = 1.0  # 0.4 unclaimed … 1.4 strong claim
 
 
 func build(faction: String = "Cybernex", radius: float = 28.0, count: int = 10) -> void:
 	_faction = faction
+	_radius = radius
+	_base_count = count
 	if _built:
-		_restyle()
+		set_density(_density, faction)
 		return
+	_rebuild(count)
+	_built = true
+	set_process(true)
+	print("[CityNightLights] towers=", _towers.size(), " faction=", faction)
+
+
+func set_density(d: float, faction: String = "") -> void:
+	_density = clampf(d, 0.25, 1.6)
+	if faction != "":
+		_faction = faction
+	if not _built:
+		return
+	# Show/hide towers by density; boost emission
+	var col := _faction_color()
+	var n_show: int = int(ceil(float(_towers.size()) * _density / 1.2))
+	for i in _towers.size():
+		var t: MeshInstance3D = _towers[i]
+		if t == null or not is_instance_valid(t):
+			continue
+		t.visible = i < n_show
+		var mat := t.material_override as StandardMaterial3D
+		if mat:
+			mat.emission = col
+			mat.emission_energy_multiplier = (1.4 + _density * 1.2) * (1.0 if i % 2 == 0 else 0.7)
+			mat.albedo_color = col * 0.35
+	for i in _wins.size():
+		var w: MeshInstance3D = _wins[i]
+		if w and is_instance_valid(w):
+			w.visible = i < n_show
+			var wm := w.material_override as StandardMaterial3D
+			if wm:
+				wm.emission_energy_multiplier = 1.8 + _density * 1.5
+	for L in _lights:
+		if L and is_instance_valid(L):
+			L.light_color = col
+			L.light_energy = 0.7 * _density
+			L.visible = _density > 0.55
+
+
+func _faction_color() -> Color:
+	if _faction == "gROT":
+		return Color(1.0, 0.25, 0.45)
+	if _faction == "Contested":
+		return Color(1.0, 0.65, 0.2)
+	return Color(0.35, 0.85, 1.0)
+
+
+func _rebuild(count: int) -> void:
+	for c in get_children():
+		c.queue_free()
+	_towers.clear()
+	_lights.clear()
+	_wins.clear()
 	var gq := get_node_or_null("/root/GraphicsQuality")
 	var n: int = count
 	if gq != null:
@@ -24,11 +81,11 @@ func build(faction: String = "Cybernex", radius: float = 28.0, count: int = 10) 
 			2, 3:
 				n = count
 	var rng := RandomNumberGenerator.new()
-	rng.seed = hash(faction) * 17 + 99
-	var col := Color(0.35, 0.85, 1.0) if faction != "gROT" else Color(1.0, 0.25, 0.45)
+	rng.seed = hash(_faction) * 17 + 99
+	var col := _faction_color()
 	for i in n:
 		var ang := float(i) / float(maxi(n, 1)) * TAU + rng.randf() * 0.3
-		var r := radius * rng.randf_range(0.35, 1.0)
+		var r := _radius * rng.randf_range(0.35, 1.0)
 		var pos := Vector3(cos(ang) * r, 0.0, sin(ang) * r)
 		var h := rng.randf_range(3.5, 11.0)
 		var tower := MeshInstance3D.new()
@@ -46,7 +103,6 @@ func build(faction: String = "Cybernex", radius: float = 28.0, count: int = 10) 
 		tower.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(tower)
 		_towers.append(tower)
-		# Window spark strip
 		var win := MeshInstance3D.new()
 		var wb := BoxMesh.new()
 		wb.size = Vector3(box.size.x * 1.05, h * 0.7, 0.08)
@@ -61,7 +117,7 @@ func build(faction: String = "Cybernex", radius: float = 28.0, count: int = 10) 
 		win.material_override = wm
 		win.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(win)
-		_towers.append(win)
+		_wins.append(win)
 		if i % 3 == 0 and not (gq != null and int(gq.tier) == 0):
 			var light := OmniLight3D.new()
 			light.light_color = col
@@ -71,24 +127,11 @@ func build(faction: String = "Cybernex", radius: float = 28.0, count: int = 10) 
 			light.shadow_enabled = false
 			add_child(light)
 			_lights.append(light)
-	_built = true
-	print("[CityNightLights] towers=", n, " faction=", faction)
-	set_process(true)
-
-
-func _restyle() -> void:
-	var col := Color(0.35, 0.85, 1.0) if _faction != "gROT" else Color(1.0, 0.25, 0.45)
-	for t in _towers:
-		if t is MeshInstance3D:
-			var mat := (t as MeshInstance3D).material_override as StandardMaterial3D
-			if mat and mat.emission.b > 0.5 or (mat and mat.emission.r < 0.5):
-				pass
 
 
 func _process(_delta: float) -> void:
-	# Pulse city energy slightly
 	var t := Time.get_ticks_msec() * 0.001
 	for i in _lights.size():
 		var L: OmniLight3D = _lights[i]
-		if L and is_instance_valid(L):
-			L.light_energy = 0.9 + 0.4 * sin(t * 1.7 + float(i))
+		if L and is_instance_valid(L) and L.visible:
+			L.light_energy = (0.7 + 0.35 * sin(t * 1.7 + float(i))) * _density
