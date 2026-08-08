@@ -168,7 +168,7 @@ func _hatch_fx(entering: bool) -> void:
 
 
 
-func is_near_seat(player: Node3D, max_dist: float = 5.5) -> bool:
+func is_near_seat(player: Node3D, max_dist: float = 7.5) -> bool:
 	if player == null or not is_instance_valid(player) or not _inside or _active == null:
 		return false
 	if not is_instance_valid(_active):
@@ -179,7 +179,7 @@ func is_near_seat(player: Node3D, max_dist: float = 5.5) -> bool:
 			if player.global_position.distance_to((n as Node3D).global_position) <= max_dist:
 				return true
 	# Cockpit room fallback (near origin of pocket)
-	if _kind == "ship" and player.global_position.distance_to(_active.global_position) < 8.0:
+	if _kind == "ship" and player.global_position.distance_to(_active.global_position) < 12.0:
 		return true
 	return false
 
@@ -208,14 +208,19 @@ func _process(delta: float) -> void:
 	if not _inside or _player == null or not is_instance_valid(_player) or _active == null:
 		return
 	# Pulse seat label when close
-	var near_seat := is_near_seat(_player, 5.5)
+	var near_seat := is_near_seat(_player, 7.5)
 	var lab = _active.get_node_or_null("SeatLabel")
 	if lab is Label3D:
 		(lab as Label3D).modulate.a = 1.0 if near_seat else 0.55
+		(lab as Label3D).text = "PILOT SEAT · F" if near_seat else "PILOT SEAT"
 		if near_seat:
 			(lab as Label3D).font_size = 56
 		else:
 			(lab as Label3D).font_size = 42
+	# Soft seat glow pulse
+	var seat_n = _active.get_node_or_null("SeatGlow")
+	if seat_n is MeshInstance3D:
+		(seat_n as MeshInstance3D).visible = near_seat
 	# Soft exit-volume proximity (walk into hatch area)
 	var exit_v = _active.get_node_or_null("ExitVolume")
 	if exit_v is Node3D:

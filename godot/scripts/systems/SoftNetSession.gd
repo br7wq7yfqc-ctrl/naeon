@@ -13,7 +13,7 @@ var _player: Node3D = null
 var _ghost: Node3D = null
 var _tick: float = 0.0
 var _ghost_pending: bool = false
-const SNAP_INTERVAL := 0.25  ## was 0.05 — 5× less GC pressure
+const SNAP_INTERVAL := 0.4   ## soft net rare; GC safe
 const HISTORY_MS := 1500
 
 func _ready() -> void:
@@ -37,8 +37,10 @@ func enable(on: bool = true, with_ghost: bool = false) -> void:
 			_ghost.queue_free()
 			_ghost = null
 		print("[SoftNetSession] disabled (perf)")
+	set_process(false)
 	else:
 		print("[SoftNetSession] enabled ghost=", ghost_enabled)
+	set_process(enabled)
 		if ghost_enabled and _player:
 			_ghost_pending = true
 			call_deferred("_ensure_ghost")
@@ -116,7 +118,7 @@ func _process(delta: float) -> void:
 	while _history.size() > 0 and now - int(_history[0]["t"]) > HISTORY_MS:
 		_history.pop_front()
 	# Cap hard (GC safety)
-	while _history.size() > 24:
+	while _history.size() > 12:
 		_history.pop_front()
 	snapshot_published.emit(snap)
 	if ghost_enabled:

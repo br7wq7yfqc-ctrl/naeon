@@ -180,7 +180,12 @@ func _refresh_label() -> void:
 		_label.text = "P%d · %s · %s%s" % [peer_id, form, faction, extra]
 		_label.position = Vector3(0, 2.4 if form == "Ship" else 2.05, 0)
 
+var _p_accum: float = 0.0
 func _process(delta: float) -> void:
+	_p_accum += delta
+	if _p_accum < 0.05:
+		return
+	_p_accum = 0.0
 	global_position = global_position.lerp(_target, clampf(delta * 12.0, 0.0, 1.0))
 	rotation.y = lerp_angle(rotation.y, _target_yaw, clampf(delta * 10.0, 0.0, 1.0))
 	if form == "Ship":

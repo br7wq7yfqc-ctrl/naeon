@@ -469,7 +469,7 @@ func _do_land() -> void:
 		if pl and pl.has_method("altitude_of") and pl.altitude_of(global_position) < surface_land_alt:
 			velocity = Vector3.ZERO
 			is_landed = true
-			_land_lock_t = 0.65
+			_land_lock_t = 0.85
 			_landed_pad = null
 			_pitch = 0.0
 			_roll = 0.0
@@ -493,8 +493,8 @@ func _do_launch() -> void:
 	_sync_landing_gear()
 	if flight_mode == FlightMode.HOVER:
 		_set_mode(FlightMode.SCM)
-	# Controlled lift: pad up + slight nose — never "random sky climb"
-	velocity = up_boost * 8.0 + nose * 3.0
+	# Controlled lift: modest pad up + nose — not a sky rocket
+	velocity = up_boost * 5.5 + nose * 2.5
 	launched.emit()
 	print("[Ship] Launched")
 
@@ -1063,8 +1063,19 @@ func _stick_to_pad() -> void:
 		_roll = lerpf(_roll, 0.0, 0.35)
 		_apply_attitude()
 		return
-	# Surface land: freeze (no upward integrate)
+	# Surface land: freeze + soft altitude hold vs nearest planet
 	velocity = Vector3.ZERO
+	if _open_space and _open_space.has_method("nearest_planet"):
+		var pl: Node3D = _open_space.nearest_planet(global_position)
+		if pl and is_instance_valid(pl) and "radius" in pl:
+			var up2: Vector3 = (global_position - pl.global_position).normalized()
+			var hold: Vector3 = pl.global_position + up2 * (float(pl.radius) + 3.5)
+			var dh: float = global_position.distance_to(hold)
+			if dh > 0.4:
+				global_position = global_position.lerp(hold, 0.2)
+			_pitch = lerpf(_pitch, 0.0, 0.3)
+			_roll = lerpf(_roll, 0.0, 0.3)
+			_apply_attitude()
 
 
 func _hull_local_size(n: Node3D) -> Vector3:

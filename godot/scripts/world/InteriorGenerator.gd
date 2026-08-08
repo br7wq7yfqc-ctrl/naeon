@@ -71,6 +71,7 @@ static func build_station(faction: String = "Cybernex") -> Node3D:
 	spawn.position = Vector3(0, 1.0, 2)
 	root.add_child(spawn)
 	_add_neon_strips(root, faction)
+	_ensure_seat_markers(root)
 	return root
 
 static func build_ship(faction: String = "Cybernex") -> Node3D:
@@ -212,7 +213,46 @@ static func _interior_point_lights(root: Node3D, neon: Color) -> void:
 
 
 
-static func build_from_profile(profile_id: String, faction: String = "Cybernex") -> Node3D:
+static static func _ensure_seat_markers(root: Node3D) -> void:
+	if root == null:
+		return
+	if root.get_node_or_null("SeatVolume") == null:
+		var sv := Marker3D.new()
+		sv.name = "SeatVolume"
+		sv.position = Vector3(0, 0.2, -1.2)
+		root.add_child(sv)
+	if root.get_node_or_null("SeatLabel") == null:
+		var lab := Label3D.new()
+		lab.name = "SeatLabel"
+		lab.text = "PILOT SEAT"
+		lab.font_size = 42
+		lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		lab.position = Vector3(0, 1.6, -1.2)
+		lab.modulate = Color(0.3, 0.9, 1.0)
+		root.add_child(lab)
+	if root.get_node_or_null("SeatGlow") == null:
+		var g := MeshInstance3D.new()
+		g.name = "SeatGlow"
+		var cm := CylinderMesh.new()
+		cm.top_radius = 0.35
+		cm.bottom_radius = 0.35
+		cm.height = 0.08
+		g.mesh = cm
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.albedo_color = Color(0.2, 0.85, 1.0, 0.7)
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.emission_enabled = true
+		mat.emission = Color(0.2, 0.85, 1.0)
+		mat.emission_energy_multiplier = 2.0
+		g.material_override = mat
+		g.position = Vector3(0, 0.05, -1.2)
+		g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		g.visible = false
+		root.add_child(g)
+
+
+func build_from_profile(profile_id: String, faction: String = "Cybernex") -> Node3D:
 	var cat = load("res://scripts/ship/ShipInteriorProfiles.gd")
 	var prof: Dictionary = cat.profile(profile_id)
 	var root := Node3D.new()

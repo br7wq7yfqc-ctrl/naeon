@@ -17,6 +17,7 @@ const _AP = preload("res://scripts/assets/AssetPaths.gd")
 @export var form_name: String = "Canine"
 
 var _yaw: float = 0.0
+var last_move_input: Vector2 = Vector2.ZERO
 var _pitch: float = 0.0
 var _provider: Node = null
 var _visual: Node3D
@@ -381,26 +382,19 @@ func _physics_process(delta: float) -> void:
 	if input.length_squared() > 1.0:
 		input = input.normalized()
 
-	# Movement relative to look: W = body forward (−Z), D = body right (+X)
+	# Facing: pure SurfaceFacing.compute_wish (selftest parity) — W = face (−Z @ yaw0)
+	last_move_input = input
+	var wish := _Facing.compute_wish(input, _up, _yaw)
 	var blook := _basis_from_up()
 	var forward := (-blook.z)
-	var right := blook.x
 	forward = (forward - _up * forward.dot(_up))
-	right = (right - _up * right.dot(_up))
 	if forward.length_squared() < 1e-6:
 		forward = Vector3(0, 0, -1)
 	else:
 		forward = forward.normalized()
-	if right.length_squared() < 1e-6:
-		right = forward.cross(_up).normalized()
-	else:
-		right = right.normalized()
-	# Re-orthogonalize right from forward×up so A/D never shear into sideways "strafe nose"
-	right = forward.cross(_up).normalized()
+	var right := forward.cross(_up).normalized()
 	if right.length_squared() < 1e-6:
 		right = blook.x
-	# input.y: W=-1 S=+1  →  wish along forward when W
-	var wish := right * input.x + forward * (-input.y)
 	if eva_mode:
 		_process_eva(delta, wish, forward, right)
 		return

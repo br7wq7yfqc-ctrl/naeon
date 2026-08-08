@@ -14,7 +14,7 @@ const PATCH_SIZE := 38.0
 const DEFAULT_RES := 10
 const LOAD_BUDGET := 2          ## meshes built per stream tick (scaled in _process)
 const STREAM_HZ := 0.28         ## ~3.5 Hz default; LOW slower
-const MESH_CACHE_MAX := 48
+const MESH_CACHE_MAX := 32
 
 var _planet: Node3D
 var _radius: float = 1200.0
@@ -120,7 +120,7 @@ func _process(delta: float) -> void:
 	if _planet == null or _observer == null or not is_instance_valid(_observer):
 		return
 	var alt: float = _observer.global_position.distance_to(_planet.global_position) - _radius
-	if alt > 160.0 or alt < -10.0:
+	if alt > 120.0 or alt < -10.0:
 		if _active:
 			_park_all()
 			_active = false

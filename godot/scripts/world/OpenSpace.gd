@@ -117,12 +117,20 @@ func _spawn_asteroid_belt() -> void:
 	world_root.add_child(belt)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7
-	for i in 14:
+	var belt_n := 14
+	var gqb := get_node_or_null("/root/GraphicsQuality")
+	if gqb:
+		match int(gqb.tier):
+			0: belt_n = 4
+			1: belt_n = 8
+			2: belt_n = 11
+			_: belt_n = 14
+	for i in belt_n:
 		var p: Node3D = Node3D.new()
 		p.set_script(prop_script)
 		p.set("relative_path", "environments/asteroid_ore/asteroid_ore_cybernex_lod2.glb" if i % 2 == 0 else "environments/asteroid_ore/asteroid_ore_grot_lod2.glb")
 		p.set("scale_factor", rng.randf_range(4.0, 14.0))
-		p.set("add_static_collision", true)
+		p.set("add_static_collision", false)  # belt collision was free-flight FPS tax
 		belt.add_child(p)
 		var ang := rng.randf() * TAU
 		var r := rng.randf_range(3200, 5200)
@@ -484,6 +492,7 @@ func _process(delta: float) -> void:
 		_hud_accum = 0.0
 		_update_altitude_fog()
 		_update_hud()
+		_park_far_planets()
 	# Soft EVA timer (warning only — no death Phase 0)
 	if _eva_mode and player and is_instance_valid(player) and "eva_time" in player:
 		if float(player.eva_time) > 90.0:
@@ -941,3 +950,39 @@ func _apply_openspace_perf() -> void:
 	for n in get_tree().get_nodes_in_group("planets") if get_tree() else []:
 		pass
 	print("[OpenSpace] perf tier=", tier)
+
+
+
+func _park_far_planets() -> void:
+	## Only nearest planet runs full surface systems; far planets = impostor + no process.
+	var obs: Node3D = null
+	if _in_ship and ship and is_instance_valid(ship):
+		obs = ship
+	elif player and is_instance_valid(player):
+		obs = player
+	if obs == null:
+		return
+	var best: Node3D = null
+	var best_d := 1.0e18
+	for pl in planets:
+		if pl == null or not is_instance_valid(pl):
+			continue
+		var d: float = obs.global_position.distance_to(pl.global_position)
+		if d < best_d:
+			best_d = d
+			best = pl
+	for pl in planets:
+		if pl == null or not is_instance_valid(pl):
+			continue
+		var d: float = obs.global_position.distance_to(pl.global_position)
+		var near := pl == best or d < 4500.0
+		# Far: stop process entirely (LOD visual freezes on last impostor — OK at distance)
+		if pl.has_method("set_process"):
+			pl.set_process(near)
+		if not near:
+			# Hide heavy child streams
+			for nm in ["SurfaceDetail", "SurfaceFlora", "SurfaceFauna", "SurfaceWater", "CaveMouthField", "LandscapeFeatures", "CaveInterior"]:
+				var n = pl.get_node_or_null(nm)
+				if n:
+					n.set_process(false)
+					n.visible = false
