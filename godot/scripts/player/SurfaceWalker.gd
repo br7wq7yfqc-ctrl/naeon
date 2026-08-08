@@ -1,6 +1,7 @@
 extends CharacterBody3D
 const _HeroForms = preload("res://scripts/player/HeroFormCatalog.gd")
 const _MeshOrient = preload("res://scripts/assets/MeshOrient.gd")
+const _Facing = preload("res://scripts/player/SurfaceFacing.gd")
 const _FormAnim = preload("res://scripts/player/FormAnimator.gd")
 const _FormFX = preload("res://scripts/player/FormSwitchFX.gd")
 ## Planet-surface TPS walker: radial gravity, floor snap, procedural anim.
@@ -445,7 +446,7 @@ func _physics_process(delta: float) -> void:
 
 func _basis_from_up() -> Basis:
 	# Shared pure math (SurfaceFacing) — det(+1), W along −Z at yaw0
-	return SurfaceFacing.basis_from_up(_up, _yaw)
+	return _Facing.basis_from_up(_up, _yaw)
 
 func _apply_body_basis() -> void:
 	var b := _basis_from_up()
