@@ -7,6 +7,7 @@ class_name SurfaceDetail
 ## - Load ring + hysteresis unload ring
 
 const _Math = preload("res://scripts/world/SurfaceChunkMath.gd")
+const _Relief = preload("res://scripts/world/PlanetRelief.gd")
 
 const CELL_M := 40.0
 const PATCH_SIZE := 38.0
@@ -19,6 +20,8 @@ var _planet: Node3D
 var _radius: float = 1200.0
 var _surface_color: Color = Color(0.12, 0.2, 0.16)
 var _seed: int = 1
+var _planet_id: String = "Nex-Prime"
+var _relief_profile: Dictionary = {}
 var _observer: Node3D
 
 var _accum: float = 0.0
@@ -46,6 +49,9 @@ func setup(planet: Node3D, radius: float, color: Color, seed_i: int = 1) -> void
 	_radius = radius
 	_surface_color = color
 	_seed = seed_i
+	if planet != null and "planet_name" in planet:
+		_planet_id = str(planet.planet_name)
+	_relief_profile = _Relief.profile_for_planet(_planet_id)
 	_apply_quality()
 
 
@@ -168,7 +174,8 @@ func _spawn_cell(cell: Vector2i) -> void:
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
 		var mat := StandardMaterial3D.new()
-		mat.albedo_color = _surface_color.lightened(0.04)
+		mat.vertex_color_use_as_albedo = true
+	mat.albedo_color = _surface_color.lightened(0.04)
 		mat.roughness = 0.96
 		mat.metallic = 0.0
 		mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
@@ -179,6 +186,7 @@ func _spawn_cell(cell: Vector2i) -> void:
 		mi.material_override = mat
 		add_child(mi)
 	mi.mesh = _mesh_for_cell(cell)
+	_ensure_vertex_mat(mi)
 	mi.visible = true
 	_live[cell] = mi
 	_refresh_xform(cell)
@@ -220,40 +228,45 @@ func _build_height_mesh(cell: Vector2i) -> ArrayMesh:
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var half := PATCH_SIZE * 0.5
 	var step := PATCH_SIZE / float(_res - 1)
-	var seed_off := float(_seed) * 0.013 + float(cell.x) * 1.7 + float(cell.y) * 2.3
+	var ox := float(cell.x) * PATCH_SIZE
+	var oz := float(cell.y) * PATCH_SIZE
 	var verts: Array[Vector3] = []
+	var colors: PackedColorArray = PackedColorArray()
 	verts.resize(_res * _res)
+	colors.resize(_res * _res)
+	var sea: float = float(_relief_profile.get("sea_level", -0.35))
 	for z in _res:
 		for x in _res:
 			var px := -half + float(x) * step
 			var pz := -half + float(z) * step
-			var h := _fbm(px * 0.09 + seed_off, pz * 0.09 + seed_off * 0.7) * 2.4
+			var wx := px + ox
+			var wz := pz + oz
+			var h: float = float(_Relief.height_at(wx, wz, _seed, _relief_profile))
+			var col: Color = _surface_color
+			if h < sea:
+				h = sea
+				col = Color(0.12, 0.28, 0.48).lerp(Color(0.08, 0.4, 0.55), 0.4)
+			elif h < sea + 0.55:
+				col = Color(0.45, 0.4, 0.28).lerp(_surface_color, 0.35)
+			elif h > 5.0:
+				col = Color(0.55, 0.55, 0.58).lerp(_surface_color, 0.25)
+			elif bool(_Relief.is_canyon(wx, wz, _seed)):
+				col = Color(0.35, 0.22, 0.15).lerp(_surface_color, 0.4)
+			elif bool(_Relief.is_river(wx, wz, _seed, _relief_profile)):
+				col = Color(0.15, 0.35, 0.5).lerp(_surface_color, 0.3)
 			verts[z * _res + x] = Vector3(px, h, pz)
+			colors[z * _res + x] = col
 	for z in _res - 1:
 		for x in _res - 1:
 			var i00 := z * _res + x
 			var i10 := i00 + 1
 			var i01 := i00 + _res
 			var i11 := i01 + 1
-			st.add_vertex(verts[i00])
-			st.add_vertex(verts[i10])
-			st.add_vertex(verts[i11])
-			st.add_vertex(verts[i00])
-			st.add_vertex(verts[i11])
-			st.add_vertex(verts[i01])
+			for idx in [i00, i10, i11, i00, i11, i01]:
+				st.set_color(colors[idx])
+				st.add_vertex(verts[idx])
 	st.generate_normals()
 	return st.commit()
-
-
-func _fbm(x: float, z: float) -> float:
-	var v := 0.0
-	var amp := 1.0
-	var freq := 1.0
-	for _o in 3:
-		v += amp * sin(x * freq * 1.7 + z * freq * 1.3) * cos(z * freq * 0.9 - x * freq * 0.6)
-		amp *= 0.5
-		freq *= 2.1
-	return v * 0.5
 
 
 func live_count() -> int:
@@ -262,3 +275,19 @@ func live_count() -> int:
 
 func queue_depth() -> int:
 	return _queue.size()
+
+
+func _ensure_vertex_mat(mi: MeshInstance3D) -> void:
+	if mi == null:
+		return
+	if mi.material_override != null:
+		var ex = mi.material_override
+		if ex is StandardMaterial3D:
+			(ex as StandardMaterial3D).vertex_color_use_as_albedo = true
+		return
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.roughness = 0.92
+	mat.metallic = 0.02
+	mat.albedo_color = _surface_color
+	mi.material_override = mat

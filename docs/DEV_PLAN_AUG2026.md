@@ -3,30 +3,27 @@
 ## Mode
 holistic-economical + sequential
 
-## Fauna (new track)
-See [FAUNA_BIOMES.md](systems/FAUNA_BIOMES.md)
+## Planet Relief (priority — not flat spheres)
+See [PLANET_RELIEF.md](systems/PLANET_RELIEF.md)
 
 | Phase | Item | Status |
 |-------|------|--------|
-| F0 | FaunaCatalog domains + biomes | **done** |
-| F0 | SurfaceFauna stream + proxies | **done** |
-| F0 | Planet biomes on profiles | **done** |
-| F1 | Observer rebind on ship/walker swap | next |
-| F2 | Tripo fauna batch (6 meshes max) | queued (credits OK) |
-| F3 | Soft scan/harvest fauna | later |
-| F4 | Station/belt space fauna | later |
+| R0 | PlanetRelief sampler (mtn/sea/river/canyon/cave) | **done** |
+| R1 | SurfaceDetail continuous height + shore/ocean/alpine/river colors | **done** |
+| R2 | Water material / sea plane juice | next |
+| R3 | Cave mouths + tunnel SDF | queued |
+| R4 | Macro ocean/land albedo on far sphere | queued |
 
-## Domains
-aquatic · terrestrial · aerial · **space**
+### Features required
+**mountains · hills · seas/oceans · rivers · canyons · caves**
 
-## Also this turn
-| Item | Status |
-|------|--------|
-| Harvest soft-econ toast juice | done |
+## Fauna
+See [FAUNA_BIOMES.md](systems/FAUNA_BIOMES.md) — F0 done
 
 ## Next sequential
-1. Fauna observer rebind (OpenSpace player/ship)
-2. Optional 1–2 Tripo fauna (B) if density still flat
-3. Soft scan prompt near fauna
+1. R2 water plane / shore foam
+2. Walker snap to PlanetRelief height
+3. Cave mouth prototype
+4. Far-sphere land/ocean color bands
 
-Updated: 2026-08-07T23:59:45.690186+00:00
+Updated: 2026-08-08T00:08:55.074776+00:00
