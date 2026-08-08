@@ -154,7 +154,7 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 				win_c = Color(0.95, 0.12, 0.42)
 			_spawn_claim_fx(win_c)
 			_notify_hud("Claim locked → transition · soft economy only")
-	_claim_pylon_pulse(true)
+			_claim_pylon_pulse(true)
 		else:
 			_status = "contested"
 			_set_contested_ring(true)
@@ -166,7 +166,7 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 				_contest_ring.pulse()
 			_spawn_claim_fx(Color(1.0, 0.6, 0.2))
 			_notify_hud("CLAIM PULSE %.2f / 1.75 — stay in zone, C again" % ownership.claim_strength)
-	_claim_pylon_pulse()
+			_claim_pylon_pulse()
 		_apply_faction_visual()
 		_refresh_label()
 		claimed.emit(ownership.faction_name())
