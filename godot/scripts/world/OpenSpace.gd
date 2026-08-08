@@ -855,3 +855,4 @@ func _walk_set_obs(n: Node, obs: Node3D) -> void:
 		n.set_observer(obs)
 	for c in n.get_children():
 		_walk_set_obs(c, obs)
+

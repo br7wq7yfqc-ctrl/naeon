@@ -143,6 +143,10 @@ func _ensure_nodes() -> void:
 	add_child(_fx)
 	# Soil dust particles on terra stroke (code-first, 0 Tripo)
 	_dust = GPUParticles3D.new()
+	var _psmesh_144 := SphereMesh.new()
+	_psmesh_144.radius = 0.06
+	_psmesh_144.height = 0.12
+	_dust.draw_pass_1 = _psmesh_144
 	_dust.name = "TerraDust"
 	_dust.amount = 48
 	_dust.lifetime = 0.7

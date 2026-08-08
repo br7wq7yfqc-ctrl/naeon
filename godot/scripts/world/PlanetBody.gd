@@ -358,6 +358,8 @@ func _spawn_pad(pad_name: String, dir: Vector3) -> void:
 
 func _load_glb_pads() -> void:
 	_glb_loaded = true
+	if DisplayServer.get_name() == "headless":
+		return
 	var ap = load("res://scripts/assets/AssetPaths.gd")
 	if ap == null:
 		return

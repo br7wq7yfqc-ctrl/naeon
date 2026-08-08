@@ -184,6 +184,10 @@ func _spawn_cell(cell: Vector2i) -> void:
 		if gq and int(gq.tier) <= 0:
 			mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
 		mi.material_override = mat
+		# Placeholder mesh so RID never null when entering tree
+		var ph := BoxMesh.new()
+		ph.size = Vector3(0.01, 0.01, 0.01)
+		mi.mesh = ph
 		add_child(mi)
 	mi.mesh = _mesh_for_cell(cell)
 	_ensure_vertex_mat(mi)

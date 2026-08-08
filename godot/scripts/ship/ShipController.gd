@@ -589,7 +589,7 @@ func _spawn_module_visual(module: ShipModule) -> void:
 			pos = Vector3(randf_range(-0.4, 0.4), 0.35, 0)
 	if faction == "gROT" and rel != "":
 		rel = rel.replace("_cybernex_", "_grot_")
-	if rel != "":
+	if rel != "" and DisplayServer.get_name() != "headless":
 		var path: String = _asset_path(rel)
 		if path != "" and FileAccess.file_exists(path):
 			var doc := GLTFDocument.new()
