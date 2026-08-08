@@ -172,6 +172,9 @@ func _spawn_projectile(caster: Node, dmg: float, color: Color) -> void:
 			if GameManager:
 				final_dmg *= 1.0 + GameManager.knowledge_insight_bonus()
 			other.take_damage(final_dmg)
+		var VFX3 = load("res://scripts/abilities/AbilityVfx.gd")
+		if VFX3 and is_instance_valid(body):
+			VFX3.impact_burst(body.global_position, color, caster.get_tree(), false)
 		if is_instance_valid(body):
 			body.queue_free()
 	)
