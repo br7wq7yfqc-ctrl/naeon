@@ -318,6 +318,7 @@ func try_exit_ship() -> void:
 			pl.set_observer(player)
 		_set_planet_observers(player)
 	_bind_soft_net_actor(player)
+	_toast_hud("EVA suit" if _eva_mode else "Debarked — clear of hull")
 	print("[OpenSpace] exited ship  eva=", _eva_mode)
 
 
@@ -329,7 +330,7 @@ func try_enter_ship() -> void:
 		player = null
 		print("[OpenSpace] No walker to board")
 		return
-	var board_r := 24.0 if _eva_mode else 14.0
+	var board_r := 28.0 if _eva_mode else 16.0
 	var board_anchor: Vector3 = ship.global_position
 	var hatch_n: Node3D = ship.get_node_or_null("HatchPoint") as Node3D
 	if hatch_n:
@@ -350,19 +351,11 @@ func try_enter_ship() -> void:
 		floating.set_target(ship)
 	_bind_soft_net_actor(ship)
 	# Disable walker ticks then free safely
-	var old: Node = player
-	player = null
-	if is_instance_valid(old):
-		old.set_process(false)
-		old.set_physics_process(false)
-		old.set_process_input(false)
-		old.set_process_unhandled_input(false)
-		if old is CollisionObject3D:
-			(old as CollisionObject3D).collision_layer = 0
-			(old as CollisionObject3D).collision_mask = 0
-		old.queue_free()
+	_safe_free_walker()
 	if is_instance_valid(ship) and ship.has_method("set_pilot_active"):
 		ship.set_pilot_active(true)
+	if is_instance_valid(ship) and "velocity" in ship:
+		ship.velocity = Vector3.ZERO if bool(ship.get("is_landed")) else ship.velocity
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	var door2 = ship.get_node_or_null("HatchPoint/HatchDoor")
 	if door2 is Node3D:
@@ -431,8 +424,8 @@ func _spawn_player_near_ship() -> void:
 		if side.length_squared() < 0.01:
 			side = pad_up.cross(Vector3.RIGHT)
 	side = side.normalized()
-	# High clear spawn — away from pad props (density cluster)
-	player.global_position = ship.global_position + pad_up * 4.5 + side * 7.0
+	# High clear spawn — well above pad deck / props (was too low → terrain embed)
+	player.global_position = ship.global_position + pad_up * 6.5 + side * 8.5
 	if player.has_method("set_planet_gravity_provider"):
 		player.set_planet_gravity_provider(self)
 	if player.has_method("set_eva_profile"):
@@ -683,17 +676,7 @@ func _try_seat_to_pilot() -> bool:
 	if floating and is_instance_valid(floating) and floating.has_method("set_target"):
 		floating.set_target(ship)
 	_bind_soft_net_actor(ship)
-	var old: Node = player
-	player = null
-	if is_instance_valid(old):
-		old.set_process(false)
-		old.set_physics_process(false)
-		old.set_process_input(false)
-		old.set_process_unhandled_input(false)
-		if old is CollisionObject3D:
-			(old as CollisionObject3D).collision_layer = 0
-			(old as CollisionObject3D).collision_mask = 0
-		old.queue_free()
+	_safe_free_walker()
 	if ship.has_method("set_pilot_active"):
 		ship.set_pilot_active(true)
 	# Hatch door close after seat pilot
@@ -902,3 +885,24 @@ func _toast_hud(msg: String, ttl: float = 2.2) -> void:
 			n.push_toast(msg, ttl)
 			return
 	print("[OpenSpace] ", msg)
+
+
+func _safe_free_walker() -> void:
+	## Disable then deferred free — avoids ClassDB has_method on freed walker (SIGSEGV).
+	var old: Node = player
+	player = null
+	if old == null or not is_instance_valid(old):
+		return
+	old.set_process(false)
+	old.set_physics_process(false)
+	old.set_process_input(false)
+	old.set_process_unhandled_input(false)
+	if old is CollisionObject3D:
+		(old as CollisionObject3D).collision_layer = 0
+		(old as CollisionObject3D).collision_mask = 0
+	if old is CharacterBody3D:
+		(old as CharacterBody3D).velocity = Vector3.ZERO
+	# Drop group membership so SoftScanCache cannot return stale ref
+	if old.is_in_group("player"):
+		old.remove_from_group("player")
+	old.call_deferred("queue_free")

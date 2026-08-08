@@ -28,6 +28,7 @@ var _arm_l: MeshInstance3D
 var _arm_r: MeshInstance3D
 var _limb_rig: Node3D
 var _form_skel: Skeleton3D = null
+var _spawn_grace_t: float = 0.0
 var _move_amount: float = 0.0
 var eva_mode: bool = false
 var thruster_accel: float = 14.0
@@ -183,7 +184,10 @@ func _load_form_visual() -> void:
 	_strip_colliders(root)
 	_visual.add_child(root)
 	root.name = "FormGLB"
-	_MeshOrient.face_neg_z(root as Node3D, true)
+	_MeshOrient.face_neg_z(root as Node3D, false)
+	# Characters: face −Z (body forward)
+	if root is Node3D:
+		(root as Node3D).position = Vector3(0, 0, 0)
 	_form_skel = _FormAnim.find_skeleton(root)
 	root.scale = Vector3.ONE * 1.1
 	root.position = Vector3(0, 0, 0)
@@ -251,33 +255,49 @@ func snap_to_surface() -> void:
 	_update_up()
 	var space := get_world_3d().direct_space_state if get_world_3d() else null
 	if space == null:
-		global_position += _up * 3.0
+		global_position += _up * 4.0
 		return
-	var origin := global_position + _up * 25.0
-	var end := global_position - _up * 80.0
+	# High origin so we don't start inside pad mesh
+	var origin := global_position + _up * 40.0
+	var end := global_position - _up * 120.0
 	var q := PhysicsRayQueryParameters3D.create(origin, end)
 	q.collision_mask = 1
 	q.exclude = [get_rid()]
 	var hit := space.intersect_ray(q)
 	if hit:
-		global_position = hit.position + _up * 1.85
+		# Clearance above contact — was 1.85 (often inside pad props / hull)
+		global_position = hit.position + _up * 2.55
 		velocity = Vector3.ZERO
+		_spawn_grace_t = 0.35
+		safe_unground()
 		print("[SurfaceWalker] snapped to ", hit.position)
 		return
 	if _relief_snap_fallback():
+		_spawn_grace_t = 0.35
+		safe_unground()
 		return
-	global_position += _up * 4.0
+	global_position += _up * 5.0
+	_spawn_grace_t = 0.35
 	print("[SurfaceWalker] no hit — boost along up")
 
 
 func safe_unground() -> void:
-	## If embedded in geometry after spawn, push out along up.
+	## If embedded in geometry after spawn/exit, push out along up.
 	_update_up()
-	if test_move(global_transform, -_up * 0.05):
-		# stuck — rise until free or cap
-		for i in 12:
-			global_position += _up * 0.45
-			if not test_move(global_transform, -_up * 0.05):
+	var stuck := test_move(global_transform, -_up * 0.08) or test_move(global_transform, _up * 0.05)
+	if not stuck:
+		# Also test capsule center sideways for pad props
+		for dir in [Vector3.RIGHT, Vector3.LEFT, Vector3.FORWARD, Vector3.BACK]:
+			var tdir: Vector3 = (dir - _up * dir.dot(_up))
+			if tdir.length_squared() < 1e-6:
+				continue
+			if test_move(global_transform, tdir.normalized() * 0.35):
+				stuck = true
+				break
+	if stuck:
+		for i in 20:
+			global_position += _up * 0.4
+			if not test_move(global_transform, -_up * 0.08):
 				break
 		velocity = Vector3.ZERO
 		print("[SurfaceWalker] safe_unground lifted")
@@ -331,6 +351,14 @@ func _input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	_terrain_hint_tick(delta)
 	_update_up()
+	if _spawn_grace_t > 0.0:
+		_spawn_grace_t = maxf(0.0, _spawn_grace_t - delta)
+		# Hold still while settling out of embed
+		if not eva_mode:
+			velocity = velocity.lerp(Vector3.ZERO, clampf(8.0 * delta, 0.0, 1.0))
+			var v_up0 := velocity.dot(_up)
+			if v_up0 < 0.0:
+				velocity -= _up * v_up0  # no dig into surface
 	energy = minf(max_energy, energy + energy_regen * delta)
 	var g_vec := -_up * 14.0
 	if _provider and _provider.has_method("gravity_at"):
@@ -448,7 +476,7 @@ func _update_anim(delta: float) -> void:
 	var sway := sin(_anim_time * TAU * 0.5) * 0.04
 	var lean := clampf(_move_amount, 0.0, 1.0) * 0.12
 	_visual.position = Vector3(sway * 0.15, bob, 0.0)
-	_visual.rotation = Vector3(-lean, 0.0, sway * 0.5)
+	_visual.rotation = Vector3(-lean, 0.0, sway * 0.35)  # no Y spin — body yaw owns facing
 	# Idle breathe when still
 	if _move_amount < 0.08:
 		var breathe := sin(Time.get_ticks_msec() * 0.004) * 0.02

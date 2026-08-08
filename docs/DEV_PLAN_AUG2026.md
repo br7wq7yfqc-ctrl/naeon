@@ -1,15 +1,21 @@
 # NAEON Dev Plan — Aug 2026
 
-## sequential + holistic-economical · 0 micro-DMG · Tripo ~4220
+## Phase 0 sequential · loop first
 
+### P1 Loop blockers
 | Item | Status |
 |------|--------|
-| Op-mode sync + siege weapon skins | done |
-| SoftShieldBubble + Scan ring | done |
-| HUD flight/op line | done |
+| Land climb / launch lock | done |
+| Exit embed multi-snap | done |
+| Walker face / grace | done |
+| Safe free walker (no SIGSEGV) | done |
+| EVA ship soft coast for reboard | done |
 
-## Next
-1. Soft pad extract VFX under budget
-2. Batch DMG **only** on owner request
+### P1 residual
+- Real-client playtest of facing/WASD
+- Interior seat residual
 
-Updated: 2026-08-08T17:01:03.436226+00:00
+### P2+
+Water R2 · flora · FPS · extract VFX · batch DMG after loop
+
+Updated: 2026-08-08T17:17:42.114805+00:00

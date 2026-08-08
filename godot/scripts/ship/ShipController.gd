@@ -44,6 +44,8 @@ var _yaw: float = 0.0
 var _roll: float = 0.0
 var _fire_cd: float = 0.0
 var is_landed: bool = false
+var _land_lock_t: float = 0.0
+var _land_hold_h: float = 3.5
 var flight_mode: int = FlightMode.SCM
 var pilot_active: bool = true
 var _open_space: Node = null
@@ -316,13 +318,24 @@ func _physics_process(delta: float) -> void:
 		_sync_planet_palette()
 	_tick_scan_pulse(delta)
 	if not pilot_active:
-		velocity = Vector3.ZERO
+		# Soft coast while EVA (was hard-stop → awkward relative reboard)
+		velocity = velocity.lerp(Vector3.ZERO, clampf(0.55 * delta, 0.0, 0.35))
+		if velocity.length() < 0.15:
+			velocity = Vector3.ZERO
+		# Still stick if landed
+		if is_landed:
+			velocity = Vector3.ZERO
+			_stick_to_pad()
 		return
 	if is_landed:
-		# Sticky pad: kill velocity, re-snap to pad, allow E launch only
+		# Sticky pad: kill ALL motion, no thruster integrate, short launch lock
+		_land_lock_t = maxf(0.0, _land_lock_t - delta)
 		velocity = Vector3.ZERO
 		_stick_to_pad()
-		if Input.is_action_just_pressed("ability_2"):
+		if _thruster_fx and is_instance_valid(_thruster_fx):
+			_thruster_fx.emitting = false
+		# Ignore accidental launch for lock window (prevents "lift on land")
+		if _land_lock_t <= 0.0 and Input.is_action_just_pressed("ability_2"):
 			_do_launch()
 		_update_status()
 		return
@@ -455,7 +468,11 @@ func _do_land() -> void:
 		if pl and pl.has_method("altitude_of") and pl.altitude_of(global_position) < surface_land_alt:
 			velocity = Vector3.ZERO
 			is_landed = true
+			_land_lock_t = 0.65
 			_landed_pad = null
+			_pitch = 0.0
+			_roll = 0.0
+			_apply_attitude()
 			_sync_landing_gear()
 			_set_mode(FlightMode.HOVER)
 			landed.emit()
@@ -465,13 +482,18 @@ func _do_land() -> void:
 	print("[Ship] Land denied — approach a pad (<", land_pad_snap_distance, "m) or surface")
 
 func _do_launch() -> void:
+	if _land_lock_t > 0.0:
+		print("[Ship] Launch lock ", "%.2f" % _land_lock_t, "s")
+		return
+	var up_boost: Vector3 = _reference_up()
+	var nose: Vector3 = -global_transform.basis.z
 	is_landed = false
 	_landed_pad = null
 	_sync_landing_gear()
 	if flight_mode == FlightMode.HOVER:
 		_set_mode(FlightMode.SCM)
-	# Boost off pad
-	velocity = global_transform.basis.y * 6.0 - global_transform.basis.z * 4.0
+	# Controlled lift: pad up + slight nose — never "random sky climb"
+	velocity = up_boost * 8.0 + nose * 3.0
 	launched.emit()
 	print("[Ship] Launched")
 
@@ -1021,15 +1043,26 @@ func clear_deployed_rover() -> void:
 
 
 func _stick_to_pad() -> void:
+	velocity = Vector3.ZERO
 	if _landed_pad and is_instance_valid(_landed_pad):
 		var up: Vector3 = Vector3.UP
 		if _landed_pad.has_meta("pad_up"):
-			up = _landed_pad.get_meta("pad_up")
-		# Keep ship parked; do not climb
-		global_position = _landed_pad.global_position + up * 4.0
-		velocity = Vector3.ZERO
+			up = (_landed_pad.get_meta("pad_up") as Vector3).normalized()
+		var target: Vector3 = _landed_pad.global_position + up * _land_hold_h
+		# Soft correct only if drifted — hard teleport every frame felt like "climbing"
+		var d: float = global_position.distance_to(target)
+		if d > 0.15:
+			global_position = global_position.lerp(target, 0.55 if d > 1.5 else 0.25)
+		# Hard ceiling: never rise above hold height + slack
+		var h: float = (global_position - _landed_pad.global_position).dot(up)
+		if h > _land_hold_h + 0.4:
+			global_position = target
+		# Keep level to pad
+		_pitch = lerpf(_pitch, 0.0, 0.35)
+		_roll = lerpf(_roll, 0.0, 0.35)
+		_apply_attitude()
 		return
-	# Surface land: freeze in place
+	# Surface land: freeze (no upward integrate)
 	velocity = Vector3.ZERO
 
 
