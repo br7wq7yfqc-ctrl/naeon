@@ -1,17 +1,17 @@
 # NAEON Dev Plan — Aug 2026
 
-## sequential + holistic-economical
+## sequential + holistic-economical · 0 micro-DMG
 
 | Item | Status |
 |------|--------|
-| EVA thruster envelope | done |
-| Mag-boot near hull | done |
-| AbilityVfx | done |
-| Planet surface micro-texture | done |
-| Cave crystal procedural + Tripo GLB (20cr, bal 4680) | done |
+| Mag-boot feel (ship frame, pull, ring, steps) | **done** |
+| HUD EVA/MAG status | **done** |
+| Form Cycle ability → _cycle_form | **done** |
+| Prior EVA/crystal/VFX | done |
 
 ## Next
-1. Mag-boot surface feel polish
-2. Batch DMG on owner request only
+1. Soft combat juice from Ability impact_burst wire
+2. Interior ambient audio/light polish
+3. Batch DMG **only** on owner request
 
-Updated: 2026-08-08T01:42:12.057034+00:00
+Updated: 2026-08-08T01:44:36.399661+00:00

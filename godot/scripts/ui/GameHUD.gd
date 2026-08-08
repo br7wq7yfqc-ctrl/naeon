@@ -417,7 +417,18 @@ func _refresh() -> void:
 	elif not (SoftENet and SoftENet.is_host):
 		_host_hint_cache = ""
 		host_hint = ""
-	_status_label.text = "HP %s  EN %s  |  %s %s%s%s\nCONTRIB %.0f  ·  4=form F9=fac F10=host F11=join  (no P2W)" % [hp, en, fac, form, net, host_hint, contrib]
+	var eva_line := ""
+	if _player and "eva_mode" in _player and bool(_player.eva_mode):
+		var mag_s := ""
+		if "mag_boot" in _player:
+			if "_mag_latched" in _player and bool(_player._mag_latched):
+				mag_s = " MAG:LATCH"
+			elif bool(_player.mag_boot):
+				mag_s = " MAG:ARM"
+			else:
+				mag_s = " MAG:off"
+		eva_line = "  |  EVA%s" % mag_s
+	_status_label.text = "HP %s  EN %s  |  %s %s%s%s%s\nCONTRIB %.0f  ·  4=form F9=fac F10=host F11=join  (no P2W)" % [hp, en, fac, form, net, host_hint, eva_line, contrib]
 
 	# Terrain budget + interior status (soft info only)
 	if _terrain_label:

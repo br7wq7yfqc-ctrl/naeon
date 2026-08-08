@@ -312,6 +312,7 @@ func _input(event: InputEvent) -> void:
 			if eva_mode:
 				mag_boot = not mag_boot
 				print("[SurfaceWalker] mag-boot ", mag_boot)
+				_toast_self("MAG-BOOT ARMED" if mag_boot else "MAG-BOOT OFF")
 			else:
 				_try_ability(1)
 		elif event.keycode == KEY_R:
@@ -829,31 +830,53 @@ func _tick_mag_boot(delta: float) -> void:
 	var ship_n: Node3D = _find_nearby_ship()
 	if ship_n == null:
 		if _mag_latched:
-			_mag_latched = false
-			print("[SurfaceWalker] mag-boot released (no hull)")
+			_mag_release("no hull")
 		return
 	var dist: float = global_position.distance_to(ship_n.global_position)
 	var hull_clear: float = maxf(0.0, dist - 3.5)
 	if mag_boot and hull_clear < MAG_RANGE:
 		_mag_normal = (global_position - ship_n.global_position).normalized()
+		# Soft attraction when armed in range (before hard latch)
+		if not _mag_latched and hull_clear < MAG_RANGE:
+			var pull := (3.5 - hull_clear) * 2.2
+			velocity += -_mag_normal * pull * delta
 		if hull_clear < MAG_LOCK_RANGE:
 			if not _mag_latched:
 				_mag_latched = true
+				_mag_step_t = 0.0
+				_mag_latch_fx()
+				_toast_self("MAG-BOOT LATCH · crawl hull · E release")
 				print("[SurfaceWalker] mag-boot LATCHed")
+			# Stick to shell + inherit ship velocity (feel = walking on hull)
 			var target: Vector3 = ship_n.global_position + _mag_normal * 4.0
-			global_position = global_position.lerp(target, clampf(delta * 4.0, 0.0, 1.0))
+			global_position = global_position.lerp(target, clampf(delta * 5.5, 0.0, 1.0))
 			var v_out := velocity.dot(_mag_normal)
 			if v_out > 0.0:
 				velocity -= _mag_normal * v_out
+			if "velocity" in ship_n and ship_n.velocity is Vector3:
+				var sv: Vector3 = ship_n.velocity
+				# Blend local crawl onto ship frame
+				var local_v := velocity - sv
+				local_v = local_v - _mag_normal * local_v.dot(_mag_normal)
+				velocity = sv + local_v
+			# Footstep clack while crawling
+			if _move_amount > 0.15:
+				_mag_step_t += delta
+				if _mag_step_t > 0.32:
+					_mag_step_t = 0.0
+					_mag_step_fx()
 		elif _mag_latched and hull_clear > MAG_LOCK_RANGE + 0.8:
-			_mag_latched = false
-			print("[SurfaceWalker] mag-boot released")
+			_mag_release("range")
 	elif _mag_latched:
-		_mag_latched = false
+		_mag_release("disarm")
 	if _mag_light:
-		_mag_light.visible = mag_boot
-		_mag_light.light_energy = 2.2 if _mag_latched else (0.7 if mag_boot else 0.0)
-		_mag_light.light_color = Color(0.3, 0.95, 1.0) if _mag_latched else Color(0.5, 0.7, 1.0)
+		_mag_light.visible = mag_boot or _mag_latched
+		_mag_light.light_energy = 2.6 if _mag_latched else (0.85 if mag_boot else 0.0)
+		_mag_light.light_color = Color(0.25, 0.95, 1.0) if _mag_latched else Color(0.5, 0.7, 1.0)
+	if _mag_ring and is_instance_valid(_mag_ring):
+		_mag_ring.visible = _mag_latched
+		if _mag_latched:
+			_mag_ring.rotate_y(delta * 2.2)
 
 
 func _find_nearby_ship() -> Node3D:
@@ -918,6 +941,26 @@ func _ensure_eva_fx() -> void:
 	_mag_light.position = Vector3(0, 0.15, 0)
 	_mag_light.shadow_enabled = false
 	add_child(_mag_light)
+	_mag_ring = MeshInstance3D.new()
+	_mag_ring.name = "MagRing"
+	var tm := TorusMesh.new()
+	tm.inner_radius = 0.35
+	tm.outer_radius = 0.48
+	tm.rings = 8
+	tm.ring_segments = 12
+	_mag_ring.mesh = tm
+	var rm := StandardMaterial3D.new()
+	rm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	rm.albedo_color = Color(0.3, 0.9, 1.0, 0.55)
+	rm.emission_enabled = true
+	rm.emission = Color(0.3, 0.9, 1.0)
+	rm.emission_energy_multiplier = 1.8
+	rm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_mag_ring.material_override = rm
+	_mag_ring.position = Vector3(0, 0.05, 0)
+	_mag_ring.visible = false
+	_mag_ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(_mag_ring)
 
 
 func _clear_eva_fx() -> void:
@@ -927,8 +970,76 @@ func _clear_eva_fx() -> void:
 	if _mag_light and is_instance_valid(_mag_light):
 		_mag_light.queue_free()
 	_mag_light = null
+	if _mag_ring and is_instance_valid(_mag_ring):
+		_mag_ring.queue_free()
+	_mag_ring = null
 
 
 func _update_eva_fx(thruster_on: bool) -> void:
 	if _eva_jet and is_instance_valid(_eva_jet):
 		_eva_jet.emitting = thruster_on and not _mag_latched
+
+
+
+func _mag_release(reason: String) -> void:
+	if not _mag_latched:
+		return
+	_mag_latched = false
+	_mag_step_t = 0.0
+	if _mag_ring and is_instance_valid(_mag_ring):
+		_mag_ring.visible = false
+	_toast_self("Mag-boot released")
+	print("[SurfaceWalker] mag-boot released (", reason, ")")
+
+
+func _mag_latch_fx() -> void:
+	_ensure_eva_fx()
+	if _mag_light:
+		_mag_light.light_energy = 4.0
+	if AudioDirector and AudioDirector.has_method("play_claim_pulse"):
+		AudioDirector.play_claim_pulse()
+	elif AudioDirector and AudioDirector.has_method("play_hit"):
+		AudioDirector.play_hit(false)
+	var tree := get_tree()
+	if tree and tree.current_scene:
+		var p2 := GPUParticles3D.new()
+		p2.amount = 10
+		p2.lifetime = 0.35
+		p2.one_shot = true
+		p2.explosiveness = 1.0
+		p2.emitting = true
+		var pm := ParticleProcessMaterial.new()
+		pm.direction = Vector3(0, 1, 0)
+		pm.spread = 180.0
+		pm.initial_velocity_min = 1.0
+		pm.initial_velocity_max = 3.5
+		pm.gravity = Vector3.ZERO
+		pm.color = Color(0.4, 0.95, 1.0, 0.9)
+		p2.process_material = pm
+		var sm := SphereMesh.new()
+		sm.radius = 0.04
+		sm.height = 0.08
+		p2.draw_pass_1 = sm
+		tree.current_scene.add_child(p2)
+		p2.global_position = global_position
+		tree.create_timer(0.5).timeout.connect(func():
+			if is_instance_valid(p2):
+				p2.queue_free()
+		)
+
+
+func _mag_step_fx() -> void:
+	if _mag_light:
+		_mag_light.light_energy = 3.2
+	if AudioDirector and AudioDirector.has_method("play_ui"):
+		AudioDirector.play_ui()
+
+
+func _toast_self(msg: String) -> void:
+	var tree := get_tree()
+	if tree == null:
+		return
+	for n in tree.get_nodes_in_group("game_hud"):
+		if n.has_method("push_toast"):
+			n.push_toast(msg, 2.0)
+			return

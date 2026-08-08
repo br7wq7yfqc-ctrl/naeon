@@ -71,6 +71,12 @@ func finish_channel(caster: Node, target = null) -> void:
 	print("[Ability] ", ability_name, " channel complete")
 
 func _apply_effect(caster: Node, _target) -> void:
+	if ability_name == "Form Cycle":
+		if caster and caster.has_method("_cycle_form"):
+			caster._cycle_form()
+		elif caster and caster.has_method("cycle_form"):
+			caster.cycle_form()
+		return
 	if is_hacking:
 		_apply_hacking(caster)
 	elif is_firewall:
