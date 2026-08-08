@@ -55,7 +55,7 @@ func _process(delta: float) -> void:
 			_status = "owned"
 			_set_contested_ring(false)
 			swap_cluster_theme(ownership.faction_name())
-	_update_city_density()
+			_update_city_density()
 			_refresh_label()
 	if running and ownership and ownership.is_fully_owned():
 		_tick_harvest(delta)
