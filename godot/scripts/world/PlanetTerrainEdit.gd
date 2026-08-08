@@ -63,6 +63,8 @@ func setup(p: Node3D, r: float, color: Color, seed_i: int, id: String) -> void:
 	_ensure_nodes()
 	_rebuild_mesh()
 	set_process(true)
+	if not budget_exhausted.is_connected(_on_budget_exhausted):
+		budget_exhausted.connect(_on_budget_exhausted)
 
 func set_observer(n: Node3D) -> void:
 	_observer = n
@@ -443,3 +445,18 @@ func _reseed_base_for_cell(cell: Vector2i) -> void:
 		var wx := ox + (ix / float(RES - 1) - 0.5) * WORLD_SIZE
 		var wz := oz + (iz / float(RES - 1) - 0.5) * WORLD_SIZE
 		_base[i] = float(_Relief.height_at(wx, wz, _seed, _relief_profile))
+
+
+func _on_budget_exhausted(reason: String) -> void:
+	var msg := "Terrain volume cap"
+	if reason == "cave_floor_protected":
+		msg = "Cave floor protected — dig elsewhere"
+	elif reason == "planet_volume_cap":
+		msg = "Planet edit budget exhausted"
+	var tree := get_tree()
+	if tree == null:
+		return
+	for n in tree.get_nodes_in_group("game_hud"):
+		if n.has_method("push_toast"):
+			n.push_toast(msg, 2.5)
+			return

@@ -60,6 +60,7 @@ func _process(delta: float) -> void:
 	if running and ownership and ownership.is_fully_owned():
 		_tick_harvest(delta)
 	_try_player_claim()
+	_try_pad_scan()
 
 func _try_player_claim() -> void:
 	if _claim_cd > 0.0:
@@ -387,3 +388,24 @@ func _update_city_density() -> void:
 		if ownership and ownership.claim_strength > 0.0:
 			dens = 1.0 + clampf(ownership.claim_strength / 1.75, 0.0, 0.4)
 	city.call("set_density", dens, fac)
+
+
+var _pad_scan_cd: float = 0.0
+
+func _try_pad_scan() -> void:
+	_pad_scan_cd = maxf(0.0, _pad_scan_cd - get_process_delta_time())
+	if _pad_scan_cd > 0.0:
+		return
+	if not Input.is_physical_key_pressed(KEY_V):
+		return
+	var actor := _find_actor()
+	if actor == null:
+		return
+	if actor.global_position.distance_to(global_position) > claim_radius * 0.85:
+		return
+	_pad_scan_cd = 1.5
+	var fac := ownership.faction_name() if ownership else "Neutral"
+	var stren := ownership.claim_strength if ownership else 0.0
+	_notify_hud("Pad scan: %s  claim=%.2f  reserves=%.0f  (soft intel)" % [fac, stren, crystal_reserves])
+	if AudioDirector and AudioDirector.has_method("play_ui"):
+		AudioDirector.play_ui()
