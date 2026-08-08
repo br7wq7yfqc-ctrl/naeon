@@ -201,7 +201,7 @@ func _spawn_complete_burst() -> void:
 		return
 	var c := _caster as Node3D
 	var p := GPUParticles3D.new()
-	p.amount = 18
+	p.amount = 10
 	p.lifetime = 0.45
 	p.one_shot = true
 	p.explosiveness = 1.0

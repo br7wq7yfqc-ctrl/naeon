@@ -148,7 +148,7 @@ func _ensure_nodes() -> void:
 	_psmesh_144.height = 0.12
 	_dust.draw_pass_1 = _psmesh_144
 	_dust.name = "TerraDust"
-	_dust.amount = 48
+	_dust.amount = 16
 	_dust.lifetime = 0.7
 	_dust.one_shot = false
 	_dust.explosiveness = 0.15

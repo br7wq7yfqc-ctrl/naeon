@@ -781,26 +781,52 @@ func _sync_landing_gear() -> void:
 func _ensure_thruster_fx() -> void:
 	if _thruster_fx and is_instance_valid(_thruster_fx):
 		return
+	# Prefer shared NeonParticles plume (quad + additive shader)
+	var NP = load("res://scripts/fx/NeonParticles.gd")
+	var fac_col := Color(0.95, 0.25, 0.4) if faction == "gROT" else Color(0.3, 0.8, 1.0)
+	if NP:
+		_thruster_fx = NP.thruster_plume(self, fac_col, Vector3(0, 0, 2.2))
+		if _thruster_fx:
+			return
 	_thruster_fx = GPUParticles3D.new()
 	_thruster_fx.name = "ThrusterFX"
-	_thruster_fx.amount = 48
-	_thruster_fx.lifetime = 0.35
+	var amt := 12
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	if gq:
+		match int(gq.tier):
+			0: amt = 8
+			2, 3: amt = 18
+	_thruster_fx.amount = amt
+	_thruster_fx.lifetime = 0.24
 	_thruster_fx.emitting = false
-	_thruster_fx.position = Vector3(0, 0, 2.2)  # behind hull (+Z = aft if nose −Z)
+	_thruster_fx.fixed_fps = 24
+	_thruster_fx.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_thruster_fx.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	_thruster_fx.visibility_aabb = AABB(Vector3(-2, -2, -1), Vector3(4, 4, 10))
+	_thruster_fx.position = Vector3(0, 0, 2.2)
 	var pm := ParticleProcessMaterial.new()
 	pm.direction = Vector3(0, 0, 1)
-	pm.spread = 12.0
-	pm.initial_velocity_min = 6.0
-	pm.initial_velocity_max = 14.0
+	pm.spread = 10.0
+	pm.initial_velocity_min = 5.0
+	pm.initial_velocity_max = 12.0
 	pm.gravity = Vector3.ZERO
-	pm.scale_min = 0.06
-	pm.scale_max = 0.18
-	pm.color = Color(0.35, 0.75, 1.0, 0.85)
+	pm.scale_min = 0.5
+	pm.scale_max = 1.2
+	pm.color = fac_col
 	_thruster_fx.process_material = pm
-	var dm := SphereMesh.new()
-	dm.radius = 0.08
-	dm.height = 0.16
-	_thruster_fx.draw_pass_1 = dm
+	var qm := QuadMesh.new()
+	qm.size = Vector2(0.2, 0.2)
+	_thruster_fx.draw_pass_1 = qm
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	mat.albedo_color = fac_col
+	mat.emission_enabled = true
+	mat.emission = fac_col
+	mat.emission_energy_multiplier = 1.8
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_thruster_fx.material_override = mat
 	add_child(_thruster_fx)
 
 
@@ -810,13 +836,11 @@ func _update_thruster_fx(axes: Vector3, delta: float) -> void:
 	var power: float = clampf(absf(axes.z) + absf(axes.x) * 0.4 + absf(axes.y) * 0.3, 0.0, 1.5)
 	_thruster_fx.emitting = power > 0.08 and pilot_active and not is_landed
 	if _thruster_fx.emitting:
-		_thruster_fx.amount = int(32 + power * 40)
+		# Velocity only — never reallocate particle buffer via amount thrash
 		var pm := _thruster_fx.process_material as ParticleProcessMaterial
 		if pm:
-			pm.initial_velocity_min = 5.0 + power * 8.0
-			pm.initial_velocity_max = 10.0 + power * 16.0
-			var fac_col := Color(0.95, 0.25, 0.4) if faction == "gROT" else Color(0.3, 0.8, 1.0)
-			pm.color = fac_col
+			pm.initial_velocity_min = 4.0 + power * 5.0
+			pm.initial_velocity_max = 8.0 + power * 10.0
 		_engine_pulse_t += delta
 		if _engine_pulse_t > 0.35 and AudioDirector and power > 0.5:
 			_engine_pulse_t = 0.0

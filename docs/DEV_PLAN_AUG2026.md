@@ -1,18 +1,17 @@
 # NAEON Dev Plan — Aug 2026
 
-## sequential + living neon · Tripo wave in progress
+## sequential + holistic-economical · 0 micro-DMG · Tripo ~4220
 
 | Item | Status |
 |------|--------|
-| NeonParticles (burst/trail/thruster/claim/muzzle) | done |
-| LivingConfig Cybernex/gROT morph modes | done |
-| FormAnimator full walk/run/idle/air/wings | done |
-| TurretAnimator aim/recoil/muzzle | done |
-| Ship thruster plume + living sync | done |
-| Tripo living-config asset wave (~20) | running |
+| Particle shader opt (quad+additive+budget) | **done** |
+| Thruster amount thrash removed | **done** |
+| Prior living neon / contest / fauna | done |
+| Tripo wave (~460 spent) | complete |
 
 ## Next
-1. Wire new GLBs into ship/weapon hardpoints after process
-2. Batch DMG only on owner request
+1. Wire remaining wave assets (wing/thruster/shield emitter)
+2. Soft combat neon pass under budget
+3. Batch DMG **only** on owner request
 
-Updated: 2026-08-08T13:58:05.968391+00:00
+Updated: 2026-08-08T16:06:26.845984+00:00

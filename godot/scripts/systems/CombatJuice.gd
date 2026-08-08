@@ -113,39 +113,18 @@ func _spawn_number(amount: float, world_pos: Vector3, crit: bool) -> void:
 
 
 func _spawn_impact(world_pos: Vector3, crit: bool) -> void:
-	if _impact_budget >= 4:
+	var NP = load("res://scripts/fx/NeonParticles.gd")
+	if NP:
+		var col := Color(1.0, 0.85, 0.3, 0.9) if crit else Color(1.0, 0.4, 0.25, 0.85)
+		NP.burst(world_pos, col, get_tree(), 10 if crit else 6, 7.0 if crit else 4.5)
 		return
-	var tree := get_tree()
-	if tree == null or tree.current_scene == null:
+	if _impact_budget >= 3:
 		return
+	# fallback minimal
 	_impact_budget += 1
-	var p := GPUParticles3D.new()
-	p.amount = 10 if crit else 6
-	p.lifetime = 0.35
-	p.one_shot = true
-	p.explosiveness = 1.0
-	p.emitting = true
-	p.global_position = world_pos
-	var pm := ParticleProcessMaterial.new()
-	pm.direction = Vector3(0, 1, 0)
-	pm.spread = 180.0
-	pm.initial_velocity_min = 2.0
-	pm.initial_velocity_max = 9.0 if crit else 5.0
-	pm.gravity = Vector3(0, -2, 0)
-	pm.scale_min = 0.05
-	pm.scale_max = 0.14 if crit else 0.1
-	pm.color = Color(1.0, 0.85, 0.3, 0.9) if crit else Color(1.0, 0.4, 0.25, 0.85)
-	p.process_material = pm
-	var sm := SphereMesh.new()
-	sm.radius = 0.06
-	sm.height = 0.12
-	p.draw_pass_1 = sm
-	tree.current_scene.add_child(p)
-	tree.create_timer(0.35).timeout.connect(func():
-		_impact_budget = maxi(0, _impact_budget - 1)
-		if is_instance_valid(p):
-			p.queue_free()
-	)
+	var tree := get_tree()
+	if tree:
+		tree.create_timer(0.3).timeout.connect(func(): _impact_budget = maxi(0, _impact_budget - 1))
 
 
 func _spawn_hit_ring(world_pos: Vector3, crit: bool) -> void:

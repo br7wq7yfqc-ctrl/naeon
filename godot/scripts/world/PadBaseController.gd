@@ -363,6 +363,7 @@ func _spawn_claim_fx(col: Color) -> void:
 	var NP = load("res://scripts/fx/NeonParticles.gd")
 	if NP:
 		NP.claim_radial(global_position, col, get_tree())
+		return
 	var p := GPUParticles3D.new()
 	p.amount = 24
 	p.lifetime = 0.7

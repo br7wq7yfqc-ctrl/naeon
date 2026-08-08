@@ -76,7 +76,7 @@ static func impact_burst(at: Vector3, color: Color, tree: SceneTree, crit: bool 
 	if tree == null or tree.current_scene == null:
 		return
 	var p := GPUParticles3D.new()
-	p.amount = 14 if crit else 8
+	p.amount = 8 if crit else 8
 	p.lifetime = 0.4
 	p.one_shot = true
 	p.explosiveness = 1.0
