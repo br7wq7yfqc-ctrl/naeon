@@ -167,6 +167,7 @@ func _build_shell() -> void:
 	call_deferred("_ensure_surface_flora")
 	call_deferred("_ensure_surface_water")
 	call_deferred("_ensure_cave_mouths")
+	call_deferred("_ensure_cave_interior")
 
 	_terrain_edit = Node3D.new()
 	_terrain_edit.set_script(_TerrainEdit)
@@ -185,6 +186,9 @@ func set_observer(node: Node3D) -> void:
 	var cv = get_node_or_null("CaveMouthField")
 	if cv and cv.has_method("set_observer"):
 		cv.set_observer(node)
+	var ci = get_node_or_null("CaveInterior")
+	if ci and ci.has_method("set_observer"):
+		ci.set_observer(node)
 	var _fl := get_node_or_null("SurfaceFlora")
 	if _fl and _fl.has_method("set_observer"):
 		_fl.set_observer(node)
@@ -526,6 +530,14 @@ func _spawn_pad_density() -> void:
 		_pads_root.add_child(life)
 		if life.has_method("build"):
 			life.build(6, fac)
+	if not _pads_root.has_node("CityNightLights"):
+		var city := Node3D.new()
+		var cscr: Script = load("res://scripts/world/CityNightLights.gd") as Script
+		city.set_script(cscr)
+		city.name = "CityNightLights"
+		_pads_root.add_child(city)
+		if city.has_method("build"):
+			city.call("build", fac, 26.0, 10)
 
 
 
@@ -577,6 +589,26 @@ func _ensure_surface_water() -> void:
 		w.call("set_observer", obs)
 	print("[PlanetBody] SurfaceWater ", pid)
 
+
+
+
+func _ensure_cave_interior() -> void:
+	if has_node("CaveInterior"):
+		return
+	var c := Node3D.new()
+	var scr: Script = load("res://scripts/world/CaveInterior.gd") as Script
+	c.set_script(scr)
+	c.name = "CaveInterior"
+	add_child(c)
+	var pid: String = str(planet_name)
+	if c.has_method("setup"):
+		c.call("setup", self, radius, pid, int(absi(pid.hash()) % 10000) + 9)
+	var obs: Node3D = null
+	if has_method("_resolve_observer"):
+		obs = _resolve_observer()
+	if obs and c.has_method("set_observer"):
+		c.call("set_observer", obs)
+	print("[PlanetBody] CaveInterior ", pid)
 
 func _ensure_cave_mouths() -> void:
 	if has_node("CaveMouthField"):
@@ -635,4 +667,10 @@ func _apply_surface_uniforms(mat: ShaderMaterial) -> void:
 	mat.set_shader_parameter("shore_color", Color(0.42, 0.38, 0.22))
 	mat.set_shader_parameter("seed", float(absi(str(planet_name).hash()) % 97))
 	mat.set_shader_parameter("sun_direction", _sun_dir if "_sun_dir" in self else Vector3(0.55, 0.75, 0.35))
-	mat.set_shader_parameter("emission_strength", 0.08)
+	mat.set_shader_parameter("emission_strength", 0.06)
+	mat.set_shader_parameter("city_intensity", 1.4)
+	mat.set_shader_parameter("city_density", 0.55)
+	if str(planet_name) == "Shard-Moon":
+		mat.set_shader_parameter("city_intensity", 0.35)
+	elif str(planet_name) == "ROT-Hive":
+		mat.set_shader_parameter("city_light_color", Color(1.0, 0.35, 0.5))
