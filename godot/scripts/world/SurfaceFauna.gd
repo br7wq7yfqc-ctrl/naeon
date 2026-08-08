@@ -24,6 +24,7 @@ var _built: bool = false
 var _planet_id: String = "Nex-Prime"
 var _biomes: PackedStringArray = PackedStringArray()
 var _relief_profile: Dictionary = {}
+var _chirp_t: float = 0.0
 
 
 func setup(planet: Node3D, radius: float, atmosphere_height: float, planet_id: String, seed_i: int = 2) -> void:
@@ -224,6 +225,11 @@ func _place_cell(cell: Vector2i, alt: float) -> void:
 
 func _animate(delta: float) -> void:
 	var t: float = Time.get_ticks_msec() * 0.001
+	_chirp_t += delta
+	if _chirp_t > 6.5:
+		_chirp_t = 0.0
+		if AudioDirector and AudioDirector.has_method("play_fauna_chirp"):
+			AudioDirector.play_fauna_chirp()
 	for i in _actors.size():
 		var a: Dictionary = _actors[i]
 		var node: Node3D = a.get("node") as Node3D
