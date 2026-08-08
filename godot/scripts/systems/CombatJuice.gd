@@ -9,7 +9,7 @@ var _flash_col: Color = Color(1, 0.2, 0.15, 0)
 var _hitstop_left: float = 0.0
 var _marker: Control
 var _marker_t: float = 0.0
-var _impact_budget: int = 0
+var _impact_budget: int = 12
 var _hurt_t: float = 0.0
 var _hurt_flash: ColorRect
 
@@ -55,6 +55,7 @@ func _ready() -> void:
 	set_process(true)
 
 func _process(delta: float) -> void:
+	_impact_budget = mini(12, _impact_budget + int(delta * 18.0))
 	if _hurt_t > 0.0:
 		_hurt_t = maxf(0.0, _hurt_t - delta)
 		if _hurt_flash:
@@ -71,6 +72,10 @@ func _process(delta: float) -> void:
 		_marker.modulate.a = clampf(_marker_t * 4.0, 0.0, 1.0)
 
 func hit_feedback(amount: float, world_pos: Vector3, crit: bool = false) -> void:
+	# Soft budget: when flooded, UI flash only (no numbers/particles)
+	var flooded := _impact_budget <= 0 and not crit
+	if not flooded:
+		_impact_budget = maxi(0, _impact_budget - 1)
 	_flash_col = Color(1.0, 0.85, 0.2, 0) if crit else Color(1.0, 0.25, 0.18, 0)
 	_flash_t = 0.16 if crit else 0.08
 	_marker_t = 0.18 if crit else 0.12

@@ -20,6 +20,7 @@ var _lane_hud: Label = null
 var dummy_scene: PackedScene = preload("res://scenes/combat/CombatDummy.tscn")
 
 func _ready() -> void:
+	_apply_arena_perf()
 	_phase0_arena_feel()
 	_ensure_clash_director()
 	print("[TestArena] Loaded — Aexion Clash slice")
@@ -95,9 +96,10 @@ func _spawn_dummies() -> void:
 	var gq := get_node_or_null("/root/GraphicsQuality")
 	if gq:
 		match int(gq.tier):
-			0: cap = mini(cap, 4)
-			1: cap = mini(cap, 6)
-			_: cap = table.size()
+			0: cap = mini(cap, 3)
+			1: cap = mini(cap, 5)
+			2: cap = mini(cap, 6)
+			_: cap = mini(cap, table.size())
 	for i in mini(table.size(), cap):
 		var entry = table[i]
 		var d: Node = dummy_scene.instantiate()
@@ -154,11 +156,24 @@ func _spawn_props() -> void:
 		[Vector3(0, 0, -16), "environments/gate_arch/gate_arch_cybernex_lod1.glb", 1.5],
 		[Vector3(-4, 0, 5), "environments/walkway_segment/walkway_segment_cybernex_lod2.glb", 1.2],
 	]
-	for entry in positions:
+	var prop_cap := positions.size()
+	var gq2 := get_node_or_null("/root/GraphicsQuality")
+	if gq2:
+		match int(gq2.tier):
+			0: prop_cap = mini(prop_cap, 6)
+			1: prop_cap = mini(prop_cap, 11)
+			_: prop_cap = positions.size()
+	# Prefer lod2 paths on LOW (string replace)
+	for i in mini(positions.size(), prop_cap):
+		var entry = positions[i]
+		var rel: String = str(entry[1])
+		if gq2 and int(gq2.tier) <= 1:
+			rel = rel.replace("_lod0.", "_lod2.").replace("_lod1.", "_lod2.")
 		var prop: Node3D = Node3D.new()
 		prop.set_script(prop_script)
-		prop.set("relative_path", str(entry[1]))
+		prop.set("relative_path", rel)
 		prop.set("scale_factor", float(entry[2]))
+		prop.set("add_static_collision", false)
 		add_child(prop)
 		prop.global_position = entry[0]
 
@@ -177,10 +192,35 @@ func _spawn_cover() -> void:
 		[Vector3(-10, 0, -1), Vector3(0.45, 1.2, 2.8)],
 		[Vector3(7, 0, 6), Vector3(2.0, 0.9, 0.4)],
 	]
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	var n_spots := spots.size()
+	if gq and int(gq.tier) == 0:
+		n_spots = 3
+	elif gq and int(gq.tier) == 1:
+		n_spots = 4
+	# Shared materials (avoid per-block StandardMaterial3D thrash)
+	var mat_a := StandardMaterial3D.new()
+	mat_a.albedo_color = Color(0.14, 0.16, 0.2)
+	mat_a.metallic = 0.55
+	mat_a.roughness = 0.55
+	mat_a.emission_enabled = true
+	mat_a.emission = Color(0.1, 0.45, 0.65)
+	mat_a.emission_energy_multiplier = 0.35
+	var mat_b := mat_a.duplicate() as StandardMaterial3D
+	mat_b.emission = Color(0.55, 0.12, 0.28)
+	var edge_a := StandardMaterial3D.new()
+	edge_a.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	edge_a.albedo_color = Color(0.2, 0.85, 1.0)
+	edge_a.emission_enabled = true
+	edge_a.emission = edge_a.albedo_color
+	edge_a.emission_energy_multiplier = 1.2
+	var edge_b := edge_a.duplicate() as StandardMaterial3D
+	edge_b.albedo_color = Color(0.95, 0.2, 0.4)
+	edge_b.emission = edge_b.albedo_color
 	var root_c := Node3D.new()
 	root_c.name = "CoverField"
 	add_child(root_c)
-	for i in spots.size():
+	for i in n_spots:
 		var e = spots[i]
 		var body := StaticBody3D.new()
 		body.collision_layer = 1
@@ -195,32 +235,21 @@ func _spawn_cover() -> void:
 		var bm := BoxMesh.new()
 		bm.size = e[1]
 		mi.mesh = bm
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = Color(0.14, 0.16, 0.2)
-		mat.metallic = 0.55
-		mat.roughness = 0.55
-		mat.emission_enabled = true
-		mat.emission = Color(0.1, 0.45, 0.65) if i % 2 == 0 else Color(0.55, 0.12, 0.28)
-		mat.emission_energy_multiplier = 0.45
-		mi.material_override = mat
+		mi.material_override = mat_a if i % 2 == 0 else mat_b
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
 		body.add_child(mi)
-		# Neon edge top
 		var edge := MeshInstance3D.new()
 		var eb := BoxMesh.new()
 		eb.size = Vector3(e[1].x * 0.95, 0.06, e[1].z * 0.95)
 		edge.mesh = eb
-		var em := StandardMaterial3D.new()
-		em.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		em.albedo_color = Color(0.2, 0.85, 1.0) if i % 2 == 0 else Color(0.95, 0.2, 0.4)
-		em.emission_enabled = true
-		em.emission = em.albedo_color
-		em.emission_energy_multiplier = 1.6
-		edge.material_override = em
+		edge.material_override = edge_a if i % 2 == 0 else edge_b
 		edge.position = Vector3(0, e[1].y * 0.5 + 0.02, 0)
 		edge.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		edge.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
 		body.add_child(edge)
 		root_c.add_child(body)
-	print("[TestArena] cover blocks ", spots.size())
+	print("[TestArena] cover blocks ", n_spots)
 
 func _spawn_turrets() -> void:
 	var tscn: PackedScene = load("res://scenes/combat/Turret.tscn")
@@ -231,7 +260,15 @@ func _spawn_turrets() -> void:
 		[Vector3(-11, 0, -6), "gROT"],
 		[Vector3(9, 0, 4), "Cybernex"],
 	]
-	for s in spots:
+	var tcap := spots.size()
+	var gqt := get_node_or_null("/root/GraphicsQuality")
+	if gqt:
+		match int(gqt.tier):
+			0: tcap = mini(tcap, 1)
+			1: tcap = mini(tcap, 2)
+			_: tcap = mini(tcap, spots.size())
+	for si in mini(spots.size(), tcap):
+		var s = spots[si]
 		var turr: Node = tscn.instantiate()
 		add_child(turr)
 		turr.global_position = s[0]
@@ -488,12 +525,24 @@ func _phase0_arena_feel() -> void:
 		e.tonemap_mode = Environment.TONE_MAPPER_ACES
 		e.adjustment_enabled = true
 		e.adjustment_saturation = 1.08
-	# Lane light pillars
-	for i in 3:
+	# Lane light pillars — tier-capped (omni lights are FPS killers on 1060)
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	var n_lights := 3
+	if gq:
+		match int(gq.tier):
+			0: n_lights = 1
+			1: n_lights = 2
+			_: n_lights = 3
+		if not bool(gq.glow):
+			var we2 := get_node_or_null("WorldEnvironment") as WorldEnvironment
+			if we2 and we2.environment:
+				we2.environment.glow_enabled = false
+	for i in n_lights:
 		var o := OmniLight3D.new()
 		o.light_color = [Color(0.2, 0.8, 1), Color(1, 0.85, 0.3), Color(1, 0.25, 0.4)][i]
-		o.light_energy = 0.9
-		o.omni_range = 16.0
+		o.light_energy = 0.55 if gq and int(gq.tier) == 0 else 0.75
+		o.omni_range = 10.0 if gq and int(gq.tier) == 0 else 14.0
+		o.shadow_enabled = false
 		o.position = Vector3([-22, 0, 22][i], 6.0, 0)
 		add_child(o)
 	if SessionObjectives:
@@ -515,14 +564,27 @@ func _spawn_clash_landmarks() -> void:
 		node.set_script(prop_script)
 		node.set("relative_path", str(s["rel"]))
 		node.set("scale_factor", float(s["s"]))
-		node.set("add_static_collision", true)
+		var gqm := get_node_or_null("/root/GraphicsQuality")
+		node.set("add_static_collision", false if gqm and int(gqm.tier) <= 1 else true)
+		if gqm and int(gqm.tier) <= 1:
+			node.set("relative_path", str(s["rel"]).replace("_lod1.", "_lod2."))
 		add_child(node)
 		node.position = s["pos"]
 	print("[TestArena] clash landmarks placed")
-	for pos in [Vector3(0, 6, -48), Vector3(0, 6, 48), Vector3(-28, 5, -10), Vector3(28, 5, -10)]:
+	var lm_pos: Array = [Vector3(0, 6, -48), Vector3(0, 6, 48), Vector3(-28, 5, -10), Vector3(28, 5, -10)]
+	var gql := get_node_or_null("/root/GraphicsQuality")
+	var lm_n := lm_pos.size()
+	if gql:
+		match int(gql.tier):
+			0: lm_n = 0  # directional only on LOW
+			1: lm_n = 2
+			_: lm_n = lm_pos.size()
+	for i in lm_n:
+		var pos: Vector3 = lm_pos[i]
 		var o := OmniLight3D.new()
-		o.light_energy = 1.2
-		o.omni_range = 14.0
+		o.light_energy = 0.7
+		o.omni_range = 11.0
+		o.shadow_enabled = false
 		o.light_color = Color(0.4, 0.85, 1.0) if pos.z < 0 else Color(1.0, 0.3, 0.45)
 		o.position = pos
 		add_child(o)
@@ -542,6 +604,11 @@ func _ensure_clash_director() -> void:
 func _soft_neon_ambient() -> void:
 	## Cheap neon pillars (no particles) for Arena readability under budget.
 	var spots := [Vector3(0,0,-14), Vector3(12,0,2), Vector3(-12,0,2)]
+	var gqa := get_node_or_null("/root/GraphicsQuality")
+	if gqa and int(gqa.tier) == 0:
+		spots = [Vector3(0,0,-14)]
+	elif gqa and int(gqa.tier) == 1:
+		spots = [Vector3(0,0,-14), Vector3(12,0,2)]
 	var root_n := Node3D.new()
 	root_n.name = "NeonAmbient"
 	add_child(root_n)
@@ -562,3 +629,40 @@ func _soft_neon_ambient() -> void:
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		root_n.add_child(mi)
 	print("[TestArena] soft neon ambient")
+
+
+
+func _apply_arena_perf() -> void:
+	## Clash FPS envelope for min-spec (RTX 1060 3GB floor).
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	var tier := 1
+	if gq:
+		tier = int(gq.tier)
+		if gq.has_method("apply_tier"):
+			gq.apply_tier(tier)  # refresh viewport MSAA/shadows
+	var we := get_node_or_null("WorldEnvironment") as WorldEnvironment
+	if we and we.environment:
+		var e := we.environment
+		e.ssao_enabled = false
+		e.ssil_enabled = false
+		e.sdfgi_enabled = false
+		e.volumetric_fog_enabled = false
+		e.glow_enabled = tier >= 2
+		if tier <= 1:
+			e.glow_intensity = 0.0
+			e.adjustment_enabled = tier >= 1
+		e.fog_enabled = false
+	# Directional light: one shadow caster max
+	for c in get_children():
+		if c is DirectionalLight3D:
+			var dl := c as DirectionalLight3D
+			dl.shadow_enabled = tier >= 1
+			if tier == 0:
+				dl.light_energy = minf(dl.light_energy, 0.85)
+			elif tier == 1:
+				dl.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+		if c is OmniLight3D:
+			(c as OmniLight3D).shadow_enabled = false
+	# HUD refresh budget already 10Hz; mark FPS-friendly
+	Engine.max_fps = 0  # uncapped; GPU-bound preferred over artificial 30
+	print("[TestArena] arena perf tier=", tier)

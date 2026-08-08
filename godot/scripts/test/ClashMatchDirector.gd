@@ -98,22 +98,34 @@ func _flash(msg: String) -> void:
 	if GameManager:
 		GameManager.toast_requested.emit(msg)
 
+var _lbl_banner: Label
+var _lbl_lanes: Label
+var _lbl_score: Label
+var _lbl_cache_t: float = 0.0
+
 func _process(delta: float) -> void:
 	_tick_accum += delta
-	if _tick_accum < 0.15:
+	var tick_need := 0.25
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	if gq and int(gq.tier) == 0:
+		tick_need = 0.4
+	if _tick_accum < tick_need:
 		return
 	_tick_accum = 0.0
+	_lbl_cache_t += tick_need
+	if _lbl_banner == null or _lbl_cache_t > 2.0:
+		_lbl_cache_t = 0.0
+		_lbl_banner = _find_label("MatchBanner")
+		_lbl_lanes = _find_label("LaneBar")
+		_lbl_score = _find_label("ScoreLine")
 	_t += delta
 	# Soft passive lane drift (alive match feel)
 	if int(_t) % 7 == 0 and fmod(_t, 1.0) < delta:
 		for i in 3:
 			_lane_pressure[i] = clampf(float(_lane_pressure[i]) + randf_range(-0.02, 0.015), 0.08, 0.92)
-	var top := _hud.get_node_or_null("Control/MatchBanner") as Label
-	# path may differ — search
-	if top == null:
-		top = _find_label("MatchBanner")
-	var lanes := _find_label("LaneBar")
-	var score := _find_label("ScoreLine")
+	var top := _lbl_banner
+	var lanes := _lbl_lanes
+	var score := _lbl_score
 	if top:
 		top.text = _banner if _t < 4.0 or int(_t) % 12 < 3 else "AEXION CLASH  ·  TOP / MID / BOT  ·  soft War Score only"
 	if lanes:

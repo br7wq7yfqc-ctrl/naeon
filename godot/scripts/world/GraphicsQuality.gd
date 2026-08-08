@@ -109,3 +109,19 @@ func _apply_to_viewport() -> void:
 	else:
 		vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED
 	RenderingServer.directional_shadow_atlas_set_size(shadow_size, true)
+	_apply_env_flags()
+
+
+
+func _apply_env_flags() -> void:
+	var tree := get_tree()
+	if tree == null:
+		return
+	var we := tree.root.find_child("WorldEnvironment", true, false)
+	if we is WorldEnvironment and (we as WorldEnvironment).environment:
+		var e: Environment = (we as WorldEnvironment).environment
+		e.glow_enabled = glow
+		e.ssao_enabled = ssao
+		e.ssil_enabled = ssil
+		if not glow:
+			e.glow_intensity = 0.0

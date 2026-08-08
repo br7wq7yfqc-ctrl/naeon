@@ -59,10 +59,22 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= gravity * delta
 
 	_ai_accum += delta
-	var do_ai := _ai_accum >= 0.1
+	var ai_need := 0.1
+	if not can_move:
+		ai_need = 0.28  # static lane holds — rare retarget
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	if gq and int(gq.tier) == 0:
+		ai_need *= 1.6
+	var do_ai := _ai_accum >= ai_need
 	if do_ai:
 		_ai_accum = 0.0
 	var player := _find_player() if do_ai or _player_cache == null else _player_cache
+	# Far culling: no move/look when far from player (still take damage)
+	if player and global_position.distance_squared_to(player.global_position) > 55.0 * 55.0:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		move_and_slide()
+		return
 	if player and can_move:
 		var to_p: Vector3 = player.global_position - global_position
 		to_p.y = 0.0

@@ -37,7 +37,14 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_ai_accum += delta
-	if _ai_accum < 0.12:
+	var ai_dt := 0.12
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	if gq:
+		match int(gq.tier):
+			0: ai_dt = 0.22
+			1: ai_dt = 0.16
+			_: ai_dt = 0.12
+	if _ai_accum < ai_dt:
 		return
 	_ai_accum = 0.0
 	if not _alive:
