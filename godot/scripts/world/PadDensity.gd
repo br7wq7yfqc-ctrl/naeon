@@ -35,6 +35,22 @@ func build(faction: String = "Cybernex", radius: float = 28.0, count: int = 18) 
 	rng.seed = 40401
 	var fx := "grot" if faction == "gROT" else "cybernex"
 	var neon := Color(0.95, 0.2, 0.4) if faction == "gROT" else Color(0.25, 0.75, 1.0)
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	var light_budget := 6
+	if gq:
+		match int(gq.tier):
+			0:
+				count = mini(count, 6)
+				light_budget = 1
+			1:
+				count = mini(count, 10)
+				light_budget = 3
+			2:
+				count = mini(count, 14)
+				light_budget = 5
+			_:
+				light_budget = 8
+	var lights_spawned := 0
 	for i in count:
 		var rel: String = PROPS[i % PROPS.size()]
 		rel = rel.replace("_cybernex_", "_%s_" % fx)
@@ -42,6 +58,8 @@ func build(faction: String = "Cybernex", radius: float = 28.0, count: int = 18) 
 		var r := radius * (0.35 + 0.55 * rng.randf())
 		var p: Node3D = Node3D.new()
 		p.set_script(prop_script)
+		if gq and int(gq.tier) <= 1:
+			rel = rel.replace("_lod1.", "_lod2.").replace("_lod0.", "_lod2.")
 		p.set("relative_path", rel)
 		var is_station := "station_habitat" in rel
 		var is_flood := "floodlight" in rel
@@ -51,26 +69,29 @@ func build(faction: String = "Cybernex", radius: float = 28.0, count: int = 18) 
 		add_child(p)
 		p.position = Vector3(cos(ang) * r, 0.0, sin(ang) * r)
 		p.rotation.y = rng.randf() * TAU
-		# Soft flood / crystal lights (readable pad night feel)
-		if is_flood or is_spire or i % 5 == 0:
+		# Soft flood / crystal lights — hard budget (omni = FPS tax)
+		if lights_spawned < light_budget and (is_flood or is_spire or i % 7 == 0):
 			var o := OmniLight3D.new()
 			o.light_color = neon if is_spire else Color(1.0, 0.92, 0.75)
-			o.light_energy = 2.8 if is_flood else 1.6
-			o.omni_range = 22.0 if is_flood else 12.0
-			o.omni_attenuation = 1.4
+			o.light_energy = 1.4 if is_flood else 0.9
+			o.omni_range = 14.0 if is_flood else 9.0
+			o.omni_attenuation = 1.6
 			o.shadow_enabled = false
 			o.position = Vector3(0, 4.5 if is_flood else 2.2, 0)
 			p.add_child(o)
+			lights_spawned += 1
 	var core: Node3D = Node3D.new()
 	core.set_script(prop_script)
 	core.set("relative_path", "props/claim_beacon/claim_beacon_%s_lod1.glb" % fx)
 	core.set("scale_factor", 1.5)
 	core.set("add_static_collision", false)
 	add_child(core)
-	var core_l := OmniLight3D.new()
-	core_l.light_color = neon
-	core_l.light_energy = 3.2
-	core_l.omni_range = 18.0
-	core_l.position = Vector3(0, 3.0, 0)
-	core.add_child(core_l)
-	print("[PadDensity] props=", count, " faction=", faction, " lights=on")
+	if lights_spawned < light_budget:
+		var core_l := OmniLight3D.new()
+		core_l.light_color = neon
+		core_l.light_energy = 1.6
+		core_l.omni_range = 12.0
+		core_l.shadow_enabled = false
+		core_l.position = Vector3(0, 3.0, 0)
+		core.add_child(core_l)
+	print("[PadDensity] props=", count, " faction=", faction, " lights=", lights_spawned)

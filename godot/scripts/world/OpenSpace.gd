@@ -471,9 +471,19 @@ func _bind_soft_net_actor(actor: Node3D) -> void:
 	print("[OpenSpace] soft net actor → ", actor.name)
 
 
+var _hud_accum: float = 0.0
+var _os_perf_applied: bool = false
+
 func _process(delta: float) -> void:
-	_update_altitude_fog()
-	_update_hud()
+	if not _os_perf_applied:
+		_os_perf_applied = true
+		_apply_openspace_perf()
+	_hud_accum += delta
+	# Fog + HUD ~8Hz (was every frame — string build is not free)
+	if _hud_accum >= 0.12:
+		_hud_accum = 0.0
+		_update_altitude_fog()
+		_update_hud()
 	# Soft EVA timer (warning only — no death Phase 0)
 	if _eva_mode and player and is_instance_valid(player) and "eva_time" in player:
 		if float(player.eva_time) > 90.0:
@@ -906,3 +916,28 @@ func _safe_free_walker() -> void:
 	if old.is_in_group("player"):
 		old.remove_from_group("player")
 	old.call_deferred("queue_free")
+
+
+
+func _apply_openspace_perf() -> void:
+	## Space view: kill expensive post-FX; omni shadows already off on pads.
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	var tier := int(gq.tier) if gq else 1
+	var we := get_node_or_null("WorldEnvironment") as WorldEnvironment
+	if we == null:
+		we = find_child("WorldEnvironment", true, false) as WorldEnvironment
+	if we and we.environment:
+		var e := we.environment
+		e.ssao_enabled = (tier >= 2 and bool(gq.ssao)) if gq else false
+		e.ssil_enabled = tier >= 3
+		e.sdfgi_enabled = false
+		e.volumetric_fog_enabled = false
+		e.glow_enabled = tier >= 2
+		if tier <= 1:
+			e.glow_intensity = 0.0
+			e.glow_bloom = 0.0
+		e.fog_enabled = tier >= 1  # altitude fog script may still tint
+	# Directional only shadows
+	for n in get_tree().get_nodes_in_group("planets") if get_tree() else []:
+		pass
+	print("[OpenSpace] perf tier=", tier)

@@ -73,7 +73,13 @@ func _build_mouths() -> void:
 
 func _process(delta: float) -> void:
 	_accum += delta
-	if _accum < STREAM_HZ:
+	var hz := STREAM_HZ
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	if gq and int(gq.tier) == 0:
+		hz = 0.9
+	elif gq and int(gq.tier) == 1:
+		hz = STREAM_HZ * 1.25
+	if _accum < hz:
 		return
 	_accum = 0.0
 	if _planet == null or _observer == null or not is_instance_valid(_observer):

@@ -12,8 +12,8 @@ const _Relief = preload("res://scripts/world/PlanetRelief.gd")
 const CELL_M := 40.0
 const PATCH_SIZE := 38.0
 const DEFAULT_RES := 10
-const LOAD_BUDGET := 2          ## meshes built per stream tick
-const STREAM_HZ := 0.2          ## 5 Hz stream tick
+const LOAD_BUDGET := 2          ## meshes built per stream tick (scaled in _process)
+const STREAM_HZ := 0.28         ## ~3.5 Hz default; LOW slower
 const MESH_CACHE_MAX := 48
 
 var _planet: Node3D
@@ -97,7 +97,24 @@ func _apply_quality() -> void:
 
 func _process(delta: float) -> void:
 	_accum += delta
-	if _accum < STREAM_HZ:
+	var hz := STREAM_HZ
+	var budget := LOAD_BUDGET
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	if gq:
+		match int(gq.tier):
+			0:
+				hz = 0.45
+				budget = 1
+			1:
+				hz = 0.32
+				budget = 1
+			2:
+				hz = 0.28
+				budget = 2
+			_:
+				hz = 0.22
+				budget = 2
+	if _accum < hz:
 		return
 	_accum = 0.0
 	if _planet == null or _observer == null or not is_instance_valid(_observer):
@@ -115,14 +132,15 @@ func _process(delta: float) -> void:
 		_enqueue_needed(cell)
 		_unload_far(cell)
 	# FloatingOrigin may shift planet — cheap refresh of live xforms
-	_xform_accum += STREAM_HZ
-	if _xform_accum >= 1.0:
+	_xform_accum += hz
+	var xneed := 1.2 if gq and int(gq.tier) <= 1 else 1.0
+	if _xform_accum >= xneed:
 		_xform_accum = 0.0
 		for c in _live.keys():
 			_refresh_xform(c)
 	# Budgeted builds
 	var built := 0
-	while built < LOAD_BUDGET and not _queue.is_empty():
+	while built < budget and not _queue.is_empty():
 		var c: Vector2i = _queue.pop_front()
 		if _live.has(c):
 			continue

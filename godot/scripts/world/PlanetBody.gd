@@ -206,8 +206,16 @@ func set_observer(node: Node3D) -> void:
 
 func _process(delta: float) -> void:
 	_update_accum += delta
-	# Throttle LOD checks ~8 Hz — enough for free flight
-	if _update_accum < 0.12:
+	# Throttle: slower when far (impostor) — saves CPU with many planets
+	var tick := 0.12
+	if _current_lod >= 3:
+		tick = 0.35
+	elif _current_lod == 2:
+		tick = 0.2
+	var gq0 := get_node_or_null("/root/GraphicsQuality")
+	if gq0 and int(gq0.tier) == 0:
+		tick *= 1.35
+	if _update_accum < tick:
 		return
 	_update_accum = 0.0
 	var obs := _resolve_observer()
@@ -233,6 +241,7 @@ func _process(delta: float) -> void:
 	_update_atmosphere(dist, lod, obs)
 	# Pad streaming
 	_update_pads(dist)
+	_sync_surface_visibility(dist)
 	# Disable collision when very far (saves broadphase) — re-enable near
 	var need_col := dist < radius + 800.0
 	if need_col != _collision_enabled:
@@ -287,15 +296,27 @@ func _apply_lod(lod: int) -> void:
 func _update_pads(dist: float) -> void:
 	if not has_base:
 		return
-	if dist < pad_stream_dist:
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	var stream_d := pad_stream_dist
+	var glb_d := radius + 180.0
+	var base_d := radius + 220.0
+	if gq:
+		match int(gq.tier):
+			0:
+				stream_d = radius + 220.0
+				glb_d = radius + 90.0
+				base_d = radius + 110.0
+			1:
+				stream_d = radius + 320.0
+				glb_d = radius + 140.0
+				base_d = radius + 170.0
+	if dist < stream_d:
 		if not _pads_built:
 			_build_pads()
 		_pads_root.visible = true
-		# Load GLB detail only when close
-		if dist < radius + 180.0 and not _glb_loaded:
+		if dist < glb_d and not _glb_loaded:
 			_load_glb_pads()
-		# Stream full base cluster on primary pad when very close
-		if dist < radius + 220.0:
+		if dist < base_d:
 			_stream_bases()
 	else:
 		if _pads_root:
@@ -529,15 +550,33 @@ func _spawn_pad_density() -> void:
 	var fac := "Cybernex"
 	if "faction_base" in self:
 		fac = str(faction_base)
+	var dens_n := 14
+	var life_n := 6
+	var city_n := 10
+	var gqp := get_node_or_null("/root/GraphicsQuality")
+	if gqp:
+		match int(gqp.tier):
+			0:
+				dens_n = 5
+				life_n = 2
+				city_n = 4
+			1:
+				dens_n = 9
+				life_n = 4
+				city_n = 7
+			2:
+				dens_n = 12
+				life_n = 5
+				city_n = 9
 	if d.has_method("build"):
-		d.build(fac, 22.0, 14)
+		d.build(fac, 22.0, dens_n)
 	if not _pads_root.has_node("PadAmbientLife"):
 		var life := Node3D.new()
 		life.set_script(load("res://scripts/world/PadAmbientLife.gd"))
 		life.name = "PadAmbientLife"
 		_pads_root.add_child(life)
 		if life.has_method("build"):
-			life.build(6, fac)
+			life.build(life_n, fac)
 	if not _pads_root.has_node("CityNightLights"):
 		var city := Node3D.new()
 		var cscr: Script = load("res://scripts/world/CityNightLights.gd") as Script
@@ -545,7 +584,7 @@ func _spawn_pad_density() -> void:
 		city.name = "CityNightLights"
 		_pads_root.add_child(city)
 		if city.has_method("build"):
-			city.call("build", fac, 26.0, 10)
+			city.call("build", fac, 26.0, city_n)
 
 
 
@@ -718,3 +757,23 @@ func relief_height_at(world_pos: Vector3) -> float:
 	var north: Vector3 = east.cross(dir).normalized()
 	var to: Vector3 = world_pos - global_position
 	return float(_R.height_at(to.dot(east), to.dot(north), int(absi(str(planet_name).hash()) % 10000), prof))
+
+
+
+func _sync_surface_visibility(dist: float) -> void:
+	## Park expensive surface streams when not near planet.
+	var near_surf := dist < radius + 160.0
+	var mid_surf := dist < radius + 280.0
+	for nm in ["SurfaceDetail", "SurfaceFlora", "SurfaceFauna", "SurfaceWater", "CaveMouthField", "LandscapeFeatures", "CaveInterior"]:
+		var n := get_node_or_null(nm)
+		if n == null:
+			continue
+		var want := near_surf
+		if nm in ["SurfaceFlora", "SurfaceFauna", "CaveMouthField", "LandscapeFeatures"]:
+			want = near_surf
+		elif nm == "SurfaceWater":
+			want = mid_surf
+		elif nm == "SurfaceDetail":
+			want = mid_surf
+		n.visible = want
+		n.set_process(want)

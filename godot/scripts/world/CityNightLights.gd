@@ -54,7 +54,8 @@ func set_density(d: float, faction: String = "") -> void:
 	for L in _lights:
 		if L and is_instance_valid(L):
 			L.light_color = col
-			L.light_energy = 0.7 * _density
+			L.light_energy = 0.45 * _density
+			L.shadow_enabled = false
 			L.visible = _density > 0.55
 
 
@@ -129,9 +130,15 @@ func _rebuild(count: int) -> void:
 			_lights.append(light)
 
 
-func _process(_delta: float) -> void:
+var _pulse_accum: float = 0.0
+func _process(delta: float) -> void:
+	# Pulse lights ~5Hz — not every frame
+	_pulse_accum += delta
+	if _pulse_accum < 0.2:
+		return
+	_pulse_accum = 0.0
 	var t := Time.get_ticks_msec() * 0.001
 	for i in _lights.size():
 		var L: OmniLight3D = _lights[i]
 		if L and is_instance_valid(L) and L.visible:
-			L.light_energy = (0.7 + 0.35 * sin(t * 1.7 + float(i))) * _density
+			L.light_energy = (0.45 + 0.25 * sin(t * 1.7 + float(i))) * _density

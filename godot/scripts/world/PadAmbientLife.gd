@@ -54,7 +54,12 @@ func build(count: int = 5, faction: String = Cybernex) -> void:
 	print([PadAmbientLife] n=, n,  faction=, faction)
 
 
+var _life_accum: float = 0.0
 func _process(delta: float) -> void:
+	_life_accum += delta
+	if _life_accum < 0.2:
+		return
+	_life_accum = 0.0
 	if _actors.is_empty():
 		return
 	var t := Time.get_ticks_msec() * 0.001
