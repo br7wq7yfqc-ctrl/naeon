@@ -3,18 +3,19 @@
 ## Mode
 holistic-economical + sequential · **code-first, 0 Tripo**
 
-## This session
+## Shipped this slice
 | Item | Status |
 |------|--------|
-| ShipHullAmbient (rim/engine/cabin + modes) | done |
-| CombatJuice hit ring (CRIT/normal) | done |
-| CombatDummy stagger + hit pop | done |
-| Pad claim pylon pulse light | done |
+| EnergyEconomy single source | done |
+| Ability kit costs + channel refund | done |
+| Ship get/spend_energy + bolt costs | done |
+| S-INT bulkheads / hatch arch / seat glow | done |
+| InteriorDirector LayerContext + hatch FX | done |
 
-## Next (queue)
-1. Ability energy cost consistency pass
-2. Ship interior pocket (S-INT) scaffold deepen
-3. Credit-check Tripo cave crystal only if balance allows
-4. Batch DMG on owner request only
+## Next
+1. Seat [F] → pilot seamless path harden
+2. EVA exit from ship hatch
+3. Tripo crystal only after credit check
+4. Batch DMG on owner request
 
-Updated: 2026-08-08T01:18:11.633894+00:00
+Updated: 2026-08-08T01:22:21.266026+00:00

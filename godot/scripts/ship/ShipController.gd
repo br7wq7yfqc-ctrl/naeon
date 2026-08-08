@@ -328,7 +328,7 @@ func _physics_process(delta: float) -> void:
 
 	_fire_cd = max(0.0, _fire_cd - delta)
 	shields = min(max_shields, shields + 4.0 * delta)
-	energy = min(max_energy, energy + 8.0 * delta)
+	energy = min(max_energy, energy + 8.0 * delta)  # EnergyEconomy.REGEN_SHIP
 
 	var axes: Vector3 = _ship_axis()
 	var thrust: float = (base_thrust + _module_thrust()) * _thrust_mult()
@@ -522,9 +522,14 @@ func _fire_weapon() -> void:
 		AudioDirector.play_hit(false)
 	if CombatJuice:
 		CombatJuice.hit_feedback(2.0, global_position - global_transform.basis.z * 3.0)
-	var e_cost := 4.0 if flight_mode != FlightMode.NAV else 5.5
-	if op_mode == 1:
-		e_cost *= 1.35
+	var e_cost: float = 5.0
+	var EE = load("res://scripts/systems/EnergyEconomy.gd")
+	if EE:
+		e_cost = float(EE.ship_bolt_cost(int(flight_mode), op_mode))
+	else:
+		e_cost = 5.5 if flight_mode == FlightMode.NAV else 5.0
+		if op_mode == 1:
+			e_cost *= 1.35
 	if energy < e_cost:
 		return
 	energy -= e_cost
@@ -1069,3 +1074,11 @@ func _tick_hull_ambient(axes: Vector3, _delta: float) -> void:
 		_hull_ambient.call("set_op_mode", op_mode)
 	if _hull_ambient.has_method("set_landed"):
 		_hull_ambient.call("set_landed", is_landed)
+
+
+func get_energy() -> float:
+	return energy
+
+
+func spend_energy(amount: float) -> void:
+	energy = maxf(0.0, energy - amount)

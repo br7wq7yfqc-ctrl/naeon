@@ -49,7 +49,10 @@ func can_activate(caster: Node) -> bool:
 	return true
 
 func activate(caster: Node, target = null) -> void:
-	if caster != null and caster.has_method("spend_energy"):
+	var EE = load("res://scripts/systems/EnergyEconomy.gd")
+	if EE and caster != null:
+		EE.spend(caster, energy_cost)
+	elif caster != null and caster.has_method("spend_energy"):
 		caster.spend_energy(energy_cost)
 	if biomass_cost > 0.0 and caster != null and caster.has_method("spend_biomass"):
 		caster.spend_biomass(biomass_cost)

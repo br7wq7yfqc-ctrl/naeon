@@ -1,10 +1,10 @@
 extends RefCounted
 class_name AbilityKitCatalog
-## Balanced cross-mode ability kits (soft only — no P2W power from economy).
-## Q/E/R/F map to indices 0..3 in AbilitySystem.
+## Balanced cross-mode ability kits — costs from EnergyEconomy (single source).
+
+const EE = preload("res://scripts/systems/EnergyEconomy.gd")
 
 static func kit_for_faction(faction: String) -> Array:
-	## Returns Array[Ability]
 	var out: Array = []
 	out.append(_pulse())
 	if faction == "gROT":
@@ -21,8 +21,8 @@ static func _pulse() -> Ability:
 	var a := Ability.new()
 	a.ability_name = "Pulse Bolt"
 	a.description = "Primary soft bolt"
-	a.cooldown = 0.55
-	a.energy_cost = 6.0
+	a.cooldown = EE.CD_PULSE
+	a.energy_cost = EE.PULSE_BOLT
 	a.damage = 11.0
 	a.range = 24.0
 	a.targeting = Ability.TargetingType.TARGET_DIRECTION
@@ -34,8 +34,8 @@ static func _firewall() -> Ability:
 	var a := Ability.new()
 	a.ability_name = "Nex-Firewall"
 	a.description = "Shield window + soft cleanse"
-	a.cooldown = 16.0
-	a.energy_cost = 28.0
+	a.cooldown = EE.CD_FIREWALL
+	a.energy_cost = EE.NEX_FIREWALL
 	a.duration = 4.5
 	a.heal = 12.0
 	a.is_firewall = true
@@ -48,8 +48,8 @@ static func _probe() -> Ability:
 	var a := Ability.new()
 	a.ability_name = "System Probe"
 	a.description = "Channeled claim/recon pulse"
-	a.cooldown = 11.0
-	a.energy_cost = 22.0
+	a.cooldown = EE.CD_PROBE
+	a.energy_cost = EE.SYSTEM_PROBE
 	a.damage = 7.0
 	a.range = 18.0
 	a.is_hacking = true
@@ -63,8 +63,8 @@ static func _hack_grot() -> Ability:
 	var a := Ability.new()
 	a.ability_name = "Hack"
 	a.description = "Channeled infection claim push"
-	a.cooldown = 11.0
-	a.energy_cost = 22.0
+	a.cooldown = EE.CD_HACK
+	a.energy_cost = EE.HACK
 	a.damage = 12.0
 	a.range = 18.0
 	a.is_hacking = true
@@ -79,8 +79,8 @@ static func _surge() -> Ability:
 	var a := Ability.new()
 	a.ability_name = "Rot Surge"
 	a.description = "Close burst"
-	a.cooldown = 5.0
-	a.energy_cost = 12.0
+	a.cooldown = EE.CD_SURGE
+	a.energy_cost = EE.ROT_SURGE
 	a.damage = 16.0
 	a.effect_color = Color(0.9, 0.12, 0.4)
 	return a
@@ -90,7 +90,7 @@ static func _form_cycle() -> Ability:
 	var a := Ability.new()
 	a.ability_name = "Form Cycle"
 	a.description = "Cycle cyber-animal form (identity, not power)"
-	a.cooldown = 2.0
-	a.energy_cost = 0.0
+	a.cooldown = EE.CD_FORM
+	a.energy_cost = EE.FORM_CYCLE
 	a.targeting = Ability.TargetingType.SELF
 	return a

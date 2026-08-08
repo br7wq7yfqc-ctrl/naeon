@@ -58,6 +58,12 @@ func try_activate(index: int, target = null) -> bool:
 			owner_character
 		)
 		if not ok:
+			if owner_character and ability.energy_cost > 0.0:
+				var EE = load("res://scripts/systems/EnergyEconomy.gd")
+				if EE:
+					EE.refund(owner_character, ability.energy_cost)
+			_pending_channel_ability = null
+			_pending_channel_target = null
 			ability_failed.emit(ability, "Cannot channel")
 			return false
 		# Short anti-spam lock; full CD applied on complete

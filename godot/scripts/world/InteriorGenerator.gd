@@ -7,6 +7,8 @@ const _NEON_CX := Color(0.15, 0.85, 1.0)
 const _NEON_GR := Color(0.95, 0.12, 0.42)
 
 static func _try_glb(parent: Node3D, rel: String, pos: Vector3, scl: float = 1.0) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	var ap = load("res://scripts/assets/AssetPaths.gd")
 	if ap == null:
 		return
@@ -255,4 +257,63 @@ static func build_from_profile(profile_id: String, faction: String = "Cybernex")
 	root.add_child(elabel)
 	_add_neon_strips(root, faction)
 	_interior_point_lights(root, neon)
+	
+	_strip_light(root, Vector3(0, 2.3, 3.5), Vector3(0.22, 0.05, 10), neon)
+	_ship_bulkheads(root, prof.get("rooms", []), neon)
+	_hatch_arch(root, hatch_pos, neon)
+	_seat_glow(root, seat_pos, neon)
+	_interior_point_lights(root, neon)
+	_add_neon_strips(root, faction)
 	return root
+
+
+
+static func _ship_bulkheads(root: Node3D, rooms: Array, neon: Color) -> void:
+	## Door-frame bulkheads between sequential rooms along +Z.
+	if rooms.size() < 2:
+		return
+	for i in range(rooms.size() - 1):
+		var a: Dictionary = rooms[i]
+		var b: Dictionary = rooms[i + 1]
+		var az: float = float(a["pos"].z) + float(a["size"].z) * 0.5
+		var bz: float = float(b["pos"].z) - float(b["size"].z) * 0.5
+		var mid_z: float = (az + bz) * 0.5
+		var frame := Node3D.new()
+		frame.name = "Bulkhead_%d" % i
+		frame.position = Vector3(0, 0, mid_z)
+		root.add_child(frame)
+		# Left/right pillars + top lintel (walk-through center)
+		_box_mesh(frame, Vector3(-1.35, 1.2, 0), Vector3(0.25, 2.4, 0.35), Color(0.1, 0.11, 0.14), true)
+		_box_mesh(frame, Vector3(1.35, 1.2, 0), Vector3(0.25, 2.4, 0.35), Color(0.1, 0.11, 0.14), true)
+		_box_mesh(frame, Vector3(0, 2.35, 0), Vector3(2.9, 0.2, 0.35), Color(0.1, 0.11, 0.14), true)
+		_box_mesh(frame, Vector3(0, 2.2, 0), Vector3(2.4, 0.06, 0.12), neon, false, true)
+
+
+static func _hatch_arch(root: Node3D, hatch_pos: Vector3, neon: Color) -> void:
+	var arch := Node3D.new()
+	arch.name = "HatchArch"
+	arch.position = hatch_pos
+	root.add_child(arch)
+	_box_mesh(arch, Vector3(-1.1, 1.1, 0), Vector3(0.2, 2.2, 0.25), Color(0.09, 0.1, 0.12), true)
+	_box_mesh(arch, Vector3(1.1, 1.1, 0), Vector3(0.2, 2.2, 0.25), Color(0.09, 0.1, 0.12), true)
+	_box_mesh(arch, Vector3(0, 2.2, 0), Vector3(2.4, 0.18, 0.25), Color(0.09, 0.1, 0.12), true)
+	_box_mesh(arch, Vector3(0, 0.08, 0), Vector3(2.0, 0.08, 0.5), neon, false, true)
+	var ol := OmniLight3D.new()
+	ol.light_color = neon
+	ol.light_energy = 2.4
+	ol.omni_range = 6.0
+	ol.position = Vector3(0, 1.8, 0.3)
+	ol.shadow_enabled = false
+	arch.add_child(ol)
+
+
+static func _seat_glow(root: Node3D, seat_pos: Vector3, neon: Color) -> void:
+	var seat_v := root.get_node_or_null("SeatVolume")
+	_box_mesh(root, seat_pos + Vector3(0, -0.05, 0), Vector3(1.4, 0.08, 1.4), neon.darkened(0.2), false, true)
+	var lab := Label3D.new()
+	lab.text = "PILOT SEAT  [F]"
+	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lab.font_size = 28
+	lab.modulate = neon
+	lab.position = seat_pos + Vector3(0, 1.8, 0)
+	root.add_child(lab)

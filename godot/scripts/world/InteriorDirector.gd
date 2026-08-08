@@ -88,8 +88,13 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 		# Flat gravity inside
 		player.set_planet_gravity_provider(self)
 	_inside = true
+	if LayerContext:
+		LayerContext.current_layer = "ship_int" if kind == "ship" else "station"
+		if "seamless_stage" in LayerContext:
+			LayerContext.seamless_stage = "interior"
+	_hatch_fx(true)
 	entered.emit(kind)
-	_toast("Entered %s · press I to exit" % kind)
+	_toast("Entered %s · I exit · F seat (ship)" % kind)
 	print("[Interior] entered ", kind)
 
 func gravity_at(global_pos: Vector3) -> Vector3:
@@ -111,6 +116,11 @@ func exit_interior() -> void:
 		_active.queue_free()
 		_active = null
 	_inside = false
+	if LayerContext:
+		LayerContext.current_layer = "surface" if _kind != "ship" else "space"
+		if "seamless_stage" in LayerContext:
+			LayerContext.seamless_stage = "world"
+	_hatch_fx(false)
 	exited.emit(_kind)
 	_toast("Exited interior")
 	print("[Interior] exited ", _kind)
@@ -124,3 +134,30 @@ func _toast(msg: String) -> void:
 		if n.has_method("push_toast"):
 			n.push_toast(msg, 2.5)
 			return
+
+
+func _hatch_fx(entering: bool) -> void:
+	## Soft hatch light on nearby ship hatch door (presentation only).
+	if _open_space == null:
+		return
+	var ship = null
+	if _open_space.has_method("get_player_ship"):
+		ship = _open_space.get_player_ship()
+	if ship == null and SoftScanCache:
+		ship = SoftScanCache.get_player()
+	if ship == null:
+		return
+	var door = ship.get_node_or_null("HatchPoint/HatchDoor")
+	if door == null:
+		door = ship.get_node_or_null("HatchDoor")
+	if door is MeshInstance3D:
+		var mi: MeshInstance3D = door
+		var mat = mi.material_override
+		if mat is StandardMaterial3D:
+			var sm: StandardMaterial3D = mat
+			sm.emission_enabled = true
+			sm.emission_energy_multiplier = 2.4 if entering else 0.6
+			if entering:
+				mi.rotation.y = deg_to_rad(75.0)
+			else:
+				mi.rotation.y = 0.0
