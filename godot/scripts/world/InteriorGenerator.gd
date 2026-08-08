@@ -252,7 +252,7 @@ static func _ensure_seat_markers(root: Node3D) -> void:
 		root.add_child(g)
 
 
-func build_from_profile(profile_id: String, faction: String = "Cybernex") -> Node3D:
+static func build_from_profile(profile_id: String, faction: String = "Cybernex") -> Node3D:
 	var cat = load("res://scripts/ship/ShipInteriorProfiles.gd")
 	var prof: Dictionary = cat.profile(profile_id)
 	var root := Node3D.new()
