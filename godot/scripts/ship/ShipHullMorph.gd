@@ -12,7 +12,9 @@ var _tween: Tween
 func _ready() -> void:
 	if get_child_count() == 0:
 		_build_proxy_plates()
-	call_deferred("_try_load_radiator_meshes")
+	# Skip GLB radiators on headless (dummy mesh RID → Parameter m is null spam)
+	if DisplayServer.get_name() != "headless":
+		call_deferred("_try_load_radiator_meshes")
 
 
 func _build_proxy_plates() -> void:
@@ -39,7 +41,7 @@ func _build_proxy_plates() -> void:
 		mi.material_override = mat
 		add_child(mi)
 		mi.position = s["pos"]
-		mi.visible = false  # show only while morphing/siege
+		mi.visible = false
 		var base_xf := mi.transform
 		var siege_xf := base_xf
 		if s.has("siege_pos"):
@@ -95,7 +97,6 @@ func op_mode_name() -> String:
 			return "CRUISE"
 
 
-
 func _try_load_radiator_meshes() -> void:
 	var AP = load("res://scripts/assets/AssetPaths.gd")
 	if AP == null:
@@ -118,6 +119,7 @@ func _try_load_radiator_meshes() -> void:
 		var scn := doc.generate_scene(st)
 		if scn == null:
 			continue
+		_strip_empty_meshes(scn)
 		add_child(scn)
 		scn.name = "RadiatorGLB_%s" % ("L" if side < 0 else "R")
 		scn.scale = Vector3.ONE * 0.55
@@ -127,3 +129,13 @@ func _try_load_radiator_meshes() -> void:
 		scn.visible = false
 		_plates.append({"node": scn, "base": base, "siege": siege})
 	print("[HullMorph] siege radiators loaded")
+
+
+func _strip_empty_meshes(n: Node) -> void:
+	if n is MeshInstance3D:
+		var mi: MeshInstance3D = n
+		if mi.mesh == null:
+			n.queue_free()
+			return
+	for c in n.get_children():
+		_strip_empty_meshes(c)

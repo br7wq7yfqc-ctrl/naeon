@@ -101,6 +101,8 @@ func _build_shell() -> void:
 	_apply_surface_uniforms(smat)
 	_mesh.material_override = smat
 	_surface_shader_mat = smat
+	# Always have a mesh RID (avoid Parameter m is null before first LOD)
+	_mesh.mesh = _Cache.sphere(radius, maxi(8, _segs_far))
 	add_child(_mesh)
 
 	# Atmosphere outer shell — fresnel limb shader (space view)

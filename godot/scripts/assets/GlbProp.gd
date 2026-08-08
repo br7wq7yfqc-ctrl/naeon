@@ -9,6 +9,7 @@ const _AP = preload("res://scripts/assets/AssetPaths.gd")
 func _ready() -> void:
 	_load_prop()
 
+
 func _load_prop() -> void:
 	var path: String = _AP.resolve(relative_path)
 	if not FileAccess.file_exists(path):
@@ -25,21 +26,45 @@ func _load_prop() -> void:
 		return
 	add_child(root)
 	root.scale = Vector3.ONE * scale_factor
+	_sanitize_meshes(root)
 	if add_static_collision:
 		_add_collision_from_meshes(root)
 	print("[GlbProp] Loaded ", path)
 
-func _add_collision_from_meshes(n: Node) -> void:
+
+func _sanitize_meshes(n: Node) -> void:
+	## Drop empty MeshInstance3D (prevents mesh_get_surface_count null RID spam).
 	if n is MeshInstance3D:
 		var mi: MeshInstance3D = n
-		if mi.mesh:
+		if mi.mesh == null:
+			mi.queue_free()
+			return
+	for c in n.get_children():
+		_sanitize_meshes(c)
+
+
+func _add_collision_from_meshes(n: Node) -> void:
+	# Headless dummy renderer has invalid mesh RIDs — skip trimesh/convex entirely
+	if DisplayServer.get_name() == "headless":
+		return
+	if n is MeshInstance3D:
+		var mi: MeshInstance3D = n
+		if mi.mesh != null:
 			var body := StaticBody3D.new()
 			var col := CollisionShape3D.new()
-			col.shape = mi.mesh.create_trimesh_shape()
+			var sh: Shape3D = null
+			# Convex can still touch surface_count; wrap carefully
+			sh = mi.mesh.create_convex_shape(true, true)
+			if sh == null:
+				var box := BoxShape3D.new()
+				box.size = Vector3(1.2, 1.2, 1.2)
+				sh = box
+			col.shape = sh
 			body.add_child(col)
 			mi.add_child(body)
 	for c in n.get_children():
 		_add_collision_from_meshes(c)
+
 
 func reload_for_faction(faction: String) -> void:
 	var fx := "cybernex" if faction != "gROT" else "grot"

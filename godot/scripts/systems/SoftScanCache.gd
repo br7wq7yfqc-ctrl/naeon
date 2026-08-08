@@ -1,6 +1,5 @@
 extends Node
-## Autoload-optional static-ish cache for group scans (HUD / pads / ship).
-## Avoids repeated get_nodes_in_group + FileAccess every frame.
+## Shared TTL cache for group/file scans (HUD / pads / ship).
 
 const PLAYER_TTL := 0.45
 const PAD_TTL := 0.8
@@ -8,19 +7,20 @@ const PLANET_TTL := 1.2
 const TERRAIN_TTL := 0.7
 const HOST_FILE_TTL := 2.5
 
-func _ready() -> void:
-	set_process(true)
-
 var _player: Node3D = null
-var _player_t: float = 0.0
+var _player_t: float = 99.0
 var _pads: Array = []
-var _pads_t: float = 0.0
+var _pads_t: float = 99.0
 var _planets: Array = []
-var _planets_t: float = 0.0
+var _planets_t: float = 99.0
 var _terrain: Array = []
-var _terrain_t: float = 0.0
+var _terrain_t: float = 99.0
 var _host_hint: String = ""
 var _host_t: float = 99.0
+
+
+func _ready() -> void:
+	set_process(true)
 
 
 func _process(delta: float) -> void:
@@ -40,11 +40,11 @@ func get_player() -> Node3D:
 		_player = null
 		return null
 	var n = tree.get_first_node_in_group("player")
-	if n is Node3D:
+	if n is Node3D and is_instance_valid(n):
 		_player = n as Node3D
 		return _player
 	for s in tree.get_nodes_in_group("ship"):
-		if s is Node3D:
+		if s is Node3D and is_instance_valid(s):
 			_player = s as Node3D
 			return _player
 	_player = null
@@ -55,8 +55,8 @@ func get_pads() -> Array:
 	if _pads_t < PAD_TTL and not _pads.is_empty():
 		return _pads
 	_pads_t = 0.0
-	var tree := get_tree()
 	_pads = []
+	var tree := get_tree()
 	if tree:
 		for n in tree.get_nodes_in_group("pad_bases"):
 			if is_instance_valid(n):
@@ -68,8 +68,8 @@ func get_planets() -> Array:
 	if _planets_t < PLANET_TTL and not _planets.is_empty():
 		return _planets
 	_planets_t = 0.0
-	var tree := get_tree()
 	_planets = []
+	var tree := get_tree()
 	if tree:
 		for n in tree.get_nodes_in_group("planets"):
 			if n is Node3D and is_instance_valid(n):
@@ -81,8 +81,8 @@ func get_terrain_edits() -> Array:
 	if _terrain_t < TERRAIN_TTL and not _terrain.is_empty():
 		return _terrain
 	_terrain_t = 0.0
-	var tree := get_tree()
 	_terrain = []
+	var tree := get_tree()
 	if tree:
 		for n in tree.get_nodes_in_group("terrain_edit"):
 			if is_instance_valid(n):
@@ -118,7 +118,7 @@ func nearest_pad(from: Vector3, max_dist: float = 200.0) -> Node3D:
 	var best: Node3D = null
 	var best_d := max_dist
 	for n in get_pads():
-		if n is Node3D:
+		if n is Node3D and is_instance_valid(n):
 			var d: float = from.distance_to((n as Node3D).global_position)
 			if d < best_d:
 				best_d = d
@@ -130,10 +130,11 @@ func nearest_planet(from: Vector3) -> Node3D:
 	var best: Node3D = null
 	var best_d := 1.0e12
 	for n in get_planets():
-		var d: float = from.distance_to((n as Node3D).global_position)
-		if d < best_d:
-			best_d = d
-			best = n as Node3D
+		if n is Node3D and is_instance_valid(n):
+			var d: float = from.distance_to((n as Node3D).global_position)
+			if d < best_d:
+				best_d = d
+				best = n as Node3D
 	return best
 
 
@@ -143,3 +144,7 @@ func invalidate() -> void:
 	_planets_t = 99.0
 	_terrain_t = 99.0
 	_host_t = 99.0
+	_player = null
+	_pads.clear()
+	_planets.clear()
+	_terrain.clear()

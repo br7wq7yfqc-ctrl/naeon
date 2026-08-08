@@ -374,14 +374,9 @@ func _rebuild_mesh() -> void:
 			st.add_vertex(verts[i01])
 	st.generate_normals()
 	var mesh := st.commit()
-	# Drop previous mesh/shape refs so RID memory is reclaimed
-	if _mesh_inst.mesh:
-		_mesh_inst.mesh = null
-	if _col and _col.shape:
-		_col.shape = null
+	# Assign mesh without nulling first (null mesh → ERROR Parameter m is null)
 	_mesh_inst.mesh = mesh
-	if mesh and _col:
-		# Convex cheaper than trimesh for soft edit plate
+	if mesh and _col and mesh.get_surface_count() > 0:
 		var sh: Shape3D = mesh.create_convex_shape(true, true)
 		if sh == null:
 			sh = mesh.create_trimesh_shape()

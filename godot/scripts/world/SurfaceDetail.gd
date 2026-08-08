@@ -199,7 +199,7 @@ func _recycle(cell: Vector2i) -> void:
 	_live.erase(cell)
 	if mi and is_instance_valid(mi):
 		mi.visible = false
-		mi.mesh = null  # drop RID ref; mesh may stay in cache
+		# Keep last mesh RID — null mesh spam ERROR Parameter m is null in renderer
 		_pool.append(mi)
 
 
