@@ -1,18 +1,12 @@
 # NAEON Dev Plan — Aug 2026
 
-## Phase 0 sequential
+## Batch release 0.3.19
+- Loop blockers + P1-P4 facing/water/flora/seat/extract
+- Batch DMG on owner request
 
-| Track | Status |
-|-------|--------|
-| P1 facing markers + wish re-ortho + selftest | **done** |
-| P2 water shore score + no-dance wave | **done** |
-| P2 flora density/shore + FPS alt cut | **done** |
-| P3 seat glow/volume/proximity | **done** |
-| P4 pad extract neon VFX | **done** |
+## Next after 0.3.19
+1. Real-client loop playtest feedback
+2. Arena FPS profile
+3. Deepen Phase 0 loop
 
-## Next
-1. Real-client confirm face arrow vs WASD
-2. Arena FPS profile pass
-3. Batch DMG only after 10‑min loop
-
-Updated: 2026-08-08T17:27:07.998005+00:00
+Updated: 2026-08-08T17:40:00Z
