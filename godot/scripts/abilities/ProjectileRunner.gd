@@ -85,6 +85,7 @@ func _try_hit(target: Node) -> void:
 
 
 func _expire(p: Node) -> void:
+	_neon_pop()
 	if p and is_instance_valid(p):
 		p.queue_free()
 	else:
