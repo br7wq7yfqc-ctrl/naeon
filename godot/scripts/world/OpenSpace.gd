@@ -20,6 +20,7 @@ var _eva_mode: bool = false
 var _in_rover: bool = false
 var _rover: Node3D = null
 var _eva_warn_t: float = 0.0
+var _eva_tether_t: float = 0.0
 var _spawn_ship_pos := Vector3(0, 0, 2800)
 
 func _ready() -> void:
@@ -328,9 +329,14 @@ func try_enter_ship() -> void:
 		player = null
 		print("[OpenSpace] No walker to board")
 		return
-	var board_r := 22.0 if _eva_mode else 14.0
-	if player.global_position.distance_to(ship.global_position) > board_r:
+	var board_r := 24.0 if _eva_mode else 14.0
+	var board_anchor: Vector3 = ship.global_position
+	var hatch_n: Node3D = ship.get_node_or_null("HatchPoint") as Node3D
+	if hatch_n:
+		board_anchor = hatch_n.global_position
+	if player.global_position.distance_to(board_anchor) > board_r:
 		print("[OpenSpace] Too far from hatch")
+		_toast_hud("Too far from hatch")
 		return
 	_in_ship = true
 	_eva_mode = false
@@ -358,11 +364,15 @@ func try_enter_ship() -> void:
 	if is_instance_valid(ship) and ship.has_method("set_pilot_active"):
 		ship.set_pilot_active(true)
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	var door2 = ship.get_node_or_null("HatchPoint/HatchDoor")
+	if door2 is Node3D:
+		(door2 as Node3D).rotation.y = 0.0
+	_toast_hud("Boarded — hatch sealed")
 	print("[OpenSpace] boarded ship")
 
 
 func _spawn_eva_near_ship() -> void:
-	## Open-space EVA: hatch offset, thruster suit, no floor snap.
+	## Open-space EVA from hatch: thruster suit, velocity match, hatch ajar.
 	if ship == null or not is_instance_valid(ship):
 		return
 	player = _make_fallback_player()
@@ -370,10 +380,16 @@ func _spawn_eva_near_ship() -> void:
 	var hatch: Node3D = ship.get_node_or_null("HatchPoint") as Node3D
 	var side: Vector3 = ship.global_transform.basis.x
 	var up: Vector3 = ship.global_transform.basis.y
+	var aft: Vector3 = ship.global_transform.basis.z
 	if hatch:
-		player.global_position = hatch.global_position
+		# Out from hatch along +X of ship (hatch side) + slight aft
+		player.global_position = hatch.global_position + side * 2.2 + up * 0.4 + aft * 0.5
 	else:
-		player.global_position = ship.global_position + side * 4.0 + up * 1.2
+		player.global_position = ship.global_position + side * 4.5 + up * 1.4
+	# Open hatch door soft
+	var door = ship.get_node_or_null("HatchPoint/HatchDoor")
+	if door is Node3D:
+		(door as Node3D).rotation.y = deg_to_rad(85.0)
 	if player.has_method("set_planet_gravity_provider"):
 		player.set_planet_gravity_provider(self)
 	if player.has_method("set_eva_profile"):
@@ -381,11 +397,15 @@ func _spawn_eva_near_ship() -> void:
 	if player.has_method("set_spawn_basis"):
 		var nose: Vector3 = -ship.global_transform.basis.z
 		player.set_spawn_basis(up, atan2(-nose.x, -nose.z))
-	# Match ship velocity soft so no instant relative slam
-	if player is CharacterBody3D and ship.get("velocity") != null:
-		(player as CharacterBody3D).velocity = ship.velocity * 0.85
+	# Match ship velocity so no instant relative slam
+	if player is CharacterBody3D and "velocity" in ship and ship.velocity is Vector3:
+		(player as CharacterBody3D).velocity = (ship.velocity as Vector3) * 0.9
+	# Skip floor snap for EVA
+	if player.has_method("set") and "eva_mode" in player:
+		pass
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	print("[OpenSpace] EVA deployed")
+	_toast_hud("EVA — thrusters WASD · Space/Shift · F reboard hatch")
+	print("[OpenSpace] EVA deployed from hatch")
 
 
 func _spawn_player_near_ship() -> void:
@@ -467,7 +487,18 @@ func _process(delta: float) -> void:
 			_eva_warn_t += delta
 			if _eva_warn_t > 8.0:
 				_eva_warn_t = 0.0
+				_toast_hud("EVA suit — reboard soon (soft warn)")
 				print("[OpenSpace] EVA soft warning — reboard soon")
+		# Soft tether distance (presentation, no death)
+		if ship and is_instance_valid(ship):
+			var td: float = player.global_position.distance_to(ship.global_position)
+			if td > 80.0:
+				_eva_tether_t += delta
+				if _eva_tether_t > 5.0:
+					_eva_tether_t = 0.0
+					_toast_hud("EVA tether soft — ship %.0fm" % td)
+			else:
+				_eva_tether_t = 0.0
 
 func _update_hud() -> void:
 	if hud_label == null or ship == null:
@@ -612,40 +643,36 @@ func _unboard_rover() -> void:
 
 
 func _try_seat_to_pilot() -> bool:
-	## Interior seat volume → direct PILOT (single-seat fast path).
+	## Interior seat volume → direct PILOT (single-seat fast path). Hardened free.
 	if _interior == null or not is_instance_valid(_interior):
 		return false
 	if not _interior.has_method("is_inside") or not _interior.is_inside():
 		return false
 	if player == null or not is_instance_valid(player):
 		return false
-	var active: Node3D = null
-	if _interior.has_method("get_active_interior"):
-		active = _interior.get_active_interior()
-	# find SeatVolume near player
-	var seat_near := false
-	if active and is_instance_valid(active):
-		var seat: Node = active.get_node_or_null("SeatVolume")
-		if seat and seat is Node3D:
-			if player.global_position.distance_to((seat as Node3D).global_position) < 3.5:
-				seat_near = true
-		var seat_m: Node = active.get_node_or_null("Seat")
-		if seat_m and seat_m is Node3D:
-			if player.global_position.distance_to((seat_m as Node3D).global_position) < 3.5:
-				seat_near = true
-	if not seat_near:
-		# also allow if kind ship and near spawn
-		if _interior.has_method("get_kind") and str(_interior.get_kind()) == "ship":
-			if player.global_position.distance_to(Vector3(0, 50000, 0)) < 12.0:
-				seat_near = true
-	if not seat_near:
-		return false
-	# Exit interior pocket then board ship without distance check
-	if _interior.has_method("exit_interior"):
-		_interior.exit_interior()
-	# Force board
 	if ship == null or not is_instance_valid(ship):
 		return false
+	var seat_near := false
+	if _interior.has_method("is_near_seat"):
+		seat_near = bool(_interior.is_near_seat(player))
+	else:
+		# legacy distance check
+		var active: Node3D = null
+		if _interior.has_method("get_active_interior"):
+			active = _interior.get_active_interior()
+		if active and is_instance_valid(active):
+			for nm in ["SeatVolume", "Seat"]:
+				var seat: Node = active.get_node_or_null(nm)
+				if seat is Node3D and player.global_position.distance_to((seat as Node3D).global_position) < 3.8:
+					seat_near = true
+	if not seat_near:
+		_toast_hud("Move to PILOT SEAT, then F")
+		return false
+	# Close pocket without teleport (avoids surface snap before free)
+	if _interior.has_method("exit_for_pilot"):
+		_interior.exit_for_pilot()
+	elif _interior.has_method("exit_interior"):
+		_interior.exit_interior()
 	_in_ship = true
 	_eva_mode = false
 	if LayerContext:
@@ -661,12 +688,20 @@ func _try_seat_to_pilot() -> bool:
 	if is_instance_valid(old):
 		old.set_process(false)
 		old.set_physics_process(false)
+		old.set_process_input(false)
+		old.set_process_unhandled_input(false)
 		if old is CollisionObject3D:
 			(old as CollisionObject3D).collision_layer = 0
+			(old as CollisionObject3D).collision_mask = 0
 		old.queue_free()
 	if ship.has_method("set_pilot_active"):
 		ship.set_pilot_active(true)
+	# Hatch door close after seat pilot
+	var door = ship.get_node_or_null("HatchPoint/HatchDoor")
+	if door is Node3D:
+		(door as Node3D).rotation.y = 0.0
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	_toast_hud("PILOT — seat locked")
 	print("[OpenSpace] seat → pilot")
 	return true
 
@@ -856,3 +891,14 @@ func _walk_set_obs(n: Node, obs: Node3D) -> void:
 	for c in n.get_children():
 		_walk_set_obs(c, obs)
 
+
+
+func _toast_hud(msg: String, ttl: float = 2.2) -> void:
+	var tree := get_tree()
+	if tree == null:
+		return
+	for n in tree.get_nodes_in_group("game_hud"):
+		if n.has_method("push_toast"):
+			n.push_toast(msg, ttl)
+			return
+	print("[OpenSpace] ", msg)

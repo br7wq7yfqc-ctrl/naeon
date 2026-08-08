@@ -161,3 +161,39 @@ func _hatch_fx(entering: bool) -> void:
 				mi.rotation.y = deg_to_rad(75.0)
 			else:
 				mi.rotation.y = 0.0
+
+
+
+func is_near_seat(player: Node3D, max_dist: float = 3.8) -> bool:
+	if player == null or not is_instance_valid(player) or not _inside or _active == null:
+		return false
+	if not is_instance_valid(_active):
+		return false
+	for nm in ["SeatVolume", "Seat", "Spawn"]:
+		var n: Node = _active.get_node_or_null(nm)
+		if n is Node3D:
+			if player.global_position.distance_to((n as Node3D).global_position) <= max_dist:
+				return true
+	# Cockpit room fallback (near origin of pocket)
+	if _kind == "ship" and player.global_position.distance_to(_active.global_position) < 8.0:
+		return true
+	return false
+
+
+func exit_for_pilot() -> void:
+	## Leave pocket without teleporting walker (walker will be freed for ship pilot).
+	if not _inside:
+		return
+	_hatch_fx(false)
+	if _active and is_instance_valid(_active):
+		_active.queue_free()
+	_active = null
+	_inside = false
+	_player = null
+	if LayerContext:
+		LayerContext.current_layer = "Space"
+		if "seamless_stage" in LayerContext:
+			LayerContext.seamless_stage = "world"
+	exited.emit("ship_to_pilot")
+	print("[Interior] exit_for_pilot")
+	_kind = ""

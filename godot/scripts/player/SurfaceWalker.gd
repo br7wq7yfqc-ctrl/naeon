@@ -78,7 +78,8 @@ func _ready() -> void:
 	_load_form_visual()
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	# Snap to floor next frame
-	call_deferred("snap_to_surface")
+	if not eva_mode:
+		call_deferred("snap_to_surface")
 	_ensure_combat_nodes()
 	print("[SurfaceWalker] ready form=", form_name)
 	if SoftNetSession:
@@ -285,7 +286,6 @@ func _input(event: InputEvent) -> void:
 		elif event.keycode == KEY_Q:
 			_try_ability(0)
 		elif event.keycode == KEY_E:
-			if eva_mode:
 				mag_boot = not mag_boot
 				print("[SurfaceWalker] mag-boot ", mag_boot)
 			else:
@@ -341,12 +341,21 @@ func _physics_process(delta: float) -> void:
 	var wish := right * input.x + forward * (-input.y)
 	if eva_mode:
 		# Zero-G thruster: WASD plane + Space/Shift vertical, light damp
+		var thruster_accel_eff: float = thruster_accel
 		var lift := 0.0
 		if Input.is_physical_key_pressed(KEY_SPACE):
 			lift += 1.0
 		if Input.is_physical_key_pressed(KEY_SHIFT):
 			lift -= 1.0
-		var wish3 := wish * thruster_accel + _up * lift * thruster_accel
+		var thruster_on := wish.length_squared() > 0.01 or absf(lift) > 0.01
+		var thruster_energy := 4.5 * delta if thruster_on else 0.0
+		if thruster_energy > 0.0 and energy < thruster_energy:
+			thruster_accel_eff = thruster_accel * 0.25
+		else:
+			thruster_accel_eff = thruster_accel
+			if thruster_energy > 0.0:
+				energy = maxf(0.0, energy - thruster_energy)
+		var wish3 := wish * thruster_accel_eff + _up * lift * thruster_accel_eff
 		velocity += wish3 * delta
 		velocity = velocity.lerp(Vector3.ZERO, 0.65 * delta)
 		if velocity.length() > 18.0:
