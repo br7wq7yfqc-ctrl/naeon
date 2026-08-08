@@ -595,20 +595,23 @@ func _ensure_surface_water() -> void:
 
 
 func _ensure_landscape_features() -> void:
-	if has_node(LandscapeFeatures):
+	if has_node("LandscapeFeatures"):
 		return
 	var n := Node3D.new()
-	var scr: Script = load(res://scripts/world/LandscapeFeatures.gd) as Script
+	var scr: Script = load("res://scripts/world/LandscapeFeatures.gd") as Script
 	n.set_script(scr)
-	n.name = LandscapeFeatures
+	n.name = "LandscapeFeatures"
 	add_child(n)
 	var pid: String = str(planet_name)
-	if n.has_method(setup):
-		n.call(setup, self, radius, pid, int(absi(pid.hash()) % 10000) + 3)
-	var obs: Node3D = _resolve_observer() if has_method(_resolve_observer) else null
-	if obs and n.has_method(set_observer):
-		n.call(set_observer, obs)
-	print([PlanetBody] LandscapeFeatures , pid)
+	if n.has_method("setup"):
+		n.call("setup", self, radius, pid, int(absi(pid.hash()) % 10000) + 3)
+	var obs: Node3D = null
+	if has_method("_resolve_observer"):
+		obs = _resolve_observer()
+	if obs and n.has_method("set_observer"):
+		n.call("set_observer", obs)
+	print("[PlanetBody] LandscapeFeatures ", pid)
+
 
 func _ensure_cave_interior() -> void:
 	if has_node("CaveInterior"):
