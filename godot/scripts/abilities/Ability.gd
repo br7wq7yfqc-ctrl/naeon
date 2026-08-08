@@ -54,6 +54,9 @@ func activate(caster: Node, target = null) -> void:
 		EE.spend(caster, energy_cost)
 	elif caster != null and caster.has_method("spend_energy"):
 		caster.spend_energy(energy_cost)
+	var VFX = load("res://scripts/abilities/AbilityVfx.gd")
+	if VFX and caster:
+		VFX.cast_flash(caster, effect_color if effect_color.a > 0.0 else Color(0.3, 0.9, 1.0))
 	if biomass_cost > 0.0 and caster != null and caster.has_method("spend_biomass"):
 		caster.spend_biomass(biomass_cost)
 	if is_channeled and channel_time > 0.0:
@@ -143,6 +146,9 @@ func _spawn_projectile(caster: Node, dmg: float, color: Color) -> void:
 	mat.emission_energy_multiplier = 2.5
 	ball.material_override = mat
 	body.add_child(ball)
+	var VFX2 = load("res://scripts/abilities/AbilityVfx.gd")
+	if VFX2:
+		VFX2.bolt_trail(body, color)
 	body.set_meta("damage", dmg)
 	body.set_meta("direction", dir)
 	body.set_meta("speed", 28.0)

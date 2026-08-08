@@ -360,17 +360,24 @@ func _try_crystal_scan() -> void:
 		GameManager.deposit_economy(1.5)
 		_scan_session_total += 1.5
 	_notify("Crystal scan +1.5  (session %.0f/%.0f)" % [_scan_session_total, SCAN_SESSION_CAP])
+	_spawn_scan_fx(crystal_pos)
 	if AudioDirector and AudioDirector.has_method("play_claim_pulse"):
 		AudioDirector.play_claim_pulse()
 	elif AudioDirector and AudioDirector.has_method("play_ui"):
 		AudioDirector.play_ui()
 	# pulse crystal emission
-	if _active_cave and is_instance_valid(_active_cave) and _active_cave.get_child_count() > 2:
-		var cr = _active_cave.get_child(2)
+	if _active_cave and is_instance_valid(_active_cave):
+		var cr = _active_cave.get_node_or_null("CrystalDeposit")
 		if cr is MeshInstance3D:
 			var mat := (cr as MeshInstance3D).material_override as StandardMaterial3D
 			if mat:
-				mat.emission_energy_multiplier = 5.0
+				mat.emission_energy_multiplier = 6.5
+				var tree2 := get_tree()
+				if tree2:
+					tree2.create_timer(0.35).timeout.connect(func():
+						if is_instance_valid(mat):
+							mat.emission_energy_multiplier = 2.4
+					)
 	print("[CaveInterior] crystal soft-scan")
 
 
@@ -401,3 +408,30 @@ func _spawn_scan_fx(at: Vector3) -> void:
 			if is_instance_valid(p):
 				p.queue_free()
 		)
+
+
+func _try_crystal_glb(parent: Node3D, pos: Vector3) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	var AP = load("res://scripts/assets/AssetPaths.gd")
+	if AP == null:
+		return
+	var rel := "props/cave_energy_crystal/cave_energy_crystal_cybernex_lod1.glb"
+	var path: String = str(AP.resolve(rel)) if AP.has_method("resolve") else ""
+	if path == "" or not FileAccess.file_exists(path):
+		return
+	var doc := GLTFDocument.new()
+	var st := GLTFState.new()
+	if doc.append_from_file(path, st) != OK:
+		return
+	var scn := doc.generate_scene(st)
+	if scn == null:
+		return
+	var dep = parent.get_node_or_null("CrystalDeposit")
+	if dep:
+		dep.visible = false
+	parent.add_child(scn)
+	scn.name = "CrystalDepositGLB"
+	scn.position = pos
+	scn.scale = Vector3.ONE * 0.85
+	print("[CaveInterior] Tripo crystal GLB loaded")

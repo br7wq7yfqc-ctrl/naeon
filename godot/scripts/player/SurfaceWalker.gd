@@ -32,6 +32,18 @@ var _move_amount: float = 0.0
 var eva_mode: bool = false
 var thruster_accel: float = 14.0
 var mag_boot: bool = false
+var _mag_latched: bool = false
+var _mag_normal: Vector3 = Vector3.UP
+var _thrust_smooth: Vector3 = Vector3.ZERO
+var _eva_jet: GPUParticles3D = null
+var _mag_light: OmniLight3D = null
+const MAG_RANGE := 5.5
+const MAG_LOCK_RANGE := 3.2
+const THRUST_MAIN := 1.0
+const THRUST_RCS := 0.55
+const THRUST_LIFT := 0.85
+const THRUST_RAMP := 6.0
+const EVA_EN_RATE := 3.8
 var eva_time: float = 0.0
 var energy: float = 100.0
 var max_energy: float = 100.0
@@ -48,21 +60,32 @@ func set_planet_gravity_provider(p: Node) -> void:
 
 func set_eva_profile(enabled: bool) -> void:
 	eva_mode = enabled
+	mag_boot = false
+	_mag_latched = false
+	_thrust_smooth = Vector3.ZERO
 	if enabled:
 		speed = 5.5
 		sprint_mult = 1.2
 		jump_velocity = 0.0
+		thruster_accel = 16.0
+		motion_mode = CharacterBody3D.MOTION_MODE_FLOATING
+		floor_snap_length = 0.0
 		print("[SurfaceWalker] EVA thruster suit")
 		if _body_mesh and _body_mesh.material_override is StandardMaterial3D:
 			var m: StandardMaterial3D = _body_mesh.material_override
 			m.emission_enabled = true
 			m.emission = Color(0.3, 0.8, 1.0)
 			m.emission_energy_multiplier = 0.8
+		_ensure_eva_fx()
 	else:
 		speed = 6.5
 		sprint_mult = 1.75
 		jump_velocity = 7.0
+		thruster_accel = 14.0
+		motion_mode = CharacterBody3D.MOTION_MODE_GROUNDED
+		floor_snap_length = 0.25
 		print("[SurfaceWalker] surface profile")
+		_clear_eva_fx()
 
 
 func _ready() -> void:
@@ -341,33 +364,7 @@ func _physics_process(delta: float) -> void:
 	# input.y: W=-1 S=+1  →  wish along forward when W
 	var wish := right * input.x + forward * (-input.y)
 	if eva_mode:
-		# Zero-G thruster: WASD plane + Space/Shift vertical, light damp
-		var thruster_accel_eff: float = thruster_accel
-		var lift := 0.0
-		if Input.is_physical_key_pressed(KEY_SPACE):
-			lift += 1.0
-		if Input.is_physical_key_pressed(KEY_SHIFT):
-			lift -= 1.0
-		var thruster_on := wish.length_squared() > 0.01 or absf(lift) > 0.01
-		var thruster_energy := 4.5 * delta if thruster_on else 0.0
-		if thruster_energy > 0.0 and energy < thruster_energy:
-			thruster_accel_eff = thruster_accel * 0.25
-		else:
-			thruster_accel_eff = thruster_accel
-			if thruster_energy > 0.0:
-				energy = maxf(0.0, energy - thruster_energy)
-		var wish3 := wish * thruster_accel_eff + _up * lift * thruster_accel_eff
-		velocity += wish3 * delta
-		velocity = velocity.lerp(Vector3.ZERO, 0.65 * delta)
-		if velocity.length() > 18.0:
-			velocity = velocity.normalized() * 18.0
-		eva_time += delta
-		if mag_boot:
-			velocity = velocity.lerp(Vector3.ZERO, 4.0 * delta)
-		_move_amount = velocity.length() / 12.0
-		_apply_body_basis()
-		move_and_slide()
-		_update_anim(delta)
+		_process_eva(delta, wish, forward, right)
 		return
 	var sp := speed * (sprint_mult if Input.is_physical_key_pressed(KEY_SHIFT) else 1.0) * _infection_move_mult()
 	var target_planar := wish * sp
@@ -785,3 +782,153 @@ func _terrain_hint_tick(delta: float) -> void:
 				if n.has_method("push_toast"):
 					n.push_toast("Terrain budget left: %.0f  (G raise / B lower / U undo)" % left, 2.8)
 					return
+
+func _process_eva(delta: float, wish: Vector3, forward: Vector3, right: Vector3) -> void:
+	## Optimized thruster envelope: main (W/S) > RCS (A/D) > lift; smooth ramp; EN cost.
+	_tick_mag_boot(delta)
+	var lift := 0.0
+	if Input.is_physical_key_pressed(KEY_SPACE):
+		lift += 1.0
+	if Input.is_physical_key_pressed(KEY_SHIFT):
+		lift -= 1.0
+	var main_axis := wish.dot(forward)
+	var strafe_axis := wish.dot(right)
+	var wish_raw := forward * main_axis * THRUST_MAIN + right * strafe_axis * THRUST_RCS + _up * lift * THRUST_LIFT
+	if _mag_latched:
+		wish_raw = wish_raw - _mag_normal * wish_raw.dot(_mag_normal)
+		wish_raw *= 0.45
+	_thrust_smooth = _thrust_smooth.move_toward(wish_raw, THRUST_RAMP * delta)
+	var thruster_on := _thrust_smooth.length_squared() > 0.01
+	var thruster_accel_eff: float = thruster_accel
+	var thruster_energy := EVA_EN_RATE * delta if thruster_on else 0.0
+	if thruster_energy > 0.0 and energy < thruster_energy:
+		thruster_accel_eff = thruster_accel * 0.22
+		thruster_energy = 0.0
+	elif thruster_energy > 0.0:
+		energy = maxf(0.0, energy - thruster_energy)
+	velocity += _thrust_smooth * thruster_accel_eff * delta
+	var damp := 0.35 if thruster_on else 1.1
+	if _mag_latched:
+		damp = 3.5
+	velocity = velocity.lerp(Vector3.ZERO, damp * delta)
+	var vmax := 8.0 if _mag_latched else 16.0
+	if velocity.length() > vmax:
+		velocity = velocity.normalized() * vmax
+	eva_time += delta
+	_update_eva_fx(thruster_on)
+	_move_amount = velocity.length() / 12.0
+	if _mag_latched:
+		_apply_mag_basis()
+	else:
+		_apply_body_basis()
+	move_and_slide()
+	_update_anim(delta)
+
+
+func _tick_mag_boot(delta: float) -> void:
+	var ship_n: Node3D = _find_nearby_ship()
+	if ship_n == null:
+		if _mag_latched:
+			_mag_latched = false
+			print("[SurfaceWalker] mag-boot released (no hull)")
+		return
+	var dist: float = global_position.distance_to(ship_n.global_position)
+	var hull_clear: float = maxf(0.0, dist - 3.5)
+	if mag_boot and hull_clear < MAG_RANGE:
+		_mag_normal = (global_position - ship_n.global_position).normalized()
+		if hull_clear < MAG_LOCK_RANGE:
+			if not _mag_latched:
+				_mag_latched = true
+				print("[SurfaceWalker] mag-boot LATCHed")
+			var target: Vector3 = ship_n.global_position + _mag_normal * 4.0
+			global_position = global_position.lerp(target, clampf(delta * 4.0, 0.0, 1.0))
+			var v_out := velocity.dot(_mag_normal)
+			if v_out > 0.0:
+				velocity -= _mag_normal * v_out
+		elif _mag_latched and hull_clear > MAG_LOCK_RANGE + 0.8:
+			_mag_latched = false
+			print("[SurfaceWalker] mag-boot released")
+	elif _mag_latched:
+		_mag_latched = false
+	if _mag_light:
+		_mag_light.visible = mag_boot
+		_mag_light.light_energy = 2.2 if _mag_latched else (0.7 if mag_boot else 0.0)
+		_mag_light.light_color = Color(0.3, 0.95, 1.0) if _mag_latched else Color(0.5, 0.7, 1.0)
+
+
+func _find_nearby_ship() -> Node3D:
+	var tree := get_tree()
+	if tree == null:
+		return null
+	var best: Node3D = null
+	var best_d := MAG_RANGE + 6.0
+	for n in tree.get_nodes_in_group("ship"):
+		if n is Node3D and is_instance_valid(n):
+			var d: float = global_position.distance_to((n as Node3D).global_position)
+			if d < best_d:
+				best_d = d
+				best = n as Node3D
+	return best
+
+
+func _apply_mag_basis() -> void:
+	var nose := -global_transform.basis.z
+	nose = (nose - _mag_normal * nose.dot(_mag_normal))
+	if nose.length_squared() < 1e-5:
+		nose = _mag_normal.cross(Vector3.RIGHT)
+		if nose.length_squared() < 1e-5:
+			nose = _mag_normal.cross(Vector3.FORWARD)
+	nose = nose.normalized()
+	var x := nose.cross(_mag_normal).normalized()
+	var b := Basis(x, _mag_normal, -nose)
+	global_transform.basis = b
+	_up = _mag_normal
+	if cam_pivot:
+		cam_pivot.rotation.x = _pitch
+
+
+func _ensure_eva_fx() -> void:
+	if _eva_jet and is_instance_valid(_eva_jet):
+		return
+	_eva_jet = GPUParticles3D.new()
+	_eva_jet.name = "EvaJet"
+	_eva_jet.amount = 12
+	_eva_jet.lifetime = 0.28
+	_eva_jet.emitting = false
+	_eva_jet.position = Vector3(0, 0.9, 0.35)
+	var pm := ParticleProcessMaterial.new()
+	pm.direction = Vector3(0, 0, 1)
+	pm.spread = 22.0
+	pm.initial_velocity_min = 2.0
+	pm.initial_velocity_max = 5.0
+	pm.gravity = Vector3.ZERO
+	pm.color = Color(0.4, 0.85, 1.0, 0.75)
+	pm.scale_min = 0.04
+	pm.scale_max = 0.1
+	_eva_jet.process_material = pm
+	var sm := SphereMesh.new()
+	sm.radius = 0.05
+	sm.height = 0.1
+	_eva_jet.draw_pass_1 = sm
+	add_child(_eva_jet)
+	_mag_light = OmniLight3D.new()
+	_mag_light.name = "MagBootLight"
+	_mag_light.omni_range = 3.5
+	_mag_light.light_energy = 0.0
+	_mag_light.position = Vector3(0, 0.15, 0)
+	_mag_light.shadow_enabled = false
+	add_child(_mag_light)
+
+
+func _clear_eva_fx() -> void:
+	if _eva_jet and is_instance_valid(_eva_jet):
+		_eva_jet.queue_free()
+	_eva_jet = null
+	if _mag_light and is_instance_valid(_mag_light):
+		_mag_light.queue_free()
+	_mag_light = null
+
+
+func _update_eva_fx(thruster_on: bool) -> void:
+	if _eva_jet and is_instance_valid(_eva_jet):
+		_eva_jet.emitting = thruster_on and not _mag_latched
