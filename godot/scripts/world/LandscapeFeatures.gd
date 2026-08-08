@@ -2,8 +2,8 @@ extends Node3D
 class_name LandscapeFeatures
 ## Procedural landscape accents (mesa pillars, dune ridges) — pool + cell stream.
 
-const _Math = preload(res://scripts/world/SurfaceChunkMath.gd)
-const _Relief = preload(res://scripts/world/PlanetRelief.gd)
+const _Math = preload("res://scripts/world/SurfaceChunkMath.gd")
+const _Relief = preload("res://scripts/world/PlanetRelief.gd")
 const CELL_M := 48.0
 const STREAM_HZ := 0.55
 const MAX_PROPS := 10
@@ -12,7 +12,7 @@ var _planet: Node3D
 var _radius: float = 1200.0
 var _observer: Node3D
 var _seed: int = 1
-var _planet_id: String = Nex-Prime
+var _planet_id: String = "Nex-Prime"
 var _profile: Dictionary = {}
 var _props: Array = []
 var _accum: float = 0.0
@@ -41,13 +41,13 @@ func _ready() -> void:
 
 
 func _build_pool() -> void:
-	var gq := get_node_or_null(/root/GraphicsQuality)
+	var gq := get_node_or_null("/root/GraphicsQuality")
 	var n: int = MAX_PROPS
 	if gq and int(gq.tier) == 0:
 		n = 6
 	for i in n:
 		var root := Node3D.new()
-		root.name = LF_%d % i
+		root.name = "LF_%d" % i
 		var mi := MeshInstance3D.new()
 		var kind := i % 3
 		if kind == 0:
@@ -67,14 +67,13 @@ func _build_pool() -> void:
 		var mat := StandardMaterial3D.new()
 		mat.albedo_color = Color(0.45, 0.35, 0.25)
 		mat.roughness = 0.95
-		mat.vertex_color_use_as_albedo = false
 		mi.material_override = mat
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		root.add_child(mi)
 		root.visible = false
 		add_child(root)
 		_props.append(root)
-	print([LandscapeFeatures] pool=, n,  planet=, _planet_id)
+	print("[LandscapeFeatures] pool=", n, " planet=", _planet_id)
 
 
 func _process(delta: float) -> void:
@@ -110,7 +109,7 @@ func _place(cell: Vector2i) -> void:
 		var wz: float = float(c.y) * CELL_M + rng.randf_range(-8.0, 8.0)
 		var h: float = float(_Relief.height_at(wx, wz, _seed, _profile))
 		var biome: String = str(_Relief.biome_hint(wx, wz, h, _seed, _profile))
-		if biome not in [mesa, dunes, crater, alpine, canyon]:
+		if biome not in ["mesa", "dunes", "crater", "alpine", "canyon"]:
 			continue
 		var xform: Transform3D = _Math.cell_transform(_planet.global_position, _radius, c, CELL_M, h)
 		var p: Node3D = _props[placed]
@@ -120,13 +119,13 @@ func _place(cell: Vector2i) -> void:
 		if mi and mi.material_override is StandardMaterial3D:
 			var mat := mi.material_override as StandardMaterial3D
 			match biome:
-				mesa:
+				"mesa":
 					mat.albedo_color = Color(0.55, 0.38, 0.22)
-				dunes:
+				"dunes":
 					mat.albedo_color = Color(0.75, 0.65, 0.35)
-				crater:
+				"crater":
 					mat.albedo_color = Color(0.3, 0.28, 0.26)
-				canyon:
+				"canyon":
 					mat.albedo_color = Color(0.4, 0.25, 0.15)
 				_:
 					mat.albedo_color = Color(0.5, 0.5, 0.52)
