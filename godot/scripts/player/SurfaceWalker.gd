@@ -444,19 +444,8 @@ func _physics_process(delta: float) -> void:
 	_update_anim(delta)
 
 func _basis_from_up() -> Basis:
-	# Right-handed: X=right, Y=up, Z=back (−forward). Previous up.cross(f0) flipped X (det=-1)
-	# which made WASD feel sideways and inverted horizontal look.
-	var up := _up.normalized()
-	var f0 := Vector3(0, 0, -1)  # Godot forward
-	if absf(up.dot(f0)) > 0.95:
-		f0 = Vector3(1, 0, 0)
-	# Project preferred forward onto tangent plane
-	f0 = (f0 - up * f0.dot(up)).normalized()
-	# forward × up = right (right-handed)
-	var right := f0.cross(up).normalized()
-	var forward := up.cross(right).normalized()
-	var b := Basis(right, up, -forward)
-	return Basis(up, _yaw) * b
+	# Shared pure math (SurfaceFacing) — det(+1), W along −Z at yaw0
+	return SurfaceFacing.basis_from_up(_up, _yaw)
 
 func _apply_body_basis() -> void:
 	var b := _basis_from_up()
@@ -1120,24 +1109,3 @@ func _ensure_face_arrow() -> void:
 	_face_arrow.position = Vector3(0, 1.1, -0.55)  # local −Z = face
 	_face_arrow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(_face_arrow)
-
-
-static func compute_wish(input: Vector2, up: Vector3, yaw: float) -> Vector3:
-	## Pure helper: W(input.y=-1) → tangent forward from yaw. det(+1) basis.
-	var u := up.normalized()
-	var f0 := Vector3(0, 0, -1)
-	if absf(u.dot(f0)) > 0.95:
-		f0 = Vector3(1, 0, 0)
-	f0 = (f0 - u * f0.dot(u)).normalized()
-	var right0 := f0.cross(u).normalized()
-	var forward0 := u.cross(right0).normalized()
-	var b0 := Basis(right0, u, -forward0)
-	var b := Basis(u, yaw) * b0
-	var forward := (-b.z)
-	forward = (forward - u * forward.dot(u))
-	if forward.length_squared() < 1e-8:
-		return Vector3.ZERO
-	forward = forward.normalized()
-	var right := b.x
-	right = (right - u * right.dot(u)).normalized()
-	return (right * input.x + forward * (-input.y)).normalized() if input.length_squared() > 0 else Vector3.ZERO
