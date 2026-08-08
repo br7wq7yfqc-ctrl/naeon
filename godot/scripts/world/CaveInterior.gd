@@ -23,6 +23,9 @@ var _inside: bool = false
 var _enter_cd: float = 0.0
 var _entry_world: Vector3 = Vector3.ZERO
 var _prompt_cd: float = 0.0
+var _fov_blend: float = 0.0
+var _base_fov: float = 70.0
+var _cave_fov: float = 58.0
 
 
 func setup(planet: Node3D, radius: float, planet_id: String, seed_i: int = 7) -> void:
@@ -31,6 +34,7 @@ func setup(planet: Node3D, radius: float, planet_id: String, seed_i: int = 7) ->
 	_planet_id = planet_id
 	_seed = seed_i
 	_profile = _Relief.profile_for_planet(planet_id)
+	add_to_group("cave_interior")
 	if _caves.is_empty():
 		_build_pool()
 
@@ -143,6 +147,8 @@ func _process(delta: float) -> void:
 		_accum = 0.0
 		_stream_caves()
 	_tick_enter_exit()
+	_tick_fov(delta)
+	_try_crystal_scan()
 
 
 func _stream_caves() -> void:
@@ -243,7 +249,8 @@ func _do_enter(cave: Node3D) -> void:
 	if _observer is CharacterBody3D:
 		(_observer as CharacterBody3D).velocity = Vector3.ZERO
 	_observer.global_position = target
-	_notify("Entered cave — [F] to exit")
+	_notify("Entered cave — [F] exit · [V] scan crystal")
+	_fov_blend = 1.0
 	if AudioDirector and AudioDirector.has_method("play_ui"):
 		AudioDirector.play_ui()
 	print("[CaveInterior] enter ", cave.name)
@@ -261,6 +268,7 @@ func _do_exit() -> void:
 	_inside = false
 	_active_cave = null
 	_notify("Exited cave")
+	_fov_blend = 0.0
 	if AudioDirector and AudioDirector.has_method("play_ui"):
 		AudioDirector.play_ui()
 	print("[CaveInterior] exit")
@@ -274,3 +282,122 @@ func _notify(msg: String) -> void:
 		if n.has_method("push_toast"):
 			n.push_toast(msg, 2.5)
 			return
+
+
+func blocks_terrain_edit(world_pos: Vector3) -> bool:
+	if not _inside or _active_cave == null or not is_instance_valid(_active_cave):
+		# Also protect when standing near any visible cave floor
+		for c in _caves:
+			if c and is_instance_valid(c) and c.visible:
+				if world_pos.distance_to(c.global_position) < 10.0:
+					return true
+		return false
+	return world_pos.distance_to(_active_cave.global_position) < 12.0
+
+
+func is_player_inside() -> bool:
+	return _inside
+
+
+func nearest_crystal_world() -> Vector3:
+	if _active_cave and is_instance_valid(_active_cave) and _inside:
+		return _active_cave.to_global(Vector3(0.8, -1.0, 3.0))
+	var best := Vector3.ZERO
+	var best_d := 1e12
+	if _observer == null:
+		return best
+	for c in _caves:
+		if c == null or not c.visible:
+			continue
+		var p: Vector3 = c.to_global(Vector3(0.8, -1.0, 3.0))
+		var d: float = _observer.global_position.distance_to(p)
+		if d < best_d:
+			best_d = d
+			best = p
+	return best
+
+
+func _tick_fov(delta: float) -> void:
+	if _observer == null or not is_instance_valid(_observer):
+		return
+	var cam: Camera3D = null
+	if _observer.has_node("CamPivot/Camera3D"):
+		cam = _observer.get_node("CamPivot/Camera3D") as Camera3D
+	elif _observer.has_node("Camera3D"):
+		cam = _observer.get_node("Camera3D") as Camera3D
+	else:
+		for c in _observer.find_children("*", "Camera3D", true, false):
+			cam = c as Camera3D
+			break
+	if cam == null:
+		return
+	var target: float = _cave_fov if _inside else _base_fov
+	cam.fov = lerpf(cam.fov, target, clampf(delta * 4.0, 0.0, 1.0))
+
+
+var _scan_cd: float = 0.0
+var _scan_session_total: float = 0.0
+const SCAN_SESSION_CAP := 25.0
+
+func _try_crystal_scan() -> void:
+	_scan_cd = maxf(0.0, _scan_cd - get_process_delta_time())
+	if _observer == null or _scan_cd > 0.0:
+		return
+	if not Input.is_physical_key_pressed(KEY_V):
+		return
+	var crystal_pos := nearest_crystal_world()
+	if crystal_pos == Vector3.ZERO:
+		return
+	if _observer.global_position.distance_to(crystal_pos) > 8.0:
+		return
+	_scan_cd = 1.2
+	# Soft economy only — no combat power
+	if _scan_session_total >= SCAN_SESSION_CAP:
+		_notify("Crystal scan soft-cap reached this session")
+		_scan_cd = 2.0
+		return
+	if GameManager and GameManager.has_method("deposit_economy"):
+		GameManager.deposit_economy(1.5)
+		_scan_session_total += 1.5
+	_notify("Crystal scan +1.5  (session %.0f/%.0f)" % [_scan_session_total, SCAN_SESSION_CAP])
+	if AudioDirector and AudioDirector.has_method("play_claim_pulse"):
+		AudioDirector.play_claim_pulse()
+	elif AudioDirector and AudioDirector.has_method("play_ui"):
+		AudioDirector.play_ui()
+	# pulse crystal emission
+	if _active_cave and is_instance_valid(_active_cave) and _active_cave.get_child_count() > 2:
+		var cr = _active_cave.get_child(2)
+		if cr is MeshInstance3D:
+			var mat := (cr as MeshInstance3D).material_override as StandardMaterial3D
+			if mat:
+				mat.emission_energy_multiplier = 5.0
+	print("[CaveInterior] crystal soft-scan")
+
+
+func _spawn_scan_fx(at: Vector3) -> void:
+	var p := GPUParticles3D.new()
+	p.amount = 16
+	p.lifetime = 0.5
+	p.one_shot = true
+	p.explosiveness = 0.95
+	p.emitting = true
+	var pm := ParticleProcessMaterial.new()
+	pm.direction = Vector3(0, 1, 0)
+	pm.spread = 80.0
+	pm.initial_velocity_min = 1.0
+	pm.initial_velocity_max = 4.0
+	pm.gravity = Vector3(0, -2, 0)
+	pm.color = Color(0.4, 0.85, 1.0, 0.85)
+	p.process_material = pm
+	var sm := SphereMesh.new()
+	sm.radius = 0.06
+	sm.height = 0.12
+	p.draw_pass_1 = sm
+	add_child(p)
+	p.global_position = at
+	var tree := get_tree()
+	if tree:
+		tree.create_timer(0.7).timeout.connect(func():
+			if is_instance_valid(p):
+				p.queue_free()
+		)

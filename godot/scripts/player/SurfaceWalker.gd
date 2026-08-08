@@ -302,6 +302,7 @@ func _input(event: InputEvent) -> void:
 		)
 
 func _physics_process(delta: float) -> void:
+	_terrain_hint_tick(delta)
 	_update_up()
 	energy = minf(max_energy, energy + energy_regen * delta)
 	var g_vec := -_up * 14.0
@@ -385,6 +386,12 @@ func _physics_process(delta: float) -> void:
 	up_direction = _up
 	floor_snap_length = 0.35
 	floor_max_angle = deg_to_rad(55.0)
+	# Canyon/steep assist: stickier steps on high slopes
+	if is_on_floor() and get_floor_angle() > deg_to_rad(40.0):
+		floor_snap_length = 0.55
+		floor_max_angle = deg_to_rad(70.0)
+		if _move_amount > 0.2:
+			velocity += _up * 2.5 * delta  # soft climb boost
 	_apply_body_basis()
 	move_and_slide()
 	if is_on_floor():
@@ -747,3 +754,24 @@ func _spawn_wade_fx(up: Vector3) -> void:
 			if is_instance_valid(p):
 				p.queue_free()
 		)
+
+
+var _terrain_hint_cd: float = 0.0
+
+func _terrain_hint_tick(delta: float) -> void:
+	_terrain_hint_cd = maxf(0.0, _terrain_hint_cd - delta)
+	if _terrain_hint_cd > 0.0:
+		return
+	if not (Input.is_physical_key_pressed(KEY_G) or Input.is_physical_key_pressed(KEY_B)):
+		return
+	_terrain_hint_cd = 4.0
+	var tree := get_tree()
+	if tree == null:
+		return
+	for te_node in tree.get_nodes_in_group("terrain_edit"):
+		if te_node.has_method("remaining_volume"):
+			var left: float = float(te_node.remaining_volume())
+			for n in tree.get_nodes_in_group("game_hud"):
+				if n.has_method("push_toast"):
+					n.push_toast("Terrain budget left: %.0f  (G raise / B lower / U undo)" % left, 2.8)
+					return

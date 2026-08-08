@@ -666,7 +666,7 @@ func _apply_surface_uniforms(mat: ShaderMaterial) -> void:
 	mat.set_shader_parameter("ocean_color", ocean)
 	mat.set_shader_parameter("shore_color", Color(0.42, 0.38, 0.22))
 	mat.set_shader_parameter("seed", float(absi(str(planet_name).hash()) % 97))
-	mat.set_shader_parameter("sun_direction", _sun_dir if "_sun_dir" in self else Vector3(0.55, 0.75, 0.35))
+	mat.set_shader_parameter("sun_direction", _sun_dir)
 	mat.set_shader_parameter("emission_strength", 0.06)
 	mat.set_shader_parameter("city_intensity", 1.4)
 	mat.set_shader_parameter("city_density", 0.55)
@@ -674,3 +674,18 @@ func _apply_surface_uniforms(mat: ShaderMaterial) -> void:
 		mat.set_shader_parameter("city_intensity", 0.35)
 	elif str(planet_name) == "ROT-Hive":
 		mat.set_shader_parameter("city_light_color", Color(1.0, 0.35, 0.5))
+
+
+func relief_height_at(world_pos: Vector3) -> float:
+	var _R = load("res://scripts/world/PlanetRelief.gd")
+	if _R == null:
+		return 0.0
+	var prof: Dictionary = _R.profile_for_planet(str(planet_name))
+	var dir: Vector3 = (world_pos - global_position).normalized()
+	var east: Vector3 = dir.cross(Vector3.UP)
+	if east.length_squared() < 1e-6:
+		east = dir.cross(Vector3.RIGHT)
+	east = east.normalized()
+	var north: Vector3 = east.cross(dir).normalized()
+	var to: Vector3 = world_pos - global_position
+	return float(_R.height_at(to.dot(east), to.dot(north), int(absi(str(planet_name).hash()) % 10000), prof))

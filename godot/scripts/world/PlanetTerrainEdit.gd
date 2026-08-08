@@ -8,6 +8,7 @@ signal budget_exhausted(reason: String)
 signal undo_done()
 
 const _Math = preload("res://scripts/world/SurfaceChunkMath.gd")
+const _Relief = preload("res://scripts/world/PlanetRelief.gd")
 
 const RES := 33
 const WORLD_SIZE := 72.0
@@ -22,6 +23,7 @@ var planet_id: String = "planet"
 var radius: float = 1200.0
 var surface_color: Color = Color(0.12, 0.2, 0.16)
 var _seed: int = 1
+var _relief_profile: Dictionary = {}
 
 var _mesh_inst: MeshInstance3D
 var _body: StaticBody3D
@@ -55,6 +57,7 @@ func setup(p: Node3D, r: float, color: Color, seed_i: int, id: String) -> void:
 	surface_color = color
 	_seed = seed_i
 	planet_id = id
+	_relief_profile = _Relief.profile_for_planet(id)
 	_init_heights()
 	_load_edits()
 	_ensure_nodes()
@@ -77,9 +80,11 @@ func _init_heights() -> void:
 	_delta = PackedFloat32Array()
 	_delta.resize(n)
 	for i in n:
-		var x := float(i % RES)
-		var z := float(i / RES)
-		_base[i] = _fbm(x * 0.35, z * 0.35) * 2.4
+		var ix := float(i % RES)
+		var iz := float(i / RES)
+		var wx := (ix / float(RES - 1) - 0.5) * WORLD_SIZE
+		var wz := (iz / float(RES - 1) - 0.5) * WORLD_SIZE
+		_base[i] = float(_Relief.height_at(wx, wz, _seed, _relief_profile))
 		_delta[i] = 0.0
 
 func _fbm(x: float, z: float) -> float:
@@ -221,6 +226,8 @@ func _reposition_plate_to_cell(cell: Vector2i) -> void:
 	_plate_up = xf.basis.y
 	_plate_origin = xf.origin
 	global_transform = xf
+	_reseed_base_for_cell(cell)
+	_dirty = true
 
 func _snapshot() -> void:
 	var snap := PackedFloat32Array()
@@ -280,6 +287,13 @@ func _try_edit(delta: float) -> void:
 		if _dust_mat:
 			_dust_mat.color = Color(0.35, 0.75, 0.45, 0.9) if raise else Color(0.75, 0.4, 0.2, 0.9)
 			_dust_mat.direction = Vector3(0, 1 if raise else -0.2, 0)
+	if lower and _cave_blocks_dig_at(_observer.global_position):
+		if not has_meta("_cave_block_toast"):
+			set_meta("_cave_block_toast", true)
+			budget_exhausted.emit("cave_floor_protected")
+		return
+	elif has_meta("_cave_block_toast"):
+		remove_meta("_cave_block_toast")
 	var sign := 1.0 if raise else -1.0
 	var applied := _apply_brush(u, v, sign * BRUSH_STRENGTH * delta)
 	if applied > 0.0:
@@ -312,6 +326,12 @@ func _apply_brush(u: float, v: float, amount: float) -> float:
 			var idx := j * RES + i
 			var before: float = _delta[idx]
 			var after: float = clampf(before + amount * w, -MAX_DELTA, MAX_DELTA)
+			# Sea floor: cannot dig below sea_level continuum
+			var sea_l: float = float(_relief_profile.get("sea_level", -0.35))
+			var abs_h: float = _base[idx] + after
+			if abs_h < sea_l - 0.15:
+				after = sea_l - 0.15 - _base[idx]
+				after = clampf(after, -MAX_DELTA, MAX_DELTA)
 			var diff: float = after - before
 			if absf(diff) < 1e-5:
 				continue
@@ -399,3 +419,27 @@ func _load_edits() -> void:
 	f.close()
 	_dirty = true
 	print("[TerrainEdit] loaded ", path, " volume=", _volume_used)
+
+
+func _cave_blocks_dig_at(world_pos: Vector3) -> bool:
+	var tree := get_tree()
+	if tree == null:
+		return false
+	for n in tree.get_nodes_in_group("cave_interior"):
+		if n.has_method("blocks_terrain_edit") and bool(n.blocks_terrain_edit(world_pos)):
+			return true
+	return false
+
+
+func _reseed_base_for_cell(cell: Vector2i) -> void:
+	## Align edit plate base height with PlanetRelief at this cell (continuum with SurfaceDetail)
+	if _base.is_empty():
+		return
+	var ox := float(cell.x) * CELL_M
+	var oz := float(cell.y) * CELL_M
+	for i in _base.size():
+		var ix := float(i % RES)
+		var iz := float(i / RES)
+		var wx := ox + (ix / float(RES - 1) - 0.5) * WORLD_SIZE
+		var wz := oz + (iz / float(RES - 1) - 0.5) * WORLD_SIZE
+		_base[i] = float(_Relief.height_at(wx, wz, _seed, _relief_profile))

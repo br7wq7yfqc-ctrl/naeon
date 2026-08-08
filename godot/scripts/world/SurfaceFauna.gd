@@ -199,6 +199,12 @@ func _place_cell(cell: Vector2i, alt: float) -> void:
 		if domain != _Cat.Domain.AQUATIC and rh < sea_l - 0.15:
 			node.visible = false
 			continue
+		# Aerial prefer mid heights; terrestrial skip high alpine peaks for small fauna
+		if domain == _Cat.Domain.TERRESTRIAL and rh > 5.5:
+			node.visible = false
+			continue
+		if domain == _Cat.Domain.AERIAL and rh < 1.0:
+			h = rng.randf_range(10.0, 40.0)
 		if domain == _Cat.Domain.AQUATIC and rh > sea_l + 1.2:
 			node.visible = false
 			continue
