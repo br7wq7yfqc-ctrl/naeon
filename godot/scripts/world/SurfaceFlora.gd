@@ -3,6 +3,7 @@ class_name SurfaceFlora
 ## Flora/rocks stream on same cell grid as SurfaceDetail. Pool never respawns.
 
 const _Math = preload("res://scripts/world/SurfaceChunkMath.gd")
+const _Relief = preload("res://scripts/world/PlanetRelief.gd")
 const CELL_M := 40.0
 const COUNT_BASE := 12
 const STREAM_HZ := 0.35
@@ -15,6 +16,8 @@ var _last_cell: Vector2i = Vector2i(999999, 999999)
 var _accum: float = 0.0
 var _seed: int = 1
 var _built: bool = false
+var _planet_id: String = "Nex-Prime"
+var _relief_profile: Dictionary = {}
 
 const ROCKS := [
 	"environments/surface_rock_cluster/surface_rock_cluster_cybernex_lod2.glb",
@@ -27,6 +30,9 @@ func setup(planet: Node3D, radius: float, seed_i: int = 1) -> void:
 	_planet = planet
 	_radius = radius
 	_seed = seed_i
+	if planet != null and "planet_name" in planet:
+		_planet_id = str(planet.planet_name)
+	_relief_profile = _Relief.profile_for_planet(_planet_id)
 
 
 func set_observer(n: Node3D) -> void:
@@ -135,7 +141,15 @@ func _place_cell(cell: Vector2i) -> void:
 		var r := 3.0 + rng.randf() * 20.0
 		var offset := (east * cos(ang) + north * sin(ang)) * r
 		var dir := (center * _radius + offset).normalized()
-		var pos: Vector3 = _planet.global_position + dir * (_radius + 0.2)
+		var wx := float(cell.x) * CELL_M + offset.dot(east)
+		var wz := float(cell.y) * CELL_M + offset.dot(north)
+		var rh: float = float(_Relief.height_at(wx, wz, _seed, _relief_profile))
+		var sea_l: float = float(_relief_profile.get("sea_level", -0.35))
+		if rh < sea_l + 0.1:
+			(p as Node3D).visible = false
+			continue
+		(p as Node3D).visible = true
+		var pos: Vector3 = _planet.global_position + dir * (_radius + 0.2 + maxf(rh, 0.0) * 0.05)
 		var pup := dir
 		var tt: Array = _Math.stable_tangent(pup)
 		(p as Node3D).global_transform = Transform3D(Basis(tt[0], pup, -tt[1]), pos)

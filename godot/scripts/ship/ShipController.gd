@@ -54,7 +54,8 @@ var _cargo_hold: Node = null
 var _cargo_ramp: Node3D = null
 var _hull_morph: Node3D = null
 var _role = null
-var op_mode: int = 0  # 0 cruise 1 siege 2 scan
+var op_mode: int = 0
+var _palette_accum: float = 0.0
 var _deployed_rover: Node3D = null
 var _engine_pulse_t: float = 0.0
 
@@ -297,6 +298,10 @@ func _update_roll_input(delta: float) -> void:
 		_roll = lerpf(_roll, bank_t, 2.4 * delta)
 
 func _physics_process(delta: float) -> void:
+	_palette_accum += delta
+	if _palette_accum > 1.5:
+		_palette_accum = 0.0
+		_sync_planet_palette()
 	if not pilot_active:
 		velocity = Vector3.ZERO
 		return
@@ -957,3 +962,38 @@ func _hull_local_size(n: Node3D) -> Vector3:
 	if a.size.length_squared() < 1e-6:
 		return Vector3.ONE
 	return a.size
+
+
+func _sync_planet_palette() -> void:
+	var tree := get_tree()
+	if tree == null:
+		return
+	var best: Node3D = null
+	var best_d := 1.0e12
+	for n in tree.get_nodes_in_group("planets"):
+		if n is Node3D:
+			var d: float = global_position.distance_to((n as Node3D).global_position)
+			if d < best_d:
+				best_d = d
+				best = n as Node3D
+	if best == null:
+		return
+	# Only near-surface influence
+	if best.has_method("altitude_of"):
+		if float(best.altitude_of(global_position)) > 400.0:
+			return
+	var col := Color(0.5, 0.7, 1.0)
+	if "surface_color" in best:
+		col = best.surface_color
+	# Soft emission on first MeshInstance3D child named Hull or any mesh
+	for c in find_children("*", "MeshInstance3D", true, false):
+		var mi := c as MeshInstance3D
+		if mi == null:
+			continue
+		var mat = mi.material_override
+		if mat is StandardMaterial3D:
+			var sm := mat as StandardMaterial3D
+			sm.emission_enabled = true
+			sm.emission = col * 0.15
+			sm.emission_energy_multiplier = 0.25
+			break
