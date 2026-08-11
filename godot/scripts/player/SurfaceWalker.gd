@@ -35,6 +35,7 @@ var _face_arrow: MeshInstance3D = null
 var _move_amount: float = 0.0
 var eva_mode: bool = false
 var interior_mode: bool = false
+var _dying: bool = false
 var thruster_accel: float = 14.0
 var mag_boot: bool = false
 var _mag_ring: MeshInstance3D = null
@@ -63,6 +64,34 @@ var camera: Camera3D
 
 func set_planet_gravity_provider(p: Node) -> void:
 	_provider = p
+
+
+func mark_dying() -> void:
+	## Called before free — stop all ticks/notifs that could has_method on self.
+	_dying = true
+	set_process(false)
+	set_physics_process(false)
+	set_process_input(false)
+	set_process_unhandled_input(false)
+	set_process_internal(false)
+	velocity = Vector3.ZERO
+	collision_layer = 0
+	collision_mask = 0
+	if is_in_group("player"):
+		remove_from_group("player")
+	# Kill child processors
+	for c in get_children():
+		if c is Node:
+			c.set_process(false)
+			c.set_physics_process(false)
+			if c is GPUParticles3D:
+				(c as GPUParticles3D).emitting = false
+
+
+func _notification(what: int) -> void:
+	if _dying:
+		return
+	# Default CharacterBody3D notifications continue via engine; we only gate script process below.
 
 
 func set_interior_mode(on: bool) -> void:
@@ -369,6 +398,8 @@ func _input(event: InputEvent) -> void:
 		)
 
 func _physics_process(delta: float) -> void:
+	if _dying:
+		return
 	if interior_mode:
 		# Flat Y-up pocket — never radial planet gravity / surface snap
 		_up = Vector3.UP

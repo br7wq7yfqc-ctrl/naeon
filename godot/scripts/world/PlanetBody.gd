@@ -52,6 +52,8 @@ var _segs_mid: int = 32
 var _segs_far: int = 16
 var _collision_enabled: bool = true
 var _surface_detail: Node3D = null
+var _pad_build_stage: int = 0
+var _pad_build_pending: bool = false
 var _terrain_edit: Node3D = null
 
 func _ready() -> void:
@@ -311,16 +313,49 @@ func _update_pads(dist: float) -> void:
 				glb_d = radius + 140.0
 				base_d = radius + 170.0
 	if dist < stream_d:
+		# Stagger pad build across frames — full 3-pad+density in one frame freezes 10–15s
 		if not _pads_built:
-			_build_pads()
-		_pads_root.visible = true
-		if dist < glb_d and not _glb_loaded:
-			_load_glb_pads()
-		if dist < base_d:
-			_stream_bases()
+			_pad_build_pending = true
+			_step_pad_build()
+		elif _pad_build_pending:
+			_step_pad_build()
+		if _pads_root:
+			_pads_root.visible = true
+		if dist < glb_d and not _glb_loaded and _pads_built:
+			call_deferred("_load_glb_pads")
+		if dist < base_d and _pads_built:
+			# bases once; BaseBuilder is heavy — defer
+			call_deferred("_stream_bases")
 	else:
 		if _pads_root:
 			_pads_root.visible = false
+
+func _step_pad_build() -> void:
+	## One pad (or density) per call — spreads hitch.
+	match _pad_build_stage:
+		0:
+			if _pads_root == null:
+				_pads_root = Node3D.new()
+				_pads_root.name = "Pads"
+				add_child(_pads_root)
+			_spawn_pad("Pad_North", Vector3.UP)
+			_pad_build_stage = 1
+		1:
+			_spawn_pad("Pad_Eq", Vector3(1, 0.15, 0).normalized())
+			_pad_build_stage = 2
+		2:
+			_spawn_pad("Pad_Far", Vector3(-0.7, 0.2, 0.7).normalized())
+			_pad_build_stage = 3
+		3:
+			_spawn_pad_density()
+			_pad_build_stage = 4
+			_pads_built = true
+			_pad_build_pending = false
+			print("[PlanetBody] pads staggered build complete")
+		_:
+			_pads_built = true
+			_pad_build_pending = false
+
 
 func _build_pads() -> void:
 	_pads_built = true

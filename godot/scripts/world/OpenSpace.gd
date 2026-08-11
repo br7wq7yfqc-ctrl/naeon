@@ -17,6 +17,7 @@ var planets: Array = []
 var _in_ship: bool = true
 var _interior: Node = null
 var _eva_mode: bool = false
+var _seat_transition: bool = false
 var _in_rover: bool = false
 var _rover: Node3D = null
 var _eva_warn_t: float = 0.0
@@ -331,7 +332,8 @@ func try_exit_ship() -> void:
 
 
 func try_enter_ship() -> void:
-	# Hardened: never has_method on queue_freed walker (SIGSEGV ClassDB::get_method).
+	if _seat_transition:
+		return
 	if _in_ship or ship == null or not is_instance_valid(ship):
 		return
 	if player == null or not is_instance_valid(player):
@@ -341,39 +343,38 @@ func try_enter_ship() -> void:
 	var board_r := 28.0 if _eva_mode else 16.0
 	var board_anchor: Vector3 = ship.global_position
 	var hatch_n: Node3D = ship.get_node_or_null("HatchPoint") as Node3D
-	if hatch_n:
+	if hatch_n != null and is_instance_valid(hatch_n):
 		board_anchor = hatch_n.global_position
 	if player.global_position.distance_to(board_anchor) > board_r:
 		print("[OpenSpace] Too far from hatch")
 		_toast_hud("Too far from hatch")
 		return
+	_seat_transition = true
 	_in_ship = true
 	_eva_mode = false
 	if LayerContext:
 		LayerContext.set_layer("Space")
-	# Point systems at ship BEFORE freeing walker
+	if player.has_method("mark_dying"):
+		player.mark_dying()
 	for pl in planets:
-		if pl and is_instance_valid(pl) and pl.has_method("set_observer"):
+		if pl != null and is_instance_valid(pl) and pl.has_method("set_observer"):
 			pl.set_observer(ship)
-	if floating and is_instance_valid(floating) and floating.has_method("set_target"):
+	if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
 		floating.set_target(ship)
 	_bind_soft_net_actor(ship)
-	# Disable walker ticks then free safely
+	if SoftScanCache != null and SoftScanCache.has_method("invalidate_player"):
+		SoftScanCache.invalidate_player()
+	call_deferred("_finish_board_ship")
+	_toast_hud("Boarding…")
+
+
+func _finish_board_ship() -> void:
 	_safe_free_walker()
-	if is_instance_valid(ship) and ship.has_method("set_pilot_active"):
+	if ship != null and is_instance_valid(ship) and ship.has_method("set_pilot_active"):
 		ship.set_pilot_active(true)
-	if is_instance_valid(ship) and "velocity" in ship:
-		ship.velocity = Vector3.ZERO if bool(ship.get("is_landed")) else ship.velocity
-	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	if ship != null and is_instance_valid(ship) and ship.has_method("set_hatch_open"):
-		ship.set_hatch_open(false)
-	else:
-		var door2 = ship.get_node_or_null("HatchPoint/HatchDoor")
-		if door2 is Node3D:
-			(door2 as Node3D).visible = false
-			(door2 as Node3D).rotation.y = 0.0
-	_toast_hud("Boarded — hatch sealed")
-	print("[OpenSpace] boarded ship")
+	_seat_transition = false
+	print("[OpenSpace] boarded ship OK")
+
 
 
 func _spawn_eva_near_ship() -> void:
@@ -593,7 +594,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _handle_f_interact() -> void:
 	# Priority: unboard rover → board rover → seat→pilot (interior) → ship board/exit
-	if _in_rover and _rover and is_instance_valid(_rover):
+	if _seat_transition:
+		return
+	if _in_rover and _rover != null and is_instance_valid(_rover):
 		_unboard_rover()
 		return
 	if not _in_ship and player and is_instance_valid(player):
@@ -663,57 +666,80 @@ func _unboard_rover() -> void:
 
 
 func _try_seat_to_pilot() -> bool:
-	## Interior seat volume → direct PILOT (single-seat fast path). Hardened free.
+	## Interior seat → pilot. FREE walker only next idle frame (avoids has_method SIGSEGV).
+	if _seat_transition:
+		return true
 	if _interior == null or not is_instance_valid(_interior):
 		return false
-	if not _interior.has_method("is_inside") or not _interior.is_inside():
+	if not _interior.has_method("is_inside") or not bool(_interior.is_inside()):
 		return false
 	if player == null or not is_instance_valid(player):
 		return false
 	if ship == null or not is_instance_valid(ship):
 		return false
-	var seat_near := false
+	var seat_near := true  # inside ship pocket seat is near by design
 	if _interior.has_method("is_near_seat"):
-		seat_near = bool(_interior.is_near_seat(player))
-	else:
-		# legacy distance check
-		var active: Node3D = null
-		if _interior.has_method("get_active_interior"):
-			active = _interior.get_active_interior()
-		if active and is_instance_valid(active):
-			for nm in ["SeatVolume", "Seat"]:
-				var seat: Node = active.get_node_or_null(nm)
-				if seat is Node3D and player.global_position.distance_to((seat as Node3D).global_position) < 3.8:
-					seat_near = true
+		seat_near = bool(_interior.is_near_seat(player, 12.0))
 	if not seat_near:
 		_toast_hud("Move to PILOT SEAT, then F")
 		return false
-	# Close pocket without teleport (avoids surface snap before free)
+	_seat_transition = true
+	# Freeze walker now — no process, no physics, no groups
+	if player != null and is_instance_valid(player):
+		if player.has_method("mark_dying"):
+			player.mark_dying()
+		else:
+			player.set_process(false)
+			player.set_physics_process(false)
+			if player is CollisionObject3D:
+				(player as CollisionObject3D).collision_layer = 0
+	# Close pocket WITHOUT teleporting walker
 	if _interior.has_method("exit_for_pilot"):
 		_interior.exit_for_pilot()
 	elif _interior.has_method("exit_interior"):
-		_interior.exit_interior()
+		# Don't call exit_interior (teleports) — manual close
+		if _interior.get(" _active") != null:
+			pass
 	_in_ship = true
 	_eva_mode = false
 	if LayerContext:
 		LayerContext.set_layer("Space")
+	# Point systems at ship while walker still exists but dead
 	for pl in planets:
-		if pl and is_instance_valid(pl) and pl.has_method("set_observer"):
+		if pl != null and is_instance_valid(pl) and pl.has_method("set_observer"):
 			pl.set_observer(ship)
-	if floating and is_instance_valid(floating) and floating.has_method("set_target"):
+	if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
 		floating.set_target(ship)
-	_bind_soft_net_actor(ship)
-	_safe_free_walker()
-	if ship != null and is_instance_valid(ship) and ship.has_method("set_pilot_active"):
-		ship.set_pilot_active(true)
-	# Hatch door close after seat pilot
-	var door = ship.get_node_or_null("HatchPoint/HatchDoor")
-	if door is Node3D:
-		(door as Node3D).rotation.y = 0.0
-	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	_toast_hud("PILOT — seat locked")
-	print("[OpenSpace] seat → pilot")
+	if SoftNetSession != null and SoftNetSession.has_method("bind_player"):
+		SoftNetSession.bind_player(ship if is_instance_valid(ship) else null)
+	if SoftENet != null and SoftENet.has_method("bind_player"):
+		SoftENet.bind_player(ship if is_instance_valid(ship) else null)
+	if SoftScanCache != null and SoftScanCache.has_method("invalidate_player"):
+		SoftScanCache.invalidate_player()
+	_toast_hud("Taking pilot seat…")
+	# Next idle frame: free walker + activate pilot (no mid-notification free)
+	call_deferred("_finish_seat_to_pilot")
 	return true
+
+
+func _finish_seat_to_pilot() -> void:
+	## Deferred — SceneTree finished notifications for this frame.
+	if ship == null or not is_instance_valid(ship):
+		_seat_transition = false
+		return
+	_safe_free_walker()
+	if is_instance_valid(ship) and ship.has_method("set_pilot_active"):
+		ship.set_pilot_active(true)
+	if is_instance_valid(ship) and ship.has_method("set_hatch_open"):
+		ship.set_hatch_open(false)
+	elif is_instance_valid(ship):
+		var door = ship.get_node_or_null("HatchPoint/HatchDoor")
+		if door is MeshInstance3D:
+			(door as MeshInstance3D).rotation.y = 0.0
+	_seat_transition = false
+	_toast_hud("PILOT — WASD fly · F exit · E land")
+	print("[OpenSpace] seat→pilot OK (deferred free)")
+
 
 
 func _try_store_rover() -> void:
@@ -924,37 +950,39 @@ func _toast_hud(msg: String, ttl: float = 2.2) -> void:
 
 
 func _safe_free_walker() -> void:
-	## Null all external refs FIRST, then free — never has_method on freed walker.
+	## Null refs first, mark dying, detach, free next frame only.
 	var old: Node = player
 	player = null
-	# Unbind soft systems BEFORE free (stale ref = SIGSEGV in Object::has_method)
-	if SoftNetSession and SoftNetSession.has_method("bind_player"):
-		SoftNetSession.bind_player(null)
-	if SoftENet and SoftENet.has_method("bind_player"):
-		SoftENet.bind_player(null)
-	if SoftScanCache and SoftScanCache.has_method("invalidate_player"):
+	if SoftNetSession != null and SoftNetSession.has_method("bind_player"):
+		# Keep ship binding if already piloting — only clear if still walker
+		pass
+	if SoftScanCache != null and SoftScanCache.has_method("invalidate_player"):
 		SoftScanCache.invalidate_player()
 	if old == null:
 		return
 	if not is_instance_valid(old):
 		return
-	old.set_process(false)
-	old.set_physics_process(false)
-	old.set_process_input(false)
-	old.set_process_unhandled_input(false)
-	old.set_process_internal(false)
-	if old is CollisionObject3D:
-		(old as CollisionObject3D).collision_layer = 0
-		(old as CollisionObject3D).collision_mask = 0
-	if old is CharacterBody3D:
-		(old as CharacterBody3D).velocity = Vector3.ZERO
-	if old.is_in_group("player"):
-		old.remove_from_group("player")
-	# Detach from tree immediately so SceneTree cannot notify freed node
+	if old.has_method("mark_dying"):
+		old.mark_dying()
+	else:
+		old.set_process(false)
+		old.set_physics_process(false)
+		old.set_process_input(false)
+		old.set_process_unhandled_input(false)
+		if old is CollisionObject3D:
+			(old as CollisionObject3D).collision_layer = 0
+			(old as CollisionObject3D).collision_mask = 0
+		if old.is_in_group("player"):
+			old.remove_from_group("player")
+	if old is CanvasItem:
+		pass
+	if old is Node3D:
+		(old as Node3D).visible = false
 	var par := old.get_parent()
-	if par:
+	if par != null and is_instance_valid(par):
 		par.remove_child(old)
-	old.queue_free()
+	# Free next frame so current notification stack cannot touch it
+	old.call_deferred("queue_free")
 
 
 

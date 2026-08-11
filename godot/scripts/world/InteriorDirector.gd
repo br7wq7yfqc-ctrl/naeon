@@ -322,8 +322,12 @@ func exit_for_pilot() -> void:
 	if not _inside:
 		return
 	_hatch_fx(false)
-	if _player and is_instance_valid(_player) and _player.has_method("set_interior_mode"):
-		_player.set_interior_mode(false)
+	# Walker will be freed by OpenSpace — do not call methods that re-enable process
+	if _player != null and is_instance_valid(_player):
+		if _player.has_method("mark_dying"):
+			_player.mark_dying()
+		elif _player.has_method("set_interior_mode"):
+			_player.set_interior_mode(false)
 	if _active and is_instance_valid(_active):
 		_active.queue_free()
 	_active = null

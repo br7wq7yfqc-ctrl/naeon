@@ -11,8 +11,8 @@ const _Relief = preload("res://scripts/world/PlanetRelief.gd")
 
 const CELL_M := 40.0
 const PATCH_SIZE := 38.0
-const DEFAULT_RES := 10
-const LOAD_BUDGET := 2          ## meshes built per stream tick (scaled in _process)
+const DEFAULT_RES := 8
+const LOAD_BUDGET := 1          ## meshes built per stream tick (scaled in _process)
 const STREAM_HZ := 0.28         ## ~3.5 Hz default; LOW slower
 const MESH_CACHE_MAX := 32
 
@@ -41,6 +41,8 @@ var _mesh_cache_order: Array = []
 ## cells waiting to build this tick
 var _queue: Array = []
 var _active: bool = false
+var _warm_t: float = 0.0
+var _warm_cells: int = 0
 var _xform_accum: float = 0.0
 
 
@@ -100,45 +102,64 @@ func _process(delta: float) -> void:
 	var hz := STREAM_HZ
 	var budget := LOAD_BUDGET
 	var gq := get_node_or_null("/root/GraphicsQuality")
-	if gq:
-		match int(gq.tier):
-			0:
-				hz = 0.45
-				budget = 1
-			1:
-				hz = 0.32
-				budget = 1
-			2:
-				hz = 0.28
-				budget = 2
-			_:
-				hz = 0.22
-				budget = 2
+	var tier := int(gq.tier) if gq else 1
+	match tier:
+		0:
+			hz = 0.55
+			budget = 1
+		1:
+			hz = 0.40
+			budget = 1
+		2:
+			hz = 0.32
+			budget = 1
+		_:
+			hz = 0.28
+			budget = 2
+	# Warm-up: first seconds near surface build only 1 cell/tick, slower
+	if _warm_t < 4.0:
+		hz = maxf(hz, 0.5)
+		budget = 1
 	if _accum < hz:
 		return
 	_accum = 0.0
 	if _planet == null or _observer == null or not is_instance_valid(_observer):
 		return
 	var alt: float = _observer.global_position.distance_to(_planet.global_position) - _radius
-	if alt > 120.0 or alt < -10.0:
+	if alt > 140.0 or alt < -10.0:
 		if _active:
 			_park_all()
 			_active = false
+			_warm_t = 0.0
+			_warm_cells = 0
 		return
-	_active = true
+	if not _active:
+		# Soft activate — do NOT enqueue full ring same frame (10–15s freeze cause)
+		_active = true
+		_warm_t = 0.0
+		_warm_cells = 0
+		_queue.clear()
+		_center_cell = Vector2i(999999, 999999)
+	_warm_t += hz
 	var cell: Vector2i = _Math.cell_of(_planet.global_position, _radius, _observer.global_position, CELL_M)
 	if cell != _center_cell:
 		_center_cell = cell
-		_enqueue_needed(cell)
+		# Expand load ring gradually during warm-up
+		var ring := 0 if _warm_cells < 1 else (1 if _warm_t < 2.5 else _load_ring)
+		_enqueue_ring(cell, ring)
 		_unload_far(cell)
-	# FloatingOrigin may shift planet — cheap refresh of live xforms
+	# Xform refresh throttled harder
 	_xform_accum += hz
-	var xneed := 1.2 if gq and int(gq.tier) <= 1 else 1.0
+	var xneed := 1.6 if tier <= 1 else 1.1
 	if _xform_accum >= xneed:
 		_xform_accum = 0.0
+		var n := 0
 		for c in _live.keys():
 			_refresh_xform(c)
-	# Budgeted builds
+			n += 1
+			if n >= 6:
+				break
+	# Budgeted builds (hard cap 1 during warm)
 	var built := 0
 	while built < budget and not _queue.is_empty():
 		var c: Vector2i = _queue.pop_front()
@@ -147,7 +168,24 @@ func _process(delta: float) -> void:
 		if _Math.chebyshev(c, _center_cell) > _load_ring:
 			continue
 		_spawn_cell(c)
+		_warm_cells += 1
 		built += 1
+
+
+func _enqueue_ring(center: Vector2i, ring: int) -> void:
+	var want: Array[Vector2i] = _Math.ring_cells(center, ring)
+	want.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return _Math.chebyshev(a, center) < _Math.chebyshev(b, center)
+	)
+	for c in want:
+		if _live.has(c):
+			continue
+		if c in _queue:
+			continue
+		_queue.append(c)
+	# Cap queue depth — never backlog 50+ meshes
+	while _queue.size() > 12:
+		_queue.pop_back()
 
 
 func _enqueue_needed(center: Vector2i) -> void:
