@@ -55,7 +55,10 @@ func _ready() -> void:
 	call_deferred("_maybe_cmdline_net")
 
 func bind_player(p: Node3D) -> void:
-	_player_ref = p if p != null and is_instance_valid(p) else null
+	if p != null and is_instance_valid(p):
+		_player_ref = p
+	else:
+		_player_ref = null
 
 
 func _ensure_puppet_root() -> void:

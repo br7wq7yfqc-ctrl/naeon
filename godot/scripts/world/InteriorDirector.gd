@@ -127,7 +127,7 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 		(_active as Node3D).rotation = Vector3.ZERO
 
 	# Cancel any pending surface snap / exterior physics on walker
-	if player.has_method("set_interior_mode"):
+	if player != null and is_instance_valid(player) and player.has_method("set_interior_mode"):
 		player.set_interior_mode(true)
 	elif "interior_mode" in player:
 		player.interior_mode = true
@@ -136,11 +136,11 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 		(player as CharacterBody3D).floor_snap_length = 0.5
 
 	# Zero vertical velocity + flat gravity BEFORE teleport
-	if player.has_method("set_planet_gravity_provider"):
+	if player != null and is_instance_valid(player) and player.has_method("set_planet_gravity_provider"):
 		player.set_planet_gravity_provider(self)
-	if player.has_method("set_spawn_basis"):
+	if player != null and is_instance_valid(player) and player.has_method("set_spawn_basis"):
 		player.set_spawn_basis(Vector3.UP, 0.0)
-	if player.has_method("set_eva_profile"):
+	if player != null and is_instance_valid(player) and player.has_method("set_eva_profile"):
 		player.set_eva_profile(false)
 
 	# Place on spawn marker (floor + clearance)
@@ -164,11 +164,11 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	# Pause floating origin while inside (prevents void rebase)
 	if _open_space and _open_space.get("floating") != null:
 		var fo = _open_space.floating
-		if fo and fo.has_method("set_target"):
+		if fo != null and is_instance_valid(fo) and fo.has_method("set_target"):
 			fo.set_target(null)
-		if fo and fo.has_method("set_process"):
+		if fo != null and is_instance_valid(fo) and fo.has_method("set_process"):
 			fo.set_process(false)
-		if fo and fo.has_method("set_physics_process"):
+		if fo != null and is_instance_valid(fo) and fo.has_method("set_physics_process"):
 			fo.set_physics_process(false)
 
 	_inside = true
@@ -212,7 +212,7 @@ func _settle_player_on_floor() -> void:
 		print("[Interior] no floor ray — hard place")
 	if _player is CharacterBody3D:
 		(_player as CharacterBody3D).velocity = Vector3.ZERO
-	if _player.has_method("set_spawn_basis"):
+	if _player != null and is_instance_valid(_player) and _player.has_method("set_spawn_basis"):
 		_player.set_spawn_basis(Vector3.UP, 0.0)
 
 
@@ -226,20 +226,20 @@ func exit_interior() -> void:
 		return
 	_hatch_fx(false)
 	if _player and is_instance_valid(_player):
-		if _player.has_method("set_interior_mode"):
+		if _player != null and is_instance_valid(_player) and _player.has_method("set_interior_mode"):
 			_player.set_interior_mode(false)
 		elif "interior_mode" in _player:
 			_player.interior_mode = false
 		# Restore exterior gravity + place on pad/ship return
-		if _player.has_method("set_planet_gravity_provider") and _open_space:
+		if _player != null and is_instance_valid(_player) and _player.has_method("set_planet_gravity_provider") and _open_space:
 			_player.set_planet_gravity_provider(_open_space)
-		if _player.has_method("set_spawn_basis"):
+		if _player != null and is_instance_valid(_player) and _player.has_method("set_spawn_basis"):
 			_player.set_spawn_basis(_return_up, 0.0)
 		_player.global_position = _return_pos
 		if _player is CharacterBody3D:
 			(_player as CharacterBody3D).velocity = Vector3.ZERO
 		# Snap only AFTER exterior gravity restored
-		if _player.has_method("snap_to_surface"):
+		if _player != null and is_instance_valid(_player) and _player.has_method("snap_to_surface"):
 			_player.call_deferred("snap_to_surface")
 	if _active and is_instance_valid(_active):
 		_active.queue_free()
@@ -331,7 +331,7 @@ func exit_for_pilot() -> void:
 	_player = null
 	if _open_space:
 		var fo = _open_space.get("floating")
-		if fo and fo.has_method("set_physics_process"):
+		if fo != null and is_instance_valid(fo) and fo.has_method("set_physics_process"):
 			fo.set_physics_process(true)
 	if LayerContext:
 		LayerContext.current_layer = "Space"

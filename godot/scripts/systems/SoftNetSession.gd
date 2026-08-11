@@ -106,13 +106,18 @@ func _finish_ghost_visual() -> void:
 		_ghost.global_position = _player.global_position + Vector3(1.5, 0, 1.5)
 
 func _process(delta: float) -> void:
-	if not enabled or _player == null or not is_instance_valid(_player):
+	if not enabled:
+		return
+	if _player == null or not is_instance_valid(_player):
+		_player = null
 		return
 	_tick += delta
 	if _tick < SNAP_INTERVAL:
 		return
 	_tick = 0.0
 	var snap := _capture()
+	if snap.is_empty():
+		return
 	_history.append({"t": Time.get_ticks_msec(), "snap": snap})
 	var now := Time.get_ticks_msec()
 	while _history.size() > 0 and now - int(_history[0]["t"]) > HISTORY_MS:
@@ -125,39 +130,43 @@ func _process(delta: float) -> void:
 		_apply_ghost(now)
 
 func _capture() -> Dictionary:
+	if _player == null or not is_instance_valid(_player):
+		_player = null
+		return {}
+	var p: Node3D = _player
 	var form := ""
 	var fac := "Cybernex"
-	if "current_form" in _player:
-		form = str(_player.current_form)
-	elif "form_name" in _player:
-		form = str(_player.form_name)
-	if "faction" in _player:
-		fac = str(_player.faction)
+	if "current_form" in p:
+		form = str(p.current_form)
+	elif "form_name" in p:
+		form = str(p.form_name)
+	if "faction" in p:
+		fac = str(p.faction)
 	# Lightweight — skip LayerContextAuthority bundle every tick (was heavy)
 	var actor_mode := "pilot"
 	var op_mode := 0
 	var morph_t := 0.0
 	var landed := false
-	if "eva_mode" in _player and bool(_player.eva_mode):
+	if "eva_mode" in p and bool(p.eva_mode):
 		actor_mode = "eva"
-	elif _player.is_in_group("ship") or str(_player.get_class()).find("Ship") >= 0 or _player.has_method("flight_mode_name"):
+	elif p.is_in_group("ship") or str(p.get_class()).find("Ship") >= 0:
 		actor_mode = "pilot"
-		if "op_mode" in _player:
-			op_mode = int(_player.op_mode)
-		if "is_landed" in _player:
-			landed = bool(_player.is_landed)
-		var hm = _player.get_node_or_null("HullMorph")
-		if hm and "morph_t" in hm:
+		if "op_mode" in p:
+			op_mode = int(p.op_mode)
+		if "is_landed" in p:
+			landed = bool(p.is_landed)
+		var hm = p.get_node_or_null("HullMorph")
+		if hm != null and is_instance_valid(hm) and "morph_t" in hm:
 			morph_t = float(hm.morph_t)
-	elif _player.has_method("board"):
+	elif p.is_in_group("ground_vehicle"):
 		actor_mode = "vehicle"
 	else:
 		actor_mode = "surface"
 	return {
-		"pos": [_player.global_position.x, _player.global_position.y, _player.global_position.z],
-		"yaw": _player.rotation.y,
-		"pitch": _player.rotation.x,
-		"roll": _player.rotation.z,
+		"pos": [p.global_position.x, p.global_position.y, p.global_position.z],
+		"yaw": p.rotation.y,
+		"pitch": p.rotation.x,
+		"roll": p.rotation.z,
 		"form": form,
 		"faction": fac,
 		"actor_mode": actor_mode,

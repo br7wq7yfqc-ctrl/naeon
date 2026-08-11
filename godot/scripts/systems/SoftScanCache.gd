@@ -31,9 +31,16 @@ func _process(delta: float) -> void:
 	_host_t += delta
 
 
+func invalidate_player() -> void:
+	_player = null
+	_player_t = 99.0
+
+
 func get_player() -> Node3D:
-	if _player != null and is_instance_valid(_player) and _player_t < PLAYER_TTL:
-		return _player
+	if _player != null:
+		if is_instance_valid(_player) and _player_t < PLAYER_TTL:
+			return _player
+		_player = null
 	_player_t = 0.0
 	var tree := get_tree()
 	if tree == null:

@@ -1158,7 +1158,7 @@ func _tick_scan_pulse(delta: float) -> void:
 	if pad:
 		var fac := "?"
 		if "ownership" in pad and pad.ownership:
-			fac = str(pad.ownership.faction_name()) if pad.ownership.has_method("faction_name") else "?"
+			fac = str(pad.ownership.faction_name()) if pad.ownership != null and is_instance_valid(pad.ownership) and pad.ownership.has_method("faction_name") else "?"
 		bits.append("pad@%.0fm %s" % [global_position.distance_to(pad.global_position), fac])
 	var report := "SCAN · " + (" · ".join(bits) if bits.size() > 0 else "no contacts")
 	if report == _scan_last_report:

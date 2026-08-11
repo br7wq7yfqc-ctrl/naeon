@@ -35,7 +35,7 @@ func _ready() -> void:
 	_spawn_orbital_stations()
 	_spawn_ship()
 	_setup_interior()
-	if floating and floating.has_method("set_target"):
+	if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
 		floating.set_target(ship)
 	# Graphics
 	var gq := get_node_or_null("/root/GraphicsQuality")
@@ -365,7 +365,7 @@ func try_enter_ship() -> void:
 	if is_instance_valid(ship) and "velocity" in ship:
 		ship.velocity = Vector3.ZERO if bool(ship.get("is_landed")) else ship.velocity
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	if ship.has_method("set_hatch_open"):
+	if ship != null and is_instance_valid(ship) and ship.has_method("set_hatch_open"):
 		ship.set_hatch_open(false)
 	else:
 		var door2 = ship.get_node_or_null("HatchPoint/HatchDoor")
@@ -392,25 +392,25 @@ func _spawn_eva_near_ship() -> void:
 	else:
 		player.global_position = ship.global_position + side * 4.5 + up * 1.4
 	# Open hatch door soft
-	if ship.has_method("set_hatch_open"):
+	if ship != null and is_instance_valid(ship) and ship.has_method("set_hatch_open"):
 		ship.set_hatch_open(true)
 	else:
 		var door = ship.get_node_or_null("HatchPoint/HatchDoor")
 		if door is Node3D:
 			(door as Node3D).visible = true
 			(door as Node3D).rotation.y = deg_to_rad(85.0)
-	if player.has_method("set_planet_gravity_provider"):
+	if player != null and is_instance_valid(player) and player.has_method("set_planet_gravity_provider"):
 		player.set_planet_gravity_provider(self)
-	if player.has_method("set_eva_profile"):
+	if player != null and is_instance_valid(player) and player.has_method("set_eva_profile"):
 		player.set_eva_profile(true)
-	if player.has_method("set_spawn_basis"):
+	if player != null and is_instance_valid(player) and player.has_method("set_spawn_basis"):
 		var nose: Vector3 = -ship.global_transform.basis.z
 		player.set_spawn_basis(up, atan2(-nose.x, -nose.z))
 	# Match ship velocity so no instant relative slam
 	if player is CharacterBody3D and "velocity" in ship and ship.velocity is Vector3:
 		(player as CharacterBody3D).velocity = (ship.velocity as Vector3) * 0.9
 	# Skip floor snap for EVA
-	if player.has_method("set") and "eva_mode" in player:
+	if player != null and is_instance_valid(player) and player.has_method("set") and "eva_mode" in player:
 		pass
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	_toast_hud("EVA — thrusters WASD · Space/Shift · F reboard hatch")
@@ -442,17 +442,17 @@ func _spawn_player_near_ship() -> void:
 	side = side.normalized()
 	# High clear spawn — well above pad deck / props (was too low → terrain embed)
 	player.global_position = ship.global_position + pad_up * 3.2 + side * 5.5
-	if player.has_method("set_planet_gravity_provider"):
+	if player != null and is_instance_valid(player) and player.has_method("set_planet_gravity_provider"):
 		player.set_planet_gravity_provider(self)
-	if player.has_method("set_eva_profile"):
+	if player != null and is_instance_valid(player) and player.has_method("set_eva_profile"):
 		player.set_eva_profile(false)
 	# Face same way as ship nose (−Z of ship)
 	var nose: Vector3 = -ship.global_transform.basis.z
 	nose = (nose - pad_up * nose.dot(pad_up)).normalized()
 	var yaw := atan2(-nose.x, -nose.z)
-	if player.has_method("set_spawn_basis"):
+	if player != null and is_instance_valid(player) and player.has_method("set_spawn_basis"):
 		player.set_spawn_basis(pad_up, yaw)
-	if player.has_method("snap_to_surface"):
+	if player != null and is_instance_valid(player) and player.has_method("snap_to_surface"):
 		player.call_deferred("snap_to_surface")
 		# Second snap next frames for physics settle
 		get_tree().create_timer(0.05).timeout.connect(func():
@@ -521,7 +521,7 @@ func _process(delta: float) -> void:
 				_eva_tether_t = 0.0
 
 func _update_hud() -> void:
-	if hud_label == null or ship == null:
+	if hud_label == null or ship == null or not is_instance_valid(ship):
 		return
 	var pl: Node3D = nearest_planet(ship.global_position)
 	var alt := 0.0
@@ -635,7 +635,7 @@ func _try_board_nearby_rover() -> bool:
 	_in_rover = true
 	if _rover.has_method("board"):
 		_rover.board(player)
-	if floating and floating.has_method("set_target"):
+	if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
 		floating.set_target(_rover)
 	_bind_soft_net_actor(_rover)
 	print("[OpenSpace] boarded rover")
@@ -653,9 +653,9 @@ func _unboard_rover() -> void:
 	_in_rover = false
 	if actor and is_instance_valid(actor):
 		player = actor
-		if player.has_method("set_planet_gravity_provider"):
+		if player != null and is_instance_valid(player) and player.has_method("set_planet_gravity_provider"):
 			player.set_planet_gravity_provider(self)
-		if floating and floating.has_method("set_target"):
+		if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
 			floating.set_target(player)
 		_bind_soft_net_actor(player)
 	_rover = null
@@ -704,7 +704,7 @@ func _try_seat_to_pilot() -> bool:
 		floating.set_target(ship)
 	_bind_soft_net_actor(ship)
 	_safe_free_walker()
-	if ship.has_method("set_pilot_active"):
+	if ship != null and is_instance_valid(ship) and ship.has_method("set_pilot_active"):
 		ship.set_pilot_active(true)
 	# Hatch door close after seat pilot
 	var door = ship.get_node_or_null("HatchPoint/HatchDoor")
@@ -757,7 +757,7 @@ func _toggle_interior() -> void:
 	if actor == null and ship and _in_ship and is_instance_valid(ship):
 		_in_ship = false
 		_eva_mode = false
-		if ship.has_method("set_pilot_active"):
+		if ship != null and is_instance_valid(ship) and ship.has_method("set_pilot_active"):
 			ship.set_pilot_active(false)
 		_spawn_player_near_ship() if bool(ship.get("is_landed")) else _spawn_eva_near_ship()
 		actor = player
@@ -924,24 +924,37 @@ func _toast_hud(msg: String, ttl: float = 2.2) -> void:
 
 
 func _safe_free_walker() -> void:
-	## Disable then deferred free — avoids ClassDB has_method on freed walker (SIGSEGV).
+	## Null all external refs FIRST, then free — never has_method on freed walker.
 	var old: Node = player
 	player = null
-	if old == null or not is_instance_valid(old):
+	# Unbind soft systems BEFORE free (stale ref = SIGSEGV in Object::has_method)
+	if SoftNetSession and SoftNetSession.has_method("bind_player"):
+		SoftNetSession.bind_player(null)
+	if SoftENet and SoftENet.has_method("bind_player"):
+		SoftENet.bind_player(null)
+	if SoftScanCache and SoftScanCache.has_method("invalidate_player"):
+		SoftScanCache.invalidate_player()
+	if old == null:
+		return
+	if not is_instance_valid(old):
 		return
 	old.set_process(false)
 	old.set_physics_process(false)
 	old.set_process_input(false)
 	old.set_process_unhandled_input(false)
+	old.set_process_internal(false)
 	if old is CollisionObject3D:
 		(old as CollisionObject3D).collision_layer = 0
 		(old as CollisionObject3D).collision_mask = 0
 	if old is CharacterBody3D:
 		(old as CharacterBody3D).velocity = Vector3.ZERO
-	# Drop group membership so SoftScanCache cannot return stale ref
 	if old.is_in_group("player"):
 		old.remove_from_group("player")
-	old.call_deferred("queue_free")
+	# Detach from tree immediately so SceneTree cannot notify freed node
+	var par := old.get_parent()
+	if par:
+		par.remove_child(old)
+	old.queue_free()
 
 
 
@@ -1010,7 +1023,7 @@ func _schedule_surface_settle() -> void:
 	## Snap walker to pad/terrain after F exit — aborted if interior_mode.
 	if player == null or not is_instance_valid(player):
 		return
-	if player.has_method("snap_to_surface"):
+	if player != null and is_instance_valid(player) and player.has_method("snap_to_surface"):
 		player.call_deferred("snap_to_surface")
 	var tree := get_tree()
 	if tree == null:
@@ -1021,12 +1034,27 @@ func _schedule_surface_settle() -> void:
 
 func _surface_settle_tick(stage: int) -> void:
 	if player == null or not is_instance_valid(player):
+		player = null
 		return
 	if "interior_mode" in player and bool(player.interior_mode):
-		return  # entered I — do not yank out of pocket
-	if _interior and _interior.has_method("is_inside") and _interior.is_inside():
 		return
-	if stage <= 1 and player.has_method("snap_to_surface"):
-		player.snap_to_surface()
-	elif player.has_method("safe_unground"):
-		player.safe_unground()
+	if _interior != null and is_instance_valid(_interior) and _interior.has_method("is_inside") and bool(_interior.is_inside()):
+		return
+	if stage <= 1:
+		_call_if(player, &"snap_to_surface")
+	else:
+		_call_if(player, &"safe_unground")
+
+
+
+func _node_alive(n: Object) -> bool:
+	return n != null and is_instance_valid(n)
+
+
+func _call_if(n: Object, method: StringName, args: Array = []) -> void:
+	## Safe has_method + call — never SIGSEGV on freed objects.
+	if n == null or not is_instance_valid(n):
+		return
+	if not n.has_method(method):
+		return
+	n.callv(method, args)
