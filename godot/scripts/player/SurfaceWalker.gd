@@ -189,13 +189,12 @@ func _load_form_visual() -> void:
 	_visual.add_child(root)
 	root.name = "FormGLB"
 	_MeshOrient.face_neg_z(root as Node3D, false)
-	# Characters: face −Z (body forward)
-	if root is Node3D:
-		(root as Node3D).position = Vector3(0, 0, 0)
+	# Characters: body forward = local −Z (same as wish/W). Many GLBs face +X/+Z after import.
+	_force_char_face_neg_z(root as Node3D)
 	_form_skel = _FormAnim.find_skeleton(root)
 	root.scale = Vector3.ONE * 1.1
 	root.position = Vector3(0, 0, 0)
-	print("[SurfaceWalker] form mesh ", path)
+	print("[SurfaceWalker] form mesh ", path, " yaw=", rad_to_deg((root as Node3D).rotation.y))
 
 func _strip_colliders(n: Node) -> void:
 	for c in n.get_children():
@@ -382,9 +381,8 @@ func _physics_process(delta: float) -> void:
 	if input.length_squared() > 1.0:
 		input = input.normalized()
 
-	# Facing: pure SurfaceFacing.compute_wish (selftest parity) — W = face (−Z @ yaw0)
+	# Body basis first, then wish from that basis (visual −Z = forward). Avoid dual-math drift.
 	last_move_input = input
-	var wish := _Facing.compute_wish(input, _up, _yaw)
 	var blook := _basis_from_up()
 	var forward := (-blook.z)
 	forward = (forward - _up * forward.dot(_up))
@@ -392,9 +390,15 @@ func _physics_process(delta: float) -> void:
 		forward = Vector3(0, 0, -1)
 	else:
 		forward = forward.normalized()
+	# Right = up × forward? RH: forward×up was wrong for some poles — use up.cross(forward)
+	# RH: forward × up = right (W along −Z, D along +X)
 	var right := forward.cross(_up).normalized()
 	if right.length_squared() < 1e-6:
 		right = blook.x
+	# W (input.y=-1) → +forward (−Z); D (input.x=+1) → +right
+	var wish := Vector3.ZERO
+	if input.length_squared() > 1e-6:
+		wish = (right * input.x + forward * (-input.y)).normalized()
 	if eva_mode:
 		_process_eva(delta, wish, forward, right)
 		return
@@ -1101,6 +1105,31 @@ func _ensure_face_arrow() -> void:
 	mat.emission = Color(0.2, 1.0, 0.85)
 	mat.emission_energy_multiplier = 2.0
 	_face_arrow.material_override = mat
-	_face_arrow.position = Vector3(0, 1.1, -0.55)  # local −Z = face
+	_face_arrow.position = Vector3(0, 1.15, -0.7)  # local −Z = face
 	_face_arrow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(_face_arrow)
+
+
+
+func _force_char_face_neg_z(root: Node3D) -> void:
+	## After MeshOrient, pick yaw so mesh "front" mass is toward local −Z (matches W).
+	if root == null:
+		return
+	var base: AABB = _MeshOrient._aabb_children(root)
+	if base.size.length_squared() < 1e-8:
+		# Common biped GLB faces +X — try 90°
+		root.rotation.y = PI * 0.5
+		return
+	var best_y := root.rotation.y
+	var best_score := -1.0e12
+	for y in [0.0, PI * 0.5, PI, PI * 1.5]:
+		var a: AABB = _MeshOrient._rotate_aabb_y(base, y)
+		# Prefer depth along Z (side profile thinner on X), and center of mass toward −Z
+		var score: float = a.size.z - a.size.x * 1.1
+		score += -a.get_center().z * 2.0
+		# Prefer taller than wide (upright)
+		score += a.size.y * 0.15
+		if score > best_score:
+			best_score = score
+			best_y = y
+	root.rotation.y = best_y

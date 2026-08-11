@@ -42,10 +42,16 @@ func try_toggle(player: Node3D, ship: Node3D = null) -> void:
 			enter_station(player, pad)
 			return
 	# Ship interior if near ship
-	if ship and player and player.global_position.distance_to(ship.global_position) < 14.0:
-		enter_ship(player, ship)
+	if ship and player and is_instance_valid(ship) and is_instance_valid(player):
+		var sd: float = player.global_position.distance_to(ship.global_position)
+		if sd < 42.0:
+			enter_ship(player, ship)
+			return
+		print("[Interior] Too far from ship (", int(sd), "m)")
+		_toast("Closer to ship hull for interior")
 		return
 	print("[Interior] Nothing to enter (near pad or ship)")
+	_toast("Near pad or ship, then I")
 
 func enter_station(player: Node3D, pad: Node3D) -> void:
 	var fac := "Cybernex"
@@ -63,6 +69,11 @@ func enter_ship(player: Node3D, ship: Node3D) -> void:
 	if ship.has_method("get_interior_profile_id"):
 		pid = str(ship.get_interior_profile_id())
 	var interior: Node3D = _Gen.build_from_profile(pid, fac)
+	if interior == null:
+		print("[Interior] build_from_profile failed ", pid)
+		_toast("Interior build failed")
+		return
+	print("[Interior] building ship pocket ", pid)
 	_begin(player, "ship", interior, ship.global_position, Vector3.UP)
 
 func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, ret_up: Vector3) -> void:

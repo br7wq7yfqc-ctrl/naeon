@@ -21,8 +21,8 @@ enum FlightMode { SCM, NAV, HOVER }
 @export var max_speed_hover: float = 22.0
 @export var mouse_sensitivity: float = 0.0025
 @export var faction: String = "Cybernex"
-@export var land_pad_snap_distance: float = 55.0
-@export var surface_land_alt: float = 35.0
+@export var land_pad_snap_distance: float = 90.0
+@export var surface_land_alt: float = 120.0
 
 @onready var camera_pivot: Node3D = $CameraPivot
 @onready var camera: Camera3D = $CameraPivot/Camera3D
@@ -401,6 +401,7 @@ func _physics_process(delta: float) -> void:
 		_fire_weapon()
 	if Input.is_action_just_pressed("ability_2"):
 		_toggle_landing()
+	_auto_land_assist(delta)
 	if Input.is_action_just_pressed("ability_3"):
 		attach_module(ShipModule.make_extractor())
 	_recompute_stats()
@@ -421,15 +422,22 @@ func _toggle_landing() -> void:
 		_do_land()
 
 func _do_land() -> void:
-	# Speed gate — hard landings rejected (clear feedback)
+	# Permissive land gate — playable, still blocks hyper-speed crashes
 	var spd := velocity.length()
 	var v_rad := 0.0
 	if _open_space and _open_space.has_method("gravity_at"):
 		var gg: Vector3 = _open_space.gravity_at(global_position)
 		if gg.length() > 0.01:
-			v_rad = velocity.dot(gg.normalized())  # positive = sinking toward planet
-	if not _Flight.land_ok(spd, v_rad, 22.0, 14.0):
-		print("[Ship] Land denied — too fast (spd=", int(spd), " sink=", int(v_rad), "). Slow to HOVER.")
+			# g points planetward; sink = velocity along g (toward surface)
+			v_rad = velocity.dot(gg.normalized())
+	# Slow auto-brake before commit
+	if spd > 28.0:
+		velocity = velocity * 0.35
+		spd = velocity.length()
+		print("[Ship] Land brake → spd ", int(spd))
+	if not _Flight.land_ok(spd, v_rad, 48.0, 40.0):
+		print("[Ship] Land denied — too fast (spd=", int(spd), " sink=", int(v_rad), "). Slow / HOVER (2).")
+		_toast_ship("Slow down to land (HOVER)")
 		return
 	# Prefer pad snap within range; else surface land if altitude low
 	var pad: Node3D = null
@@ -445,7 +453,7 @@ func _do_land() -> void:
 		# Face roughly along pad
 		velocity = Vector3.ZERO
 		is_landed = true
-		_land_lock_t = 0.85
+		_land_lock_t = 1.25
 	velocity = Vector3.ZERO
 	if _thruster_fx and is_instance_valid(_thruster_fx):
 		_thruster_fx.emitting = false
@@ -470,7 +478,7 @@ func _do_land() -> void:
 		if pl and pl.has_method("altitude_of") and pl.altitude_of(global_position) < surface_land_alt:
 			velocity = Vector3.ZERO
 			is_landed = true
-			_land_lock_t = 0.85
+			_land_lock_t = 1.25
 			_landed_pad = null
 			_pitch = 0.0
 			_roll = 0.0
@@ -484,8 +492,11 @@ func _do_land() -> void:
 	print("[Ship] Land denied — approach a pad (<", land_pad_snap_distance, "m) or surface")
 
 func _do_launch() -> void:
+	if not is_landed:
+		return
 	if _land_lock_t > 0.0:
 		print("[Ship] Launch lock ", "%.2f" % _land_lock_t, "s")
+		_toast_ship("Launch lock %.1fs" % _land_lock_t)
 		return
 	var up_boost: Vector3 = _reference_up()
 	var nose: Vector3 = -global_transform.basis.z
@@ -494,10 +505,11 @@ func _do_launch() -> void:
 	_sync_landing_gear()
 	if flight_mode == FlightMode.HOVER:
 		_set_mode(FlightMode.SCM)
-	# Controlled lift: modest pad up + nose — not a sky rocket
-	velocity = up_boost * 5.5 + nose * 2.5
+	# Gentle lift — user then applies thrust (no sky rocket)
+	velocity = up_boost * 3.5 + nose * 1.5
 	launched.emit()
 	print("[Ship] Launched")
+	_toast_ship("Launched")
 
 func detach_module(index: int) -> void:
 	if index < 0 or index >= modules.size():
@@ -912,33 +924,40 @@ func _ensure_morph_and_hatch() -> void:
 	if get_node_or_null("HatchPoint") == null:
 		var h := Marker3D.new()
 		h.name = "HatchPoint"
-		h.position = Vector3(3.2, 0.8, 0.5)
+		# Side hatch slightly aft — marker only (no giant plate)
+		h.position = Vector3(2.4, 0.6, 0.8)
 		add_child(h)
-	if _hull_morph and is_instance_valid(_hull_morph):
-		return
-	_hull_morph = Node3D.new()
-	_hull_morph.set_script(load("res://scripts/ship/ShipHullMorph.gd"))
-	_hull_morph.name = "HullMorph"
-	add_child(_hull_morph)
-	# Procedural hatch plate (juice)
-	var door := MeshInstance3D.new()
-	door.name = "HatchDoor"
-	var db := BoxMesh.new()
-	db.size = Vector3(0.9, 1.2, 0.06)
-	door.mesh = db
-	var dm := StandardMaterial3D.new()
-	dm.albedo_color = Color(0.2, 0.55, 0.7)
-	dm.emission_enabled = true
-	dm.emission = Color(0.2, 0.7, 1.0)
-	dm.emission_energy_multiplier = 0.6
-	door.material_override = dm
+	if _hull_morph == null or not is_instance_valid(_hull_morph):
+		_hull_morph = Node3D.new()
+		_hull_morph.set_script(load("res://scripts/ship/ShipHullMorph.gd"))
+		_hull_morph.name = "HullMorph"
+		add_child(_hull_morph)
+	# Small hatch plate — HIDDEN by default (was blue monolith on +X)
 	var hp = get_node_or_null("HatchPoint")
-	if hp:
+	if hp and hp.get_node_or_null("HatchDoor") == null:
+		var door := MeshInstance3D.new()
+		door.name = "HatchDoor"
+		var db := BoxMesh.new()
+		db.size = Vector3(0.35, 0.55, 0.04)
+		door.mesh = db
+		var dm := StandardMaterial3D.new()
+		dm.albedo_color = Color(0.15, 0.2, 0.25, 0.35)
+		dm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		dm.emission_enabled = true
+		dm.emission = Color(0.2, 0.7, 1.0)
+		dm.emission_energy_multiplier = 0.25
+		door.material_override = dm
+		door.visible = false  # only show during EVA / open
+		door.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		hp.add_child(door)
-	else:
-		door.position = Vector3(3.2, 0.8, 0.5)
-		add_child(door)
 	print("[Ship] Hatch + HullMorph")
+
+
+func set_hatch_open(open: bool) -> void:
+	var door = get_node_or_null("HatchPoint/HatchDoor")
+	if door is MeshInstance3D:
+		(door as MeshInstance3D).visible = open
+		(door as MeshInstance3D).rotation.y = deg_to_rad(85.0) if open else 0.0
 
 
 func _toggle_siege() -> void:
@@ -1373,7 +1392,7 @@ func _ensure_nose_marker() -> void:
 	var n := MeshInstance3D.new()
 	n.name = "NoseMarker"
 	var bm := BoxMesh.new()
-	bm.size = Vector3(0.12, 0.12, 1.6)
+	bm.size = Vector3(0.06, 0.06, 0.9)
 	n.mesh = bm
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -1385,3 +1404,33 @@ func _ensure_nose_marker() -> void:
 	n.position = Vector3(0, 0.4, -2.2)  # local −Z = thrust nose
 	n.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(n)
+
+
+
+func _toast_ship(msg: String) -> void:
+	if GameManager and GameManager.has_signal("toast_requested"):
+		GameManager.toast_requested.emit(msg)
+	print("[Ship] ", msg)
+
+
+
+func _auto_land_assist(_delta: float) -> void:
+	## Soft snap-land when nearly stopped above pad.
+	if is_landed or not pilot_active:
+		return
+	if _land_lock_t > 0.0:
+		return
+	if velocity.length() > 10.0:
+		return
+	if _open_space == null or not _open_space.has_method("nearest_pad"):
+		return
+	var pad: Node3D = _open_space.nearest_pad(global_position)
+	if pad == null or not is_instance_valid(pad):
+		return
+	var d: float = pad.global_position.distance_to(global_position)
+	if d > 45.0:
+		return
+	# Near pad + slow → commit land once
+	_do_land()
+
+

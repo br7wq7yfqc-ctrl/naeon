@@ -365,9 +365,13 @@ func try_enter_ship() -> void:
 	if is_instance_valid(ship) and "velocity" in ship:
 		ship.velocity = Vector3.ZERO if bool(ship.get("is_landed")) else ship.velocity
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	var door2 = ship.get_node_or_null("HatchPoint/HatchDoor")
-	if door2 is Node3D:
-		(door2 as Node3D).rotation.y = 0.0
+	if ship.has_method("set_hatch_open"):
+		ship.set_hatch_open(false)
+	else:
+		var door2 = ship.get_node_or_null("HatchPoint/HatchDoor")
+		if door2 is Node3D:
+			(door2 as Node3D).visible = false
+			(door2 as Node3D).rotation.y = 0.0
 	_toast_hud("Boarded — hatch sealed")
 	print("[OpenSpace] boarded ship")
 
@@ -388,9 +392,13 @@ func _spawn_eva_near_ship() -> void:
 	else:
 		player.global_position = ship.global_position + side * 4.5 + up * 1.4
 	# Open hatch door soft
-	var door = ship.get_node_or_null("HatchPoint/HatchDoor")
-	if door is Node3D:
-		(door as Node3D).rotation.y = deg_to_rad(85.0)
+	if ship.has_method("set_hatch_open"):
+		ship.set_hatch_open(true)
+	else:
+		var door = ship.get_node_or_null("HatchPoint/HatchDoor")
+		if door is Node3D:
+			(door as Node3D).visible = true
+			(door as Node3D).rotation.y = deg_to_rad(85.0)
 	if player.has_method("set_planet_gravity_provider"):
 		player.set_planet_gravity_provider(self)
 	if player.has_method("set_eva_profile"):
@@ -745,9 +753,18 @@ func _try_store_rover() -> void:
 
 func _toggle_interior() -> void:
 	var actor: Node3D = player if player and is_instance_valid(player) else null
-	if actor == null and ship and _in_ship:
-		print("[OpenSpace] Exit ship first (F) to enter interiors on foot")
-		return
+	# From pilot: soft-exit to hatch then open ship interior pocket
+	if actor == null and ship and _in_ship and is_instance_valid(ship):
+		_in_ship = false
+		_eva_mode = false
+		if ship.has_method("set_pilot_active"):
+			ship.set_pilot_active(false)
+		_spawn_player_near_ship() if bool(ship.get("is_landed")) else _spawn_eva_near_ship()
+		actor = player
+		if actor and is_instance_valid(actor) and _interior and _interior.has_method("enter_ship"):
+			_interior.enter_ship(actor, ship)
+			_toast_hud("Ship interior")
+			return
 	if actor == null:
 		return
 	if _interior and _interior.has_method("try_toggle"):

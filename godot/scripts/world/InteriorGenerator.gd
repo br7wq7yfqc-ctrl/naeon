@@ -112,6 +112,7 @@ static func build_ship(faction: String = "Cybernex") -> Node3D:
 	root.add_child(elabel)
 	_add_neon_strips(root, faction)
 	_attach_ambient(root, "ship", neon)
+	_ensure_seat_markers(root)
 	return root
 
 static func _room(parent: Node3D, pos: Vector3, size: Vector3, rname: String, neon: Color) -> void:

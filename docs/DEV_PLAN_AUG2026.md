@@ -1,18 +1,11 @@
 # NAEON Dev Plan — Aug 2026
 
-## sequential
-
-| Track | Status |
-|-------|--------|
-| Arena FPS | done |
-| OpenSpace FPS v1 | done |
-| Residuals facing/land/seat | **done** |
-| SoftNet / multi-planet CPU | **done** |
-| OpenSpace FPS deepen | **done** |
+## Hotfix batch (2026-08-11T20:06:34.508428+00:00)
+- Character mesh face −Z (sideways walk)
+- Land: permissive gate + auto pad assist + lock 1.25s
+- Hatch door hidden (was blue monolith +X)
+- Interior: enter from pilot / 42m range
 
 ## Next
-1. Real-client verify land lock + W facing + seat F
-2. Combat readability residual
-3. Batch DMG after loop acceptance
-
-Updated: 2026-08-08T23:34:23.511912+00:00
+- Real-client verify land/face/interior
+- Batch DMG after acceptance
