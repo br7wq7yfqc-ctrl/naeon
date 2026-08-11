@@ -441,7 +441,7 @@ func _spawn_player_near_ship() -> void:
 			side = pad_up.cross(Vector3.RIGHT)
 	side = side.normalized()
 	# High clear spawn — well above pad deck / props (was too low → terrain embed)
-	player.global_position = ship.global_position + pad_up * 6.5 + side * 8.5
+	player.global_position = ship.global_position + pad_up * 3.2 + side * 5.5
 	if player.has_method("set_planet_gravity_provider"):
 		player.set_planet_gravity_provider(self)
 	if player.has_method("set_eva_profile"):
@@ -1003,3 +1003,30 @@ func _park_far_planets() -> void:
 				if n:
 					n.set_process(false)
 					n.visible = false
+
+
+
+func _schedule_surface_settle() -> void:
+	## Snap walker to pad/terrain after F exit — aborted if interior_mode.
+	if player == null or not is_instance_valid(player):
+		return
+	if player.has_method("snap_to_surface"):
+		player.call_deferred("snap_to_surface")
+	var tree := get_tree()
+	if tree == null:
+		return
+	tree.create_timer(0.08).timeout.connect(_surface_settle_tick.bind(1))
+	tree.create_timer(0.20).timeout.connect(_surface_settle_tick.bind(2))
+
+
+func _surface_settle_tick(stage: int) -> void:
+	if player == null or not is_instance_valid(player):
+		return
+	if "interior_mode" in player and bool(player.interior_mode):
+		return  # entered I — do not yank out of pocket
+	if _interior and _interior.has_method("is_inside") and _interior.is_inside():
+		return
+	if stage <= 1 and player.has_method("snap_to_surface"):
+		player.snap_to_surface()
+	elif player.has_method("safe_unground"):
+		player.safe_unground()

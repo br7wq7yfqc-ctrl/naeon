@@ -68,7 +68,7 @@ static func build_station(faction: String = "Cybernex") -> Node3D:
 	# Spawn point
 	var spawn := Marker3D.new()
 	spawn.name = "Spawn"
-	spawn.position = Vector3(0, 1.0, 2)
+	spawn.position = Vector3(0, 1.35, 2)
 	root.add_child(spawn)
 	_add_neon_strips(root, faction)
 	_ensure_seat_markers(root)
@@ -101,7 +101,7 @@ static func build_ship(faction: String = "Cybernex") -> Node3D:
 	root.add_child(exit)
 	var spawn := Marker3D.new()
 	spawn.name = "Spawn"
-	spawn.position = Vector3(0, 0.9, 1)
+	spawn.position = Vector3(0, 1.25, 1)
 	root.add_child(spawn)
 	var elabel := Label3D.new()
 	elabel.text = "HATCH  [I]"
@@ -121,7 +121,8 @@ static func _room(parent: Node3D, pos: Vector3, size: Vector3, rname: String, ne
 	room.position = pos
 	parent.add_child(room)
 	# Floor
-	_box_mesh(room, Vector3(0, 0, 0), Vector3(size.x, 0.2, size.z), Color(0.06, 0.07, 0.09), true)
+	_box_mesh(room, Vector3(0, 0, 0), Vector3(size.x, 0.55, size.z), Color(0.06, 0.07, 0.09), true)
+	_box_mesh(room, Vector3(0, -0.8, 0), Vector3(size.x + 1.0, 1.0, size.z + 1.0), Color(0.04, 0.04, 0.05), true)
 	# Ceiling
 	_box_mesh(room, Vector3(0, size.y, 0), Vector3(size.x, 0.15, size.z), Color(0.05, 0.06, 0.08), true)
 	# Walls (open on -Z/+Z for corridor flow — leave gaps)
@@ -294,7 +295,7 @@ static func build_from_profile(profile_id: String, faction: String = "Cybernex")
 	root.add_child(exit)
 	var spawn := Marker3D.new()
 	spawn.name = "Spawn"
-	spawn.position = seat_pos + Vector3(0, 0, 1.2)
+	spawn.position = seat_pos + Vector3(0, 0.4, 1.2)
 	root.add_child(spawn)
 	var elabel := Label3D.new()
 	elabel.text = "HATCH [I]  SEAT [F]"

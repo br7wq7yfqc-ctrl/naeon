@@ -1,13 +1,17 @@
 extends Node
 class_name InteriorDirector
-## Enter/exit station or ship interiors (procedural pockets). Seamless enough for vertical slice.
+## Enter/exit station or ship interiors (procedural pockets).
+## Pocket is parented under OpenSpace (NOT WorldRoot) so FloatingOrigin cannot
+## yank the room away from the player. Deferred surface snaps are cancelled.
 
 signal entered(kind: String)
 signal exited(kind: String)
 
 const _Gen = preload("res://scripts/world/InteriorGenerator.gd")
+## Fixed local pocket under OpenSpace — near scene origin, away from planets.
+const POCKET_LOCAL := Vector3(0.0, 120.0, 0.0)
 
-var _root: Node3D
+var _root: Node3D  ## WorldRoot (legacy; not used for pocket parent)
 var _active: Node3D
 var _kind: String = ""
 var _return_pos: Vector3 = Vector3.ZERO
@@ -16,42 +20,52 @@ var _player: Node3D
 var _open_space: Node
 var _inside: bool = false
 var _exit_hint_t: float = 0.0
+var _player_was_parent: Node = null
+
 
 func setup(world_root: Node3D, open_space: Node) -> void:
 	add_to_group("interior_director")
 	_root = world_root
 	_open_space = open_space
 
+
 func is_inside() -> bool:
 	return _inside
+
 
 func get_kind() -> String:
 	return _kind
 
+
 func get_active_interior() -> Node3D:
 	return _active
+
 
 func try_toggle(player: Node3D, ship: Node3D = null) -> void:
 	if _inside:
 		exit_interior()
 		return
+	if player == null or not is_instance_valid(player):
+		_toast("No walker")
+		return
 	# Prefer station if near pad
-	if _open_space and _open_space.has_method("nearest_pad") and player:
+	if _open_space and _open_space.has_method("nearest_pad"):
 		var pad: Node3D = _open_space.nearest_pad(player.global_position)
-		if pad and player.global_position.distance_to(pad.global_position) < 35.0:
+		if pad and is_instance_valid(pad) and player.global_position.distance_to(pad.global_position) < 45.0:
 			enter_station(player, pad)
 			return
 	# Ship interior if near ship
-	if ship and player and is_instance_valid(ship) and is_instance_valid(player):
+	if ship and is_instance_valid(ship):
 		var sd: float = player.global_position.distance_to(ship.global_position)
-		if sd < 42.0:
+		if sd < 48.0:
 			enter_ship(player, ship)
 			return
 		print("[Interior] Too far from ship (", int(sd), "m)")
-		_toast("Closer to ship hull for interior")
+		_toast("Closer to ship for interior")
 		return
 	print("[Interior] Nothing to enter (near pad or ship)")
 	_toast("Near pad or ship, then I")
+
 
 func enter_station(player: Node3D, pad: Node3D) -> void:
 	var fac := "Cybernex"
@@ -59,7 +73,9 @@ func enter_station(player: Node3D, pad: Node3D) -> void:
 		fac = str(pad.get_meta("base_faction"))
 	elif GameManager:
 		fac = GameManager.get_faction_name()
-	_begin(player, "station", _Gen.build_station(fac), pad.global_position, pad.get_meta("pad_up") if pad.has_meta("pad_up") else Vector3.UP)
+	var up: Vector3 = pad.get_meta("pad_up") if pad.has_meta("pad_up") else Vector3.UP
+	_begin(player, "station", _Gen.build_station(fac), pad.global_position, up)
+
 
 func enter_ship(player: Node3D, ship: Node3D) -> void:
 	var fac := "Cybernex"
@@ -70,35 +86,91 @@ func enter_ship(player: Node3D, ship: Node3D) -> void:
 		pid = str(ship.get_interior_profile_id())
 	var interior: Node3D = _Gen.build_from_profile(pid, fac)
 	if interior == null:
-		print("[Interior] build_from_profile failed ", pid)
+		# Fallback simple ship pocket
+		interior = _Gen.build_ship(fac)
+	if interior == null:
+		print("[Interior] build failed ", pid)
 		_toast("Interior build failed")
 		return
 	print("[Interior] building ship pocket ", pid)
-	_begin(player, "ship", interior, ship.global_position, Vector3.UP)
+	var up := Vector3.UP
+	if _open_space and _open_space.has_method("nearest_planet"):
+		var pl: Node3D = _open_space.nearest_planet(ship.global_position)
+		if pl and is_instance_valid(pl):
+			up = (ship.global_position - pl.global_position).normalized()
+	_begin(player, "ship", interior, ship.global_position, up)
+
 
 func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, ret_up: Vector3) -> void:
-	if _active:
+	if interior == null or player == null or not is_instance_valid(player):
+		return
+	# Tear down previous pocket
+	if _active and is_instance_valid(_active):
 		_active.queue_free()
+		_active = null
+
 	_kind = kind
 	_player = player
-	_return_pos = ret_pos + ret_up * 3.0
-	_return_up = ret_up
+	_return_up = ret_up.normalized() if ret_up.length_squared() > 0.01 else Vector3.UP
+	_return_pos = ret_pos + _return_up * 4.0
 	_active = interior
-	# Place pocket near origin of floating space but offset from planet chaos
-	if _root:
-		_root.add_child(_active)
-	# Offset far from planets to avoid collision
-	_active.global_position = Vector3(0, 50000, 0)
-	var spawn: Node3D = _active.get_node_or_null("Spawn") as Node3D
-	if spawn:
-		player.global_position = spawn.global_position
-	else:
-		player.global_position = _active.global_position + Vector3(0, 1, 0)
+
+	# Parent under OpenSpace (scene root), NOT WorldRoot — FloatingOrigin only shifts WorldRoot.
+	var host: Node = _open_space if _open_space else _root
+	if host == null:
+		print("[Interior] no host")
+		return
+	host.add_child(_active)
+	# Fixed local pocket — stable, near camera origin of OpenSpace
+	if _active is Node3D:
+		(_active as Node3D).position = POCKET_LOCAL
+		(_active as Node3D).rotation = Vector3.ZERO
+
+	# Cancel any pending surface snap / exterior physics on walker
+	if player.has_method("set_interior_mode"):
+		player.set_interior_mode(true)
+	elif "interior_mode" in player:
+		player.interior_mode = true
+	if player is CharacterBody3D:
+		(player as CharacterBody3D).velocity = Vector3.ZERO
+		(player as CharacterBody3D).floor_snap_length = 0.5
+
+	# Zero vertical velocity + flat gravity BEFORE teleport
+	if player.has_method("set_planet_gravity_provider"):
+		player.set_planet_gravity_provider(self)
 	if player.has_method("set_spawn_basis"):
 		player.set_spawn_basis(Vector3.UP, 0.0)
-	if player.has_method("set_planet_gravity_provider"):
-		# Flat gravity inside
-		player.set_planet_gravity_provider(self)
+	if player.has_method("set_eva_profile"):
+		player.set_eva_profile(false)
+
+	# Place on spawn marker (floor + clearance)
+	var spawn: Node3D = _active.get_node_or_null("Spawn") as Node3D
+	var target: Vector3
+	if spawn:
+		# Force update transforms
+		_active.force_update_transform()
+		spawn.force_update_transform()
+		target = spawn.global_position
+	else:
+		target = (_active as Node3D).global_position + Vector3(0, 1.2, 0)
+	# Safety: never leave player below floor of pocket
+	var floor_y: float = (_active as Node3D).global_position.y + 0.3
+	if target.y < floor_y + 0.9:
+		target.y = floor_y + 1.15
+	player.global_position = target
+	if player is CharacterBody3D:
+		(player as CharacterBody3D).velocity = Vector3.ZERO
+
+	# Pause floating origin while inside (prevents void rebase)
+	if _open_space and _open_space.get("floating") != null:
+		var fo = _open_space.floating
+		if fo and fo.has_method("set_target"):
+			fo.set_target(null)
+		if fo and fo.has_method("set_process"):
+			fo.set_process(false)
+		if fo and fo.has_method("set_physics_process"):
+			fo.set_physics_process(false)
+
 	_inside = true
 	if LayerContext:
 		LayerContext.current_layer = "ship_int" if kind == "ship" else "station"
@@ -107,41 +179,104 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	_hatch_fx(true)
 	entered.emit(kind)
 	_toast("Entered %s · I exit · F seat (ship)" % kind)
-	print("[Interior] entered ", kind)
+	print("[Interior] entered ", kind, " at ", target)
 	set_process(true)
+
+	# Deferred floor settle (same-frame collision may not be ready)
+	call_deferred("_settle_player_on_floor")
 	if AudioDirector and AudioDirector.has_method("play_interior_enter"):
 		AudioDirector.play_interior_enter()
 
-func gravity_at(global_pos: Vector3) -> Vector3:
-	# Flat down for interiors
-	return Vector3(0, -12.0, 0)
+
+func _settle_player_on_floor() -> void:
+	if not _inside or _player == null or not is_instance_valid(_player) or _active == null:
+		return
+	if not is_instance_valid(_active):
+		return
+	var space = _player.get_world_3d().direct_space_state if _player.get_world_3d() else null
+	if space == null:
+		_player.global_position = _active.global_position + Vector3(0, 1.2, 0)
+		return
+	var origin: Vector3 = _player.global_position + Vector3(0, 8, 0)
+	var end: Vector3 = _player.global_position + Vector3(0, -20, 0)
+	var q := PhysicsRayQueryParameters3D.create(origin, end)
+	q.collision_mask = 1
+	q.exclude = [_player.get_rid()]
+	var hit := space.intersect_ray(q)
+	if hit:
+		_player.global_position = hit.position + Vector3(0, 1.05, 0)
+		print("[Interior] settled on floor ", hit.position)
+	else:
+		# Hard place above pocket origin (thick safety floor is at y~0 local)
+		_player.global_position = _active.global_position + Vector3(0, 1.25, 0)
+		print("[Interior] no floor ray — hard place")
+	if _player is CharacterBody3D:
+		(_player as CharacterBody3D).velocity = Vector3.ZERO
+	if _player.has_method("set_spawn_basis"):
+		_player.set_spawn_basis(Vector3.UP, 0.0)
+
+
+func gravity_at(_global_pos: Vector3) -> Vector3:
+	## Flat down — Y-up interior (never radial planet gravity).
+	return Vector3(0, -14.0, 0)
+
 
 func exit_interior() -> void:
 	if not _inside:
 		return
+	_hatch_fx(false)
 	if _player and is_instance_valid(_player):
-		_player.global_position = _return_pos
+		if _player.has_method("set_interior_mode"):
+			_player.set_interior_mode(false)
+		elif "interior_mode" in _player:
+			_player.interior_mode = false
+		# Restore exterior gravity + place on pad/ship return
 		if _player.has_method("set_planet_gravity_provider") and _open_space:
 			_player.set_planet_gravity_provider(_open_space)
 		if _player.has_method("set_spawn_basis"):
 			_player.set_spawn_basis(_return_up, 0.0)
+		_player.global_position = _return_pos
+		if _player is CharacterBody3D:
+			(_player as CharacterBody3D).velocity = Vector3.ZERO
+		# Snap only AFTER exterior gravity restored
 		if _player.has_method("snap_to_surface"):
 			_player.call_deferred("snap_to_surface")
-	if _active:
+	if _active and is_instance_valid(_active):
 		_active.queue_free()
-		_active = null
+	_active = null
 	_inside = false
+
+	# Resume floating origin on walker/ship
+	if _open_space:
+		var fo = _open_space.get("floating")
+		if fo:
+			if fo.has_method("set_physics_process"):
+				fo.set_physics_process(true)
+			if fo.has_method("set_process"):
+				fo.set_process(true)
+			if fo.has_method("set_target"):
+				var tgt: Node3D = null
+				if _open_space.get("player") and is_instance_valid(_open_space.player):
+					tgt = _open_space.player
+				elif _open_space.get("ship") and is_instance_valid(_open_space.ship):
+					tgt = _open_space.ship
+				if tgt:
+					fo.set_target(tgt)
+
 	if LayerContext:
 		LayerContext.current_layer = "surface" if _kind != "ship" else "space"
 		if "seamless_stage" in LayerContext:
 			LayerContext.seamless_stage = "world"
-	_hatch_fx(false)
 	exited.emit(_kind)
 	_toast("Exited interior")
 	print("[Interior] exited ", _kind)
 	_kind = ""
+	set_process(false)
+
 
 func _toast(msg: String) -> void:
+	if GameManager and GameManager.has_signal("toast_requested"):
+		GameManager.toast_requested.emit(msg)
 	var tree := get_tree()
 	if tree == null:
 		return
@@ -152,31 +287,20 @@ func _toast(msg: String) -> void:
 
 
 func _hatch_fx(entering: bool) -> void:
-	## Soft hatch light on nearby ship hatch door (presentation only).
 	if _open_space == null:
 		return
 	var ship = null
-	if _open_space.has_method("get_player_ship"):
-		ship = _open_space.get_player_ship()
-	if ship == null and SoftScanCache:
-		ship = SoftScanCache.get_player()
-	if ship == null:
+	if "ship" in _open_space:
+		ship = _open_space.ship
+	if ship == null or not is_instance_valid(ship):
+		return
+	if ship.has_method("set_hatch_open"):
+		ship.set_hatch_open(entering)
 		return
 	var door = ship.get_node_or_null("HatchPoint/HatchDoor")
-	if door == null:
-		door = ship.get_node_or_null("HatchDoor")
 	if door is MeshInstance3D:
-		var mi: MeshInstance3D = door
-		var mat = mi.material_override
-		if mat is StandardMaterial3D:
-			var sm: StandardMaterial3D = mat
-			sm.emission_enabled = true
-			sm.emission_energy_multiplier = 2.4 if entering else 0.6
-			if entering:
-				mi.rotation.y = deg_to_rad(75.0)
-			else:
-				mi.rotation.y = 0.0
-
+		(door as MeshInstance3D).visible = entering
+		(door as MeshInstance3D).rotation.y = deg_to_rad(75.0) if entering else 0.0
 
 
 func is_near_seat(player: Node3D, max_dist: float = 7.5) -> bool:
@@ -189,22 +313,26 @@ func is_near_seat(player: Node3D, max_dist: float = 7.5) -> bool:
 		if n is Node3D:
 			if player.global_position.distance_to((n as Node3D).global_position) <= max_dist:
 				return true
-	# Cockpit room fallback (near origin of pocket)
-	if _kind == "ship" and player.global_position.distance_to(_active.global_position) < 12.0:
+	if _kind == "ship" and player.global_position.distance_to(_active.global_position) < 14.0:
 		return true
 	return false
 
 
 func exit_for_pilot() -> void:
-	## Leave pocket without teleporting walker (walker will be freed for ship pilot).
 	if not _inside:
 		return
 	_hatch_fx(false)
+	if _player and is_instance_valid(_player) and _player.has_method("set_interior_mode"):
+		_player.set_interior_mode(false)
 	if _active and is_instance_valid(_active):
 		_active.queue_free()
 	_active = null
 	_inside = false
 	_player = null
+	if _open_space:
+		var fo = _open_space.get("floating")
+		if fo and fo.has_method("set_physics_process"):
+			fo.set_physics_process(true)
 	if LayerContext:
 		LayerContext.current_layer = "Space"
 		if "seamless_stage" in LayerContext:
@@ -212,27 +340,32 @@ func exit_for_pilot() -> void:
 	exited.emit("ship_to_pilot")
 	print("[Interior] exit_for_pilot")
 	_kind = ""
-
+	set_process(false)
 
 
 func _process(delta: float) -> void:
 	if not _inside or _player == null or not is_instance_valid(_player) or _active == null:
 		return
-	# Pulse seat label when close
+	if not is_instance_valid(_active):
+		return
+	# Keep player from falling out of pocket bounds
+	var anchor: Vector3 = _active.global_position
+	var ppos: Vector3 = _player.global_position
+	if ppos.y < anchor.y - 5.0 or ppos.distance_to(anchor) > 80.0:
+		print("[Interior] rescue void fall")
+		_player.global_position = anchor + Vector3(0, 1.2, 0)
+		if _player is CharacterBody3D:
+			(_player as CharacterBody3D).velocity = Vector3.ZERO
+
 	var near_seat := is_near_seat(_player, 7.5)
 	var lab = _active.get_node_or_null("SeatLabel")
 	if lab is Label3D:
 		(lab as Label3D).modulate.a = 1.0 if near_seat else 0.55
 		(lab as Label3D).text = "PILOT SEAT · F" if near_seat else "PILOT SEAT"
-		if near_seat:
-			(lab as Label3D).font_size = 56
-		else:
-			(lab as Label3D).font_size = 42
-	# Soft seat glow pulse
+		(lab as Label3D).font_size = 56 if near_seat else 42
 	var seat_n = _active.get_node_or_null("SeatGlow")
 	if seat_n is MeshInstance3D:
 		(seat_n as MeshInstance3D).visible = near_seat
-	# Soft exit-volume proximity (walk into hatch area)
 	var exit_v = _active.get_node_or_null("ExitVolume")
 	if exit_v is Node3D:
 		var d: float = _player.global_position.distance_to((exit_v as Node3D).global_position)

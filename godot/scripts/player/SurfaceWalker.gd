@@ -34,6 +34,7 @@ var _spawn_grace_t: float = 0.0
 var _face_arrow: MeshInstance3D = null
 var _move_amount: float = 0.0
 var eva_mode: bool = false
+var interior_mode: bool = false
 var thruster_accel: float = 14.0
 var mag_boot: bool = false
 var _mag_ring: MeshInstance3D = null
@@ -62,6 +63,18 @@ var camera: Camera3D
 
 func set_planet_gravity_provider(p: Node) -> void:
 	_provider = p
+
+
+func set_interior_mode(on: bool) -> void:
+	interior_mode = on
+	if on:
+		eva_mode = false
+		velocity = Vector3.ZERO
+		_up = Vector3.UP
+		up_direction = Vector3.UP
+		_spawn_grace_t = 0.5
+		floor_snap_length = 0.55
+	print("[SurfaceWalker] interior_mode=", on)
 
 
 func set_eva_profile(enabled: bool) -> void:
@@ -255,6 +268,8 @@ func on_hacked(caster: Node, amount: float = 1.0) -> void:
 		inf.add_stacks(2)
 
 func snap_to_surface() -> void:
+	if interior_mode:
+		return
 	_update_up()
 	var space := get_world_3d().direct_space_state if get_world_3d() else null
 	if space == null:
@@ -286,6 +301,8 @@ func snap_to_surface() -> void:
 
 func safe_unground() -> void:
 	## If embedded in geometry after spawn/exit, push out along up.
+	if interior_mode:
+		return
 	_update_up()
 	var stuck := test_move(global_transform, -_up * 0.08) or test_move(global_transform, _up * 0.05)
 	if not stuck:
@@ -352,6 +369,12 @@ func _input(event: InputEvent) -> void:
 		)
 
 func _physics_process(delta: float) -> void:
+	if interior_mode:
+		# Flat Y-up pocket — never radial planet gravity / surface snap
+		_up = Vector3.UP
+		up_direction = Vector3.UP
+		if _provider == null or not _provider.has_method("gravity_at"):
+			pass
 	_terrain_hint_tick(delta)
 	_update_up()
 	if _spawn_grace_t > 0.0:
