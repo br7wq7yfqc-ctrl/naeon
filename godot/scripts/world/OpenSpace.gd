@@ -571,7 +571,13 @@ func _update_hud() -> void:
 				pool = int(sd.pool_count())
 			elif sd.get("_live") != null:
 				pass
-	hud_label.text += "\nMEM obj:%d nodes:%d ram:%dMB  detail live/pool:%d/%d" % [objs, nodes, oram, live, pool]
+		var pa := 0
+	var pf := 0
+	var PP = load("res://scripts/combat/ProjectilePool.gd")
+	if PP:
+		pa = int(PP.active_count())
+		pf = int(PP.free_count())
+	hud_label.text += "\nMEM obj:%d nodes:%d ram:%dMB  detail %d/%d  proj %d/%d" % [objs, nodes, oram, live, pool, pa, pf]
 	if mode_label:
 		mode_label.text = "GFX: %s  MEM %dMB" % [gqn, oram]
 

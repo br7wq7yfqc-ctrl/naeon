@@ -154,28 +154,12 @@ func _respawn() -> void:
 func _fire_at(player: Node) -> void:
 	if player.has_method("take_damage"):
 		player.take_damage(attack_damage)
-	# Simple muzzle flash
-	var ball := MeshInstance3D.new()
-	var sm := SphereMesh.new()
-	sm.radius = 0.12
-	sm.height = 0.24
-	ball.mesh = sm
-	var m := StandardMaterial3D.new()
-	m.emission_enabled = true
-	m.emission = Color(1.0, 0.2, 0.4)
-	m.emission_energy_multiplier = 3.0
-	ball.material_override = m
-	get_tree().current_scene.add_child(ball)
-	ball.global_position = global_position + Vector3.UP * 1.2
 	var target_pos: Vector3 = player.global_position + Vector3.UP * 1.2
-	var dir: Vector3 = (target_pos - ball.global_position).normalized()
-	var t := 0.0
-	var runner := Node.new()
-	ball.add_child(runner)
-	runner.set_script(load("res://scripts/abilities/ProjectileRunner.gd"))
-	ball.set_meta("direction", dir)
-	ball.set_meta("speed", 18.0)
-	# Damage on proximity via Area is overkill; already applied hit-scan style once
+	var origin: Vector3 = global_position + Vector3.UP * 1.2
+	var dir: Vector3 = (target_pos - origin).normalized()
+	var _Pool = load("res://scripts/combat/ProjectilePool.gd")
+	_Pool.spawn(get_tree(), origin, dir, 18.0, 0.0, "gROT", Color(1.0, 0.2, 0.4), 0.7)
+
 
 func _find_player() -> Node3D:
 	if _player_cache != null and is_instance_valid(_player_cache):

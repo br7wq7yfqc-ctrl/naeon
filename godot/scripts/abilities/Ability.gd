@@ -184,49 +184,20 @@ func _spawn_projectile(caster: Node, dmg: float, color: Color) -> void:
 		var cam: Camera3D = caster.get_node("CameraPivot/Camera3D")
 		dir = -cam.global_transform.basis.z
 		origin = cam.global_position + dir * 0.8
-	var body := Area3D.new()
-	body.collision_layer = 8
-	body.collision_mask = 5
-	var shape := CollisionShape3D.new()
-	shape.shape = _shared_shape()
-	body.add_child(shape)
-	var ball := MeshInstance3D.new()
-	ball.mesh = _shared_ball_mesh()
-	ball.material_override = _shared_mat(color)
-	body.add_child(ball)
-	var VFX2 = load("res://scripts/abilities/AbilityVfx.gd")
-	if VFX2:
-		VFX2.bolt_trail(body, color)
-	body.set_meta("damage", dmg)
-	body.set_meta("direction", dir)
-	body.set_meta("speed", 28.0)
-	caster.get_tree().current_scene.add_child(body)
+	var final_dmg: float = dmg
+	if GameManager:
+		final_dmg *= 1.0 + GameManager.knowledge_insight_bonus()
+	var fac := "Cybernex"
+	if "faction" in caster:
+		fac = str(caster.faction)
+	elif caster.has_method("get_faction"):
+		fac = str(caster.get_faction())
+	var _Pool = load("res://scripts/combat/ProjectilePool.gd")
+	_Pool.spawn(caster.get_tree(), origin, dir, 28.0, final_dmg, fac, color, 1.4)
 	var NP = load("res://scripts/fx/NeonParticles.gd")
 	if NP:
 		NP.muzzle_flash(origin, dir, color, caster.get_tree())
-		NP.trail_attach(body, color, Vector3.ZERO)
-	body.global_position = origin
-	body.monitoring = true
-	body.monitorable = true
-	body.body_entered.connect(func(other: Node):
-		if other == caster:
-			return
-		if other.is_in_group("player") and caster.is_in_group("player"):
-			return
-		if other.has_method("take_damage"):
-			var final_dmg: float = dmg
-			if GameManager:
-				final_dmg *= 1.0 + GameManager.knowledge_insight_bonus()
-			other.take_damage(final_dmg)
-		var VFX3 = load("res://scripts/abilities/AbilityVfx.gd")
-		if VFX3 and is_instance_valid(body):
-			VFX3.impact_burst(body.global_position, color, caster.get_tree(), false)
-		if is_instance_valid(body):
-			body.queue_free()
-	)
-	var runner := Node.new()
-	runner.set_script(preload("res://scripts/abilities/ProjectileRunner.gd"))
-	body.add_child(runner)
+
 
 func _spawn_beam(caster: Node, to: Vector3, color: Color) -> void:
 	if caster == null or not caster.is_inside_tree():

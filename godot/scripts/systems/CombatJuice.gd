@@ -1,5 +1,7 @@
 extends Node
 static var _shared_impact_mat: StandardMaterial3D = null
+static var _torus_n: TorusMesh = null
+static var _torus_c: TorusMesh = null
 static var _shared_label_mat: StandardMaterial3D = null
 
 static func _impact_mat(col: Color) -> StandardMaterial3D:
@@ -155,12 +157,22 @@ func _spawn_hit_ring(world_pos: Vector3, crit: bool) -> void:
 	if tree == null or tree.current_scene == null:
 		return
 	var mi := MeshInstance3D.new()
-	var tm := TorusMesh.new()
-	tm.inner_radius = 0.08 if not crit else 0.12
-	tm.outer_radius = 0.55 if not crit else 0.95
-	tm.rings = 8
-	tm.ring_segments = 12
-	mi.mesh = tm
+	if crit:
+		if _torus_c == null:
+			_torus_c = TorusMesh.new()
+			_torus_c.inner_radius = 0.12
+			_torus_c.outer_radius = 0.95
+			_torus_c.rings = 8
+			_torus_c.ring_segments = 12
+		mi.mesh = _torus_c
+	else:
+		if _torus_n == null:
+			_torus_n = TorusMesh.new()
+			_torus_n.inner_radius = 0.08
+			_torus_n.outer_radius = 0.55
+			_torus_n.rings = 8
+			_torus_n.ring_segments = 12
+		mi.mesh = _torus_n
 	var mat := _impact_mat(Color(1.0, 0.7, 0.2))
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.albedo_color = Color(1.0, 0.85, 0.25, 0.85) if crit else Color(1.0, 0.4, 0.25, 0.7)

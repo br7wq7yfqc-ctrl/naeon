@@ -92,29 +92,14 @@ func _find_target() -> Node3D:
 
 func _fire(target: Node3D) -> void:
 	_living_fire()
-	var bolt := MeshInstance3D.new()
-	var sphere := SphereMesh.new()
-	sphere.radius = 0.12
-	sphere.height = 0.24
-	bolt.mesh = sphere
-	var mat := StandardMaterial3D.new()
-	mat.emission_enabled = true
-	mat.emission = Color(1.0, 0.2, 0.35) if faction == "gROT" else Color(0.2, 0.8, 1.0)
-	mat.emission_energy_multiplier = 3.0
-	bolt.material_override = mat
 	var dir: Vector3 = (target.global_position + Vector3(0, 1.0, 0) - global_position).normalized()
-	get_tree().current_scene.add_child(bolt)
-	bolt.global_position = global_position + Vector3(0, 1.4, 0) + dir * 0.8
-	bolt.set_meta("direction", dir)
-	bolt.set_meta("speed", projectile_speed)
-	bolt.set_meta("damage", damage)
-	bolt.set_meta("faction", faction)
-	var runner := Node.new()
-	runner.set_script(preload("res://scripts/abilities/ProjectileRunner.gd"))
-	# Prefer enemy-aware runner if available
-	if ResourceLoader.exists("res://scripts/combat/TurretProjectile.gd"):
-		runner.set_script(load("res://scripts/combat/TurretProjectile.gd"))
-	bolt.add_child(runner)
+	var col := Color(1.0, 0.2, 0.35) if faction == "gROT" else Color(0.2, 0.8, 1.0)
+	var _Pool = load("res://scripts/combat/ProjectilePool.gd")
+	var spd: float = 40.0
+	if "projectile_speed" in self:
+		spd = float(projectile_speed)
+	_Pool.spawn(get_tree(), global_position + Vector3(0, 1.4, 0) + dir * 0.8, dir, spd, damage, faction, col, 3.2)
+
 
 func take_damage(amount: float) -> void:
 	if not _alive:
