@@ -1038,12 +1038,21 @@ func _park_far_planets() -> void:
 		if pl.has_method("set_process"):
 			pl.set_process(near)
 		if not near:
-			# Hide heavy child streams
+			# Unload live meshes, not just hide (baseline RSS)
 			for nm in ["SurfaceDetail", "SurfaceFlora", "SurfaceFauna", "SurfaceWater", "CaveMouthField", "LandscapeFeatures", "CaveInterior"]:
 				var n = pl.get_node_or_null(nm)
-				if n:
-					n.set_process(false)
-					n.visible = false
+				if n == null:
+					continue
+				n.set_process(false)
+				if n.has_method("_park_all"):
+					n.call("_park_all")
+				n.visible = false
+		else:
+			for nm2 in ["SurfaceDetail", "SurfaceFlora", "SurfaceFauna", "SurfaceWater", "CaveMouthField", "LandscapeFeatures", "CaveInterior"]:
+				var n2 = pl.get_node_or_null(nm2)
+				if n2:
+					n2.set_process(true)
+					n2.visible = true
 
 
 
