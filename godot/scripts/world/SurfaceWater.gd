@@ -205,3 +205,9 @@ func _wave(_delta: float) -> void:
 		# Soft scale pulse only (local scale — OK)
 		var s := 1.0 + 0.04 * sin(t * 1.5)
 		foam.scale = Vector3(s, 1.0, s)
+
+
+func _park_all() -> void:
+	set_process(false)
+	visible = false
+

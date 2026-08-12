@@ -1,6 +1,58 @@
 class_name Ability
 extends Resource
 
+static var _ball_mesh: SphereMesh = null
+static var _shield_mesh: SphereMesh = null
+static var _mat_cache: Dictionary = {}  # key -> StandardMaterial3D
+static var _proj_shape: SphereShape3D = null
+
+static func _shared_ball_mesh() -> SphereMesh:
+	if _ball_mesh == null:
+		var sm := SphereMesh.new()
+		sm.radius = 0.18
+		sm.height = 0.36
+		sm.radial_segments = 8
+		sm.rings = 6
+		_ball_mesh = sm
+	return _ball_mesh
+
+static func _shared_shield_mesh() -> SphereMesh:
+	if _shield_mesh == null:
+		var sm := SphereMesh.new()
+		sm.radius = 1.4
+		sm.height = 2.8
+		sm.radial_segments = 12
+		sm.rings = 8
+		_shield_mesh = sm
+	return _shield_mesh
+
+static func _shared_shape() -> SphereShape3D:
+	if _proj_shape == null:
+		var sh := SphereShape3D.new()
+		sh.radius = 0.2
+		_proj_shape = sh
+	return _proj_shape
+
+static func _shared_mat(color: Color, alpha: float = 1.0, unshaded: bool = false) -> StandardMaterial3D:
+	var key := "%d_%d_%d_%d_%d" % [int(color.r * 20.0), int(color.g * 20.0), int(color.b * 20.0), int(alpha * 10.0), (1 if unshaded else 0)]
+	if _mat_cache.has(key):
+		return _mat_cache[key]
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(color.r, color.g, color.b, alpha)
+	mat.emission_enabled = true
+	mat.emission = color
+	mat.emission_energy_multiplier = 2.5 if alpha >= 0.99 else 1.5
+	if unshaded:
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	if alpha < 0.99:
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	if _mat_cache.size() > 20:
+		_mat_cache.clear()
+	_mat_cache[key] = mat
+	return mat
+
+
 ## Data-driven ability for TPS / MOBA / Strategy layers.
 
 @export var ability_name: String = "Unnamed Ability"
@@ -136,21 +188,11 @@ func _spawn_projectile(caster: Node, dmg: float, color: Color) -> void:
 	body.collision_layer = 8
 	body.collision_mask = 5
 	var shape := CollisionShape3D.new()
-	var sphere_shape := SphereShape3D.new()
-	sphere_shape.radius = 0.2
-	shape.shape = sphere_shape
+	shape.shape = _shared_shape()
 	body.add_child(shape)
 	var ball := MeshInstance3D.new()
-	var sphere := SphereMesh.new()
-	sphere.radius = 0.18
-	sphere.height = 0.36
-	ball.mesh = sphere
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = color
-	mat.emission_enabled = true
-	mat.emission = color
-	mat.emission_energy_multiplier = 2.5
-	ball.material_override = mat
+	ball.mesh = _shared_ball_mesh()
+	ball.material_override = _shared_mat(color)
 	body.add_child(ball)
 	var VFX2 = load("res://scripts/abilities/AbilityVfx.gd")
 	if VFX2:
@@ -192,13 +234,7 @@ func _spawn_beam(caster: Node, to: Vector3, color: Color) -> void:
 	var im := MeshInstance3D.new()
 	var imm := ImmediateMesh.new()
 	im.mesh = imm
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.albedo_color = color
-	mat.emission_enabled = true
-	mat.emission = color
-	mat.emission_energy_multiplier = 3.0
-	im.material_override = mat
+	im.material_override = _shared_mat(color, 1.0, true)
 	caster.get_tree().current_scene.add_child(im)
 	imm.clear_surfaces()
 	imm.surface_begin(Mesh.PRIMITIVE_LINES)
@@ -215,18 +251,8 @@ func _spawn_shield_fx(caster: Node, color: Color) -> void:
 	if caster == null:
 		return
 	var shell := MeshInstance3D.new()
-	var sphere := SphereMesh.new()
-	sphere.radius = 1.4
-	sphere.height = 2.8
-	shell.mesh = sphere
-	var mat := StandardMaterial3D.new()
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.albedo_color = Color(color.r, color.g, color.b, 0.25)
-	mat.emission_enabled = true
-	mat.emission = color
-	mat.emission_energy_multiplier = 1.5
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	shell.material_override = mat
+	shell.mesh = _shared_shield_mesh()
+	shell.material_override = _shared_mat(color, 0.25)
 	caster.add_child(shell)
 	shell.position = Vector3.UP * 1.0
 	var dur: float = max(duration, 0.6)

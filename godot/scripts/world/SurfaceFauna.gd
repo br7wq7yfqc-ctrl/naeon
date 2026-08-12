@@ -277,3 +277,13 @@ func _animate(delta: float) -> void:
 			var look := next + planar.normalized()
 			if look.distance_to(next) > 0.01:
 				node.look_at(look, up)
+
+
+func _park_all() -> void:
+	for a in _actors:
+		if a is Dictionary and a.has("node"):
+			var n = a["node"]
+			if n is Node3D and is_instance_valid(n):
+				(n as Node3D).visible = false
+	set_process(false)
+

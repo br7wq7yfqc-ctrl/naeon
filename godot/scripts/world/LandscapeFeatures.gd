@@ -139,3 +139,11 @@ func _place(cell: Vector2i) -> void:
 		placed += 1
 	for i in range(placed, _props.size()):
 		_props[i].visible = false
+
+
+func _park_all() -> void:
+	for p in _props:
+		if p is Node3D and is_instance_valid(p):
+			(p as Node3D).visible = false
+	set_process(false)
+

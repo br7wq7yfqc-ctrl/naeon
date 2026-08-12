@@ -435,3 +435,11 @@ func _try_crystal_glb(parent: Node3D, pos: Vector3) -> void:
 	scn.position = pos
 	scn.scale = Vector3.ONE * 0.85
 	print("[CaveInterior] Tripo crystal GLB loaded")
+
+
+func _park_all() -> void:
+	for c in _caves:
+		if c is Node3D and is_instance_valid(c):
+			(c as Node3D).visible = false
+	set_process(false)
+

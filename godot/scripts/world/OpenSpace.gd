@@ -554,8 +554,26 @@ func _update_hud() -> void:
 			mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields), (pl.current_lod_name() if pl and is_instance_valid(pl) and pl.has_method("current_lod_name") else "-"), (GameManager.contribution if GameManager else 0.0)
 		]
 	)
+	# DEV mem — sequential observability (no extra nodes)
+	var objs := int(Performance.get_monitor(Performance.OBJECT_COUNT))
+	var nodes := int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))
+	var oram := int(Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0)
+	var live := 0
+	var pool := 0
+	if pl != null and is_instance_valid(pl):
+		var sd = pl.get_node_or_null("SurfaceDetail")
+		if sd != null:
+			if "live_count" in sd:
+				live = int(sd.live_count()) if sd.has_method("live_count") else 0
+			if sd.has_method("live_count"):
+				live = int(sd.live_count())
+			if sd.has_method("pool_count"):
+				pool = int(sd.pool_count())
+			elif sd.get("_live") != null:
+				pass
+	hud_label.text += "\nMEM obj:%d nodes:%d ram:%dMB  detail live/pool:%d/%d" % [objs, nodes, oram, live, pool]
 	if mode_label:
-		mode_label.text = "GFX: %s" % gqn
+		mode_label.text = "GFX: %s  MEM %dMB" % [gqn, oram]
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and (event.keycode == KEY_ESCAPE or event.physical_keycode == KEY_ESCAPE):

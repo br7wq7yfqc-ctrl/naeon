@@ -169,3 +169,11 @@ func _place_cell(cell: Vector2i) -> void:
 		if shore_band:
 			sc *= 1.15
 		(p as Node3D).global_transform = Transform3D(Basis(tt[0], pup, -tt[1]).scaled(Vector3.ONE * sc), pos)
+
+
+func _park_all() -> void:
+	for p in _props:
+		if p is Node3D and is_instance_valid(p):
+			(p as Node3D).visible = false
+	set_process(false)
+
