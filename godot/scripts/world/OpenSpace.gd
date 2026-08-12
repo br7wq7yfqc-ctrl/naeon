@@ -560,19 +560,14 @@ func _update_hud() -> void:
 	var oram := int(Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0)
 	var live := 0
 	var pool := 0
+	var pa := 0
+	var pf := 0
 	if pl != null and is_instance_valid(pl):
 		var sd = pl.get_node_or_null("SurfaceDetail")
-		if sd != null:
-			if "live_count" in sd:
-				live = int(sd.live_count()) if sd.has_method("live_count") else 0
-			if sd.has_method("live_count"):
-				live = int(sd.live_count())
-			if sd.has_method("pool_count"):
-				pool = int(sd.pool_count())
-			elif sd.get("_live") != null:
-				pass
-		var pa := 0
-	var pf := 0
+		if sd != null and sd.has_method("live_count"):
+			live = int(sd.live_count())
+		if sd != null and sd.has_method("pool_count"):
+			pool = int(sd.pool_count())
 	var PP = load("res://scripts/combat/ProjectilePool.gd")
 	if PP:
 		pa = int(PP.active_count())
@@ -580,6 +575,7 @@ func _update_hud() -> void:
 	hud_label.text += "\nMEM obj:%d nodes:%d ram:%dMB  detail %d/%d  proj %d/%d" % [objs, nodes, oram, live, pool, pa, pf]
 	if mode_label:
 		mode_label.text = "GFX: %s  MEM %dMB" % [gqn, oram]
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and (event.keycode == KEY_ESCAPE or event.physical_keycode == KEY_ESCAPE):
