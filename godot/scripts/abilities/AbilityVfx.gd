@@ -1,5 +1,22 @@
 extends RefCounted
 class_name AbilityVfx
+static var _flash_mat: StandardMaterial3D = null
+
+static func _shared_flash(col: Color) -> StandardMaterial3D:
+	if _flash_mat == null:
+		var m := StandardMaterial3D.new()
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		m.emission_enabled = true
+		m.albedo_color = col
+		m.emission = col
+		m.emission_energy_multiplier = 2.2
+		_flash_mat = m
+	else:
+		_flash_mat.albedo_color = col
+		_flash_mat.emission = col
+	return _flash_mat
+
 ## Soft cast/impact presentation — no combat power. Shared by Ability + Channel.
 
 static func cast_flash(caster: Node, color: Color, energy: float = 2.5) -> void:
@@ -23,7 +40,7 @@ static func cast_flash(caster: Node, color: Color, energy: float = 2.5) -> void:
 	tm.rings = 6
 	tm.ring_segments = 10
 	ring.mesh = tm
-	var mat := StandardMaterial3D.new()
+	var mat := _shared_flash(color)
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.albedo_color = Color(color.r, color.g, color.b, 0.85)
 	mat.emission_enabled = true

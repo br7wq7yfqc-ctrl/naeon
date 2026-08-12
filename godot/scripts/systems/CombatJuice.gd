@@ -1,4 +1,22 @@
 extends Node
+static var _shared_impact_mat: StandardMaterial3D = null
+static var _shared_label_mat: StandardMaterial3D = null
+
+static func _impact_mat(col: Color) -> StandardMaterial3D:
+	if _shared_impact_mat == null:
+		var m := StandardMaterial3D.new()
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		m.albedo_color = col
+		m.emission_enabled = true
+		m.emission = col
+		m.emission_energy_multiplier = 2.0
+		_shared_impact_mat = m
+	else:
+		_shared_impact_mat.albedo_color = col
+		_shared_impact_mat.emission = col
+	return _shared_impact_mat
+
 ## Combat readability: floating dmg, flash, hit marker, impact ring, soft hitstop.
 ## Presentation only — no combat power.
 
@@ -143,7 +161,7 @@ func _spawn_hit_ring(world_pos: Vector3, crit: bool) -> void:
 	tm.rings = 8
 	tm.ring_segments = 12
 	mi.mesh = tm
-	var mat := StandardMaterial3D.new()
+	var mat := _impact_mat(Color(1.0, 0.7, 0.2))
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.albedo_color = Color(1.0, 0.85, 0.25, 0.85) if crit else Color(1.0, 0.4, 0.25, 0.7)
 	mat.emission_enabled = true

@@ -15,6 +15,7 @@ const DEFAULT_RES := 8
 const LOAD_BUDGET := 1          ## meshes built per stream tick (scaled in _process)
 const STREAM_HZ := 0.28         ## ~3.5 Hz default; LOW slower
 const MESH_CACHE_MAX := 32
+const POOL_MAX := 8
 
 var _planet: Node3D
 var _radius: float = 1200.0
@@ -219,6 +220,11 @@ func _park_all() -> void:
 	var keys: Array = _live.keys()
 	for k in keys:
 		_recycle(k)
+	_trim_pool()
+	# Drop mesh cache when fully parked (far planet) — RID reclaim
+	if _mesh_cache.size() > 8:
+		_mesh_cache.clear()
+		_mesh_cache_order.clear()
 
 
 func _spawn_cell(cell: Vector2i) -> void:
@@ -257,10 +263,21 @@ func _recycle(cell: Vector2i) -> void:
 		return
 	var mi: MeshInstance3D = _live[cell]
 	_live.erase(cell)
-	if mi and is_instance_valid(mi):
-		mi.visible = false
-		# Keep last mesh RID — null mesh spam ERROR Parameter m is null in renderer
+	if mi == null or not is_instance_valid(mi):
+		return
+	mi.visible = false
+	# Cap pool — excess MeshInstance3D + mats were a soft leak
+	if _pool.size() < POOL_MAX:
 		_pool.append(mi)
+	else:
+		mi.queue_free()
+
+
+func _trim_pool() -> void:
+	while _pool.size() > POOL_MAX:
+		var extra = _pool.pop_back()
+		if extra != null and is_instance_valid(extra):
+			extra.queue_free()
 
 
 func _refresh_xform(cell: Vector2i) -> void:

@@ -5,6 +5,7 @@ class_name InteriorGenerator
 
 const _NEON_CX := Color(0.15, 0.85, 1.0)
 const _NEON_GR := Color(0.95, 0.12, 0.42)
+static var _glb_cache: Dictionary = {}  # abs path -> PackedScene
 
 static func _try_glb(parent: Node3D, rel: String, pos: Vector3, scl: float = 1.0) -> void:
 	if DisplayServer.get_name() == "headless":
@@ -15,16 +16,35 @@ static func _try_glb(parent: Node3D, rel: String, pos: Vector3, scl: float = 1.0
 	var path: String = ap.resolve(rel)
 	if path == "" or not FileAccess.file_exists(path):
 		return
-	var doc := GLTFDocument.new()
-	var state := GLTFState.new()
-	if doc.append_from_file(path, state) != OK:
+	var packed: PackedScene = null
+	if _glb_cache.has(path):
+		packed = _glb_cache[path]
+	else:
+		var doc := GLTFDocument.new()
+		var state := GLTFState.new()
+		if doc.append_from_file(path, state) != OK:
+			return
+		var built := doc.generate_scene(state)
+		if built == null:
+			return
+		packed = PackedScene.new()
+		var err := packed.pack(built)
+		if err != OK:
+			# Fallback: use built node once, no cache
+			parent.add_child(built)
+			built.position = pos
+			built.scale = Vector3.ONE * scl
+			return
+		if _glb_cache.size() > 24:
+			_glb_cache.clear()
+		_glb_cache[path] = packed
+	var inst: Node = packed.instantiate()
+	if inst == null:
 		return
-	var root := doc.generate_scene(state)
-	if root == null:
-		return
-	parent.add_child(root)
-	root.position = pos
-	root.scale = Vector3.ONE * scl
+	parent.add_child(inst)
+	if inst is Node3D:
+		(inst as Node3D).position = pos
+		(inst as Node3D).scale = Vector3.ONE * scl
 
 static func build_station(faction: String = "Cybernex") -> Node3D:
 	var root := Node3D.new()

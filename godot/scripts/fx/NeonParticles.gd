@@ -12,6 +12,7 @@ const AMBER := Color(1.0, 0.65, 0.2, 0.9)
 static var _active_oneshot: int = 0
 static var _shared_quad: QuadMesh = null
 static var _shader: Shader = null
+static var _mat_cache: Dictionary = {}  # Color rgba key -> Material
 
 const MAX_ONESHOT_LOW := 4
 const MAX_ONESHOT_MED := 8
@@ -61,16 +62,20 @@ static func _shared_mesh() -> QuadMesh:
 
 
 static func _neon_mat(color: Color) -> Material:
+	var key := "%d_%d_%d" % [int(color.r * 40.0), int(color.g * 40.0), int(color.b * 40.0)]
+	if _mat_cache.has(key):
+		return _mat_cache[key]
 	if _shader == null:
 		_shader = load("res://shaders/neon_particle.gdshader") as Shader
-	var mat := ShaderMaterial.new()
+	var mat: Material
 	if _shader:
-		mat.shader = _shader
-		mat.set_shader_parameter("albedo", color)
-		mat.set_shader_parameter("soft_edge", 0.5)
-		mat.set_shader_parameter("core_boost", 1.5)
+		var smat := ShaderMaterial.new()
+		smat.shader = _shader
+		smat.set_shader_parameter("albedo", color)
+		smat.set_shader_parameter("soft_edge", 0.5)
+		smat.set_shader_parameter("core_boost", 1.5)
+		mat = smat
 	else:
-		# Fallback unshaded (still cheap)
 		var sm := StandardMaterial3D.new()
 		sm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		sm.albedo_color = color
@@ -80,7 +85,11 @@ static func _neon_mat(color: Color) -> Material:
 		sm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		sm.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
 		sm.cull_mode = BaseMaterial3D.CULL_DISABLED
-		return sm
+		mat = sm
+	# Bound cache (few faction colors in practice)
+	if _mat_cache.size() > 16:
+		_mat_cache.clear()
+	_mat_cache[key] = mat
 	return mat
 
 
