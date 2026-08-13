@@ -1,10 +1,21 @@
 # NAEON — Asset Concept Generation Plan
 
-**Version:** 0.1  
+**Version:** 0.4  
 **Date:** 2026-08-13  
 **Pipeline:** Tripo-first · dual-theme · neon + local assets/ · no secrets in git  
 **Skill:** naeon-holistic-economical + naeon-sequential-dev  
 **Constraint:** Concept art feeds 3D (Tripo/Blender), not final production meshes in git
+
+---
+
+## 0. Style Lock (mandatory for all batches)
+
+- **Adult hard sci-fi only.** Mature realistic proportions, function-over-form, readable wear and material detail.
+- **Forbidden:** cartoon, cute, chibi, anime stylization, soft “mascot” proportions, excessive gore fetish, medieval, pure fantasy organic, wood/bone ritual aesthetics.
+- **Cybernex:** dark chrome / white-grey, cyan lattice edge light, living architecture in harmony with nature (Venus Project), clean geometric panels.
+- **gROT:** always black + red. Industrial futurism + **structured genetic cyber-biomass** (engineered tissue, spore veins, biotech fusion on hard-surface frames and factory chassis). Mass-production / hive-lab feel. Never pure organic monster or gothic castle.
+- **Neutral / Relic:** third aesthetic — weathered grey-gold, non-human geometry, neither cyan nor red dominance.
+- **Ortho sheets:** neutral dark or light grid, orthographic, equal scale, Front / Side / Back / Top, minimal labels.
 
 ---
 
@@ -13,106 +24,103 @@
 | Deliverable | Spec |
 |-------------|------|
 | **Cinematic** | 1 key art, landscape or portrait, dark-neon, readable silhouette |
-| **Ortho sheet** | Single image: front / side / back / top (or 3⁄4) on neutral grid — modeler reference |
-| **Anim / scene clip** | 2–6 s loop or beat (idle, walk, undock, claim flip) — optional per batch |
+| **Ortho sheet** | Single image: front / side / back / top on neutral grid — modeler reference |
+| **Anim / scene clip** | 2–6 s loop or beat (idle, walk, undock, fly-through, claim flip) — optional per hero object |
 
-**Dual theme:** Cybernex = cyan/white/soft green + living architecture · gROT = crimson/purple/spore + industrial biomass.
+Dual-theme required wherever ownership or faction presence applies.
 
 ---
 
 ## 2. Priority batches (sequential)
 
-### Batch 1 — VS critical (generate first)
-
-| ID | Object | Type |
-|----|--------|------|
-| `CHAR_AEGIS` | Aegis Walker (canine CX) | Character |
-| `CHAR_GRAFT` | Graft Hound (lurcher gROT) | Character |
-| `CHAR_SERA` | Sera Venn (noo-person) | Character |
-| `LOC_ARK_VAULT` | NEX Vault Crown exterior | Location |
-| `LOC_ROT_SPIRE` | Spire of One Voice exterior | Location |
-| `PROP_PILLAR` | Contested claim pillar (both themes) | Prop |
-| `SHIP_STARTER` | Starter hull (CX lattice / gROT spore variants) | Ship |
-| `WPN_PULSE_T0` | T0 Pulse rifle | Weapon |
-| `INT_TESTARENA` | TestArena interior shell | Interior |
+### Batch 1 — VS critical
+CHAR_AEGIS, CHAR_GRAFT, CHAR_SERA, LOC_ARK_VAULT, LOC_ROT_SPIRE, PROP_PILLAR (dual), SHIP_STARTER (dual), WPN_PULSE_T0, INT_TESTARENA  
+**Status:** largely complete (prior session)
 
 ### Batch 2 — Forms + hubs
-
-| ID | Object |
-|----|--------|
-| `CHAR_HELIX` | Helix Ord (avian Warden) |
-| `CHAR_THROAT` | Third Throat |
-| `CHAR_KILN` | Kiln-Nine |
-| `FORM_FELINE` | CX feline scout chassis |
-| `FORM_AVIAN` | CX avian |
-| `LOC_ARK_RING` | Ring of Quiet Lights |
-| `LOC_ROT_KILNS` | Vein Kilns |
-| `INT_NEX_HAB` | Cybernex habitat interior |
-| `INT_SPIRE_HALL` | gROT ritual hall |
+CHAR_HELIX, CHAR_THROAT, CHAR_KILN, FORM_FELINE, FORM_AVIAN, LOC_ARK_RING, LOC_ROT_KILNS, INT_NEX_HAB, INT_SPIRE_HALL  
+**Status:** largely complete
 
 ### Batch 3 — Space + modules
+SHIP_T1_FIGHTER (dual), SHIP_HAULER, MOD_THRUSTER_T0, MOD_SHIELD_CX / GR, PAD_DOCK, LOC_HELIOS, LOC_TWIN_MOON  
+**Status:** largely complete
 
-| ID | Object |
-|----|--------|
-| `SHIP_T1_FIGHTER` | T1 fighter both themes |
-| `SHIP_HAULER` | Logistics hauler |
-| `MOD_THRUSTER_T0` | Propulsion module |
-| `MOD_SHIELD_CX` | Shield lattice |
-| `MOD_SHIELD_GR` | Spore ward |
-| `PAD_DOCK` | Dock / Transition pad |
-| `LOC_HELIOS` | Dawn Scaffold |
-| `LOC_TWIN_MOON` | Twin Moon A Contested |
+### Batch 4 — Economy + social + sites
+T1 gear, extractor, storage, constructor, Mirror Spindle, Echo Well, Forge Anvil, décor seeds, SITE_PIN set  
+**Status:** largely complete
 
-### Batch 4 — Economy + social + remaining sites
+### Batch 5 — MOBA Arena (paused for later refinement)
+Hex layout, diagonal river, multi-height labyrinth jungle (CX healthy / GR infected), 3 towers + inhibitors per lane, creep types (melee / ranged / artillery), super-creeps  
+**Status:** geometry + style locked v0.3.2; visual polish deferred
 
-Gear T1 body, extractor, storage, constructor beacon, Mirror Spindle, Echo Memory Well, Forge Anvil, fleet LOD icons, décor props.
+### Batch 6–11 — Environments expansion (CLOSED this session)
+- **Biomes:** BIO_CX_HARMONY, BIO_GR_INFECTED, BIO_ASH_MARCH, BIO_ARK_NEX, BIO_ICE_OUTER, BIO_OCEAN_REEF
+- **Flora:** FLORA_CX_CRYSTAL / GARDEN, FLORA_GR_SPORE / VEIN, FLORA_NEUTRAL
+- **Fauna:** FAUNA_CX_SCOUT (mature hard-sci-fi), FAUNA_GR_SWARM / HUNTER, FAUNA_NEUT_DRIFTER, FAUNA_RELIC_ECHO
+- **Nebulae:** NEB_CX_LUMEN, NEB_GR_ASH, NEB_HELIOS, NEB_NULL
+- **Space:** SPACE_ASTEROID_BELT, SPACE_ASTEROID_HOLLOW, SPACE_RELIC_RING, SPACE_RELIC_OBELISK, SPACE_WRECK_FIELD, SPACE_STATION_NEUTRAL
+- **Interiors:** INT_RELIC_CHAMBER, INT_COLONY_CX / GR, INT_SHIP_BRIDGE, INT_SHIP_BAY
 
-### Batch 5+ — Full catalog expansion
+### Batch 12 — Active (current)
+1. SPACE_RELIC_RING cinematic + short fly-through clip
+2. NEB_VEIL (contested border)
+3. INT_FACTORY_CX / INT_FACTORY_GR dual
+4. INT_VAULT_CROWN + INT_SPIRE (HQ interiors)
+5. Surface transport: CX rover + GR crawler
+6. Capital ship exteriors dual (CX clean / GR bio-industrial)
+7. PROP_DECOR dual (hab furniture + industrial crates)
+8. Start T0–T1 weapons/gear dual (pulse, lattice rifle, cyber-blade, shield modules)
 
-All SITE_PIN locations cinematic; remaining form families; T2–T3 hero ships; MOBA arena skin; seasonal VFX boards.
+### Batch 13+ — Remaining
+T2–T3 ships, more form families, seasonal VFX, remaining SITE_PIN polish, full ortho backlog for Tripo hand-off, MOBA arena return.
 
 ---
 
 ## 3. Per-object checklist
 
 ```text
-[ ] Cinematic prompt locked (faction theme, no gore fetish, readable)
-[ ] Ortho 4-view prompt locked (T-pose or neutral, scale markers)
-[ ] Generated + reviewed silhouette
-[ ] Optional 2–6s anim (idle / interaction)
-[ ] Logged in ASSET_GEN_LOG.md (date, batch, paths)
+[ ] Cinematic prompt locked (adult hard sci-fi + faction canon)
+[ ] Ortho 4-view prompt locked (neutral, scale, no drama)
+[ ] Generated + silhouette reviewed
+[ ] Optional 2–6s anim for hero objects
+[ ] Logged (date, batch, paths)
 [ ] Hand to Tripo/Blender only after ortho approved
 ```
 
 ---
 
-## 4. Prompt style anchors
+## 4. Prompt style anchors (quick reference)
 
-**Cybernex:** dark chrome, cyan edge light, biotech gardens, Venus-Project calm tech, anthropomorphic cyborg animals, clean panels.
+**Cybernex:** dark chrome, cyan edge light, biotech gardens, Venus-Project calm tech, anthropomorphic cyborg animals (mature), clean panels.
 
-**gROT:** ash industrial, spore veins, asymmetric morphs, red-purple bioluminescence, dense machinery, hierarchical ornament.
+**gROT:** black industrial hard-surface + controlled red genetic cyber-biomass (engineered tissue / spore veins on frames), mass-production, hierarchical, red optic/glow accents.
 
-**Ortho:** pure white or dark grid background, orthographic camera, no dramatic lighting, equal scale, labels Front Side Back Top.
+**Relic / Neutral:** weathered grey-gold, non-human geometry, third aesthetic.
 
-**Avoid:** real-world trademarks, excessive gore, P2W glow language, illegible clutter.
+**Ortho:** pure grid background, orthographic, equal scale, Front Side Back Top.
+
+**Avoid:** trademarks, excessive gore, P2W language, illegible clutter, cartoon/cute, medieval, pure organic fantasy.
 
 ---
 
 ## 5. Volume reality
 
-Full universe ≠ one session. **Batch 1** is mandatory before parallel Tripo. Subsequent batches on command «дальше / batch N».
-
-Videos: short loops only for hero objects in each batch (not every prop).
+Full universe ≠ one session. Generate on command «дальше / batch N».  
+Videos: short loops only for hero objects.  
+Heavy assets stay in neon bucket + local assets/; never commit large binaries to git.
 
 ---
 
-## 6. Status
+## 6. Status summary
 
 | Batch | Status |
 |-------|--------|
-| 1 VS critical | **In generation** |
-| 2–5 | Queued |
+| 1–4 VS + core | Largely complete |
+| 5 Arena | Geometry locked, visual polish deferred |
+| 6–11 Environments | **Closed** (biomes → interiors) |
+| 12 Current | **Active** (relic, factories, transport, capital, weapons start) |
+| 13+ | Queued |
 
 ---
 
-*Concept generation authority; production meshes stay out of git.*
+*Concept generation authority; production meshes stay out of git. Style lock is non-negotiable.*
