@@ -76,3 +76,6 @@ __pycache__/
 *.pid
 logs/*.pid
 
+
+# Approved design plates — live in s3://neon/generations/ + catalog.json
+generations/
