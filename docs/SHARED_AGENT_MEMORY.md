@@ -113,3 +113,6 @@
 ### 2026-08-08 — ShipHullAmbient
 - Code-first hull rim/engine/cabin lights + op_mode pulse (SIEGE/SCAN/land).
 - 0 Tripo. Sequential after scan/landscape.
+
+
+| 2026-08-13 | `s3://neon/generations/` = approved design renders + orthogonal Tripo schemes; index `generations/catalog.json` updated on every ingest | Owner + sequential-dev |

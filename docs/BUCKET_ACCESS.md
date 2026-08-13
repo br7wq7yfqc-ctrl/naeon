@@ -61,3 +61,19 @@ aws s3 ls s3://neon/generations/ --endpoint-url https://storage.yandexcloud.net 
 # анонимное чтение (после политики → 200, сейчас 403)
 curl -sI https://storage.yandexcloud.net/neon/generations/rendered/ypNsZ.jpg
 ```
+
+## Approved designs index
+
+`generations/` holds **approved** design renders and orthogonal schemes for Tripo.
+
+Index (update on every new approved ingest):
+
+`s3://neon/generations/catalog.json`
+
+Rebuild + upload:
+
+```bash
+python3 ~/Documents/naeon/scripts/assets/update_generations_catalog.py
+```
+
+Rule is locked in `.grok/skills/naeon-sequential-dev/SKILL.md`.

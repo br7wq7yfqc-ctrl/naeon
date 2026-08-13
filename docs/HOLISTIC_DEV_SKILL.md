@@ -82,3 +82,8 @@ A good early contribution:
 ---
 
 **Load this skill at the beginning of every development session.**
+
+
+## Approved generations (with sequential-dev)
+
+Approved design renders and orthogonal schemes live in `s3://neon/generations/`. The index `generations/catalog.json` must be updated whenever new approved files are added.

@@ -28,3 +28,10 @@
 - Balance check when generating; code-first when zero.
 
 Updated: 2026-08-07T23:18:08.396968+00:00
+
+
+## Approved generations (bucket)
+
+- Store approved design renders and orthogonal Tripo schemes in `s3://neon/generations/`.
+- Keep `s3://neon/generations/catalog.json` current on every new approved file.
+- Skill: `naeon-sequential-dev`.
