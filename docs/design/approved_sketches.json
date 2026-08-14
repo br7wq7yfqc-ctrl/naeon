@@ -1,5 +1,5 @@
 {
-  "version": "1.4",
+  "version": "1.5",
   "updated": "2026-08-15",
   "rule": "locked only",
   "user": "77c65418-d257-47c3-8504-4540b6e0a754",
@@ -374,9 +374,25 @@
       "class": "module",
       "label": "Turret + seed-torpedo",
       "position": "gr-turret-torpedo"
+    },
+    {
+      "id": "ba11d579-8ea9-4650-a070-a1932b1d6eb6",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "module",
+      "label": "Scanner + repair arm",
+      "position": "gr-scanner-repair"
+    },
+    {
+      "id": "f545cfc5-7c79-46af-a486-81d374ab0f74",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "module",
+      "label": "Scanner + repair arm",
+      "position": "gr-scanner-repair"
     }
   ],
-  "note": "position = slug in docs/asset_positions.json. Nine Index slugs (cx-dmr … gr-turret-torpedo) are ledger keys with ocr=false, count=0 — not invented OCR titles.",
-  "positions_bound": 46,
+  "note": "position = slug in docs/asset_positions.json. Index slugs (ocr=false, count=0) are existing Index keys, not invented OCR titles. GR scanner-repair locked 2026-08-15. CX scanner-repair redo in review — not in this locked list.",
+  "positions_bound": 48,
   "positions_unbound": 0
 }

@@ -1,9 +1,9 @@
 {
-  "version": 2.1,
+  "version": 2.2,
   "updated": "2026-08-15",
-  "source": "asset_positions.json v1 OCR bind + approved_sketches.json 46 UUID + 9 Index slugs",
+  "source": "asset_positions.json v2.2 + GR scanner-repair lock (existing Index slug)",
   "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Do not commit catalog.json. Nine index_slug rows (ocr=false, count=0) are existing Index keys, not invented OCR.",
-  "positions": 123,
+  "positions": 124,
   "bound_sheets": 213,
   "merged_slugs": {
     "heawy_5ault_i8reakt4fough": "heavy_assault",
@@ -557,6 +557,29 @@
           "view": "ortho",
           "class": "module",
           "label": "Turret + seed-torpedo"
+        }
+      ]
+    },
+    "gr-scanner-repair": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "ba11d579-8ea9-4650-a070-a1932b1d6eb6",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Scanner + repair arm"
+        },
+        {
+          "id": "f545cfc5-7c79-46af-a486-81d374ab0f74",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "module",
+          "label": "Scanner + repair arm"
         }
       ]
     },
@@ -1562,13 +1585,14 @@
   },
   "index_only_slugs": [
     "cx-dmr",
-    "gr-dmr",
     "cx-firewall-gadget",
-    "gr-infection-tool",
     "cx-tank-gun",
-    "gr-tank-gun",
-    "gr-contractile",
     "cx-turret-launcher",
+    "gr-contractile",
+    "gr-dmr",
+    "gr-infection-tool",
+    "gr-scanner-repair",
+    "gr-tank-gun",
     "gr-turret-torpedo"
   ]
 }
