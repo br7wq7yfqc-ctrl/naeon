@@ -1,0 +1,39 @@
+{
+  "code": 0,
+  "data": {
+    "task_id": "16a8d46f-56e4-4ec5-8876-bc63b037fe08",
+    "type": "text_to_model",
+    "status": "success",
+    "input": {
+      "prompt": "low poly sci-fi cargo crate, game ready asset, clean topology, simple materials",
+      "model_version": "v2.5-20250123",
+      "texture": true,
+      "pbr": true,
+      "texture_alignment": "geometry",
+      "export_uv": true,
+      "geometry_quality": "standard"
+    },
+    "output": {
+      "pbr_model": "https://tripo-data.rg1.data.tripo3d.com/tcli_adeb2feff6db4c0c83660a4e042088fa/20260806/16a8d46f-56e4-4ec5-8876-bc63b037fe08/tripo_pbr_model_16a8d46f-56e4-4ec5-8876-bc63b037fe08.glb?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYWRlYjJmZWZmNmRiNGMwYzgzNjYwYTRlMDQyMDg4ZmEvMjAyNjA4MDYvMTZhOGQ0NmYtNTZlNC00ZWM1LTg4NzYtYmM2M2IwMzdmZTA4L3RyaXBvX3Bicl9tb2RlbF8xNmE4ZDQ2Zi01NmU0LTRlYzUtODg3Ni1iYzYzYjAzN2ZlMDguZ2xiIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzg2MDYwODAwfX19XX0_&Signature=kCIODvOMQ14UJkWAcK~6-YsmrUJV5lUW-YuEIZK5w7lZ9Vwf-S3Vb19UTXLiPWSi3y5-jicDFYfA8RzzrQzHKeGrXDl51Hx1tTRHGGU66l259WRjyvehmPA3tCAXjSQ2kBKzcV6CMbvMGEvQPa8TlJIkmW2oOVfB1I4yuttFyXoQLjto0H4hwgGvi3tkB2d504Y1x0wt6UUmkEl8uo7vLS4JFzN0lvgs3FCdVI~DhUEPofGqARATpi0~3OHoEMQO66IDLVI1qHjQOrN5d5TkFDcWToztfA0W6vqj32sDgJuzVx7fzODYRkweujZa~vHIJARYKSqNl7uNekBNrcqSLQ__",
+      "generated_image": "https://tripo-data.rg1.data.tripo3d.com/tcli_adeb2feff6db4c0c83660a4e042088fa/20260806/16a8d46f-56e4-4ec5-8876-bc63b037fe08/text2image_16a8d46f-56e4-4ec5-8876-bc63b037fe08.jpeg?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYWRlYjJmZWZmNmRiNGMwYzgzNjYwYTRlMDQyMDg4ZmEvMjAyNjA4MDYvMTZhOGQ0NmYtNTZlNC00ZWM1LTg4NzYtYmM2M2IwMzdmZTA4L3RleHQyaW1hZ2VfMTZhOGQ0NmYtNTZlNC00ZWM1LTg4NzYtYmM2M2IwMzdmZTA4LmpwZWciLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODYwNjA4MDB9fX1dfQ__&Signature=WNQF83yVB7AGsAZHfuNBdgW-UANfXff0sFXid23J-4~3KsOYm~4Qoc27Ws~PGwm9E7-a8NPhdyBzdgoiMalIabfwQvYo7koXN-oRtUaUZyzMypdg-wiBWwR473ap--NPpua-r~KxpOLGcq7d72O8E6QX~IlmpPsfBEas~Y-wa56s1nuzuFmGwJnRiy4d-Ff56qgb9Yl7vx9EH2KQLjGr2Xzj9JQL9S1EdMGyzgJ4qfCGwIKFJaKVoOzPujTs-EI2zwEd8K8f1aaeF7FKQ55Kk6VRTV1Z2pZmUJLcyTD7aCZvFwVh7jeZSAGiUDfy-MF62hJPNVm5CtdC8P63u12KlA__",
+      "rendered_image": "https://tripo-data.rg1.data.tripo3d.com/tcli_adeb2feff6db4c0c83660a4e042088fa/20260806/16a8d46f-56e4-4ec5-8876-bc63b037fe08/legacy_mesh.webp?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYWRlYjJmZWZmNmRiNGMwYzgzNjYwYTRlMDQyMDg4ZmEvMjAyNjA4MDYvMTZhOGQ0NmYtNTZlNC00ZWM1LTg4NzYtYmM2M2IwMzdmZTA4L2xlZ2FjeV9tZXNoLndlYnAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODYwNjA4MDB9fX1dfQ__&Signature=QTaCS2-KBArZI9yjdw7jZXmQ7M6tYkZ4PFxN2ZFfmkNp7zxoo-3QLAMmkRssWlabwGALHn~v3uziicSkQd1nerwuQ3IzPiHRkdbkzVFGeNnUU~HN7P7Nfe-2Hl4B18dgk6w4aFBdpbnpEQABeUhpnZl5PFq1RHiw2DC44~0M8ZDL3u3guUuY4wbOXlt6xM0Y1tcCNUPXAA9q167IXxlk3nCawfwUWC7ADbNoeQsiR1tvFjiG8aVxCCv816VzcY9aDLFJfq67yq38aw5iM1gr17iejGO1kKM1TI1datpjwpg9qd0uJg20ZeMB4blmDCtc9c83oxrZ74ryvrev2uiJ4A__"
+    },
+    "progress": 100,
+    "create_time": 1785982017,
+    "consumed_credit": 20,
+    "prompt": "low poly sci-fi cargo crate, game ready asset, clean topology, simple materials",
+    "thumbnail": "https://tripo-data.rg1.data.tripo3d.com/tcli_adeb2feff6db4c0c83660a4e042088fa/20260806/16a8d46f-56e4-4ec5-8876-bc63b037fe08/legacy_mesh.webp?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYWRlYjJmZWZmNmRiNGMwYzgzNjYwYTRlMDQyMDg4ZmEvMjAyNjA4MDYvMTZhOGQ0NmYtNTZlNC00ZWM1LTg4NzYtYmM2M2IwMzdmZTA4L2xlZ2FjeV9tZXNoLndlYnAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODYwNjA4MDB9fX1dfQ__&Signature=QTaCS2-KBArZI9yjdw7jZXmQ7M6tYkZ4PFxN2ZFfmkNp7zxoo-3QLAMmkRssWlabwGALHn~v3uziicSkQd1nerwuQ3IzPiHRkdbkzVFGeNnUU~HN7P7Nfe-2Hl4B18dgk6w4aFBdpbnpEQABeUhpnZl5PFq1RHiw2DC44~0M8ZDL3u3guUuY4wbOXlt6xM0Y1tcCNUPXAA9q167IXxlk3nCawfwUWC7ADbNoeQsiR1tvFjiG8aVxCCv816VzcY9aDLFJfq67yq38aw5iM1gr17iejGO1kKM1TI1datpjwpg9qd0uJg20ZeMB4blmDCtc9c83oxrZ74ryvrev2uiJ4A__",
+    "queuing_num": -1,
+    "running_left_time": -1,
+    "result": {
+      "pbr_model": {
+        "type": "glb",
+        "url": "https://tripo-data.rg1.data.tripo3d.com/tcli_adeb2feff6db4c0c83660a4e042088fa/20260806/16a8d46f-56e4-4ec5-8876-bc63b037fe08/tripo_pbr_model_16a8d46f-56e4-4ec5-8876-bc63b037fe08.glb?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYWRlYjJmZWZmNmRiNGMwYzgzNjYwYTRlMDQyMDg4ZmEvMjAyNjA4MDYvMTZhOGQ0NmYtNTZlNC00ZWM1LTg4NzYtYmM2M2IwMzdmZTA4L3RyaXBvX3Bicl9tb2RlbF8xNmE4ZDQ2Zi01NmU0LTRlYzUtODg3Ni1iYzYzYjAzN2ZlMDguZ2xiIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzg2MDYwODAwfX19XX0_&Signature=kCIODvOMQ14UJkWAcK~6-YsmrUJV5lUW-YuEIZK5w7lZ9Vwf-S3Vb19UTXLiPWSi3y5-jicDFYfA8RzzrQzHKeGrXDl51Hx1tTRHGGU66l259WRjyvehmPA3tCAXjSQ2kBKzcV6CMbvMGEvQPa8TlJIkmW2oOVfB1I4yuttFyXoQLjto0H4hwgGvi3tkB2d504Y1x0wt6UUmkEl8uo7vLS4JFzN0lvgs3FCdVI~DhUEPofGqARATpi0~3OHoEMQO66IDLVI1qHjQOrN5d5TkFDcWToztfA0W6vqj32sDgJuzVx7fzODYRkweujZa~vHIJARYKSqNl7uNekBNrcqSLQ__"
+      },
+      "rendered_image": {
+        "type": "webp",
+        "url": "https://tripo-data.rg1.data.tripo3d.com/tcli_adeb2feff6db4c0c83660a4e042088fa/20260806/16a8d46f-56e4-4ec5-8876-bc63b037fe08/legacy_mesh.webp?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYWRlYjJmZWZmNmRiNGMwYzgzNjYwYTRlMDQyMDg4ZmEvMjAyNjA4MDYvMTZhOGQ0NmYtNTZlNC00ZWM1LTg4NzYtYmM2M2IwMzdmZTA4L2xlZ2FjeV9tZXNoLndlYnAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODYwNjA4MDB9fX1dfQ__&Signature=QTaCS2-KBArZI9yjdw7jZXmQ7M6tYkZ4PFxN2ZFfmkNp7zxoo-3QLAMmkRssWlabwGALHn~v3uziicSkQd1nerwuQ3IzPiHRkdbkzVFGeNnUU~HN7P7Nfe-2Hl4B18dgk6w4aFBdpbnpEQABeUhpnZl5PFq1RHiw2DC44~0M8ZDL3u3guUuY4wbOXlt6xM0Y1tcCNUPXAA9q167IXxlk3nCawfwUWC7ADbNoeQsiR1tvFjiG8aVxCCv816VzcY9aDLFJfq67yq38aw5iM1gr17iejGO1kKM1TI1datpjwpg9qd0uJg20ZeMB4blmDCtc9c83oxrZ74ryvrev2uiJ4A__"
+      }
+    }
+  }
+}
