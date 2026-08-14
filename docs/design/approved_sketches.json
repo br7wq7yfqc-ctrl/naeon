@@ -1,5 +1,5 @@
 {
-  "version": "1.9",
+  "version": "1.10",
   "updated": "2026-08-15",
   "rule": "locked only",
   "user": "77c65418-d257-47c3-8504-4540b6e0a754",
@@ -735,9 +735,225 @@
       "label": "Light crawler scout",
       "position": "grot_crawler",
       "dump_key": "generations/imagine_images/YTTxi.jpg"
+    },
+    {
+      "id": "vYOfQ",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "armor",
+      "label": "Light armor",
+      "position": "cybernex_light_armor",
+      "dump_key": "generations/rendered/vYOfQ.jpg"
+    },
+    {
+      "id": "G1DlH",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Light armor silhouette",
+      "position": "cybernex_light_armor",
+      "dump_key": "generations/rendered/G1DlH.jpg"
+    },
+    {
+      "id": "mYaBr",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Light armor",
+      "position": "cybernex_light_armor",
+      "dump_key": "generations/rendered/mYaBr.jpg"
+    },
+    {
+      "id": "XDhht",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "armor",
+      "label": "Medium armor",
+      "position": "cybernex_medium_armor",
+      "dump_key": "generations/rendered/XDhht.jpg"
+    },
+    {
+      "id": "3KCUS",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Medium armor",
+      "position": "cybernex_medium_armor",
+      "dump_key": "generations/rendered/3KCUS.jpg"
+    },
+    {
+      "id": "XqU70",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "armor",
+      "label": "Light armor",
+      "position": "grot_light_armor",
+      "dump_key": "generations/rendered/XqU70.jpg"
+    },
+    {
+      "id": "mfHHB",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Light armor",
+      "position": "grot_light_armor",
+      "dump_key": "generations/rendered/mfHHB.jpg"
+    },
+    {
+      "id": "vB0CU",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Light armor",
+      "position": "grot_light_armor",
+      "dump_key": "generations/rendered/vB0CU.jpg"
+    },
+    {
+      "id": "ZiYRJ",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Light armor",
+      "position": "grot_light_armor",
+      "dump_key": "generations/rendered/ZiYRJ.jpg"
+    },
+    {
+      "id": "gjXDt",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "weapon-infantry",
+      "label": "Silent Prong",
+      "position": "cybernex_silent_prong",
+      "dump_key": "generations/rendered/gjXDt.jpg"
+    },
+    {
+      "id": "oAWSV",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "drone",
+      "label": "Logistic drone",
+      "position": "cybernex_logistic_drone",
+      "dump_key": "generations/rendered/oAWSV.jpg"
+    },
+    {
+      "id": "KcgoY",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "drone",
+      "label": "Logistic drone",
+      "position": "grot_logistic_drone",
+      "dump_key": "generations/rendered/KcgoY.jpg"
+    },
+    {
+      "id": "o55Js",
+      "faction": "NEUT",
+      "view": "cinematic",
+      "class": "drone",
+      "label": "Logistic drone (class)",
+      "position": "logistic_drone",
+      "dump_key": "generations/rendered/o55Js.jpg"
+    },
+    {
+      "id": "hpvGX",
+      "faction": "NEUT",
+      "view": "cinematic",
+      "class": "drone",
+      "label": "Medium drone (class)",
+      "position": "medium_drone",
+      "dump_key": "generations/rendered/hpvGX.jpg"
+    },
+    {
+      "id": "Bp9Gi",
+      "faction": "NEUT",
+      "view": "cinematic",
+      "class": "drone",
+      "label": "Heavy drone (class)",
+      "position": "heavy_drone",
+      "dump_key": "generations/rendered/Bp9Gi.jpg"
+    },
+    {
+      "id": "nwXlo",
+      "faction": "NEUT",
+      "view": "cinematic",
+      "class": "drone",
+      "label": "Heavy assault / siege drone",
+      "position": "heavy_assault",
+      "dump_key": "generations/rendered/nwXlo.jpg"
+    },
+    {
+      "id": "DvC3C",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ground",
+      "label": "Scout rover",
+      "position": "cybernex_scout_rover",
+      "dump_key": "generations/rendered/DvC3C.jpg"
+    },
+    {
+      "id": "KCHaV",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ground",
+      "label": "Hoverbike",
+      "position": "grot_hoverbike",
+      "dump_key": "generations/rendered/KCHaV.jpg"
+    },
+    {
+      "id": "lYaDV",
+      "faction": "NEUT",
+      "view": "cinematic",
+      "class": "ground",
+      "label": "Support logistics vehicle",
+      "position": "support_logistics_vehicle",
+      "dump_key": "generations/rendered/lYaDV.jpg"
+    },
+    {
+      "id": "MnVIJ",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ground",
+      "label": "Support logistics vehicle",
+      "position": "support_logistics_vehicle",
+      "dump_key": "generations/rendered/MnVIJ.jpg"
+    },
+    {
+      "id": "yGSDn",
+      "faction": "NEUT",
+      "view": "cinematic",
+      "class": "module",
+      "label": "Ownership claim beacon",
+      "position": "ownership_claim_beacon",
+      "dump_key": "generations/rendered/yGSDn.jpg"
+    },
+    {
+      "id": "cHfB3",
+      "faction": "NEUT",
+      "view": "cinematic",
+      "class": "ship-single",
+      "label": "Sniper ship (class)",
+      "position": "sniper_ship",
+      "dump_key": "generations/rendered/cHfB3.jpg"
+    },
+    {
+      "id": "LEThZ",
+      "faction": "NEUT",
+      "view": "ortho",
+      "class": "ship-single",
+      "label": "Stealth ship (class)",
+      "position": "stealth_ship",
+      "dump_key": "generations/rendered/LEThZ.jpg"
+    },
+    {
+      "id": "eBFi8",
+      "faction": "NEUT",
+      "view": "cinematic",
+      "class": "ship-single",
+      "label": "Stealth ship (class)",
+      "position": "stealth_ship",
+      "dump_key": "generations/rendered/eBFi8.jpg"
     }
   ],
-  "note": "position = slug in docs/asset_positions.json. Dump short IDs are existing neon files, not invented UUIDs. Rebind 2026-08-15: capitals, multicrew, single-seat, drones, armor, beacons.",
-  "positions_bound": 87,
+  "note": "position = slug in docs/asset_positions.json. Dump short IDs are existing neon files, not invented UUIDs. Rebind 2026-08-15: remaining 16 chat-lock plates found in rendered/ by title.",
+  "positions_bound": 78,
   "positions_unbound": 0
 }

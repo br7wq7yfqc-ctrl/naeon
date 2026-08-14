@@ -1,10 +1,10 @@
 # NAEON — Approved sketch catalog
 
-**Version:** 1.9 · **Updated:** 2026-08-15  
+**Version:** 1.10 · **Updated:** 2026-08-15  
 **Rule:** this file lists **locked only**. In-review / draft / dump do not belong here.
 
 Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **127 positions, 213 sheets**.  
-Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **54 UUID + 33 dump IDs**, none invented.
+Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **54 UUID + 57 dump IDs**, none invented.
 
 Bucket: `s3://neon/generations/canon/{class}/{id}/master.jpg`  
 Grok: `https://assets.grok.com/users/77c65418-d257-47c3-8504-4540b6e0a754/generated/{UUID}/image.jpg`
@@ -16,8 +16,8 @@ S3 Index `generations/catalog.json` is **not** in git and is not patched by this
 | Positions after OCR merge + Index keys | 127 |
 | Bound sheets (invariant) | 213 |
 | Locked UUID | 54 |
-| Dump file IDs rebound (existing neon files) | 33 |
-| Chat-lock still `file_id` null | 16 |
+| Dump file IDs rebound (existing neon files) | 57 |
+| Chat-lock still `file_id` null | 0 |
 | UUID with no position | 0 |
 | Index-only positions (`ocr: false`, `count: 0`) | 13 |
 | Unfactioned class plates kept as templates | 11 |
@@ -144,34 +144,36 @@ Verified against the plate before bind.
 | Claim beacon | GR | cinematic | `grot_claim_beacon` | `nFxgT` |
 | Claim beacon | CX | ortho | `cybernex_claim_beacon` | `phjM0` |
 | Hoverbike | CX | ortho | `cybernex_hoverbike` | `WrLuh` |
+| Hoverbike | GR | cinematic | `grot_hoverbike` | `KCHaV` |
 | Light crawler scout | GR | cinematic | `grot_crawler` | `YTTxi` |
+| Light armor | CX | ortho | `cybernex_light_armor` | `vYOfQ` |
+| Light armor | CX | cinematic | `cybernex_light_armor` | `G1DlH`, `mYaBr` |
+| Medium armor | CX | ortho | `cybernex_medium_armor` | `XDhht` |
+| Medium armor | CX | cinematic | `cybernex_medium_armor` | `3KCUS` |
+| Light armor | GR | ortho | `grot_light_armor` | `XqU70` |
+| Light armor | GR | cinematic | `grot_light_armor` | `mfHHB`, `vB0CU`, `ZiYRJ` |
+| Silent Prong | CX | cinematic | `cybernex_silent_prong` | `gjXDt` |
+| Logistic drone | CX | cinematic | `cybernex_logistic_drone` | `oAWSV` |
+| Logistic drone | GR | cinematic | `grot_logistic_drone` | `KcgoY` |
+| Logistic drone (class) | NEUT | cinematic | `logistic_drone` | `o55Js` |
+| Medium drone (class) | NEUT | cinematic | `medium_drone` | `hpvGX` |
+| Heavy drone (class) | NEUT | cinematic | `heavy_drone` | `Bp9Gi` |
+| Heavy assault / siege | NEUT | cinematic | `heavy_assault` | `nwXlo` |
+| Scout rover | CX | cinematic | `cybernex_scout_rover` | `DvC3C` |
+| Support logistics | NEUT | cinematic | `support_logistics_vehicle` | `lYaDV` |
+| Support logistics | GR | cinematic | `support_logistics_vehicle` | `MnVIJ` |
+| Ownership claim beacon | NEUT | cinematic | `ownership_claim_beacon` | `yGSDn` |
+| Sniper (class) | NEUT | cinematic | `sniper_ship` | `cHfB3` |
+| Stealth (class) | NEUT | ortho | `stealth_ship` | `LEThZ` |
+| Stealth (class) | NEUT | cinematic | `stealth_ship` | `eBFi8` |
 
 ---
 
-## B. Locked in chat — position exists, dump file not identified
+## B. Locked in chat — dump file identified
 
-These stay `file_id` null. Do not invent a UUID. Unfactioned class plates are templates, not faction hulls.
+Chat-lock `file_id` null: **0**. All 16 remaining plates found in `generations/rendered/` by title. Existing dump IDs only. No invented UUIDs.
 
-### Still unbound (16)
-
-| Position | Notes |
-|----------|-------|
-| `cybernex_light_armor` | 4 titled sheets, no dump match |
-| `cybernex_medium_armor` | 2 titled sheets, no dump match |
-| `grot_light_armor` | 4 titled sheets, no dump match |
-| `cybernex_logistic_drone` | titled sheet, no dump match |
-| `grot_logistic_drone` | titled sheet, no dump match |
-| `logistic_drone` | unfactioned; renamed `logisflc_drowe` |
-| `medium_drone` | unfactioned class plate |
-| `heavy_drone` | unfactioned class plate |
-| `heavy_assault` | siege plate; merged `heawy_5ault_i8reakt4fough` |
-| `cybernex_scout_rover` | titled sheets, no dump match |
-| `grot_hoverbike` | titled sheet, no dump match |
-| `support_logistics_vehicle` | merged OCR titles, no dump match |
-| `ownership_claim_beacon` | renamed `owner5hip_cla1m_beacon`; faction beacons already rebound |
-| `cybernex_silent_prong` | CBX-1 sidearm nearest slug |
-| `sniper_ship` | unfactioned; see `cybernex_sniper_ship` |
-| `stealth_ship` | unfactioned class plate; faction stealth has no OCR slug |
+Unfactioned class plates (`sniper_ship`, `stealth_ship`, `logistic_drone`, `medium_drone`, `heavy_drone`, `heavy_assault`, `ownership_claim_beacon`, `support_logistics_vehicle`) stay templates, not faction hulls.
 
 CX support hull, CX fighter, CX bomber, CX stealth, GR scout-ship, GR medium drone have dump plates but **no OCR slug** — not rebound onto a different object.
 

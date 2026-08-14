@@ -1,8 +1,8 @@
 {
-  "version": 2.6,
+  "version": 2.7,
   "updated": "2026-08-15",
-  "source": "asset_positions.json v2.6 + dump rebind ships/drones/armor/beacons",
-  "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Do not commit catalog.json. Index-slug rows (ocr=false, count=0) are existing Index keys, not invented OCR.",
+  "source": "asset_positions.json v2.7 + dump rebind remaining 16 chat-lock plates",
+  "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Dump short IDs are existing neon rendered files, not invented UUIDs.",
   "positions": 127,
   "bound_sheets": 213,
   "merged_slugs": {
@@ -107,7 +107,34 @@
         "CYBERNEX LIGHT ARMOR- EXO/IL1"
       ],
       "chat_lock": true,
-      "file_id": null
+      "file_id": "vYOfQ",
+      "dump_key": "generations/rendered/vYOfQ.jpg",
+      "locked_uuids": [
+        {
+          "id": "vYOfQ",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/vYOfQ.jpg"
+        },
+        {
+          "id": "G1DlH",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Light armor silhouette",
+          "dump_key": "generations/rendered/G1DlH.jpg"
+        },
+        {
+          "id": "mYaBr",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/mYaBr.jpg"
+        }
+      ]
     },
     "cybernex_medium_armor": {
       "category": "characters",
@@ -117,7 +144,26 @@
         "I CYBERNEX MEDIUM ARMOR- DESIGN LOCK"
       ],
       "chat_lock": true,
-      "file_id": null
+      "file_id": "XDhht",
+      "dump_key": "generations/rendered/XDhht.jpg",
+      "locked_uuids": [
+        {
+          "id": "XDhht",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Medium armor",
+          "dump_key": "generations/rendered/XDhht.jpg"
+        },
+        {
+          "id": "3KCUS",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Medium armor",
+          "dump_key": "generations/rendered/3KCUS.jpg"
+        }
+      ]
     },
     "grot_graft_hound": {
       "category": "characters",
@@ -184,7 +230,42 @@
         "I GROT LIGHT ARMOR"
       ],
       "chat_lock": true,
-      "file_id": null
+      "file_id": "XqU70",
+      "dump_key": "generations/rendered/XqU70.jpg",
+      "locked_uuids": [
+        {
+          "id": "XqU70",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/XqU70.jpg"
+        },
+        {
+          "id": "mfHHB",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/mfHHB.jpg"
+        },
+        {
+          "id": "vB0CU",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/vB0CU.jpg"
+        },
+        {
+          "id": "ZiYRJ",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/ZiYRJ.jpg"
+        }
+      ]
     },
     "grot_medium_armor": {
       "category": "characters",
@@ -477,7 +558,18 @@
         "CYBERNEX CBX-1 'SILENT PRONG\""
       ],
       "chat_lock": true,
-      "file_id": null
+      "file_id": "gjXDt",
+      "dump_key": "generations/rendered/gjXDt.jpg",
+      "locked_uuids": [
+        {
+          "id": "gjXDt",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "weapon-infantry",
+          "label": "Silent Prong",
+          "dump_key": "generations/rendered/gjXDt.jpg"
+        }
+      ]
     },
     "cybernex_uixgemient": {
       "category": "props",
@@ -746,7 +838,18 @@
         "heawy_5ault_i8reakt4fough"
       ],
       "chat_lock": true,
-      "file_id": null
+      "file_id": "nwXlo",
+      "dump_key": "generations/rendered/nwXlo.jpg",
+      "locked_uuids": [
+        {
+          "id": "nwXlo",
+          "faction": "NEUT",
+          "view": "cinematic",
+          "class": "drone",
+          "label": "Heavy assault / siege drone",
+          "dump_key": "generations/rendered/nwXlo.jpg"
+        }
+      ]
     },
     "il_ili": {
       "category": "props",
@@ -809,7 +912,18 @@
         "owner5hip_cla1m_beacon"
       ],
       "chat_lock": true,
-      "file_id": null
+      "file_id": "yGSDn",
+      "dump_key": "generations/rendered/yGSDn.jpg",
+      "locked_uuids": [
+        {
+          "id": "yGSDn",
+          "faction": "NEUT",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Ownership claim beacon",
+          "dump_key": "generations/rendered/yGSDn.jpg"
+        }
+      ]
     },
     "ritual_infrastructure": {
       "category": "props",
@@ -1577,7 +1691,18 @@
         "cybernex_sniper_ship"
       ],
       "chat_lock": true,
-      "file_id": null
+      "file_id": "cHfB3",
+      "dump_key": "generations/rendered/cHfB3.jpg",
+      "locked_uuids": [
+        {
+          "id": "cHfB3",
+          "faction": "NEUT",
+          "view": "cinematic",
+          "class": "ship-single",
+          "label": "Sniper ship (class)",
+          "dump_key": "generations/rendered/cHfB3.jpg"
+        }
+      ]
     },
     "stealth_ship": {
       "category": "ships",
@@ -1588,7 +1713,26 @@
       ],
       "unfactioned_duplicate": true,
       "chat_lock": true,
-      "file_id": null
+      "file_id": "LEThZ",
+      "dump_key": "generations/rendered/LEThZ.jpg",
+      "locked_uuids": [
+        {
+          "id": "LEThZ",
+          "faction": "NEUT",
+          "view": "ortho",
+          "class": "ship-single",
+          "label": "Stealth ship (class)",
+          "dump_key": "generations/rendered/LEThZ.jpg"
+        },
+        {
+          "id": "eBFi8",
+          "faction": "NEUT",
+          "view": "cinematic",
+          "class": "ship-single",
+          "label": "Stealth ship (class)",
+          "dump_key": "generations/rendered/eBFi8.jpg"
+        }
+      ]
     },
     "combat_drone": {
       "category": "vehicles",
@@ -1694,7 +1838,18 @@
         "CYBERNEX LOGISTIC DRONE"
       ],
       "chat_lock": true,
-      "file_id": null
+      "file_id": "oAWSV",
+      "dump_key": "generations/rendered/oAWSV.jpg",
+      "locked_uuids": [
+        {
+          "id": "oAWSV",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "drone",
+          "label": "Logistic drone",
+          "dump_key": "generations/rendered/oAWSV.jpg"
+        }
+      ]
     },
     "cybernex_medium_drone": {
       "category": "vehicles",
@@ -1723,7 +1878,18 @@
         "CYBERNEX LIGHT SCOUT ROVER"
       ],
       "chat_lock": true,
-      "file_id": null
+      "file_id": "DvC3C",
+      "dump_key": "generations/rendered/DvC3C.jpg",
+      "locked_uuids": [
+        {
+          "id": "DvC3C",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ground",
+          "label": "Scout rover",
+          "dump_key": "generations/rendered/DvC3C.jpg"
+        }
+      ]
     },
     "cybernex_utility_drone_CNX-7": {
       "category": "vehicles",
@@ -1848,7 +2014,18 @@
         "gROT Light SlNGLE-SEAT HOVERBIKE"
       ],
       "chat_lock": true,
-      "file_id": null
+      "file_id": "KCHaV",
+      "dump_key": "generations/rendered/KCHaV.jpg",
+      "locked_uuids": [
+        {
+          "id": "KCHaV",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ground",
+          "label": "Hoverbike",
+          "dump_key": "generations/rendered/KCHaV.jpg"
+        }
+      ]
     },
     "grot_light_drone": {
       "category": "vehicles",
@@ -1877,7 +2054,18 @@
         "gROT LOGISTIC DRONE"
       ],
       "chat_lock": true,
-      "file_id": null
+      "file_id": "KcgoY",
+      "dump_key": "generations/rendered/KcgoY.jpg",
+      "locked_uuids": [
+        {
+          "id": "KcgoY",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "drone",
+          "label": "Logistic drone",
+          "dump_key": "generations/rendered/KcgoY.jpg"
+        }
+      ]
     },
     "grot_walker": {
       "category": "vehicles",
@@ -1909,7 +2097,18 @@
         "CLASS.' ASSAVLT I HEAVY DRONE"
       ],
       "chat_lock": true,
-      "file_id": null
+      "file_id": "Bp9Gi",
+      "dump_key": "generations/rendered/Bp9Gi.jpg",
+      "locked_uuids": [
+        {
+          "id": "Bp9Gi",
+          "faction": "NEUT",
+          "view": "cinematic",
+          "class": "drone",
+          "label": "Heavy drone (class)",
+          "dump_key": "generations/rendered/Bp9Gi.jpg"
+        }
+      ]
     },
     "logistic_drone": {
       "category": "vehicles",
@@ -1921,7 +2120,18 @@
         "logisflc_drowe"
       ],
       "chat_lock": true,
-      "file_id": null
+      "file_id": "o55Js",
+      "dump_key": "generations/rendered/o55Js.jpg",
+      "locked_uuids": [
+        {
+          "id": "o55Js",
+          "faction": "NEUT",
+          "view": "cinematic",
+          "class": "drone",
+          "label": "Logistic drone (class)",
+          "dump_key": "generations/rendered/o55Js.jpg"
+        }
+      ]
     },
     "medium_drone": {
       "category": "vehicles",
@@ -1930,7 +2140,18 @@
         "CLASS.. MEDIUM DRONE"
       ],
       "chat_lock": true,
-      "file_id": null
+      "file_id": "hpvGX",
+      "dump_key": "generations/rendered/hpvGX.jpg",
+      "locked_uuids": [
+        {
+          "id": "hpvGX",
+          "faction": "NEUT",
+          "view": "cinematic",
+          "class": "drone",
+          "label": "Medium drone (class)",
+          "dump_key": "generations/rendered/hpvGX.jpg"
+        }
+      ]
     },
     "support_logistics_vehicle": {
       "category": "vehicles",
@@ -1944,7 +2165,26 @@
         "rot_support_logistics_vehicle"
       ],
       "chat_lock": true,
-      "file_id": null
+      "file_id": "lYaDV",
+      "dump_key": "generations/rendered/lYaDV.jpg",
+      "locked_uuids": [
+        {
+          "id": "lYaDV",
+          "faction": "NEUT",
+          "view": "cinematic",
+          "class": "ground",
+          "label": "Support logistics vehicle",
+          "dump_key": "generations/rendered/lYaDV.jpg"
+        },
+        {
+          "id": "MnVIJ",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ground",
+          "label": "Support logistics vehicle",
+          "dump_key": "generations/rendered/MnVIJ.jpg"
+        }
+      ]
     },
     "utility_drone": {
       "category": "vehicles",
