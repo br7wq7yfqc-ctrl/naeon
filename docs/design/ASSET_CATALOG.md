@@ -1,10 +1,10 @@
 # NAEON — Approved sketch catalog
 
-**Version:** 1.6 · **Updated:** 2026-08-15  
+**Version:** 1.7 · **Updated:** 2026-08-15  
 **Rule:** this file lists **locked only**. In-review / draft / dump do not belong here.
 
-Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **125 positions, 213 sheets** (was 129 OCR slugs → 114 after merge → 123 with 9 Index keys → 124 with `gr-scanner-repair` → 125 with `cx-scanner-repair`; sheets not dropped).  
-Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **50 UUID**, none invented, all bound.
+Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **126 positions, 213 sheets** (was 129 OCR slugs → 114 after merge → 125 with scanner-repair keys → 126 with `gr-drone-bay`; sheets not dropped).  
+Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **51 UUID**, none invented, all bound.
 
 Bucket: `s3://neon/generations/canon/{class}/{id}/master.jpg`  
 Grok: `https://assets.grok.com/users/77c65418-d257-47c3-8504-4540b6e0a754/generated/{UUID}/image.jpg`
@@ -13,12 +13,12 @@ S3 Index `generations/catalog.json` is **not** in git and is not patched by this
 
 | Ledger | Count |
 |--------|------:|
-| Positions after OCR merge + Index keys | 125 |
+| Positions after OCR merge + Index keys | 126 |
 | Bound sheets (invariant) | 213 |
-| Locked UUID | 50 |
-| UUID bound to a position | 50 |
+| Locked UUID | 51 |
+| UUID bound to a position | 51 |
 | UUID with no position | 0 |
-| Index-only positions (`ocr: false`, `count: 0`) | 11 |
+| Index-only positions (`ocr: false`, `count: 0`) | 12 |
 | Chat-lock positions, `file_id` null | 49 |
 | Unfactioned class plates kept as templates | 11 |
 | OCR slugs still unresolved | 9 |
@@ -100,6 +100,7 @@ APC / hover / mech guns bind to the **hull** they sit on. Tank main has no Heavy
 | Scanner + repair arm | GR | ortho | `gr-scanner-repair` | `f545cfc5-7c79-46af-a486-81d374ab0f74` |
 | Scanner + repair lattice | CX | cinematic | `cx-scanner-repair` | `9671aa91-1d4d-4499-8ce6-5498592f5321` |
 | Scanner + repair lattice | CX | ortho | `cx-scanner-repair` | `02275317-e746-4c3e-95b9-9e32e4ecccc9` |
+| Drone bay | GR | cinematic | `gr-drone-bay` | `4dab3ea3-cf73-4f75-818c-c983c6f2d43c` |
 
 ---
 
@@ -206,7 +207,7 @@ Sidearm T0 GR has no dedicated slug (`grot_weapon_carbine` holds carbine + mixed
 
 ## C. Index-only positions (no OCR sheet)
 
-These 11 keys already existed in the Index (`cx-dmr`, …, `cx-scanner-repair`). They were missing from the OCR ledger because no titled sheet was ever bound. Added as ledger rows with **`ocr: false`, `count: 0`**. Not invented OCR titles. Bound sheets stay **213**.
+These 12 keys already existed in the Index or are planned batch slugs (`cx-dmr`, …, `gr-drone-bay`). They were missing from the OCR ledger because no titled sheet was ever bound. Added as ledger rows with **`ocr: false`, `count: 0`**. Not invented OCR titles. Bound sheets stay **213**.
 
 | Position | Object | Faction | IDs |
 |----------|--------|---------|-----|
@@ -221,6 +222,7 @@ These 11 keys already existed in the Index (`cx-dmr`, …, `cx-scanner-repair`).
 | `gr-turret-torpedo` | Turret + seed-torpedo | GR | `01ca395f-bd23-43b2-9252-a59297638be0`, `41624757-559c-4757-a0dd-bcf549779e91` |
 | `gr-scanner-repair` | Scanner + repair arm | GR | `ba11d579-8ea9-4650-a070-a1932b1d6eb6`, `f545cfc5-7c79-46af-a486-81d374ab0f74` |
 | `cx-scanner-repair` | Scanner + repair lattice | CX | `9671aa91-1d4d-4499-8ce6-5498592f5321`, `02275317-e746-4c3e-95b9-9e32e4ecccc9` |
+| `gr-drone-bay` | Drone bay | GR | `4dab3ea3-cf73-4f75-818c-c983c6f2d43c` |
 
 Do **not** piggyback these onto carbine / hover / `thruster_cluster_neon` / `cybernex_defense_systems`. Those are different objects.
 

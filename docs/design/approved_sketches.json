@@ -1,5 +1,5 @@
 {
-  "version": "1.6",
+  "version": "1.7",
   "updated": "2026-08-15",
   "rule": "locked only",
   "user": "77c65418-d257-47c3-8504-4540b6e0a754",
@@ -406,9 +406,17 @@
       "class": "module",
       "label": "Scanner + repair lattice",
       "position": "cx-scanner-repair"
+    },
+    {
+      "id": "4dab3ea3-cf73-4f75-818c-c983c6f2d43c",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "module",
+      "label": "Drone bay",
+      "position": "gr-drone-bay"
     }
   ],
-  "note": "position = slug in docs/asset_positions.json. Index slugs (ocr=false, count=0) are existing Index keys, not invented OCR titles. Batch 18 Utility locked 2026-08-15 (CX redo + GR).",
-  "positions_bound": 50,
+  "note": "position = slug in docs/asset_positions.json. Index slugs (ocr=false, count=0) are existing Index keys or planned batch slugs, not invented OCR titles. GR drone-bay cinematic locked 2026-08-15. CX hive redo in review.",
+  "positions_bound": 51,
   "positions_unbound": 0
 }

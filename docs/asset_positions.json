@@ -1,9 +1,9 @@
 {
-  "version": 2.3,
+  "version": 2.4,
   "updated": "2026-08-15",
-  "source": "asset_positions.json v2.3 + CX scanner-repair lock (existing Index slug)",
+  "source": "asset_positions.json v2.4 + GR drone-bay cinematic lock",
   "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Do not commit catalog.json. Index-slug rows (ocr=false, count=0) are existing Index keys, not invented OCR.",
-  "positions": 125,
+  "positions": 126,
   "bound_sheets": 213,
   "merged_slugs": {
     "heawy_5ault_i8reakt4fough": "heavy_assault",
@@ -1604,6 +1604,22 @@
           "label": "Scanner + repair lattice"
         }
       ]
+    },
+    "gr-drone-bay": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "4dab3ea3-cf73-4f75-818c-c983c6f2d43c",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Drone bay"
+        }
+      ]
     }
   },
   "index_only_slugs": [
@@ -1614,6 +1630,7 @@
     "cx-turret-launcher",
     "gr-contractile",
     "gr-dmr",
+    "gr-drone-bay",
     "gr-infection-tool",
     "gr-scanner-repair",
     "gr-tank-gun",
