@@ -1,5 +1,5 @@
 {
-  "version": "1.10",
+  "version": "1.11",
   "updated": "2026-08-15",
   "rule": "locked only",
   "user": "77c65418-d257-47c3-8504-4540b6e0a754",
@@ -951,9 +951,17 @@
       "label": "Stealth ship (class)",
       "position": "stealth_ship",
       "dump_key": "generations/rendered/eBFi8.jpg"
+    },
+    {
+      "id": "hK3hw",
+      "faction": "NEUT",
+      "view": "icon",
+      "class": "ui",
+      "label": "Resource HUD icons",
+      "position": "ui-resource-icons"
     }
   ],
-  "note": "position = slug in docs/asset_positions.json. Dump short IDs are existing neon files, not invented UUIDs. Rebind 2026-08-15: remaining 16 chat-lock plates found in rendered/ by title.",
-  "positions_bound": 78,
+  "note": "position = slug in docs/asset_positions.json. OCR-9 closed 2026-08-15: uixgemient→ui-resource-icons (hK3hw), fjaid_wd→shield_emitter. 7 unreadable titles kept.",
+  "positions_bound": 112,
   "positions_unbound": 0
 }

@@ -1,10 +1,10 @@
 # NAEON — Approved sketch catalog
 
-**Version:** 1.10 · **Updated:** 2026-08-15  
+**Version:** 1.11 · **Updated:** 2026-08-15  
 **Rule:** this file lists **locked only**. In-review / draft / dump do not belong here.
 
-Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **127 positions, 213 sheets**.  
-Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **54 UUID + 57 dump IDs**, none invented.
+Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **126 positions, 213 sheets**.  
+Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **54 UUID + 58 dump IDs**, none invented.
 
 Bucket: `s3://neon/generations/canon/{class}/{id}/master.jpg`  
 Grok: `https://assets.grok.com/users/77c65418-d257-47c3-8504-4540b6e0a754/generated/{UUID}/image.jpg`
@@ -13,15 +13,16 @@ S3 Index `generations/catalog.json` is **not** in git and is not patched by this
 
 | Ledger | Count |
 |--------|------:|
-| Positions after OCR merge + Index keys | 127 |
+| Positions after OCR merge + Index keys | 126 |
 | Bound sheets (invariant) | 213 |
 | Locked UUID | 54 |
-| Dump file IDs rebound (existing neon files) | 57 |
+| Dump file IDs rebound (existing neon files) | 58 |
 | Chat-lock still `file_id` null | 0 |
 | UUID with no position | 0 |
 | Index-only positions (`ocr: false`, `count: 0`) | 13 |
 | Unfactioned class plates kept as templates | 11 |
-| OCR slugs still unresolved | 9 |
+| OCR slugs still unresolved | 0 |
+| OCR unreadable (title noise, sheet kept, no dump match) | 7 |
 
 ---
 
@@ -166,6 +167,7 @@ Verified against the plate before bind.
 | Sniper (class) | NEUT | cinematic | `sniper_ship` | `cHfB3` |
 | Stealth (class) | NEUT | ortho | `stealth_ship` | `LEThZ` |
 | Stealth (class) | NEUT | cinematic | `stealth_ship` | `eBFi8` |
+| Resource HUD icons | NEUT | icon | `ui-resource-icons` | `hK3hw` |
 
 ---
 
@@ -225,6 +227,8 @@ Do **not** piggyback these onto carbine / hover / `thruster_cluster_neon` / `cyb
 | `cybernex_CNX-88` | `cybernex_heavy_armor` |
 | `iasym_scouti` | `grot_crawler` |
 | `cybernex_utility_drone_UX-7` | `cybernex_utility_drone_CNX-7` |
+| `cybernex_uixgemient` | `ui-resource-icons` (dump `hK3hw`) |
+| `cybernex_fjaid_wd` | `cybernex_shield_emitter` (`FJAID` = `SHIELD`) |
 
 ### Category fixes
 
@@ -237,9 +241,15 @@ Do **not** piggyback these onto carbine / hover / `thruster_cluster_neon` / `cyb
 | `cybernex_avian_pathfinder`, `cybernex_feline_scout`, `grot_graft_hound` | props | characters |
 | `support_logistics_vehicle`, `logistic_drone` | props | vehicles |
 
-### OCR unresolved (kept, sheets not dropped)
+### OCR unresolved
 
-`11_iiiirfi_iiiiiiiiiiii_iii_illllli`, `il_ili`, `in_iiiiiir`, `it4luurfi`, `ty_jjbllv`, `umeia_ie_ln`, `l4_cyb8rne`, `cybernex_uixgemient`, `cybernex_fjaid_wd`.
+**0.** Queue closed.
+
+### OCR unreadable (kept, sheets not dropped)
+
+Title is noise. No matching dump plate after title-band pass of remaining `rendered/` + `imagine_images/`. Not merged in the dark.
+
+`11_iiiirfi_iiiiiiiiiiii_iii_illllli`, `il_ili`, `in_iiiiiir`, `it4luurfi`, `ty_jjbllv`, `umeia_ie_ln`, `l4_cyb8rne`.
 
 ---
 

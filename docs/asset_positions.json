@@ -1,9 +1,9 @@
 {
-  "version": 2.7,
+  "version": 2.8,
   "updated": "2026-08-15",
-  "source": "asset_positions.json v2.7 + dump rebind remaining 16 chat-lock plates",
+  "source": "asset_positions.json v2.8 + OCR-9 close (2 merges, 7 unreadable-kept)",
   "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Dump short IDs are existing neon rendered files, not invented UUIDs.",
-  "positions": 127,
+  "positions": 126,
   "bound_sheets": 213,
   "merged_slugs": {
     "heawy_5ault_i8reakt4fough": "heavy_assault",
@@ -24,7 +24,9 @@
     "tripo_id_rot_ha_801_accpt": "grot_heavy_armor",
     "cybernex_CNX-88": "cybernex_heavy_armor",
     "iasym_scouti": "grot_crawler",
-    "cybernex_utility_drone_UX-7": "cybernex_utility_drone_CNX-7"
+    "cybernex_utility_drone_UX-7": "cybernex_utility_drone_CNX-7",
+    "cybernex_uixgemient": "ui-resource-icons",
+    "cybernex_fjaid_wd": "cybernex_shield_emitter"
   },
   "items": {
     "cybernex_avian_pathfinder": {
@@ -359,7 +361,9 @@
       "titles": [
         "j 11,Iiiirfi¥iiiiiiiiiiii,iii,Illllli,"
       ],
-      "ocr_unresolved": true
+      "ocr_unresolved": false,
+      "ocr_unreadable": true,
+      "note": "title unrecoverable; no matching dump plate; sheet kept"
     },
     "cx-dmr": {
       "category": "props",
@@ -528,27 +532,21 @@
         }
       ]
     },
-    "cybernex_fjaid_wd": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "CYBERNEX i FJAID.WD"
-      ],
-      "ocr_unresolved": true
-    },
     "cybernex_shield_emitter": {
       "category": "props",
-      "count": 5,
+      "count": 6,
       "titles": [
         ". w CYBERNEX",
         "CYBERNE*",
         "CYBERNEX':",
         "CYBEfiNEX",
-        "CYBEftINEA LlC.p.r"
+        "CYBEftINEA LlC.p.r",
+        "CYBERNEX i FJAID.WD"
       ],
       "merged_from": [
         "cybefinex",
-        "cybeftinea_llc"
+        "cybeftinea_llc",
+        "cybernex_fjaid_wd"
       ]
     },
     "cybernex_silent_prong": {
@@ -570,14 +568,6 @@
           "dump_key": "generations/rendered/gjXDt.jpg"
         }
       ]
-    },
-    "cybernex_uixgemient": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "CYBERNEX UIXGEMIENT"
-      ],
-      "ocr_unresolved": true
     },
     "cybernex_wake_drill": {
       "category": "props",
@@ -857,7 +847,9 @@
       "titles": [
         "Il. Ili I"
       ],
-      "ocr_unresolved": true
+      "ocr_unresolved": false,
+      "ocr_unreadable": true,
+      "note": "title unrecoverable; no matching dump plate; sheet kept"
     },
     "in_iiiiiir": {
       "category": "props",
@@ -865,7 +857,9 @@
       "titles": [
         "In Iiiiiir"
       ],
-      "ocr_unresolved": true
+      "ocr_unresolved": false,
+      "ocr_unreadable": true,
+      "note": "title unrecoverable; no matching dump plate; sheet kept"
     },
     "it4luurfi": {
       "category": "props",
@@ -873,7 +867,9 @@
       "titles": [
         "IT4LUURFI"
       ],
-      "ocr_unresolved": true
+      "ocr_unresolved": false,
+      "ocr_unreadable": true,
+      "note": "title unrecoverable; no matching dump plate; sheet kept"
     },
     "knowledge": {
       "category": "props",
@@ -888,7 +884,9 @@
       "titles": [
         ".L4 CYB8RNÉK"
       ],
-      "ocr_unresolved": true
+      "ocr_unresolved": false,
+      "ocr_unreadable": true,
+      "note": "title unrecoverable; no matching dump plate; sheet kept"
     },
     "lattice_storm": {
       "category": "props",
@@ -982,7 +980,9 @@
       "titles": [
         "1*•.ty..4!¥JJblLV.¢1 4>. • •"
       ],
-      "ocr_unresolved": true
+      "ocr_unresolved": false,
+      "ocr_unreadable": true,
+      "note": "title unrecoverable; no matching dump plate; sheet kept"
     },
     "umeia_ie_ln": {
       "category": "props",
@@ -990,7 +990,9 @@
       "titles": [
         "uMEIA T .IE; LN F."
       ],
-      "ocr_unresolved": true
+      "ocr_unresolved": false,
+      "ocr_unreadable": true,
+      "note": "title unrecoverable; no matching dump plate; sheet kept"
     },
     "utility_bay": {
       "category": "props",
@@ -2259,6 +2261,31 @@
           "view": "ortho",
           "class": "module",
           "label": "Drone bay hive"
+        }
+      ]
+    },
+    "ui-resource-icons": {
+      "category": "props",
+      "count": 1,
+      "titles": [
+        "CYBERNEX UIXGEMIENT",
+        "CYBERNEX UI ELEMENT"
+      ],
+      "merged_from": [
+        "cybernex_uixgemient"
+      ],
+      "chat_lock": true,
+      "file_id": "hK3hw",
+      "dump_key": "generations/imagine_images/hK3hw.jpg",
+      "ocr": true,
+      "locked_uuids": [
+        {
+          "id": "hK3hw",
+          "faction": "NEUT",
+          "view": "icon",
+          "class": "ui",
+          "label": "Resource HUD icons",
+          "dump_key": "generations/imagine_images/hK3hw.jpg"
         }
       ]
     }
