@@ -1,10 +1,10 @@
 # NAEON — Approved sketch catalog
 
-**Version:** 1.8 · **Updated:** 2026-08-15  
+**Version:** 1.9 · **Updated:** 2026-08-15  
 **Rule:** this file lists **locked only**. In-review / draft / dump do not belong here.
 
-Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **127 positions, 213 sheets** (was 129 OCR slugs → 114 after merge → 126 with `gr-drone-bay` → 127 with `cx-drone-bay`; sheets not dropped).  
-Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **54 UUID**, none invented, all bound.
+Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **127 positions, 213 sheets**.  
+Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **54 UUID + 33 dump IDs**, none invented.
 
 Bucket: `s3://neon/generations/canon/{class}/{id}/master.jpg`  
 Grok: `https://assets.grok.com/users/77c65418-d257-47c3-8504-4540b6e0a754/generated/{UUID}/image.jpg`
@@ -16,10 +16,10 @@ S3 Index `generations/catalog.json` is **not** in git and is not patched by this
 | Positions after OCR merge + Index keys | 127 |
 | Bound sheets (invariant) | 213 |
 | Locked UUID | 54 |
-| UUID bound to a position | 54 |
+| Dump file IDs rebound (existing neon files) | 33 |
+| Chat-lock still `file_id` null | 16 |
 | UUID with no position | 0 |
 | Index-only positions (`ocr: false`, `count: 0`) | 13 |
-| Chat-lock positions, `file_id` null | 49 |
 | Unfactioned class plates kept as templates | 11 |
 | OCR slugs still unresolved | 9 |
 
@@ -105,106 +105,75 @@ APC / hover / mech guns bind to the **hull** they sit on. Tank main has no Heavy
 | Drone bay hive | CX | cinematic | `cx-drone-bay` | `e0df2d07-e567-4060-a9d7-03dc53666f51` |
 | Drone bay hive | CX | ortho | `cx-drone-bay` | `9bacf651-688d-4848-8299-6320b86e1905` |
 
+### Rebound from dump (short IDs — existing `rendered/` / `imagine_images/` files, not invented UUIDs)
+
+Verified against the plate before bind.
+
+| Object | Faction | View | Position | Dump ID |
+|--------|---------|------|----------|---------|
+| Heavy Battlecruiser | CX | cinematic | `cybernex_battlecruiser_CNH-09` | `1TV3u` |
+| Heavy Battlecruiser | GR | cinematic | `grot_battlecruiser` | `7o4tp` |
+| Battleship | CX | cinematic | `cybernex_battleship_CNX-9` | `kfNYX` |
+| Battleship | GR | cinematic | `grot_battleship` | `fCrw7` |
+| Mothership | CX | cinematic | `cybernex_mothership` | `jfwHn` |
+| Mothership | GR | cinematic | `grot_mothership` | `1lgj1` |
+| Frigate | CX | cinematic | `cybernex_frigate` | `kcldc` |
+| Frigate | GR | ortho | `grot_frigate` | `QZsJN` |
+| Corvette | CX | cinematic | `cybernex_corvette_CNX-77` | `7Ypuk` |
+| Corvette | GR | cinematic | `grot_corvette` | `MeMG7` |
+| Heavy Freighter | CX | cinematic | `cybernex_freighter` | `oEnF2` |
+| Heavy Freighter | GR | cinematic | `grot_freighter` | `8WNxd` |
+| Gunship | CX | cinematic | `cybernex_gunship` | `l5qg1` |
+| Gunship | GR | cinematic | `grot_gunship` | `7zIwZ` |
+| Support | GR | cinematic | `grot_support_ship` | `mmaTy` |
+| Fighter | GR | cinematic | `grot_fighter` | `1HmNd` |
+| Bomber | GR | cinematic | `grot_bomber` | `JJUvM` |
+| Scout | CX | cinematic | `cybernex_scout_single_seat_recon_light` | `kGA5q` |
+| Interceptor | CX | cinematic | `cybernex_interceptor` | `QdM8V` |
+| Interceptor | GR | cinematic | `grot_interceptor` | `l6zkI` |
+| Sniper | CX | ortho | `cybernex_sniper_ship` | `82c99f90` + `307rv` |
+| Light drone | CX | cinematic | `cybernex_light_drone` | `EKJFX` |
+| Light drone | GR | cinematic | `grot_light_drone` | `FRKhQ` |
+| Medium drone | CX | ortho | `cybernex_medium_drone` | `HT5Yn` |
+| Heavy armor | CX | cinematic | `cybernex_heavy_armor` | `ozs5C` |
+| Heavy exo CNX-88 | CX | ortho | `cybernex_heavy_armor` | `iw9mb` |
+| Medium armor | GR | cinematic | `grot_medium_armor` | `opzQg` |
+| Heavy armor | GR | cinematic | `grot_heavy_armor` | `oci1u` |
+| Helmet | CX | cinematic | `cybernex_helmet_CNX-7` | `icjiG` |
+| Helmet | GR | ortho | `grot_helmet` | `fMeN1` |
+| Claim beacon | GR | cinematic | `grot_claim_beacon` | `nFxgT` |
+| Claim beacon | CX | ortho | `cybernex_claim_beacon` | `phjM0` |
+| Hoverbike | CX | ortho | `cybernex_hoverbike` | `WrLuh` |
+| Light crawler scout | GR | cinematic | `grot_crawler` | `YTTxi` |
+
 ---
 
-## B. Locked in chat — position exists, file ID not in dump
+## B. Locked in chat — position exists, dump file not identified
 
-These are **canon decisions**. The OCR ledger has a real slug. `file_id` is **null** until a matching neon file is identified or re-exported. Do not invent a UUID.
+These stay `file_id` null. Do not invent a UUID. Unfactioned class plates are templates, not faction hulls.
 
-### Capital
+### Still unbound (16)
 
-| Position | Faction | Caveats |
-|----------|---------|---------|
-| `cybernex_battlecruiser_CNH-09` | CX | Heavy Battlecruiser |
-| `grot_battlecruiser` | GR | Heavy Battlecruiser |
-| `cybernex_battleship_CNX-9` | CX | — |
-| `grot_battleship` | GR | — |
-| `cybernex_mothership` | CX | hex, **external dock** |
-| `grot_mothership` | GR | rhomboid, **external dock**; merged OCR `grot_document_ms_4v_ortho` |
+| Position | Notes |
+|----------|-------|
+| `cybernex_light_armor` | 4 titled sheets, no dump match |
+| `cybernex_medium_armor` | 2 titled sheets, no dump match |
+| `grot_light_armor` | 4 titled sheets, no dump match |
+| `cybernex_logistic_drone` | titled sheet, no dump match |
+| `grot_logistic_drone` | titled sheet, no dump match |
+| `logistic_drone` | unfactioned; renamed `logisflc_drowe` |
+| `medium_drone` | unfactioned class plate |
+| `heavy_drone` | unfactioned class plate |
+| `heavy_assault` | siege plate; merged `heawy_5ault_i8reakt4fough` |
+| `cybernex_scout_rover` | titled sheets, no dump match |
+| `grot_hoverbike` | titled sheet, no dump match |
+| `support_logistics_vehicle` | merged OCR titles, no dump match |
+| `ownership_claim_beacon` | renamed `owner5hip_cla1m_beacon`; faction beacons already rebound |
+| `cybernex_silent_prong` | CBX-1 sidearm nearest slug |
+| `sniper_ship` | unfactioned; see `cybernex_sniper_ship` |
+| `stealth_ship` | unfactioned class plate; faction stealth has no OCR slug |
 
-Unfactioned class plates (templates, not faction hulls): `battlecruiser`, `battleship`, `mothership`, `capital_carrier`, `capital_cruiser`.
-
-### Multicrew
-
-| Position | Faction | Caveats |
-|----------|---------|---------|
-| `cybernex_frigate` | CX | — |
-| `grot_frigate` | GR | cin = draft |
-| `cybernex_corvette_CNX-77` | CX | — |
-| `grot_corvette` | GR | — |
-| `cybernex_freighter` | CX | — |
-| `grot_freighter` | GR | — |
-| `cybernex_gunship` | CX | turbines locked |
-| `grot_gunship` | GR | — |
-| `grot_support_ship` | GR | CX support hull has no OCR slug |
-
-Unfactioned class plates: `frigate`, `freighter`, `gunship`.
-
-### Single-seat
-
-| Position | Faction | Caveats |
-|----------|---------|---------|
-| `grot_fighter` | GR | CX fighter has no faction slug; see unfactioned `fighter` |
-| `grot_bomber` | GR | CX Bomber top-view later; no CX bomber slug |
-| `cybernex_scout_single_seat_recon_light` | CX | — |
-| `cybernex_sniper_ship` | CX | — |
-| `sniper_ship` | — | unfactioned class plate |
-| `stealth_ship` | — | unfactioned class plate; no faction stealth slug |
-| `cybernex_interceptor` | CX | — |
-| `grot_interceptor` | GR | GR Scout non-top later; GR scout slug is `grot_crawler` (ground) |
-
-### Drones
-
-| Position | Faction | Caveats |
-|----------|---------|---------|
-| `cybernex_light_drone` | CX | — |
-| `grot_light_drone` | GR | — |
-| `cybernex_medium_drone` | CX | — |
-| `medium_drone` | — | unfactioned class plate |
-| `heavy_drone` | — | unfactioned class plate |
-| `heavy_assault` | — | siege / heavy assault plate; merged OCR `heawy_5ault_i8reakt4fough` |
-| `cybernex_logistic_drone` | CX | — |
-| `grot_logistic_drone` | GR | — |
-| `logistic_drone` | — | unfactioned; renamed from `logisflc_drowe` |
-
-Multicrew + capital + heavy ground only. `combat_drone` exists as a vehicle plate (was mis-filed under characters) but is not chat-locked.
-
-### Ground
-
-| Position | Faction | Caveats |
-|----------|---------|---------|
-| `cybernex_scout_rover` | CX | — |
-| `grot_crawler` | GR | merged OCR `iasym_scouti` |
-| `cybernex_apc` | CX | **UUID on vehicle weapon** — see §A, not chat-lock |
-| `grot_apc` | GR | **UUID on vehicle weapon** — see §A |
-| `cybernex_hover_tank` | CX | Hover cin = draft; **UUID on cannon** — see §A |
-| `grot_hover_tank` | GR | **UUID on canal-cannon** — see §A |
-| `support_logistics_vehicle` | — | merged `vehitle_tliss_support_logistic` + `rot_support_logistics_vehicle` |
-| `cybernex_hoverbike` | CX | handlebars |
-| `grot_hoverbike` | GR | handlebars |
-| `cybernex_walker` | CX | CX Mech ortho deferred; **UUID on 4-gun cluster** — see §A |
-| `grot_walker` | GR | biped; **UUID on gun pair** — see §A |
-
-No OCR slug for a dedicated Heavy Tank **hull**. Tank main guns live on Index slugs `cx-tank-gun` / `gr-tank-gun` (§A / §C). GR quad-mech has no separate slug.
-
-### Infantry / Batch 14
-
-| Position | Notes | `file_id` |
-|----------|-------|-----------|
-| `cybernex_light_armor` | Armor L | null |
-| `cybernex_medium_armor` | Armor M | null |
-| `cybernex_heavy_armor` | Armor H; merged OCR `cybernex_CNX-88` | null |
-| `grot_light_armor` | Armor L | null |
-| `grot_medium_armor` | Armor M | null |
-| `grot_heavy_armor` | Armor H; merged OCR `tripo_id_rot_ha_801_accpt` | null |
-| `cybernex_helmet_CNX-7` | — | null |
-| `grot_helmet` | — | null |
-| `cybernex_claim_beacon` | was ships; merged `cybernex_doc_cnx_ocb_4v_001` | null |
-| `grot_claim_beacon` | was ships | null |
-| `ownership_claim_beacon` | renamed from `owner5hip_cla1m_beacon` | null |
-| `cybernex_silent_prong` | CBX-1; nearest existing slug to Sidearm T0 CX | null |
-
-Sidearm T0 GR has no dedicated slug (`grot_weapon_carbine` holds carbine + mixed T0–T1 titles). UI icons have no clean slug (`cybernex_uixgemient` is OCR-unresolved). IDs may still sit in `rendered/` dump, not rebound.
+CX support hull, CX fighter, CX bomber, CX stealth, GR scout-ship, GR medium drone have dump plates but **no OCR slug** — not rebound onto a different object.
 
 ---
 
@@ -274,4 +243,4 @@ Do **not** piggyback these onto carbine / hover / `thruster_cluster_neon` / `cyb
 
 ## Not in this catalog
 
-CX scanner + repair lattice (redo in review — first take rejected as steampunk). Seating drafts. Superseded takes. Raw `imagine_images/` + `rendered/` dumps. S3 Index `generations/catalog.json`.
+Seating drafts. Superseded takes. Raw unclassified dump. S3 Index `generations/catalog.json`.
