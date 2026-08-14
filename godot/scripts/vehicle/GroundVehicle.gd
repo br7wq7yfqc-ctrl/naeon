@@ -176,19 +176,23 @@ func _apply_velocity(delta: float) -> void:
 
 
 func _try_load_chassis() -> bool:
-	var AP = load(res://scripts/assets/AssetPaths.gd)
-	var fac := cybernex
-	if pilot and pilot.has_method(get_faction):
+	if DisplayServer.get_name() == "headless":
+		return false
+	var AP = load("res://scripts/assets/AssetPaths.gd")
+	var fac := "cybernex"
+	if pilot and pilot.has_method("get_faction"):
 		var f := str(pilot.get_faction()).to_lower()
-		if f == grot:
-			fac = grot
+		if f == "grot":
+			fac = "grot"
 	elif GameManager:
 		var g := str(GameManager.get_faction_name()).to_lower()
-		if g == grot:
-			fac = grot
-	var rel := vehicles/ground_rover_chassis/ground_rover_chassis_%s_lod1.glb % fac
-	var path := AP.resolve(rel) if AP and AP.has_method(resolve) else 
-	if path ==  or not FileAccess.file_exists(path):
+		if g == "grot":
+			fac = "grot"
+	var rel := "vehicles/ground_rover_chassis/ground_rover_chassis_%s_lod1.glb" % fac
+	var path := ""
+	if AP and AP.has_method("resolve"):
+		path = str(AP.resolve(rel))
+	if path == "" or not FileAccess.file_exists(path):
 		return false
 	var doc := GLTFDocument.new()
 	var st := GLTFState.new()
@@ -198,11 +202,11 @@ func _try_load_chassis() -> bool:
 	if scn == null:
 		return false
 	add_child(scn)
-	scn.name = ChassisGLB
+	scn.name = "ChassisGLB"
 	scn.scale = Vector3.ONE * 1.35
 	scn.position = Vector3(0, 0.35, 0)
-	var MO = load(res://scripts/assets/MeshOrient.gd)
-	if MO and MO.has_method(face_neg_z):
+	var MO = load("res://scripts/assets/MeshOrient.gd")
+	if MO and MO.has_method("face_neg_z"):
 		MO.face_neg_z(scn as Node3D, true)
-	print([Rover] chassis , path)
+	print("[Rover] chassis ", path)
 	return true
