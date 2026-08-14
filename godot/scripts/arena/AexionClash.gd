@@ -31,6 +31,7 @@ func _ready() -> void:
 		LayerContext.seamless_stage = "S1"
 		if LayerContext.active_quest_id == "":
 			LayerContext.set_quest("clash_slice_v0")
+		LayerContext.set_site_pin("SITE_TEST_ARENA_PILLAR")
 	if GameManager:
 		GameManager.toast_requested.emit(
 			"Aexion Clash — kills + soft lane pressure · WS cap 60/day · no planet flip"

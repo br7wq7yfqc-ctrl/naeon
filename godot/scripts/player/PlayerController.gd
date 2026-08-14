@@ -17,7 +17,7 @@ const FORMS := ["Canine", "Feline", "Avian", "Human"]
 @export var mouse_sensitivity: float = 0.0028
 @export var max_health: float = 100.0
 @export var max_energy: float = 100.0
-@export var energy_regen: float = 12.0
+@export var energy_regen: float = 8.0
 @export var faction: String = "Cybernex"
 
 @onready var camera_pivot: Node3D = $CameraPivot
@@ -68,6 +68,14 @@ func _ready() -> void:
 	if SoftNetSession:
 		SoftNetSession.bind_player(self)
 	print("[Player] InputMap move_forward=", InputMap.has_action("move_forward"))
+
+
+func hurtbox_center() -> Vector3:
+	return global_position + Vector3(0, 1.0, 0)
+
+
+func hurtbox_radius() -> float:
+	return 0.9
 
 func _ensure_input_ready() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -270,7 +278,8 @@ func apply_firewall(duration: float, heal_amount: float = 0.0) -> void:
 	firewall_timer = max(firewall_timer, duration)
 	var inf = get_node_or_null("InfectionStatus")
 	if inf and inf.has_method("cleanse"):
-		inf.cleanse(1)  # rank1 cleanse_stacks=1
+		# rules/04: Nex Barrier removes all Infection stacks (up to 5)
+		inf.cleanse(5)
 	if heal_amount > 0.0:
 		heal(heal_amount)
 	_firewall_break_nearby_channels()

@@ -3,26 +3,26 @@ class_name EnergyEconomy
 ## Single source of truth for soft energy costs (TPS / ship / channel).
 ## No P2W — numbers only; economy contribution never modifies these.
 
-# --- Regen (units/sec) ---
-const REGEN_PLAYER := 12.0
-const REGEN_WALKER := 12.0
+# --- Regen (units/sec) — rules/04 ---
+const REGEN_PLAYER := 8.0
+const REGEN_WALKER := 8.0
 const REGEN_SHIP := 8.0
 const MAX_DEFAULT := 100.0
 
-# --- Ability kit ---
-const PULSE_BOLT := 6.0
-const NEX_FIREWALL := 28.0
+# --- Ability kit (rules/04 placeholder sheet) ---
+const PULSE_BOLT := 18.0
+const NEX_FIREWALL := 25.0
 const SYSTEM_PROBE := 22.0
-const HACK := 22.0
-const ROT_SURGE := 14.0
+const HACK := 35.0
+const ROT_SURGE := 30.0
 const FORM_CYCLE := 0.0
 
-# --- Ability cooldowns (seconds) mirrored for HUD consistency ---
-const CD_PULSE := 0.55
-const CD_FIREWALL := 16.0
+# --- Ability cooldowns (seconds) ---
+const CD_PULSE := 5.0
+const CD_FIREWALL := 12.0
 const CD_PROBE := 11.0
-const CD_HACK := 11.0
-const CD_SURGE := 5.0
+const CD_HACK := 16.0
+const CD_SURGE := 14.0
 const CD_FORM := 2.0
 
 # --- Ship weapons ---

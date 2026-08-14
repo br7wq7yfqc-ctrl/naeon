@@ -59,18 +59,19 @@ func _proximity(p: Node) -> void:
 	if tree == null or not (p is Node3D):
 		return
 	var pos: Vector3 = (p as Node3D).global_position
-	var player := tree.get_first_node_in_group("player")
+	var player: Node = SoftScanCache.get_player() if SoftScanCache else tree.get_first_node_in_group("player")
 	if player is Node3D:
 		var same := false
 		if "faction" in player and str(player.faction) == faction:
 			same = true
 		elif player.has_method("get_faction") and str(player.get_faction()) == faction:
 			same = true
-		if not same and pos.distance_to((player as Node3D).global_position) < 1.15:
+		if not same and SoftScanCache.overlaps_hurtbox(pos, player, 1.15):
 			_try_hit(player)
 			return
-	for e in tree.get_nodes_in_group("enemy"):
-		if e is Node3D and is_instance_valid(e) and pos.distance_to((e as Node3D).global_position) < 1.2:
+	var enemies: Array = SoftScanCache.get_enemies() if SoftScanCache else tree.get_nodes_in_group("enemy")
+	for e in enemies:
+		if e is Node3D and is_instance_valid(e) and SoftScanCache.overlaps_hurtbox(pos, e, 1.2):
 			_try_hit(e)
 			return
 

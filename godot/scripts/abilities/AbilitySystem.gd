@@ -66,13 +66,8 @@ func try_activate(index: int, target = null) -> bool:
 			_pending_channel_target = null
 			ability_failed.emit(ability, "Cannot channel")
 			return false
-		# Short anti-spam lock; full CD applied on complete
 		current_cooldowns[ability] = minf(ability.cooldown * 0.25, 2.0)
 		ability_activated.emit(ability)
-	if AudioDirector:
-		AudioDirector.play_hit(false)
-	if owner_character and is_instance_valid(owner_character) and CombatJuice:
-		CombatJuice.hit_feedback(4.0, owner_character.global_position if owner_character is Node3D else Vector3.ZERO)
 		return true
 	ability.activate(owner_character, target)
 	current_cooldowns[ability] = ability.cooldown
@@ -187,8 +182,6 @@ func _on_ability_activated(ability: Ability) -> void:
 		return
 	var tag := "CHANNEL" if ability.is_channeled else "CAST"
 	_toast("%s  %s" % [tag, ability.ability_name], 1.4)
-	if CombatJuice and owner_character is Node3D:
-		CombatJuice.hit_feedback(3.0, (owner_character as Node3D).global_position)
 
 
 func _toast(msg: String, ttl: float = 2.5) -> void:

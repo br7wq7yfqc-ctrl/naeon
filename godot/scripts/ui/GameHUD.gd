@@ -515,8 +515,9 @@ func _refresh() -> void:
 	if _ctx_label and LayerContext:
 		var q := LayerContext.active_quest_id if LayerContext.active_quest_id != "" else "—"
 		var c := LayerContext.active_claim_id if LayerContext.active_claim_id != "" else "—"
+		var pin := LayerContext.site_pin_id if LayerContext.site_pin_id != "" else "—"
 		var risk := int(LayerContext.cargo_risk * 100.0)
-		_ctx_label.text = "quest %s | claim %s | cargo risk %d%%" % [q, c, risk]
+		_ctx_label.text = "quest %s | claim %s | pin %s | cargo risk %d%%" % [q, c, pin, risk]
 
 	# Soft physics lead marker (mastery ≥20) — visual aid only
 	if _lead_pip:
@@ -540,7 +541,7 @@ func _refresh() -> void:
 		var ar := GameManager.get_alliance_rank_name() if GameManager.has_method("get_alliance_rank_name") else ""
 		_mastery_label.text = "KNOWLEDGE r%d | %s %.1f | bio %.0f | insight +%.1f%% | %s | rank %s" % [rank, ops_key, colony, bio, soft, GameManager.economy_label(), ar]
 
-	# Infection pips — always visible danger colour
+	# Infection pips — always visible (shape + number, max 5)
 	var stacks := 0
 	var glitch := false
 	if _player:
@@ -548,17 +549,16 @@ func _refresh() -> void:
 		if inf:
 			stacks = int(inf.stacks)
 			glitch = float(inf.glitch_timer) > 0.0
-	if stacks > 0:
-		var pips := ""
-		for i in 5:
-			pips += "●" if i < stacks else "○"
-		var stage: String = _SoftK.infection_label(stacks)
-		if stage == "":
-			stage = "INFECTION %s" % pips
-		_infection_label.text = "%s%s" % [stage, "  GLITCH" if glitch else ""]
-		_infection_label.visible = true
+	var pips := ""
+	for i in 5:
+		pips += "●" if i < stacks else "○"
+	var stage: String = _SoftK.infection_label(stacks)
+	if stage == "":
+		stage = "INF %s  %d/5" % [pips, stacks]
 	else:
-		_infection_label.visible = false
+		stage = "%s  %s %d/5" % [stage, pips, stacks]
+	_infection_label.text = "%s%s" % [stage, "  GLITCH" if glitch else ""]
+	_infection_label.visible = true
 
 	# Ability bar
 	_update_channel_hud()

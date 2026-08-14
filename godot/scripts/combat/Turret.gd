@@ -66,28 +66,22 @@ func _process(delta: float) -> void:
 func _find_target() -> Node3D:
 	var best: Node3D = null
 	var best_d: float = aggro_range
-	var groups: Array = ["player"] if target_player and faction == "gROT" else ["enemy"]
-	if faction == "Cybernex":
-		groups = ["enemy"]
-	for g in groups:
-		for n in get_tree().get_nodes_in_group(g):
-			if n == self or not is_instance_valid(n):
-				continue
-			if n is Node3D:
-				var d: float = global_position.distance_to((n as Node3D).global_position)
-				if d < best_d:
-					# faction filter
-					if n.has_method("get_faction") and str(n.get_faction()) == faction:
-						continue
-					best = n as Node3D
-					best_d = d
-	# also CharacterBody3D player without group
-	if best == null and target_player and faction == "gROT":
-		var p := get_tree().get_first_node_in_group("player")
-		if p is Node3D:
-			var d2: float = global_position.distance_to((p as Node3D).global_position)
-			if d2 <= aggro_range:
-				best = p as Node3D
+	var candidates: Array = []
+	if target_player and faction == "gROT":
+		var p: Node = SoftScanCache.get_player() if SoftScanCache else get_tree().get_first_node_in_group("player")
+		if p:
+			candidates.append(p)
+	else:
+		candidates = SoftScanCache.get_enemies() if SoftScanCache else get_tree().get_nodes_in_group("enemy")
+	for n in candidates:
+		if n == self or not is_instance_valid(n) or not (n is Node3D):
+			continue
+		if n.has_method("get_faction") and str(n.get_faction()) == faction:
+			continue
+		var d: float = global_position.distance_to((n as Node3D).global_position)
+		if d < best_d:
+			best = n as Node3D
+			best_d = d
 	return best
 
 func _fire(target: Node3D) -> void:
@@ -119,10 +113,20 @@ func on_hacked(caster: Node, amount: float = 1.0) -> void:
 func get_faction() -> String:
 	return faction
 
+
+func hurtbox_center() -> Vector3:
+	return global_position + Vector3(0, 1.1, 0)
+
+
+func hurtbox_radius() -> float:
+	return 1.15
+
 func _die() -> void:
 	_alive = false
 	_update_label()
 	visible = false
+	if SoftScanCache:
+		SoftScanCache.invalidate_enemies()
 	await get_tree().create_timer(5.0).timeout
 	health = max_health
 	_alive = true

@@ -123,11 +123,21 @@ func on_hacked(caster: Node, amount: float = 1.0) -> void:
 func get_faction() -> String:
 	return faction
 
+
+func hurtbox_center() -> Vector3:
+	return global_position + Vector3(0, 0.85, 0)
+
+
+func hurtbox_radius() -> float:
+	return 0.95
+
 func _die() -> void:
 	if CombatJuice:
 		CombatJuice.hit_feedback(max_health, global_position + Vector3(0, 1.2, 0), true)
 	_alive = false
 	died.emit()
+	if SoftScanCache:
+		SoftScanCache.invalidate_enemies()
 	if CombatJuice:
 		CombatJuice.kill_pop(global_position)
 	visible = false
@@ -149,6 +159,8 @@ func _respawn() -> void:
 	if _mat:
 		_mat.emission = Color(0.9, 0.1, 0.35)
 	_update_labels()
+	if SoftScanCache:
+		SoftScanCache.invalidate_enemies()
 	print("[CombatDummy] Respawned")
 
 func _fire_at(player: Node) -> void:

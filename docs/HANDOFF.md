@@ -40,12 +40,12 @@ Updated: 2026-08-07T23:03:47.555592+00:00
 
 | Priority | Owner | Task |
 |----------|--------|------|
-| **P0** | A | Infection 5; Ability 04/16; perf smoke |
-| **P0** | B | TransitionContext S1 + site_pin |
+| **P0** | A | Ability activate + costs/04 + Infection 5 pips — **this pass** |
+| **P0** | B | LayerContext site_pin_id — **this pass** |
 | **P0** | All | ~60 FPS; no memory climb — even primitive |
 | P1 | E | Act I Quest Resources |
 | P2 | D | Constructor CT_* + ranks UI 26 |
-| Ops | Owner | Tripo; neon |
+| Ops | Owner | Tripo; neon public-read; local generations/ for real plate JPGs |
 
 ---
 

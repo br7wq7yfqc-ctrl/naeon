@@ -32,6 +32,8 @@ var _marker_t: float = 0.0
 var _impact_budget: int = 12
 var _hurt_t: float = 0.0
 var _hurt_flash: ColorRect
+var _label_pool: Array = []
+const LABEL_POOL_MAX := 12
 
 func _ready() -> void:
 	_layer = CanvasLayer.new()
@@ -115,7 +117,7 @@ func _spawn_number(amount: float, world_pos: Vector3, crit: bool) -> void:
 	if cam.is_position_behind(world_pos):
 		return
 	var sp: Vector2 = cam.unproject_position(world_pos)
-	var lab := Label.new()
+	var lab := _acquire_label()
 	var txt := ("%d" % int(round(amount))) if amount >= 1.0 else ("%.1f" % amount)
 	if crit:
 		txt = "CRIT " + txt
@@ -126,7 +128,8 @@ func _spawn_number(amount: float, world_pos: Vector3, crit: bool) -> void:
 	lab.modulate = Color(1.0, 0.9, 0.25) if crit else Color(1.0, 0.5, 0.35)
 	lab.position = sp + Vector2(randf_range(-18, 18), -28)
 	lab.z_index = 20
-	_layer.add_child(lab)
+	lab.visible = true
+	lab.scale = Vector2.ONE
 	var tw := get_tree().create_tween()
 	tw.set_parallel(true)
 	var rise := 70.0 if crit else 48.0
@@ -134,7 +137,7 @@ func _spawn_number(amount: float, world_pos: Vector3, crit: bool) -> void:
 	tw.tween_property(lab, "modulate:a", 0.0, 0.65)
 	if crit:
 		tw.tween_property(lab, "scale", Vector2(1.35, 1.35), 0.12)
-	tw.chain().tween_callback(lab.queue_free)
+	tw.chain().tween_callback(_release_label.bind(lab))
 
 
 func _spawn_impact(world_pos: Vector3, crit: bool) -> void:
@@ -220,16 +223,42 @@ func kill_pop(world_pos: Vector3) -> void:
 	if cam.is_position_behind(world_pos):
 		return
 	var sp: Vector2 = cam.unproject_position(world_pos)
-	var lab := Label.new()
+	var lab := _acquire_label()
 	lab.text = "DOWN"
 	lab.add_theme_font_size_override("font_size", 28)
 	lab.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
 	lab.add_theme_constant_override("outline_size", 6)
 	lab.modulate = Color(1.0, 0.85, 0.3)
 	lab.position = sp + Vector2(-20, -40)
-	_layer.add_child(lab)
+	lab.visible = true
+	lab.scale = Vector2.ONE
 	var tw := get_tree().create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(lab, "position", lab.position + Vector2(0, -50), 0.7)
 	tw.tween_property(lab, "modulate:a", 0.0, 0.7)
-	tw.chain().tween_callback(lab.queue_free)
+	tw.chain().tween_callback(_release_label.bind(lab))
+
+
+func _acquire_label() -> Label:
+	while not _label_pool.is_empty():
+		var cand = _label_pool.pop_back()
+		if cand != null and is_instance_valid(cand) and cand is Label:
+			return cand
+	var lab := Label.new()
+	lab.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if _layer:
+		_layer.add_child(lab)
+	return lab
+
+
+func _release_label(lab: Label) -> void:
+	if lab == null or not is_instance_valid(lab):
+		return
+	lab.visible = false
+	lab.text = ""
+	lab.modulate = Color(1, 1, 1, 1)
+	lab.scale = Vector2.ONE
+	if _label_pool.size() < LABEL_POOL_MAX:
+		_label_pool.append(lab)
+	else:
+		lab.queue_free()

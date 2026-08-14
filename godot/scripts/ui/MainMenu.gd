@@ -32,8 +32,8 @@ func _build() -> void:
 	center.set_anchors_preset(Control.PRESET_CENTER)
 	center.offset_left = -220
 	center.offset_right = 220
-	center.offset_top = -180
-	center.offset_bottom = 200
+	center.offset_top = -280
+	center.offset_bottom = 280
 	center.add_theme_constant_override("separation", 14)
 	add_child(center)
 
@@ -57,8 +57,15 @@ func _build() -> void:
 	_btn(center, "AEXION CLASH  —  3-lane TPS stub", _goto_clash, Color(0.75, 0.2, 0.35))
 	_btn(center, "Quit", func(): get_tree().quit(), Color(0.25, 0.25, 0.3))
 
+	var plates := HBoxContainer.new()
+	plates.alignment = BoxContainer.ALIGNMENT_CENTER
+	center.add_child(plates)
+	var CP = load("res://scripts/assets/CanonPlates.gd")
+	if CP:
+		CP.attach_menu_strip(plates)
+
 	var foot := Label.new()
-	foot.text = "Benchmarks: SC/NMS continuum · EVE/Stellaris soft meta · Predecessor lanes\nNo P2W  ·  WASD + mouse  ·  F10 host / F11 join soft net"
+	foot.text = "Benchmarks: SC/NMS continuum · EVE/Stellaris soft meta · Predecessor lanes\nNo P2W  ·  WASD + mouse  ·  F10 host / F11 join soft net\nCanon plates: local generations/canon or identity cards (bucket public-read pending)"
 	foot.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	foot.add_theme_font_size_override("font_size", 12)
 	foot.modulate = Color(0.4, 0.48, 0.55)

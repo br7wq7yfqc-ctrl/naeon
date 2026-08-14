@@ -121,3 +121,5 @@ HANDOFF → rules/lore/design → skill §25 → code.
 
 
 | 2026-08-13 | `s3://neon/generations/` = approved design renders + orthogonal Tripo schemes; index `generations/catalog.json` updated on every ingest | Owner + sequential-dev |
+| 2026-08-14 | Phase 0 playtest: AbilitySystem activate, rules/04 costs, enemy scan cache, CombatJuice label pool, site_pin, canon identity cards. No DMG. | sequential-dev |
+

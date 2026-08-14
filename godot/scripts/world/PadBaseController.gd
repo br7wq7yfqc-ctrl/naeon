@@ -174,10 +174,7 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 		_apply_faction_visual()
 		_refresh_label()
 		claimed.emit(ownership.faction_name())
-		if LayerContext:
-			LayerContext.set_claim(str(name))
-			if LayerContext.active_quest_id == "":
-				LayerContext.set_quest("slice_claim_%s" % name)
+		_bind_layer_claim()
 		return
 	ownership.claim_strength += strength
 	ownership.start_transition(f)
@@ -193,6 +190,7 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 	if CombatJuice:
 		CombatJuice.hit_feedback(12.0, global_position, true)
 	claimed.emit(ownership.faction_name())
+	_bind_layer_claim()
 	_notify_hud("Claim resolved → %s. Harvest = Contribution (no combat power)." % ownership.faction_name())
 	var ccol := Color(0.15, 0.85, 1.0) if ownership.faction_name() == "Cybernex" else Color(0.95, 0.12, 0.42)
 	_spawn_claim_fx(ccol)
@@ -417,6 +415,19 @@ func _update_city_density() -> void:
 var _pad_scan_cd: float = 0.0
 var _actor_cache: Node3D = null
 var _actor_cache_t: float = 0.0
+
+
+func _bind_layer_claim() -> void:
+	if LayerContext == null:
+		return
+	LayerContext.set_claim(str(name))
+	if LayerContext.active_quest_id == "":
+		LayerContext.set_quest("slice_claim_%s" % name)
+	if LayerContext.site_pin_id == "":
+		var pin := str(get_meta("site_pin_id", ""))
+		if pin == "":
+			pin = "SITE_SPACE_TEST_PAD"
+		LayerContext.set_site_pin(pin)
 
 func _try_pad_scan() -> void:
 	_pad_scan_cd = maxf(0.0, _pad_scan_cd - get_process_delta_time())

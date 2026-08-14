@@ -43,6 +43,9 @@ func _ready() -> void:
 	_soft_neon_ambient()
 	_spawn_turrets()
 	_spawn_claim_nodes()
+	var CP = load("res://scripts/assets/CanonPlates.gd")
+	if CP:
+		CP.spawn_arena_wall(self, Vector3(0, 0, 8))
 	if kills_label:
 		kills_label.text = "Kills: 0"
 

@@ -31,6 +31,8 @@ func _ready() -> void:
 	if LayerContext:
 		LayerContext.set_layer("Space")
 		LayerContext.seamless_stage = "S1"
+		if LayerContext.site_pin_id == "":
+			LayerContext.set_site_pin("SITE_SPACE_TEST_PAD")
 	_spawn_starfield()
 	_spawn_planets()
 	_spawn_orbital_stations()
@@ -44,6 +46,10 @@ func _ready() -> void:
 		_apply_env_quality(gq)
 		gq.tier_changed.connect(_on_tier)
 	print("[OpenSpace] ready planets=", planets.size())
+	var hud_root := get_node_or_null("HUD/Root") as Control
+	var CP = load("res://scripts/assets/CanonPlates.gd")
+	if CP and hud_root:
+		CP.spawn_space_hud(hud_root)
 
 func _on_tier(_t: int) -> void:
 	var gq := get_node_or_null("/root/GraphicsQuality")

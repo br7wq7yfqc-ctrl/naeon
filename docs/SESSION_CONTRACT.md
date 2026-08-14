@@ -22,7 +22,9 @@
 3. Rover drive envelope
 4. Chunk streaming (done)
 5. Terrain stability (done)
-6. Next: pad claim feedback, combat hit volumes, ability costs consistency
+6. Pad claim feedback + site_pin (this pass)
+7. Combat hurtboxes + ability costs from rules/04 (this pass)
+8. Next: pad claim 3D readability polish, 10-min loop soak on Mac GPU
 
 ## Tripo
 - Balance check when generating; code-first when zero.
