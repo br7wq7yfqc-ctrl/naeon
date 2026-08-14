@@ -1,20 +1,25 @@
 # NAEON — Shared Agent Memory
 
-**Purpose:** Single source of truth for all design decisions, mechanical rules, content progress, and constraints that every development agent must respect.
+**Last updated:** 2026-08-07 (design gaps closed)
 
-**Maintainer:** Design Lead  
-**Last updated:** 2026-08-05
+## Core constraints
+No P2W · soft Knowledge · Infection max 5 · S1 · freemium ≠ power · Tripo-first · narrative ≠ power · perf/25 · site_pin catalog · constructor templates only
 
----
+## Design corpus
+rules/00–26 · Act I–VI + premium · SITE_PIN · **CONSTRUCTOR_TEMPLATES** · **SIDE_QUEST_TEMPLATES** · **EDU_MODULE_LIBRARY** · skill v2.0
 
-## 1. Core Project Constraints (Never Violate)
+## Gaps closed
+- Constructor template seed (8 templates, VS = 2)
+- Generated side-quest templates
+- Edu module library soft
+- LEGENDARY_SITES v0.2 with IDs
+- HANDOFFS refreshed to skill v2.0 + rules 20–26
 
-- **No Pay-to-Win.** Subscription and tokens give convenience, cosmetics, voice, premium narrative, generation quota — never combat power or claim advantage.
-- **Economical Asset Pipeline.** Prefer free credits → Tripo primary → Meshy secondary → Rodin only for hero assets. One mesh → many variants (Cybernex + gROT) in Blender.
-- **Local-first development.** Heavy assets never in main Git repo. Use `assets/` (gitignored) + Yandex Object Storage bucket `neon`.
-- **Godot 4.x**, dark-neon futuristic aesthetic, low-end optimization target.
-- **Asymmetric factions:** Cybernex (protection, harmony, Nex-Firewall) vs gROT (assimilation, infection, hacking).
-- **Soft Knowledge system** only — informational / QoL advantages, never raw stats.
+## Implementation P0
+A: Infection 5 + perf · B: TransitionContext S1 · E: Act I resources · Ops: Tripo/neon
+
+## Protocol
+HANDOFF → rules/lore/design → skill §25 → code.
 
 ## 2. Current Mechanical Truths
 

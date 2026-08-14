@@ -1,153 +1,90 @@
-# NAEON — Handoffs for Parallel Build Sessions
+# NAEON — Build-Session Briefs (Design-Aware)
 
-**Date:** 2026-08-05  
-**Status:** All sub-agents paused. Ready for parallel independent sessions.
-
----
-
-## Current Project State (Snapshot)
-
-### Repository
-- https://github.com/br7wq7yfqc-ctrl/naeon
-- Main branch is up to date with CONCEPT.md (v1.2+), DEVELOPMENT_PLAN.md (v2.0), CI, asset pipeline docs.
-
-### Already Implemented
-- Godot 4.3 project skeleton (`godot/`)
-- `PlayerController.gd` (TPS movement + form switch skeleton)
-- Data-driven Ability System (`Ability.gd` + `AbilitySystem.gd`) with Hacking / Nex-Firewall flags
-- `OwnershipData.gd` + basic Contribution / KnowledgeRank
-- Asset storage strategy (Yandex Object Storage bucket `neon`)
-- Sync scripts + `.gitignore` protection for `/assets/`
-- CI pipeline (validate + headless + export jobs for Linux/Windows)
-- Tripo-first low-cost Asset Pipeline documentation
-
-### Infrastructure
-- Yandex Object Storage bucket: `neon`
-- Service account with storage.editor rights exists
-- Asset Pipeline VM exists (public IP was provided, but no permanent agent access)
-- Tripo API key available (user-side only)
+**Date:** 2026-08-07  
+**Companion:** `docs/HANDOFF.md`  
+**Skill:** `naeon-holistic-economical` **v2.0**  
+**Canon:** rules/00–26 · lore Act I–VI · SITE_PIN_CATALOG
 
 ---
 
-## Parallel Build Sessions — Handoffs
+## Session A — Core Gameplay (TPS / Ability)
 
-### Session A — Core Gameplay & Ability Systems
-**Owner focus:** TPS, Ability System, Hacking/Firewall, Combat feel, Educational soft integration
+### Must-read
+`02`, `04`, `16`, `20`, `21`, `03`, `08`, `10`, **`25`**, skill Infection **max 5**
 
-**Current status:**
-- Basic TPS controller exists
-- Ability System is data-driven and supports asymmetric flags
-- Hacking / Nex-Firewall exist as concept + flags
+### Tasks
+1. Infection **5** pips (shape + number).
+2. Ability costs/CDs from 04 + ranks 16.
+3. Interruptible Hack; Firewall cleanse.
+4. Knowledge overlays optional, off by default.
+5. **Perf smoke** every merge (25): ~60 FPS min preset, no memory climb, free on exit.
 
-**Next concrete tasks:**
-1. Polish Ability resource format and activation flow
-2. Implement real Hacking ability (TPS) and Nex-Firewall counter
-3. Create simple TestArena scene for combat testing
-4. Soft Knowledge Mastery combat insights (QoL only)
-5. Basic form-specific movement (Canine / Feline / Avian)
-
-**Definition of Done:**
-- Playable TPS character with 2–3 working abilities including Hacking vs Firewall
-- Test scene loads and runs at 60 FPS on low-end settings
+### DoD
+Readable Hack/Firewall; 5-stack decisive not permanent; perf baseline on TestArena.
 
 ---
 
-### Session B — Space, Ships & Ownership
-**Owner focus:** ShipController, modules, carriers seed, Dynamic Ownership Transformation
+## Session B — Space / Transitions
 
-**Current status:**
-- OwnershipData resource exists
-- No full ShipController yet
-- Dynamic Ownership design is documented
+### Must-read
+`14`, `22`, `03`, `13`, `10`, **`18`**, **`25`**, SITE_PIN_CATALOG
 
-**Next concrete tasks:**
-1. Implement `ShipController.gd` (semi-Newtonian flight)
-2. Basic modular system (Module resource + attach points)
-3. OwnershipComponent with transition_progress
-4. Simple visual theme swap (material blend Cybernex ↔ gROT) on one object
-5. Space test scene
+### Tasks
+1. `TransitionContext` round-trip TestArena ↔ SpaceTest.
+2. Preserve `active_quest_ids`, cargo, claim, **`site_pin_id`**.
+3. Layer label; S1 <3 s no hitch.
+4. One modular attach; Contested ring.
 
-**Definition of Done:**
-- Flyable ship placeholder
-- One claimable object that can switch faction visually and in data
+### DoD
+Fly, land, context intact; S1 declared; perf on SpaceTest.
 
 ---
 
-### Session C — Strategy, Alliance & Economy
-**Owner focus:** Colony, Contribution, RBE, Alliance hierarchy, Knowledge system
+## Session C — Assets
 
-**Current status:**
-- Contribution and KnowledgeRank skeletons exist
-- RBE philosophy documented
+### Must-read
+ASSET_PIPELINE, skill economical, **25** (LOD)
 
-**Next concrete tasks:**
-1. ResourceNode + basic extractor
-2. Contribution score calculation
-3. Alliance hierarchy data model + permissions
-4. Knowledge Rank progression + soft rewards
-5. Simple Strategy overlay / orders skeleton
+### Blocked
+Tripo / neon — placeholders OK.
 
-**Definition of Done:**
-- Place an extractor, gain Contribution
-- Alliance data structure with roles and shared resources
+### DoD
+Dual-theme prop when credits exist; no secrets in git.
 
 ---
 
-### Session D — Asset Pipeline & Tooling
-**Owner focus:** Tripo automation, Blender processing, dual-theme variants, VM bootstrap
+## Session D — Economy / Alliance
 
-**Current status:**
-- Documentation ready (`docs/ASSET_PIPELINE.md`)
-- Storage + sync scripts ready
-- Tripo chosen as primary generator
+### Must-read
+`05`, `15`, `11`, `12`, **`26`**, `23`, `24`, CONSTRUCTOR_TEMPLATES
 
-**Next concrete tasks:**
-1. Complete `generate_tripo.py` (API call + download)
-2. Blender headless `process_asset.py` (LOD + dual materials)
-3. `make_faction_variants.py`
-4. Full VM install script (user runs it)
-5. Inbox watcher
+### Tasks
+1. Ledgers soft caps.
+2. Ranks 0–4 UI from 26.
+3. Constructor: `CT_DELIVER_HUB` + `CT_DEFEND_CLAIM` minimum.
 
-**Definition of Done:**
-- One command: prompt → Tripo → processed dual-theme assets in `assets/` + synced to `neon`
+### DoD
+Pool deposit; rank list; one constructor template live.
 
 ---
 
-### Session E — Platform, Quests, Voice & Meta
-**Owner focus:** Quest system, Educational nodes, Voice (SpeechKit / Alice), NAEXOS.ONLINE gates
+## Session E — Quests / Meta
 
-**Current status:**
-- Design fully documented in CONCEPT.md
-- No runtime implementation yet
+### Must-read
+`06`, `07`, `09`, `19`, CAMPAIGN_QUEST_IDS, QUEST_ACT_I–VI, SIDE_QUEST_TEMPLATES, EDU_MODULE_LIBRARY, PREMIUM_EPILOGUES
 
-**Next concrete tasks:**
-1. Quest data model + simple static quests
-2. Educational Learning Node UI skeleton
-3. Prompt Studio / aiNEX placeholder
-4. Voice pipeline architecture (modular STT/TTS)
-5. Alliance Quest Constructor design implementation start
+### Tasks
+1. Quest Resources **CQ-CX-I-01** + **CQ-GR-I-01** first.
+2. site_pin from catalog only.
+3. Premium badge `story_only`.
+4. Optional: one SQ_GATHER, EDU_HIST_SCHISM_01.
 
-**Definition of Done:**
-- One complete static quest + one educational puzzle node playable
+### DoD
+One CX + one GR Act I playable; premium cannot grant power.
 
 ---
 
-## How to start a parallel session
+## Cross-session
 
-1. Create a feature branch: `feature/session-A-abilities`, etc.
-2. Work only within the scope of that handoff
-3. Keep commits small and focused
-4. Update this HANDOFFS.md when a session reaches its DoD
-5. Merge via PR into `main` after review
-
-## Global Rules (still active)
-
-- Never commit secrets / API keys / `.env`
-- `/assets/` stays gitignored
-- Prefer soft, non-P2W mechanics
-- Local-first, then Yandex Cloud
-- Cross-platform (Mac + Windows)
-
----
-
-*All sub-agents are now stopped. Parallel sessions can be started independently using the handoffs above.*
+One writer per hot path; after DoD → SESSION_STATUS + SHARED_AGENT_MEMORY.  
+**Every code track:** rules/25 performance.
