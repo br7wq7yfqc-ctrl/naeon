@@ -1,9 +1,9 @@
 {
-  "version": 2.2,
+  "version": 2.3,
   "updated": "2026-08-15",
-  "source": "asset_positions.json v2.2 + GR scanner-repair lock (existing Index slug)",
-  "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Do not commit catalog.json. Nine index_slug rows (ocr=false, count=0) are existing Index keys, not invented OCR.",
-  "positions": 124,
+  "source": "asset_positions.json v2.3 + CX scanner-repair lock (existing Index slug)",
+  "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Do not commit catalog.json. Index-slug rows (ocr=false, count=0) are existing Index keys, not invented OCR.",
+  "positions": 125,
   "bound_sheets": 213,
   "merged_slugs": {
     "heawy_5ault_i8reakt4fough": "heavy_assault",
@@ -1581,11 +1581,35 @@
       "titles": [
         "UTILITY DRONE.S"
       ]
+    },
+    "cx-scanner-repair": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "9671aa91-1d4d-4499-8ce6-5498592f5321",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Scanner + repair lattice"
+        },
+        {
+          "id": "02275317-e746-4c3e-95b9-9e32e4ecccc9",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "module",
+          "label": "Scanner + repair lattice"
+        }
+      ]
     }
   },
   "index_only_slugs": [
     "cx-dmr",
     "cx-firewall-gadget",
+    "cx-scanner-repair",
     "cx-tank-gun",
     "cx-turret-launcher",
     "gr-contractile",

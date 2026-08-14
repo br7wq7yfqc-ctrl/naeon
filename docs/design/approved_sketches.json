@@ -1,5 +1,5 @@
 {
-  "version": "1.5",
+  "version": "1.6",
   "updated": "2026-08-15",
   "rule": "locked only",
   "user": "77c65418-d257-47c3-8504-4540b6e0a754",
@@ -390,9 +390,25 @@
       "class": "module",
       "label": "Scanner + repair arm",
       "position": "gr-scanner-repair"
+    },
+    {
+      "id": "9671aa91-1d4d-4499-8ce6-5498592f5321",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "module",
+      "label": "Scanner + repair lattice",
+      "position": "cx-scanner-repair"
+    },
+    {
+      "id": "02275317-e746-4c3e-95b9-9e32e4ecccc9",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "module",
+      "label": "Scanner + repair lattice",
+      "position": "cx-scanner-repair"
     }
   ],
-  "note": "position = slug in docs/asset_positions.json. Index slugs (ocr=false, count=0) are existing Index keys, not invented OCR titles. GR scanner-repair locked 2026-08-15. CX scanner-repair redo in review — not in this locked list.",
-  "positions_bound": 48,
+  "note": "position = slug in docs/asset_positions.json. Index slugs (ocr=false, count=0) are existing Index keys, not invented OCR titles. Batch 18 Utility locked 2026-08-15 (CX redo + GR).",
+  "positions_bound": 50,
   "positions_unbound": 0
 }
