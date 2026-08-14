@@ -1,10 +1,10 @@
 # NAEON — Approved sketch catalog
 
-**Version:** 1.3 · **Updated:** 2026-08-15  
+**Version:** 1.4 · **Updated:** 2026-08-15  
 **Rule:** this file lists **locked only**. In-review / draft / dump do not belong here.
 
-Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **114 positions, 213 sheets** (was 129 OCR slugs; 19 garbage keys merged; sheets not dropped).  
-Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **46 UUID**, none invented.
+Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **123 positions, 213 sheets** (was 129 OCR slugs → 114 after merge → 123 with 9 Index keys; sheets not dropped).  
+Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **46 UUID**, none invented, all bound.
 
 Bucket: `s3://neon/generations/canon/{class}/{id}/master.jpg`  
 Grok: `https://assets.grok.com/users/77c65418-d257-47c3-8504-4540b6e0a754/generated/{UUID}/image.jpg`
@@ -13,11 +13,12 @@ S3 Index `generations/catalog.json` is **not** in git and is not patched by this
 
 | Ledger | Count |
 |--------|------:|
-| Positions after OCR merge | 114 |
+| Positions after OCR merge + 9 Index keys | 123 |
 | Bound sheets (invariant) | 213 |
 | Locked UUID (all from v1.2) | 46 |
-| UUID bound to an existing position | 28 |
-| UUID with no OCR position (do not invent) | 18 |
+| UUID bound to a position | 46 |
+| UUID with no position | 0 |
+| Index-only positions (`ocr: false`, `count: 0`) | 9 |
 | Chat-lock positions, `file_id` null | 49 |
 | Unfactioned class plates kept as templates | 11 |
 | OCR slugs still unresolved | 9 |
@@ -26,7 +27,7 @@ S3 Index `generations/catalog.json` is **not** in git and is not patched by this
 
 ## A. Locked with file ID
 
-`position` is the slug in `docs/asset_positions.json`. Em-dash = locked UUID, **no matching OCR position** — see §C. Do not invent a slug.
+`position` is the slug in `docs/asset_positions.json`. Nine keys (`cx-dmr` … `gr-turret-torpedo`) are **existing Index slugs**, not OCR titles — `ocr: false`, `count: 0`. See §C.
 
 ### Capital ships
 
@@ -47,25 +48,25 @@ S3 Index `generations/catalog.json` is **not** in git and is not patched by this
 | Assault Carbine | CX | ortho | `cybernex_weapon_carbine` | `41700055-4027-4db9-b162-8233ff2705e6` |
 | Assault Carbine | GR | cinematic | `grot_weapon_carbine` | `b8e46c7f-70aa-463f-aa30-1ff714867f36` |
 | Assault Carbine | GR | ortho | `grot_weapon_carbine` | `e09e9b53-dd95-455c-ad3b-53a2e626c708` |
-| DMR | CX | cinematic | — | `d9115a7c-147a-4393-8ded-c5f252989328` |
-| DMR | CX | ortho | — | `cf8e7639-1399-4544-858d-a957bb18c945` |
-| DMR | GR | cinematic | — | `4034222f-86ee-413c-a48a-43ca948dffde` |
-| DMR | GR | ortho | — | `37750a80-84c5-485c-94db-8bfddd976640` |
-| Firewall gadget | CX | cinematic | — | `68663b86-f177-4594-b70b-deec857abe88` |
-| Firewall gadget | CX | ortho | — | `641c9c0c-45bd-41fa-a3fc-875e0b99fc24` |
-| Infection tool | GR | cinematic | — | `6e058bb5-29ce-4f77-9542-3fb90a822ebe` |
-| Infection tool | GR | ortho | — | `4a1cfd7b-c75d-46f6-ab79-66d6f0c0c6b3` |
+| DMR | CX | cinematic | `cx-dmr` | `d9115a7c-147a-4393-8ded-c5f252989328` |
+| DMR | CX | ortho | `cx-dmr` | `cf8e7639-1399-4544-858d-a957bb18c945` |
+| DMR | GR | cinematic | `gr-dmr` | `4034222f-86ee-413c-a48a-43ca948dffde` |
+| DMR | GR | ortho | `gr-dmr` | `37750a80-84c5-485c-94db-8bfddd976640` |
+| Firewall gadget | CX | cinematic | `cx-firewall-gadget` | `68663b86-f177-4594-b70b-deec857abe88` |
+| Firewall gadget | CX | ortho | `cx-firewall-gadget` | `641c9c0c-45bd-41fa-a3fc-875e0b99fc24` |
+| Infection tool | GR | cinematic | `gr-infection-tool` | `6e058bb5-29ce-4f77-9542-3fb90a822ebe` |
+| Infection tool | GR | ortho | `gr-infection-tool` | `4a1cfd7b-c75d-46f6-ab79-66d6f0c0c6b3` |
 
 ### Vehicle weapons
 
-Weapon locks bind to the **hull/vehicle position** they belong to (no separate weapon slug in the OCR ledger). Tank main has no hull slug — see §C.
+APC / hover / mech guns bind to the **hull** they sit on. Tank main has no Heavy Tank hull in the OCR ledger — it uses the Index weapon slug (`cx-tank-gun` / `gr-tank-gun`), not a hover or APC plate.
 
 | Object | Faction | View | Position | ID |
 |--------|---------|------|----------|----|
-| Tank main | CX | cinematic | — | `576b48ad-426c-4b15-8292-fdd117ff43c3` |
-| Tank main | CX | ortho | — | `f6ba51ce-9f94-44ff-84e4-aee90fa3c1bc` |
-| Tank main | GR | cinematic | — | `ce213a7c-d304-4a32-98c1-0a404c2bc7c9` |
-| Tank main | GR | ortho | — | `e996c312-7056-4d6c-9bf2-435f12155119` |
+| Tank main | CX | cinematic | `cx-tank-gun` | `576b48ad-426c-4b15-8292-fdd117ff43c3` |
+| Tank main | CX | ortho | `cx-tank-gun` | `f6ba51ce-9f94-44ff-84e4-aee90fa3c1bc` |
+| Tank main | GR | cinematic | `gr-tank-gun` | `ce213a7c-d304-4a32-98c1-0a404c2bc7c9` |
+| Tank main | GR | ortho | `gr-tank-gun` | `e996c312-7056-4d6c-9bf2-435f12155119` |
 | APC autocannon/EW | CX | cinematic | `cybernex_apc` | `024be4f6-45a0-43fa-bc62-055f920ec7ab` |
 | APC autocannon/EW | CX | ortho | `cybernex_apc` | `a077f3ce-615f-4bb3-bdc7-5bbfcb5bc859` |
 | APC autocannon/infection | GR | cinematic | `grot_apc` | `02dfbd93-d19f-4230-85cd-97840f0db3de` |
@@ -89,12 +90,12 @@ Weapon locks bind to the **hull/vehicle position** they belong to (no separate w
 | Spore-cloud generator | GR | ortho | `grot_spore_prop` | `77a7cc90-2b95-4100-8f0a-3b1798306104` |
 | Quantum-thrust + RCS | CX | cinematic | `thruster_cluster_neon` | `6f743074-1a2e-4f4b-b796-599166bc80b9` |
 | Quantum-thrust + RCS | CX | ortho | `thruster_cluster_neon` | `26e6e753-ff0a-4a0b-b7c7-0134f23f5a63` |
-| Contractile main + RCS | GR | cinematic | — | `b85d041d-3a81-43e7-a2ba-b0b195b53e94` |
-| Contractile main + RCS | GR | ortho | — | `a25897c9-1a4f-4bbd-9b50-31f7b715590a` |
-| Turret + hex launcher | CX | cinematic | — | `899de1b8-9179-452c-bc75-dee69352c374` |
-| Turret + hex launcher | CX | ortho | — | `8e742135-e693-4ad7-bbc2-fd9f4fcb092f` |
-| Turret + seed-torpedo | GR | cinematic | — | `01ca395f-bd23-43b2-9252-a59297638be0` |
-| Turret + seed-torpedo | GR | ortho | — | `41624757-559c-4757-a0dd-bcf549779e91` |
+| Contractile main + RCS | GR | cinematic | `gr-contractile` | `b85d041d-3a81-43e7-a2ba-b0b195b53e94` |
+| Contractile main + RCS | GR | ortho | `gr-contractile` | `a25897c9-1a4f-4bbd-9b50-31f7b715590a` |
+| Turret + hex launcher | CX | cinematic | `cx-turret-launcher` | `899de1b8-9179-452c-bc75-dee69352c374` |
+| Turret + hex launcher | CX | ortho | `cx-turret-launcher` | `8e742135-e693-4ad7-bbc2-fd9f4fcb092f` |
+| Turret + seed-torpedo | GR | cinematic | `gr-turret-torpedo` | `01ca395f-bd23-43b2-9252-a59297638be0` |
+| Turret + seed-torpedo | GR | ortho | `gr-turret-torpedo` | `41624757-559c-4757-a0dd-bcf549779e91` |
 
 ---
 
@@ -176,7 +177,7 @@ Multicrew + capital + heavy ground only. `combat_drone` exists as a vehicle plat
 | `cybernex_walker` | CX | CX Mech ortho deferred; **UUID on 4-gun cluster** — see §A |
 | `grot_walker` | GR | biped; **UUID on gun pair** — see §A |
 
-No OCR slug for a dedicated Heavy Tank hull (Tank main UUID stays unbound, §C). GR quad-mech has no separate slug.
+No OCR slug for a dedicated Heavy Tank **hull**. Tank main guns live on Index slugs `cx-tank-gun` / `gr-tank-gun` (§A / §C). GR quad-mech has no separate slug.
 
 ### Infantry / Batch 14
 
@@ -199,21 +200,23 @@ Sidearm T0 GR has no dedicated slug (`grot_weapon_carbine` holds carbine + mixed
 
 ---
 
-## C. Locked UUID without OCR position
+## C. Index-only positions (no OCR sheet)
 
-These 18 UUIDs stay in `approved_sketches.json` with `"position": null`. **Do not invent a ledger slug** to park them.
+These 9 keys already existed in the Index (`cx-dmr`, …). They were missing from the OCR ledger because no titled sheet was ever bound. Added as ledger rows with **`ocr: false`, `count: 0`**. Not invented OCR titles. Bound sheets stay **213**.
 
-| Object | Faction | Views | IDs |
-|--------|---------|-------|-----|
-| DMR | CX | cin / ortho | `d9115a7c-147a-4393-8ded-c5f252989328`, `cf8e7639-1399-4544-858d-a957bb18c945` |
-| DMR | GR | cin / ortho | `4034222f-86ee-413c-a48a-43ca948dffde`, `37750a80-84c5-485c-94db-8bfddd976640` |
-| Firewall gadget | CX | cin / ortho | `68663b86-f177-4594-b70b-deec857abe88`, `641c9c0c-45bd-41fa-a3fc-875e0b99fc24` |
-| Infection tool | GR | cin / ortho | `6e058bb5-29ce-4f77-9542-3fb90a822ebe`, `4a1cfd7b-c75d-46f6-ab79-66d6f0c0c6b3` |
-| Tank main | CX | cin / ortho | `576b48ad-426c-4b15-8292-fdd117ff43c3`, `f6ba51ce-9f94-44ff-84e4-aee90fa3c1bc` |
-| Tank main | GR | cin / ortho | `ce213a7c-d304-4a32-98c1-0a404c2bc7c9`, `e996c312-7056-4d6c-9bf2-435f12155119` |
-| Contractile main + RCS | GR | cin / ortho | `b85d041d-3a81-43e7-a2ba-b0b195b53e94`, `a25897c9-1a4f-4bbd-9b50-31f7b715590a` |
-| Turret + hex launcher | CX | cin / ortho | `899de1b8-9179-452c-bc75-dee69352c374`, `8e742135-e693-4ad7-bbc2-fd9f4fcb092f` |
-| Turret + seed-torpedo | GR | cin / ortho | `01ca395f-bd23-43b2-9252-a59297638be0`, `41624757-559c-4757-a0dd-bcf549779e91` |
+| Position | Object | Faction | IDs |
+|----------|--------|---------|-----|
+| `cx-dmr` | DMR | CX | `d9115a7c-147a-4393-8ded-c5f252989328`, `cf8e7639-1399-4544-858d-a957bb18c945` |
+| `gr-dmr` | DMR | GR | `4034222f-86ee-413c-a48a-43ca948dffde`, `37750a80-84c5-485c-94db-8bfddd976640` |
+| `cx-firewall-gadget` | Firewall gadget | CX | `68663b86-f177-4594-b70b-deec857abe88`, `641c9c0c-45bd-41fa-a3fc-875e0b99fc24` |
+| `gr-infection-tool` | Infection tool | GR | `6e058bb5-29ce-4f77-9542-3fb90a822ebe`, `4a1cfd7b-c75d-46f6-ab79-66d6f0c0c6b3` |
+| `cx-tank-gun` | Tank main | CX | `576b48ad-426c-4b15-8292-fdd117ff43c3`, `f6ba51ce-9f94-44ff-84e4-aee90fa3c1bc` |
+| `gr-tank-gun` | Tank main | GR | `ce213a7c-d304-4a32-98c1-0a404c2bc7c9`, `e996c312-7056-4d6c-9bf2-435f12155119` |
+| `gr-contractile` | Contractile main + RCS | GR | `b85d041d-3a81-43e7-a2ba-b0b195b53e94`, `a25897c9-1a4f-4bbd-9b50-31f7b715590a` |
+| `cx-turret-launcher` | Turret + hex launcher | CX | `899de1b8-9179-452c-bc75-dee69352c374`, `8e742135-e693-4ad7-bbc2-fd9f4fcb092f` |
+| `gr-turret-torpedo` | Turret + seed-torpedo | GR | `01ca395f-bd23-43b2-9252-a59297638be0`, `41624757-559c-4757-a0dd-bcf549779e91` |
+
+Do **not** piggyback these onto carbine / hover / `thruster_cluster_neon` / `cybernex_defense_systems`. Those are different objects.
 
 ---
 

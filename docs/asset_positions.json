@@ -1,9 +1,9 @@
 {
-  "version": 2,
+  "version": 2.1,
   "updated": "2026-08-15",
-  "source": "asset_positions.json v1 OCR bind + approved_sketches.json 46 UUID",
-  "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Do not commit catalog.json.",
-  "positions": 114,
+  "source": "asset_positions.json v1 OCR bind + approved_sketches.json 46 UUID + 9 Index slugs",
+  "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Do not commit catalog.json. Nine index_slug rows (ocr=false, count=0) are existing Index keys, not invented OCR.",
+  "positions": 123,
   "bound_sheets": 213,
   "merged_slugs": {
     "heawy_5ault_i8reakt4fough": "heavy_assault",
@@ -217,6 +217,98 @@
       ],
       "ocr_unresolved": true
     },
+    "cx-dmr": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "d9115a7c-147a-4393-8ded-c5f252989328",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "weapon-infantry",
+          "label": "DMR"
+        },
+        {
+          "id": "cf8e7639-1399-4544-858d-a957bb18c945",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "weapon-infantry",
+          "label": "DMR"
+        }
+      ]
+    },
+    "cx-firewall-gadget": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "68663b86-f177-4594-b70b-deec857abe88",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "weapon-infantry",
+          "label": "Firewall gadget"
+        },
+        {
+          "id": "641c9c0c-45bd-41fa-a3fc-875e0b99fc24",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "weapon-infantry",
+          "label": "Firewall gadget"
+        }
+      ]
+    },
+    "cx-tank-gun": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "576b48ad-426c-4b15-8292-fdd117ff43c3",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "weapon-vehicle",
+          "label": "Tank main"
+        },
+        {
+          "id": "f6ba51ce-9f94-44ff-84e4-aee90fa3c1bc",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "weapon-vehicle",
+          "label": "Tank main"
+        }
+      ]
+    },
+    "cx-turret-launcher": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "899de1b8-9179-452c-bc75-dee69352c374",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Turret + hex launcher"
+        },
+        {
+          "id": "8e742135-e693-4ad7-bbc2-fd9f4fcb092f",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "module",
+          "label": "Turret + hex launcher"
+        }
+      ]
+    },
     "cybernex_CN-8800": {
       "category": "props",
       "count": 1,
@@ -350,6 +442,121 @@
           "view": "ortho",
           "class": "weapon-infantry",
           "label": "Assault Carbine"
+        }
+      ]
+    },
+    "gr-contractile": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "b85d041d-3a81-43e7-a2ba-b0b195b53e94",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Contractile main + RCS"
+        },
+        {
+          "id": "a25897c9-1a4f-4bbd-9b50-31f7b715590a",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "module",
+          "label": "Contractile main + RCS"
+        }
+      ]
+    },
+    "gr-dmr": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "4034222f-86ee-413c-a48a-43ca948dffde",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "weapon-infantry",
+          "label": "DMR"
+        },
+        {
+          "id": "37750a80-84c5-485c-94db-8bfddd976640",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "weapon-infantry",
+          "label": "DMR"
+        }
+      ]
+    },
+    "gr-infection-tool": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "6e058bb5-29ce-4f77-9542-3fb90a822ebe",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "weapon-infantry",
+          "label": "Infection tool"
+        },
+        {
+          "id": "4a1cfd7b-c75d-46f6-ab79-66d6f0c0c6b3",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "weapon-infantry",
+          "label": "Infection tool"
+        }
+      ]
+    },
+    "gr-tank-gun": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "ce213a7c-d304-4a32-98c1-0a404c2bc7c9",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "weapon-vehicle",
+          "label": "Tank main"
+        },
+        {
+          "id": "e996c312-7056-4d6c-9bf2-435f12155119",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "weapon-vehicle",
+          "label": "Tank main"
+        }
+      ]
+    },
+    "gr-turret-torpedo": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "01ca395f-bd23-43b2-9252-a59297638be0",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Turret + seed-torpedo"
+        },
+        {
+          "id": "41624757-559c-4757-a0dd-bcf549779e91",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "module",
+          "label": "Turret + seed-torpedo"
         }
       ]
     },
@@ -1352,5 +1559,16 @@
         "UTILITY DRONE.S"
       ]
     }
-  }
+  },
+  "index_only_slugs": [
+    "cx-dmr",
+    "gr-dmr",
+    "cx-firewall-gadget",
+    "gr-infection-tool",
+    "cx-tank-gun",
+    "gr-tank-gun",
+    "gr-contractile",
+    "cx-turret-launcher",
+    "gr-turret-torpedo"
+  ]
 }

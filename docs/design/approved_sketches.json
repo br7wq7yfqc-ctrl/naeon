@@ -1,5 +1,5 @@
 {
-  "version": "1.3",
+  "version": "1.4",
   "updated": "2026-08-15",
   "rule": "locked only",
   "user": "77c65418-d257-47c3-8504-4540b6e0a754",
@@ -93,7 +93,7 @@
       "view": "cinematic",
       "class": "weapon-infantry",
       "label": "DMR",
-      "position": null
+      "position": "cx-dmr"
     },
     {
       "id": "cf8e7639-1399-4544-858d-a957bb18c945",
@@ -101,7 +101,7 @@
       "view": "ortho",
       "class": "weapon-infantry",
       "label": "DMR",
-      "position": null
+      "position": "cx-dmr"
     },
     {
       "id": "4034222f-86ee-413c-a48a-43ca948dffde",
@@ -109,7 +109,7 @@
       "view": "cinematic",
       "class": "weapon-infantry",
       "label": "DMR",
-      "position": null
+      "position": "gr-dmr"
     },
     {
       "id": "37750a80-84c5-485c-94db-8bfddd976640",
@@ -117,7 +117,7 @@
       "view": "ortho",
       "class": "weapon-infantry",
       "label": "DMR",
-      "position": null
+      "position": "gr-dmr"
     },
     {
       "id": "68663b86-f177-4594-b70b-deec857abe88",
@@ -125,7 +125,7 @@
       "view": "cinematic",
       "class": "weapon-infantry",
       "label": "Firewall gadget",
-      "position": null
+      "position": "cx-firewall-gadget"
     },
     {
       "id": "641c9c0c-45bd-41fa-a3fc-875e0b99fc24",
@@ -133,7 +133,7 @@
       "view": "ortho",
       "class": "weapon-infantry",
       "label": "Firewall gadget",
-      "position": null
+      "position": "cx-firewall-gadget"
     },
     {
       "id": "6e058bb5-29ce-4f77-9542-3fb90a822ebe",
@@ -141,7 +141,7 @@
       "view": "cinematic",
       "class": "weapon-infantry",
       "label": "Infection tool",
-      "position": null
+      "position": "gr-infection-tool"
     },
     {
       "id": "4a1cfd7b-c75d-46f6-ab79-66d6f0c0c6b3",
@@ -149,7 +149,7 @@
       "view": "ortho",
       "class": "weapon-infantry",
       "label": "Infection tool",
-      "position": null
+      "position": "gr-infection-tool"
     },
     {
       "id": "576b48ad-426c-4b15-8292-fdd117ff43c3",
@@ -157,7 +157,7 @@
       "view": "cinematic",
       "class": "weapon-vehicle",
       "label": "Tank main",
-      "position": null
+      "position": "cx-tank-gun"
     },
     {
       "id": "f6ba51ce-9f94-44ff-84e4-aee90fa3c1bc",
@@ -165,7 +165,7 @@
       "view": "ortho",
       "class": "weapon-vehicle",
       "label": "Tank main",
-      "position": null
+      "position": "cx-tank-gun"
     },
     {
       "id": "ce213a7c-d304-4a32-98c1-0a404c2bc7c9",
@@ -173,7 +173,7 @@
       "view": "cinematic",
       "class": "weapon-vehicle",
       "label": "Tank main",
-      "position": null
+      "position": "gr-tank-gun"
     },
     {
       "id": "e996c312-7056-4d6c-9bf2-435f12155119",
@@ -181,7 +181,7 @@
       "view": "ortho",
       "class": "weapon-vehicle",
       "label": "Tank main",
-      "position": null
+      "position": "gr-tank-gun"
     },
     {
       "id": "024be4f6-45a0-43fa-bc62-055f920ec7ab",
@@ -333,7 +333,7 @@
       "view": "cinematic",
       "class": "module",
       "label": "Contractile main + RCS",
-      "position": null
+      "position": "gr-contractile"
     },
     {
       "id": "a25897c9-1a4f-4bbd-9b50-31f7b715590a",
@@ -341,7 +341,7 @@
       "view": "ortho",
       "class": "module",
       "label": "Contractile main + RCS",
-      "position": null
+      "position": "gr-contractile"
     },
     {
       "id": "899de1b8-9179-452c-bc75-dee69352c374",
@@ -349,7 +349,7 @@
       "view": "cinematic",
       "class": "module",
       "label": "Turret + hex launcher",
-      "position": null
+      "position": "cx-turret-launcher"
     },
     {
       "id": "8e742135-e693-4ad7-bbc2-fd9f4fcb092f",
@@ -357,7 +357,7 @@
       "view": "ortho",
       "class": "module",
       "label": "Turret + hex launcher",
-      "position": null
+      "position": "cx-turret-launcher"
     },
     {
       "id": "01ca395f-bd23-43b2-9252-a59297638be0",
@@ -365,7 +365,7 @@
       "view": "cinematic",
       "class": "module",
       "label": "Turret + seed-torpedo",
-      "position": null
+      "position": "gr-turret-torpedo"
     },
     {
       "id": "41624757-559c-4757-a0dd-bcf549779e91",
@@ -373,10 +373,10 @@
       "view": "ortho",
       "class": "module",
       "label": "Turret + seed-torpedo",
-      "position": null
+      "position": "gr-turret-torpedo"
     }
   ],
-  "note": "position = slug in docs/asset_positions.json. null = locked UUID, no OCR position (do not invent).",
-  "positions_bound": 28,
-  "positions_unbound": 18
+  "note": "position = slug in docs/asset_positions.json. Nine Index slugs (cx-dmr … gr-turret-torpedo) are ledger keys with ocr=false, count=0 — not invented OCR titles.",
+  "positions_bound": 46,
+  "positions_unbound": 0
 }
