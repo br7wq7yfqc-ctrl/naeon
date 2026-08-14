@@ -1,5 +1,5 @@
 {
-  "version": "1.7",
+  "version": "1.8",
   "updated": "2026-08-15",
   "rule": "locked only",
   "user": "77c65418-d257-47c3-8504-4540b6e0a754",
@@ -414,9 +414,33 @@
       "class": "module",
       "label": "Drone bay",
       "position": "gr-drone-bay"
+    },
+    {
+      "id": "f569980e-7ebc-466f-90d9-ca1f744163ad",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "module",
+      "label": "Drone bay",
+      "position": "gr-drone-bay"
+    },
+    {
+      "id": "e0df2d07-e567-4060-a9d7-03dc53666f51",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "module",
+      "label": "Drone bay hive",
+      "position": "cx-drone-bay"
+    },
+    {
+      "id": "9bacf651-688d-4848-8299-6320b86e1905",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "module",
+      "label": "Drone bay hive",
+      "position": "cx-drone-bay"
     }
   ],
-  "note": "position = slug in docs/asset_positions.json. Index slugs (ocr=false, count=0) are existing Index keys or planned batch slugs, not invented OCR titles. GR drone-bay cinematic locked 2026-08-15. CX hive redo in review.",
-  "positions_bound": 51,
+  "note": "position = slug in docs/asset_positions.json. Index slugs (ocr=false, count=0) are existing Index keys or planned batch slugs, not invented OCR titles. Batch 19 drone bay locked 2026-08-15.",
+  "positions_bound": 54,
   "positions_unbound": 0
 }

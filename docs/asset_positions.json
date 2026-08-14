@@ -1,9 +1,9 @@
 {
-  "version": 2.4,
+  "version": 2.5,
   "updated": "2026-08-15",
-  "source": "asset_positions.json v2.4 + GR drone-bay cinematic lock",
+  "source": "asset_positions.json v2.5 + batch 19 drone bay lock",
   "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Do not commit catalog.json. Index-slug rows (ocr=false, count=0) are existing Index keys, not invented OCR.",
-  "positions": 126,
+  "positions": 127,
   "bound_sheets": 213,
   "merged_slugs": {
     "heawy_5ault_i8reakt4fough": "heavy_assault",
@@ -1618,12 +1618,43 @@
           "view": "cinematic",
           "class": "module",
           "label": "Drone bay"
+        },
+        {
+          "id": "f569980e-7ebc-466f-90d9-ca1f744163ad",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "module",
+          "label": "Drone bay"
+        }
+      ]
+    },
+    "cx-drone-bay": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "e0df2d07-e567-4060-a9d7-03dc53666f51",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Drone bay hive"
+        },
+        {
+          "id": "9bacf651-688d-4848-8299-6320b86e1905",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "module",
+          "label": "Drone bay hive"
         }
       ]
     }
   },
   "index_only_slugs": [
     "cx-dmr",
+    "cx-drone-bay",
     "cx-firewall-gadget",
     "cx-scanner-repair",
     "cx-tank-gun",
