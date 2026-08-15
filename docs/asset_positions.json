@@ -1995,6 +1995,14 @@
           "manual": 36
         },
         {
+          "id": "730ceba8-94f4-4207-a9b1-cce2489a1848",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "ship-capital",
+          "label": "Flagship",
+          "manual": 37
+        },
+        {
           "id": "e0d7837c-0d25-4c70-92f6-82bc4f478f84",
           "faction": "GR",
           "view": "cinematic",
