@@ -68,8 +68,9 @@
       "faction": "CX",
       "view": "ortho",
       "class": "weapon-infantry",
-      "label": "Assault Carbine",
-      "position": "cybernex_weapon_carbine"
+      "label": "Carbine",
+      "position": "cybernex_weapon_carbine",
+      "manual": 28
     },
     {
       "id": "b8e46c7f-70aa-463f-aa30-1ff714867f36",

@@ -714,7 +714,8 @@
           "faction": "CX",
           "view": "ortho",
           "class": "weapon-infantry",
-          "label": "Assault Carbine"
+          "label": "Carbine",
+          "manual": 28
         }
       ]
     },
