@@ -16,6 +16,8 @@ var aim_up: Vector3 = Vector3.UP
 @export var projectile_speed: float = 42.0
 @export var max_health: float = 120.0
 @export var target_player: bool = true
+@export var skip_visual: bool = false
+@export var display_name: String = "TURRET"
 
 var health: float = 120.0
 var _cd: float = 0.0
@@ -204,12 +206,12 @@ func revive() -> void:
 func _update_label() -> void:
 	if _label:
 		if not _alive:
-			_label.text = "TURRET DESTROYED"
+			_label.text = "%s DESTROYED" % display_name
 		else:
-			_label.text = "TURRET %s\nHP %.0f" % [faction, health]
+			_label.text = "%s %s\nHP %.0f" % [display_name, faction, health]
 
 func _load_mesh() -> void:
-	if DisplayServer.get_name() == "headless":
+	if skip_visual or DisplayServer.get_name() == "headless":
 		return
 	var fac := "grot" if faction == "gROT" else "cybernex"
 	# Prefer rotating barrel HQ; fallback emplacement
@@ -247,7 +249,7 @@ var _anim: Node = null
 func _ensure_animator() -> void:
 	if _anim:
 		return
-	if DisplayServer.get_name() == "headless":
+	if DisplayServer.get_name() == "headless" or skip_visual:
 		return
 	_anim = Node.new()
 	_anim.set_script(load("res://scripts/combat/TurretAnimator.gd"))
