@@ -42,5 +42,11 @@ Old `generations/catalog.json` and the visual album are **void**.
 | 035 | Cybernex Sidearm — sheet | CX | ortho | `cb6c3686-91b2-46b2-ad58-a8299cb7ff31` | imagine |
 | 036 | gROT Flagship — cinematic | GR | cinematic | `COmSz` | `generations/rendered/COmSz.jpg` |
 | 037 | gROT Flagship — ortho | GR | ortho | `730ceba8-94f4-4207-a9b1-cce2489a1848` | imagine |
+| 038 | Cybernex DMR — cinematic | CX | cinematic | `d9115a7c-147a-4393-8ded-c5f252989328` | imagine |
+| 039 | Cybernex DMR — ortho | CX | ortho | `cf8e7639-1399-4544-858d-a957bb18c945` | imagine |
+| 040 | gROT DMR — cinematic | GR | cinematic | `4034222f-86ee-413c-a48a-43ca948dffde` | imagine |
+| 041 | gROT DMR — ortho | GR | ortho | `37750a80-84c5-485c-94db-8bfddd976640` | imagine |
+| 042 | gROT Carbine — cinematic | GR | cinematic | `b8e46c7f-70aa-463f-aa30-1ff714867f36` | imagine |
+| 043 | gROT Carbine — ortho | GR | ortho | `e09e9b53-dd95-455c-ad3b-53a2e626c708` | imagine |
 
-Next: wait. Heavy GR armor ortho still open. Hover cannon ortho open.
+Next: infantry tools / remaining ships. Heavy GR armor ortho still open.

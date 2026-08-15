@@ -500,14 +500,16 @@
           "faction": "CX",
           "view": "cinematic",
           "class": "weapon-infantry",
-          "label": "DMR"
+          "label": "DMR",
+          "manual": 38
         },
         {
           "id": "cf8e7639-1399-4544-858d-a957bb18c945",
           "faction": "CX",
           "view": "ortho",
           "class": "weapon-infantry",
-          "label": "DMR"
+          "label": "DMR",
+          "manual": 39
         }
       ]
     },
@@ -785,14 +787,16 @@
           "faction": "GR",
           "view": "cinematic",
           "class": "weapon-infantry",
-          "label": "DMR"
+          "label": "DMR",
+          "manual": 40
         },
         {
           "id": "37750a80-84c5-485c-94db-8bfddd976640",
           "faction": "GR",
           "view": "ortho",
           "class": "weapon-infantry",
-          "label": "DMR"
+          "label": "DMR",
+          "manual": 41
         }
       ]
     },
@@ -960,14 +964,16 @@
           "faction": "GR",
           "view": "cinematic",
           "class": "weapon-infantry",
-          "label": "Assault Carbine"
+          "label": "Carbine",
+          "manual": 42
         },
         {
           "id": "e09e9b53-dd95-455c-ad3b-53a2e626c708",
           "faction": "GR",
           "view": "ortho",
           "class": "weapon-infantry",
-          "label": "Assault Carbine"
+          "label": "Carbine",
+          "manual": 43
         }
       ]
     },

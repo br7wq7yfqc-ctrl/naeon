@@ -53,8 +53,8 @@ S3 Index `generations/catalog.json` is **WIPED** (2026-08-15). Do not use. Rebui
 | Assault Carbine | CX | cinematic | `cybernex_weapon_carbine` | `cdbfa627-e7cf-46c6-9738-efdc944733bd` |
 | Carbine | CX | sheet | `cybernex_weapon_carbine` | `41700055-4027-4db9-b162-8233ff2705e6` |
 | Sidearm | CX | sheet | `cybernex_sidearm` | `cb6c3686-91b2-46b2-ad58-a8299cb7ff31` |
-| Assault Carbine | GR | cinematic | `grot_weapon_carbine` | `b8e46c7f-70aa-463f-aa30-1ff714867f36` |
-| Assault Carbine | GR | ortho | `grot_weapon_carbine` | `e09e9b53-dd95-455c-ad3b-53a2e626c708` |
+| Carbine | GR | cinematic | `grot_weapon_carbine` | `b8e46c7f-70aa-463f-aa30-1ff714867f36` |
+| Carbine | GR | ortho | `grot_weapon_carbine` | `e09e9b53-dd95-455c-ad3b-53a2e626c708` |
 | DMR | CX | cinematic | `cx-dmr` | `d9115a7c-147a-4393-8ded-c5f252989328` |
 | DMR | CX | ortho | `cx-dmr` | `cf8e7639-1399-4544-858d-a957bb18c945` |
 | DMR | GR | cinematic | `gr-dmr` | `4034222f-86ee-413c-a48a-43ca948dffde` |
