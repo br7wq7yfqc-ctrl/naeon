@@ -50,6 +50,7 @@ var flight_mode: int = FlightMode.SCM
 var pilot_active: bool = true
 var _open_space: Node = null
 var _landed_pad: Node3D = null
+var _land_hint_cd: float = 0.0
 var _landing_gear: Node3D = null
 var _thruster_fx: GPUParticles3D = null
 var _cargo_hold: Node = null
@@ -422,74 +423,69 @@ func _toggle_landing() -> void:
 		_do_land()
 
 func _do_land() -> void:
-	# Permissive land gate — playable, still blocks hyper-speed crashes
+	## Honest speed/sink gate. No secret 0.35 brake. Claim is C after touchdown.
 	var spd := velocity.length()
 	var v_rad := 0.0
 	if _open_space and _open_space.has_method("gravity_at"):
 		var gg: Vector3 = _open_space.gravity_at(global_position)
 		if gg.length() > 0.01:
-			# g points planetward; sink = velocity along g (toward surface)
 			v_rad = velocity.dot(gg.normalized())
-	# Slow auto-brake before commit
-	if spd > 28.0:
-		velocity = velocity * 0.35
-		spd = velocity.length()
-		print("[Ship] Land brake → spd ", int(spd))
-	if not _Flight.land_ok(spd, v_rad, 48.0, 40.0):
-		print("[Ship] Land denied — too fast (spd=", int(spd), " sink=", int(v_rad), "). Slow / HOVER (2).")
-		_toast_ship("Slow down to land (HOVER)")
+	var max_spd := 18.0
+	var max_sink := 12.0
+	if flight_mode == FlightMode.HOVER:
+		max_spd = 24.0
+		max_sink = 16.0
+	elif flight_mode == FlightMode.NAV:
+		max_spd = 12.0
+		max_sink = 8.0
+	if not _Flight.land_ok(spd, v_rad, max_spd, max_sink):
+		_toast_ship("Land denied — spd %d sink %d  (3 HOVER, slow)" % [int(spd), int(v_rad)])
+		print("[Ship] Land denied spd=", int(spd), " sink=", int(v_rad), " mode=", flight_mode_name())
 		return
-	# Prefer pad snap within range; else surface land if altitude low
 	var pad: Node3D = null
 	if _open_space and _open_space.has_method("nearest_pad"):
 		pad = _open_space.nearest_pad(global_position)
-	if pad and pad.global_position.distance_to(global_position) <= land_pad_snap_distance:
-		_landed_pad = pad
-		# Snap above pad
+	if pad and is_instance_valid(pad) and pad.global_position.distance_to(global_position) <= land_pad_snap_distance:
+		_commit_land(pad)
+		return
+	if _open_space and _open_space.has_method("nearest_planet"):
+		var pl: Node3D = _open_space.nearest_planet(global_position)
+		if pl and pl.has_method("altitude_of") and float(pl.altitude_of(global_position)) < surface_land_alt:
+			_commit_land(null)
+			print("[Ship] Surface land near ", pl.get("planet_name"))
+			return
+	_toast_ship("Approach a pad (<%dm) or low surface" % int(land_pad_snap_distance))
+	print("[Ship] Land denied — no pad/surface in envelope")
+
+
+func _commit_land(pad: Node3D) -> void:
+	velocity = Vector3.ZERO
+	is_landed = true
+	_land_lock_t = 1.25
+	_landed_pad = pad
+	if pad:
 		var up: Vector3 = Vector3.UP
 		if pad.has_meta("pad_up"):
 			up = pad.get_meta("pad_up")
 		global_position = pad.global_position + up * 4.0
-		# Face roughly along pad
-		velocity = Vector3.ZERO
-		is_landed = true
-		_land_lock_t = 1.25
-	velocity = Vector3.ZERO
 	if _thruster_fx and is_instance_valid(_thruster_fx):
 		_thruster_fx.emitting = false
 	if AudioDirector:
 		AudioDirector.play_land()
 	if SessionObjectives:
 		SessionObjectives.on_landed_or_lane()
-		_sync_landing_gear()
-		_spawn_land_fx()
-		_set_mode(FlightMode.HOVER)
-		# Align flight plane to pad surface
-		_pitch = 0.0
-		_roll = 0.0
-		_apply_attitude()
-		landed.emit()
+	_sync_landing_gear()
+	_spawn_land_fx()
+	_set_mode(FlightMode.HOVER)
+	_pitch = 0.0
+	_roll = 0.0
+	_apply_attitude()
+	landed.emit()
+	if pad:
 		print("[Ship] Landed on pad ", pad.name)
-		_claim_nearby_pad()
-		return
-	# Surface land near planet
-	if _open_space and _open_space.has_method("nearest_planet"):
-		var pl: Node3D = _open_space.nearest_planet(global_position)
-		if pl and pl.has_method("altitude_of") and pl.altitude_of(global_position) < surface_land_alt:
-			velocity = Vector3.ZERO
-			is_landed = true
-			_land_lock_t = 1.25
-			_landed_pad = null
-			_pitch = 0.0
-			_roll = 0.0
-			_apply_attitude()
-			_sync_landing_gear()
-			_set_mode(FlightMode.HOVER)
-			landed.emit()
-			print("[Ship] Surface land near ", pl.get("planet_name"))
-			_claim_nearby_pad()
-			return
-	print("[Ship] Land denied — approach a pad (<", land_pad_snap_distance, "m) or surface")
+		_toast_ship("Landed — C to claim (soft ownership, no combat power)")
+	else:
+		_toast_ship("Surface land — C near a pad to claim")
 
 func _do_launch() -> void:
 	if not is_landed:
@@ -1413,14 +1409,14 @@ func _toast_ship(msg: String) -> void:
 	print("[Ship] ", msg)
 
 
-
-func _auto_land_assist(_delta: float) -> void:
-	## Soft snap-land when nearly stopped above pad.
+func _auto_land_assist(delta: float) -> void:
+	## Hint only — E still commits. No auto-land (honest speed gate).
+	_land_hint_cd = maxf(0.0, _land_hint_cd - delta)
 	if is_landed or not pilot_active:
 		return
-	if _land_lock_t > 0.0:
+	if velocity.length() > 8.0:
 		return
-	if velocity.length() > 10.0:
+	if flight_mode != FlightMode.HOVER:
 		return
 	if _open_space == null or not _open_space.has_method("nearest_pad"):
 		return
@@ -1428,9 +1424,11 @@ func _auto_land_assist(_delta: float) -> void:
 	if pad == null or not is_instance_valid(pad):
 		return
 	var d: float = pad.global_position.distance_to(global_position)
-	if d > 45.0:
+	if d > 28.0:
 		return
-	# Near pad + slow → commit land once
-	_do_land()
+	_sync_landing_gear()
+	if _land_hint_cd <= 0.0:
+		_land_hint_cd = 3.5
+		_toast_ship("Pad %.0fm — E land (then C claim)" % d)
 
 
