@@ -1100,6 +1100,16 @@
       "label": "Carrier",
       "position": "grot_capital_carrier",
       "manual": 2
+    },
+    {
+      "id": "2x5uF",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "ship-capital",
+      "label": "Cruiser",
+      "position": "grot_capital_cruiser",
+      "dump_key": "generations/rendered/2x5uF.jpg",
+      "manual": 3
     }
   ],
   "note": "Manual rebuild started. #001 1p69s gROT Carrier cinematic. Generations Index wiped.",

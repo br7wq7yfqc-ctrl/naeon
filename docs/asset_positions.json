@@ -1656,11 +1656,21 @@
       ],
       "locked_uuids": [
         {
+          "id": "2x5uF",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "ship-capital",
+          "label": "Cruiser",
+          "dump_key": "generations/rendered/2x5uF.jpg",
+          "manual": 3
+        },
+        {
           "id": "9633a0a4-98a5-4ea0-8cad-78798f1cbce6",
           "faction": "GR",
           "view": "cinematic",
           "class": "ship-capital",
-          "label": "Cruiser"
+          "label": "Cruiser",
+          "notes": "old UUID, file missing — not in manual catalog until verified"
         }
       ]
     },
