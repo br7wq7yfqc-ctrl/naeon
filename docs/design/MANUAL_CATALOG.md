@@ -27,5 +27,6 @@ Old `generations/catalog.json` and the visual album are **void**.
 | 020 | Cybernex Heavy fighter — cinematic | CX | cinematic | `7GPCx` | `generations/rendered/7GPCx.jpg` |
 | 021 | Cybernex Heavy fighter — ortho | CX | ortho | `f9b60ddc-94d9-4705-87dc-d784f9cb01a5` | imagine |
 | 022 | Resource badges — Knowledge / Claim / Alliance / Salvage | NEUT | icon | `6CC4f` | `generations/rendered/6CC4f.jpg` |
+| 023 | Cybernex APC gun — cinematic | CX | cinematic | `024be4f6-45a0-43fa-bc62-055f920ec7ab` | imagine |
 
 Next: wait. Heavy GR armor ortho still open.

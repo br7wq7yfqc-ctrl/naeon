@@ -71,7 +71,7 @@ APC / hover / mech guns bind to the **hull** they sit on. Tank main has no Heavy
 | Tank main | CX | ortho | `cx-tank-gun` | `f6ba51ce-9f94-44ff-84e4-aee90fa3c1bc` |
 | Tank main | GR | cinematic | `gr-tank-gun` | `ce213a7c-d304-4a32-98c1-0a404c2bc7c9` |
 | Tank main | GR | ortho | `gr-tank-gun` | `e996c312-7056-4d6c-9bf2-435f12155119` |
-| APC autocannon/EW | CX | cinematic | `cybernex_apc` | `024be4f6-45a0-43fa-bc62-055f920ec7ab` |
+| APC gun | CX | cinematic | `cybernex_apc` | `024be4f6-45a0-43fa-bc62-055f920ec7ab` |
 | APC autocannon/EW | CX | ortho | `cybernex_apc` | `a077f3ce-615f-4bb3-bdc7-5bbfcb5bc859` |
 | APC autocannon/infection | GR | cinematic | `grot_apc` | `02dfbd93-d19f-4230-85cd-97840f0db3de` |
 | APC autocannon/infection | GR | ortho | `grot_apc` | `a722bad1-3db4-444c-ad6a-1abd2641d401` |
