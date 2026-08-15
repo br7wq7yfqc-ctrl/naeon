@@ -140,18 +140,41 @@ func _apply_effect(caster: Node, _target) -> void:
 
 func _apply_hacking(caster: Node) -> void:
 	var hit: Dictionary = _ray_query(caster, range)
-	if hit.is_empty():
-		print("[Hacking] No target in range")
-		return
-	var col_v: Variant = hit.get("collider")
-	var col: Node = col_v as Node
-	var target: Node = _find_hackable(col)
+	var target: Node = null
+	var hit_pos: Vector3 = caster.global_position if caster is Node3D else Vector3.ZERO
+	if not hit.is_empty():
+		var col_v: Variant = hit.get("collider")
+		var col: Node = col_v as Node
+		target = _find_hackable(col)
+		hit_pos = hit.get("position", hit_pos)
+		if target == null:
+			print("[Hacking] Hit non-hackable: ", col)
+	if target == null:
+		target = _nearest_hack_pad(caster)
 	if target:
 		target.on_hacked(caster, damage)
 	else:
-		print("[Hacking] Hit non-hackable: ", col)
-	var hit_pos: Vector3 = hit.get("position", caster.global_position)
-	_spawn_beam(caster, hit_pos, Color(1.0, 0.2, 0.55))
+		print("[Hacking] No target in range")
+	if caster is Node3D:
+		_spawn_beam(caster, hit_pos, Color(1.0, 0.2, 0.55))
+
+
+func _nearest_hack_pad(caster: Node) -> Node:
+	if caster == null or not (caster is Node3D) or caster.get_tree() == null:
+		return null
+	var origin: Vector3 = (caster as Node3D).global_position
+	var best: Node = null
+	var best_d := self.range
+	for n in caster.get_tree().get_nodes_in_group("pad_bases"):
+		if n == null or not is_instance_valid(n) or not (n is Node3D):
+			continue
+		if not n.has_method("on_hacked"):
+			continue
+		var d: float = origin.distance_to((n as Node3D).global_position)
+		if d < best_d:
+			best = n
+			best_d = d
+	return best
 
 func _find_hackable(node: Node) -> Node:
 	if node == null:

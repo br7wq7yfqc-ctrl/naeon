@@ -67,12 +67,18 @@ func _find_target() -> Node3D:
 	var best: Node3D = null
 	var best_d: float = aggro_range
 	var candidates: Array = []
-	if target_player and faction == "gROT":
-		var p: Node = SoftScanCache.get_player() if SoftScanCache else get_tree().get_first_node_in_group("player")
-		if p:
+	var p: Node = SoftScanCache.get_player() if SoftScanCache else (get_tree().get_first_node_in_group("player") if get_tree() else null)
+	if p != null and is_instance_valid(p):
+		var pf := ""
+		if p.has_method("get_faction"):
+			pf = str(p.get_faction())
+		if pf != faction:
 			candidates.append(p)
-	else:
-		candidates = SoftScanCache.get_enemies() if SoftScanCache else get_tree().get_nodes_in_group("enemy")
+	if target_player and faction == "gROT" and p != null and not candidates.has(p):
+		candidates.append(p)
+	var extras: Array = SoftScanCache.get_enemies() if SoftScanCache else (get_tree().get_nodes_in_group("enemy") if get_tree() else [])
+	for n in extras:
+		candidates.append(n)
 	for n in candidates:
 		if n == self or not is_instance_valid(n) or not (n is Node3D):
 			continue
@@ -107,8 +113,18 @@ func on_hacked(caster: Node, amount: float = 1.0) -> void:
 	take_damage(amount * 8.0)
 	if caster and caster.has_method("get_faction"):
 		faction = str(caster.get_faction())
-		target_player = faction == "gROT"
+		target_player = faction != _player_faction()
 		_update_label()
+	var pnode := get_parent()
+	if pnode and pnode.has_method("on_hacked"):
+		pnode.on_hacked(caster, amount * 0.5)
+
+
+func _player_faction() -> String:
+	var p: Node = SoftScanCache.get_player() if SoftScanCache else null
+	if p and p.has_method("get_faction"):
+		return str(p.get_faction())
+	return "Cybernex"
 
 func get_faction() -> String:
 	return faction

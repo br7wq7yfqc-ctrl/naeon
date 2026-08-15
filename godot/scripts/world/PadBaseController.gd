@@ -22,9 +22,22 @@ var _base_fov: float = 70.0
 var _claim_cd: float = 0.0
 var _harvest_fx_cd: float = 0.0
 var _harvest_accum_fx: float = 0.0
+var _contest_side: String = ""
+var _guard: Node3D = null
+var _occupy_in_t: float = 0.0
+var _occupy_label_t: float = 0.0
+var _seeding: bool = false
+
+const CLAIM_NEED := 1.75
+const OCCUPY_RATE := 0.32
+const GUARD_RATE := 0.18
+const DECAY_RATE := 0.16
+const PULSE_STR := 0.38
+const HACK_STR := 0.22
 
 func _ready() -> void:
 	add_to_group("pad_base")
+	add_to_group("hackable")
 	call_deferred("_ensure_claim_beacon")
 	ownership = OwnershipData.new()
 	ownership.object_id = "%s/%s" % [get_parent().name if get_parent() else "pad", name]
@@ -38,7 +51,9 @@ func _ready() -> void:
 	add_child(_contest_ring)
 	await get_tree().create_timer(0.4).timeout
 	if ownership.current_faction == OwnershipData.Faction.NEUTRAL:
+		_seeding = true
 		claim(default_faction, 0.5)
+		_seeding = false
 
 func _ensure_label() -> void:
 	_label = Label3D.new()
@@ -61,7 +76,8 @@ func _process(delta: float) -> void:
 			swap_cluster_theme(ownership.faction_name())
 			_update_city_density()
 			_refresh_label()
-	if running and ownership and ownership.is_fully_owned():
+	_tick_occupy(delta)
+	if running and ownership and ownership.is_fully_owned() and _status != "contested":
 		_tick_harvest(delta)
 	_try_player_claim()
 	_try_pad_scan()
@@ -81,8 +97,8 @@ func _try_player_claim() -> void:
 		fac = str(actor.get_faction())
 	elif GameManager:
 		fac = GameManager.get_faction_name()
-	claim(fac, 1.0)
-	_claim_cd = 0.7
+	claim(fac, PULSE_STR)
+	_claim_cd = 0.85
 
 func _find_actor() -> Node3D:
 	_actor_cache_t -= get_process_delta_time() if is_inside_tree() else 0.0
@@ -107,95 +123,267 @@ func _find_actor() -> Node3D:
 	return null
 
 func claim(faction_name: String, strength: float = 1.0) -> void:
+	_nudge_claim(faction_name, strength, true)
+
+
+func on_hacked(caster: Node, amount: float = 1.0) -> void:
+	var fac := "Cybernex"
+	if caster and caster.has_method("get_faction"):
+		fac = str(caster.get_faction())
+	elif GameManager:
+		fac = GameManager.get_faction_name()
+	_nudge_claim(fac, HACK_STR + maxf(amount, 0.0) * 0.04, true)
+
+
+func get_contest_side() -> String:
+	return _contest_side
+
+
+func get_claim_need() -> float:
+	return CLAIM_NEED
+
+
+func _tick_occupy(delta: float) -> void:
 	if ownership == null:
 		return
-	var f: OwnershipData.Faction = OwnershipData.from_string(faction_name)
-	var cur := ownership.current_faction
-	if cur != OwnershipData.Faction.NEUTRAL and cur != OwnershipData.Faction.CONTESTED and f != cur and f != OwnershipData.Faction.NEUTRAL:
-		ownership.previous_faction = cur
-		ownership.current_faction = OwnershipData.Faction.CONTESTED
-		ownership.transition_progress = 0.35
-		ownership.claim_strength += strength * 0.5
-		_status = "contested"
-		_set_contested_ring(true)
-		_apply_faction_visual()
-		_refresh_label()
-		if SessionObjectives:
-			SessionObjectives.on_claim_or_obj()
-		if AudioDirector:
-			if AudioDirector.has_method("play_contest"):
-				AudioDirector.play_contest()
-			else:
-				AudioDirector.play_claim()
-		if CombatJuice:
-			CombatJuice.hit_feedback(6.0, global_position, false)
-		_spawn_claim_fx(Color(1.0, 0.55, 0.15))
-		if _contest_ring and _contest_ring.has_method("pulse"):
-			_contest_ring.pulse()
-		claimed.emit("Contested")
-		print("[PadBase] CONTESTED ", ownership.previous_faction, " vs ", f, " @ ", name)
-		_notify_hud("CONTESTED — Dynamic Ownership open. Soft Knowledge only.")
-		var ic: String = _SoftK.intercept_claim_toast(faction_name)
-		if ic != "":
-			_notify_hud(ic)
-		var tip: String = _SoftK.structure_tip(ownership.faction_name() if ownership else "")
-		if tip != "":
-			_notify_hud(tip)
+	var actor := _find_actor()
+	var in_zone := actor != null and is_instance_valid(actor) \
+		and actor.global_position.distance_to(global_position) <= claim_radius
+	var pfac := "Cybernex"
+	if in_zone:
+		if actor.has_method("get_faction"):
+			pfac = str(actor.get_faction())
+		elif GameManager:
+			pfac = GameManager.get_faction_name()
+	var hostile := ownership.is_fully_owned() and ownership.faction_name() != pfac
+	if in_zone:
+		_occupy_in_t += delta
+		if _occupy_in_t >= 0.35:
+			var same_hold := ownership.is_fully_owned() and ownership.faction_name() == pfac
+			if not same_hold:
+				_nudge_claim(pfac, OCCUPY_RATE * delta, false)
+		if hostile or _status == "contested":
+			_ensure_guard()
+	else:
+		_occupy_in_t = 0.0
+		if _status == "contested":
+			_decay_contest(delta)
+	if in_zone and _guard_alive():
+		var gf := ""
+		if _guard.has_method("get_faction"):
+			gf = str(_guard.get_faction())
+		if gf != "" and gf != "Neutral":
+			_nudge_claim(gf, GUARD_RATE * delta, false)
+	if ownership.is_fully_owned() and _status != "contested":
+		_clear_guard()
+	_occupy_label_t += delta
+	if _occupy_label_t >= 0.35:
+		_occupy_label_t = 0.0
+		if _status == "contested":
+			_refresh_label()
+			_set_contested_ring(true)
+
+
+func _decay_contest(delta: float) -> void:
+	if ownership == null or ownership.current_faction != OwnershipData.Faction.CONTESTED:
 		return
-	if ownership.current_faction == OwnershipData.Faction.CONTESTED:
-		ownership.claim_strength += strength
-		if ownership.claim_strength >= 1.75:
-			ownership.start_transition(f)
-			ownership.claim_strength = 0.0
-			_status = "claiming"
-			_set_contested_ring(false)
-			if AudioDirector:
-				AudioDirector.play_claim()
-			if CombatJuice:
-				CombatJuice.hit_feedback(10.0, global_position, true)
-			var win_c := Color(0.15, 0.85, 1.0)
-			if faction_name == "gROT":
-				win_c = Color(0.95, 0.12, 0.42)
-			_spawn_claim_fx(win_c)
-			_notify_hud("Claim locked → transition · soft economy only")
-			_claim_pylon_pulse(true)
+	ownership.claim_strength = maxf(0.0, ownership.claim_strength - DECAY_RATE * delta)
+	if ownership.claim_strength > 0.02:
+		return
+	var prev: OwnershipData.Faction = ownership.previous_faction
+	_contest_side = ""
+	_clear_guard()
+	if prev == OwnershipData.Faction.NEUTRAL or prev == OwnershipData.Faction.CONTESTED:
+		ownership.current_faction = OwnershipData.Faction.NEUTRAL
+		ownership.claim_strength = 0.0
+		_status = "unclaimed"
+		_set_contested_ring(false)
+	else:
+		ownership.current_faction = prev
+		ownership.transition_progress = 1.0
+		ownership.claim_strength = 0.0
+		_status = "owned"
+		_set_contested_ring(false)
+	_apply_faction_visual()
+	_refresh_label()
+	print("[PadBase] contest decayed → ", ownership.faction_name(), " @ ", name)
+
+
+func _nudge_claim(faction_name: String, amount: float, noisy: bool) -> void:
+	if ownership == null or amount <= 0.0005:
+		return
+	var f: OwnershipData.Faction = OwnershipData.from_string(faction_name)
+	if f == OwnershipData.Faction.NEUTRAL or f == OwnershipData.Faction.CONTESTED:
+		return
+	var cur := ownership.current_faction
+	if cur == OwnershipData.Faction.NEUTRAL:
+		_meter_toward(faction_name, amount)
+		if ownership.claim_strength >= 0.45:
+			_lock_to(f, noisy)
+		elif noisy:
+			_pulse_feedback(false)
+			_notify_hud("CLAIM %.0f%% — occupy the ring" % (ownership.claim_strength / 0.45 * 100.0))
+		return
+	if ownership.is_fully_owned() and cur == f:
+		if noisy:
+			_notify_hud("Pad held by %s — stay in zone to harvest" % faction_name)
+		return
+	if ownership.is_fully_owned() and cur != f:
+		_open_contest(f, faction_name, amount)
+		return
+	if cur == OwnershipData.Faction.CONTESTED:
+		_meter_toward(faction_name, amount)
+		if ownership.claim_strength >= CLAIM_NEED:
+			_lock_to(f, true)
 		else:
 			_status = "contested"
-			_set_contested_ring(true)
-			if AudioDirector and AudioDirector.has_method("play_claim_pulse"):
-				AudioDirector.play_claim_pulse()
-			elif AudioDirector:
-				AudioDirector.play_ui()
-			if _contest_ring and _contest_ring.has_method("pulse"):
-				_contest_ring.pulse()
-			_spawn_claim_fx(Color(1.0, 0.6, 0.2))
-			_notify_hud("CLAIM PULSE %.2f / 1.75 — stay in zone, C again" % ownership.claim_strength)
-			_claim_pylon_pulse()
-		_apply_faction_visual()
-		_refresh_label()
-		claimed.emit(ownership.faction_name())
-		_bind_layer_claim()
+			if noisy:
+				_pulse_feedback(false)
+				_notify_hud("OCCUPY %.0f%% → %s  ·  C pulse / Hack" % [
+					clampf(ownership.claim_strength / CLAIM_NEED, 0.0, 1.0) * 100.0,
+					_contest_side,
+				])
+			_bind_layer_claim()
 		return
-	ownership.claim_strength += strength
+	# In-progress transition toward another faction
+	if cur != f:
+		_open_contest(f, faction_name, amount)
+
+
+func _meter_toward(faction_name: String, amount: float) -> void:
+	if _contest_side == "" or _contest_side == faction_name:
+		_contest_side = faction_name
+		ownership.claim_strength += amount
+	else:
+		ownership.claim_strength -= amount
+		if ownership.claim_strength <= 0.0:
+			_contest_side = faction_name
+			ownership.claim_strength = absf(ownership.claim_strength)
+
+
+func _open_contest(f: OwnershipData.Faction, faction_name: String, amount: float) -> void:
+	ownership.previous_faction = ownership.current_faction
+	ownership.current_faction = OwnershipData.Faction.CONTESTED
+	ownership.transition_progress = 0.35
+	_contest_side = faction_name
+	ownership.claim_strength = maxf(amount, 0.05)
+	_status = "contested"
+	_set_contested_ring(true)
+	_apply_faction_visual()
+	_refresh_label()
+	_ensure_guard()
+	if SessionObjectives and not _seeding:
+		SessionObjectives.on_claim_or_obj()
+	if _seeding:
+		claimed.emit("Contested")
+		return
+	if AudioDirector:
+		if AudioDirector.has_method("play_contest"):
+			AudioDirector.play_contest()
+		else:
+			AudioDirector.play_claim()
+	if CombatJuice:
+		CombatJuice.hit_feedback(6.0, global_position, false)
+	_spawn_claim_fx(Color(1.0, 0.55, 0.15))
+	if _contest_ring and _contest_ring.has_method("pulse"):
+		_contest_ring.pulse()
+	claimed.emit("Contested")
+	print("[PadBase] CONTESTED ", ownership.previous_faction, " vs ", f, " @ ", name)
+	_notify_hud("CONTESTED — occupy the ring · C pulse · Hack (soft, no P2W)")
+	var ic: String = _SoftK.intercept_claim_toast(faction_name)
+	if ic != "":
+		_notify_hud(ic)
+	var tip: String = _SoftK.structure_tip(ownership.faction_name() if ownership else "")
+	if tip != "":
+		_notify_hud(tip)
+
+
+func _lock_to(f: OwnershipData.Faction, noisy: bool) -> void:
 	ownership.start_transition(f)
+	ownership.claim_strength = 0.0
+	_contest_side = ""
 	_status = "claiming"
 	_set_contested_ring(false)
+	_clear_guard()
 	_apply_faction_visual()
 	_refresh_label()
 	_update_city_density()
-	if SessionObjectives:
+	if SessionObjectives and not _seeding:
 		SessionObjectives.on_claim_or_obj()
-	if AudioDirector:
-		AudioDirector.play_claim()
-	if CombatJuice:
-		CombatJuice.hit_feedback(12.0, global_position, true)
+	if noisy and not _seeding:
+		if AudioDirector:
+			AudioDirector.play_claim()
+		if CombatJuice:
+			CombatJuice.hit_feedback(12.0, global_position, true)
+		_claim_pylon_pulse(true)
+		var win_c := Color(0.15, 0.85, 1.0) if ownership.faction_name() == "Cybernex" else Color(0.95, 0.12, 0.42)
+		_spawn_claim_fx(win_c)
+		_notify_hud("Claim locked → %s. Harvest = Contribution (no combat power)." % ownership.faction_name())
 	claimed.emit(ownership.faction_name())
 	_bind_layer_claim()
-	_notify_hud("Claim resolved → %s. Harvest = Contribution (no combat power)." % ownership.faction_name())
-	var ccol := Color(0.15, 0.85, 1.0) if ownership.faction_name() == "Cybernex" else Color(0.95, 0.12, 0.42)
-	_spawn_claim_fx(ccol)
 	call_deferred("_ensure_claim_beacon")
 	print("[PadBase] claim → ", ownership.faction_name(), " @ ", name)
+
+
+func _pulse_feedback(strong: bool) -> void:
+	if AudioDirector and AudioDirector.has_method("play_claim_pulse"):
+		AudioDirector.play_claim_pulse()
+	elif AudioDirector:
+		AudioDirector.play_ui()
+	if _contest_ring and _contest_ring.has_method("pulse"):
+		_contest_ring.pulse()
+	_spawn_claim_fx(Color(1.0, 0.6, 0.2))
+	_claim_pylon_pulse(strong)
+
+
+func _guard_alive() -> bool:
+	if _guard == null or not is_instance_valid(_guard):
+		return false
+	if "_alive" in _guard and not bool(_guard._alive):
+		return false
+	return true
+
+
+func _ensure_guard() -> void:
+	if _guard_alive():
+		return
+	if DisplayServer.get_name() == "headless":
+		return
+	var fac := "gROT"
+	if ownership:
+		if ownership.is_fully_owned():
+			fac = ownership.faction_name()
+		elif ownership.previous_faction == OwnershipData.Faction.GROT:
+			fac = "gROT"
+		elif ownership.previous_faction == OwnershipData.Faction.CYBERNEX:
+			fac = "Cybernex"
+		elif default_faction != "":
+			fac = default_faction
+	if fac == "Contested" or fac == "Neutral":
+		fac = "gROT"
+	var t := Node3D.new()
+	t.name = "PadContestGuard"
+	t.set_script(preload("res://scripts/combat/Turret.gd"))
+	t.set("faction", fac)
+	t.set("target_player", true)
+	t.set("aggro_range", 38.0)
+	t.set("fire_rate", 1.25)
+	t.set("damage", 5.0)
+	add_child(t)
+	t.position = Vector3(9.0, 1.15, 7.0)
+	if t.is_in_group("ally"):
+		t.remove_from_group("ally")
+	t.add_to_group("enemy")
+	if SoftScanCache:
+		SoftScanCache.invalidate_enemies()
+	_guard = t
+	print("[PadBase] contest guard ", fac, " @ ", name)
+
+
+func _clear_guard() -> void:
+	if _guard != null and is_instance_valid(_guard):
+		_guard.queue_free()
+	_guard = null
 
 func _tick_harvest(delta: float) -> void:
 	if crystal_reserves <= 0.0:
@@ -254,9 +442,14 @@ func _tint_recursive(n: Node, col: Color, t: float) -> void:
 func _refresh_label() -> void:
 	if _label == null or ownership == null:
 		return
-	_label.text = "BASE %s\n%s  %s\nEXT %.0f / R%.0f" % [
+	var meter := ""
+	if _status == "contested" and _contest_side != "":
+		var pct := int(clampf(ownership.claim_strength / CLAIM_NEED, 0.0, 1.0) * 100.0)
+		meter = " → %s %d%%" % [_contest_side, pct]
+	_label.text = "BASE %s\n%s%s  %s\nEXT %.0f / R%.0f" % [
 		ownership.faction_name().to_upper(),
 		_status,
+		meter,
 		GameManager.economy_label() if GameManager else "—",
 		total_extracted,
 		crystal_reserves,
@@ -273,6 +466,10 @@ func _refresh_label() -> void:
 
 func get_claim_status() -> String:
 	return _status
+
+
+func get_faction() -> String:
+	return ownership.faction_name() if ownership else "Neutral"
 
 func swap_cluster_theme(faction_name: String) -> void:
 	var cluster := get_parent()

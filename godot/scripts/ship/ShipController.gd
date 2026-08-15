@@ -748,7 +748,7 @@ func _claim_nearby_pad() -> void:
 				best_d = d
 				best = n
 	if best and best.has_method("claim"):
-		best.claim(faction, 1.25)
+		best.claim(faction, 0.5)
 		print("[Ship] Pad claim pulse → ", faction)
 
 func get_faction() -> String:

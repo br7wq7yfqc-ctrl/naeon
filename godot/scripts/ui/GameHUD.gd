@@ -609,12 +609,25 @@ func _refresh() -> void:
 				var d: float = (_player as Node3D).global_position.distance_to((n as Node3D).global_position)
 				if d < best_d:
 					best_d = d
-					var st := str(n.get("_status")) if "_status" in n else ""
+					var need := 1.75
+					if n.has_method("get_claim_need"):
+						need = float(n.get_claim_need())
+					var st := ""
+					if n.has_method("get_claim_status"):
+						st = str(n.get_claim_status())
+					elif "_status" in n:
+						st = str(n.get("_status"))
 					var cs := 0.0
 					if "ownership" in n and n.ownership:
 						cs = float(n.ownership.claim_strength)
-					claim_ratio = clampf(cs / 2.0, 0.0, 1.0)
-					best_txt = "PAD %s  %s  claim %.0f%%  (%.0fm)" % [n.get_faction(), st, claim_ratio * 100.0, d]
+					claim_ratio = clampf(cs / maxf(need, 0.01), 0.0, 1.0)
+					var side := ""
+					if n.has_method("get_contest_side"):
+						side = str(n.get_contest_side())
+					if side != "" and st == "contested":
+						best_txt = "PAD %s  occupy→%s %d%%  (%.0fm)" % [n.get_faction(), side, int(claim_ratio * 100.0), d]
+					else:
+						best_txt = "PAD %s  %s  claim %.0f%%  (%.0fm)" % [n.get_faction(), st, claim_ratio * 100.0, d]
 					if st == "contested" or str(n.get_faction()) == "Contested":
 						contested_near = true
 		nearest = best_txt
@@ -634,7 +647,7 @@ func _refresh() -> void:
 		_contest_banner.visible = contested_near
 		if contested_near:
 			var pulse := 0.55 + 0.45 * sin(Time.get_ticks_msec() * 0.01)
-			_contest_label.text = "CONTESTED OWNERSHIP  —  press C to contest  ·  claim %d%%" % int(claim_ratio * 100.0)
+			_contest_label.text = "CONTESTED — occupy to hold · C pulse · Hack  ·  %d%%" % int(claim_ratio * 100.0)
 			var st := _contest_banner.get_theme_stylebox("panel") as StyleBoxFlat
 			if st:
 				st.bg_color = Color(0.55, 0.18, 0.04, 0.55 + pulse * 0.35)
