@@ -23,3 +23,4 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 6. LayerContext.site_pin_id on Space + Arena + pad claim
 7. PadAmbientLife / rover chassis quotes restored (parse blockers)
 8. Infection HUD always 5 pips
+9. Procedural Cybernex/gROT hero + dummy silhouettes when GLB missing (code-first, dual-theme)

@@ -1,6 +1,7 @@
 extends CharacterBody3D
 class_name CombatDummy
 const _AP = preload("res://scripts/assets/AssetPaths.gd")
+const _ProcSil = preload("res://scripts/player/ProceduralHeroSilhouette.gd")
 
 ## Trainable combat target for TestArena. Takes damage, optional aggro fire.
 
@@ -225,31 +226,44 @@ func try_load_drone() -> void:
 	var path: String = _AP.resolve("characters/grot_infector/grot_infector_grot_lod0.glb")
 	if not FileAccess.file_exists(path):
 		path = _AP.resolve("characters/grot_thrall/grot_thrall_grot_lod0.glb")
-	if not FileAccess.file_exists(path):
-		return
-	var doc := GLTFDocument.new()
-	var state := GLTFState.new()
-	if doc.append_from_file(path, state) != OK:
-		return
-	var root := doc.generate_scene(state)
-	if root == null:
-		return
+	if path != "" and FileAccess.file_exists(path):
+		var doc := GLTFDocument.new()
+		var state := GLTFState.new()
+		if doc.append_from_file(path, state) == OK:
+			var root := doc.generate_scene(state)
+			if root != null:
+				if mesh:
+					mesh.visible = false
+				add_child(root)
+				root.name = "DroneGLB"
+				root.scale = Vector3.ONE * 0.9
+				print("[CombatDummy] drone mesh loaded")
+				return
+	_ProcSil.attach(self, "Infector" if faction == "gROT" else "Canine", faction, true)
 	if mesh:
 		mesh.visible = false
-	add_child(root)
-	root.name = "DroneGLB"
-	root.scale = Vector3.ONE * 0.9
-	print("[CombatDummy] drone mesh loaded")
+	print("[CombatDummy] procedural silhouette ", faction)
+
+
+func _visual_root() -> Node3D:
+	var g := get_node_or_null("FormGLB") as Node3D
+	if g:
+		return g
+	var d := get_node_or_null("DroneGLB") as Node3D
+	if d:
+		return d
+	return mesh
 
 
 
 func _hit_pop(amount: float) -> void:
-	if mesh == null or not is_instance_valid(mesh):
+	var vis := _visual_root()
+	if vis == null or not is_instance_valid(vis):
 		return
-	var base := mesh.scale
+	var base := vis.scale
 	var tw := get_tree().create_tween()
-	tw.tween_property(mesh, "scale", base * 1.12, 0.05)
-	tw.tween_property(mesh, "scale", base, 0.12)
+	tw.tween_property(vis, "scale", base * 1.12, 0.05)
+	tw.tween_property(vis, "scale", base, 0.12)
 	if _mat:
 		_mat.emission_energy_multiplier = 2.8 if amount >= 20.0 else 1.8
 		get_tree().create_timer(0.1).timeout.connect(func():

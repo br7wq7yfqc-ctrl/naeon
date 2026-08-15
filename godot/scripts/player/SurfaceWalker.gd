@@ -8,6 +8,7 @@ const _FormFX = preload("res://scripts/player/FormSwitchFX.gd")
 ## Used for OpenSpace exit (not flat-world PlayerController).
 
 const _AP = preload("res://scripts/assets/AssetPaths.gd")
+const _ProcSil = preload("res://scripts/player/ProceduralHeroSilhouette.gd")
 
 @export var speed: float = 6.5
 @export var sprint_mult: float = 1.75
@@ -216,6 +217,16 @@ func _load_form_visual() -> void:
 			path = p
 			break
 	if path == "":
+		if DisplayServer.get_name() != "headless" and _visual:
+			var old_p = _visual.get_node_or_null("FormGLB")
+			if old_p:
+				old_p.name = "_FormGLBDead"
+				old_p.queue_free()
+			_ProcSil.attach(_visual, form_name, faction, false)
+			if _body_mesh:
+				_body_mesh.visible = false
+			if _limb_rig:
+				_limb_rig.visible = false
 		return
 	var doc := GLTFDocument.new()
 	var state := GLTFState.new()
@@ -558,6 +569,7 @@ func _cycle_form() -> void:
 	# reload visual
 	var old = _visual.get_node_or_null("FormGLB") if _visual else null
 	if old:
+		old.name = "_FormGLBDead"
 		old.queue_free()
 	if _body_mesh:
 		_body_mesh.visible = true
@@ -702,6 +714,7 @@ func toggle_faction() -> void:
 		ab.setup_default_loadout(faction)
 	var old = _visual.get_node_or_null("FormGLB") if _visual else null
 	if old:
+		old.name = "_FormGLBDead"
 		old.queue_free()
 	if _body_mesh:
 		_body_mesh.visible = true

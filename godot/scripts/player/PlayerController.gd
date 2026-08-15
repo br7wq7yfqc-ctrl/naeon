@@ -6,6 +6,7 @@ const _FormAnim = preload("res://scripts/player/FormAnimator.gd")
 const _FormFX = preload("res://scripts/player/FormSwitchFX.gd")
 var _form_skel: Skeleton3D = null
 const _ProcLoco = preload("res://scripts/player/ProceduralLocomotion.gd")
+const _ProcSil = preload("res://scripts/player/ProceduralHeroSilhouette.gd")
 
 ## TPS controller — robust WASD (InputMap + physical/keycode fallback).
 
@@ -367,15 +368,28 @@ func try_load_form_mesh() -> void:
 			path = p
 			break
 	if path == "":
-		if body_mesh:
+		_clear_form_glb()
+		if DisplayServer.get_name() != "headless":
+			_ProcSil.attach(self, current_form, faction, false)
+			if body_mesh:
+				body_mesh.visible = false
+		elif body_mesh:
 			body_mesh.visible = true
+		if _loco:
+			_loco.reset_base()
 		return
 	_clear_form_glb()
 	var doc := GLTFDocument.new()
 	var state := GLTFState.new()
 	if doc.append_from_file(path, state) != OK:
-		if body_mesh:
+		if DisplayServer.get_name() != "headless":
+			_ProcSil.attach(self, current_form, faction, false)
+			if body_mesh:
+				body_mesh.visible = false
+		elif body_mesh:
 			body_mesh.visible = true
+		if _loco:
+			_loco.reset_base()
 		return
 	var root := doc.generate_scene(state)
 	if root == null:
@@ -435,4 +449,5 @@ func _strip_colliders(n: Node) -> void:
 func _clear_form_glb() -> void:
 	var old := get_node_or_null("FormGLB")
 	if old:
+		old.name = "_FormGLBDead"
 		old.queue_free()
