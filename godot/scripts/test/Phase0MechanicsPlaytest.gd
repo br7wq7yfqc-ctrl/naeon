@@ -342,11 +342,13 @@ func _go() -> void:
 			else:
 				w_st.global_position = cv_st.global_position
 				await get_tree().process_frame
+				await get_tree().process_frame
+				var used_v := false
 				if d_st.has_method("try_use_console"):
-					d_st.try_use_console()
+					used_v = bool(d_st.try_use_console())
 				var ls1 := str(d_st.life_support_line()) if d_st.has_method("life_support_line") else ""
-				print("[Playtest] station vented ls=", ls1, " recycler=", d_st.recycler_on() if d_st.has_method("recycler_on") else "?")
-				if ls1.find("VENTED") < 0 and ls1.find("POWER IDLE") < 0:
+				print("[Playtest] station vented used=", used_v, " ls=", ls1, " recycler=", d_st.recycler_on() if d_st.has_method("recycler_on") else "?")
+				if not used_v or (ls1.find("VENTED") < 0 and ls1.find("POWER IDLE") < 0):
 					fails.append("station E did not vent recycler")
 				await get_tree().create_timer(0.55).timeout
 				if d_st.has_method("try_use_console"):

@@ -142,6 +142,12 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 
 	_kind = kind
 	_player = player
+	_console_cd = 0.0
+	_console_hint_t = 0.0
+	if kind == "station":
+		_recycler_on = true
+	else:
+		_recycler_on = true
 	_return_up = ret_up.normalized() if ret_up.length_squared() > 0.01 else Vector3.UP
 	_return_pos = ret_pos + _return_up * 4.0
 	_active = interior
@@ -427,7 +433,7 @@ func try_use_console() -> bool:
 	if not is_near_console(_player):
 		return false
 	if _console_cd > 0.0:
-		return true
+		return false
 	_console_cd = 0.5
 	_refresh_life_support()
 	if _kind == "station":
