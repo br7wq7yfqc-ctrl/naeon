@@ -1,10 +1,10 @@
 # NAEON — Approved sketch catalog
 
-**Version:** 1.19 · **Updated:** 2026-08-15  
+**Version:** 1.20 · **Updated:** 2026-08-15  
 **Rule:** this file lists **locked only**. In-review / draft / dump do not belong here.
 
 Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **131 positions, 213 sheets**.  
-Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **63 UUID + 58 dump IDs**, none invented.
+Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **64 UUID + 58 dump IDs**, none invented.
 
 Bucket: `s3://neon/generations/canon/{class}/{id}/master.jpg`  
 Grok: `https://assets.grok.com/users/77c65418-d257-47c3-8504-4540b6e0a754/generated/{UUID}/image.jpg`
@@ -15,7 +15,7 @@ S3 Index `generations/catalog.json` is **not** in git and is not patched by this
 |--------|------:|
 | Positions after OCR merge + Index keys + batch 20 | 131 |
 | Bound sheets (invariant) | 213 |
-| Locked UUID | 63 |
+| Locked UUID | 64 |
 | Dump file IDs rebound (existing neon files) | 58 |
 | Chat-lock still `file_id` null | 0 |
 | UUID with no position | 0 |
@@ -119,7 +119,8 @@ APC / hover / mech guns bind to the **hull** they sit on. Tank main has no Heavy
 | Support | CX | ortho | `cybernex_support` | `7c53217f-5bf1-4dc3-80be-dfe7612e997c` |
 | Stealth | CX | cinematic | `cybernex_stealth` | `33ad6f0c-b9cc-427a-ab4f-aee596b91b10` |
 | Stealth | CX | ortho | `cybernex_stealth` | `70a6d3e1-8cc9-4df4-9fe8-747b00704eff` |
-| Scout | GR | cinematic | `grot_scout` | `a034a27c-8a70-46f8-93c7-abebdcef50b1` |
+| Scout | GR | cinematic | `grot_scout` | `19addf56-5247-4cb8-8a22-d65d5ca49fc3` |
+| Scout | GR | ortho | `grot_scout` | `9cf29ba4-8ced-447d-b483-be86b1188f58` |
 
 `8b074991` and ortho `93a363a3` rejected (fighter). Bomber `c76ccb6f` and noisy first pass (`b88f2e19`, `d0b8899a`, `ea61b36d`) rejected. Support rejected: `0735138d` (A), `0fdb14fa` (iroquois), `71cd1130` (wrong silhouette), `3bf43918` (no devices), `181ba89a` (ridge), `0259484b` (belly dish), `cab4e36b` (old hull ortho).
 
@@ -150,7 +151,7 @@ Verified against the plate before bind.
 | Bomber | CX | cinematic + ortho | `cybernex_bomber` | `6c3799b6` / `78162909` (UUID, §A) |
 | Bomber | GR | cinematic | `grot_bomber` | `JJUvM` |
 | Scout | CX | cinematic | `cybernex_scout_single_seat_recon_light` | `kGA5q` |
-| Scout | GR | cinematic | `grot_scout` | `a034a27c` (UUID, §A) |
+| Scout | GR | cinematic + ortho | `grot_scout` | `19addf56` / `9cf29ba4` (UUID, §A) |
 | Stealth | CX | cinematic + ortho | `cybernex_stealth` | `33ad6f0c` / `70a6d3e1` (UUID, §A; from dump `LsBZ6`) |
 | Stealth (class) | NEUT | ortho | `stealth_ship` | `LEThZ` |
 | Interceptor | CX | cinematic | `cybernex_interceptor` | `QdM8V` |

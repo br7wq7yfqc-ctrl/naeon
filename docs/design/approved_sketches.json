@@ -1,5 +1,5 @@
 {
-  "version": "1.18",
+  "version": "1.19",
   "updated": "2026-08-15",
   "rule": "locked only",
   "user": "77c65418-d257-47c3-8504-4540b6e0a754",
@@ -1035,16 +1035,27 @@
       "batch": 20
     },
     {
-      "id": "a034a27c-8a70-46f8-93c7-abebdcef50b1",
+      "id": "19addf56-5247-4cb8-8a22-d65d5ca49fc3",
       "faction": "GR",
       "view": "cinematic",
+      "class": "ship-single",
+      "label": "Scout",
+      "position": "grot_scout",
+      "batch": 20,
+      "supersedes": "a034a27c-8a70-46f8-93c7-abebdcef50b1",
+      "notes": "tail made symmetric to match ortho 9cf29ba4"
+    },
+    {
+      "id": "9cf29ba4-8ced-447d-b483-be86b1188f58",
+      "faction": "GR",
+      "view": "ortho",
       "class": "ship-single",
       "label": "Scout",
       "position": "grot_scout",
       "batch": 20
     }
   ],
-  "note": "Batch 20: CX fighter/bomber/support/stealth locked. GR scout cinematic a034a27c locked; 04df63f9 rejected. Ortho 17e2057c in review. S3 Index not patched.",
-  "positions_bound": 120,
+  "note": "Batch 20: GR scout pair locked (ortho 9cf29ba4, cin 19addf56 symmetric tail). Next: GR sniper. S3 Index not patched.",
+  "positions_bound": 121,
   "positions_unbound": 0
 }
