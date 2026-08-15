@@ -3,7 +3,7 @@
   "updated": "2026-08-15",
   "source": "v2.8 + batch 20 CX fighter pair + CX bomber pair",
   "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Dump short IDs are existing neon rendered files, not invented UUIDs.",
-  "positions": 134,
+  "positions": 135,
   "bound_sheets": 213,
   "merged_slugs": {
     "heawy_5ault_i8reakt4fough": "heavy_assault",
@@ -522,13 +522,6 @@
           "id": "68663b86-f177-4594-b70b-deec857abe88",
           "faction": "CX",
           "view": "cinematic",
-          "class": "weapon-infantry",
-          "label": "Firewall gadget"
-        },
-        {
-          "id": "641c9c0c-45bd-41fa-a3fc-875e0b99fc24",
-          "faction": "CX",
-          "view": "ortho",
           "class": "weapon-infantry",
           "label": "Firewall gadget"
         }
@@ -1404,6 +1397,27 @@
           "view": "ortho",
           "class": "ship-single",
           "label": "Fighter"
+        }
+      ]
+    },
+    "cybernex_hand_utility": {
+      "category": "props",
+      "count": 0,
+      "titles": [
+        "CYBERNEX HAND UTILITY"
+      ],
+      "ocr": false,
+      "source": "manual_rebuild",
+      "chat_lock": true,
+      "notes": "Rebound off cx-firewall-gadget. Plate is a hand utility, not a firewall gun.",
+      "locked_uuids": [
+        {
+          "id": "641c9c0c-45bd-41fa-a3fc-875e0b99fc24",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "gadget",
+          "label": "Hand utility",
+          "manual": 24
         }
       ]
     },

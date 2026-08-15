@@ -131,9 +131,10 @@
       "id": "641c9c0c-45bd-41fa-a3fc-875e0b99fc24",
       "faction": "CX",
       "view": "ortho",
-      "class": "weapon-infantry",
-      "label": "Firewall gadget",
-      "position": "cx-firewall-gadget"
+      "class": "gadget",
+      "label": "Hand utility",
+      "position": "cybernex_hand_utility",
+      "manual": 24
     },
     {
       "id": "6e058bb5-29ce-4f77-9542-3fb90a822ebe",

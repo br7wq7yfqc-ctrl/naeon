@@ -57,7 +57,7 @@ S3 Index `generations/catalog.json` is **WIPED** (2026-08-15). Do not use. Rebui
 | DMR | GR | cinematic | `gr-dmr` | `4034222f-86ee-413c-a48a-43ca948dffde` |
 | DMR | GR | ortho | `gr-dmr` | `37750a80-84c5-485c-94db-8bfddd976640` |
 | Firewall gadget | CX | cinematic | `cx-firewall-gadget` | `68663b86-f177-4594-b70b-deec857abe88` |
-| Firewall gadget | CX | ortho | `cx-firewall-gadget` | `641c9c0c-45bd-41fa-a3fc-875e0b99fc24` |
+| Hand utility | CX | sheet | `cybernex_hand_utility` | `641c9c0c-45bd-41fa-a3fc-875e0b99fc24` |
 | Infection tool | GR | cinematic | `gr-infection-tool` | `6e058bb5-29ce-4f77-9542-3fb90a822ebe` |
 | Infection tool | GR | ortho | `gr-infection-tool` | `4a1cfd7b-c75d-46f6-ab79-66d6f0c0c6b3` |
 
