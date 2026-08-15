@@ -1,7 +1,7 @@
 # Phase 0 playtest stitch (2026-08-14)
 
 Working testing gate for the current prototype (not a closed Phase 0).
-Smoke: `scripts/playtest_headless_smoke.sh` → OS_ERR=0 · TA_ERR=0. No DMG.
+Smoke: `scripts/playtest_headless_smoke.sh` → OS_ERR=0 · TA_ERR=0 · MECH_CODE=0. No DMG.
 
 ## Play
 - Menu → Open Space or Aexion Clash
@@ -35,3 +35,6 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 18. Station/ship interiors: honest atmo/life-support, sliding doors, E console, F seat only at ship seat
 19. Pad contest: occupy-to-hold meter, decay on leave, turret guard, no harvest while contested, Hack/C pulses
 20. HOVER ground-effect + pad-aware hold altitude
+21. Interior pocket at y=9200 (was inside Nex-Prime r=1400); WorldRoot hidden; walker reparented so TPS camera stays visible
+22. Atmospheric stall (vacuum=0, HOVER=0); NAV drops to SCM; HUD STALL line
+23. Headless `--playtest-mechanics` gate in `scripts/playtest_headless_smoke.sh`

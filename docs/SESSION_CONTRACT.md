@@ -26,7 +26,8 @@
 7. Combat hurtboxes + ability costs from rules/04
 8. 10-min loop steps no longer self-complete on toast (this pass)
 9. Stations interiors: life-support, doors, ops console, seat gating (this pass)
-10. Next: 10-min soak on Mac GPU; stall / full ground-effect polish
+10. Stall in dense atmo (NAV drops to SCM); interior pocket outside planet mesh (this pass)
+11. Next: 10-min soak on Mac GPU; pad-guard combat while occupying
 
 ## Tripo
 - Balance check when generating; code-first when zero.
