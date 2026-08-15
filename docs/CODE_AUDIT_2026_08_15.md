@@ -173,6 +173,36 @@ or inverted.
 
 ---
 
+## 1b. Found by GUI playthrough, after the static pass
+
+Three defects only surfaced once the arena was actually played. Worth recording
+because a read-only audit could not have caught them.
+
+- **The "invisible ledge" had a second half.** Replacing `Barrier`'s collision
+  shape was necessary but not sufficient: the wall itself lay **lengthwise down
+  the middle of the MID lane** at `(0, 1.25, -14)`, 2.5 m tall and walkable. A
+  headless capsule probe came to rest at `y=3.250` on the lane instead of
+  `y=0.750`, so the player stood on top of the wall and dropped 2.5 m stepping
+  off it. Moved into the gap between MID and TOP; every probe point now rests at
+  `0.750` and the lane has a `0.000` vertical step from end to end.
+- **The friendly MID tower stood inside the chase camera.** Spawn is `z=6`,
+  `CameraPivot/Camera3D` trails 4.5 units to `z≈10.5`, and the Cybernex MID
+  tower sat at `z=12` with a 3.2 m translucent column — it filled the view and
+  hid the player on load. Friendly towers moved back to `z=16..18`.
+- **F3 was still unreadable.** The play-mode consolidation was not enough:
+  `GameHUD`, the legacy `TestArena` `HUD/Root/*` labels and the director's
+  `ScoreLine` all wrote the same two corners. `GameHUD` now owns every stat
+  readout, the debug left column has one fixed stacked layout, and the pad radar
+  moved above the vitals block. `LaneHUD` is anchored where it is created — the
+  one-time styling pass ran from `_ready`, before `_finish_clash_layout` had
+  built the label, so its layout never applied.
+
+Method note: when a visual report and a code reading disagree, measure. A
+headless probe that ray-casts the floor and drops a capsule at known points
+settled this in one run, where two observers had given opposite answers.
+
+---
+
 ## 2. Deliberately not changed
 
 - `PlanetBody._update_pads` still only hides the pads root when leaving the
