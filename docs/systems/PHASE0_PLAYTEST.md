@@ -57,3 +57,5 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 40. Extractor harvest only while owned by the player faction; ship bolts use ProjectilePool
 41. Clash HUD drops SessionObjectives briefing / LAYER chip (F3 still dumps)
 42. Mac 10-min soak still needs owner GPU (this VM is llvmpipe)
+43. Cave crystal is a named `Crystal` node; V scan only inside the pocket; prompt at the deposit
+44. Rover mouse look (yaw + cam pitch) while boarded

@@ -9,7 +9,7 @@ Phase 0 mechanics depth: interiors, occupy-to-hold, HOVER/stall, pad-guard comba
 |-------|--------|
 | Design VS + campaign + constructor/side/edu templates | **Gaps closed** |
 | B | Continuum: land gate, HOVER hold + ground-effect, atmo NAV lock, stall, EVA tether, pooled ship bolts, sliding hatch |
-| C | Walker coyote/slope; rover grip/brake + CargoHold store; interior doors/console/recycler; pocket HUD chrome |
+| C | Walker coyote/slope; rover grip/brake + mouse look + CargoHold store; interior doors/console/recycler; pocket HUD chrome; cave V scan on named Crystal |
 | A | Combat knock + dummy stagger; Rot Surge AOE; Clash lanes/K/D/beacons; pad-guard occupy fight; Infection 5 Firewall |
 | D | Design ready (constructor + 26) |
 | E | Act I implement first |

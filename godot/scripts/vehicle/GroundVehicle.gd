@@ -18,6 +18,7 @@ var _up: Vector3 = Vector3.UP
 var _yaw: float = 0.0
 var _cam: Camera3D
 var _speed_along: float = 0.0
+var _cam_pitch: float = -0.18
 
 
 func _ready() -> void:
@@ -80,6 +81,7 @@ func board(actor: Node3D) -> void:
 	if _cam:
 		_cam.current = true
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	set_process_unhandled_input(true)
 
 
 func unboard() -> Node3D:
@@ -88,6 +90,7 @@ func unboard() -> Node3D:
 	_speed_along = 0.0
 	if _cam:
 		_cam.current = false
+	set_process_unhandled_input(false)
 	if a and is_instance_valid(a):
 		a.visible = true
 		a.global_position = global_position + _up * 1.6 + global_transform.basis.x * 2.2
@@ -106,7 +109,15 @@ func as_storage_entry() -> Dictionary:
 	}
 
 
-func _physics_process(delta: float) -> void:
+func _unhandled_input(event: InputEvent) -> void:
+	if pilot == null or not is_instance_valid(pilot):
+		return
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		_yaw -= event.relative.x * 0.0022
+		_cam_pitch = clampf(_cam_pitch - event.relative.y * 0.0020, deg_to_rad(-28.0), deg_to_rad(10.0))
+		if _cam:
+			_cam.rotation.x = _cam_pitch
+		get_viewport().set_input_as_handled()
 	# Radial up
 	if _provider and _provider.has_method("gravity_at"):
 		var g: Vector3 = _provider.gravity_at(global_position)

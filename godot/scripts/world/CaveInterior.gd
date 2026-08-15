@@ -87,6 +87,7 @@ func _build_pool() -> void:
 		floor_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		root.add_child(floor_mi)
 		var crystal := MeshInstance3D.new()
+		crystal.name = "Crystal"
 		var sm := SphereMesh.new()
 		sm.radius = 0.35
 		sm.height = 0.7
@@ -101,6 +102,15 @@ func _build_pool() -> void:
 		crystal.material_override = cm2
 		crystal.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		root.add_child(crystal)
+		var clab := Label3D.new()
+		clab.name = "CrystalPrompt"
+		clab.text = "V scan"
+		clab.font_size = 22
+		clab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		clab.position = Vector3(0.8, -0.2, 3.0)
+		clab.modulate = Color(0.45, 0.85, 1.0, 0.9)
+		clab.visible = false
+		root.add_child(clab)
 		var body := StaticBody3D.new()
 		body.collision_layer = 1
 		body.collision_mask = 0
@@ -186,9 +196,9 @@ func _stream_caves() -> void:
 		cave.global_transform = xform
 		cave.scale = Vector3.ONE * (0.85 + open * 0.5)
 		cave.visible = true
-		var crystal = cave.get_node_or_null("MeshInstance3D")  # fragile; use child index
-		if cave.get_child_count() > 2 and cave.get_child(2) is MeshInstance3D:
-			var mat := (cave.get_child(2) as MeshInstance3D).material_override as StandardMaterial3D
+		var crystal = cave.get_node_or_null("Crystal")
+		if crystal is MeshInstance3D:
+			var mat := (crystal as MeshInstance3D).material_override as StandardMaterial3D
 			if mat:
 				if _planet_id == "ROT-Hive":
 					mat.albedo_color = Color(0.95, 0.2, 0.4)
@@ -266,6 +276,10 @@ func _do_exit() -> void:
 			(_observer as CharacterBody3D).velocity = Vector3.ZERO
 		_observer.global_position = back
 	_inside = false
+	if _active_cave and is_instance_valid(_active_cave):
+		var plab = _active_cave.get_node_or_null("CrystalPrompt")
+		if plab is Label3D:
+			(plab as Label3D).visible = false
 	_active_cave = null
 	_notify("Exited cave")
 	_fov_blend = 0.0
@@ -301,6 +315,9 @@ func is_player_inside() -> bool:
 
 func nearest_crystal_world() -> Vector3:
 	if _active_cave and is_instance_valid(_active_cave) and _inside:
+		var cr = _active_cave.get_node_or_null("Crystal")
+		if cr is Node3D:
+			return (cr as Node3D).global_position
 		return _active_cave.to_global(Vector3(0.8, -1.0, 3.0))
 	var best := Vector3.ZERO
 	var best_d := 1e12
@@ -341,14 +358,19 @@ const SCAN_SESSION_CAP := 25.0
 
 func _try_crystal_scan() -> void:
 	_scan_cd = maxf(0.0, _scan_cd - get_process_delta_time())
-	if _observer == null or _scan_cd > 0.0:
-		return
-	if not Input.is_physical_key_pressed(KEY_V):
+	if not _inside or _observer == null:
 		return
 	var crystal_pos := nearest_crystal_world()
 	if crystal_pos == Vector3.ZERO:
 		return
-	if _observer.global_position.distance_to(crystal_pos) > 8.0:
+	var near := _observer.global_position.distance_to(crystal_pos) <= 8.0
+	if _active_cave:
+		var plab = _active_cave.get_node_or_null("CrystalPrompt")
+		if plab is Label3D:
+			(plab as Label3D).visible = near
+	if _scan_cd > 0.0:
+		return
+	if not near or not Input.is_physical_key_pressed(KEY_V):
 		return
 	_scan_cd = 1.2
 	# Soft economy only — no combat power
@@ -367,7 +389,7 @@ func _try_crystal_scan() -> void:
 		AudioDirector.play_ui()
 	# pulse crystal emission
 	if _active_cave and is_instance_valid(_active_cave):
-		var cr = _active_cave.get_node_or_null("CrystalDeposit")
+		var cr = _active_cave.get_node_or_null("Crystal")
 		if cr is MeshInstance3D:
 			var mat := (cr as MeshInstance3D).material_override as StandardMaterial3D
 			if mat:
