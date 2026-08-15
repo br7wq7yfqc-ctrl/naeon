@@ -32,7 +32,11 @@
 13. Interior HUD clutter collapsed in pocket; Clash feel (movement, knock, honest lanes, occupy beacons) (this pass)
 14. Clash HUD ScoreLine/LaneHUD/banner collapse; ship combat: bolt sweep, hull crit recover, shield hold, turrets track hulls (this pass)
 15. Clash lane towers fight; ship afterburn W+Shift; walker variable jump (this pass)
-16. Next: 10-min soak on Mac GPU (this VM is llvmpipe)
+16. **Full code audit**: sphere physics, turret cadence, pad contest deadlock, economy
+    regen, pad brake sign, no-P2W / no-friendly-fire enforcement, real Infection,
+    downed state, match conclusion. See `docs/CODE_AUDIT_2026_08_15.md` (this pass)
+17. Next: pad streaming teardown (only remaining monotonic memory climb); 10-min
+    soak on Mac GPU (this VM is llvmpipe)
 
 ## Tripo
 - Balance check when generating; code-first when zero.

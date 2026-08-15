@@ -124,4 +124,54 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-14 | Phase 0 playtest: AbilitySystem activate, rules/04 costs, enemy scan cache, CombatJuice label pool, site_pin, canon identity cards. No DMG. | sequential-dev |
 | 2026-08-15 | Clash HUD collapse (banner/ScoreLine/LaneHUD); ship bolt sweep + hull crit recover + shield hold; pad turrets track hulls. No permadeath, no P2W. | sequential-dev |
 | 2026-08-15 | Clash towers are live Turrets; ship afterburn W+Shift (energy); walker variable jump cut. Soft pressure only. | sequential-dev |
+| 2026-08-15 | **Full code audit** — 101 scripts / 10 scenes / 12 autoloads. ~110 confirmed defects, blockers fixed. Report: `docs/CODE_AUDIT_2026_08_15.md` | owner brief: prototype → playable |
+
+## Full code audit — 2026-08-15
+
+Authority: **`docs/CODE_AUDIT_2026_08_15.md`** (read it before touching combat,
+pads, ship flight or the arena). Summary of what every agent must now assume:
+
+### Traps found here — do not reintroduce
+
+- `get_floor_angle()` **must** be passed radial up on a planet. The default is
+  world +Y, which reads flat ground as a cliff.
+- Never derive a tangent frame from a fixed world seed axis. `SurfaceFacing`
+  exposes `basis_from_up_ref` + `transport_ref`; carry the reference between
+  frames or the frame snaps 90° near world ±Z.
+- A gated AI tick must drain cooldowns by the **gated interval**, not one
+  `delta`, or rates silently scale with FPS.
+- Set `faction` **before** `add_child`: `_ready` picks groups, mesh and label
+  from it.
+- Never iterate `SoftScanCache.get_enemies()` while damaging — a kill clears the
+  shared array. Snapshot first.
+- Only one owner per HUD line, and only one initiator per input action. Two
+  systems polling the same key double its effect.
+- `--check-only --script` does not register autoloads; "Identifier not found:
+  GameManager" from that mode is a false positive.
+
+### Invariants (re-established, must hold)
+
+1. Knowledge / Contribution / Biomass are soft only — never damage, HP, CDR or
+   claim strength (rules/08, rules/04).
+2. No friendly fire, and no self-damage. Guard at the receiver, not just the
+   caster.
+3. Infection hard cap 5, with a real bounded effect via the attacker faction
+   passed into `take_damage(amount, source_faction)`.
+4. No permadeath anywhere: walker, arena hero and ship all recover.
+5. Arena influence on the persistent map is capped, temporary and decaying
+   (`PadBaseController.apply_arena_influence`), never a raw `claim_strength`
+   write.
+6. Claims need presence, and one press is one pulse
+   (`PadBaseController.claim_pulse_from`).
+7. Harvest credits the **owning** faction, not the local player's selection.
+
+### Known debt left open (with reasons)
+
+- `PlanetBody._update_pads` has no teardown, so pads accumulate per visited
+  planet — the one remaining monotonic memory climb under rules/25.
+- `harvested` / `claimed` / `contribution_gained` / `influence_emitted` have no
+  listeners yet.
+- `_harvest_vfx`, `_spawn_asteroid_belt`, `_schedule_surface_settle` are content
+  hooks, still uncalled.
+
 

@@ -68,3 +68,18 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 50. Clash lane towers are live Turrets (faction, 160 HP, collision); death = +28 soft pressure, not a planet flip
 51. Ship afterburn: W+Shift spends 16 EN/s, thrust×1.55, speed×1.18; hull-crit and landed deny; Shift without W still descends
 52. Walker + Clash jump: release Space while rising cuts upward speed (variable height)
+
+## Audit pass 2026-08-15 (full code audit)
+53. Arena Barrier uses a wall-sized collision shape (was the 60x1x60 floor shape — invisible slab, player spawned above the lanes)
+54. `get_floor_angle(_up)` on walker + rover; sphere frames parallel-transport a tangent reference (no 90-degree snap near world +/-Z)
+55. Turret cooldown drains the gated AI interval, so fire_rate is honest and FPS-independent; dead turrets/dummies leave the target groups
+56. Pad contest holds transition 1.0 (a partial write flipped status to owned and killed decay); reserves regenerate while idle
+57. One press = one claim pulse via `claim_pulse_from`; the ship must be landed; harvest credits the owning faction
+58. `approach_assist` brakes on approach, not departure, and scales with delta
+59. No-P2W: Knowledge no longer multiplies ability damage; War Score cap persists to user://; arena influence is capped + decaying
+60. No friendly fire: hack, dummy fire and tower kills all check faction at the receiver
+61. Infection amplifies gROT damage via `take_damage(amount, source_faction)`; Firewall decays and mitigates on the walker
+62. Walker has a real downed window and `is_downed()`, so attackers disengage; EVA has a fuel budget and keeps planet gravity
+63. Ship: HOVER hold only inside a gravity well, commanded-lift-only strip, launch stays in HOVER, one hardpoint per module type, recovery runs with no pilot
+64. Clash: match_ended shows a result panel (Enter rematches), kills come from AexionClash, minimap orientation fixed, lane refill counts the living
+65. Perf: shared arena meshes/materials, 10 Hz ownership visuals, one-time HUD styling, preloaded per-shot scripts, bolt pool counter reset on scene change
