@@ -1665,6 +1665,14 @@
           "manual": 3
         },
         {
+          "id": "763a575f-4c77-4ed8-a678-6e2057ff3af6",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Cruiser",
+          "manual": 4
+        },
+        {
           "id": "9633a0a4-98a5-4ea0-8cad-78798f1cbce6",
           "faction": "GR",
           "view": "cinematic",
