@@ -1138,6 +1138,26 @@
       "label": "Battleship",
       "position": "grot_battleship",
       "manual": 6
+    },
+    {
+      "id": "5juQw",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Heavy armor",
+      "position": "cybernex_heavy_armor",
+      "dump_key": "generations/rendered/5juQw.jpg",
+      "manual": 7
+    },
+    {
+      "id": "97pBo",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "armor",
+      "label": "Heavy armor",
+      "position": "cybernex_heavy_armor",
+      "dump_key": "generations/rendered/97pBo.jpg",
+      "manual": 8
     }
   ],
   "note": "Manual rebuild started. #001 1p69s gROT Carrier cinematic. Generations Index wiped.",

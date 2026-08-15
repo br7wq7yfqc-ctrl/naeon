@@ -169,8 +169,8 @@ Verified against the plate before bind.
 | Light drone | GR | cinematic | `grot_light_drone` | `FRKhQ` |
 | Medium drone | CX | ortho | `cybernex_medium_drone` | `HT5Yn` |
 | Medium drone | GR | cinematic + ortho | `grot_medium_drone` | `QdM8V` / `f60f0126` (dump + UUID, §A) |
-| Heavy armor | CX | cinematic | `cybernex_heavy_armor` | `ozs5C` |
-| Heavy exo CNX-88 | CX | ortho | `cybernex_heavy_armor` | `iw9mb` |
+| Heavy armor | CX | cinematic | `cybernex_heavy_armor` | `5juQw` |
+| Heavy armor | CX | ortho | `cybernex_heavy_armor` | `97pBo` |
 | Medium armor | GR | cinematic | `grot_medium_armor` | `opzQg` |
 | Heavy armor | GR | cinematic | `grot_heavy_armor` | `oci1u` |
 | Helmet | CX | cinematic | `cybernex_helmet_CNX-7` | `icjiG` |

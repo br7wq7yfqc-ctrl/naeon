@@ -60,12 +60,31 @@
       "dump_key": "generations/imagine_images/ozs5C.jpg",
       "locked_uuids": [
         {
+          "id": "5juQw",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Heavy armor",
+          "dump_key": "generations/rendered/5juQw.jpg",
+          "manual": 7
+        },
+        {
+          "id": "97pBo",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Heavy armor",
+          "dump_key": "generations/rendered/97pBo.jpg",
+          "manual": 8
+        },
+        {
           "id": "ozs5C",
           "faction": "CX",
           "view": "cinematic",
           "class": "armor",
           "label": "Heavy armor",
-          "dump_key": "generations/imagine_images/ozs5C.jpg"
+          "dump_key": "generations/imagine_images/ozs5C.jpg",
+          "notes": "superseded by manual #007 5juQw"
         },
         {
           "id": "iw9mb",
@@ -73,7 +92,8 @@
           "view": "ortho",
           "class": "armor",
           "label": "Heavy exo CNX-88",
-          "dump_key": "generations/imagine_images/iw9mb.jpg"
+          "dump_key": "generations/imagine_images/iw9mb.jpg",
+          "notes": "superseded by manual #008 97pBo"
         }
       ]
     },
