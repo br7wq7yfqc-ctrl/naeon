@@ -1,6 +1,9 @@
 extends RefCounted
 class_name PlanetProfileCatalog
 ## Data-driven planet gravity / atmosphere envelopes (continuum feel, not P2W).
+##
+## Placement lives in StarSystemCatalog — the `pos` entries below are only a
+## fallback for a body with no authored orbit.
 
 ## id -> profile dict
 static func profiles() -> Dictionary:

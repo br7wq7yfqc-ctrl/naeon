@@ -1,5 +1,6 @@
 extends Node3D
 const _PlanetProfiles = preload("res://scripts/world/PlanetProfileCatalog.gd")
+const _StarSystems = preload("res://scripts/world/StarSystemCatalog.gd")
 ## Seamless open space: free flight, planets, bases, surface walk, origin rebase.
 ## Entry scene for SC-like continuum (no change_scene landing).
 
@@ -14,6 +15,7 @@ const PlayerScene_PATH := "res://scenes/player/Player.tscn"
 var ship: CharacterBody3D
 var player: CharacterBody3D
 var planets: Array = []
+var star: Node3D = null
 var _in_ship: bool = true
 var _interior: Node = null
 var _eva_mode: bool = false
@@ -40,7 +42,9 @@ func _ready() -> void:
 			LayerContext.set_site_pin("SITE_SPACE_TEST_PAD")
 	print("[OpenSpace] site_pin=", LayerContext.site_pin_id if LayerContext else "")
 	_spawn_starfield()
+	_spawn_star()
 	_spawn_planets()
+	_spawn_asteroid_belt()
 	_spawn_orbital_stations()
 	_spawn_ship()
 	# HUD must exist before any walker does, or every claim / contest / harvest
@@ -124,23 +128,99 @@ func _spawn_starfield() -> void:
 		var xf := Transform3D(Basis.from_scale(Vector3.ONE * s), pos)
 		mm.set_instance_transform(i, xf)
 
+func _spawn_star() -> void:
+	## Visible star at the system origin. Planets orbit it and take their light
+	## direction from it, so "which way is the sun" is a real answer per body.
+	var st: Dictionary = _StarSystems.star_of()
+	if st.is_empty():
+		return
+	var root := Node3D.new()
+	root.name = "Star"
+	world_root.add_child(root)
+	root.position = Vector3.ZERO
+	star = root
+	if DisplayServer.get_name() == "headless":
+		return
+	var r: float = float(st.get("radius", 900.0))
+	var col: Color = st.get("color", Color(1.0, 0.94, 0.8))
+	var mi := MeshInstance3D.new()
+	var sm := SphereMesh.new()
+	sm.radius = r
+	sm.height = r * 2.0
+	sm.radial_segments = 24
+	sm.rings = 12
+	mi.mesh = sm
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = col
+	mat.emission_enabled = true
+	mat.emission = col
+	mat.emission_energy_multiplier = 6.0
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	root.add_child(mi)
+	# Corona: a second slightly larger shell, alpha-blended.
+	var halo := MeshInstance3D.new()
+	var hm := SphereMesh.new()
+	hm.radius = r * 1.22
+	hm.height = r * 2.44
+	hm.radial_segments = 20
+	hm.rings = 10
+	halo.mesh = hm
+	var hmat := StandardMaterial3D.new()
+	hmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	hmat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	hmat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	hmat.albedo_color = Color(col.r, col.g, col.b, 0.16)
+	hmat.cull_mode = BaseMaterial3D.CULL_FRONT
+	halo.material_override = hmat
+	halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	halo.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	root.add_child(halo)
+	print("[OpenSpace] star %s r=%.0f" % [str(st.get("name", "Star")), r])
+
+
+func star_position() -> Vector3:
+	if star != null and is_instance_valid(star):
+		return star.global_position
+	return world_root.global_position if world_root else Vector3.ZERO
+
+
 func _spawn_planets() -> void:
 	var script: Script = preload("res://scripts/world/PlanetBody.gd") as Script
-	for pid in ["Nex-Prime", "ROT-Hive", "Shard-Moon"]:
+	var ids: PackedStringArray = _StarSystems.body_ids()
+	if ids.is_empty():
+		ids = PackedStringArray(["Nex-Prime", "ROT-Hive", "Shard-Moon"])
+	for pid in ids:
 		var pl: Node3D = Node3D.new()
 		pl.set_script(script)
 		_PlanetProfiles.apply_to(pl, pid)
 		world_root.add_child(pl)
-		# position from profile (local); ensure global after enter tree
-		var prof: Dictionary = _PlanetProfiles.profiles().get(pid, {})
-		if prof.has("pos"):
-			pl.position = prof["pos"]
+		# Orbit around the star, not hand-typed coordinates: the three bodies
+		# used to sit in one clump with no star to orbit.
+		var orbital: Vector3 = _StarSystems.body_position(pid)
+		if orbital != Vector3.ZERO:
+			pl.position = orbital
+		else:
+			var prof: Dictionary = _PlanetProfiles.profiles().get(pid, {})
+			if prof.has("pos"):
+				pl.position = prof["pos"]
 		planets.append(pl)
-	print("[OpenSpace] planets from PlanetProfileCatalog: ", planets.size())
+		print("[OpenSpace] %s at orbit %.0f" % [pid, pl.position.length()])
+	print("[OpenSpace] system %s bodies=%d" % [_StarSystems.HOME, planets.size()])
 
 
 
 func _spawn_asteroid_belt() -> void:
+	## Belt band comes from the system layout, so it sits between the orbits it
+	## is meant to separate instead of at hardcoded coordinates.
+	if DisplayServer.get_name() == "headless":
+		return
+	var band: Dictionary = _StarSystems.belt_of()
+	var r_in: float = float(band.get("inner", 9000.0))
+	var r_out: float = float(band.get("outer", 10400.0))
+	var thick: float = float(band.get("thickness", 420.0))
 	var prop_script: Script = preload("res://scripts/assets/GlbProp.gd")
 	var belt := Node3D.new()
 	belt.name = "AsteroidBelt"
@@ -163,8 +243,9 @@ func _spawn_asteroid_belt() -> void:
 		p.set("add_static_collision", false)  # belt collision was free-flight FPS tax
 		belt.add_child(p)
 		var ang := rng.randf() * TAU
-		var r := rng.randf_range(3200, 5200)
-		p.global_position = Vector3(cos(ang) * r, rng.randf_range(-400, 400), sin(ang) * r - 800)
+		var r := rng.randf_range(r_in, r_out)
+		p.global_position = Vector3(cos(ang) * r, rng.randf_range(-thick, thick) * 0.5, sin(ang) * r)
+	print("[OpenSpace] belt n=%d band %.0f-%.0f" % [belt_n, r_in, r_out])
 
 func _setup_interior() -> void:
 	_interior = Node.new()
@@ -210,13 +291,27 @@ func _bind_planet_observers() -> void:
 
 
 func _sync_planet_sun() -> void:
+	## Each body is lit from the star it orbits, not from one fixed world angle.
 	var sun := $Sun as DirectionalLight3D
+	var sc: Vector3 = star_position()
+	for pl in planets:
+		if pl == null or not is_instance_valid(pl) or not pl.has_method("set_sun_direction"):
+			continue
+		var to_body: Vector3 = (pl as Node3D).global_position - sc
+		if to_body.length_squared() < 1.0:
+			continue
+		pl.set_sun_direction(to_body.normalized())
+	# Aim the shadow-casting light along the star→observer line so the terminator
+	# on the planet you are at matches where the star actually is.
 	if sun == null:
 		return
-	var dir: Vector3 = -sun.global_transform.basis.z
-	for pl in planets:
-		if pl and pl.has_method("set_sun_direction"):
-			pl.set_sun_direction(dir)
+	var obs: Node3D = ship if (ship and is_instance_valid(ship)) else (player if (player and is_instance_valid(player)) else null)
+	if obs == null:
+		return
+	var to_obs: Vector3 = obs.global_position - sc
+	if to_obs.length_squared() < 1.0:
+		return
+	sun.look_at_from_position(sun.global_position, sun.global_position + to_obs.normalized(), Vector3.UP)
 
 
 func _update_altitude_fog() -> void:
