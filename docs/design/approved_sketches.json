@@ -1239,6 +1239,26 @@
       "position": "grot_heavy_armor",
       "dump_key": "generations/rendered/zyFa0.jpg",
       "manual": 17
+    },
+    {
+      "id": "A2cmE",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "armor",
+      "label": "Pilot helmet",
+      "position": "cybernex_helmet_CNX-7",
+      "dump_key": "generations/rendered/A2cmE.jpg",
+      "manual": 18
+    },
+    {
+      "id": "agxTz",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Pilot helmet",
+      "position": "grot_helmet",
+      "dump_key": "generations/rendered/agxTz.jpg",
+      "manual": 19
     }
   ],
   "note": "Manual rebuild started. #001 1p69s gROT Carrier cinematic. Generations Index wiped.",

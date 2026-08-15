@@ -22,5 +22,7 @@ Old `generations/catalog.json` and the visual album are **void**.
 | 015 | gROT Medium armor — cinematic | GR | cinematic | `opzQg` | `generations/rendered/opzQg.jpg` |
 | 016 | gROT Medium armor — ortho | GR | ortho | `fDy43` | `generations/rendered/fDy43.jpg` |
 | 017 | gROT Heavy armor — cinematic | GR | cinematic | `zyFa0` | `generations/rendered/zyFa0.jpg` |
+| 018 | Cybernex Pilot helmet — sheet | CX | ortho | `A2cmE` | `generations/rendered/A2cmE.jpg` |
+| 019 | gROT Pilot helmet — cinematic | GR | cinematic | `agxTz` | `generations/rendered/agxTz.jpg` |
 
-Next: heavy ortho. `UEp3P` not locked — plate title is LIGHT, silhouette is not the tank.
+Next: wait. Heavy GR ortho still open. Helmets: no extra ortho.

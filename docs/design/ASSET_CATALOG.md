@@ -174,8 +174,8 @@ Verified against the plate before bind.
 | Medium armor | GR | cinematic | `grot_medium_armor` | `opzQg` |
 | Medium armor | GR | ortho | `grot_medium_armor` | `fDy43` |
 | Heavy armor | GR | cinematic | `grot_heavy_armor` | `zyFa0` |
-| Helmet | CX | cinematic | `cybernex_helmet_CNX-7` | `icjiG` |
-| Helmet | GR | ortho | `grot_helmet` | `fMeN1` |
+| Helmet | CX | sheet | `cybernex_helmet_CNX-7` | `A2cmE` |
+| Helmet | GR | cinematic | `grot_helmet` | `agxTz` |
 | Claim beacon | GR | cinematic | `grot_claim_beacon` | `nFxgT` |
 | Claim beacon | CX | ortho | `cybernex_claim_beacon` | `phjM0` |
 | Hoverbike | CX | ortho | `cybernex_hoverbike` | `WrLuh` |

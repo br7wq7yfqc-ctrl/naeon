@@ -110,12 +110,22 @@
       "dump_key": "generations/imagine_images/icjiG.jpg",
       "locked_uuids": [
         {
+          "id": "A2cmE",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Pilot helmet",
+          "dump_key": "generations/rendered/A2cmE.jpg",
+          "manual": 18
+        },
+        {
           "id": "icjiG",
           "faction": "CX",
           "view": "cinematic",
           "class": "armor",
           "label": "Helmet",
-          "dump_key": "generations/imagine_images/icjiG.jpg"
+          "dump_key": "generations/imagine_images/icjiG.jpg",
+          "notes": "superseded by manual #018 A2cmE"
         }
       ]
     },
@@ -284,12 +294,22 @@
       "dump_key": "generations/imagine_images/fMeN1.jpg",
       "locked_uuids": [
         {
+          "id": "agxTz",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Pilot helmet",
+          "dump_key": "generations/rendered/agxTz.jpg",
+          "manual": 19
+        },
+        {
           "id": "fMeN1",
           "faction": "GR",
           "view": "ortho",
           "class": "armor",
           "label": "Helmet",
-          "dump_key": "generations/imagine_images/fMeN1.jpg"
+          "dump_key": "generations/imagine_images/fMeN1.jpg",
+          "notes": "superseded by manual #019 agxTz; ortho not required"
         }
       ]
     },
