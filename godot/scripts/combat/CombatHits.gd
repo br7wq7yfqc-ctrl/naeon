@@ -28,9 +28,21 @@ static func apply_shot(tree: SceneTree, origin: Vector3, dir: Vector3, dmg: floa
 		return null
 	if best.has_method("take_damage"):
 		best.take_damage(dmg)
+	apply_planar_knock(best, n, dmg)
 	if CombatJuice and best is Node3D:
 		CombatJuice.hit_feedback(dmg, (best as Node3D).global_position, dmg >= 20.0)
 	return best
+
+
+static func apply_planar_knock(body: Node, dir: Vector3, dmg: float, extra_y: float = 1.2) -> void:
+	if body == null or not (body is CharacterBody3D):
+		return
+	var n := Vector3(dir.x, 0.0, dir.z)
+	if n.length_squared() < 0.0001:
+		return
+	n = n.normalized()
+	var mag := clampf(dmg * 0.35, 2.5, 9.0)
+	(body as CharacterBody3D).velocity += n * mag + Vector3(0, extra_y, 0)
 
 
 static func _ray_hit_t(origin: Vector3, dir: Vector3, max_range: float, faction: String, target: Node) -> float:

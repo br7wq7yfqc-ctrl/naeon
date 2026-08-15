@@ -58,6 +58,10 @@ func _physics_process(delta: float) -> void:
 	_cd = max(0.0, _cd - delta)
 	if not is_on_floor():
 		velocity.y -= gravity * delta
+	# Knock must survive this frame — do not overwrite xz while staggered.
+	if _stagger > 0.0:
+		move_and_slide()
+		return
 
 	_ai_accum += delta
 	var ai_need := 0.1
@@ -89,8 +93,14 @@ func _physics_process(delta: float) -> void:
 			velocity.x = move_toward(velocity.x, 0.0, move_speed)
 			velocity.z = move_toward(velocity.z, 0.0, move_speed)
 		if dist <= attack_range and _cd <= 0.0:
-			_fire_at(player)
-			_cd = attack_cooldown
+			var downed := false
+			if player.has_method("is_downed"):
+				downed = bool(player.is_downed())
+			elif "_down_t" in player:
+				downed = float(player._down_t) > 0.0
+			if not downed:
+				_fire_at(player)
+				_cd = attack_cooldown
 	else:
 		velocity.x = 0.0
 		velocity.z = 0.0
@@ -183,6 +193,11 @@ func _respawn() -> void:
 func _fire_at(player: Node) -> void:
 	if player.has_method("take_damage"):
 		player.take_damage(attack_damage)
+	if player is CharacterBody3D:
+		var Hits = load("res://scripts/combat/CombatHits.gd")
+		if Hits:
+			var away: Vector3 = (player as Node3D).global_position - global_position
+			Hits.apply_planar_knock(player, away, attack_damage, 1.0)
 	var target_pos: Vector3 = player.global_position + Vector3.UP * 1.2
 	var origin: Vector3 = global_position + Vector3.UP * 1.2
 	var dir: Vector3 = (target_pos - origin).normalized()
