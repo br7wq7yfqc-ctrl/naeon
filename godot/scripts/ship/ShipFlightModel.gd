@@ -141,3 +141,30 @@ static func ground_effect_accel(g: Vector3, height_agl: float, pad_dist: float, 
 	if v_up < -1.0 and ge > 0.04:
 		lift += (-v_up) * ge * 2.4
 	return up_dir * lift
+
+
+static func stall_speed(mode: int) -> float:
+	## Minimum flying speed in dense atmo. HOVER is VTOL — no stall.
+	match mode:
+		Mode.NAV:
+			return 48.0
+		Mode.HOVER:
+			return 0.0
+		_:
+			return 16.0
+
+
+static func stall_amount(atmo: float, speed: float, stall_spd: float) -> float:
+	## 0 flying … 1 fully stalled. Vacuum does not stall.
+	if stall_spd <= 0.05 or atmo < 0.22:
+		return 0.0
+	var need: float = stall_spd * (0.32 + atmo * 0.68)
+	if speed >= need:
+		return 0.0
+	return clampf(1.0 - speed / maxf(need, 0.15), 0.0, 1.0)
+
+
+static func stall_sink_accel(g: Vector3, stall: float) -> Vector3:
+	if stall <= 0.01 or g.length() < 0.01:
+		return Vector3.ZERO
+	return g * stall * 0.9

@@ -52,6 +52,8 @@ var _open_space: Node = null
 var _landed_pad: Node3D = null
 var _land_hint_cd: float = 0.0
 var _hover_hold_alt: float = -1.0
+var _stall: float = 0.0
+var _stall_toast_t: float = 0.0
 var _landing_gear: Node3D = null
 var _thruster_fx: GPUParticles3D = null
 var _cargo_hold: Node = null
@@ -428,6 +430,24 @@ func _physics_process(delta: float) -> void:
 			# NAV: light gravity bias only near surface
 			accel += g * lerpf(0.02, 0.2, atmo)
 
+	_stall = _Flight.stall_amount(atmo, velocity.length(), _Flight.stall_speed(flight_mode))
+	if _stall > 0.01 and g.length() > 0.01:
+		accel += _Flight.stall_sink_accel(g, _stall)
+		# Wash out lateral authority when the wing is stalled
+		if _stall > 0.35:
+			var fwd: Vector3 = -global_transform.basis.z
+			var along: float = accel.dot(fwd)
+			accel = accel.lerp(fwd * along + g * _stall, clampf(_stall, 0.0, 0.85))
+		if flight_mode == FlightMode.NAV and _stall > 0.55:
+			_set_mode(FlightMode.SCM)
+			_toast_ship("STALL — dropped to SCM")
+		_stall_toast_t -= delta
+		if _stall > 0.4 and _stall_toast_t <= 0.0:
+			_stall_toast_t = 2.4
+			_toast_ship("STALL %.0f%% — add speed or HOVER" % (_stall * 100.0))
+	else:
+		_stall_toast_t = maxf(0.0, _stall_toast_t - delta)
+
 	# Soft pad approach brake (assist, not autopilot)
 	if _open_space and _open_space.has_method("nearest_pad"):
 		var pad: Node3D = _open_space.nearest_pad(global_position)
@@ -459,9 +479,10 @@ func _physics_process(delta: float) -> void:
 func _update_status() -> void:
 	if status_label:
 		var opn := "SIEGE" if op_mode == 1 else ("SCAN" if op_mode == 2 else "CRUISE")
-		status_label.text = "%s  OP:%s  SPD %d  SHD %d  E %d  %s" % [
+		status_label.text = "%s  OP:%s  SPD %d  SHD %d  E %d  %s%s" % [
 			flight_mode_name(), opn, int(velocity.length()), int(shields), int(energy),
-			("LANDED" if is_landed else "FLIGHT")
+			("LANDED" if is_landed else "FLIGHT"),
+			("  STALL" if _stall > 0.35 else ""),
 		]
 
 func _toggle_landing() -> void:
@@ -1365,7 +1386,14 @@ func get_op_mode_name() -> String:
 
 
 func get_flight_status_line() -> String:
-	return "%s · %s · SPD %d" % [flight_mode_name(), get_op_mode_name(), int(velocity.length())]
+	var st := "%s · %s · SPD %d" % [flight_mode_name(), get_op_mode_name(), int(velocity.length())]
+	if _stall > 0.28:
+		st += " · STALL %.0f%%" % (_stall * 100.0)
+	return st
+
+
+func get_stall() -> float:
+	return _stall
 
 
 
