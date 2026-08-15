@@ -54,6 +54,7 @@ var _collision_enabled: bool = true
 var _surface_detail: Node3D = null
 var _pad_build_stage: int = 0
 var _pad_build_pending: bool = false
+var _bases_built: bool = false
 var _terrain_edit: Node3D = null
 
 func _ready() -> void:
@@ -326,12 +327,37 @@ func _update_pads(dist: float) -> void:
 			_pads_root.visible = true
 		if dist < glb_d and not _glb_loaded and _pads_built:
 			call_deferred("_load_glb_pads")
-		if dist < base_d and _pads_built:
+		if dist < base_d and _pads_built and not _bases_built:
 			# bases once; BaseBuilder is heavy — defer
+			_bases_built = true
 			call_deferred("_stream_bases")
 	else:
 		if _pads_root:
 			_pads_root.visible = false
+		# Hiding alone leaked every visited planet's pads, GLB, base clusters,
+		# contested rings and guards for the rest of the session (rules/25 §2).
+		# Unload well past the build radius so orbiting the edge cannot thrash.
+		if _pads_built and dist > stream_d * 1.35:
+			_unload_pads()
+
+func _unload_pads() -> void:
+	## Free the whole pad subtree and reset every flag the builder reads, so a
+	## later approach rebuilds from scratch instead of half-restoring.
+	if _pads_root and is_instance_valid(_pads_root):
+		for c in _pads_root.get_children():
+			_pads_root.remove_child(c)
+			c.queue_free()
+	_pads.clear()
+	_pads_built = false
+	_glb_loaded = false
+	_bases_built = false
+	_pad_build_stage = 0
+	_pad_build_pending = false
+	if SoftScanCache:
+		# The cache hands out pad nodes; it must not keep the freed ones.
+		SoftScanCache.invalidate()
+	print("[PlanetBody] pads unloaded ", planet_name)
+
 
 func _step_pad_build() -> void:
 	## One pad (or density) per call — spreads hitch.

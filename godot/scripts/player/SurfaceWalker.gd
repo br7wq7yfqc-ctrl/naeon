@@ -68,6 +68,7 @@ var _jump_cut: bool = false
 var _jumped: bool = false
 var _down_t: float = 0.0
 var _air_v_up: float = 0.0
+var _jump_fx: GPUParticles3D = null
 var _was_on_floor: bool = false
 
 const DOWN_TIME := 2.2
@@ -392,21 +393,24 @@ func snap_to_surface() -> void:
 	if space == null:
 		global_position += _up * 4.0
 		return
-	# High origin so we don't start inside pad mesh
-	var origin := global_position + _up * 40.0
-	var end := global_position - _up * 120.0
-	var q := PhysicsRayQueryParameters3D.create(origin, end)
-	q.collision_mask = 1
-	q.exclude = [get_rid()]
-	var hit := space.intersect_ray(q)
-	if hit:
-		# Clearance above contact — was 1.85 (often inside pad props / hull)
-		global_position = hit.position + _up * 2.55
-		velocity = Vector3.ZERO
-		_spawn_grace_t = 0.35
-		safe_unground()
-		print("[SurfaceWalker] snapped to ", hit.position)
-		return
+	# Start just above the head and only reach higher if that misses. Starting at
+	# +40 took the first hit downward, so anything overhead — a pad prop, the
+	# ship hull, an overhang — became the "surface" and stranded you on a roof.
+	for lift in [2.5, 12.0, 40.0]:
+		var origin: Vector3 = global_position + _up * lift
+		var end: Vector3 = global_position - _up * 120.0
+		var q := PhysicsRayQueryParameters3D.create(origin, end)
+		q.collision_mask = 1
+		q.exclude = [get_rid()]
+		var hit: Dictionary = space.intersect_ray(q)
+		if hit:
+			# Clearance above contact — was 1.85 (often inside pad props / hull)
+			global_position = hit.position + _up * 2.55
+			velocity = Vector3.ZERO
+			_spawn_grace_t = 0.35
+			safe_unground()
+			print("[SurfaceWalker] snapped to ", hit.position, " from +", lift)
+			return
 	if _relief_snap_fallback():
 		_spawn_grace_t = 0.35
 		safe_unground()
@@ -531,17 +535,7 @@ func _physics_process(delta: float) -> void:
 		regen_mult *= 0.25
 	energy = minf(max_energy, energy + energy_regen * regen_mult * delta)
 
-	var input := Vector2.ZERO
-	if Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_W):
-		input.y -= 1.0
-	if Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_S):
-		input.y += 1.0
-	if Input.is_physical_key_pressed(KEY_A) or Input.is_key_pressed(KEY_A):
-		input.x -= 1.0
-	if Input.is_physical_key_pressed(KEY_D) or Input.is_key_pressed(KEY_D):
-		input.x += 1.0
-	if input.length_squared() > 1.0:
-		input = input.normalized()
+	var input := _read_move_input()
 
 	# Body basis first, then wish from that basis (visual −Z = forward). Avoid dual-math drift.
 	last_move_input = input
@@ -564,7 +558,7 @@ func _physics_process(delta: float) -> void:
 	if eva_mode:
 		_process_eva(delta, wish, forward, right)
 		return
-	var sp := speed * (sprint_mult if Input.is_physical_key_pressed(KEY_SHIFT) else 1.0) * _infection_move_mult()
+	var sp := speed * (sprint_mult if _sprinting() else 1.0) * _infection_move_mult()
 	if interior_mode:
 		var atmo := 1.0
 		if _provider and _provider.has_method("get_atmo"):
@@ -664,6 +658,33 @@ func _try_claim_pulse() -> void:
 				best = n
 	if best and best.has_method("claim_pulse_from"):
 		best.claim_pulse_from(self)
+
+
+func _read_move_input() -> Vector2:
+	## InputMap first so rebinding and gamepad sticks work, physical keys as the
+	## fallback for exported builds that start without a mapping.
+	var v := Vector2.ZERO
+	if InputMap.has_action("move_left") and InputMap.has_action("move_right") \
+		and InputMap.has_action("move_forward") and InputMap.has_action("move_back"):
+		v = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	if v.length_squared() < 0.01:
+		if Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_W):
+			v.y -= 1.0
+		if Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_S):
+			v.y += 1.0
+		if Input.is_physical_key_pressed(KEY_A) or Input.is_key_pressed(KEY_A):
+			v.x -= 1.0
+		if Input.is_physical_key_pressed(KEY_D) or Input.is_key_pressed(KEY_D):
+			v.x += 1.0
+	if v.length_squared() > 1.0:
+		v = v.normalized()
+	return v
+
+
+func _sprinting() -> bool:
+	if InputMap.has_action("sprint") and Input.is_action_pressed("sprint"):
+		return true
+	return Input.is_physical_key_pressed(KEY_SHIFT)
 
 
 func _real_gravity() -> Vector3:
@@ -825,33 +846,39 @@ func _update_limbs() -> void:
 		_arm_r.rotation.x = sin(a) * 0.4 * amp
 
 func _spawn_jump_fx() -> void:
-	var p := GPUParticles3D.new()
-	p.amount = 18
-	p.lifetime = 0.45
-	p.one_shot = true
-	p.explosiveness = 1.0
-	p.emitting = true
-	var pm := ParticleProcessMaterial.new()
-	pm.direction = Vector3(0, 1, 0)
-	pm.spread = 70.0
-	pm.initial_velocity_min = 1.0
-	pm.initial_velocity_max = 3.5
-	pm.gravity = Vector3(0, -8, 0)
-	pm.scale_min = 0.04
-	pm.scale_max = 0.12
-	pm.color = Color(0.65, 0.7, 0.6, 0.85)
-	p.process_material = pm
-	var sm := SphereMesh.new()
-	sm.radius = 0.06
-	sm.height = 0.12
-	sm.radial_segments = 4
-	sm.rings = 2
-	p.draw_pass_1 = sm
-	add_child(p)
-	p.position = Vector3(0, 0.05, 0)
-	var tree := get_tree()
-	if tree:
-		tree.create_timer(0.6).timeout.connect(p.queue_free)
+	## One reusable emitter instead of a fresh GPUParticles3D + material + mesh
+	## + SceneTree timer on every jump (rules/25 §3.2).
+	if DisplayServer.get_name() == "headless":
+		return
+	if _jump_fx == null or not is_instance_valid(_jump_fx):
+		var p := GPUParticles3D.new()
+		p.name = "JumpFX"
+		p.amount = 18
+		p.lifetime = 0.45
+		p.one_shot = true
+		p.emitting = false
+		p.explosiveness = 1.0
+		var pm := ParticleProcessMaterial.new()
+		pm.direction = Vector3(0, 1, 0)
+		pm.spread = 70.0
+		pm.initial_velocity_min = 1.0
+		pm.initial_velocity_max = 3.5
+		pm.gravity = Vector3(0, -8, 0)
+		pm.scale_min = 0.04
+		pm.scale_max = 0.12
+		pm.color = Color(0.65, 0.7, 0.6, 0.85)
+		p.process_material = pm
+		var sm := SphereMesh.new()
+		sm.radius = 0.06
+		sm.height = 0.12
+		sm.radial_segments = 4
+		sm.rings = 2
+		p.draw_pass_1 = sm
+		add_child(p)
+		p.position = Vector3(0, 0.05, 0)
+		_jump_fx = p
+	_jump_fx.restart()
+	_jump_fx.emitting = true
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -1182,8 +1209,10 @@ func _find_nearby_ship() -> Node3D:
 		return null
 	var best: Node3D = null
 	var best_d := MAG_RANGE + 6.0
-	for n in tree.get_nodes_in_group("ship"):
-		if n is Node3D and is_instance_valid(n):
+	# Shared TTL cache — this ran a group scan every physics frame while in EVA.
+	var ships: Array = SoftScanCache.get_ships() if SoftScanCache else tree.get_nodes_in_group("ship")
+	for n in ships:
+		if n is Node3D and is_instance_valid(n) and n.is_inside_tree():
 			var d: float = global_position.distance_to((n as Node3D).global_position)
 			if d < best_d:
 				best_d = d

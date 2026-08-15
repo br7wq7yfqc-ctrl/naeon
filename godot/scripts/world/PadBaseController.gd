@@ -383,9 +383,24 @@ func _lock_to(f: OwnershipData.Faction, noisy: bool) -> void:
 		_spawn_claim_fx(win_c)
 		_notify_hud("Claim locked → %s. Harvest = Contribution (no combat power)." % ownership.faction_name())
 	claimed.emit(ownership.faction_name())
+	# Losing a pad while you are elsewhere had no feedback at all: the toast
+	# above is gated on `noisy`, which only a nearby pulse sets.
+	if not _seeding and not noisy and GameManager:
+		var new_fac := ownership.faction_name()
+		if new_fac != GameManager.get_faction_name():
+			_notify_hud("%s lost — %s holds it now (occupy to take it back)" % [_pad_label(), new_fac])
 	_bind_layer_claim()
 	call_deferred("_ensure_claim_beacon")
 	print("[PadBase] claim → ", ownership.faction_name(), " @ ", name)
+
+
+func _pad_label() -> String:
+	var n: Node = get_parent()
+	while n:
+		if n.has_meta("pad_up"):
+			return str(n.name)
+		n = n.get_parent()
+	return "Pad"
 
 
 func _pulse_feedback(strong: bool) -> void:
@@ -515,6 +530,8 @@ func _tick_harvest(delta: float) -> void:
 			if AudioDirector and AudioDirector.has_method("play_ui"):
 				AudioDirector.play_ui()
 			_notify_hud("HARVEST +%.1f  %s" % [_harvest_accum_fx, GameManager.economy_label()])
+			# Written long ago and never called — extraction had no visual tell.
+			_harvest_vfx()
 			_harvest_accum_fx = 0.0
 	harvested.emit(got, total_extracted)
 	_status = "extracting"

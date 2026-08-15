@@ -75,6 +75,7 @@ var _shield_hold_t: float = 0.0
 var _burn_on: bool = false
 var _hull_ambient: Node3D = null
 var _gq: Node = null
+var _status_cache: String = ""
 
 const _SHIELD_REGEN := 4.0
 const _SHIELD_HOLD := 2.4
@@ -216,7 +217,9 @@ func _input(event: InputEvent) -> void:
 		_yaw -= event.relative.x * sens
 		_pitch -= event.relative.y * sens
 		_pitch = clamp(_pitch, deg_to_rad(-89), deg_to_rad(89))
-		_apply_attitude()
+		# _physics_process applies the attitude once per tick. Writing
+		# global_transform per mouse event flushed the physics server a dozen
+		# times per rendered frame at high polling rates.
 	if event.is_action_pressed("ui_cancel"):
 		Input.set_mouse_mode(
 			Input.MOUSE_MODE_VISIBLE if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
@@ -513,19 +516,24 @@ func _physics_process(delta: float) -> void:
 	_auto_land_assist(delta)
 	if Input.is_action_just_pressed("ability_3"):
 		attach_module(ShipModule.make_extractor())
-	_recompute_stats()
+	# _recompute_stats only changes on attach/detach, which already call it.
 	_update_status()
 
 func _update_status() -> void:
-	if status_label:
-		var opn := "SIEGE" if op_mode == 1 else ("SCAN" if op_mode == 2 else "CRUISE")
-		status_label.text = "%s  OP:%s  SPD %d  SHD %d  E %d  %s%s%s%s" % [
-			flight_mode_name(), opn, int(velocity.length()), int(shields), int(energy),
-			("LANDED" if is_landed else "FLIGHT"),
-			("  STALL" if _stall > 0.35 else ""),
-			("  HULL CRIT" if _hull_crit_t > 0.0 else ""),
-			("  BURN" if _burn_on else ""),
-		]
+	if status_label == null:
+		return
+	var opn := "SIEGE" if op_mode == 1 else ("SCAN" if op_mode == 2 else "CRUISE")
+	var txt := "%s  OP:%s  SPD %d  SHD %d  E %d  %s%s%s%s" % [
+		flight_mode_name(), opn, int(velocity.length()), int(shields), int(energy),
+		("LANDED" if is_landed else "FLIGHT"),
+		("  STALL" if _stall > 0.35 else ""),
+		("  HULL CRIT" if _hull_crit_t > 0.0 else ""),
+		("  BURN" if _burn_on else ""),
+	]
+	# Assigning Label3D.text regenerates its glyph mesh, so only write on change.
+	if txt != _status_cache:
+		_status_cache = txt
+		status_label.text = txt
 
 func _toggle_landing() -> void:
 	if is_landed:
@@ -1131,8 +1139,13 @@ func set_hatch_open(open: bool) -> void:
 
 
 func _toggle_siege() -> void:
-	if _role == null or not bool(_role.allows_siege):
+	if _role == null:
 		_role = _load_role_sniper()
+	elif not bool(_role.allows_siege):
+		# Deny instead of silently swapping the hull's role profile out from
+		# under the player — that rewrote its stats as a side effect.
+		_toast_ship("%s hull has no siege mode" % str(_role.display_name if "display_name" in _role else "This"))
+		return
 	if op_mode == 1:
 		op_mode = 0
 		var exit_s := 0.8

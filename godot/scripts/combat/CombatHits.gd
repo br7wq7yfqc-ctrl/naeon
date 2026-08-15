@@ -57,17 +57,23 @@ static func _consider(origin: Vector3, dir: Vector3, max_range: float, faction: 
 	return [best, best_t]
 
 
-static func apply_planar_knock(body: Node, dir: Vector3, dmg: float, extra_y: float = 1.2) -> void:
+static func apply_planar_knock(body: Node, dir: Vector3, dmg: float, extra_up: float = 1.2) -> void:
 	if body == null or not (body is CharacterBody3D):
 		return
 	if "is_landed" in body and bool(body.is_landed):
 		return
-	var n := Vector3(dir.x, 0.0, dir.z)
+	# "Planar" means the target's own ground plane. Hard-coding world Y shoved a
+	# walker sideways on a sphere and dug the knock into the terrain.
+	var up: Vector3 = (body as CharacterBody3D).up_direction
+	if up.length_squared() < 0.0001:
+		up = Vector3.UP
+	up = up.normalized()
+	var n := dir - up * dir.dot(up)
 	if n.length_squared() < 0.0001:
 		return
 	n = n.normalized()
 	var mag := clampf(dmg * 0.35, 2.5, 9.0)
-	(body as CharacterBody3D).velocity += n * mag + Vector3(0, extra_y, 0)
+	(body as CharacterBody3D).velocity += n * mag + up * extra_up
 
 
 static func _ray_hit_t(origin: Vector3, dir: Vector3, max_range: float, faction: String, target: Node) -> float:

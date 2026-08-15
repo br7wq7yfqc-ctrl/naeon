@@ -692,8 +692,10 @@ func _update_hud() -> void:
 			var sd = pl.get_node_or_null("SurfaceDetail")
 			if sd != null and sd.has_method("live_count"):
 				live = int(sd.live_count())
-			if sd != null and sd.has_method("pool_count"):
-				pool = int(sd.pool_count())
+			# SurfaceDetail exposes queue_depth, not pool_count — the old name
+			# never matched, so this always read 0.
+			if sd != null and sd.has_method("queue_depth"):
+				pool = int(sd.queue_depth())
 		var PP = load("res://scripts/combat/ProjectilePool.gd")
 		if PP:
 			pa = int(PP.active_count())
@@ -1157,9 +1159,6 @@ func _apply_openspace_perf() -> void:
 			e.glow_bloom = 0.0
 		if not _interior_view:
 			e.fog_enabled = tier >= 1  # altitude fog script may still tint
-	# Directional only shadows
-	for n in get_tree().get_nodes_in_group("planets") if get_tree() else []:
-		pass
 	print("[OpenSpace] perf tier=", tier)
 
 
@@ -1193,8 +1192,9 @@ func _park_far_planets() -> void:
 		if pl.has_method("set_process"):
 			pl.set_process(near)
 		if not near:
-			# Unload live meshes, not just hide (baseline RSS)
-			for nm in ["SurfaceDetail", "SurfaceFlora", "SurfaceFauna", "SurfaceWater", "CaveMouthField", "LandscapeFeatures", "CaveInterior"]:
+			# Unload live meshes, not just hide (baseline RSS). "Pads" is in the
+			# list because its controllers poll input and scan groups forever.
+			for nm in ["SurfaceDetail", "SurfaceFlora", "SurfaceFauna", "SurfaceWater", "CaveMouthField", "LandscapeFeatures", "CaveInterior", "Pads"]:
 				var n = pl.get_node_or_null(nm)
 				if n == null:
 					continue
@@ -1203,7 +1203,7 @@ func _park_far_planets() -> void:
 					n.call("_park_all")
 				n.visible = false
 		else:
-			for nm2 in ["SurfaceDetail", "SurfaceFlora", "SurfaceFauna", "SurfaceWater", "CaveMouthField", "LandscapeFeatures", "CaveInterior"]:
+			for nm2 in ["SurfaceDetail", "SurfaceFlora", "SurfaceFauna", "SurfaceWater", "CaveMouthField", "LandscapeFeatures", "CaveInterior", "Pads"]:
 				var n2 = pl.get_node_or_null(nm2)
 				if n2:
 					n2.set_process(true)
