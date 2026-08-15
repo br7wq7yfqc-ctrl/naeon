@@ -1081,9 +1081,19 @@
       "label": "Medium drone",
       "position": "grot_medium_drone",
       "batch": 20
+    },
+    {
+      "id": "1p69s",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-capital",
+      "label": "Carrier",
+      "position": "grot_capital_carrier",
+      "dump_key": "generations/rendered/1p69s.jpg",
+      "manual": 1
     }
   ],
-  "note": "Batch 20 CLOSED. GR medium drone pair locked (QdM8V + f60f0126). CX interceptor unbound. S3 Index not patched.",
+  "note": "Manual rebuild started. #001 1p69s gROT Carrier cinematic. Generations Index wiped.",
   "positions_bound": 124,
   "positions_unbound": 1
 }

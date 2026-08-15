@@ -1617,11 +1617,21 @@
       ],
       "locked_uuids": [
         {
+          "id": "1p69s",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Carrier",
+          "dump_key": "generations/rendered/1p69s.jpg",
+          "manual": 1
+        },
+        {
           "id": "390de03e-2dfc-4b4f-ac4c-dec037fa2ef5",
           "faction": "GR",
           "view": "ortho",
           "class": "ship-capital",
-          "label": "Carrier"
+          "label": "Carrier",
+          "notes": "old UUID, file missing — not in manual catalog until verified"
         }
       ]
     },
