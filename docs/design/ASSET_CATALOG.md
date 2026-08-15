@@ -67,6 +67,7 @@ APC / hover / mech guns bind to the **hull** they sit on. Tank main has no Heavy
 
 | Object | Faction | View | Position | ID |
 |--------|---------|------|----------|----|
+| Tank gun | CX | cinematic | `cx-tank-gun` | `22365d81-9d7a-4784-9057-8d90337e40b8` |
 | Tank main | CX | ortho | `cx-tank-gun` | `f6ba51ce-9f94-44ff-84e4-aee90fa3c1bc` |
 | Tank main | GR | cinematic | `gr-tank-gun` | `ce213a7c-d304-4a32-98c1-0a404c2bc7c9` |
 | Tank main | GR | ortho | `gr-tank-gun` | `e996c312-7056-4d6c-9bf2-435f12155119` |

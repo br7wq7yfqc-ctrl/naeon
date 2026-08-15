@@ -223,8 +223,9 @@
       "faction": "CX",
       "view": "cinematic",
       "class": "weapon-vehicle",
-      "label": "Hover energy cannon",
-      "position": "cybernex_hover_tank"
+      "label": "Tank gun",
+      "position": "cx-tank-gun",
+      "manual": 26
     },
     {
       "id": "cade3b02-acb5-432b-8d08-8fe653ce657d",
