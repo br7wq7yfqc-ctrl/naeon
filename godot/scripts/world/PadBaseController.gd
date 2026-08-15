@@ -480,9 +480,9 @@ func _ensure_guard() -> void:
 		t.set_aim_up(up)
 	if t.has_signal("died") and not t.died.is_connected(_on_guard_died):
 		t.died.connect(_on_guard_died)
-	if t.is_in_group("ally"):
-		t.remove_from_group("ally")
-	t.add_to_group("enemy")
+	# Keep the group Turret chose from its faction: CombatHits scans "ally" too,
+	# so a friendly guard stays hittable by the other side without being listed
+	# as an enemy on the player's own radar.
 	if SoftScanCache:
 		SoftScanCache.invalidate_enemies()
 	_guard = t

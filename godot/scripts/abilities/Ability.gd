@@ -175,7 +175,7 @@ func _apply_aoe_burst(caster: Node) -> void:
 		if dist > rad:
 			continue
 		if e.has_method("take_damage"):
-			e.take_damage(dmg)
+			e.take_damage(dmg, fac)
 		if Hits:
 			var away: Vector3 = (e as Node3D).global_position - origin
 			var knock_dmg := force if force > 0.05 else dmg

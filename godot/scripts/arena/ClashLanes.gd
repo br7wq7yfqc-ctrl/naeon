@@ -25,7 +25,15 @@ func _ready() -> void:
 	_build_lane_markers()
 	print("[ClashLanes] TOP/MID/BOT + dual nexus ready")
 
+var _mat_cache: Dictionary = {}
+var _mesh_cache: Dictionary = {}
+
 func _mat(col: Color, emit: float = 1.2) -> StandardMaterial3D:
+	# Share by colour+emission: the arena built 45+ unique materials for a
+	# handful of colours, and each one is its own draw call on min spec.
+	var key := "%d_%d_%d_%d" % [int(col.r * 32.0), int(col.g * 32.0), int(col.b * 32.0), int(emit * 8.0)]
+	if _mat_cache.has(key):
+		return _mat_cache[key]
 	var m := StandardMaterial3D.new()
 	m.albedo_color = col * 0.35
 	m.metallic = 0.4
@@ -35,13 +43,21 @@ func _mat(col: Color, emit: float = 1.2) -> StandardMaterial3D:
 	m.emission_energy_multiplier = emit
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	m.albedo_color.a = 0.85
+	_mat_cache[key] = m
 	return m
+
+func _shared_box(size: Vector3) -> BoxMesh:
+	var key := "%.2f_%.2f_%.2f" % [size.x, size.y, size.z]
+	if _mesh_cache.has(key):
+		return _mesh_cache[key]
+	var bm := BoxMesh.new()
+	bm.size = size
+	_mesh_cache[key] = bm
+	return bm
 
 func _box(size: Vector3, pos: Vector3, col: Color, parent: Node3D = self) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
-	var bm := BoxMesh.new()
-	bm.size = size
-	mi.mesh = bm
+	mi.mesh = _shared_box(size)
 	mi.material_override = _mat(col)
 	parent.add_child(mi)
 	mi.position = pos

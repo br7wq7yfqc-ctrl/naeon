@@ -213,8 +213,10 @@ func _physics_process(delta: float) -> void:
 		if ability_system and _down_t <= 0.0:
 			ability_system.try_activate(2)
 	if _just_ability(4):
-		if _down_t <= 0.0:
-			cycle_form()
+		# Through the ability so the F slot's cooldown in the HUD is real.
+		# _on_ability_activated performs the actual form cycle.
+		if ability_system and _down_t <= 0.0:
+			ability_system.try_activate(3)
 
 
 ## Robust WASD: InputMap first, then physical keys + keycodes + arrows.
@@ -303,9 +305,14 @@ func get_faction() -> String:
 func heal(amount: float) -> void:
 	health = min(max_health, health + amount)
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, source_faction: String = "") -> void:
 	if _down_t > 0.0:
 		return
+	# Infection is gROT pressure: stacks amplify gROT damage (rules/04).
+	if source_faction == "gROT":
+		var inf_t = get_node_or_null("InfectionStatus")
+		if inf_t and inf_t.has_method("damage_taken_mult_from_grot"):
+			amount *= float(inf_t.damage_taken_mult_from_grot())
 	if firewall_timer > 0.0:
 		amount *= 0.35
 	# Feedback after mitigation — else Firewall looks like it does nothing.
@@ -473,6 +480,9 @@ func try_load_form_mesh() -> void:
 		body_mesh.visible = false
 	root.name = "FormGLB"
 	_MeshOrient.face_neg_z(root as Node3D, true)
+	# Bind the skeleton or the arena hero stays in bind pose while the same
+	# asset animates on the planet surface.
+	_form_skel = _FormAnim.find_skeleton(root)
 	add_child.call_deferred(root)
 	root.scale = Vector3.ONE * 0.85
 	root.position = Vector3(0, 0, 0)
@@ -521,6 +531,7 @@ func _strip_colliders(n: Node) -> void:
 			(n as RigidBody3D).freeze = true
 
 func _clear_form_glb() -> void:
+	_form_skel = null
 	var old := get_node_or_null("FormGLB")
 	if old:
 		old.name = "_FormGLBDead"

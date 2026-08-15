@@ -61,6 +61,7 @@ var energy_regen: float = 8.0  # EnergyEconomy.REGEN_WALKER
 var health: float = 100.0
 var max_health: float = 100.0
 var _up: Vector3 = Vector3.UP
+var _ref_fwd: Vector3 = Vector3(0, 0, -1)
 var _coyote_t: float = 0.0
 var _jump_buf_t: float = 0.0
 var _jump_cut: bool = false
@@ -184,12 +185,14 @@ func _ready() -> void:
 	# Snap to floor next frame
 	if not eva_mode:
 		call_deferred("snap_to_surface")
-	_ensure_combat_nodes()
-	print("[SurfaceWalker] ready form=", form_name)
 	if SoftNetSession:
 		SoftNetSession.bind_player(self)
+	# Session first: it overwrites faction and form, and the kit is built from
+	# faction, so building before this handed gROT the Cybernex loadout.
 	if SoftSession:
 		SoftSession.apply_to_player(self)
+	_ensure_combat_nodes()
+	print("[SurfaceWalker] ready form=", form_name, " faction=", faction)
 
 func _ensure_rig() -> void:
 	if get_node_or_null("CollisionShape3D") == null:
@@ -268,6 +271,15 @@ func _load_form_visual() -> void:
 		return
 	if _body_mesh:
 		_body_mesh.visible = false
+	if _limb_rig:
+		# Procedural limbs would swing inside the loaded character mesh.
+		_limb_rig.visible = false
+	# Free any earlier mesh: _ready loads once and SoftSession loads again, which
+	# used to leave two overlapping characters.
+	var prev_glb = _visual.get_node_or_null("FormGLB")
+	if prev_glb:
+		prev_glb.name = "_FormGLBDead"
+		prev_glb.queue_free()
 	# Strip rigid bodies from form mesh
 	_strip_colliders(root)
 	_visual.add_child(root)
@@ -631,8 +643,8 @@ func _physics_process(delta: float) -> void:
 		floor_max_angle = deg_to_rad(70.0)
 	_apply_body_basis()
 	move_and_slide()
-	if is_on_floor():
-		apply_floor_snap()
+	if not interior_mode:
+		_surface_assists_tick(delta)
 
 	_update_anim(delta)
 
@@ -669,8 +681,11 @@ func _gravity_vec() -> Vector3:
 
 
 func _basis_from_up() -> Basis:
-	# Shared pure math (SurfaceFacing) — det(+1), W along −Z at yaw0
-	return _Facing.basis_from_up(_up, _yaw)
+	# Shared pure math (SurfaceFacing) — det(+1), W along −Z at yaw0.
+	# The reference forward is transported frame to frame so crossing the world
+	# ±Z band no longer snaps the body and camera 90 degrees.
+	_ref_fwd = _Facing.transport_ref(_up, _ref_fwd)
+	return _Facing.basis_from_up_ref(_up, _yaw, _ref_fwd)
 
 func _apply_body_basis() -> void:
 	var b := _basis_from_up()
@@ -879,7 +894,13 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func toggle_faction() -> void:
-	faction = "gROT" if faction != "gROT" else "Cybernex"
+	# Drive GameManager so pad claims, ship modules and friendly-fire checks all
+	# agree on which side the player is on.
+	if GameManager and GameManager.has_method("cycle_faction"):
+		GameManager.cycle_faction()
+		faction = GameManager.get_faction_name()
+	else:
+		faction = "gROT" if faction != "gROT" else "Cybernex"
 	var ab = get_node_or_null("AbilitySystem")
 	if ab and ab.has_method("setup_default_loadout"):
 		ab.setup_default_loadout(faction)
@@ -896,6 +917,13 @@ func toggle_faction() -> void:
 		SoftSession.remember_player(self)
 	if GameManager:
 		GameManager.toast_requested.emit("Faction → %s (surface dual-theme)" % faction)
+
+
+func _surface_assists_tick(delta: float) -> void:
+	## Both helpers were fully implemented and never called: nothing caught a
+	## walker below the procedural relief, and wading made no splash.
+	_relief_floor_assist(delta)
+	_wade_splash(delta)
 
 
 func _relief_snap_fallback() -> bool:
@@ -1319,10 +1347,15 @@ func is_downed() -> bool:
 	return _down_t > 0.0
 
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, source_faction: String = "") -> void:
 	if _dying or _down_t > 0.0:
 		return
 	var dmg: float = amount
+	# Infection is gROT pressure: stacks amplify gROT damage (rules/04).
+	if source_faction == "gROT":
+		var inf_t = get_node_or_null("InfectionStatus")
+		if inf_t and inf_t.has_method("damage_taken_mult_from_grot"):
+			dmg *= float(inf_t.damage_taken_mult_from_grot())
 	if firewall_timer > 0.0:
 		dmg *= 0.35
 	health = maxf(0.0, health - dmg)
@@ -1359,9 +1392,10 @@ func _recover_from_down() -> void:
 
 func _ensure_face_arrow() -> void:
 	## Thin cyan nose marker along local −Z so facing bugs are obvious in-client.
+	## Debug aid only — it must not stick out of the hero in a release build.
 	if _face_arrow and is_instance_valid(_face_arrow):
 		return
-	if DisplayServer.get_name() == "headless":
+	if DisplayServer.get_name() == "headless" or not OS.is_debug_build():
 		return
 	_face_arrow = MeshInstance3D.new()
 	_face_arrow.name = "FaceArrow"

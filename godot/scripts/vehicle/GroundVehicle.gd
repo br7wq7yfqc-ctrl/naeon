@@ -1,5 +1,6 @@
 extends CharacterBody3D
 class_name GroundVehicle
+const _Facing = preload("res://scripts/player/SurfaceFacing.gd")
 ## Surface rover — radial gravity drive, nose = −Z, board/exit F.
 
 @export var class_id: String = "rover"
@@ -15,6 +16,7 @@ class_name GroundVehicle
 var pilot: Node3D = null
 var _provider: Node = null
 var _up: Vector3 = Vector3.UP
+var _ref_fwd: Vector3 = Vector3(0, 0, -1)
 var _yaw: float = 0.0
 var _cam: Camera3D
 var _speed_along: float = 0.0
@@ -188,15 +190,10 @@ func _physics_process(delta: float) -> void:
 
 
 func _apply_basis() -> void:
-	var t: Array = []
-	# stable tangent like SurfaceChunkMath
-	var ref := Vector3.UP
-	if absf(_up.dot(ref)) > 0.92:
-		ref = Vector3.RIGHT
-	var east := ref.cross(_up).normalized()
-	var north := _up.cross(east).normalized()
-	var b := Basis(east, _up, -north)
-	b = Basis(_up, _yaw) * b
+	# Transported reference instead of a world axis: switching the seed axis
+	# snapped the chassis — and therefore the drive direction — 90 degrees.
+	_ref_fwd = _Facing.transport_ref(_up, _ref_fwd)
+	var b := _Facing.basis_from_up_ref(_up, _yaw, _ref_fwd)
 	global_transform = Transform3D(b.orthonormalized(), global_position)
 
 
@@ -218,8 +215,6 @@ func _apply_velocity(delta: float) -> void:
 		v_up = minf(v_up, -0.5)
 	velocity = planar + _up * v_up
 	move_and_slide()
-	if is_on_floor():
-		apply_floor_snap()
 
 
 

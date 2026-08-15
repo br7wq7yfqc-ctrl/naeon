@@ -26,6 +26,10 @@ var _spawn_ship_pos := Vector3(0, 0, 2800)
 var _interior_view: bool = false
 
 func _ready() -> void:
+	# Bolts freed with the previous scene never reached release().
+	var _PoolReset = load("res://scripts/combat/ProjectilePool.gd")
+	if _PoolReset and _PoolReset.has_method("reset_counters"):
+		_PoolReset.reset_counters()
 	_phase0_space_feel()
 	add_to_group("open_space")
 	print("[OpenSpace] boot")

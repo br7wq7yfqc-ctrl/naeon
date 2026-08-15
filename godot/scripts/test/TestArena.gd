@@ -14,6 +14,7 @@ extends Node3D
 
 var kills: int = 0
 var _match_over: bool = false
+var _hud_styled: bool = false
 var _clash: Node = null
 var _lanes: Node3D = null
 var _radar: Control = null
@@ -21,6 +22,9 @@ var _lane_hud: Label = null
 var dummy_scene: PackedScene = preload("res://scenes/combat/CombatDummy.tscn")
 
 func _ready() -> void:
+	var _PoolReset = load("res://scripts/combat/ProjectilePool.gd")
+	if _PoolReset and _PoolReset.has_method("reset_counters"):
+		_PoolReset.reset_counters()
 	_apply_arena_perf()
 	_phase0_arena_feel()
 	_ensure_clash_director()
@@ -773,34 +777,41 @@ func _arena_debug() -> bool:
 
 
 func _apply_arena_hud_layout() -> void:
+	# Styling happens once: re-applying theme overrides five times a second
+	# fired NOTIFICATION_THEME_CHANGED and queued a redraw each tick.
+	if not _hud_styled:
+		_hud_styled = true
+		if kills_label:
+			kills_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+			kills_label.offset_left = -420
+			kills_label.offset_right = -16
+			kills_label.offset_top = 40
+			kills_label.offset_bottom = 70
+			kills_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+			kills_label.add_theme_font_size_override("font_size", 16)
+			kills_label.add_theme_color_override("font_color", Color(0.95, 0.9, 0.45))
+			kills_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+			kills_label.add_theme_constant_override("outline_size", 4)
+		if _lane_hud:
+			_lane_hud.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+			_lane_hud.offset_left = -440
+			_lane_hud.offset_right = -16
+			_lane_hud.offset_top = 70
+			_lane_hud.offset_bottom = 100
+			_lane_hud.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	var dbg := _arena_debug()
+	# GameHUD owns the debug overlay; these legacy labels would overprint it.
 	if info_label:
-		info_label.visible = dbg
+		info_label.visible = false
 	if bar_health:
 		bar_health.visible = dbg
 	if bar_energy:
 		bar_energy.visible = dbg
 	if ability_label:
-		ability_label.visible = dbg
+		ability_label.visible = false
 	if contrib_label:
-		contrib_label.visible = dbg
+		contrib_label.visible = false
 	if kills_label:
 		kills_label.visible = dbg
-		kills_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-		kills_label.offset_left = -420
-		kills_label.offset_right = -16
-		kills_label.offset_top = 40
-		kills_label.offset_bottom = 70
-		kills_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		kills_label.add_theme_font_size_override("font_size", 16)
-		kills_label.add_theme_color_override("font_color", Color(0.95, 0.9, 0.45))
-		kills_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
-		kills_label.add_theme_constant_override("outline_size", 4)
 	if _lane_hud:
 		_lane_hud.visible = true
-		_lane_hud.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-		_lane_hud.offset_left = -440
-		_lane_hud.offset_right = -16
-		_lane_hud.offset_top = 70
-		_lane_hud.offset_bottom = 100
-		_lane_hud.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT

@@ -237,6 +237,12 @@ func _settle_player_on_floor() -> void:
 		return
 	if not is_instance_valid(_active):
 		return
+	# The pocket's StaticBody shapes were added this frame; wait for the physics
+	# server to commit them or the floor ray finds nothing on a cold entry.
+	if get_tree():
+		await get_tree().physics_frame
+	if not _inside or _player == null or not is_instance_valid(_player) or not is_instance_valid(_active):
+		return
 	var space = _player.get_world_3d().direct_space_state if _player.get_world_3d() else null
 	if space == null:
 		_player.global_position = _active.global_position + Vector3(0, 1.2, 0)
@@ -588,8 +594,9 @@ func _tick_doors(delta: float) -> void:
 		elif prev_x > 1.25 and slab.position.x <= 1.25 and not want_open:
 			if AudioDirector and AudioDirector.has_method("play_door"):
 				AudioDirector.play_door(false)
-		# Open slab must not block the hall — collision rides the mesh otherwise.
-		var blocking := slab.position.x < 0.85
+		# Open slab must not block the hall — but drop collision only once the
+		# slab has actually cleared the opening, else you clip through it.
+		var blocking := slab.position.x < 1.4
 		for c in slab.get_children():
 			if c is CollisionObject3D:
 				(c as CollisionObject3D).collision_layer = 1 if blocking else 0

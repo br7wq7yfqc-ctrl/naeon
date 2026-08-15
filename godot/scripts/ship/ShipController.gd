@@ -851,7 +851,7 @@ func get_faction() -> String:
 func get_landed_pad() -> Node3D:
 	return _landed_pad if is_landed else null
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, _source_faction: String = "") -> void:
 	if CombatJuice:
 		CombatJuice.hit_feedback(float(amount), global_position, amount >= 40.0)
 	_shield_hold_t = _SHIELD_HOLD

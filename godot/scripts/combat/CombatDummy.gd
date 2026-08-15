@@ -141,7 +141,7 @@ func _begin_windup_fx() -> void:
 		)
 
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, _source_faction: String = "") -> void:
 	if CombatJuice:
 		var crit := amount >= max_health * 0.35 or amount >= 25.0
 		CombatJuice.hit_feedback(float(amount), global_position + Vector3(0, 1.2, 0), crit)
@@ -236,7 +236,7 @@ func _fire_at(player: Node) -> void:
 	if _same_faction(player):
 		return
 	if player.has_method("take_damage"):
-		player.take_damage(attack_damage)
+		player.take_damage(attack_damage, str(faction))
 	if player is CharacterBody3D:
 		var away: Vector3 = (player as Node3D).global_position - global_position
 		_Hits.apply_planar_knock(player, away, attack_damage, 1.0)

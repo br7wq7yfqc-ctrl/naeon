@@ -39,8 +39,9 @@ static func apply_shot(tree: SceneTree, origin: Vector3, dir: Vector3, dmg: floa
 	if best == null or not is_instance_valid(best):
 		return null
 	# take_damage owners raise their own hit feedback — do not double it here.
+	# Every implementation takes the shooter's faction so Infection can amplify.
 	if best.has_method("take_damage"):
-		best.take_damage(dmg)
+		best.take_damage(dmg, faction)
 	apply_planar_knock(best, n, dmg)
 	return best
 

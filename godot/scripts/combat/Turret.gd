@@ -131,7 +131,7 @@ func _fire(target: Node3D) -> void:
 	_Pool.spawn(get_tree(), muzzle + dir * 0.8, dir, spd, damage, faction, col, 3.2, [self])
 
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, _source_faction: String = "") -> void:
 	if not _alive:
 		return
 	if CombatJuice:

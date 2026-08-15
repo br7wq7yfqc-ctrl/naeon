@@ -46,7 +46,10 @@ func setup(root: Node3D, fac: String = "Cybernex") -> void:
 func aim_at(global_target: Vector3, delta: float) -> void:
 	if base == null:
 		return
-	var to := global_target - base.global_position
+	# head.rotation is local to `base`, which Turret._process already turned
+	# toward the same target — measure in local space or the barrel doubles the
+	# yaw and points away.
+	var to: Vector3 = base.to_local(global_target)
 	var want_yaw := atan2(-to.x, -to.z)
 	yaw = lerp_angle(yaw, want_yaw, clampf(delta * 4.0, 0.0, 1.0))
 	var horiz := Vector3(to.x, 0, to.z).length()
