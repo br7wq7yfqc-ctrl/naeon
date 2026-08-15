@@ -81,6 +81,9 @@ func _process(delta: float) -> void:
 	_tick_guard_respawn(delta)
 	if running and ownership and ownership.is_fully_owned() and _status != "contested" and _owner_in_zone():
 		_tick_harvest(delta)
+	elif _status == "extracting":
+		_status = "owned"
+		_refresh_label()
 	_try_player_claim()
 	_try_pad_scan()
 
@@ -515,6 +518,13 @@ func get_occupy_strength() -> float:
 func _owner_in_zone() -> bool:
 	if ownership == null or not ownership.is_fully_owned():
 		return false
+	var own_fac := ownership.faction_name()
+	if _actor_holds_zone(own_fac):
+		return true
+	return _landed_ship_holds_zone(own_fac)
+
+
+func _actor_holds_zone(own_fac: String) -> bool:
 	var actor := _find_actor()
 	if actor == null or not is_instance_valid(actor):
 		return false
@@ -525,7 +535,42 @@ func _owner_in_zone() -> bool:
 		pfac = str(actor.get_faction())
 	elif GameManager:
 		pfac = GameManager.get_faction_name()
-	return pfac == ownership.faction_name()
+	return pfac == own_fac
+
+
+func _landed_ship_holds_zone(own_fac: String) -> bool:
+	var tree := get_tree()
+	if tree == null:
+		return false
+	for s in tree.get_nodes_in_group("ship"):
+		if s == null or not is_instance_valid(s):
+			continue
+		if not bool(s.get("is_landed")):
+			continue
+		var sfac := "Cybernex"
+		if s.has_method("get_faction"):
+			sfac = str(s.get_faction())
+		if sfac != own_fac:
+			continue
+		if _ship_landed_on_this(s):
+			return true
+	return false
+
+
+func _ship_landed_on_this(ship: Node) -> bool:
+	var pad: Node = null
+	if ship.has_method("get_landed_pad"):
+		pad = ship.get_landed_pad()
+	elif "_landed_pad" in ship:
+		pad = ship.get("_landed_pad")
+	if pad != null and is_instance_valid(pad):
+		if pad == self:
+			return true
+		if pad is Node and (pad == get_parent() or pad.is_ancestor_of(self) or is_ancestor_of(pad)):
+			return true
+	if ship is Node3D:
+		return (ship as Node3D).global_position.distance_to(global_position) <= claim_radius
+	return false
 
 
 func get_faction() -> String:

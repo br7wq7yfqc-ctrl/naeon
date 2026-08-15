@@ -787,6 +787,10 @@ func _claim_nearby_pad() -> void:
 func get_faction() -> String:
 	return faction
 
+
+func get_landed_pad() -> Node3D:
+	return _landed_pad if is_landed else null
+
 func take_damage(amount: float) -> void:
 	if CombatJuice:
 		CombatJuice.hit_feedback(float(amount), global_position, amount >= 40.0)

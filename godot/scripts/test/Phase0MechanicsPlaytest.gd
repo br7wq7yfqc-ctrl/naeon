@@ -198,6 +198,24 @@ func _go() -> void:
 				print("[Playtest] ship landed=", land_ship.get("is_landed"), " pad=", deck.name)
 				if not bool(land_ship.get("is_landed")):
 					fails.append("ship did not land on pad")
+				else:
+					# Walker is still 420m out; landed owning ship should keep the extractor on.
+					var c4: float = float(GameManager.contribution) if GameManager else 0.0
+					await get_tree().create_timer(0.7).timeout
+					var c5: float = float(GameManager.contribution) if GameManager else 0.0
+					print("[Playtest] harvest landed-ship ", snapped(c4, 0.01), " -> ", snapped(c5, 0.01), " status=", pad.get_claim_status() if pad.has_method("get_claim_status") else "?")
+					if c5 <= c4 + 0.001:
+						fails.append("no harvest while owning ship is landed")
+					if land_ship.has_method("_do_launch"):
+						land_ship.set("_land_lock_t", 0.0)
+						land_ship._do_launch()
+					await get_tree().create_timer(0.25).timeout
+					var c6: float = float(GameManager.contribution) if GameManager else 0.0
+					await get_tree().create_timer(0.55).timeout
+					var c7: float = float(GameManager.contribution) if GameManager else 0.0
+					print("[Playtest] harvest after launch ", snapped(c6, 0.01), " -> ", snapped(c7, 0.01))
+					if c7 - c6 > 0.08:
+						fails.append("harvest continued after launch with nobody in ring")
 
 	# --- HOVER mode + vacuum stall ---
 	var ship: Node = os.get("ship")
