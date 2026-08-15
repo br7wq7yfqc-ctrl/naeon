@@ -1119,6 +1119,16 @@
       "label": "Cruiser",
       "position": "grot_capital_cruiser",
       "manual": 4
+    },
+    {
+      "id": "3guBl",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "ship-capital",
+      "label": "Battleship",
+      "position": "grot_battleship",
+      "dump_key": "generations/rendered/3guBl.jpg",
+      "manual": 5
     }
   ],
   "note": "Manual rebuild started. #001 1p69s gROT Carrier cinematic. Generations Index wiped.",

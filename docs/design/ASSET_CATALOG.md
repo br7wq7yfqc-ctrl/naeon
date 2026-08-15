@@ -140,6 +140,7 @@ Verified against the plate before bind.
 | Heavy Battlecruiser | GR | cinematic | `grot_battlecruiser` | `7o4tp` |
 | Battleship | CX | cinematic | `cybernex_battleship_CNX-9` | `kfNYX` |
 | Battleship | GR | cinematic | `grot_battleship` | `fCrw7` |
+| Battleship | GR | ortho | `grot_battleship` | `3guBl` |
 | Mothership | CX | cinematic | `cybernex_mothership` | `jfwHn` |
 | Mothership | GR | cinematic | `grot_mothership` | `1lgj1` |
 | Frigate | CX | cinematic | `cybernex_frigate` | `kcldc` |

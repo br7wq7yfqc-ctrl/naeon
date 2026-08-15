@@ -1584,6 +1584,15 @@
           "class": "ship-capital",
           "label": "Battleship",
           "dump_key": "generations/rendered/fCrw7.jpg"
+        },
+        {
+          "id": "3guBl",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "ship-capital",
+          "label": "Battleship",
+          "dump_key": "generations/rendered/3guBl.jpg",
+          "manual": 5
         }
       ]
     },
