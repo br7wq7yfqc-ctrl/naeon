@@ -543,11 +543,20 @@
           "manual": 26
         },
         {
+          "id": "cade3b02-acb5-432b-8d08-8fe653ce657d",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "weapon-vehicle",
+          "label": "Tank gun",
+          "manual": 34
+        },
+        {
           "id": "f6ba51ce-9f94-44ff-84e4-aee90fa3c1bc",
           "faction": "CX",
           "view": "ortho",
           "class": "weapon-vehicle",
-          "label": "Tank main"
+          "label": "Tank main",
+          "notes": "old ortho, not in manual catalog"
         }
       ]
     },
@@ -2216,13 +2225,6 @@
           "class": "weapon-vehicle",
           "label": "Hover cannon",
           "manual": 25
-        },
-        {
-          "id": "cade3b02-acb5-432b-8d08-8fe653ce657d",
-          "faction": "CX",
-          "view": "ortho",
-          "class": "weapon-vehicle",
-          "label": "Hover energy cannon"
         }
       ]
     },

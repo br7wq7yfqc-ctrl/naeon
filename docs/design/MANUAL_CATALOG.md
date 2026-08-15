@@ -38,5 +38,6 @@ Old `generations/catalog.json` and the visual album are **void**.
 | 031 | gROT Engine module — ortho | GR | ortho | `a25897c9-1a4f-4bbd-9b50-31f7b715590a` | imagine |
 | 032 | gROT Spore Feast — ortho | GR | ortho | `auivA` | `generations/rendered/auivA.jpg` |
 | 033 | gROT Drone carrier — cinematic | GR | cinematic | `B2g0Z` | `generations/rendered/B2g0Z.jpg` |
+| 034 | Cybernex Tank gun — ortho | CX | ortho | `cade3b02-acb5-432b-8d08-8fe653ce657d` | imagine |
 
-Next: wait. Heavy GR armor ortho still open. Distinct from #001 capital carrier.
+Next: wait. Heavy GR armor ortho still open. Hover cannon ortho open.

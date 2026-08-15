@@ -69,14 +69,13 @@ APC / hover / mech guns bind to the **hull** they sit on. Tank main has no Heavy
 | Object | Faction | View | Position | ID |
 |--------|---------|------|----------|----|
 | Tank gun | CX | cinematic | `cx-tank-gun` | `22365d81-9d7a-4784-9057-8d90337e40b8` |
-| Tank main | CX | ortho | `cx-tank-gun` | `f6ba51ce-9f94-44ff-84e4-aee90fa3c1bc` |
+| Tank gun | CX | ortho | `cx-tank-gun` | `cade3b02-acb5-432b-8d08-8fe653ce657d` |
 | Tank main | GR | cinematic | `gr-tank-gun` | `ce213a7c-d304-4a32-98c1-0a404c2bc7c9` |
 | Tank main | GR | ortho | `gr-tank-gun` | `e996c312-7056-4d6c-9bf2-435f12155119` |
 | APC gun | CX | cinematic | `cybernex_apc` | `024be4f6-45a0-43fa-bc62-055f920ec7ab` |
 | APC gun | CX | ortho | `cybernex_apc` | `a077f3ce-615f-4bb3-bdc7-5bbfcb5bc859` |
 | APC gun | GR | sheet | `grot_apc` | `41624757-559c-4757-a0dd-bcf549779e91` |
 | Hover cannon | CX | cinematic | `cybernex_hover_tank` | `576b48ad-426c-4b15-8292-fdd117ff43c3` |
-| Hover energy cannon | CX | ortho | `cybernex_hover_tank` | `cade3b02-acb5-432b-8d08-8fe653ce657d` |
 | Hover canal-cannon | GR | cinematic | `grot_hover_tank` | `44ef17f1-73f4-43ad-b878-524b48321c41` |
 | Hover canal-cannon | GR | ortho | `grot_hover_tank` | `27a2dc10-2759-4b82-8422-d76121cedf39` |
 | Mech 4-gun cluster | CX | cinematic | `cybernex_walker` | `9ec6f2e9-a825-418f-b427-b725ed066df9` |
