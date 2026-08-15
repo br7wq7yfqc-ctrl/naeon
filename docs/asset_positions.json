@@ -1593,6 +1593,14 @@
           "label": "Battleship",
           "dump_key": "generations/rendered/3guBl.jpg",
           "manual": 5
+        },
+        {
+          "id": "3a8de11f-6f48-42b4-887b-4e0c34e41ca9",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Battleship",
+          "manual": 6
         }
       ]
     },

@@ -139,7 +139,7 @@ Verified against the plate before bind.
 | Heavy Battlecruiser | CX | cinematic | `cybernex_battlecruiser_CNH-09` | `1TV3u` |
 | Heavy Battlecruiser | GR | cinematic | `grot_battlecruiser` | `7o4tp` |
 | Battleship | CX | cinematic | `cybernex_battleship_CNX-9` | `kfNYX` |
-| Battleship | GR | cinematic | `grot_battleship` | `fCrw7` |
+| Battleship | GR | cinematic | `grot_battleship` | `3a8de11f-6f48-42b4-887b-4e0c34e41ca9` |
 | Battleship | GR | ortho | `grot_battleship` | `3guBl` |
 | Mothership | CX | cinematic | `cybernex_mothership` | `jfwHn` |
 | Mothership | GR | cinematic | `grot_mothership` | `1lgj1` |
