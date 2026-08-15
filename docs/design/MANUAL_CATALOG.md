@@ -25,5 +25,6 @@ Old `generations/catalog.json` and the visual album are **void**.
 | 018 | Cybernex Pilot helmet — sheet | CX | ortho | `A2cmE` | `generations/rendered/A2cmE.jpg` |
 | 019 | gROT Pilot helmet — cinematic | GR | cinematic | `agxTz` | `generations/rendered/agxTz.jpg` |
 | 020 | Cybernex Heavy fighter — cinematic | CX | cinematic | `7GPCx` | `generations/rendered/7GPCx.jpg` |
+| 021 | Cybernex Heavy fighter — ortho | CX | ortho | `f9b60ddc-94d9-4705-87dc-d784f9cb01a5` | imagine |
 
-Next: heavy fighter ortho in review. Heavy GR armor ortho still open.
+Next: wait. Heavy GR armor ortho still open.

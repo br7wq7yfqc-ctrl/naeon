@@ -116,6 +116,7 @@ APC / hover / mech guns bind to the **hull** they sit on. Tank main has no Heavy
 | Fighter | CX | cinematic | `cybernex_fighter` | `4ca9faf0-e533-403b-bc6e-2f6263d6a4d7` |
 | Fighter | CX | ortho | `cybernex_fighter` | `eb126daa-d380-4db6-bc95-9fde9e4e6846` |
 | Heavy fighter (multicrew) | CX | cinematic | `cybernex_heavy_fighter` | `7GPCx` |
+| Heavy fighter (multicrew) | CX | ortho | `cybernex_heavy_fighter` | `f9b60ddc-94d9-4705-87dc-d784f9cb01a5` |
 | Bomber | CX | cinematic | `cybernex_bomber` | `6c3799b6-f741-4ab2-aa5c-a86d564c5493` |
 | Bomber | CX | ortho | `cybernex_bomber` | `78162909-d59f-47be-a58c-c7fde0f19ad8` |
 | Support | CX | cinematic | `cybernex_support` | `877b315c-e073-4cf6-a455-2483332d63f4` |

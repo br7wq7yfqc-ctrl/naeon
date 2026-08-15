@@ -1269,6 +1269,15 @@
       "position": "cybernex_heavy_fighter",
       "dump_key": "generations/rendered/7GPCx.jpg",
       "manual": 20
+    },
+    {
+      "id": "f9b60ddc-94d9-4705-87dc-d784f9cb01a5",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "ship-small-multicrew",
+      "label": "Heavy fighter",
+      "position": "cybernex_heavy_fighter",
+      "manual": 21
     }
   ],
   "note": "Manual rebuild started. #001 1p69s gROT Carrier cinematic. Generations Index wiped.",
