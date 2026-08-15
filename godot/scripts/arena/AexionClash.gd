@@ -26,6 +26,7 @@ func _ready() -> void:
 	war = _WarScore.new()
 	war.name = "WarScore"
 	add_child(war)
+	add_to_group("aexion_clash")
 	if LayerContext:
 		LayerContext.set_layer("Arena")
 		LayerContext.seamless_stage = "S1"
