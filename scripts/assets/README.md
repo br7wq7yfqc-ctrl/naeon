@@ -7,6 +7,19 @@
 ./scripts/assets/sync_to_bucket.sh       # local → bucket
 ```
 
+## Tripo harvest (while batch is running)
+
+Copy completed `pipeline/inbox/<slug>/model.glb` → `s3://neon/dev/tripo/<slug>/`.
+Does **not** start Tripo tasks. Copy only — safe next to `tripo_image2model.py`.
+
+```bash
+./scripts/assets/harvest_tripo_inbox.sh          # one pass
+./scripts/assets/harvest_tripo_inbox.sh --watch  # every 60s
+```
+
+Mac already has the GLBs in `inbox/` as they finish. Harvest is for the bucket
+(and other machines via `sync_from_bucket.sh`).
+
 ## Automatic sync
 
 См. подробную инструкцию: `docs/ASSETS_AUTO_SYNC.md`
