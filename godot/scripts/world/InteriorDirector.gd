@@ -144,10 +144,7 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	_player = player
 	_console_cd = 0.0
 	_console_hint_t = 0.0
-	if kind == "station":
-		_recycler_on = true
-	else:
-		_recycler_on = true
+	_recycler_on = true
 	_return_up = ret_up.normalized() if ret_up.length_squared() > 0.01 else Vector3.UP
 	_return_pos = ret_pos + _return_up * 4.0
 	_active = interior
