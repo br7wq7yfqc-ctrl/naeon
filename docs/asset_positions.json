@@ -2157,7 +2157,8 @@
           "faction": "CX",
           "view": "ortho",
           "class": "weapon-vehicle",
-          "label": "APC autocannon/EW"
+          "label": "APC gun",
+          "manual": 29
         }
       ]
     },

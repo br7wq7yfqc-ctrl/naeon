@@ -72,7 +72,7 @@ APC / hover / mech guns bind to the **hull** they sit on. Tank main has no Heavy
 | Tank main | GR | cinematic | `gr-tank-gun` | `ce213a7c-d304-4a32-98c1-0a404c2bc7c9` |
 | Tank main | GR | ortho | `gr-tank-gun` | `e996c312-7056-4d6c-9bf2-435f12155119` |
 | APC gun | CX | cinematic | `cybernex_apc` | `024be4f6-45a0-43fa-bc62-055f920ec7ab` |
-| APC autocannon/EW | CX | ortho | `cybernex_apc` | `a077f3ce-615f-4bb3-bdc7-5bbfcb5bc859` |
+| APC gun | CX | ortho | `cybernex_apc` | `a077f3ce-615f-4bb3-bdc7-5bbfcb5bc859` |
 | APC gun | GR | sheet | `grot_apc` | `41624757-559c-4757-a0dd-bcf549779e91` |
 | Hover cannon | CX | cinematic | `cybernex_hover_tank` | `576b48ad-426c-4b15-8292-fdd117ff43c3` |
 | Hover energy cannon | CX | ortho | `cybernex_hover_tank` | `cade3b02-acb5-432b-8d08-8fe653ce657d` |

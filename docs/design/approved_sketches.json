@@ -200,8 +200,9 @@
       "faction": "CX",
       "view": "ortho",
       "class": "weapon-vehicle",
-      "label": "APC autocannon/EW",
-      "position": "cybernex_apc"
+      "label": "APC gun",
+      "position": "cybernex_apc",
+      "manual": 29
     },
     {
       "id": "02dfbd93-d19f-4230-85cd-97840f0db3de",
