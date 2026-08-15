@@ -66,7 +66,16 @@ var _scan_pulse_t: float = 0.0
 var _scan_last_report: String = ""
 var _deployed_rover: Node3D = null
 var _engine_pulse_t: float = 0.0
+var _hull_crit_t: float = 0.0
+var _shield_hold_t: float = 0.0
 var _hull_ambient: Node3D = null
+
+const _SHIELD_REGEN := 4.0
+const _SHIELD_HOLD := 2.4
+const _HULL_CRIT_T := 1.8
+const _HULL_CRIT_THRUST := 0.45
+const _HULL_CRIT_ENERGY := 0.35
+const _HULL_CRIT_HP := 0.35
 
 func _ready() -> void:
 	add_to_group("ship")
@@ -229,6 +238,8 @@ func _thrust_mult() -> float:
 		m *= float(_role.siege_thrust_mult)
 	elif op_mode == 2:
 		m *= 0.7
+	if _hull_crit_t > 0.0:
+		m *= _HULL_CRIT_THRUST
 	return m
 
 func _damp_mult() -> float:
@@ -365,15 +376,12 @@ func _physics_process(delta: float) -> void:
 		# Ignore accidental launch for lock window (prevents "lift on land")
 		if _land_lock_t <= 0.0 and Input.is_action_just_pressed("ability_2"):
 			_do_launch()
+		_tick_combat(delta)
 		_update_status()
 		return
 
 	_update_roll_input(delta)
 	_apply_attitude()
-
-	_fire_cd = max(0.0, _fire_cd - delta)
-	shields = min(max_shields, shields + 4.0 * delta)
-	energy = min(max_energy, energy + 8.0 * delta)  # EnergyEconomy.REGEN_SHIP
 
 	var axes: Vector3 = _ship_axis()
 	var thrust: float = (base_thrust + _module_thrust()) * _thrust_mult()
@@ -466,8 +474,7 @@ func _physics_process(delta: float) -> void:
 	if velocity.length() > 5.0 and SessionObjectives:
 		SessionObjectives.on_moved()
 
-	if Input.is_action_pressed("ability_1") and _fire_cd <= 0.0:
-		_fire_weapon()
+	_tick_combat(delta)
 	if Input.is_action_just_pressed("ability_2"):
 		_toggle_landing()
 	_auto_land_assist(delta)
@@ -479,10 +486,11 @@ func _physics_process(delta: float) -> void:
 func _update_status() -> void:
 	if status_label:
 		var opn := "SIEGE" if op_mode == 1 else ("SCAN" if op_mode == 2 else "CRUISE")
-		status_label.text = "%s  OP:%s  SPD %d  SHD %d  E %d  %s%s" % [
+		status_label.text = "%s  OP:%s  SPD %d  SHD %d  E %d  %s%s%s" % [
 			flight_mode_name(), opn, int(velocity.length()), int(shields), int(energy),
 			("LANDED" if is_landed else "FLIGHT"),
 			("  STALL" if _stall > 0.35 else ""),
+			("  HULL CRIT" if _hull_crit_t > 0.0 else ""),
 		]
 
 func _toggle_landing() -> void:
@@ -610,23 +618,23 @@ func _recompute_stats() -> void:
 		max_cargo += m.cargo_bonus
 	shields = min(shields, max_shields)
 
+func _tick_combat(delta: float) -> void:
+	_fire_cd = max(0.0, _fire_cd - delta)
+	if _hull_crit_t > 0.0:
+		_hull_crit_t = maxf(0.0, _hull_crit_t - delta)
+	if _shield_hold_t > 0.0:
+		_shield_hold_t = maxf(0.0, _shield_hold_t - delta)
+	if _hull_crit_t <= 0.0 and _shield_hold_t <= 0.0:
+		shields = min(max_shields, shields + _SHIELD_REGEN * delta)
+	var e_rate: float = 8.0
+	if _hull_crit_t > 0.0:
+		e_rate *= _HULL_CRIT_ENERGY
+	energy = min(max_energy, energy + e_rate * delta)
+	if Input.is_action_pressed("ability_1") and _fire_cd <= 0.0:
+		_fire_weapon()
+
+
 func _fire_weapon() -> void:
-	# Soft muzzle flash (presentation only)
-	var flash := OmniLight3D.new()
-	flash.light_energy = 6.0
-	flash.omni_range = 8.0
-	flash.light_color = Color(0.5, 0.85, 1.0) if faction != "gROT" else Color(1.0, 0.3, 0.4)
-	flash.position = Vector3(0, 0, -2.0)
-	add_child(flash)
-	var flash_ref = flash
-	get_tree().create_timer(0.07).timeout.connect(func():
-		if is_instance_valid(flash_ref):
-			flash_ref.queue_free()
-	)
-	if AudioDirector:
-		AudioDirector.play_hit(false)
-	if CombatJuice:
-		CombatJuice.hit_feedback(2.0, global_position - global_transform.basis.z * 3.0)
 	var e_cost: float = 5.0
 	var EE = load("res://scripts/systems/EnergyEconomy.gd")
 	if EE:
@@ -636,6 +644,8 @@ func _fire_weapon() -> void:
 		if op_mode == 1:
 			e_cost *= 1.35
 	if energy < e_cost:
+		if AudioDirector and AudioDirector.has_method("play_ui_deny"):
+			AudioDirector.play_ui_deny()
 		return
 	energy -= e_cost
 	_fire_cd = 0.22 if op_mode == 1 else (0.14 if flight_mode == FlightMode.NAV else 0.18)
@@ -646,12 +656,35 @@ func _fire_weapon() -> void:
 		dps *= float(_role.siege_dps_mult) if "siege_dps_mult" in _role else 1.35
 	var dir: Vector3 = -global_transform.basis.z
 	var origin: Vector3 = global_position + dir * 2.2
+	var Hits = load("res://scripts/combat/CombatHits.gd")
+	if Hits:
+		var aim: Array = Hits.aim_from(self)
+		origin = aim[0]
+		dir = aim[1]
 	var spd: float = 95.0 if flight_mode == FlightMode.NAV else (55.0 if flight_mode == FlightMode.HOVER else 72.0)
 	var life: float = 1.6 if flight_mode == FlightMode.NAV else 1.25
 	var col := Color(0.3, 0.95, 1.0) if faction == "Cybernex" else Color(1.0, 0.2, 0.4)
 	var _Pool = load("res://scripts/combat/ProjectilePool.gd")
 	if _Pool:
-		_Pool.spawn(get_tree(), origin, dir, spd, dps * 0.55, str(faction), col, life)
+		_Pool.spawn(get_tree(), origin, dir, spd, dps * 0.55, str(faction), col, life, [self])
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	if gq == null or int(gq.tier) > 0:
+		var flash := OmniLight3D.new()
+		flash.light_energy = 6.0
+		flash.omni_range = 8.0
+		flash.light_color = Color(0.5, 0.85, 1.0) if faction != "gROT" else Color(1.0, 0.3, 0.4)
+		flash.shadow_enabled = false
+		add_child(flash)
+		flash.position = Vector3(0, 0, -2.0)
+		var flash_ref = flash
+		var tree := get_tree()
+		if tree:
+			tree.create_timer(0.07).timeout.connect(func():
+				if is_instance_valid(flash_ref):
+					flash_ref.queue_free()
+			)
+	if AudioDirector:
+		AudioDirector.play_hit(false)
 	var NP = load("res://scripts/fx/NeonParticles.gd")
 	if NP:
 		NP.muzzle_flash(origin, dir, NP.faction_color(str(faction)), get_tree())
@@ -770,12 +803,36 @@ func get_landed_pad() -> Node3D:
 func take_damage(amount: float) -> void:
 	if CombatJuice:
 		CombatJuice.hit_feedback(float(amount), global_position, amount >= 40.0)
+	_shield_hold_t = _SHIELD_HOLD
 	var rest: float = amount
 	if shields > 0.0:
 		var absorbed: float = min(shields, rest)
 		shields -= absorbed
 		rest -= absorbed
 	health = max(0.0, health - rest)
+	if health <= 0.0:
+		_hull_critical()
+
+
+func _hull_critical() -> void:
+	health = max_health * _HULL_CRIT_HP
+	shields = 0.0
+	_hull_crit_t = _HULL_CRIT_T
+	_shield_hold_t = maxf(_shield_hold_t, _SHIELD_HOLD)
+	velocity *= 0.4
+	if flight_mode == FlightMode.NAV:
+		_set_mode(FlightMode.SCM)
+	if GameManager:
+		GameManager.toast_requested.emit("HULL CRITICAL — thrust cut, no permadeath")
+	print("[Ship] hull critical recover")
+
+
+func hurtbox_center() -> Vector3:
+	return global_position
+
+
+func hurtbox_radius() -> float:
+	return 2.4
 
 func _spawn_land_fx() -> void:
 	# Brief dust ring on pad touchdown
