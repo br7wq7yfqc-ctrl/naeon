@@ -97,3 +97,4 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 75. Perf: pooled jump FX, cached ship scan in EVA, ship Label3D written on change, `_recompute_stats` on attach/detach, attitude applied once per tick
 76. Harvest VFX called; pad loss announced while you are away; siege denies unsupported hulls; F3 detail counter reads `queue_depth`
 77. ENERGY_ECONOMY doc re-synced to the constants (it listed Pulse 6/0.55s against the real 18/5.0s)
+78. Land gate is legible: `land_readiness_line()` on the ship HUD says which term still fails (`alt 600→120`, `pad 148m→90m`, `slow 12.3→12`, `LAND READY — E`); the refusal toast names the same term, and gate + readout share one `_land_envelope()`

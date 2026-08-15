@@ -196,6 +196,14 @@ The design rules are not decoration either. These were being broken in code:
   could strand you on a roof.
 - Pressing Esc to release the mouse abandoned the match: the arena hero never
   consumed `ui_cancel`, so `TestArena` handled it too.
+- **The land gate was honest but illegible.** `_do_land` refused with
+  "Approach a pad (<90m) or low surface", which restates the rule instead of
+  saying which condition failed. A tester given the full control scheme spent
+  many attempts and never landed, reading the refusal as a bug. The ship HUD now
+  carries a live `land_readiness_line()` — `LAND: alt 600→120`,
+  `LAND: pad 148m→90m`, `LAND: slow 12.3→12`, or `LAND READY — E` — and the
+  refusal toast names the same failing term. The gate itself is unchanged; both
+  it and the readout now read one `_land_envelope()`.
 - `nearest_pad` force-built the entire pad complex synchronously, and
   `ShipController` calls it every physics frame — a hard freeze each time a ship
   crossed 500 m AGL, defeating the staggered builder written to prevent it.
@@ -266,6 +274,23 @@ lap1 retreat         nodes=502  still_built=0  (+90 over baseline)
 
 Lap 1 returns to **exactly** the lap 0 figure, so the +90 residual is one-time
 pool allocation in the surface systems, not a leak, and no planet stays built.
+
+### Landing readout, driven down through the envelope
+
+```
+alt 600  LAND: alt 600→120
+alt 300  LAND: alt 300→120
+alt 150  LAND: pad 148m→90m      # pads have streamed in by here
+alt  80  LAND READY — E
+alt  20  LAND READY — E
+fast     LAND: slow 12.3→12
+```
+
+Landing itself measured working: at 80 m altitude `nearest_pad` returns
+`Pad_North` at 79.4 m and `_do_land()` sets `is_landed=true`. At 300 m the pads
+are legitimately not streamed in yet (tier 0 builds at `radius + 220`) and
+`altitude_of` exceeds the 120 m surface-land limit — which is exactly what the
+new readout now says out loud.
 
 ### GUI playthrough
 

@@ -662,10 +662,15 @@ func _update_hud() -> void:
 	var extra := ""
 	if mode == "INTERIOR" and _interior.has_method("life_support_line"):
 		extra = "  ·  " + str(_interior.life_support_line())
-	elif _in_ship and ship.has_method("get_flight_status_line"):
-		var fl := str(ship.get_flight_status_line())
-		if "STALL" in fl:
+	elif _in_ship:
+		if ship.has_method("get_flight_status_line") and "STALL" in str(ship.get_flight_status_line()):
 			extra = "  ·  STALL"
+		# The land gate is honest; without this the player cannot see which
+		# condition still fails and reads the refusal as a bug.
+		if ship.has_method("land_readiness_line"):
+			var lr := str(ship.land_readiness_line())
+			if lr != "":
+				extra += "  ·  " + lr
 	var brief := "%s  ·  %s  ·  %s  ·  %d m/s  ·  HP %d  SHD %d%s  ·  occupy/C  E land  F EVA" % [
 		mode, loc, alt_s, int(spd), int(ship.health), int(ship.shields), extra
 	]

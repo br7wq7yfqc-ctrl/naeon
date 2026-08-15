@@ -549,15 +549,10 @@ func _do_land() -> void:
 		var gg: Vector3 = _open_space.gravity_at(global_position)
 		if gg.length() > 0.01:
 			v_rad = velocity.dot(gg.normalized())
-	var max_spd := 18.0
-	var max_sink := 12.0
-	if flight_mode == FlightMode.HOVER:
-		# Must stay under max_speed_hover (22) or the gate can never fire.
-		max_spd = 12.0
-		max_sink = 8.0
-	elif flight_mode == FlightMode.NAV:
-		max_spd = 12.0
-		max_sink = 8.0
+	# HOVER must stay under max_speed_hover (22) or the gate can never fire.
+	var env := _land_envelope()
+	var max_spd: float = env[0]
+	var max_sink: float = env[1]
 	if not _Flight.land_ok(spd, v_rad, max_spd, max_sink):
 		_toast_ship("Land denied — spd %d sink %d  (3 HOVER, slow)" % [int(spd), int(v_rad)])
 		print("[Ship] Land denied spd=", int(spd), " sink=", int(v_rad), " mode=", flight_mode_name())
@@ -574,8 +569,11 @@ func _do_land() -> void:
 			_commit_land(null)
 			print("[Ship] Surface land near ", pl.get("planet_name"))
 			return
-	_toast_ship("Approach a pad (<%dm) or low surface" % int(land_pad_snap_distance))
-	print("[Ship] Land denied — no pad/surface in envelope")
+	# Say which condition failed instead of restating the rule.
+	var alt_now: float = _altitude_now()
+	_toast_ship("Land denied — %s" % land_readiness_line().trim_prefix("LAND: "))
+	print("[Ship] Land denied — no pad within ", int(land_pad_snap_distance),
+		"m and alt ", int(alt_now), " > ", int(surface_land_alt))
 
 
 func _commit_land(pad: Node3D) -> void:
@@ -1510,7 +1508,63 @@ func get_flight_status_line() -> String:
 	var st := "%s · %s · SPD %d" % [flight_mode_name(), get_op_mode_name(), int(velocity.length())]
 	if _stall > 0.28:
 		st += " · STALL %.0f%%" % (_stall * 100.0)
+	if is_landed:
+		st += " · LANDED · 2 launch · C claim"
+	else:
+		st += "  ·  " + land_readiness_line()
 	return st
+
+
+func land_readiness_line() -> String:
+	## The land gate is honest but was invisible: nothing told the player which
+	## condition still failed, so "Approach a pad (<90m) or low surface" read as
+	## a bug. Spell out the envelope while a landing is plausible.
+	if is_landed:
+		return "LANDED"
+	var alt: float = _altitude_now()
+	if alt <= 0.0 or alt > 900.0:
+		return ""
+	var env := _land_envelope()
+	var max_spd: float = env[0]
+	var max_sink: float = env[1]
+	var spd: float = velocity.length()
+	var sink: float = 0.0
+	if _open_space and _open_space.has_method("gravity_at"):
+		var gg: Vector3 = _open_space.gravity_at(global_position)
+		if gg.length() > 0.01:
+			sink = velocity.dot(gg.normalized())
+	var pad_d := -1.0
+	if _open_space and _open_space.has_method("nearest_pad"):
+		var pad: Node3D = _open_space.nearest_pad(global_position)
+		if pad and is_instance_valid(pad):
+			pad_d = pad.global_position.distance_to(global_position)
+	var need: PackedStringArray = PackedStringArray()
+	# One decimal on the current value: rounding both sides printed "slow 12→12".
+	if spd > max_spd:
+		need.append("slow %.1f→%d" % [spd, int(max_spd)])
+	if absf(sink) > max_sink:
+		need.append("sink %.1f→%d" % [absf(sink), int(max_sink)])
+	var in_reach := (pad_d >= 0.0 and pad_d <= land_pad_snap_distance) or alt < surface_land_alt
+	if not in_reach:
+		if pad_d >= 0.0:
+			need.append("pad %dm→%dm" % [int(pad_d), int(land_pad_snap_distance)])
+		else:
+			need.append("alt %d→%d" % [int(alt), int(surface_land_alt)])
+	if need.is_empty():
+		return "LAND READY — E"
+	if flight_mode != FlightMode.HOVER:
+		need.append("3 HOVER")
+	return "LAND: " + " · ".join(need)
+
+
+func _land_envelope() -> Array:
+	## [max_speed, max_sink] for the current flight mode — one source for both
+	## the gate in _do_land and the readout above it.
+	if flight_mode == FlightMode.HOVER:
+		return [12.0, 8.0]
+	if flight_mode == FlightMode.NAV:
+		return [12.0, 8.0]
+	return [18.0, 12.0]
 
 
 func get_stall() -> float:
