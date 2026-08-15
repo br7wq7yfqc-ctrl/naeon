@@ -672,7 +672,8 @@
       "class": "armor",
       "label": "Medium armor",
       "position": "grot_medium_armor",
-      "dump_key": "generations/imagine_images/opzQg.jpg"
+      "dump_key": "generations/rendered/opzQg.jpg",
+      "manual": 15
     },
     {
       "id": "oci1u",
@@ -1218,6 +1219,16 @@
       "position": "grot_light_armor",
       "dump_key": "generations/rendered/2T4jW.jpg",
       "manual": 14
+    },
+    {
+      "id": "fDy43",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "armor",
+      "label": "Medium armor",
+      "position": "grot_medium_armor",
+      "dump_key": "generations/rendered/fDy43.jpg",
+      "manual": 16
     }
   ],
   "note": "Manual rebuild started. #001 1p69s gROT Carrier cinematic. Generations Index wiped.",

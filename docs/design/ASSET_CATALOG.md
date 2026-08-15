@@ -172,6 +172,7 @@ Verified against the plate before bind.
 | Heavy armor | CX | cinematic | `cybernex_heavy_armor` | `5juQw` |
 | Heavy armor | CX | ortho | `cybernex_heavy_armor` | `97pBo` |
 | Medium armor | GR | cinematic | `grot_medium_armor` | `opzQg` |
+| Medium armor | GR | ortho | `grot_medium_armor` | `fDy43` |
 | Heavy armor | GR | cinematic | `grot_heavy_armor` | `oci1u` |
 | Helmet | CX | cinematic | `cybernex_helmet_CNX-7` | `icjiG` |
 | Helmet | GR | ortho | `grot_helmet` | `fMeN1` |

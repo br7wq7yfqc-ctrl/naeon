@@ -370,7 +370,17 @@
           "view": "cinematic",
           "class": "armor",
           "label": "Medium armor",
-          "dump_key": "generations/imagine_images/opzQg.jpg"
+          "dump_key": "generations/rendered/opzQg.jpg",
+          "manual": 15
+        },
+        {
+          "id": "fDy43",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Medium armor",
+          "dump_key": "generations/rendered/fDy43.jpg",
+          "manual": 16
         }
       ]
     },
