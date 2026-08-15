@@ -219,6 +219,11 @@ func _go() -> void:
 				print("[Playtest] harvest hud=", hl0)
 				if hl0.find("EXTRACTING") < 0:
 					fails.append("extracting pad has no harvest HUD line")
+			if pad.has_method("soft_scan"):
+				var scan := str(pad.soft_scan())
+				print("[Playtest] pad scan=", scan)
+				if scan.find("soft intel") < 0 or scan.find("reserves") < 0:
+					fails.append("pad V-scan missing soft intel")
 			if walker2 and is_instance_valid(walker2) and pad is Node3D:
 				walker2.global_position = (pad as Node3D).global_position + Vector3(0, 0, 420)
 			await get_tree().create_timer(0.2).timeout

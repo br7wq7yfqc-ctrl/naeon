@@ -829,11 +829,18 @@ func _try_pad_scan() -> void:
 	if actor.global_position.distance_to(global_position) > claim_radius * 0.85:
 		return
 	_pad_scan_cd = 1.5
+	soft_scan()
+
+
+func soft_scan() -> String:
+	## V intel: ownership + reserves. Soft Knowledge only (no combat power).
 	var fac := ownership.faction_name() if ownership else "Neutral"
 	var stren := ownership.claim_strength if ownership else 0.0
-	_notify_hud("Pad scan: %s  claim=%.2f  reserves=%.0f  (soft intel)" % [fac, stren, crystal_reserves])
+	var line := "Pad scan: %s  claim=%.2f  reserves=%.0f  (soft intel)" % [fac, stren, crystal_reserves]
+	_notify_hud(line)
 	if AudioDirector and AudioDirector.has_method("play_ui"):
 		AudioDirector.play_ui()
+	return line
 
 
 func _claim_pylon_pulse(strong: bool = false) -> void:
