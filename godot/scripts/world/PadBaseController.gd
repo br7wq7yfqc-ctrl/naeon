@@ -341,21 +341,95 @@ func _ensure_claim_beacon() -> void:
 			loaded = true
 			break
 	if not loaded:
-		# procedural pylon fallback
-		var mi := MeshInstance3D.new()
-		var cyl := CylinderMesh.new()
-		cyl.top_radius = 0.15
-		cyl.bottom_radius = 0.35
-		cyl.height = 4.5
-		mi.mesh = cyl
-		var mat := StandardMaterial3D.new()
-		mat.emission_enabled = true
-		mat.emission = Color(0.2, 0.85, 1.0)
-		mat.emission_energy_multiplier = 1.5
-		mat.albedo_color = Color(0.1, 0.15, 0.2)
-		mi.material_override = mat
-		mi.position.y = 2.25
-		root.add_child(mi)
+		_build_proc_pylon(root)
+
+
+func _build_proc_pylon(root: Node3D) -> void:
+	var fac := "Cybernex"
+	if ownership:
+		fac = ownership.faction_name() if ownership.has_method("faction_name") else fac
+	var col := Color(0.2, 0.85, 1.0)
+	if fac == "gROT":
+		col = Color(0.95, 0.12, 0.42)
+	elif fac == "Contested":
+		col = Color(1.0, 0.65, 0.2)
+	elif fac == "Neutral":
+		col = Color(0.65, 0.7, 0.75)
+	var armor := StandardMaterial3D.new()
+	armor.albedo_color = Color(0.1, 0.12, 0.16)
+	armor.metallic = 0.7
+	armor.roughness = 0.35
+	armor.emission_enabled = true
+	armor.emission = col
+	armor.emission_energy_multiplier = 0.7
+	var emit := StandardMaterial3D.new()
+	emit.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	emit.albedo_color = col
+	emit.emission_enabled = true
+	emit.emission = col
+	emit.emission_energy_multiplier = 2.2
+	var disc := CylinderMesh.new()
+	disc.top_radius = 0.85
+	disc.bottom_radius = 0.95
+	disc.height = 0.14
+	disc.radial_segments = 12
+	var base := MeshInstance3D.new()
+	base.mesh = disc
+	base.material_override = armor
+	base.position.y = 0.07
+	base.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(base)
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.12
+	cyl.bottom_radius = 0.28
+	cyl.height = 4.2
+	cyl.radial_segments = 8
+	var shaft := MeshInstance3D.new()
+	shaft.mesh = cyl
+	shaft.material_override = armor
+	shaft.position.y = 2.2
+	shaft.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(shaft)
+	var rod := CylinderMesh.new()
+	rod.top_radius = 0.05
+	rod.bottom_radius = 0.05
+	rod.height = 4.4
+	var core := MeshInstance3D.new()
+	core.mesh = rod
+	core.material_override = emit
+	core.position.y = 2.25
+	core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(core)
+	var torus := TorusMesh.new()
+	torus.inner_radius = 0.22
+	torus.outer_radius = 0.48
+	torus.rings = 10
+	torus.ring_segments = 16
+	var crown := MeshInstance3D.new()
+	crown.mesh = torus
+	crown.material_override = emit
+	crown.position.y = 4.35
+	crown.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(crown)
+	for i in 3:
+		var box := BoxMesh.new()
+		box.size = Vector3(0.06, 1.6, 0.28)
+		var fin := MeshInstance3D.new()
+		fin.mesh = box
+		fin.material_override = emit
+		fin.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		root.add_child(fin)
+		fin.position = Vector3(cos(float(i) * TAU / 3.0) * 0.32, 1.4, sin(float(i) * TAU / 3.0) * 0.32)
+		fin.rotation.y = float(i) * TAU / 3.0
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	if gq == null or int(gq.tier) >= 1:
+		var light := OmniLight3D.new()
+		light.omni_range = 10.0
+		light.light_energy = 1.1
+		light.light_color = col
+		light.shadow_enabled = false
+		light.position = Vector3(0, 3.6, 0)
+		root.add_child(light)
 
 
 func _spawn_claim_fx(col: Color) -> void:

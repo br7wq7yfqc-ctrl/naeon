@@ -240,6 +240,7 @@ func _apply_form_stats() -> void:
 		_body_mat.emission_energy_multiplier = 1.6
 	if form_label:
 		form_label.text = "%s | %s" % [current_form, faction]
+		form_label.visible = false
 	call_deferred("try_load_form_mesh")
 
 func get_energy() -> float:

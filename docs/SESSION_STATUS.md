@@ -1,16 +1,16 @@
 # Session Status
-**2026-08-14**
-Phase 0 playtest stitch: combat/perf + canon identity cards. No DMG.
+**2026-08-15**
+Phase 0 iterative play-feel: silhouettes, compact HUD, combat streaks, pad pylon, ship cruise greebles. No DMG.
 
-**Last update:** 2026-08-14
+**Last update:** 2026-08-15
 **Skill:** sequential-dev + holistic v2.0
 
 | Track | Status |
 |-------|--------|
 | Design VS + campaign + constructor/side/edu templates | **Gaps closed** |
-| A | Ability activate fix; costs from 04; Infection 5 pips; runner cache |
-| B | LayerContext.site_pin_id round-trip fields |
-| C | Canon plates identity stitch (JPG when generations/ synced) |
+| A | Abilities/costs/Infection + compact HUD + bolt streaks |
+| B | site_pin + pad 3D pylon |
+| C | Canon plates + procedural silhouettes when GLB missing |
 | D | Design ready (constructor + 26) |
 | E | Act I implement first |
 

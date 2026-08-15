@@ -553,35 +553,46 @@ func _update_hud() -> void:
 		spd = ship.velocity.length()
 	elif player != null and is_instance_valid(player):
 		spd = player.velocity.length()
-	hud_label.text = (
-		"NAEON OpenSpace  |  free flight · seamless land · surface walk\n"
-		+ "WASD thrust  Space/Shift lift  Mouse=flight plane  Z/X roll  |  1/2/3 flight  4 siege  5 ramp  6 rover  7 store  |  E land  F exit/EVA/board  C claim  G/B terra  U undo  I interior  Q hack\n"
-		+ "F1 cycle quality  |  Tab → TestArena (combat sandbox)\n"
-		+ "Mode: %s  Planet: %s  Alt: %dm  Spd: %d  HP:%d SHD:%d  PLOD:%s  CONTRIB:%.0f" % [
-			mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields), (pl.current_lod_name() if pl and is_instance_valid(pl) and pl.has_method("current_lod_name") else "-"), (GameManager.contribution if GameManager else 0.0)
-		]
-	)
-	# DEV mem — sequential observability (no extra nodes)
-	var objs := int(Performance.get_monitor(Performance.OBJECT_COUNT))
-	var nodes := int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))
-	var oram := int(Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0)
-	var live := 0
-	var pool := 0
-	var pa := 0
-	var pf := 0
-	if pl != null and is_instance_valid(pl):
-		var sd = pl.get_node_or_null("SurfaceDetail")
-		if sd != null and sd.has_method("live_count"):
-			live = int(sd.live_count())
-		if sd != null and sd.has_method("pool_count"):
-			pool = int(sd.pool_count())
-	var PP = load("res://scripts/combat/ProjectilePool.gd")
-	if PP:
-		pa = int(PP.active_count())
-		pf = int(PP.free_count())
-	hud_label.text += "\nMEM obj:%d nodes:%d ram:%dMB  detail %d/%d  proj %d/%d" % [objs, nodes, oram, live, pool, pa, pf]
+	var dbg := false
+	var gh = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+	if gh and gh.has_method("is_debug_overlay"):
+		dbg = bool(gh.is_debug_overlay())
+	var brief := "%s  ·  %s  ·  %dm  ·  %d m/s  ·  HP %d  SHD %d  ·  C claim  E land  F EVA" % [
+		mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields)
+	]
+	if not dbg:
+		hud_label.text = brief
+	else:
+		hud_label.text = (
+			"NAEON OpenSpace  |  free flight · seamless land · surface walk\n"
+			+ "WASD thrust  Space/Shift lift  Mouse=flight plane  Z/X roll  |  1/2/3 flight  4 siege  5 ramp  6 rover  7 store  |  E land  F exit/EVA/board  C claim  G/B terra  U undo  I interior  Q hack\n"
+			+ "F1 cycle quality  F3 HUD debug  |  Tab → TestArena\n"
+			+ "Mode: %s  Planet: %s  Alt: %dm  Spd: %d  HP:%d SHD:%d  PLOD:%s  CONTRIB:%.0f" % [
+				mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields), (pl.current_lod_name() if pl and is_instance_valid(pl) and pl.has_method("current_lod_name") else "-"), (GameManager.contribution if GameManager else 0.0)
+			]
+		)
+	if dbg:
+		var objs := int(Performance.get_monitor(Performance.OBJECT_COUNT))
+		var nodes := int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))
+		var oram := int(Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0)
+		var live := 0
+		var pool := 0
+		var pa := 0
+		var pf := 0
+		if pl != null and is_instance_valid(pl):
+			var sd = pl.get_node_or_null("SurfaceDetail")
+			if sd != null and sd.has_method("live_count"):
+				live = int(sd.live_count())
+			if sd != null and sd.has_method("pool_count"):
+				pool = int(sd.pool_count())
+		var PP = load("res://scripts/combat/ProjectilePool.gd")
+		if PP:
+			pa = int(PP.active_count())
+			pf = int(PP.free_count())
+		hud_label.text += "\nMEM obj:%d nodes:%d ram:%dMB  detail %d/%d  proj %d/%d" % [objs, nodes, oram, live, pool, pa, pf]
+	var oram2 := int(Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0)
 	if mode_label:
-		mode_label.text = "GFX: %s  MEM %dMB" % [gqn, oram]
+		mode_label.text = "GFX: %s  MEM %dMB" % [gqn, oram2]
 
 
 func _unhandled_input(event: InputEvent) -> void:

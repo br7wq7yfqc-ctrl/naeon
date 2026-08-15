@@ -24,7 +24,8 @@
 5. Terrain stability (done)
 6. Pad claim feedback + site_pin (this pass)
 7. Combat hurtboxes + ability costs from rules/04 (this pass)
-8. Next: pad claim 3D readability polish, 10-min loop soak on Mac GPU
+8. Pad claim 3D pylon polish (this pass)
+9. Next: 10-min loop soak on Mac GPU; planet surface / continuum depth
 
 ## Tripo
 - Balance check when generating; code-first when zero.

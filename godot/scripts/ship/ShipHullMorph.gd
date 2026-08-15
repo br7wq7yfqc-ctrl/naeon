@@ -24,6 +24,9 @@ func _build_proxy_plates() -> void:
 		{"name": "RadiatorL", "pos": Vector3(-1.1, 0.2, 0.3), "size": Vector3(0.08, 0.6, 0.9), "siege_rot": Vector3(0.6, 0, 0)},
 		{"name": "RadiatorR", "pos": Vector3(1.1, 0.2, 0.3), "size": Vector3(0.08, 0.6, 0.9), "siege_rot": Vector3(-0.6, 0, 0)},
 		{"name": "Outrigger", "pos": Vector3(0, -0.4, 0.5), "size": Vector3(1.8, 0.08, 0.3), "siege_scale": Vector3(1.5, 1.0, 1.2)},
+		{"name": "NacelleL", "pos": Vector3(-0.85, -0.08, 0.25), "size": Vector3(0.32, 0.22, 1.55)},
+		{"name": "NacelleR", "pos": Vector3(0.85, -0.08, 0.25), "size": Vector3(0.32, 0.22, 1.55)},
+		{"name": "Nose", "pos": Vector3(0, 0.06, -1.55), "size": Vector3(0.5, 0.28, 0.7)},
 	]
 	for s in specs:
 		var mi := MeshInstance3D.new()
@@ -41,7 +44,7 @@ func _build_proxy_plates() -> void:
 		mi.material_override = mat
 		add_child(mi)
 		mi.position = s["pos"]
-		mi.visible = false
+		mi.visible = true
 		var base_xf := mi.transform
 		var siege_xf := base_xf
 		if s.has("siege_pos"):
@@ -80,7 +83,7 @@ func _apply_morph_t(t: float) -> void:
 		var a: Transform3D = p["base"]
 		var b: Transform3D = p["siege"]
 		n.transform = a.interpolate_with(b, morph_t)
-		n.visible = morph_t > 0.02
+		n.visible = true
 		if n is MeshInstance3D and (n as MeshInstance3D).material_override is StandardMaterial3D:
 			var mat: StandardMaterial3D = (n as MeshInstance3D).material_override
 			mat.emission_energy_multiplier = 0.4 + morph_t * 2.2
