@@ -44,6 +44,15 @@ func play_claim_pulse() -> void:
 	_beep(600.0, 0.06, -12.0, 0.04)
 
 
+func play_door(opening: bool = true) -> void:
+	if opening:
+		_beep(280.0, 0.05, -12.0)
+		_beep(420.0, 0.06, -14.0, 0.04)
+	else:
+		_beep(240.0, 0.07, -13.0)
+		_beep(160.0, 0.08, -15.0, 0.05)
+
+
 func play_ui() -> void:
 	_beep(660.0, 0.03, -14.0)
 

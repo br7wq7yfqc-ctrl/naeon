@@ -27,6 +27,7 @@ var _atmo: float = 1.0
 var _recycler_on: bool = true
 var _console_cd: float = 0.0
 var _console_hint_t: float = 0.0
+var _door_hold: Dictionary = {}  # portal name -> remain-open seconds
 
 
 func setup(world_root: Node3D, open_space: Node) -> void:
@@ -144,6 +145,7 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	_player = player
 	_console_cd = 0.0
 	_console_hint_t = 0.0
+	_door_hold.clear()
 	_recycler_on = true
 	_return_up = ret_up.normalized() if ret_up.length_squared() > 0.01 else Vector3.UP
 	_return_pos = ret_pos + _return_up * 4.0
@@ -534,6 +536,7 @@ func _refresh_life_support() -> void:
 	if _kind == "ship":
 		_sealed = true
 		_atmo = 1.0
+		_sync_ambient()
 		return
 	var planet := 0.0
 	if _open_space and _open_space.has_method("atmosphere_density_at"):
@@ -544,6 +547,15 @@ func _refresh_life_support() -> void:
 	else:
 		_atmo = clampf(planet, 0.0, 1.0)
 		_sealed = _atmo >= 0.72
+	_sync_ambient()
+
+
+func _sync_ambient() -> void:
+	if _active == null or not is_instance_valid(_active):
+		return
+	var amb = _active.get_node_or_null("InteriorAmbient")
+	if amb and amb.has_method("sync_life_support"):
+		amb.sync_life_support(_atmo, _sealed, _recycler_on, life_support_line())
 
 
 func _pad_status_line() -> String:
@@ -576,11 +588,32 @@ func _tick_doors(delta: float) -> void:
 		if slab == null:
 			continue
 		var near := _player.global_position.distance_to((n as Node3D).global_position) < 3.2
-		var target_x := 1.55 if near else 0.0
-		slab.position.x = move_toward(slab.position.x, target_x, delta * 3.4)
+		var hold := float(_door_hold.get(n.name, 0.0))
+		if near:
+			hold = 0.55
+		else:
+			hold = maxf(0.0, hold - delta)
+		_door_hold[n.name] = hold
+		var want_open := near or hold > 0.0
+		var target_x := 1.55 if want_open else 0.0
+		var speed := 4.8 if want_open else 3.1
+		var prev_x := slab.position.x
+		slab.position.x = move_toward(slab.position.x, target_x, delta * speed)
+		if prev_x < 0.18 and slab.position.x >= 0.18:
+			if AudioDirector and AudioDirector.has_method("play_door"):
+				AudioDirector.play_door(true)
+			elif AudioDirector and AudioDirector.has_method("play_ui"):
+				AudioDirector.play_ui()
+		elif prev_x > 1.25 and slab.position.x <= 1.25 and not want_open:
+			if AudioDirector and AudioDirector.has_method("play_door"):
+				AudioDirector.play_door(false)
 		# Open slab must not block the hall — collision rides the mesh otherwise.
 		var blocking := slab.position.x < 0.85
 		for c in slab.get_children():
 			if c is CollisionObject3D:
 				(c as CollisionObject3D).collision_layer = 1 if blocking else 0
 				(c as CollisionObject3D).collision_mask = 1 if blocking else 0
+		if slab is MeshInstance3D:
+			var mat := (slab as MeshInstance3D).material_override as StandardMaterial3D
+			if mat:
+				mat.emission_energy_multiplier = 1.25 if want_open else 0.55
