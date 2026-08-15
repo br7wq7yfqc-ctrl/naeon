@@ -112,6 +112,8 @@ func _spawn_floor_grid_decals() -> void:
 
 
 func _apply_env() -> void:
+	if not is_inside_tree():
+		return
 	var tree := get_tree()
 	if tree == null or tree.current_scene == null:
 		return

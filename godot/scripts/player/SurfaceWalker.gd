@@ -292,7 +292,7 @@ func _ensure_combat_nodes() -> void:
 	call_deferred("_bind_hud")
 
 func _bind_hud() -> void:
-	if get_tree() == null:
+	if not is_inside_tree() or get_tree() == null:
 		return
 	var existing = get_tree().get_first_node_in_group("game_hud")
 	if existing == null:

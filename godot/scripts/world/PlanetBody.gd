@@ -358,11 +358,27 @@ func _step_pad_build() -> void:
 
 
 func _build_pads() -> void:
+	if _pads_root == null:
+		_pads_root = Node3D.new()
+		_pads_root.name = "Pads"
+		add_child(_pads_root)
+	if _pads_built and not _pads.is_empty():
+		return
 	_pads_built = true
 	_spawn_pad("Pad_North", Vector3.UP)
 	_spawn_pad("Pad_Eq", Vector3(1, 0.15, 0).normalized())
 	_spawn_pad("Pad_Far", Vector3(-0.7, 0.2, 0.7).normalized())
 	_spawn_pad_density()
+
+
+func ensure_pad_bases() -> void:
+	## Force pad plates + claim controllers even when the ship is still
+	## outside LOW-tier stream distance (headless / orbit spawn).
+	if not has_base:
+		return
+	if not _pads_built or _pads.is_empty():
+		_build_pads()
+	_stream_bases()
 
 
 func _spawn_pad(pad_name: String, dir: Vector3) -> void:

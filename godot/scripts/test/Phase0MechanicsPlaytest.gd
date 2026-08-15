@@ -78,6 +78,10 @@ func _go() -> void:
 
 	# --- occupy contest ---
 	await get_tree().create_timer(0.6).timeout
+	var pl: Node3D = os.nearest_planet(os.ship.global_position) if os.has_method("nearest_planet") and os.get("ship") else null
+	if pl and pl.has_method("ensure_pad_bases"):
+		pl.ensure_pad_bases()
+		await get_tree().create_timer(0.55).timeout
 	var pads: Array = get_tree().get_nodes_in_group("pad_bases")
 	print("[Playtest] pads=", pads.size())
 	if pads.is_empty():
