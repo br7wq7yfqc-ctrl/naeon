@@ -28,6 +28,17 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not running:
 		return
+	if ownership and ownership.has_method("get_faction"):
+		var ofac := str(ownership.get_faction())
+		if ofac in ["Neutral", "Contested", ""]:
+			if label:
+				label.text = "Extractor idle · claim first"
+			return
+		var pfac := GameManager.get_faction_name() if GameManager else ""
+		if pfac != "" and ofac != pfac:
+			if label:
+				label.text = "Extractor %s · not yours" % ofac
+			return
 	if target_node == null or not is_instance_valid(target_node) or target_node.reserves <= 0.0:
 		_find_nearest_resource()
 		if target_node == null:

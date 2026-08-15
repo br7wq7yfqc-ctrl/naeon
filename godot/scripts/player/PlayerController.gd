@@ -345,6 +345,9 @@ func _begin_down() -> void:
 	_down_t = 0.7
 	health = 0.0
 	velocity *= 0.35
+	var ch = get_node_or_null("ChannelController")
+	if ch and ch.has_method("interrupt"):
+		ch.interrupt("downed")
 	var tree := get_tree()
 	if tree:
 		var md = tree.get_first_node_in_group("clash_match")

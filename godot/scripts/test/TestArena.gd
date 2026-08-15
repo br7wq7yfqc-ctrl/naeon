@@ -280,21 +280,22 @@ func _spawn_turrets() -> void:
 		turr.set("target_player", s[1] == "gROT")
 
 func _spawn_claim_nodes() -> void:
-	# Interactive ownership beacons using dual-theme mesh swap
+	# Lane beacons start Neutral — C pulse / Hack occupy-to-hold, no pre-claim.
 	var spots: Array = [
-		[Vector3(-1, 0, -14), "Cybernex"],
-		[Vector3(4, 0, -14), "gROT"],
+		[Vector3(0, 0, -12), "MID"],
+		[Vector3(14, 0, -10), "TOP"],
+		[Vector3(-14, 0, -10), "BOT"],
 	]
 	for s in spots:
 		var n := Node3D.new()
 		n.name = "ClaimNode"
+		n.set_meta("lane", str(s[1]))
 		var own := Node3D.new()
 		own.name = "Ownership"
 		own.set_script(preload("res://scripts/ownership/OwnershipComponent.gd"))
 		own.set("dual_mesh_base", "props/claim_beacon/claim_beacon")
 		own.set("claimable", true)
 		n.add_child(own)
-		# mesh placeholder under Ownership
 		var mesh := MeshInstance3D.new()
 		mesh.name = "Mesh"
 		var cyl := CylinderMesh.new()
@@ -305,8 +306,20 @@ func _spawn_claim_nodes() -> void:
 		own.add_child(mesh)
 		add_child(n)
 		n.global_position = s[0]
-		if own.has_method("claim"):
-			own.claim(str(s[1]), 2.0)
+		if own.has_signal("fully_claimed"):
+			own.fully_claimed.connect(_on_beacon_claimed.bind(str(s[1])))
+
+func _on_beacon_claimed(_fac, lane: String = "MID") -> void:
+	var md = get_node_or_null("ClashMatchDirector")
+	if md and md.has_method("register_objective"):
+		md.register_objective()
+	if _clash and _clash.has_method("_add_pressure"):
+		_clash._add_pressure(lane, 28.0)
+	elif _clash and "lane_pressure" in _clash:
+		var lp: Dictionary = _clash.lane_pressure
+		var k := lane if lp.has(lane) else "MID"
+		lp[k] = clampf(float(lp.get(k, 0.0)) + 28.0, 0.0, 100.0)
+
 
 func _on_dummy_died() -> void:
 	if SessionObjectives:
