@@ -111,11 +111,17 @@ func set_interior_mode(on: bool) -> void:
 		speed = 5.4
 		sprint_mult = 1.28
 		jump_velocity = 6.2
+		if camera:
+			camera.position = Vector3(0, 0.15, 2.4)
+			camera.fov = 78.0
 	else:
 		speed = 6.5
 		sprint_mult = 1.75
 		jump_velocity = 7.0
 		floor_snap_length = 0.25
+		if camera:
+			camera.position = Vector3(0, 0.35, 4.2)
+			camera.fov = 70.0
 	print("[SurfaceWalker] interior_mode=", on)
 
 

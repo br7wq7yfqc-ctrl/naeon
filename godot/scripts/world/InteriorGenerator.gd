@@ -147,12 +147,12 @@ static func _room(parent: Node3D, pos: Vector3, size: Vector3, rname: String, ne
 	room.position = pos
 	parent.add_child(room)
 	# Floor
-	_box_mesh(room, Vector3(0, 0, 0), Vector3(size.x, 0.55, size.z), Color(0.12, 0.14, 0.18), true)
-	_box_mesh(room, Vector3(0, -0.8, 0), Vector3(size.x + 1.0, 1.0, size.z + 1.0), Color(0.04, 0.04, 0.05), true)
+	_box_mesh(room, Vector3(0, 0, 0), Vector3(size.x, 0.55, size.z), Color(0.22, 0.26, 0.32), true)
+	_box_mesh(room, Vector3(0, -0.8, 0), Vector3(size.x + 1.0, 1.0, size.z + 1.0), Color(0.12, 0.13, 0.16), true)
 	# Ceiling
-	_box_mesh(room, Vector3(0, size.y, 0), Vector3(size.x, 0.15, size.z), Color(0.05, 0.06, 0.08), true)
+	_box_mesh(room, Vector3(0, size.y, 0), Vector3(size.x, 0.15, size.z), Color(0.16, 0.18, 0.22), true)
 	# Walls (open on -Z/+Z for corridor flow — leave gaps)
-	var wall_c := Color(0.08, 0.09, 0.12)
+	var wall_c := Color(0.32, 0.36, 0.42)
 	_box_mesh(room, Vector3(-size.x * 0.5, size.y * 0.5, 0), Vector3(0.2, size.y, size.z), wall_c, true)
 	_box_mesh(room, Vector3(size.x * 0.5, size.y * 0.5, 0), Vector3(0.2, size.y, size.z), wall_c, true)
 	# Neon edge trim
@@ -179,12 +179,13 @@ static func _box_mesh(parent: Node3D, pos: Vector3, size: Vector3, color: Color,
 	mat.metallic = 0.35
 	# Compatibility / llvmpipe: shaded interiors read as black without IBL.
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mat.emission_enabled = true
 	mat.emission = color
 	if emit:
 		mat.emission_energy_multiplier = 2.2
 	else:
-		mat.emission_energy_multiplier = 0.45
+		mat.emission_energy_multiplier = 0.85
 	mi.material_override = mat
 	parent.add_child(mi)
 	if collision:
@@ -476,7 +477,7 @@ static func _door_portal(root: Node3D, pos: Vector3, neon: Color, hall_w: float 
 	var gap := 2.2
 	var fill_w: float = maxf(0.4, half - gap * 0.5)
 	var fill_c: float = half - fill_w * 0.5
-	var wall_c := Color(0.08, 0.09, 0.12)
+	var wall_c := Color(0.3, 0.34, 0.4)
 	_box_mesh(door, Vector3(-fill_c, 1.2, 0), Vector3(fill_w, 2.4, 0.32), wall_c, true)
 	_box_mesh(door, Vector3(fill_c, 1.2, 0), Vector3(fill_w, 2.4, 0.32), wall_c, true)
 	_box_mesh(door, Vector3(0, 2.4, 0), Vector3(hall_w * 0.92, 0.22, 0.32), wall_c, true)
