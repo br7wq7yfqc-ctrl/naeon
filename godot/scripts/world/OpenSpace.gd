@@ -93,6 +93,8 @@ func _apply_env_quality(gq) -> void:
 		var cam: Camera3D = ship.get_node_or_null("CameraPivot/Camera3D")
 		if cam:
 			cam.far = gq.far_clip
+			if "near_clip" in gq:
+				cam.near = float(gq.near_clip)
 
 func _spawn_starfield() -> void:
 	var root := $WorldRoot/Starfield as Node3D
@@ -160,24 +162,12 @@ func _spawn_star() -> void:
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
 	root.add_child(mi)
-	# Corona: a second slightly larger shell, alpha-blended.
-	var halo := MeshInstance3D.new()
-	var hm := SphereMesh.new()
-	hm.radius = r * 1.22
-	hm.height = r * 2.44
-	hm.radial_segments = 20
-	hm.rings = 10
-	halo.mesh = hm
-	var hmat := StandardMaterial3D.new()
-	hmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	hmat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	hmat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	hmat.albedo_color = Color(col.r, col.g, col.b, 0.16)
-	hmat.cull_mode = BaseMaterial3D.CULL_FRONT
-	halo.material_override = hmat
-	halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	halo.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-	root.add_child(halo)
+	# No corona shell. A constant-alpha additive sphere is not a glow: 16% white
+	# over black space renders as a flat grey ring around the disc, which looks
+	# worse than nothing. A real corona needs the same rim/fresnel falloff the
+	# planet atmospheres use — tracked as `star_corona_shell` polish in
+	# docs/design/TRIPO_ASSET_MANIFEST.md. Glow post-processing (tier >= 2)
+	# blooms the bright disc on its own.
 	print("[OpenSpace] star %s r=%.0f" % [str(st.get("name", "Star")), r])
 
 

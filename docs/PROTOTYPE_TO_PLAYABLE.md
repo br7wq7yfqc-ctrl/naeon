@@ -418,6 +418,26 @@ asteroid belt is called for the first time and takes its band from the layout.
 Measured: `Nex-Prime at orbit 3800 · ROT-Hive at orbit 7400 · Shard-Moon at orbit
 11800 · system ARK bodies=3`, smoke green.
 
+**Spreading the orbits exposed two defects the old clump hid:**
+
+- **The system was bigger than the render distance.** At the minimum preset the
+  camera far plane was 8000, but from the spawn ROT-Hive is 10383 away and
+  Shard-Moon 15960 — both were being clipped away entirely, along with every gate
+  anchor at 13600–15200. Far clips are now sized to fit a system (LOW 22000 →
+  ULTRA 48000) and the near plane moved 0.05 → 0.25, which buys back the depth
+  precision that widening the range costs.
+- **The star's corona shell rendered as a dark ring.** A constant-alpha additive
+  sphere is not a glow: 16% white over black space is flat grey. Removed — a grey
+  ring is worse than no corona, and a real one needs the same rim falloff the
+  planet atmospheres use (tracked as `star_corona_shell` polish in the manifest).
+  Glow post-processing blooms the bright disc on its own at tier ≥ 2.
+
+Both were found by rendering frames in-engine rather than by eye: a probe placed a
+camera at known points, aimed it at known targets, and saved real frames. Two
+observers using the mouse had failed to find the star at all, because from the
+spawn it sits 45° off-axis and partly behind Nex-Prime's limb — which the geometry
+readout said outright (`angle_off_camera=45 deg`, `fov=70`).
+
 ### 7.2 Deliberately not built yet
 
 Gate anchors are authored in the catalog and **nothing spawns them**. A gate prop

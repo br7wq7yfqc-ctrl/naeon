@@ -70,6 +70,20 @@ direction from it, and the shadow light aims along the star→observer line.
 Shard-Moon ≈ 33000, gates ≈ 38000–42000). Holding the current scale until then is
 deliberate: at NAV 180 m/s the outer gate would already be a 4-minute hold of W.
 
+### 2.2 Render distance is part of the scale
+
+Spreading the orbits immediately broke the camera: the minimum preset clipped at
+8000 while the far bodies sit at 10383 and 15960 from the spawn, so they were
+simply not drawn. Far clips are now sized per tier to contain a whole system
+(LOW 22000 · MED 28000 · HIGH 36000 · ULTRA 48000) with the near plane at 0.25 to
+hold depth precision.
+
+**G1 must revisit this.** At the 2.8× target scale even ULTRA's 48000 barely
+contains the system, and pushing the far plane further on a low-end preset is not
+free. The likely answer is a **deep-space pass**: draw distant bodies through the
+existing impostor LOD in a separate camera layer with its own depth range, rather
+than one frustum stretched over five orders of magnitude.
+
 ---
 
 ## 3. Data model
