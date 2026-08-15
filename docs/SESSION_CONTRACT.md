@@ -28,7 +28,8 @@
 9. Stations interiors: life-support, doors, ops console, seat gating (this pass)
 10. Stall in dense atmo (NAV drops to SCM); interior pocket outside planet mesh (this pass)
 11. Pad-guard combat while occupying (this pass)
-12. Next: 10-min soak on Mac GPU; land-to-harvest loop depth
+12. Land-to-harvest loop: in-ring / landed-ship extractor, EXTRACTING HUD, rover CargoHold (this pass)
+13. Next: 10-min soak on Mac GPU; Clash feel; interior HUD clutter
 
 ## Tripo
 - Balance check when generating; code-first when zero.

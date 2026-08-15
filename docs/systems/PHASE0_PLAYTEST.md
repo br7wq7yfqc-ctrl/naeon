@@ -40,3 +40,10 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 23. Headless `--playtest-mechanics` gate in `scripts/playtest_headless_smoke.sh` (`timeout`, not `--quit-after` frames)
 24. Interior HUD uses POCKET, not leftover ship AGL; occupy presence moves the contest meter
 25. Pad contest guard actually fights: headless hitscan, pad_up aim, stays dead until 8s respawn; walker Pulse uses CamPivot
+26. Harvest only while owner (or landed owning ship) is in the ring; EXTRACTING HUD line with rate + reserves
+27. Seat→pilot no longer crashes HUD on a freed walker; headless playtest exits after PASS (dummy renderer hang)
+28. Interior doors drop collision when the slab is open; cockpit E works when standing on the console
+29. EVA tether warns at 80m and reels toward the ship past 120m (no death); HUD shows tether meters
+30. Surface walker Nex-Firewall cleanses Infection (cap 5); pad V `soft_scan` is callable intel
+31. Station recycler E vents POWER IDLE then restores POWER BUS; leftover console cooldown no longer blocks the next pocket
+32. Scout hulls keep a CargoHold (no belly ramp); rover deploys on a landed pad and stores as a vehicle entry

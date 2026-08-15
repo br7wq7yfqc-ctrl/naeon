@@ -1,6 +1,6 @@
 # Session Status
 **2026-08-15**
-Phase 0 mechanics depth: interiors, occupy-to-hold, HOVER/stall, pad-guard combat. No DMG.
+Phase 0 mechanics depth: interiors, occupy-to-hold, HOVER/stall, pad-guard combat, land-to-harvest. No DMG.
 
 **Last update:** 2026-08-15
 **Skill:** sequential-dev + holistic v2.0
@@ -8,9 +8,9 @@ Phase 0 mechanics depth: interiors, occupy-to-hold, HOVER/stall, pad-guard comba
 | Track | Status |
 |-------|--------|
 | Design VS + campaign + constructor/side/edu templates | **Gaps closed** |
-| B | Continuum: land gate, HOVER hold + ground-effect, atmo NAV lock, stall |
-| C | Walker coyote/slope; rover grip/brake; interior walk/life-support (pocket + cam) |
-| A | Combat + HUD + pad-guard occupy fight + honest 10-min loop steps |
+| B | Continuum: land gate, HOVER hold + ground-effect, atmo NAV lock, stall, EVA tether |
+| C | Walker coyote/slope; rover grip/brake + CargoHold store; interior doors/console/recycler |
+| A | Combat + HUD EXTRACTING + pad-guard occupy fight + Infection 5 Firewall on foot |
 | D | Design ready (constructor + 26) |
 | E | Act I implement first |
 
