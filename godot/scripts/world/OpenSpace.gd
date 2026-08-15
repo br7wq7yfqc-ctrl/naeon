@@ -840,6 +840,9 @@ func _finish_seat_to_pilot() -> void:
 	_seat_transition = false
 	_toast_hud("PILOT — WASD fly · F exit · E land")
 	print("[OpenSpace] seat→pilot OK (deferred free)")
+	var hud = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+	if hud and hud.has_method("bind_player") and ship:
+		hud.bind_player(ship)
 
 
 

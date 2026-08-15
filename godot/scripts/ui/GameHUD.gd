@@ -70,11 +70,12 @@ func _ready() -> void:
 			GameManager.biomass_changed.connect(_on_econ_tick)
 
 func bind_player(p: Node) -> void:
-	_player = p
-	if p:
-		_ability_sys = p.get_node_or_null("AbilitySystem")
-		if _ability_sys == null and p.get_child_count() > 0:
-			for c in p.get_children():
+	_player = p if p != null and is_instance_valid(p) else null
+	_ability_sys = null
+	if _player:
+		_ability_sys = _player.get_node_or_null("AbilitySystem")
+		if _ability_sys == null and _player.get_child_count() > 0:
+			for c in _player.get_children():
 				if c is AbilitySystem or (c.get_script() and "AbilitySystem" in str(c.get_script().resource_path)):
 					_ability_sys = c
 					break
@@ -388,13 +389,20 @@ func _process(d: float) -> void:
 	_hud_accum = 0.0
 	_refresh()
 
+func _alive_player() -> Node:
+	if _player != null and is_instance_valid(_player):
+		return _player
+	_player = null
+	_ability_sys = null
+	return null
+
+
 func _refresh() -> void:
 	_refresh_economy()
+	var actor: Node = _alive_player()
 	_refresh_ability_bar()
 	_apply_debug_vis()
 	_refresh_play_chrome()
-	if _player != null and not is_instance_valid(_player):
-		_player = null
 	if _obj_label and SessionObjectives:
 		_obj_label.text = SessionObjectives.briefing()
 		_obj_label.visible = true
@@ -402,17 +410,17 @@ func _refresh() -> void:
 	var en := "?"
 	var fac := "?"
 	var form := ""
-	if _player:
-		if "health" in _player:
-			hp = str(int(_player.health))
-		if "energy" in _player:
-			en = str(int(_player.energy))
-		if _player.has_method("get_faction"):
-			fac = str(_player.get_faction())
-		if "current_form" in _player:
-			form = str(_player.current_form)
-		elif "form_name" in _player:
-			form = str(_player.form_name)
+	if actor:
+		if "health" in actor:
+			hp = str(int(actor.health))
+		if "energy" in actor:
+			en = str(int(actor.energy))
+		if actor.has_method("get_faction"):
+			fac = str(actor.get_faction())
+		if "current_form" in actor:
+			form = str(actor.current_form)
+		elif "form_name" in actor:
+			form = str(actor.form_name)
 	var contrib := 0.0
 	if GameManager:
 		contrib = GameManager.contribution
@@ -578,7 +586,7 @@ func _refresh() -> void:
 
 	# Ability bar
 	_update_channel_hud()
-	if show_ability_bar and _ability_sys and _ability_sys.get("abilities") != null:
+	if show_ability_bar and _ability_sys != null and is_instance_valid(_ability_sys) and _ability_sys.get("abilities") != null:
 		var lines: PackedStringArray = PackedStringArray()
 		var keys := ["Q", "E", "R", "F"]
 		var abs = _ability_sys.abilities
@@ -753,9 +761,13 @@ func _soft_infection_text(stacks: int) -> String:
 func _refresh_ability_bar() -> void:
 	if _ability_label == null:
 		return
-	if _ability_sys == null and _player:
-		_ability_sys = _player.get_node_or_null("AbilitySystem")
-	if _ability_sys == null:
+	var actor: Node = _alive_player()
+	if _ability_sys != null and not is_instance_valid(_ability_sys):
+		_ability_sys = null
+	if _ability_sys == null and actor:
+		_ability_sys = actor.get_node_or_null("AbilitySystem")
+	if _ability_sys == null or not is_instance_valid(_ability_sys):
+		_ability_sys = null
 		_ability_label.text = ""
 		return
 	var keys := ["Q", "E", "R", "F"]
@@ -822,15 +834,15 @@ func _update_channel_hud() -> void:
 	var ratio := 0.0
 	var name := ""
 	var ch: Node = null
-	if _player:
-		ch = _player.get_node_or_null("ChannelController")
-		if ch == null and _ability_sys:
-			# channel lives on owner
-			pass
-	if ch and ch.has_method("is_channeling") and ch.is_channeling():
+	var actor: Node = _alive_player()
+	if actor:
+		ch = actor.get_node_or_null("ChannelController")
+	if _ability_sys != null and not is_instance_valid(_ability_sys):
+		_ability_sys = null
+	if ch and is_instance_valid(ch) and ch.has_method("is_channeling") and ch.is_channeling():
 		ratio = float(ch.get_ratio()) if ch.has_method("get_ratio") else 0.0
 		name = str(ch.ability_name) if "ability_name" in ch else "Channel"
-	elif _ability_sys and _ability_sys.has_method("get_channel_ratio"):
+	elif _ability_sys and is_instance_valid(_ability_sys) and _ability_sys.has_method("get_channel_ratio"):
 		ratio = float(_ability_sys.get_channel_ratio())
 		if ratio > 0.01:
 			name = "Channel"
@@ -1041,14 +1053,16 @@ func _refresh_play_chrome() -> void:
 				pip.color = Color(0.95, 0.2, 0.42, 0.95)
 			else:
 				pip.color = Color(0.22, 0.1, 0.14, 0.75)
-	if _ability_sys == null and _player:
+	if _ability_sys != null and not is_instance_valid(_ability_sys):
+		_ability_sys = null
+	if _ability_sys == null and _player != null and is_instance_valid(_player):
 		_ability_sys = _player.get_node_or_null("AbilitySystem")
 	var keys := ["Q", "E", "R", "F"]
 	for i in _slots.size():
 		var slot: Dictionary = _slots[i]
 		var nm := "—"
 		var cd := 0.0
-		if _ability_sys:
+		if _ability_sys != null and is_instance_valid(_ability_sys):
 			if _ability_sys.has_method("get_slot_label"):
 				nm = str(_ability_sys.get_slot_label(i))
 			elif "abilities" in _ability_sys and i < _ability_sys.abilities.size() and _ability_sys.abilities[i]:
