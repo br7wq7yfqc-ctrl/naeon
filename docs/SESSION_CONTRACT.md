@@ -31,7 +31,8 @@
 12. Land-to-harvest loop: in-ring / landed-ship extractor, EXTRACTING HUD, rover CargoHold (this pass)
 13. Interior HUD clutter collapsed in pocket; Clash feel (movement, knock, honest lanes, occupy beacons) (this pass)
 14. Clash HUD ScoreLine/LaneHUD/banner collapse; ship combat: bolt sweep, hull crit recover, shield hold, turrets track hulls (this pass)
-15. Next: 10-min soak on Mac GPU (this VM is llvmpipe)
+15. Clash lane towers fight; ship afterburn W+Shift; walker variable jump (this pass)
+16. Next: 10-min soak on Mac GPU (this VM is llvmpipe)
 
 ## Tripo
 - Balance check when generating; code-first when zero.

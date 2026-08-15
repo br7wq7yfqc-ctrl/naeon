@@ -65,3 +65,6 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 48. Hull critical: recover 35% HP, thrust cut 1.8s, shield hold 2.4s after hit, HP chrome shows hull+shields
 
 49. Rover drive stays in `_physics_process`; mouse look stays in `_unhandled_input` (delta parse)
+50. Clash lane towers are live Turrets (faction, 160 HP, collision); death = +28 soft pressure, not a planet flip
+51. Ship afterburn: W+Shift spends 16 EN/s, thrust×1.55, speed×1.18; hull-crit and landed deny; Shift without W still descends
+52. Walker + Clash jump: release Space while rising cuts upward speed (variable height)

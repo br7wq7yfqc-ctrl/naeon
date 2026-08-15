@@ -123,4 +123,5 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-13 | `s3://neon/generations/` = approved design renders + orthogonal Tripo schemes; index `generations/catalog.json` updated on every ingest | Owner + sequential-dev |
 | 2026-08-14 | Phase 0 playtest: AbilitySystem activate, rules/04 costs, enemy scan cache, CombatJuice label pool, site_pin, canon identity cards. No DMG. | sequential-dev |
 | 2026-08-15 | Clash HUD collapse (banner/ScoreLine/LaneHUD); ship bolt sweep + hull crit recover + shield hold; pad turrets track hulls. No permadeath, no P2W. | sequential-dev |
+| 2026-08-15 | Clash towers are live Turrets; ship afterburn W+Shift (energy); walker variable jump cut. Soft pressure only. | sequential-dev |
 

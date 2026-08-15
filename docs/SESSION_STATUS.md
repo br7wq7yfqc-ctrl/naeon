@@ -1,6 +1,6 @@
 # Session Status
 **2026-08-15**
-Phase 0 mechanics depth: interiors, occupy-to-hold, HOVER/stall, pad-guard combat, land-to-harvest, Clash HUD, ship hull combat. No DMG.
+Phase 0 mechanics depth: Clash towers, ship afterburn, variable jump. Tests skipped this pass (`/no-test`). No DMG.
 
 **Last update:** 2026-08-15
 **Skill:** sequential-dev + holistic v2.0
@@ -8,13 +8,13 @@ Phase 0 mechanics depth: interiors, occupy-to-hold, HOVER/stall, pad-guard comba
 | Track | Status |
 |-------|--------|
 | Design VS + campaign + constructor/side/edu templates | **Gaps closed** |
-| B | Continuum: land gate, HOVER hold + ground-effect, atmo NAV lock, stall, EVA tether, pooled ship bolts, hull crit + shield hold |
-| C | Walker coyote/slope; rover grip/brake + mouse look + CargoHold store; interior doors/console/recycler; pocket HUD chrome; cave V scan on named Crystal |
-| A | Combat knock + dummy stagger; Rot Surge AOE; Clash lanes/K/D/beacons + HUD collapse; pad-guard occupy fight; Infection 5 Firewall; bolt sweep hits |
+| B | Continuum: land gate, HOVER, stall, EVA tether, hull crit, afterburn W+Shift |
+| C | Walker coyote/jump-cut/slope; rover grip + mouse look; interiors; pocket HUD; cave Crystal V |
+| A | Clash towers live; lanes/K/D/beacons; pad-guard; bolt sweep; Rot Surge AOE |
 | D | Design ready (constructor + 26) |
 | E | Act I implement first |
 
-Smoke: `scripts/playtest_headless_smoke.sh` (includes `--playtest-mechanics`). This pass: hull crit recover; rover `board` parse guard.
+Smoke: skipped this pass (`/no-test`). Last green: hull crit recover + rover `board` parse.
 
 ## Marathon 2026-08-08T00:37:18.886364+00:00
 - dig continuum + cave protect + crystal V scan + FOV
