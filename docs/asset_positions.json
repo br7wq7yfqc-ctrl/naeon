@@ -3,7 +3,7 @@
   "updated": "2026-08-15",
   "source": "v2.8 + batch 20 CX fighter pair + CX bomber pair",
   "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Dump short IDs are existing neon rendered files, not invented UUIDs.",
-  "positions": 132,
+  "positions": 133,
   "bound_sheets": 213,
   "merged_slugs": {
     "heawy_5ault_i8reakt4fough": "heavy_assault",
@@ -1254,18 +1254,10 @@
         "CYBERNEX SINGLE-SEAT INTERCEPTOR - DESIGN LOCK"
       ],
       "chat_lock": true,
-      "file_id": "QdM8V",
-      "dump_key": "generations/rendered/QdM8V.jpg",
-      "locked_uuids": [
-        {
-          "id": "QdM8V",
-          "faction": "CX",
-          "view": "cinematic",
-          "class": "ship-single",
-          "label": "Interceptor",
-          "dump_key": "generations/rendered/QdM8V.jpg"
-        }
-      ]
+      "file_id": null,
+      "dump_key": null,
+      "notes": "QdM8V unbound — plate is gROT medium drone, not CX interceptor. Rebound to grot_medium_drone.",
+      "locked_uuids": []
     },
     "cybernex_fighter": {
       "category": "ships",
@@ -1415,6 +1407,29 @@
           "view": "ortho",
           "class": "ship-single",
           "label": "Sniper"
+        }
+      ]
+    },
+    "grot_medium_drone": {
+      "category": "vehicles",
+      "count": 1,
+      "titles": [
+        "gROT MEDIUM DRONE"
+      ],
+      "ocr": false,
+      "source": "batch20_rebind",
+      "chat_lock": true,
+      "file_id": "QdM8V",
+      "dump_key": "generations/rendered/QdM8V.jpg",
+      "notes": "Rebound from mislabeled CX interceptor title. Plate is gROT.",
+      "locked_uuids": [
+        {
+          "id": "QdM8V",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "drone",
+          "label": "Medium drone",
+          "dump_key": "generations/rendered/QdM8V.jpg"
         }
       ]
     },

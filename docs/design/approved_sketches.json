@@ -603,12 +603,13 @@
     },
     {
       "id": "QdM8V",
-      "faction": "CX",
+      "faction": "GR",
       "view": "cinematic",
-      "class": "ship-single",
-      "label": "Interceptor",
-      "position": "cybernex_interceptor",
-      "dump_key": "generations/rendered/QdM8V.jpg"
+      "class": "drone",
+      "label": "Medium drone",
+      "position": "grot_medium_drone",
+      "dump_key": "generations/rendered/QdM8V.jpg",
+      "notes": "rebound off cybernex_interceptor — plate is gROT"
     },
     {
       "id": "l6zkI",
@@ -1073,7 +1074,7 @@
       "batch": 20
     }
   ],
-  "note": "Batch 20: GR sniper pair locked. Next: GR medium drone. S3 Index not patched.",
+  "note": "Batch 20: GR medium drone cinematic QdM8V locked (rebound off CX interceptor). Ortho f60f0126 in review. S3 Index not patched.",
   "positions_bound": 123,
-  "positions_unbound": 0
+  "positions_unbound": 1
 }

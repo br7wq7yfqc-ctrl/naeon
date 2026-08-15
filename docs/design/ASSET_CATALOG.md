@@ -1,9 +1,9 @@
 # NAEON — Approved sketch catalog
 
-**Version:** 1.23 · **Updated:** 2026-08-15  
+**Version:** 1.24 · **Updated:** 2026-08-15  
 **Rule:** this file lists **locked only**. In-review / draft / dump do not belong here.
 
-Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **132 positions, 213 sheets**.  
+Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **133 positions, 213 sheets**.  
 Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **66 UUID + 58 dump IDs**, none invented.
 
 Bucket: `s3://neon/generations/canon/{class}/{id}/master.jpg`  
@@ -13,14 +13,14 @@ S3 Index `generations/catalog.json` is **not** in git and is not patched by this
 
 | Ledger | Count |
 |--------|------:|
-| Positions after OCR merge + Index keys + batch 20 | 132 |
+| Positions after OCR merge + Index keys + batch 20 | 133 |
 | Bound sheets (invariant) | 213 |
 | Locked UUID | 66 |
 | Dump file IDs rebound (existing neon files) | 58 |
-| Chat-lock still `file_id` null | 0 |
+| Chat-lock still `file_id` null | 1 |
 | UUID with no position | 0 |
 | Index-only positions (`ocr: false`, `count: 0`) | 13 |
-| New batch-20 slugs (`ocr: false`) | 6 |
+| New batch-20 slugs (`ocr: false`) | 7 |
 | Unfactioned class plates kept as templates | 11 |
 | OCR slugs still unresolved | 0 |
 | OCR unreadable (title noise, sheet kept, no dump match) | 7 |
@@ -123,6 +123,7 @@ APC / hover / mech guns bind to the **hull** they sit on. Tank main has no Heavy
 | Scout | GR | ortho | `grot_scout` | `0df4f683-60ce-4da3-8d21-8fff1a027bfb` |
 | Sniper | GR | cinematic | `grot_sniper` | `05073615-7510-408d-8dfe-4dbe7d5357e4` |
 | Sniper | GR | ortho | `grot_sniper` | `ad12b79f-bf19-4a1e-b446-af612399b0b0` |
+| Medium drone | GR | cinematic | `grot_medium_drone` | `QdM8V` |
 
 `8b074991` and ortho `93a363a3` rejected (fighter). Bomber `c76ccb6f` and noisy first pass (`b88f2e19`, `d0b8899a`, `ea61b36d`) rejected. Support rejected: `0735138d` (A), `0fdb14fa` (iroquois), `71cd1130` (wrong silhouette), `3bf43918` (no devices), `181ba89a` (ridge), `0259484b` (belly dish), `cab4e36b` (old hull ortho). GR scout A `19addf56` / `9cf29ba4` superseded. Ortho `5b8a6601` / `17f82b0a` rejected.
 
@@ -156,13 +157,14 @@ Verified against the plate before bind.
 | Scout | GR | cinematic + ortho | `grot_scout` | `ada7fd55` / `0df4f683` (UUID, §A) |
 | Stealth | CX | cinematic + ortho | `cybernex_stealth` | `33ad6f0c` / `70a6d3e1` (UUID, §A; from dump `LsBZ6`) |
 | Stealth (class) | NEUT | ortho | `stealth_ship` | `LEThZ` |
-| Interceptor | CX | cinematic | `cybernex_interceptor` | `QdM8V` |
+| Interceptor | CX | cinematic | `cybernex_interceptor` | unbound (`QdM8V` is gROT medium drone) |
 | Interceptor | GR | cinematic | `grot_interceptor` | `l6zkI` |
 | Sniper | CX | ortho | `cybernex_sniper_ship` | `82c99f90` + `307rv` |
 | Sniper | GR | cinematic + ortho | `grot_sniper` | `05073615` / `ad12b79f` (UUID, §A) |
 | Light drone | CX | cinematic | `cybernex_light_drone` | `EKJFX` |
 | Light drone | GR | cinematic | `grot_light_drone` | `FRKhQ` |
 | Medium drone | CX | ortho | `cybernex_medium_drone` | `HT5Yn` |
+| Medium drone | GR | cinematic | `grot_medium_drone` | `QdM8V` |
 | Heavy armor | CX | cinematic | `cybernex_heavy_armor` | `ozs5C` |
 | Heavy exo CNX-88 | CX | ortho | `cybernex_heavy_armor` | `iw9mb` |
 | Medium armor | GR | cinematic | `grot_medium_armor` | `opzQg` |
@@ -200,7 +202,7 @@ Verified against the plate before bind.
 
 ## B. Locked in chat — dump file identified
 
-Chat-lock `file_id` null: **0**. All 16 remaining plates found in `generations/rendered/` by title. Existing dump IDs only. No invented UUIDs.
+Chat-lock `file_id` null: **1** (`cybernex_interceptor` — `QdM8V` rebound to `grot_medium_drone`).
 
 Unfactioned class plates (`sniper_ship`, `stealth_ship`, `logistic_drone`, `medium_drone`, `heavy_drone`, `heavy_assault`, `ownership_claim_beacon`, `support_logistics_vehicle`) stay templates, not faction hulls.
 
