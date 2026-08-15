@@ -147,7 +147,7 @@ static func _room(parent: Node3D, pos: Vector3, size: Vector3, rname: String, ne
 	room.position = pos
 	parent.add_child(room)
 	# Floor
-	_box_mesh(room, Vector3(0, 0, 0), Vector3(size.x, 0.55, size.z), Color(0.06, 0.07, 0.09), true)
+	_box_mesh(room, Vector3(0, 0, 0), Vector3(size.x, 0.55, size.z), Color(0.12, 0.14, 0.18), true)
 	_box_mesh(room, Vector3(0, -0.8, 0), Vector3(size.x + 1.0, 1.0, size.z + 1.0), Color(0.04, 0.04, 0.05), true)
 	# Ceiling
 	_box_mesh(room, Vector3(0, size.y, 0), Vector3(size.x, 0.15, size.z), Color(0.05, 0.06, 0.08), true)
@@ -232,9 +232,9 @@ static func _interior_point_lights(root: Node3D, neon: Color) -> void:
 	for pos in spots:
 		var o := OmniLight3D.new()
 		o.light_color = neon.lerp(Color(1, 0.95, 0.85), 0.35)
-		o.light_energy = 1.8
-		o.omni_range = 11.0
-		o.omni_attenuation = 1.6
+		o.light_energy = 4.2
+		o.omni_range = 16.0
+		o.omni_attenuation = 1.15
 		o.shadow_enabled = false
 		o.position = pos
 		root.add_child(o)
