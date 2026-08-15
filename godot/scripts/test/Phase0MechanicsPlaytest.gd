@@ -258,7 +258,6 @@ func _finish(fails: PackedStringArray, code: int) -> void:
 			print("[Playtest]  - ", f)
 	if AutoUpdater and AutoUpdater.has_method("abort_pending"):
 		AutoUpdater.abort_pending()
-	OS.set_exit_code(code)
 	var tree := get_tree()
 	if tree:
 		tree.quit(code)
