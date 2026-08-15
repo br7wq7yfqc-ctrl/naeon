@@ -468,6 +468,10 @@ func get_claim_status() -> String:
 	return _status
 
 
+func get_occupy_strength() -> float:
+	return ownership.claim_strength if ownership else 0.0
+
+
 func get_faction() -> String:
 	return ownership.faction_name() if ownership else "Neutral"
 

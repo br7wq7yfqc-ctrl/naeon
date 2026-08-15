@@ -101,6 +101,20 @@ func _go() -> void:
 		print("[Playtest] occupy status=", st, " fac=", pad.get_faction() if pad.has_method("get_faction") else "?")
 		if st != "contested" and str(pad.get_faction() if pad.has_method("get_faction") else "") != "Contested":
 			fails.append("claim rival did not open contest (status=%s)" % st)
+		else:
+			var walker2: Node3D = os.get("player") as Node3D
+			var before := 0.0
+			if pad.has_method("get_occupy_strength"):
+				before = float(pad.get_occupy_strength())
+			if walker2 and is_instance_valid(walker2) and pad is Node3D:
+				walker2.global_position = (pad as Node3D).global_position + Vector3(0, 4.0, 0)
+				await get_tree().create_timer(1.15).timeout
+				var after := before
+				if pad.has_method("get_occupy_strength"):
+					after = float(pad.get_occupy_strength())
+				print("[Playtest] occupy presence meter ", snapped(before, 0.01), " -> ", snapped(after, 0.01))
+				if is_equal_approx(after, before):
+					fails.append("occupy presence did not move the contest meter")
 
 	# --- HOVER mode + vacuum stall ---
 	var ship: Node = os.get("ship")

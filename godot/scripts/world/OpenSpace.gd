@@ -606,6 +606,11 @@ func _update_hud() -> void:
 	var gh = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
 	if gh and gh.has_method("is_debug_overlay"):
 		dbg = bool(gh.is_debug_overlay())
+	var loc := pname
+	var alt_s := "%dm" % int(alt)
+	if mode == "INTERIOR":
+		loc = str(_interior.get_kind()) if _interior.has_method("get_kind") else "pocket"
+		alt_s = "POCKET"
 	var extra := ""
 	if mode == "INTERIOR" and _interior.has_method("life_support_line"):
 		extra = "  ·  " + str(_interior.life_support_line())
@@ -613,8 +618,8 @@ func _update_hud() -> void:
 		var fl := str(ship.get_flight_status_line())
 		if "STALL" in fl:
 			extra = "  ·  STALL"
-	var brief := "%s  ·  %s  ·  %dm  ·  %d m/s  ·  HP %d  SHD %d%s  ·  occupy/C  E land  F EVA" % [
-		mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields), extra
+	var brief := "%s  ·  %s  ·  %s  ·  %d m/s  ·  HP %d  SHD %d%s  ·  occupy/C  E land  F EVA" % [
+		mode, loc, alt_s, int(spd), int(ship.health), int(ship.shields), extra
 	]
 	if not dbg:
 		hud_label.text = brief
