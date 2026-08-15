@@ -1091,6 +1091,15 @@
       "position": "grot_capital_carrier",
       "dump_key": "generations/rendered/1p69s.jpg",
       "manual": 1
+    },
+    {
+      "id": "10d946d1-9954-4d9e-b02b-14b2905c9c8d",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "ship-capital",
+      "label": "Carrier",
+      "position": "grot_capital_carrier",
+      "manual": 2
     }
   ],
   "note": "Manual rebuild started. #001 1p69s gROT Carrier cinematic. Generations Index wiped.",

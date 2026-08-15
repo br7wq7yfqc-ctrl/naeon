@@ -1626,6 +1626,14 @@
           "manual": 1
         },
         {
+          "id": "10d946d1-9954-4d9e-b02b-14b2905c9c8d",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "ship-capital",
+          "label": "Carrier",
+          "manual": 2
+        },
+        {
           "id": "390de03e-2dfc-4b4f-ac4c-dec037fa2ef5",
           "faction": "GR",
           "view": "ortho",
