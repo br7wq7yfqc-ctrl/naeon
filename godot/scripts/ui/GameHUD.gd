@@ -397,15 +397,76 @@ func _alive_player() -> Node:
 	return null
 
 
+func _interior_director() -> Node:
+	var tree := get_tree()
+	if tree == null:
+		return null
+	for n in tree.get_nodes_in_group("interior_director"):
+		if n != null and is_instance_valid(n) and n.has_method("is_inside") and bool(n.is_inside()):
+			return n
+	return null
+
+
+func _in_interior_pocket() -> bool:
+	if _interior_director() != null:
+		return true
+	if LayerContext:
+		var ly := str(LayerContext.current_layer).to_lower()
+		if ly in ["ship_int", "station", "interior"]:
+			return true
+	return false
+
+
+func _apply_interior_chrome(pocket: bool) -> void:
+	## Pocket: keep HP/EN, infection pips, ability chips, life-support, toasts, channel.
+	## Hide planet/space chrome that still thinks the walker is on the pad.
+	if not pocket:
+		if _owner_label:
+			_owner_label.visible = true
+		if _layer_label:
+			_layer_label.visible = true
+		return
+	if _radar:
+		_radar.visible = false
+	if _owner_label:
+		_owner_label.visible = false
+	if _terrain_label:
+		_terrain_label.visible = false
+	if _econ_label:
+		_econ_label.visible = false
+	if _econ_bar:
+		_econ_bar.visible = false
+	if _contest_banner:
+		_contest_banner.visible = false
+	if _claim_bar:
+		_claim_bar.visible = false
+	if _obj_label:
+		_obj_label.visible = false
+	if _layer_label:
+		_layer_label.visible = false
+	if _lead_pip:
+		_lead_pip.visible = false
+	if _edu_label:
+		_edu_label.visible = false
+	if _ctx_label:
+		_ctx_label.visible = false
+
+
 func _refresh() -> void:
-	_refresh_economy()
+	var director: Node = _interior_director()
+	var pocket: bool = director != null
+	if not pocket and LayerContext:
+		var ly := str(LayerContext.current_layer).to_lower()
+		pocket = ly in ["ship_int", "station", "interior"]
+	if not pocket:
+		_refresh_economy()
 	var actor: Node = _alive_player()
 	_refresh_ability_bar()
 	_apply_debug_vis()
 	_refresh_play_chrome()
 	if _obj_label and SessionObjectives:
 		_obj_label.text = SessionObjectives.briefing()
-		_obj_label.visible = true
+		_obj_label.visible = not pocket
 	var hp := "?"
 	var en := "?"
 	var fac := "?"
@@ -458,7 +519,7 @@ func _refresh() -> void:
 					tether_s = "  tether %.0fm" % td
 		eva_line = "  |  EVA%s%s" % [mag_s, tether_s]
 	var sys_line := ""
-	if LayerContext and str(LayerContext.current_layer) in ["Space", "space"]:
+	if not pocket and LayerContext and str(LayerContext.current_layer) in ["Space", "space"]:
 		var tree_s := get_tree()
 		if tree_s:
 			for sh in tree_s.get_nodes_in_group("ship"):
@@ -474,45 +535,48 @@ func _refresh() -> void:
 
 	# Terrain budget + interior status (soft info only)
 	if _terrain_label:
-		_terrain_t += 0.12
-		if _terrain_t >= 0.5:
-			_terrain_t = 0.0
-			var tline := ""
-			var tree := get_tree()
-			if tree and _player:
-				for n in (SoftScanCache.get_terrain_edits() if SoftScanCache else tree.get_nodes_in_group("terrain_edit")):
-					if n.has_method("get_budget_ratio") and n.has_method("remaining_volume"):
-						var pct := int(clampf(float(n.get_budget_ratio()), 0.0, 1.0) * 100.0)
-						var rem := float(n.remaining_volume())
-						tline = "TERRAIN  used %d%%  rem %.0f m³  ·  G raise B dig U undo" % [pct, rem]
-						break
-			_terrain_cache = tline
-		_terrain_label.text = _terrain_cache
-		_terrain_label.visible = _terrain_cache != ""
+		if pocket:
+			_terrain_label.visible = false
+		else:
+			_terrain_t += 0.12
+			if _terrain_t >= 0.5:
+				_terrain_t = 0.0
+				var tline := ""
+				var tree_t := get_tree()
+				if tree_t and _player:
+					for n in (SoftScanCache.get_terrain_edits() if SoftScanCache else tree_t.get_nodes_in_group("terrain_edit")):
+						if n.has_method("get_budget_ratio") and n.has_method("remaining_volume"):
+							var pct := int(clampf(float(n.get_budget_ratio()), 0.0, 1.0) * 100.0)
+							var rem := float(n.remaining_volume())
+							tline = "TERRAIN  used %d%%  rem %.0f m³  ·  G raise B dig U undo" % [pct, rem]
+							break
+				_terrain_cache = tline
+			_terrain_label.text = _terrain_cache
+			_terrain_label.visible = _terrain_cache != ""
 	if _interior_label:
 		var iline := ""
-		if LayerContext and str(LayerContext.current_layer).to_lower() in ["interior", "station", "ship_int"]:
-			iline = "INTERIOR · I to exit"
-		var tree2 := get_tree()
-		if tree2:
-			for n in tree2.get_nodes_in_group("interior_director"):
-				if n.has_method("is_inside") and n.is_inside():
-					var k := "pocket"
-					if n.has_method("get_kind"):
-						k = str(n.get_kind())
-					var seat_hint := ""
-					if str(k) == "ship" and n.has_method("is_near_seat") and _player and n.is_near_seat(_player):
-						seat_hint = " · SEAT [F] pilot"
-					var ls := "LIFE SUPPORT OK · ATMO 1.00 · POWER BUS STABLE"
-					if n.has_method("life_support_line"):
-						ls = str(n.life_support_line())
-					iline = "INTERIOR · %s · I exit%s\n%s" % [k, seat_hint, ls]
-					break
+		if director:
+			var k := "pocket"
+			if director.has_method("get_kind"):
+				k = str(director.get_kind())
+			var ctx := "I"
+			if director.has_method("is_near_seat") and _player and director.is_near_seat(_player):
+				ctx = "F seat · I"
+			elif director.has_method("is_near_console") and _player and director.is_near_console(_player):
+				ctx = "E ops · I"
+			var ls := ""
+			if director.has_method("life_support_line"):
+				ls = str(director.life_support_line())
+			iline = "%s · %s" % [k, ctx]
+			if ls != "":
+				iline += "\n" + ls
+		elif pocket:
+			iline = "pocket · I"
 		_interior_label.text = iline
 		_interior_label.visible = iline != ""
 
-	# Contested pad readability (nearest active ring)
-	if _contest_banner and _contest_label:
+	# Contested pad readability (nearest active ring) — skip in pocket (walker is at y≈9200)
+	if _contest_banner and _contest_label and not pocket:
 		var best_d := 90.0
 		var best_pct := -1.0
 		var best_name := ""
@@ -617,7 +681,7 @@ func _refresh() -> void:
 	var contested_near := false
 	var claim_ratio := 0.0
 	var tree := get_tree()
-	if tree and _player and _player is Node3D:
+	if not pocket and tree and _player and _player is Node3D:
 		var best_d := 80.0
 		var best_txt := ""
 		for n in (SoftScanCache.get_pads() if SoftScanCache else tree.get_nodes_in_group("pad_bases")):
@@ -653,14 +717,15 @@ func _refresh() -> void:
 
 	# Terrain budget
 	var terra := ""
-	if _player and _player is Node3D and get_tree():
+	if not pocket and _player and _player is Node3D and get_tree():
 		for n in (SoftScanCache.get_terrain_edits() if SoftScanCache else get_tree().get_nodes_in_group("terrain_edit")):
 			if n.has_method("get_budget_ratio") and n.visible:
 				terra = "TERRA %.0f%% used  G/B edit  U undo" % (float(n.get_budget_ratio()) * 100.0)
 				break
 	if terra != "":
 		nearest = (nearest + "\n" + terra) if nearest else terra
-	_owner_label.text = nearest
+	if _owner_label:
+		_owner_label.text = nearest
 
 	if _contest_banner:
 		_contest_banner.visible = contested_near
@@ -706,11 +771,11 @@ func _refresh() -> void:
 
 	if contested_near:
 		_owner_label.add_theme_color_override("font_color", Color(1.0, 0.55, 0.2))
-	else:
+	elif _owner_label:
 		_owner_label.add_theme_color_override("font_color", Color(0.95, 0.9, 0.55))
 
-	# Pad radar
-	if _radar and _player and _player is Node3D and get_tree():
+	# Pad radar — skip in pocket (no pads at y=9200)
+	if not pocket and _radar and _player and _player is Node3D and get_tree():
 		var origin: Vector3 = (_player as Node3D).global_position
 		var pads: Array = []
 		for n in (SoftScanCache.get_pads() if SoftScanCache else get_tree().get_nodes_in_group("pad_bases")):
@@ -759,6 +824,7 @@ func _refresh() -> void:
 				_:
 					dot.color = Color(0.7, 0.7, 0.75)
 			dot.visible = true
+	_apply_interior_chrome(pocket)
 
 func _on_gm_toast(msg: String) -> void:
 	push_toast(msg, 3.0)
@@ -877,6 +943,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if k == KEY_F3 or event.physical_keycode == KEY_F3:
 		_debug_overlay = not _debug_overlay
 		_apply_debug_vis()
+		_apply_interior_chrome(_in_interior_pocket())
 		if GameManager:
 			GameManager.toast_requested.emit("HUD debug %s" % ("ON" if _debug_overlay else "OFF"))
 		get_viewport().set_input_as_handled()

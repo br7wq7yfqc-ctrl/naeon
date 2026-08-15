@@ -637,6 +637,8 @@ func _update_hud() -> void:
 	if mode == "INTERIOR":
 		loc = str(_interior.get_kind()) if _interior.has_method("get_kind") else "pocket"
 		alt_s = "POCKET"
+	# GameHUD owns pocket chrome; hide the ship occupy/AGL one-liner unless F3.
+	hud_label.visible = not (mode == "INTERIOR" and not dbg)
 	var extra := ""
 	if mode == "INTERIOR" and _interior.has_method("life_support_line"):
 		extra = "  ·  " + str(_interior.life_support_line())
