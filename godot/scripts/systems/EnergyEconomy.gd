@@ -29,6 +29,9 @@ const CD_FORM := 2.0
 const SHIP_BOLT_BASE := 5.0
 const SHIP_BOLT_NAV := 5.5
 const SHIP_BOLT_SIEGE_MULT := 1.35
+const SHIP_BURN_RATE := 16.0
+const SHIP_BURN_THRUST := 1.55
+const SHIP_BURN_SPEED := 1.18
 
 
 static func ship_bolt_cost(flight_mode: int, op_mode: int) -> float:

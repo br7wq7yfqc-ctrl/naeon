@@ -68,6 +68,7 @@ var _deployed_rover: Node3D = null
 var _engine_pulse_t: float = 0.0
 var _hull_crit_t: float = 0.0
 var _shield_hold_t: float = 0.0
+var _burn_on: bool = false
 var _hull_ambient: Node3D = null
 
 const _SHIELD_REGEN := 4.0
@@ -230,7 +231,10 @@ func _set_mode(m: int) -> void:
 	print("[Ship] Flight mode ", flight_mode_name())
 
 func _max_speed() -> float:
-	return _Flight.max_speed(flight_mode, max_speed_scm, max_speed_nav, max_speed_hover)
+	var s: float = _Flight.max_speed(flight_mode, max_speed_scm, max_speed_nav, max_speed_hover)
+	if _burn_on:
+		s *= 1.18
+	return s
 
 func _thrust_mult() -> float:
 	var m: float = _Flight.thrust_mult(flight_mode)
@@ -240,6 +244,8 @@ func _thrust_mult() -> float:
 		m *= 0.7
 	if _hull_crit_t > 0.0:
 		m *= _HULL_CRIT_THRUST
+	if _burn_on:
+		m *= 1.55
 	return m
 
 func _damp_mult() -> float:
@@ -288,8 +294,12 @@ func _ship_axis() -> Vector3:
 		strafe = 1.0 if strafe == 0.0 else strafe
 	if (InputMap.has_action("jump") and Input.is_action_pressed("jump")) or Input.is_physical_key_pressed(KEY_SPACE):
 		lift += 1.0
-	if (InputMap.has_action("sprint") and Input.is_action_pressed("sprint")) or Input.is_physical_key_pressed(KEY_SHIFT):
-		lift -= 1.0
+	var shift := (InputMap.has_action("sprint") and Input.is_action_pressed("sprint")) or Input.is_physical_key_pressed(KEY_SHIFT)
+	if shift:
+		if thrust > 0.55 and not is_landed:
+			pass
+		else:
+			lift -= 1.0
 	return Vector3(strafe, lift, thrust)
 
 
@@ -367,6 +377,7 @@ func _physics_process(delta: float) -> void:
 			_stick_to_pad()
 		return
 	if is_landed:
+		_burn_on = false
 		# Sticky pad: kill ALL motion, no thruster integrate, short launch lock
 		_land_lock_t = maxf(0.0, _land_lock_t - delta)
 		velocity = Vector3.ZERO
@@ -384,6 +395,11 @@ func _physics_process(delta: float) -> void:
 	_apply_attitude()
 
 	var axes: Vector3 = _ship_axis()
+	var want_burn := (not is_landed) and axes.z > 0.55 and (
+		Input.is_physical_key_pressed(KEY_SHIFT)
+		or (InputMap.has_action("sprint") and Input.is_action_pressed("sprint"))
+	)
+	_tick_afterburn(delta, want_burn)
 	var thrust: float = (base_thrust + _module_thrust()) * _thrust_mult()
 	var forward: Vector3 = -global_transform.basis.z
 	var right: Vector3 = global_transform.basis.x
@@ -486,11 +502,12 @@ func _physics_process(delta: float) -> void:
 func _update_status() -> void:
 	if status_label:
 		var opn := "SIEGE" if op_mode == 1 else ("SCAN" if op_mode == 2 else "CRUISE")
-		status_label.text = "%s  OP:%s  SPD %d  SHD %d  E %d  %s%s%s" % [
+		status_label.text = "%s  OP:%s  SPD %d  SHD %d  E %d  %s%s%s%s" % [
 			flight_mode_name(), opn, int(velocity.length()), int(shields), int(energy),
 			("LANDED" if is_landed else "FLIGHT"),
 			("  STALL" if _stall > 0.35 else ""),
 			("  HULL CRIT" if _hull_crit_t > 0.0 else ""),
+			("  BURN" if _burn_on else ""),
 		]
 
 func _toggle_landing() -> void:
@@ -617,6 +634,16 @@ func _recompute_stats() -> void:
 		max_shields += m.shield_bonus
 		max_cargo += m.cargo_bonus
 	shields = min(shields, max_shields)
+
+func _tick_afterburn(delta: float, want: bool) -> void:
+	_burn_on = false
+	if not want or is_landed or _hull_crit_t > 0.0:
+		return
+	var cost: float = 16.0 * delta
+	if energy < cost:
+		return
+	energy -= cost
+	_burn_on = true
 
 func _tick_combat(delta: float) -> void:
 	_fire_cd = max(0.0, _fire_cd - delta)
@@ -1307,6 +1334,8 @@ func _tick_hull_ambient(axes: Vector3, _delta: float) -> void:
 	if _hull_ambient == null or not is_instance_valid(_hull_ambient):
 		return
 	var power: float = clampf(absf(axes.z) + absf(axes.x) * 0.4 + absf(axes.y) * 0.3, 0.0, 1.5)
+	if _burn_on:
+		power = maxf(power, 1.35)
 	if not pilot_active:
 		power = 0.0
 	if _hull_ambient.has_method("set_engine_power"):
