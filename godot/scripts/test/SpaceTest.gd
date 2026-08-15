@@ -44,5 +44,5 @@ func _process(_delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.keycode == KEY_TAB:
-		if ResourceLoader.exists("res://scenes/test/TestArena.tscn"):
+		if ResourceLoader.exists("res://scenes/world/OpenSpace.tscn"):
 			get_tree().change_scene_to_file("res://scenes/world/OpenSpace.tscn")

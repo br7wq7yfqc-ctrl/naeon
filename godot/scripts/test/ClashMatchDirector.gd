@@ -68,6 +68,9 @@ func _build_hud() -> void:
 	score.add_theme_constant_override("outline_size", 4)
 	score.modulate = Color(0.85, 0.95, 1.0)
 	root.add_child(score)
+	_lbl_banner = top
+	_lbl_lanes = lanes
+	_lbl_score = score
 
 func register_kill() -> void:
 	_kills += 1
@@ -105,7 +108,6 @@ func _flash(msg: String) -> void:
 var _lbl_banner: Label
 var _lbl_lanes: Label
 var _lbl_score: Label
-var _lbl_cache_t: float = 0.0
 
 func _process(delta: float) -> void:
 	_tick_accum += delta
@@ -116,12 +118,6 @@ func _process(delta: float) -> void:
 	if _tick_accum < tick_need:
 		return
 	_tick_accum = 0.0
-	_lbl_cache_t += tick_need
-	if _lbl_banner == null or _lbl_cache_t > 2.0:
-		_lbl_cache_t = 0.0
-		_lbl_banner = _find_label("MatchBanner")
-		_lbl_lanes = _find_label("LaneBar")
-		_lbl_score = _find_label("ScoreLine")
 	_t += tick_need
 	_sync_lanes_from_clash()
 	var top := _lbl_banner
@@ -134,7 +130,9 @@ func _process(delta: float) -> void:
 		else:
 			top.visible = false
 	if lanes:
-		lanes.visible = false
+		# Bottom lane-pressure bar: the array was computed and thrown away.
+		lanes.visible = true
+		lanes.text = _lane_bar_line()
 	if score:
 		var eco := 0.0
 		if GameManager:
@@ -149,8 +147,8 @@ func _sync_lanes_from_clash() -> void:
 		clash = get_tree().get_first_node_in_group("aexion_clash")
 	if clash == null:
 		return
-	if "kills" in clash:
-		_kills = int(clash.kills)
+	# _kills is owned by register_kill — overwriting it here discarded the
+	# director's own reward path.
 	if "lane_pressure" in clash:
 		var lp: Dictionary = clash.lane_pressure
 		_lane_pressure[0] = clampf(float(lp.get("TOP", 0.0)) / 100.0, 0.0, 1.0)
@@ -158,14 +156,7 @@ func _sync_lanes_from_clash() -> void:
 		_lane_pressure[2] = clampf(float(lp.get("BOT", 0.0)) / 100.0, 0.0, 1.0)
 
 
-func _find_label(n: String) -> Label:
-	if _hud == null:
-		return null
-	var stack: Array = [_hud]
-	while not stack.is_empty():
-		var c: Node = stack.pop_back()
-		if c.name == n and c is Label:
-			return c as Label
-		for ch in c.get_children():
-			stack.append(ch)
-	return null
+func _lane_bar_line() -> String:
+	return "TOP %.0f   MID %.0f   BOT %.0f   /100  (soft)" % [
+		_lane_pressure[0] * 100.0, _lane_pressure[1] * 100.0, _lane_pressure[2] * 100.0,
+	]

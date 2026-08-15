@@ -22,6 +22,7 @@ var _contest_ring: Node3D = null
 var _contest_fov_t: float = 0.0
 var _base_fov: float = 70.0
 var _base_fov_captured: bool = false
+var _arena_influence: float = 0.0
 var _claim_cd: float = 0.0
 var _harvest_fx_cd: float = 0.0
 var _harvest_accum_fx: float = 0.0
@@ -39,6 +40,8 @@ const GUARD_RATE := 0.18
 const DECAY_RATE := 0.16
 const PULSE_STR := 0.38
 const HACK_STR := 0.22
+const ARENA_INFLUENCE_MAX := 0.30
+const ARENA_INFLUENCE_DECAY := 0.0005  # ~10 min back to zero
 
 func _ready() -> void:
 	add_to_group("pad_base")
@@ -61,6 +64,25 @@ func _ready() -> void:
 		_seeding = true
 		claim(default_faction, 0.5)
 		_seeding = false
+
+func apply_arena_influence(amount: float) -> void:
+	## Soft, temporary arena pressure (rules/13). Never flips ownership on its
+	## own and decays back out, unlike a raw claim_strength write.
+	if amount <= 0.0 or ownership == null:
+		return
+	_arena_influence = minf(_arena_influence + amount, ARENA_INFLUENCE_MAX)
+	_refresh_label()
+
+
+func arena_influence() -> float:
+	return _arena_influence
+
+
+func _tick_arena_influence(delta: float) -> void:
+	if _arena_influence <= 0.0:
+		return
+	_arena_influence = maxf(0.0, _arena_influence - ARENA_INFLUENCE_DECAY * delta)
+
 
 func _unique_object_id() -> String:
 	var pad_name := ""
@@ -104,6 +126,7 @@ func _process(delta: float) -> void:
 			_refresh_label()
 	_tick_occupy(delta)
 	_tick_guard_respawn(delta)
+	_tick_arena_influence(delta)
 	if running and ownership and ownership.is_fully_owned() and _status != "contested" and _owner_in_zone():
 		_tick_harvest(delta)
 	else:
@@ -252,8 +275,10 @@ func _nudge_claim(faction_name: String, amount: float, noisy: bool) -> void:
 	if f == OwnershipData.Faction.NEUTRAL or f == OwnershipData.Faction.CONTESTED:
 		return
 	var cur := ownership.current_faction
+	# Arena influence is a soft assist on the pulse, never a claim by itself.
+	var eff: float = amount + amount * _arena_influence
 	if cur == OwnershipData.Faction.NEUTRAL:
-		_meter_toward(faction_name, amount)
+		_meter_toward(faction_name, eff)
 		if ownership.claim_strength >= 0.45:
 			_lock_to(f, noisy)
 		elif noisy:
@@ -268,7 +293,7 @@ func _nudge_claim(faction_name: String, amount: float, noisy: bool) -> void:
 		_open_contest(f, faction_name, amount)
 		return
 	if cur == OwnershipData.Faction.CONTESTED:
-		_meter_toward(faction_name, amount)
+		_meter_toward(faction_name, eff)
 		if ownership.claim_strength >= CLAIM_NEED:
 			_lock_to(f, true)
 		else:

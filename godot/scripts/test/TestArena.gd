@@ -13,6 +13,7 @@ extends Node3D
 @onready var kills_label: Label = $HUD/Root/Kills
 
 var kills: int = 0
+var _match_over: bool = false
 var _clash: Node = null
 var _lanes: Node3D = null
 var _radar: Control = null
@@ -43,9 +44,11 @@ func _ready() -> void:
 	_soft_neon_ambient()
 	_spawn_turrets()
 	_spawn_claim_nodes()
+	# Look-dev boards sat between the camera and the spawn, filling the screen
+	# on load. Keep them behind the north nexus.
 	var CP = load("res://scripts/assets/CanonPlates.gd")
 	if CP:
-		CP.spawn_arena_wall(self, Vector3(0, 0, 8))
+		CP.spawn_arena_wall(self, Vector3(0, 0, 34))
 	if kills_label:
 		kills_label.text = "Kills: 0"
 	_apply_arena_hud_layout()
@@ -107,15 +110,16 @@ func _spawn_dummies() -> void:
 	for i in mini(table.size(), cap):
 		var entry = table[i]
 		var d: Node = dummy_scene.instantiate()
-		add_child(d)
-		d.global_position = entry[0]
-		d.set_meta("lane", str(entry[1]))
-		if d.has_signal("died"):
-			d.died.connect(_on_dummy_died)
+		# Faction before add_child — _ready() reads it for groups and mesh.
 		d.set("faction", str(entry[2]))
 		# Outer lane dummies hold; mid skirmishes can move
 		if str(entry[1]) != "MID":
 			d.set("can_move", false)
+		add_child(d)
+		d.global_position = entry[0]
+		d.set_meta("lane", str(entry[1]))
+		if d.has_signal("died"):
+			d.died.connect(_on_dummy_died.bind(str(entry[1])))
 
 func _spawn_props() -> void:
 	# Sprint C enemy mesh sample
@@ -274,10 +278,12 @@ func _spawn_turrets() -> void:
 	for si in mini(spots.size(), tcap):
 		var s = spots[si]
 		var turr: Node = tscn.instantiate()
-		add_child(turr)
-		turr.global_position = s[0]
+		# Faction before add_child: _ready() picks the target group, mesh and
+		# label from it, so a late set left a "Cybernex" turret tagged gROT.
 		turr.set("faction", s[1])
 		turr.set("target_player", s[1] == "gROT")
+		add_child(turr)
+		turr.global_position = s[0]
 
 func _spawn_claim_nodes() -> void:
 	# Lane beacons start Neutral — C pulse / Hack occupy-to-hold, no pre-claim.
@@ -321,23 +327,27 @@ func _on_beacon_claimed(_fac, lane: String = "MID") -> void:
 		lp[k] = clampf(float(lp.get(k, 0.0)) + 28.0, 0.0, 100.0)
 
 
-func _on_dummy_died() -> void:
+func _on_dummy_died(lane: String = "") -> void:
 	if SessionObjectives:
 		SessionObjectives.on_landed_or_lane()
 	if AudioDirector:
 		AudioDirector.play_hit(true)
 	call_deferred("_maybe_refill_lane")
-	kills += 1
-	var lane_k := "MID"
-	# last-killed lane is unknown here; prefer player lane if available
-	if _lanes and "player_lane" in _lanes:
+	# Credit the lane the kill happened on, not the one the player stands in.
+	var lane_k := lane
+	if lane_k == "" and _lanes and "player_lane" in _lanes:
 		lane_k = str(_lanes.player_lane)
+	if lane_k == "":
+		lane_k = "MID"
 	if _clash and _clash.has_method("register_kill"):
 		_clash.register_kill(lane_k)
-	elif _clash and "kills" in _clash:
-		# sync local kills display from clash if present
-		pass
+	# The director owns the kill reward (soft economy + mastery + flash).
+	var md := get_node_or_null("ClashMatchDirector")
+	if md and md.has_method("register_kill"):
+		md.register_kill()
 	if kills_label:
+		# AexionClash is the single source of truth for the count.
+		kills = int(_clash.kills) if _clash and "kills" in _clash else kills + 1
 		var extra := ""
 		if _clash and _clash.has_method("status_line"):
 			extra = "  |  " + str(_clash.status_line())
@@ -357,10 +367,11 @@ func _process(_delta: float) -> void:
 	_apply_arena_hud_layout()
 	if not ("health" in player):
 		return
-	bar_health.value = player.health
+	# max first: assigning value against a stale maximum clamps it.
 	bar_health.max_value = player.max_health
-	bar_energy.value = player.energy
+	bar_health.value = player.health
 	bar_energy.max_value = player.max_energy
+	bar_energy.value = player.energy
 	_try_med_heal(_delta)
 	var lines: PackedStringArray = []
 	if player.ability_system:
@@ -422,6 +433,10 @@ func _goto_openspace() -> void:
 		get_tree().change_scene_to_file("res://scenes/world/OpenSpace.tscn")
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _match_over and event is InputEventKey and event.pressed \
+		and (event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER):
+		get_tree().reload_current_scene()
+		return
 	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
 		get_tree().change_scene_to_file("res://scenes/ui/MainMenu.tscn")
 		return
@@ -439,10 +454,67 @@ func _finish_clash_layout() -> void:
 	_lanes.name = "ClashLanes"
 	add_child(_lanes)
 	_setup_clash_radar()
+	_spawn_clash_landmarks()
 	if _clash and _clash.has_method("bind_player") and player:
 		_clash.bind_player(player)
+	# The match used to end silently: active=false and nobody listening.
+	if _clash and _clash.has_signal("match_ended") \
+		and not _clash.match_ended.is_connected(_on_match_ended):
+		_clash.match_ended.connect(_on_match_ended)
 	if SoftNetSession and player:
 		SoftNetSession.bind_player(player)
+
+
+func _on_match_ended(winner: String) -> void:
+	var obj := 0
+	if _clash and _clash.has_method("objectives_secured"):
+		obj = int(_clash.objectives_secured())
+	var ws := ""
+	if _clash and _clash.get("war") != null and _clash.war.has_method("hud_line"):
+		ws = str(_clash.war.hud_line())
+	_show_match_result("CLASH COMPLETE — %s\nkills %d  ·  lanes %d/3\n%s\nEnter: rematch   ·   Esc: menu" % [
+		winner, int(_clash.kills) if _clash else 0, obj, ws,
+	])
+
+
+func _show_match_result(text: String) -> void:
+	if hud == null:
+		return
+	var root: Control = hud.get_node_or_null("Root")
+	if root == null:
+		return
+	if root.has_node("MatchResult"):
+		return
+	var panel := PanelContainer.new()
+	panel.name = "MatchResult"
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.offset_left = -280
+	panel.offset_right = 280
+	panel.offset_top = -110
+	panel.offset_bottom = 110
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.03, 0.06, 0.1, 0.88)
+	sb.border_color = Color(0.25, 0.85, 1.0, 0.7)
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(8)
+	sb.content_margin_left = 18
+	sb.content_margin_right = 18
+	sb.content_margin_top = 14
+	sb.content_margin_bottom = 14
+	panel.add_theme_stylebox_override("panel", sb)
+	var lab := Label.new()
+	lab.text = text
+	lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lab.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lab.add_theme_font_size_override("font_size", 20)
+	lab.add_theme_color_override("font_color", Color(0.9, 0.97, 1.0))
+	lab.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	lab.add_theme_constant_override("outline_size", 5)
+	panel.add_child(lab)
+	root.add_child(panel)
+	_match_over = true
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
 
 func _setup_clash_radar() -> void:
@@ -486,25 +558,24 @@ func _update_clash_radar() -> void:
 				_lane_hud.text = "LANE %s  ·  %s" % [_lanes.player_lane, press]
 	if _radar == null or not _radar.has_method("set_snapshot"):
 		return
+	# One entry per node: the old second pass compared a Node against an Array
+	# of Vector3, so every gROT node was plotted twice.
 	var ene: Array = []
 	var all: Array = []
 	for c in get_children():
-		if c == player:
+		if c == player or not (c is Node3D) or not is_instance_valid(c):
 			continue
-		if c is Node3D and "faction" in c:
-			var fac := str(c.faction)
-			if fac == "gROT":
-				ene.append((c as Node3D).global_position)
-			elif fac == "Cybernex":
-				all.append((c as Node3D).global_position)
-		# CombatDummy may use set faction property differently
-		if c is Node3D and c.has_meta("lane"):
-			if c not in ene and c != player:
-				# treat lane meta dummies as enemies if not player
-				if "health" in c or c.get_script():
-					var fp := str(c.get("faction")) if "faction" in c else "gROT"
-					if fp == "gROT":
-						ene.append((c as Node3D).global_position)
+		if c.get("_alive") == false:
+			continue
+		var fac := ""
+		if "faction" in c:
+			fac = str(c.faction)
+		elif c.has_meta("lane"):
+			fac = "gROT"
+		if fac == "gROT":
+			ene.append((c as Node3D).global_position)
+		elif fac == "Cybernex":
+			all.append((c as Node3D).global_position)
 	var nex := [
 		[Vector3(0, 0, 24), Color(0.15, 0.85, 1.0)],
 		[Vector3(0, 0, -24), Color(0.95, 0.12, 0.42)],
@@ -515,7 +586,13 @@ func _update_clash_radar() -> void:
 func _maybe_refill_lane() -> void:
 	var alive := 0
 	for c in get_children():
-		if c is Node3D and c.has_meta("lane") and c.is_in_group("enemy") and is_instance_valid(c):
+		if not (c is Node3D and is_instance_valid(c) and c.has_meta("lane")):
+			continue
+		# A corpse stays in the tree until respawn; only living holds count,
+		# or the cap is reached once and reinforcement never runs again.
+		if c.get("_alive") == false:
+			continue
+		if c.is_in_group("enemy") or c.has_method("take_damage"):
 			alive += 1
 	if alive >= 4 or dummy_scene == null:
 		return
@@ -524,14 +601,14 @@ func _maybe_refill_lane() -> void:
 		return
 	var entry = table[randi() % table.size()]
 	var d: Node = dummy_scene.instantiate()
+	d.set("faction", str(entry[2]))
+	if str(entry[1]) != "MID":
+		d.set("can_move", false)
 	add_child(d)
 	d.global_position = entry[0]
 	d.set_meta("lane", str(entry[1]))
 	if d.has_signal("died"):
-		d.died.connect(_on_dummy_died)
-	d.set("faction", str(entry[2]))
-	if str(entry[1]) != "MID":
-		d.set("can_move", false)
+		d.died.connect(_on_dummy_died.bind(str(entry[1])))
 	if GameManager:
 		GameManager.toast_requested.emit("Lane wave: %s reinforced" % str(entry[1]))
 

@@ -39,7 +39,8 @@ func _draw() -> void:
 
 func _map(world: Vector3, r: Rect2) -> Vector2:
 	var nx := clampf((world.x / arena_half) * 0.5 + 0.5, 0.0, 1.0)
-	var nz := clampf((-world.z / arena_half) * 0.5 + 0.5, 0.0, 1.0)  # -Z up
+	# +Z (Cybernex home) must map to the bottom of the widget, so no negation.
+	var nz := clampf((world.z / arena_half) * 0.5 + 0.5, 0.0, 1.0)  # -Z up
 	return Vector2(r.position.x + nx * r.size.x, r.position.y + nz * r.size.y)
 
 func set_snapshot(p: Vector3, ene: Array, all: Array, nex: Array) -> void:

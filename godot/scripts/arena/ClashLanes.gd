@@ -187,10 +187,8 @@ func _build_towers() -> void:
 			if lab is Label3D:
 				(lab as Label3D).position.y = 3.35
 				(lab as Label3D).font_size = 18
-		if gun.is_in_group("ally"):
-			gun.remove_from_group("ally")
-		if not gun.is_in_group("enemy"):
-			gun.add_to_group("enemy")
+		# Turret._ready already files itself by faction. Forcing every tower into
+		# "enemy" let the player farm their own base for lane pressure.
 		if gun.has_signal("died"):
 			gun.died.connect(_on_tower_died.bind(root, str(t[4]), str(t[3])))
 
@@ -204,16 +202,20 @@ func _on_tower_died(spire: Node3D, lane: String, fac: String) -> void:
 			var c: Color = mat.albedo_color
 			c.a = 0.4
 			mat.albedo_color = c
+	# Only an enemy tower is progress. Losing your own must not reward you.
+	var player_fac := GameManager.get_faction_name() if GameManager else "Cybernex"
 	var tree := get_tree()
-	if tree:
+	if fac != player_fac and tree:
 		var clash: Node = tree.get_first_node_in_group("aexion_clash")
 		if clash and clash.has_method("register_tower_down"):
 			clash.register_tower_down(lane)
 		var matchn: Node = tree.get_first_node_in_group("clash_match")
 		if matchn and matchn.has_method("register_objective"):
 			matchn.register_objective()
-	if GameManager:
-		GameManager.toast_requested.emit("Tower down (%s %s) — soft lane pressure only" % [fac, lane])
+		if GameManager:
+			GameManager.toast_requested.emit("Tower down (%s %s) — soft lane pressure only" % [fac, lane])
+	elif GameManager:
+		GameManager.toast_requested.emit("Your %s tower is down (%s)" % [lane, fac])
 	print("[ClashLanes] tower down ", fac, " ", lane)
 
 func _build_lane_markers() -> void:

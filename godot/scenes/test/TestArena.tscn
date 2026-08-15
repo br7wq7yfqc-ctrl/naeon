@@ -51,6 +51,9 @@ size = Vector3(1.2, 3.5, 1.2)
 [sub_resource type="BoxMesh" id="WallMesh"]
 size = Vector3(0.4, 2.5, 12)
 
+[sub_resource type="BoxShape3D" id="WallShape"]
+size = Vector3(0.4, 2.5, 12)
+
 [node name="TestArena" type="Node3D"]
 script = ExtResource("1_arena")
 
@@ -132,7 +135,7 @@ mesh = SubResource("WallMesh")
 surface_material_override/0 = SubResource("FloorMat")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Barrier"]
-shape = SubResource("FloorShape")
+shape = SubResource("WallShape")
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 6)
