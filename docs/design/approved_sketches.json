@@ -1158,6 +1158,26 @@
       "position": "cybernex_heavy_armor",
       "dump_key": "generations/rendered/97pBo.jpg",
       "manual": 8
+    },
+    {
+      "id": "NsEul",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Medium armor",
+      "position": "cybernex_medium_armor",
+      "dump_key": "generations/rendered/NsEul.jpg",
+      "manual": 9
+    },
+    {
+      "id": "6mSp1",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "armor",
+      "label": "Medium armor",
+      "position": "cybernex_medium_armor",
+      "dump_key": "generations/rendered/6mSp1.jpg",
+      "manual": 10
     }
   ],
   "note": "Manual rebuild started. #001 1p69s gROT Carrier cinematic. Generations Index wiped.",

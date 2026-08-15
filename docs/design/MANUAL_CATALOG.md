@@ -13,5 +13,7 @@ Old `generations/catalog.json` and the visual album are **void**.
 | 006 | gROT Battleship — cinematic | GR | cinematic | `3a8de11f-6f48-42b4-887b-4e0c34e41ca9` | imagine |
 | 007 | Cybernex Heavy armor — cinematic | CX | cinematic | `5juQw` | `generations/rendered/5juQw.jpg` |
 | 008 | Cybernex Heavy armor — ortho | CX | ortho | `97pBo` | `generations/rendered/97pBo.jpg` |
+| 009 | Cybernex Medium armor — cinematic | CX | cinematic | `NsEul` | `generations/rendered/NsEul.jpg` |
+| 010 | Cybernex Medium armor — ortho | CX | ortho | `6mSp1` | `generations/rendered/6mSp1.jpg` |
 
 Next: wait for the next plate.

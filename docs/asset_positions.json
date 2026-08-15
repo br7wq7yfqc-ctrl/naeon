@@ -170,12 +170,31 @@
       "dump_key": "generations/rendered/XDhht.jpg",
       "locked_uuids": [
         {
+          "id": "NsEul",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Medium armor",
+          "dump_key": "generations/rendered/NsEul.jpg",
+          "manual": 9
+        },
+        {
+          "id": "6mSp1",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Medium armor",
+          "dump_key": "generations/rendered/6mSp1.jpg",
+          "manual": 10
+        },
+        {
           "id": "XDhht",
           "faction": "CX",
           "view": "ortho",
           "class": "armor",
           "label": "Medium armor",
-          "dump_key": "generations/rendered/XDhht.jpg"
+          "dump_key": "generations/rendered/XDhht.jpg",
+          "notes": "superseded by manual #010 6mSp1"
         },
         {
           "id": "3KCUS",
@@ -183,7 +202,8 @@
           "view": "cinematic",
           "class": "armor",
           "label": "Medium armor",
-          "dump_key": "generations/rendered/3KCUS.jpg"
+          "dump_key": "generations/rendered/3KCUS.jpg",
+          "notes": "superseded by manual #009 NsEul"
         }
       ]
     },

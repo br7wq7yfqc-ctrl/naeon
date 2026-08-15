@@ -182,8 +182,8 @@ Verified against the plate before bind.
 | Light crawler scout | GR | cinematic | `grot_crawler` | `YTTxi` |
 | Light armor | CX | ortho | `cybernex_light_armor` | `vYOfQ` |
 | Light armor | CX | cinematic | `cybernex_light_armor` | `G1DlH`, `mYaBr` |
-| Medium armor | CX | ortho | `cybernex_medium_armor` | `XDhht` |
-| Medium armor | CX | cinematic | `cybernex_medium_armor` | `3KCUS` |
+| Medium armor | CX | cinematic | `cybernex_medium_armor` | `NsEul` |
+| Medium armor | CX | ortho | `cybernex_medium_armor` | `6mSp1` |
 | Light armor | GR | ortho | `grot_light_armor` | `XqU70` |
 | Light armor | GR | cinematic | `grot_light_armor` | `mfHHB`, `vB0CU`, `ZiYRJ` |
 | Silent Prong | CX | cinematic | `cybernex_silent_prong` | `gjXDt` |
