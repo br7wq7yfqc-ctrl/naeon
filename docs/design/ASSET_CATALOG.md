@@ -203,7 +203,7 @@ Verified against the plate before bind.
 | Sniper (class) | NEUT | cinematic | `sniper_ship` | `cHfB3` |
 | Stealth (class) | NEUT | ortho | `stealth_ship` | `LEThZ` |
 | Stealth (class) | NEUT | cinematic | `stealth_ship` | `eBFi8` |
-| Resource HUD icons | NEUT | icon | `ui-resource-icons` | `hK3hw` |
+| Resource badges | NEUT | icon | `ui-resource-icons` | `6CC4f` |
 
 ---
 

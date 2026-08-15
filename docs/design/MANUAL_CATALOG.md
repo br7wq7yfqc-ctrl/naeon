@@ -26,5 +26,6 @@ Old `generations/catalog.json` and the visual album are **void**.
 | 019 | gROT Pilot helmet — cinematic | GR | cinematic | `agxTz` | `generations/rendered/agxTz.jpg` |
 | 020 | Cybernex Heavy fighter — cinematic | CX | cinematic | `7GPCx` | `generations/rendered/7GPCx.jpg` |
 | 021 | Cybernex Heavy fighter — ortho | CX | ortho | `f9b60ddc-94d9-4705-87dc-d784f9cb01a5` | imagine |
+| 022 | Resource badges — Knowledge / Claim / Alliance / Salvage | NEUT | icon | `6CC4f` | `generations/rendered/6CC4f.jpg` |
 
 Next: wait. Heavy GR armor ortho still open.

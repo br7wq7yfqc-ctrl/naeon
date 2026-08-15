@@ -1278,6 +1278,16 @@
       "label": "Heavy fighter",
       "position": "cybernex_heavy_fighter",
       "manual": 21
+    },
+    {
+      "id": "6CC4f",
+      "faction": "NEUT",
+      "view": "icon",
+      "class": "ui",
+      "label": "Resource badges",
+      "position": "ui-resource-icons",
+      "dump_key": "generations/rendered/6CC4f.jpg",
+      "manual": 22
     }
   ],
   "note": "Manual rebuild started. #001 1p69s gROT Carrier cinematic. Generations Index wiped.",

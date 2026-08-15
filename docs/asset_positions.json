@@ -2649,24 +2649,33 @@
       "category": "props",
       "count": 1,
       "titles": [
-        "CYBERNEX UIXGEMIENT",
-        "CYBERNEX UI ELEMENT"
+        "KNOWLEDGE / OWNERSHIP CLAIM / ALLIANCE / SALVAGE"
       ],
       "merged_from": [
         "cybernex_uixgemient"
       ],
       "chat_lock": true,
-      "file_id": "hK3hw",
-      "dump_key": "generations/imagine_images/hK3hw.jpg",
-      "ocr": true,
+      "file_id": "6CC4f",
+      "dump_key": "generations/rendered/6CC4f.jpg",
+      "source": "manual_rebuild",
       "locked_uuids": [
+        {
+          "id": "6CC4f",
+          "faction": "NEUT",
+          "view": "icon",
+          "class": "ui",
+          "label": "Resource badges",
+          "dump_key": "generations/rendered/6CC4f.jpg",
+          "manual": 22
+        },
         {
           "id": "hK3hw",
           "faction": "NEUT",
           "view": "icon",
           "class": "ui",
           "label": "Resource HUD icons",
-          "dump_key": "generations/imagine_images/hK3hw.jpg"
+          "dump_key": "generations/imagine_images/hK3hw.jpg",
+          "notes": "superseded by manual #022 6CC4f"
         }
       ]
     }
