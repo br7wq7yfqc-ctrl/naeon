@@ -1,6 +1,6 @@
 # Session Status
 **2026-08-15**
-Phase 0 iterative play-feel: silhouettes, compact HUD, combat streaks, pad pylon, ship cruise greebles. No DMG.
+Phase 0 mechanics depth: honest land, HOVER hold, walker/rover envelopes, 10-min loop. No DMG.
 
 **Last update:** 2026-08-15
 **Skill:** sequential-dev + holistic v2.0
@@ -8,9 +8,9 @@ Phase 0 iterative play-feel: silhouettes, compact HUD, combat streaks, pad pylon
 | Track | Status |
 |-------|--------|
 | Design VS + campaign + constructor/side/edu templates | **Gaps closed** |
-| A | Abilities/costs/Infection + compact HUD + bolt streaks |
-| B | site_pin + pad 3D pylon |
-| C | Canon plates + procedural silhouettes when GLB missing |
+| A | Combat + HUD + honest 10-min loop steps |
+| B | Continuum: land gate, HOVER altitude, atmo NAV lock |
+| C | Walker coyote/slope; rover grip/brake |
 | D | Design ready (constructor + 26) |
 | E | Act I implement first |
 

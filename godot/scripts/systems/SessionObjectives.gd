@@ -15,10 +15,10 @@ var _order: PackedStringArray = [
 ]
 var _labels := {
 	"boot": "NAEON Phase 0 — pick a mode from the menu (Space or Clash)",
-	"fly_or_fight": "SPACE: fly (WASD) · CLASH: engage a lane dummy (Q/E abilities)",
-	"land_or_lane": "SPACE: approach pad + E land · CLASH: push toward a claim beacon",
-	"claim_or_obj": "SPACE: C claim pad · CLASH: secure an objective node",
-	"economy_tick": "Earn Contribution / Biomass (soft economy — no P2W)",
+	"fly_or_fight": "SPACE: fly WASD · CLASH: Q/E a lane dummy",
+	"land_or_lane": "SPACE: 3 HOVER, slow, E land · CLASH: push toward a claim beacon",
+	"claim_or_obj": "SPACE: C claim pad (not auto) · CLASH: secure an objective node",
+	"economy_tick": "Harvest on a claimed pad / cave crystal (Contribution or Biomass — no P2W)",
 }
 var current: String = "boot"
 

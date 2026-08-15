@@ -29,3 +29,6 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 12. Pad claim pylon (base/shaft/crown); ship cruise nacelles; OpenSpace HUD one-liner (F3 dump)
 13. Clash arena perimeter + nexus halo (less greybox)
 14. Honest land gate (no fake-land / auto-claim / secret brake); C claims after touchdown
+15. HOVER altitude hold; NAV locked in dense atmosphere
+16. 10-min loop: harvest-only economy_tick; objectives do not self-complete
+17. Surface walker coyote/slope/landing; rover grip + Space brake
