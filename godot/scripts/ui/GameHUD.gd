@@ -634,6 +634,9 @@ func _refresh() -> void:
 						side = str(n.get_contest_side())
 					if side != "" and st == "contested":
 						best_txt = "PAD %s  occupy→%s %d%%  (%.0fm)" % [n.get_faction(), side, int(claim_ratio * 100.0), d]
+					elif st == "extracting" and n.has_method("harvest_hud_line"):
+						var hl := str(n.harvest_hud_line())
+						best_txt = "PAD %s  %s  (%.0fm)" % [n.get_faction(), hl, d] if hl != "" else "PAD %s  extracting  (%.0fm)" % [n.get_faction(), d]
 					else:
 						best_txt = "PAD %s  %s  claim %.0f%%  (%.0fm)" % [n.get_faction(), st, claim_ratio * 100.0, d]
 					if st == "contested" or str(n.get_faction()) == "Contested":

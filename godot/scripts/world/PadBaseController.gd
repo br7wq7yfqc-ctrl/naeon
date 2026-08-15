@@ -511,6 +511,18 @@ func get_claim_status() -> String:
 	return _status
 
 
+func harvest_hud_line() -> String:
+	if _status != "extracting":
+		return ""
+	var rate: float = extract_rate * contribution_per_unit
+	var unit := "CONTRIB"
+	if GameManager and GameManager.has_method("get_faction_name") and str(GameManager.get_faction_name()) == "gROT":
+		unit = "BIOMASS"
+	elif ownership and ownership.faction_name() == "gROT":
+		unit = "BIOMASS"
+	return "EXTRACTING  %s +%.1f/s  R%.0f" % [unit, rate, crystal_reserves]
+
+
 func get_occupy_strength() -> float:
 	return ownership.claim_strength if ownership else 0.0
 

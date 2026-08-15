@@ -168,6 +168,11 @@ func _go() -> void:
 			print("[Playtest] harvest in-zone ", snapped(c0, 0.01), " -> ", snapped(c1, 0.01), " status=", pad.get_claim_status() if pad.has_method("get_claim_status") else "?")
 			if c1 <= c0 + 0.001:
 				fails.append("no harvest while owner in ring")
+			if pad.has_method("harvest_hud_line"):
+				var hl0 := str(pad.harvest_hud_line())
+				print("[Playtest] harvest hud=", hl0)
+				if hl0.find("EXTRACTING") < 0:
+					fails.append("extracting pad has no harvest HUD line")
 			if walker2 and is_instance_valid(walker2) and pad is Node3D:
 				walker2.global_position = (pad as Node3D).global_position + Vector3(0, 0, 420)
 			await get_tree().create_timer(0.2).timeout
@@ -177,6 +182,8 @@ func _go() -> void:
 			print("[Playtest] harvest out-zone ", snapped(c2, 0.01), " -> ", snapped(c3, 0.01))
 			if c3 - c2 > 0.08:
 				fails.append("harvest continued after leaving ring")
+			if pad.has_method("harvest_hud_line") and str(pad.harvest_hud_line()).find("EXTRACTING") >= 0:
+				fails.append("harvest HUD stayed EXTRACTING after leaving ring")
 			# Honest land on the same pad
 			var land_ship: Node = os.get("ship")
 			var up := Vector3.UP
