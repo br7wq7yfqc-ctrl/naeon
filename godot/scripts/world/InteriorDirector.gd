@@ -165,7 +165,7 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	if player != null and is_instance_valid(player) and player.has_method("set_planet_gravity_provider"):
 		player.set_planet_gravity_provider(self)
 	if player != null and is_instance_valid(player) and player.has_method("set_spawn_basis"):
-		player.set_spawn_basis(Vector3.UP, 0.0)
+		player.set_spawn_basis(Vector3.UP, PI)
 	if player != null and is_instance_valid(player) and player.has_method("set_eva_profile"):
 		player.set_eva_profile(false)
 
@@ -245,7 +245,7 @@ func _settle_player_on_floor() -> void:
 	if _player is CharacterBody3D:
 		(_player as CharacterBody3D).velocity = Vector3.ZERO
 	if _player != null and is_instance_valid(_player) and _player.has_method("set_spawn_basis"):
-		_player.set_spawn_basis(Vector3.UP, 0.0)
+		_player.set_spawn_basis(Vector3.UP, PI)
 
 
 func gravity_at(_global_pos: Vector3) -> Vector3:
