@@ -48,6 +48,7 @@ func _ready() -> void:
 		CP.spawn_arena_wall(self, Vector3(0, 0, 8))
 	if kills_label:
 		kills_label.text = "Kills: 0"
+	_apply_arena_hud_layout()
 
 
 func _upgrade_environment_materials() -> void:
@@ -340,6 +341,7 @@ func _process(_delta: float) -> void:
 		return
 	_ui_accum = 0.0
 	_update_clash_radar()
+	_apply_arena_hud_layout()
 	if not ("health" in player):
 		return
 	bar_health.value = player.health
@@ -359,24 +361,25 @@ func _process(_delta: float) -> void:
 				lines.append("%s %s (%.1fs)" % [key, ab.ability_name, cd])
 			else:
 				lines.append("%s %s" % [key, ab.ability_name])
-	ability_label.text = "\n".join(lines)
+	if _arena_debug():
+		ability_label.text = "\n".join(lines)
+		var mvin: Vector2 = Vector2.ZERO
+		if "last_move_input" in player:
+			mvin = player.last_move_input
+		info_label.text = (
+			"NAEON CLASH | %s | Form %s | O=OpenSpace | 3 LANES + radar | soft WS\n" % [
+				player.faction, player.current_form
+			]
+			+ "Q/E/R/F abilities | input(%.0f,%.0f) floor=%s | med heals  |  F3 HUD" % [
+				mvin.x, mvin.y, str(player.is_on_floor())
+			]
+		)
 	if contrib_label and _clash and _clash.has_method("status_line"):
 		var econ2 := GameManager.economy_label() if GameManager and GameManager.has_method("economy_label") else ""
 		var obj := ""
 		if _clash.has_method("objectives_secured"):
 			obj = "  |  OBJ %d/3" % int(_clash.objectives_secured())
 		contrib_label.text = "%s  |  %s%s" % [econ2, _clash.status_line(), obj]
-	var mvin: Vector2 = Vector2.ZERO
-	if "last_move_input" in player:
-		mvin = player.last_move_input
-	info_label.text = (
-		"NAEON CLASH | %s | Form %s | O=OpenSpace | 3 LANES + radar | soft WS\n" % [
-			player.faction, player.current_form
-		]
-		+ "Q/E/R/F abilities | input(%.0f,%.0f) floor=%s | med heals" % [
-			mvin.x, mvin.y, str(player.is_on_floor())
-		]
-	)
 
 func _try_med_heal(delta: float) -> void:
 	if player == null or not ("health" in player):
@@ -669,3 +672,42 @@ func _apply_arena_perf() -> void:
 	# HUD refresh budget already 10Hz; mark FPS-friendly
 	Engine.max_fps = 0  # uncapped; GPU-bound preferred over artificial 30
 	print("[TestArena] arena perf tier=", tier)
+
+
+func _arena_debug() -> bool:
+	var h = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+	return h != null and h.has_method("is_debug_overlay") and bool(h.is_debug_overlay())
+
+
+func _apply_arena_hud_layout() -> void:
+	var dbg := _arena_debug()
+	if info_label:
+		info_label.visible = dbg
+	if bar_health:
+		bar_health.visible = dbg
+	if bar_energy:
+		bar_energy.visible = dbg
+	if ability_label:
+		ability_label.visible = dbg
+	if contrib_label:
+		contrib_label.visible = dbg
+	if kills_label:
+		kills_label.visible = true
+		kills_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		kills_label.offset_left = -420
+		kills_label.offset_right = -16
+		kills_label.offset_top = 40
+		kills_label.offset_bottom = 70
+		kills_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		kills_label.add_theme_font_size_override("font_size", 16)
+		kills_label.add_theme_color_override("font_color", Color(0.95, 0.9, 0.45))
+		kills_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+		kills_label.add_theme_constant_override("outline_size", 4)
+	if _lane_hud:
+		_lane_hud.visible = true
+		_lane_hud.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		_lane_hud.offset_left = -560
+		_lane_hud.offset_right = -16
+		_lane_hud.offset_top = 70
+		_lane_hud.offset_bottom = 100
+		_lane_hud.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT

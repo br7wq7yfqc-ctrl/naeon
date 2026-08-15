@@ -44,6 +44,16 @@ var _toast_ttl: float = 0.0
 var _toast_queue: Array = []
 var _radar: Control
 var _radar_dots: Array = []
+var _debug_overlay: bool = false
+var _hp_bar: ProgressBar
+var _en_bar: ProgressBar
+var _hp_tag: Label
+var _en_tag: Label
+var _slot_row: HBoxContainer
+var _slots: Array = []
+var _pip_row: HBoxContainer
+var _pips: Array = []
+var _chrome_built: bool = false
 
 func _ready() -> void:
 	layer = 20
@@ -363,6 +373,7 @@ func _build() -> void:
 		_radar.add_child(d)
 		_radar_dots.append(d)
 	_root.add_child(_radar)
+	_build_play_chrome()
 
 func _process(d: float) -> void:
 	_econ_flash = maxf(0.0, _econ_flash - d)
@@ -380,6 +391,8 @@ func _process(d: float) -> void:
 func _refresh() -> void:
 	_refresh_economy()
 	_refresh_ability_bar()
+	_apply_debug_vis()
+	_refresh_play_chrome()
 	if _player != null and not is_instance_valid(_player):
 		_player = null
 	if _obj_label and SessionObjectives:
@@ -812,3 +825,231 @@ func _update_channel_hud() -> void:
 		_channel_label.visible = ratio > 0.0
 		if ratio > 0.0:
 			_channel_label.text = "%s  %d%%" % [name, int(ratio * 100.0)]
+
+
+func is_debug_overlay() -> bool:
+	return _debug_overlay
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventKey and event.pressed and not event.echo):
+		return
+	var k: int = event.keycode if event.keycode != KEY_NONE else event.physical_keycode
+	if k == KEY_F3 or event.physical_keycode == KEY_F3:
+		_debug_overlay = not _debug_overlay
+		_apply_debug_vis()
+		if GameManager:
+			GameManager.toast_requested.emit("HUD debug %s" % ("ON" if _debug_overlay else "OFF"))
+		get_viewport().set_input_as_handled()
+
+
+func _flat(col: Color, border: Color = Color(0, 0, 0, 0), bw: int = 0, radius: int = 4) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color = col
+	s.border_color = border
+	s.set_border_width_all(bw)
+	s.corner_radius_top_left = radius
+	s.corner_radius_top_right = radius
+	s.corner_radius_bottom_left = radius
+	s.corner_radius_bottom_right = radius
+	s.content_margin_left = 6
+	s.content_margin_right = 6
+	s.content_margin_top = 4
+	s.content_margin_bottom = 4
+	return s
+
+
+func _style_bar(bar: ProgressBar, fill: Color, bg: Color) -> void:
+	bar.add_theme_stylebox_override("fill", _flat(fill, Color(0, 0, 0, 0), 0, 3))
+	bar.add_theme_stylebox_override("background", _flat(bg, Color(0.2, 0.3, 0.4, 0.5), 1, 3))
+	bar.show_percentage = false
+
+
+func _build_play_chrome() -> void:
+	if _chrome_built or _root == null:
+		return
+	_chrome_built = true
+	var vitals := Control.new()
+	vitals.name = "PlayVitals"
+	vitals.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	vitals.offset_left = 18
+	vitals.offset_top = -118
+	vitals.offset_right = 280
+	vitals.offset_bottom = -18
+	vitals.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(vitals)
+	_hp_tag = Label.new()
+	_hp_tag.text = "HP"
+	_hp_tag.position = Vector2(0, 0)
+	_hp_tag.add_theme_font_size_override("font_size", 12)
+	_hp_tag.add_theme_color_override("font_color", Color(1.0, 0.45, 0.48))
+	_hp_tag.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	_hp_tag.add_theme_constant_override("outline_size", 3)
+	vitals.add_child(_hp_tag)
+	_hp_bar = ProgressBar.new()
+	_hp_bar.position = Vector2(28, 2)
+	_hp_bar.size = Vector2(210, 16)
+	_hp_bar.max_value = 100
+	_hp_bar.value = 100
+	_style_bar(_hp_bar, Color(0.82, 0.18, 0.28, 0.95), Color(0.06, 0.04, 0.05, 0.82))
+	vitals.add_child(_hp_bar)
+	_en_tag = Label.new()
+	_en_tag.text = "EN"
+	_en_tag.position = Vector2(0, 22)
+	_en_tag.add_theme_font_size_override("font_size", 12)
+	_en_tag.add_theme_color_override("font_color", Color(0.45, 0.9, 1.0))
+	_en_tag.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	_en_tag.add_theme_constant_override("outline_size", 3)
+	vitals.add_child(_en_tag)
+	_en_bar = ProgressBar.new()
+	_en_bar.position = Vector2(28, 24)
+	_en_bar.size = Vector2(210, 14)
+	_en_bar.max_value = 100
+	_en_bar.value = 100
+	_style_bar(_en_bar, Color(0.15, 0.75, 0.95, 0.95), Color(0.04, 0.07, 0.1, 0.82))
+	vitals.add_child(_en_bar)
+	_pip_row = HBoxContainer.new()
+	_pip_row.position = Vector2(28, 44)
+	_pip_row.add_theme_constant_override("separation", 5)
+	vitals.add_child(_pip_row)
+	var inf_tag := Label.new()
+	inf_tag.text = "INF"
+	inf_tag.add_theme_font_size_override("font_size", 11)
+	inf_tag.add_theme_color_override("font_color", Color(1.0, 0.4, 0.55))
+	inf_tag.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	inf_tag.add_theme_constant_override("outline_size", 3)
+	_pip_row.add_child(inf_tag)
+	for i in 5:
+		var pip := ColorRect.new()
+		pip.custom_minimum_size = Vector2(12, 12)
+		pip.color = Color(0.25, 0.12, 0.16, 0.85)
+		_pip_row.add_child(pip)
+		_pips.append(pip)
+	_slot_row = HBoxContainer.new()
+	_slot_row.name = "AbilitySlots"
+	_slot_row.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_slot_row.offset_left = -300
+	_slot_row.offset_right = 300
+	_slot_row.offset_top = -78
+	_slot_row.offset_bottom = -14
+	_slot_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_slot_row.add_theme_constant_override("separation", 8)
+	_slot_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(_slot_row)
+	var keys := ["Q", "E", "R", "F"]
+	for i in 4:
+		var panel := PanelContainer.new()
+		panel.custom_minimum_size = Vector2(118, 56)
+		panel.add_theme_stylebox_override("panel", _flat(Color(0.05, 0.09, 0.14, 0.82), Color(0.25, 0.75, 0.95, 0.55), 1, 6))
+		var vbox := VBoxContainer.new()
+		vbox.add_theme_constant_override("separation", 0)
+		var key_l := Label.new()
+		key_l.text = keys[i]
+		key_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		key_l.add_theme_font_size_override("font_size", 11)
+		key_l.add_theme_color_override("font_color", Color(0.55, 0.9, 1.0))
+		var name_l := Label.new()
+		name_l.text = "—"
+		name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name_l.add_theme_font_size_override("font_size", 13)
+		name_l.add_theme_color_override("font_color", Color(0.92, 0.96, 1.0))
+		name_l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+		name_l.add_theme_constant_override("outline_size", 3)
+		var cd_l := Label.new()
+		cd_l.text = "ready"
+		cd_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		cd_l.add_theme_font_size_override("font_size", 11)
+		cd_l.add_theme_color_override("font_color", Color(0.45, 0.95, 0.65))
+		vbox.add_child(key_l)
+		vbox.add_child(name_l)
+		vbox.add_child(cd_l)
+		panel.add_child(vbox)
+		_slot_row.add_child(panel)
+		_slots.append({"panel": panel, "name": name_l, "cd": cd_l})
+	if _obj_label:
+		_obj_label.add_theme_font_size_override("font_size", 15)
+		_obj_label.offset_top = 10
+		_obj_label.offset_bottom = 40
+	_apply_debug_vis()
+
+
+func _apply_debug_vis() -> void:
+	var dbg := _debug_overlay
+	if _status_label:
+		_status_label.visible = dbg
+	if _mastery_label:
+		_mastery_label.visible = dbg
+	if _ctx_label:
+		_ctx_label.visible = dbg
+	if _ability_label:
+		_ability_label.visible = dbg
+	if _infection_label:
+		_infection_label.visible = dbg
+	if _econ_label:
+		_econ_label.visible = true
+		_econ_label.position = Vector2(14, 52) if not dbg else Vector2(14, 128)
+	if _econ_bar:
+		_econ_bar.visible = true
+		_econ_bar.position = Vector2(14, 72) if not dbg else Vector2(14, 148)
+	if _slot_row:
+		_slot_row.visible = not dbg
+	if _radar:
+		var clash := false
+		var tree := get_tree()
+		if tree and tree.current_scene:
+			clash = str(tree.current_scene.name) == "TestArena"
+		_radar.visible = (not clash) or dbg
+
+
+func _refresh_play_chrome() -> void:
+	if not _chrome_built:
+		return
+	if _player and is_instance_valid(_player):
+		if "health" in _player and "max_health" in _player and _hp_bar:
+			_hp_bar.max_value = maxf(1.0, float(_player.max_health))
+			_hp_bar.value = float(_player.health)
+			if _hp_tag:
+				_hp_tag.text = "%d" % int(_player.health)
+		if "energy" in _player and "max_energy" in _player and _en_bar:
+			_en_bar.max_value = maxf(1.0, float(_player.max_energy))
+			_en_bar.value = float(_player.energy)
+			if _en_tag:
+				_en_tag.text = "%d" % int(_player.energy)
+		var stacks := 0
+		var inf = _player.get_node_or_null("InfectionStatus")
+		if inf:
+			stacks = int(inf.stacks)
+		for i in _pips.size():
+			var pip: ColorRect = _pips[i]
+			if i < stacks:
+				pip.color = Color(0.95, 0.2, 0.42, 0.95)
+			else:
+				pip.color = Color(0.22, 0.1, 0.14, 0.75)
+	if _ability_sys == null and _player:
+		_ability_sys = _player.get_node_or_null("AbilitySystem")
+	var keys := ["Q", "E", "R", "F"]
+	for i in _slots.size():
+		var slot: Dictionary = _slots[i]
+		var nm := "—"
+		var cd := 0.0
+		if _ability_sys:
+			if _ability_sys.has_method("get_slot_label"):
+				nm = str(_ability_sys.get_slot_label(i))
+			elif "abilities" in _ability_sys and i < _ability_sys.abilities.size() and _ability_sys.abilities[i]:
+				nm = str(_ability_sys.abilities[i].ability_name)
+			if _ability_sys.has_method("get_cooldown_remaining"):
+				cd = float(_ability_sys.get_cooldown_remaining(i))
+		var short := nm
+		if short.length() > 12:
+			short = short.substr(0, 11)
+		(slot["name"] as Label).text = short
+		var cd_l: Label = slot["cd"]
+		var panel: PanelContainer = slot["panel"]
+		if cd > 0.05:
+			cd_l.text = "%.1fs" % cd
+			cd_l.add_theme_color_override("font_color", Color(1.0, 0.75, 0.35))
+			panel.modulate = Color(0.7, 0.75, 0.8, 0.95)
+		else:
+			cd_l.text = keys[i] + " ready"
+			cd_l.add_theme_color_override("font_color", Color(0.45, 0.95, 0.65))
+			panel.modulate = Color.WHITE

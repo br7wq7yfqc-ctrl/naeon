@@ -24,3 +24,4 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 7. PadAmbientLife / rover chassis quotes restored (parse blockers)
 8. Infection HUD always 5 pips
 9. Procedural Cybernex/gROT hero + dummy silhouettes when GLB missing (code-first, dual-theme)
+10. Compact play HUD: HP/EN bars, ability chips, Infection 5 pips; F3 debug dump
