@@ -977,9 +977,18 @@
       "label": "Fighter",
       "position": "cybernex_fighter",
       "batch": 20
+    },
+    {
+      "id": "6c3799b6-f741-4ab2-aa5c-a86d564c5493",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ship-single",
+      "label": "Bomber",
+      "position": "cybernex_bomber",
+      "batch": 20
     }
   ],
-  "note": "Batch 20: CX fighter pair locked (cin 4ca9faf0, ortho eb126daa). 8b074991 and ortho 93a363a3 rejected. S3 Index not patched (no bucket key this session).",
-  "positions_bound": 114,
+  "note": "Batch 20: CX fighter pair locked. CX bomber cinematic 6c3799b6 locked; c76ccb6f + noisy first pass rejected. Ortho 78162909 in review. S3 Index not patched.",
+  "positions_bound": 115,
   "positions_unbound": 0
 }

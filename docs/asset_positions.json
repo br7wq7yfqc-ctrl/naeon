@@ -1,9 +1,9 @@
 {
-  "version": 2.9,
+  "version": 2.10,
   "updated": "2026-08-15",
-  "source": "asset_positions.json v2.9 + batch20 CX fighter pair lock",
+  "source": "asset_positions.json v2.10 + batch20 CX bomber cinematic lock",
   "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Dump short IDs are existing neon rendered files, not invented UUIDs.",
-  "positions": 127,
+  "positions": 128,
   "bound_sheets": 213,
   "merged_slugs": {
     "heawy_5ault_i8reakt4fough": "heavy_assault",
@@ -1289,6 +1289,24 @@
           "view": "ortho",
           "class": "ship-single",
           "label": "Fighter"
+        }
+      ]
+    },
+    "cybernex_bomber": {
+      "category": "ships",
+      "count": 0,
+      "titles": [
+        "CYBERNEX T1 BOMBER"
+      ],
+      "ocr": false,
+      "source": "batch20_gap",
+      "locked_uuids": [
+        {
+          "id": "6c3799b6-f741-4ab2-aa5c-a86d564c5493",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-single",
+          "label": "Bomber"
         }
       ]
     },

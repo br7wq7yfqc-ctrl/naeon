@@ -1,6 +1,4 @@
-# NAEON — Asset Concept Generation Plan
-
-**Version:** 1.14  
+**Version:** 1.15  
 **Status:** Batches 1–19 CLOSED · **Batch 20 IN PROGRESS**  
 **Updated:** 2026-08-15  
 
@@ -25,9 +23,11 @@ Cinematics carry a title bar naming the object.
 | CX T1 fighter cinematic `4ca9faf0` | **locked** |
 | CX T1 fighter ortho `eb126daa` | **locked** |
 | CX T1 fighter `8b074991` / ortho `93a363a3` | rejected |
-| CX bomber | in review |
+| CX T1 bomber cinematic `6c3799b6` | **locked** |
+| CX T1 bomber `c76ccb6f` + noisy first pass | rejected |
+| CX T1 bomber ortho `78162909` | in review |
 
 ## Ledger
 Chat-lock `file_id` null: **0**. OCR unresolved: **0**.  
-7 OCR-unreadable titles kept (no dump match). Bound sheets **213**. Positions **127**.
+7 OCR-unreadable titles kept (no dump match). Bound sheets **213**. Positions **128**. Locked UUID **57**.
 S3 `generations/catalog.json` not patched this session (no bucket key).

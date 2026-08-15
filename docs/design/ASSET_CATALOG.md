@@ -1,10 +1,10 @@
 # NAEON — Approved sketch catalog
 
-**Version:** 1.13 · **Updated:** 2026-08-15  
+**Version:** 1.14 · **Updated:** 2026-08-15  
 **Rule:** this file lists **locked only**. In-review / draft / dump do not belong here.
 
-Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **127 positions, 213 sheets**.  
-Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **56 UUID + 58 dump IDs**, none invented.
+Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **128 positions, 213 sheets**.  
+Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **57 UUID + 58 dump IDs**, none invented.
 
 Bucket: `s3://neon/generations/canon/{class}/{id}/master.jpg`  
 Grok: `https://assets.grok.com/users/77c65418-d257-47c3-8504-4540b6e0a754/generated/{UUID}/image.jpg`
@@ -13,14 +13,14 @@ S3 Index `generations/catalog.json` is **not** in git and is not patched by this
 
 | Ledger | Count |
 |--------|------:|
-| Positions after OCR merge + Index keys + batch 20 | 127 |
+| Positions after OCR merge + Index keys + batch 20 | 128 |
 | Bound sheets (invariant) | 213 |
-| Locked UUID | 56 |
+| Locked UUID | 57 |
 | Dump file IDs rebound (existing neon files) | 58 |
 | Chat-lock still `file_id` null | 0 |
 | UUID with no position | 0 |
 | Index-only positions (`ocr: false`, `count: 0`) | 13 |
-| New batch-20 slugs (`ocr: false`) | 1 |
+| New batch-20 slugs (`ocr: false`) | 2 |
 | Unfactioned class plates kept as templates | 11 |
 | OCR slugs still unresolved | 0 |
 | OCR unreadable (title noise, sheet kept, no dump match) | 7 |
@@ -113,8 +113,9 @@ APC / hover / mech guns bind to the **hull** they sit on. Tank main has no Heavy
 |--------|---------|------|----------|----|
 | Fighter | CX | cinematic | `cybernex_fighter` | `4ca9faf0-e533-403b-bc6e-2f6263d6a4d7` |
 | Fighter | CX | ortho | `cybernex_fighter` | `eb126daa-d380-4db6-bc95-9fde9e4e6846` |
+| Bomber | CX | cinematic | `cybernex_bomber` | `6c3799b6-f741-4ab2-aa5c-a86d564c5493` |
 
-`8b074991` and ortho `93a363a3` rejected.
+`8b074991` and ortho `93a363a3` rejected (fighter). Bomber `c76ccb6f` and noisy first pass (`b88f2e19`, `d0b8899a`, `ea61b36d`) rejected.
 
 ### Rebound from dump (short IDs — existing `rendered/` / `imagine_images/` files, not invented UUIDs)
 
@@ -139,6 +140,7 @@ Verified against the plate before bind.
 | Support | GR | cinematic | `grot_support_ship` | `mmaTy` |
 | Fighter | CX | cinematic | `cybernex_fighter` | `4ca9faf0` (UUID, §A) |
 | Fighter | GR | cinematic | `grot_fighter` | `1HmNd` |
+| Bomber | CX | cinematic | `cybernex_bomber` | `6c3799b6` (UUID, §A) |
 | Bomber | GR | cinematic | `grot_bomber` | `JJUvM` |
 | Scout | CX | cinematic | `cybernex_scout_single_seat_recon_light` | `kGA5q` |
 | Interceptor | CX | cinematic | `cybernex_interceptor` | `QdM8V` |
@@ -188,7 +190,7 @@ Chat-lock `file_id` null: **0**. All 16 remaining plates found in `generations/r
 
 Unfactioned class plates (`sniper_ship`, `stealth_ship`, `logistic_drone`, `medium_drone`, `heavy_drone`, `heavy_assault`, `ownership_claim_beacon`, `support_logistics_vehicle`) stay templates, not faction hulls.
 
-CX support hull, CX fighter, CX bomber, CX stealth, GR scout-ship, GR medium drone have dump plates but **no OCR slug** — not rebound onto a different object.
+CX support hull, CX stealth, GR scout-ship, GR medium drone have dump plates but **no OCR slug** — not rebound onto a different object. CX fighter + CX bomber cinematic now locked (batch 20); CX bomber ortho in review.
 
 ---
 
