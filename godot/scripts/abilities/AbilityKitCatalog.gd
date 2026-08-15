@@ -36,7 +36,7 @@ static func _firewall() -> Ability:
 	a.description = "Shield window + soft cleanse"
 	a.cooldown = EE.CD_FIREWALL
 	a.energy_cost = EE.NEX_FIREWALL
-	a.duration = 4.5
+	a.duration = 2.5
 	a.heal = 12.0
 	a.is_firewall = true
 	a.faction_restriction = Ability.FactionRestriction.CYBERNEX_ONLY
@@ -54,7 +54,7 @@ static func _probe() -> Ability:
 	a.range = 18.0
 	a.is_hacking = true
 	a.is_channeled = true
-	a.channel_time = 1.35
+	a.channel_time = 1.5
 	a.effect_color = Color(0.4, 0.85, 1.0)
 	return a
 
@@ -69,7 +69,7 @@ static func _hack_grot() -> Ability:
 	a.range = 18.0
 	a.is_hacking = true
 	a.is_channeled = true
-	a.channel_time = 1.35
+	a.channel_time = 1.5
 	a.faction_restriction = Ability.FactionRestriction.GROT_ONLY
 	a.effect_color = Color(1.0, 0.15, 0.45)
 	return a
@@ -82,6 +82,10 @@ static func _surge() -> Ability:
 	a.cooldown = EE.CD_SURGE
 	a.energy_cost = EE.ROT_SURGE
 	a.damage = 16.0
+	a.range = 5.0
+	a.aoe_radius = 4.5
+	a.force = 8.0
+	a.targeting = Ability.TargetingType.AOE
 	a.effect_color = Color(0.9, 0.12, 0.4)
 	return a
 

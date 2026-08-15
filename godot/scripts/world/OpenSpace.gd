@@ -23,6 +23,7 @@ var _rover: Node3D = null
 var _eva_warn_t: float = 0.0
 var _eva_tether_t: float = 0.0
 var _spawn_ship_pos := Vector3(0, 0, 2800)
+var _interior_view: bool = false
 
 func _ready() -> void:
 	_phase0_space_feel()
@@ -31,11 +32,15 @@ func _ready() -> void:
 	if LayerContext:
 		LayerContext.set_layer("Space")
 		LayerContext.seamless_stage = "S1"
+		if LayerContext.site_pin_id == "":
+			LayerContext.set_site_pin("SITE_SPACE_TEST_PAD")
+	print("[OpenSpace] site_pin=", LayerContext.site_pin_id if LayerContext else "")
 	_spawn_starfield()
 	_spawn_planets()
 	_spawn_orbital_stations()
 	_spawn_ship()
 	_setup_interior()
+	_setup_mechanics_playtest()
 	if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
 		floating.set_target(ship)
 	# Graphics
@@ -44,6 +49,10 @@ func _ready() -> void:
 		_apply_env_quality(gq)
 		gq.tier_changed.connect(_on_tier)
 	print("[OpenSpace] ready planets=", planets.size())
+	var hud_root := get_node_or_null("HUD/Root") as Control
+	var CP = load("res://scripts/assets/CanonPlates.gd")
+	if CP and hud_root:
+		CP.spawn_space_hud(hud_root)
 
 func _on_tier(_t: int) -> void:
 	var gq := get_node_or_null("/root/GraphicsQuality")
@@ -145,6 +154,14 @@ func _setup_interior() -> void:
 	if _interior.has_method("setup"):
 		_interior.setup(world_root, self)
 
+
+func _setup_mechanics_playtest() -> void:
+	var n := Node.new()
+	n.set_script(preload("res://scripts/test/Phase0MechanicsPlaytest.gd"))
+	n.name = "Phase0MechanicsPlaytest"
+	add_child(n)
+
+
 func _spawn_ship() -> void:
 	ship = ShipScene.instantiate()
 	world_root.add_child(ship)
@@ -184,6 +201,12 @@ func _sync_planet_sun() -> void:
 
 func _update_altitude_fog() -> void:
 	## Height fog + ambient tint near planets (SC-lite continuum, min-spec safe).
+	if _interior_view:
+		_apply_interior_env()
+		return
+	if _interior != null and is_instance_valid(_interior) and _interior.has_method("is_inside") and bool(_interior.is_inside()):
+		_apply_interior_env()
+		return
 	var we := $WorldEnvironment as WorldEnvironment
 	if we == null or we.environment == null or ship == null or not is_instance_valid(ship):
 		return
@@ -232,6 +255,37 @@ func _update_altitude_fog() -> void:
 	if sun:
 		sun.light_color = Color(1, 0.96, 0.9).lerp(fog_col.lightened(0.4), depth * 0.35)
 		sun.light_energy = 1.15 + depth * 0.45
+
+
+func set_interior_view(on: bool) -> void:
+	_interior_view = on
+	var sun := $Sun as DirectionalLight3D
+	if on:
+		_apply_interior_env()
+		if sun:
+			sun.light_energy = 0.22
+			sun.shadow_enabled = false
+	else:
+		if sun:
+			sun.light_energy = 1.35
+			sun.shadow_enabled = true
+		_update_altitude_fog()
+
+
+func _apply_interior_env() -> void:
+	var we := $WorldEnvironment as WorldEnvironment
+	if we == null or we.environment == null:
+		return
+	var env := we.environment
+	env.fog_enabled = false
+	env.volumetric_fog_enabled = false
+	env.fog_density = 0.0
+	env.background_color = Color(0.04, 0.05, 0.08)
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color(0.88, 0.92, 0.98)
+	env.ambient_light_energy = 0.9
+	env.glow_intensity = 0.18
+	env.glow_enabled = true
 
 
 func gravity_at(global_pos: Vector3) -> Vector3:
@@ -510,16 +564,42 @@ func _process(delta: float) -> void:
 				_eva_warn_t = 0.0
 				_toast_hud("EVA suit — reboard soon (soft warn)")
 				print("[OpenSpace] EVA soft warning — reboard soon")
-		# Soft tether distance (presentation, no death)
-		if ship and is_instance_valid(ship):
-			var td: float = player.global_position.distance_to(ship.global_position)
-			if td > 80.0:
-				_eva_tether_t += delta
-				if _eva_tether_t > 5.0:
-					_eva_tether_t = 0.0
-					_toast_hud("EVA tether soft — ship %.0fm" % td)
-			else:
-				_eva_tether_t = 0.0
+		_tick_eva_tether(delta)
+
+
+func eva_tether_distance() -> float:
+	if not _eva_mode or player == null or not is_instance_valid(player):
+		return -1.0
+	if ship == null or not is_instance_valid(ship):
+		return -1.0
+	return player.global_position.distance_to(ship.global_position)
+
+
+func _tick_eva_tether(delta: float) -> void:
+	## Soft reel-in past 120m. Warn at 80m. Never lethal.
+	if ship == null or not is_instance_valid(ship) or player == null or not is_instance_valid(player):
+		return
+	var td: float = player.global_position.distance_to(ship.global_position)
+	if td <= 80.0:
+		_eva_tether_t = 0.0
+		return
+	_eva_tether_t += delta
+	if _eva_tether_t > 5.0:
+		_eva_tether_t = 0.0
+		_toast_hud("EVA tether soft — ship %.0fm" % td)
+	if td <= 120.0:
+		return
+	if player.get("_mag_latched"):
+		return
+	var dir: Vector3 = ship.global_position - player.global_position
+	if dir.length_squared() < 0.01:
+		return
+	dir = dir.normalized()
+	if player is CharacterBody3D:
+		(player as CharacterBody3D).velocity += dir * 7.5 * delta
+	if player is Node3D:
+		(player as Node3D).global_position += dir * 5.0 * delta
+
 
 func _update_hud() -> void:
 	if hud_label == null or ship == null or not is_instance_valid(ship):
@@ -535,6 +615,8 @@ func _update_hud() -> void:
 		mode = str(ship.call("flight_mode_name")) if is_instance_valid(ship) and ship.has_method("flight_mode_name") else mode
 	if _in_rover:
 		mode = "ROVER"
+	elif _interior != null and is_instance_valid(_interior) and _interior.has_method("is_inside") and bool(_interior.is_inside()):
+		mode = "INTERIOR"
 	elif _eva_mode:
 		mode = "EVA"
 	elif not _in_ship:
@@ -546,35 +628,60 @@ func _update_hud() -> void:
 		spd = ship.velocity.length()
 	elif player != null and is_instance_valid(player):
 		spd = player.velocity.length()
-	hud_label.text = (
-		"NAEON OpenSpace  |  free flight · seamless land · surface walk\n"
-		+ "WASD thrust  Space/Shift lift  Mouse=flight plane  Z/X roll  |  1/2/3 flight  4 siege  5 ramp  6 rover  7 store  |  E land  F exit/EVA/board  C claim  G/B terra  U undo  I interior  Q hack\n"
-		+ "F1 cycle quality  |  Tab → TestArena (combat sandbox)\n"
-		+ "Mode: %s  Planet: %s  Alt: %dm  Spd: %d  HP:%d SHD:%d  PLOD:%s  CONTRIB:%.0f" % [
-			mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields), (pl.current_lod_name() if pl and is_instance_valid(pl) and pl.has_method("current_lod_name") else "-"), (GameManager.contribution if GameManager else 0.0)
-		]
-	)
-	# DEV mem — sequential observability (no extra nodes)
-	var objs := int(Performance.get_monitor(Performance.OBJECT_COUNT))
-	var nodes := int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))
-	var oram := int(Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0)
-	var live := 0
-	var pool := 0
-	var pa := 0
-	var pf := 0
-	if pl != null and is_instance_valid(pl):
-		var sd = pl.get_node_or_null("SurfaceDetail")
-		if sd != null and sd.has_method("live_count"):
-			live = int(sd.live_count())
-		if sd != null and sd.has_method("pool_count"):
-			pool = int(sd.pool_count())
-	var PP = load("res://scripts/combat/ProjectilePool.gd")
-	if PP:
-		pa = int(PP.active_count())
-		pf = int(PP.free_count())
-	hud_label.text += "\nMEM obj:%d nodes:%d ram:%dMB  detail %d/%d  proj %d/%d" % [objs, nodes, oram, live, pool, pa, pf]
+	var dbg := false
+	var gh = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+	if gh and gh.has_method("is_debug_overlay"):
+		dbg = bool(gh.is_debug_overlay())
+	var loc := pname
+	var alt_s := "%dm" % int(alt)
+	if mode == "INTERIOR":
+		loc = str(_interior.get_kind()) if _interior.has_method("get_kind") else "pocket"
+		alt_s = "POCKET"
+	# GameHUD owns pocket chrome; hide the ship occupy/AGL one-liner unless F3.
+	hud_label.visible = not (mode == "INTERIOR" and not dbg)
+	var extra := ""
+	if mode == "INTERIOR" and _interior.has_method("life_support_line"):
+		extra = "  ·  " + str(_interior.life_support_line())
+	elif _in_ship and ship.has_method("get_flight_status_line"):
+		var fl := str(ship.get_flight_status_line())
+		if "STALL" in fl:
+			extra = "  ·  STALL"
+	var brief := "%s  ·  %s  ·  %s  ·  %d m/s  ·  HP %d  SHD %d%s  ·  occupy/C  E land  F EVA" % [
+		mode, loc, alt_s, int(spd), int(ship.health), int(ship.shields), extra
+	]
+	if not dbg:
+		hud_label.text = brief
+	else:
+		hud_label.text = (
+			"NAEON OpenSpace  |  free flight · seamless land · surface walk\n"
+			+ "WASD thrust  Space/Shift lift  Mouse=flight plane  Z/X roll  |  1/2/3 flight  4 siege  5 ramp  6 rover  7 store  |  E land  F exit/EVA/board  C pulse  G/B terra  U undo  I interior  Q hack\n"
+			+ "F1 cycle quality  F3 HUD debug  |  Tab → TestArena\n"
+			+ "Mode: %s  Planet: %s  Alt: %dm  Spd: %d  HP:%d SHD:%d  PLOD:%s  CONTRIB:%.0f" % [
+				mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields), (pl.current_lod_name() if pl and is_instance_valid(pl) and pl.has_method("current_lod_name") else "-"), (GameManager.contribution if GameManager else 0.0)
+			]
+		)
+	if dbg:
+		var objs := int(Performance.get_monitor(Performance.OBJECT_COUNT))
+		var nodes := int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))
+		var oram := int(Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0)
+		var live := 0
+		var pool := 0
+		var pa := 0
+		var pf := 0
+		if pl != null and is_instance_valid(pl):
+			var sd = pl.get_node_or_null("SurfaceDetail")
+			if sd != null and sd.has_method("live_count"):
+				live = int(sd.live_count())
+			if sd != null and sd.has_method("pool_count"):
+				pool = int(sd.pool_count())
+		var PP = load("res://scripts/combat/ProjectilePool.gd")
+		if PP:
+			pa = int(PP.active_count())
+			pf = int(PP.free_count())
+		hud_label.text += "\nMEM obj:%d nodes:%d ram:%dMB  detail %d/%d  proj %d/%d" % [objs, nodes, oram, live, pool, pa, pf]
+	var oram2 := int(Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0)
 	if mode_label:
-		mode_label.text = "GFX: %s  MEM %dMB" % [gqn, oram]
+		mode_label.text = "GFX: %s  MEM %dMB" % [gqn, oram2]
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -697,9 +804,11 @@ func _try_seat_to_pilot() -> bool:
 		return false
 	if ship == null or not is_instance_valid(ship):
 		return false
-	var seat_near := true  # inside ship pocket seat is near by design
+	if _interior.has_method("get_kind") and str(_interior.get_kind()) != "ship":
+		return false
+	var seat_near := false
 	if _interior.has_method("is_near_seat"):
-		seat_near = bool(_interior.is_near_seat(player, 12.0))
+		seat_near = bool(_interior.is_near_seat(player, 3.8))
 	if not seat_near:
 		_toast_hud("Move to PILOT SEAT, then F")
 		return false
@@ -759,6 +868,9 @@ func _finish_seat_to_pilot() -> void:
 	_seat_transition = false
 	_toast_hud("PILOT — WASD fly · F exit · E land")
 	print("[OpenSpace] seat→pilot OK (deferred free)")
+	var hud = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+	if hud and hud.has_method("bind_player") and ship:
+		hud.bind_player(ship)
 
 
 
@@ -1023,7 +1135,8 @@ func _apply_openspace_perf() -> void:
 		if tier <= 1:
 			e.glow_intensity = 0.0
 			e.glow_bloom = 0.0
-		e.fog_enabled = tier >= 1  # altitude fog script may still tint
+		if not _interior_view:
+			e.fog_enabled = tier >= 1  # altitude fog script may still tint
 	# Directional only shadows
 	for n in get_tree().get_nodes_in_group("planets") if get_tree() else []:
 		pass
@@ -1033,6 +1146,8 @@ func _apply_openspace_perf() -> void:
 
 func _park_far_planets() -> void:
 	## Only nearest planet runs full surface systems; far planets = impostor + no process.
+	if _interior_view:
+		return
 	var obs: Node3D = null
 	if _in_ship and ship and is_instance_valid(ship):
 		obs = ship

@@ -133,25 +133,101 @@ func _apply_effect(caster: Node, _target) -> void:
 		_apply_hacking(caster)
 	elif is_firewall:
 		_apply_firewall(caster)
+	elif damage > 0.0 and aoe_radius > 0.05:
+		_apply_aoe_burst(caster)
 	elif damage > 0.0:
 		_spawn_projectile(caster, damage, effect_color)
 	elif heal > 0.0 and caster.has_method("heal"):
 		caster.heal(heal)
 
+func _apply_aoe_burst(caster: Node) -> void:
+	if caster == null or not (caster is Node3D) or not caster.is_inside_tree():
+		return
+	var origin: Vector3 = (caster as Node3D).global_position
+	var tree: SceneTree = caster.get_tree()
+	if tree == null:
+		return
+	var rad := maxf(aoe_radius, 0.5)
+	var fac := "Cybernex"
+	if "faction" in caster:
+		fac = str(caster.faction)
+	elif caster.has_method("get_faction"):
+		fac = str(caster.get_faction())
+	var dmg: float = damage
+	if GameManager:
+		dmg *= 1.0 + GameManager.knowledge_insight_bonus()
+	var Hits = load("res://scripts/combat/CombatHits.gd")
+	var enemies: Array = SoftScanCache.get_enemies() if SoftScanCache else tree.get_nodes_in_group("enemy")
+	for e in enemies:
+		if e == null or not is_instance_valid(e) or e == caster or not (e is Node3D):
+			continue
+		if e.has_method("get_faction") and str(e.get_faction()) == fac:
+			continue
+		if "faction" in e and str(e.faction) == fac:
+			continue
+		var dist: float = origin.distance_to((e as Node3D).global_position)
+		if dist > rad:
+			continue
+		if e.has_method("take_damage"):
+			e.take_damage(dmg)
+		if Hits:
+			var away: Vector3 = (e as Node3D).global_position - origin
+			var knock_dmg := force if force > 0.05 else dmg
+			Hits.apply_planar_knock(e, away, knock_dmg, 1.6)
+	var NP = load("res://scripts/fx/NeonParticles.gd")
+	if NP:
+		NP.burst(origin + Vector3(0, 0.6, 0), effect_color, tree, 14, 7.0)
+	var VFX = load("res://scripts/abilities/AbilityVfx.gd")
+	if VFX:
+		VFX.cast_flash(caster, effect_color, 3.2)
+
+
 func _apply_hacking(caster: Node) -> void:
 	var hit: Dictionary = _ray_query(caster, range)
-	if hit.is_empty():
-		print("[Hacking] No target in range")
-		return
-	var col_v: Variant = hit.get("collider")
-	var col: Node = col_v as Node
-	var target: Node = _find_hackable(col)
+	var target: Node = null
+	var hit_pos: Vector3 = caster.global_position if caster is Node3D else Vector3.ZERO
+	if not hit.is_empty():
+		var col_v: Variant = hit.get("collider")
+		var col: Node = col_v as Node
+		target = _find_hackable(col)
+		hit_pos = hit.get("position", hit_pos)
+		if target == null:
+			print("[Hacking] Hit non-hackable: ", col)
+	if target == null:
+		target = _nearest_hack_pad(caster)
 	if target:
 		target.on_hacked(caster, damage)
 	else:
-		print("[Hacking] Hit non-hackable: ", col)
-	var hit_pos: Vector3 = hit.get("position", caster.global_position)
-	_spawn_beam(caster, hit_pos, Color(1.0, 0.2, 0.55))
+		print("[Hacking] No target in range")
+	if caster is Node3D:
+		_spawn_beam(caster, hit_pos, Color(1.0, 0.2, 0.55))
+
+
+func _nearest_hack_pad(caster: Node) -> Node:
+	if caster == null or not (caster is Node3D) or caster.get_tree() == null:
+		return null
+	var origin: Vector3 = (caster as Node3D).global_position
+	var best: Node = null
+	var best_d := self.range
+	for n in caster.get_tree().get_nodes_in_group("pad_bases"):
+		if n == null or not is_instance_valid(n) or not (n is Node3D):
+			continue
+		if not n.has_method("on_hacked"):
+			continue
+		var d: float = origin.distance_to((n as Node3D).global_position)
+		if d < best_d:
+			best = n
+			best_d = d
+	for n in caster.get_tree().get_nodes_in_group("hackable"):
+		if n == null or not is_instance_valid(n) or n == caster or not (n is Node3D):
+			continue
+		if not n.has_method("on_hacked"):
+			continue
+		var d2: float = origin.distance_to((n as Node3D).global_position)
+		if d2 < best_d:
+			best = n
+			best_d = d2
+	return best
 
 func _find_hackable(node: Node) -> Node:
 	if node == null:
@@ -178,12 +254,13 @@ func _apply_firewall(caster: Node) -> void:
 func _spawn_projectile(caster: Node, dmg: float, color: Color) -> void:
 	if caster == null or not caster.is_inside_tree():
 		return
+	var Hits = load("res://scripts/combat/CombatHits.gd")
 	var origin: Vector3 = caster.global_position + Vector3.UP * 1.4
 	var dir: Vector3 = -caster.global_transform.basis.z
-	if caster.has_node("CameraPivot/Camera3D"):
-		var cam: Camera3D = caster.get_node("CameraPivot/Camera3D")
-		dir = -cam.global_transform.basis.z
-		origin = cam.global_position + dir * 0.8
+	if Hits:
+		var aim: Array = Hits.aim_from(caster)
+		origin = aim[0]
+		dir = aim[1]
 	var final_dmg: float = dmg
 	if GameManager:
 		final_dmg *= 1.0 + GameManager.knowledge_insight_bonus()
@@ -193,7 +270,7 @@ func _spawn_projectile(caster: Node, dmg: float, color: Color) -> void:
 	elif caster.has_method("get_faction"):
 		fac = str(caster.get_faction())
 	var _Pool = load("res://scripts/combat/ProjectilePool.gd")
-	_Pool.spawn(caster.get_tree(), origin, dir, 28.0, final_dmg, fac, color, 1.4)
+	_Pool.spawn(caster.get_tree(), origin, dir, 28.0, final_dmg, fac, color, 1.4, [caster])
 	var NP = load("res://scripts/fx/NeonParticles.gd")
 	if NP:
 		NP.muzzle_flash(origin, dir, color, caster.get_tree())
@@ -236,12 +313,13 @@ func _ray_query(caster: Node, max_range: float) -> Dictionary:
 	if caster == null or not caster.is_inside_tree():
 		return {}
 	var space: PhysicsDirectSpaceState3D = caster.get_world_3d().direct_space_state
+	var Hits = load("res://scripts/combat/CombatHits.gd")
 	var from: Vector3 = caster.global_position + Vector3.UP * 1.4
 	var dir: Vector3 = -caster.global_transform.basis.z
-	if caster.has_node("CameraPivot/Camera3D"):
-		var cam: Camera3D = caster.get_node("CameraPivot/Camera3D")
-		from = cam.global_position
-		dir = -cam.global_transform.basis.z
+	if Hits:
+		var aim: Array = Hits.aim_from(caster)
+		from = aim[0]
+		dir = aim[1]
 	var to: Vector3 = from + dir * max_range
 	var q: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(from, to)
 	if caster is CollisionObject3D:

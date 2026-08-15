@@ -19,19 +19,36 @@ var check_on_startup: bool = true
 var auto_download: bool = false
 
 func _ready() -> void:
+	# Headless playtests must be able to quit. HTTPRequest worker threads
+	# (and the dummy renderer) keep Godot 4.3 alive after SceneTree.quit().
+	if DisplayServer.get_name() == "headless":
+		check_on_startup = false
+		return
 	_http = HTTPRequest.new()
+	_http.timeout = 4.0
 	add_child(_http)
 	_http.request_completed.connect(_on_manifest)
 	_download = HTTPRequest.new()
+	_download.timeout = 8.0
 	add_child(_download)
 	_download.request_completed.connect(_on_download)
 	if check_on_startup:
 		call_deferred("check_for_updates")
 
+
+func abort_pending() -> void:
+	if _http != null and is_instance_valid(_http):
+		_http.cancel_request()
+	if _download != null and is_instance_valid(_download):
+		_download.cancel_request()
+
 func get_current_version() -> String:
 	return CURRENT_VERSION
 
 func check_for_updates() -> void:
+	if _http == null or not is_instance_valid(_http):
+		no_update.emit()
+		return
 	var url: String = str(ProjectSettings.get_setting("naeon/update_manifest_url", DEFAULT_MANIFEST))
 	print("[AutoUpdater] Checking ", url)
 	var err: Error = _http.request(url)

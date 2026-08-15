@@ -17,12 +17,22 @@
 - Exit remains a 10-minute intentional loop — reached by **deepening** systems, not checklist theater.
 
 ## Physics / mechanics depth track (active)
-1. Ship continuum flight model (atmo density, drag, hover hold, land speed gate)
-2. Surface walker radial ground feel (accel/air control)
-3. Rover drive envelope
+1. Ship continuum: atmo density + drag, HOVER altitude hold + pad ground-effect, honest land speed gate (this pass)
+2. Surface walker: coyote jump, slope grip, landing absorb (this pass)
+3. Rover: slope grip + Space brake + planet gravity (this pass)
 4. Chunk streaming (done)
 5. Terrain stability (done)
-6. Next: pad claim feedback, combat hit volumes, ability costs consistency
+6. Pad claim is occupy-to-hold after land — C/Hack pulses, not auto (this pass)
+7. Combat hurtboxes + ability costs from rules/04
+8. 10-min loop steps no longer self-complete on toast (this pass)
+9. Stations interiors: life-support, doors, ops console, seat gating (this pass)
+10. Stall in dense atmo (NAV drops to SCM); interior pocket outside planet mesh (this pass)
+11. Pad-guard combat while occupying (this pass)
+12. Land-to-harvest loop: in-ring / landed-ship extractor, EXTRACTING HUD, rover CargoHold (this pass)
+13. Interior HUD clutter collapsed in pocket; Clash feel (movement, knock, honest lanes, occupy beacons) (this pass)
+14. Clash HUD ScoreLine/LaneHUD/banner collapse; ship combat: bolt sweep, hull crit recover, shield hold, turrets track hulls (this pass)
+15. Clash lane towers fight; ship afterburn W+Shift; walker variable jump (this pass)
+16. Next: 10-min soak on Mac GPU (this VM is llvmpipe)
 
 ## Tripo
 - Balance check when generating; code-first when zero.

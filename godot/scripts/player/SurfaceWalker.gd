@@ -8,6 +8,7 @@ const _FormFX = preload("res://scripts/player/FormSwitchFX.gd")
 ## Used for OpenSpace exit (not flat-world PlayerController).
 
 const _AP = preload("res://scripts/assets/AssetPaths.gd")
+const _ProcSil = preload("res://scripts/player/ProceduralHeroSilhouette.gd")
 
 @export var speed: float = 6.5
 @export var sprint_mult: float = 1.75
@@ -35,6 +36,7 @@ var _face_arrow: MeshInstance3D = null
 var _move_amount: float = 0.0
 var eva_mode: bool = false
 var interior_mode: bool = false
+var firewall_timer: float = 0.0
 var _dying: bool = false
 var thruster_accel: float = 14.0
 var mag_boot: bool = false
@@ -55,10 +57,15 @@ const EVA_EN_RATE := 3.8
 var eva_time: float = 0.0
 var energy: float = 100.0
 var max_energy: float = 100.0
-var energy_regen: float = 12.0  # EnergyEconomy.REGEN_WALKER
+var energy_regen: float = 8.0  # EnergyEconomy.REGEN_WALKER
 var health: float = 100.0
 var max_health: float = 100.0
 var _up: Vector3 = Vector3.UP
+var _coyote_t: float = 0.0
+var _jump_buf_t: float = 0.0
+var _jump_cut: bool = false
+var _was_on_floor: bool = false
+var _space_held: bool = false
 var cam_pivot: Node3D
 var camera: Camera3D
 
@@ -103,6 +110,20 @@ func set_interior_mode(on: bool) -> void:
 		up_direction = Vector3.UP
 		_spawn_grace_t = 0.5
 		floor_snap_length = 0.55
+		speed = 5.4
+		sprint_mult = 1.28
+		jump_velocity = 6.2
+		if camera:
+			camera.position = Vector3(0, 0.15, 2.4)
+			camera.fov = 78.0
+	else:
+		speed = 6.5
+		sprint_mult = 1.75
+		jump_velocity = 7.0
+		floor_snap_length = 0.25
+		if camera:
+			camera.position = Vector3(0, 0.35, 4.2)
+			camera.fov = 70.0
 	print("[SurfaceWalker] interior_mode=", on)
 
 
@@ -216,6 +237,16 @@ func _load_form_visual() -> void:
 			path = p
 			break
 	if path == "":
+		if DisplayServer.get_name() != "headless" and _visual:
+			var old_p = _visual.get_node_or_null("FormGLB")
+			if old_p:
+				old_p.name = "_FormGLBDead"
+				old_p.queue_free()
+			_ProcSil.attach(_visual, form_name, faction, false)
+			if _body_mesh:
+				_body_mesh.visible = false
+			if _limb_rig:
+				_limb_rig.visible = false
 		return
 	var doc := GLTFDocument.new()
 	var state := GLTFState.new()
@@ -263,7 +294,7 @@ func _ensure_combat_nodes() -> void:
 	call_deferred("_bind_hud")
 
 func _bind_hud() -> void:
-	if get_tree() == null:
+	if not is_inside_tree() or get_tree() == null:
 		return
 	var existing = get_tree().get_first_node_in_group("game_hud")
 	if existing == null:
@@ -278,6 +309,14 @@ func _bind_hud() -> void:
 
 func get_faction() -> String:
 	return faction
+
+
+func hurtbox_center() -> Vector3:
+	return global_position + _up * 1.05
+
+
+func hurtbox_radius() -> float:
+	return 0.72
 
 func get_energy() -> float:
 	return energy
@@ -294,7 +333,33 @@ func heal(amount: float) -> void:
 func on_hacked(caster: Node, amount: float = 1.0) -> void:
 	var inf = get_node_or_null("InfectionStatus")
 	if inf and inf.has_method("add_stacks"):
-		inf.add_stacks(2)
+		inf.add_stacks(2 if amount >= 1.0 else 1)
+
+
+func apply_firewall(duration: float, heal_amount: float = 0.0) -> void:
+	## rules/04: Nex-Firewall cleanses all Infection stacks (max 5).
+	firewall_timer = maxf(firewall_timer, duration)
+	var inf = get_node_or_null("InfectionStatus")
+	if inf and inf.has_method("cleanse"):
+		inf.cleanse(5)
+	if heal_amount > 0.0:
+		heal(heal_amount)
+	_firewall_break_nearby_channels()
+
+
+func _firewall_break_nearby_channels() -> void:
+	var tree := get_tree()
+	if tree == null:
+		return
+	for n in tree.get_nodes_in_group("channel_controllers"):
+		if n == null or not is_instance_valid(n):
+			continue
+		if n.has_method("interrupt"):
+			var owner_n = n.get_parent()
+			if owner_n is Node3D and global_position.distance_to((owner_n as Node3D).global_position) < 18.0:
+				n.interrupt("firewall")
+		elif n.has_method("cancel"):
+			n.cancel()
 
 func snap_to_surface() -> void:
 	if interior_mode:
@@ -380,7 +445,9 @@ func _input(event: InputEvent) -> void:
 		elif event.keycode == KEY_Q:
 			_try_ability(0)
 		elif event.keycode == KEY_E:
-			if eva_mode:
+			if interior_mode and _try_interior_console():
+				pass
+			elif eva_mode:
 				mag_boot = not mag_boot
 				print("[SurfaceWalker] mag-boot ", mag_boot)
 				_toast_self("MAG-BOOT ARMED" if mag_boot else "MAG-BOOT OFF")
@@ -389,7 +456,9 @@ func _input(event: InputEvent) -> void:
 		elif event.keycode == KEY_R:
 			_try_ability(2)
 		elif event.keycode == KEY_F:
-			_try_ability(3)
+			# Interior seat is OpenSpace F — do not cycle form on the same tap
+			if not interior_mode:
+				_try_ability(3)
 		# G/B terrain edit handled by PlanetTerrainEdit while in player group
 	if event.is_action_pressed("ui_cancel"):
 		Input.set_mouse_mode(
@@ -404,10 +473,9 @@ func _physics_process(delta: float) -> void:
 		# Flat Y-up pocket — never radial planet gravity / surface snap
 		_up = Vector3.UP
 		up_direction = Vector3.UP
-		if _provider == null or not _provider.has_method("gravity_at"):
-			pass
+	else:
+		_update_up()
 	_terrain_hint_tick(delta)
-	_update_up()
 	if _spawn_grace_t > 0.0:
 		_spawn_grace_t = maxf(0.0, _spawn_grace_t - delta)
 		# Hold still while settling out of embed
@@ -457,11 +525,23 @@ func _physics_process(delta: float) -> void:
 		_process_eva(delta, wish, forward, right)
 		return
 	var sp := speed * (sprint_mult if Input.is_physical_key_pressed(KEY_SHIFT) else 1.0) * _infection_move_mult()
+	if interior_mode:
+		var atmo := 1.0
+		if _provider and _provider.has_method("get_atmo"):
+			atmo = float(_provider.get_atmo())
+		if atmo < 0.25:
+			sp *= 0.62
+		elif atmo < 0.72:
+			sp *= 0.85
+	var slope_ang := 0.0
+	if is_on_floor():
+		slope_ang = get_floor_angle()
+		sp *= clampf(1.0 - (slope_ang / deg_to_rad(58.0)) * 0.38, 0.52, 1.0)
 	var target_planar := wish * sp
 	# Smooth accel on ground, weaker air control (not ice-skating)
 	var planar := velocity - _up * velocity.dot(_up)
-	var accel_rate := 28.0 if is_on_floor() else 8.0
-	var decel_rate := 32.0 if is_on_floor() else 4.0
+	var accel_rate := 32.0 if interior_mode and is_on_floor() else (26.0 if is_on_floor() else 11.0)
+	var decel_rate := 42.0 if interior_mode and is_on_floor() else (34.0 if is_on_floor() else 5.5)
 	if target_planar.length_squared() > 0.01:
 		planar = planar.move_toward(target_planar, accel_rate * delta)
 	else:
@@ -470,25 +550,49 @@ func _physics_process(delta: float) -> void:
 
 	# Gravity integrate along radial up
 	var v_up := velocity.dot(_up)
-	if not is_on_floor():
-		v_up += g_vec.dot(_up) * delta
+	if is_on_floor():
+		_coyote_t = 0.14
 	else:
+		_coyote_t = maxf(0.0, _coyote_t - delta)
+		v_up += g_vec.dot(_up) * delta
+	if Input.is_physical_key_pressed(KEY_SPACE) or (InputMap.has_action("jump") and Input.is_action_pressed("jump")):
+		if not _space_held:
+			_jump_buf_t = 0.12
+		_space_held = true
+	else:
+		_space_held = false
+		_jump_buf_t = maxf(0.0, _jump_buf_t - delta)
+	var can_jump := _coyote_t > 0.0 or eva_mode
+	if _jump_buf_t > 0.0 and can_jump:
+		v_up = jump_velocity
+		_jump_buf_t = 0.0
+		_coyote_t = 0.0
+		_jump_cut = false
+		_spawn_jump_fx()
+	elif is_on_floor():
 		# stick: small downward bias helps floor contact on spheres
 		v_up = minf(v_up, -0.4)
-	if Input.is_physical_key_pressed(KEY_SPACE) and (is_on_floor() or eva_mode):
-		v_up = jump_velocity
-		_spawn_jump_fx()
+		_jump_cut = false
+	elif not _space_held and not _jump_cut and v_up > 2.0:
+		v_up *= 0.42
+		_jump_cut = true
+
+	# Landing absorb (radial)
+	if is_on_floor() and not _was_on_floor and v_up < -7.5:
+		v_up = -0.5
+		planar *= 0.72
+		if CombatJuice:
+			CombatJuice.hit_feedback(4.0, global_position, false)
+	_was_on_floor = is_on_floor()
 
 	velocity = planar + _up * v_up
 	up_direction = _up
 	floor_snap_length = 0.35
 	floor_max_angle = deg_to_rad(55.0)
-	# Canyon/steep assist: stickier steps on high slopes
-	if is_on_floor() and get_floor_angle() > deg_to_rad(40.0):
-		floor_snap_length = 0.55
+	# Canyon/steep: stickier snap, no launch boost
+	if is_on_floor() and slope_ang > deg_to_rad(40.0):
+		floor_snap_length = 0.6
 		floor_max_angle = deg_to_rad(70.0)
-		if _move_amount > 0.2:
-			velocity += _up * 2.5 * delta  # soft climb boost
 	_apply_body_basis()
 	move_and_slide()
 	if is_on_floor():
@@ -558,12 +662,23 @@ func _cycle_form() -> void:
 	# reload visual
 	var old = _visual.get_node_or_null("FormGLB") if _visual else null
 	if old:
+		old.name = "_FormGLBDead"
 		old.queue_free()
 	if _body_mesh:
 		_body_mesh.visible = true
 	_load_form_visual()
 	_ensure_face_arrow()
 	print("[SurfaceWalker] form → ", form_name)
+
+func _try_interior_console() -> bool:
+	var tree := get_tree()
+	if tree == null:
+		return false
+	for n in tree.get_nodes_in_group("interior_director"):
+		if n.has_method("try_use_console") and bool(n.try_use_console()):
+			return true
+	return false
+
 
 func _try_ability(idx: int) -> void:
 	var ab = get_node_or_null("AbilitySystem")
@@ -702,6 +817,7 @@ func toggle_faction() -> void:
 		ab.setup_default_loadout(faction)
 	var old = _visual.get_node_or_null("FormGLB") if _visual else null
 	if old:
+		old.name = "_FormGLBDead"
 		old.queue_free()
 	if _body_mesh:
 		_body_mesh.visible = true
@@ -1128,9 +1244,12 @@ func _toast_self(msg: String) -> void:
 
 func take_damage(amount: float) -> void:
 	health = maxf(0.0, health - amount)
+	var ch = get_node_or_null("ChannelController")
+	if ch and ch.has_method("notify_damage"):
+		ch.notify_damage()
 	if CombatJuice:
 		CombatJuice.damage_taken(amount)
-		CombatJuice.hit_feedback(amount, global_position + Vector3(0, 1.2, 0), amount >= 20.0)
+		CombatJuice.hit_feedback(amount, global_position + _up * 1.2, amount >= 20.0)
 	if health <= 0.0:
 		# Soft respawn at current planet pad-ish — no permadeath Phase 0
 		health = max_health
@@ -1138,6 +1257,9 @@ func take_damage(amount: float) -> void:
 		if has_method("snap_to_surface"):
 			call_deferred("snap_to_surface")
 		print("[SurfaceWalker] soft down → recover")
+		_toast_self("DOWN — recovered (Phase 0, no permadeath)")
+	else:
+		_toast_self("HIT −%.0f  HP %.0f" % [amount, health])
 
 
 

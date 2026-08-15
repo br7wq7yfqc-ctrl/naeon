@@ -50,6 +50,10 @@ var flight_mode: int = FlightMode.SCM
 var pilot_active: bool = true
 var _open_space: Node = null
 var _landed_pad: Node3D = null
+var _land_hint_cd: float = 0.0
+var _hover_hold_alt: float = -1.0
+var _stall: float = 0.0
+var _stall_toast_t: float = 0.0
 var _landing_gear: Node3D = null
 var _thruster_fx: GPUParticles3D = null
 var _cargo_hold: Node = null
@@ -62,7 +66,17 @@ var _scan_pulse_t: float = 0.0
 var _scan_last_report: String = ""
 var _deployed_rover: Node3D = null
 var _engine_pulse_t: float = 0.0
+var _hull_crit_t: float = 0.0
+var _shield_hold_t: float = 0.0
+var _burn_on: bool = false
 var _hull_ambient: Node3D = null
+
+const _SHIELD_REGEN := 4.0
+const _SHIELD_HOLD := 2.4
+const _HULL_CRIT_T := 1.8
+const _HULL_CRIT_THRUST := 0.45
+const _HULL_CRIT_ENERGY := 0.35
+const _HULL_CRIT_HP := 0.35
 
 func _ready() -> void:
 	add_to_group("ship")
@@ -190,6 +204,7 @@ func _input(event: InputEvent) -> void:
 			sens *= 0.55
 		elif flight_mode == FlightMode.HOVER:
 			sens *= 0.85
+		sens *= (1.0 - _atmo_now() * 0.42)
 		if op_mode == 1 and _role:
 			sens *= float(_role.siege_turn_mult)
 		_yaw -= event.relative.x * sens
@@ -203,12 +218,23 @@ func _input(event: InputEvent) -> void:
 		)
 
 func _set_mode(m: int) -> void:
+	if m == FlightMode.NAV and _atmo_now() > 0.45:
+		_toast_ship("NAV locked in atmosphere — SCM / HOVER")
+		m = FlightMode.SCM
+	var prev: int = flight_mode
 	flight_mode = m
+	if m == FlightMode.HOVER:
+		_hover_hold_alt = _altitude_now()
+	elif prev == FlightMode.HOVER:
+		_hover_hold_alt = -1.0
 	flight_mode_changed.emit(m)
 	print("[Ship] Flight mode ", flight_mode_name())
 
 func _max_speed() -> float:
-	return _Flight.max_speed(flight_mode, max_speed_scm, max_speed_nav, max_speed_hover)
+	var s: float = _Flight.max_speed(flight_mode, max_speed_scm, max_speed_nav, max_speed_hover)
+	if _burn_on:
+		s *= 1.18
+	return s
 
 func _thrust_mult() -> float:
 	var m: float = _Flight.thrust_mult(flight_mode)
@@ -216,6 +242,10 @@ func _thrust_mult() -> float:
 		m *= float(_role.siege_thrust_mult)
 	elif op_mode == 2:
 		m *= 0.7
+	if _hull_crit_t > 0.0:
+		m *= _HULL_CRIT_THRUST
+	if _burn_on:
+		m *= 1.55
 	return m
 
 func _damp_mult() -> float:
@@ -225,6 +255,20 @@ func _damp_mult() -> float:
 	elif op_mode == 2:
 		m *= 1.25
 	return m
+
+
+func _atmo_now() -> float:
+	if _open_space and _open_space.has_method("atmosphere_density_at"):
+		return float(_open_space.atmosphere_density_at(global_position))
+	return 0.0
+
+
+func _altitude_now() -> float:
+	if _open_space and _open_space.has_method("nearest_planet"):
+		var pl: Node3D = _open_space.nearest_planet(global_position)
+		if pl and pl.has_method("altitude_of"):
+			return float(pl.altitude_of(global_position))
+	return 0.0
 
 func _ship_axis() -> Vector3:
 	var thrust := 0.0
@@ -250,8 +294,12 @@ func _ship_axis() -> Vector3:
 		strafe = 1.0 if strafe == 0.0 else strafe
 	if (InputMap.has_action("jump") and Input.is_action_pressed("jump")) or Input.is_physical_key_pressed(KEY_SPACE):
 		lift += 1.0
-	if (InputMap.has_action("sprint") and Input.is_action_pressed("sprint")) or Input.is_physical_key_pressed(KEY_SHIFT):
-		lift -= 1.0
+	var shift := (InputMap.has_action("sprint") and Input.is_action_pressed("sprint")) or Input.is_physical_key_pressed(KEY_SHIFT)
+	if shift:
+		if thrust > 0.55 and not is_landed:
+			pass
+		else:
+			lift -= 1.0
 	return Vector3(strafe, lift, thrust)
 
 
@@ -329,6 +377,7 @@ func _physics_process(delta: float) -> void:
 			_stick_to_pad()
 		return
 	if is_landed:
+		_burn_on = false
 		# Sticky pad: kill ALL motion, no thruster integrate, short launch lock
 		_land_lock_t = maxf(0.0, _land_lock_t - delta)
 		velocity = Vector3.ZERO
@@ -338,17 +387,19 @@ func _physics_process(delta: float) -> void:
 		# Ignore accidental launch for lock window (prevents "lift on land")
 		if _land_lock_t <= 0.0 and Input.is_action_just_pressed("ability_2"):
 			_do_launch()
+		_tick_combat(delta)
 		_update_status()
 		return
 
 	_update_roll_input(delta)
 	_apply_attitude()
 
-	_fire_cd = max(0.0, _fire_cd - delta)
-	shields = min(max_shields, shields + 4.0 * delta)
-	energy = min(max_energy, energy + 8.0 * delta)  # EnergyEconomy.REGEN_SHIP
-
 	var axes: Vector3 = _ship_axis()
+	var want_burn := (not is_landed) and axes.z > 0.55 and (
+		Input.is_physical_key_pressed(KEY_SHIFT)
+		or (InputMap.has_action("sprint") and Input.is_action_pressed("sprint"))
+	)
+	_tick_afterburn(delta, want_burn)
 	var thrust: float = (base_thrust + _module_thrust()) * _thrust_mult()
 	var forward: Vector3 = -global_transform.basis.z
 	var right: Vector3 = global_transform.basis.x
@@ -368,16 +419,58 @@ func _physics_process(delta: float) -> void:
 
 	# Gravity by mode (g toward planet)
 	if g.length() > 0.01:
+		if flight_mode == FlightMode.NAV and atmo > 0.5:
+			_set_mode(FlightMode.SCM)
 		if flight_mode == FlightMode.HOVER:
 			var hh: Array = _Flight.hover_hold(velocity, g, accel, delta, 1.0)
 			accel = hh[0]
 			velocity = hh[1]
+			# Vertical stick trims hold altitude; PD holds it
+			if _hover_hold_alt < 0.0:
+				_hover_hold_alt = _altitude_now()
+			if absf(axes.y) > 0.12:
+				_hover_hold_alt = maxf(4.0, _hover_hold_alt + axes.y * 22.0 * delta)
+			# Strip raw lift so HOVER is an altitude hold, not a second SCM
+			var lift_axis: Vector3 = global_transform.basis.y
+			accel -= lift_axis * accel.dot(lift_axis)
+			var v_up: float = velocity.dot((-g).normalized())
+			accel += _Flight.hover_alt_accel(g, _altitude_now(), _hover_hold_alt, v_up)
+			var pad_d := 999.0
+			if _open_space and _open_space.has_method("nearest_pad"):
+				var hpad: Node3D = _open_space.nearest_pad(global_position)
+				if hpad and is_instance_valid(hpad):
+					pad_d = hpad.global_position.distance_to(global_position)
+					if pad_d < 52.0 and _open_space.has_method("nearest_planet"):
+						var plp: Node3D = _open_space.nearest_planet(hpad.global_position)
+						if plp and plp.has_method("altitude_of"):
+							var deck: float = float(plp.altitude_of(hpad.global_position)) + 8.0
+							if _hover_hold_alt < deck:
+								_hover_hold_alt = move_toward(_hover_hold_alt, deck, delta * 10.0)
+			accel += _Flight.ground_effect_accel(g, _altitude_now(), pad_d, v_up)
 		elif flight_mode == FlightMode.SCM:
 			# Partial gravity in atmo; almost free in vacuum
 			accel += g * lerpf(0.08, 0.45, atmo)
 		else:
 			# NAV: light gravity bias only near surface
 			accel += g * lerpf(0.02, 0.2, atmo)
+
+	_stall = _Flight.stall_amount(atmo, velocity.length(), _Flight.stall_speed(flight_mode))
+	if _stall > 0.01 and g.length() > 0.01:
+		accel += _Flight.stall_sink_accel(g, _stall)
+		# Wash out lateral authority when the wing is stalled
+		if _stall > 0.35:
+			var fwd: Vector3 = -global_transform.basis.z
+			var along: float = accel.dot(fwd)
+			accel = accel.lerp(fwd * along + g * _stall, clampf(_stall, 0.0, 0.85))
+		if flight_mode == FlightMode.NAV and _stall > 0.55:
+			_set_mode(FlightMode.SCM)
+			_toast_ship("STALL — dropped to SCM")
+		_stall_toast_t -= delta
+		if _stall > 0.4 and _stall_toast_t <= 0.0:
+			_stall_toast_t = 2.4
+			_toast_ship("STALL %.0f%% — add speed or HOVER" % (_stall * 100.0))
+	else:
+		_stall_toast_t = maxf(0.0, _stall_toast_t - delta)
 
 	# Soft pad approach brake (assist, not autopilot)
 	if _open_space and _open_space.has_method("nearest_pad"):
@@ -397,8 +490,7 @@ func _physics_process(delta: float) -> void:
 	if velocity.length() > 5.0 and SessionObjectives:
 		SessionObjectives.on_moved()
 
-	if Input.is_action_pressed("ability_1") and _fire_cd <= 0.0:
-		_fire_weapon()
+	_tick_combat(delta)
 	if Input.is_action_just_pressed("ability_2"):
 		_toggle_landing()
 	_auto_land_assist(delta)
@@ -410,9 +502,12 @@ func _physics_process(delta: float) -> void:
 func _update_status() -> void:
 	if status_label:
 		var opn := "SIEGE" if op_mode == 1 else ("SCAN" if op_mode == 2 else "CRUISE")
-		status_label.text = "%s  OP:%s  SPD %d  SHD %d  E %d  %s" % [
+		status_label.text = "%s  OP:%s  SPD %d  SHD %d  E %d  %s%s%s%s" % [
 			flight_mode_name(), opn, int(velocity.length()), int(shields), int(energy),
-			("LANDED" if is_landed else "FLIGHT")
+			("LANDED" if is_landed else "FLIGHT"),
+			("  STALL" if _stall > 0.35 else ""),
+			("  HULL CRIT" if _hull_crit_t > 0.0 else ""),
+			("  BURN" if _burn_on else ""),
 		]
 
 func _toggle_landing() -> void:
@@ -422,74 +517,69 @@ func _toggle_landing() -> void:
 		_do_land()
 
 func _do_land() -> void:
-	# Permissive land gate — playable, still blocks hyper-speed crashes
+	## Honest speed/sink gate. No secret 0.35 brake. Claim is C after touchdown.
 	var spd := velocity.length()
 	var v_rad := 0.0
 	if _open_space and _open_space.has_method("gravity_at"):
 		var gg: Vector3 = _open_space.gravity_at(global_position)
 		if gg.length() > 0.01:
-			# g points planetward; sink = velocity along g (toward surface)
 			v_rad = velocity.dot(gg.normalized())
-	# Slow auto-brake before commit
-	if spd > 28.0:
-		velocity = velocity * 0.35
-		spd = velocity.length()
-		print("[Ship] Land brake → spd ", int(spd))
-	if not _Flight.land_ok(spd, v_rad, 48.0, 40.0):
-		print("[Ship] Land denied — too fast (spd=", int(spd), " sink=", int(v_rad), "). Slow / HOVER (2).")
-		_toast_ship("Slow down to land (HOVER)")
+	var max_spd := 18.0
+	var max_sink := 12.0
+	if flight_mode == FlightMode.HOVER:
+		max_spd = 24.0
+		max_sink = 16.0
+	elif flight_mode == FlightMode.NAV:
+		max_spd = 12.0
+		max_sink = 8.0
+	if not _Flight.land_ok(spd, v_rad, max_spd, max_sink):
+		_toast_ship("Land denied — spd %d sink %d  (3 HOVER, slow)" % [int(spd), int(v_rad)])
+		print("[Ship] Land denied spd=", int(spd), " sink=", int(v_rad), " mode=", flight_mode_name())
 		return
-	# Prefer pad snap within range; else surface land if altitude low
 	var pad: Node3D = null
 	if _open_space and _open_space.has_method("nearest_pad"):
 		pad = _open_space.nearest_pad(global_position)
-	if pad and pad.global_position.distance_to(global_position) <= land_pad_snap_distance:
-		_landed_pad = pad
-		# Snap above pad
+	if pad and is_instance_valid(pad) and pad.global_position.distance_to(global_position) <= land_pad_snap_distance:
+		_commit_land(pad)
+		return
+	if _open_space and _open_space.has_method("nearest_planet"):
+		var pl: Node3D = _open_space.nearest_planet(global_position)
+		if pl and pl.has_method("altitude_of") and float(pl.altitude_of(global_position)) < surface_land_alt:
+			_commit_land(null)
+			print("[Ship] Surface land near ", pl.get("planet_name"))
+			return
+	_toast_ship("Approach a pad (<%dm) or low surface" % int(land_pad_snap_distance))
+	print("[Ship] Land denied — no pad/surface in envelope")
+
+
+func _commit_land(pad: Node3D) -> void:
+	velocity = Vector3.ZERO
+	is_landed = true
+	_land_lock_t = 1.25
+	_landed_pad = pad
+	if pad:
 		var up: Vector3 = Vector3.UP
 		if pad.has_meta("pad_up"):
 			up = pad.get_meta("pad_up")
 		global_position = pad.global_position + up * 4.0
-		# Face roughly along pad
-		velocity = Vector3.ZERO
-		is_landed = true
-		_land_lock_t = 1.25
-	velocity = Vector3.ZERO
 	if _thruster_fx and is_instance_valid(_thruster_fx):
 		_thruster_fx.emitting = false
 	if AudioDirector:
 		AudioDirector.play_land()
 	if SessionObjectives:
 		SessionObjectives.on_landed_or_lane()
-		_sync_landing_gear()
-		_spawn_land_fx()
-		_set_mode(FlightMode.HOVER)
-		# Align flight plane to pad surface
-		_pitch = 0.0
-		_roll = 0.0
-		_apply_attitude()
-		landed.emit()
+	_sync_landing_gear()
+	_spawn_land_fx()
+	_set_mode(FlightMode.HOVER)
+	_pitch = 0.0
+	_roll = 0.0
+	_apply_attitude()
+	landed.emit()
+	if pad:
 		print("[Ship] Landed on pad ", pad.name)
-		_claim_nearby_pad()
-		return
-	# Surface land near planet
-	if _open_space and _open_space.has_method("nearest_planet"):
-		var pl: Node3D = _open_space.nearest_planet(global_position)
-		if pl and pl.has_method("altitude_of") and pl.altitude_of(global_position) < surface_land_alt:
-			velocity = Vector3.ZERO
-			is_landed = true
-			_land_lock_t = 1.25
-			_landed_pad = null
-			_pitch = 0.0
-			_roll = 0.0
-			_apply_attitude()
-			_sync_landing_gear()
-			_set_mode(FlightMode.HOVER)
-			landed.emit()
-			print("[Ship] Surface land near ", pl.get("planet_name"))
-			_claim_nearby_pad()
-			return
-	print("[Ship] Land denied — approach a pad (<", land_pad_snap_distance, "m) or surface")
+		_toast_ship("Landed — C to claim (soft ownership, no combat power)")
+	else:
+		_toast_ship("Surface land — C near a pad to claim")
 
 func _do_launch() -> void:
 	if not is_landed:
@@ -545,23 +635,33 @@ func _recompute_stats() -> void:
 		max_cargo += m.cargo_bonus
 	shields = min(shields, max_shields)
 
+func _tick_afterburn(delta: float, want: bool) -> void:
+	_burn_on = false
+	if not want or is_landed or _hull_crit_t > 0.0:
+		return
+	var cost: float = 16.0 * delta
+	if energy < cost:
+		return
+	energy -= cost
+	_burn_on = true
+
+func _tick_combat(delta: float) -> void:
+	_fire_cd = max(0.0, _fire_cd - delta)
+	if _hull_crit_t > 0.0:
+		_hull_crit_t = maxf(0.0, _hull_crit_t - delta)
+	if _shield_hold_t > 0.0:
+		_shield_hold_t = maxf(0.0, _shield_hold_t - delta)
+	if _hull_crit_t <= 0.0 and _shield_hold_t <= 0.0:
+		shields = min(max_shields, shields + _SHIELD_REGEN * delta)
+	var e_rate: float = 8.0
+	if _hull_crit_t > 0.0:
+		e_rate *= _HULL_CRIT_ENERGY
+	energy = min(max_energy, energy + e_rate * delta)
+	if Input.is_action_pressed("ability_1") and _fire_cd <= 0.0:
+		_fire_weapon()
+
+
 func _fire_weapon() -> void:
-	# Soft muzzle flash (presentation only)
-	var flash := OmniLight3D.new()
-	flash.light_energy = 6.0
-	flash.omni_range = 8.0
-	flash.light_color = Color(0.5, 0.85, 1.0) if faction != "gROT" else Color(1.0, 0.3, 0.4)
-	flash.position = Vector3(0, 0, -2.0)
-	add_child(flash)
-	var flash_ref = flash
-	get_tree().create_timer(0.07).timeout.connect(func():
-		if is_instance_valid(flash_ref):
-			flash_ref.queue_free()
-	)
-	if AudioDirector:
-		AudioDirector.play_hit(false)
-	if CombatJuice:
-		CombatJuice.hit_feedback(2.0, global_position - global_transform.basis.z * 3.0)
 	var e_cost: float = 5.0
 	var EE = load("res://scripts/systems/EnergyEconomy.gd")
 	if EE:
@@ -571,6 +671,8 @@ func _fire_weapon() -> void:
 		if op_mode == 1:
 			e_cost *= 1.35
 	if energy < e_cost:
+		if AudioDirector and AudioDirector.has_method("play_ui_deny"):
+			AudioDirector.play_ui_deny()
 		return
 	energy -= e_cost
 	_fire_cd = 0.22 if op_mode == 1 else (0.14 if flight_mode == FlightMode.NAV else 0.18)
@@ -579,41 +681,40 @@ func _fire_weapon() -> void:
 		dps += m.weapon_dps
 	if op_mode == 1 and _role:
 		dps *= float(_role.siege_dps_mult) if "siege_dps_mult" in _role else 1.35
-	var bolt := Area3D.new()
-	bolt.name = "ShipBolt"
-	var mi := MeshInstance3D.new()
-	var mesh := SphereMesh.new()
-	mesh.radius = 0.14
-	mesh.height = 0.28
-	mi.mesh = mesh
-	var mat := StandardMaterial3D.new()
-	mat.emission_enabled = true
-	mat.emission = Color(0.3, 0.95, 1.0) if faction == "Cybernex" else Color(1.0, 0.2, 0.4)
-	mat.emission_energy_multiplier = 3.0
-	mat.albedo_color = mat.emission
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mi.material_override = mat
-	bolt.add_child(mi)
 	var dir: Vector3 = -global_transform.basis.z
-	bolt.set_meta("direction", dir)
-	bolt.set_meta("speed", 95.0 if flight_mode == FlightMode.NAV else (55.0 if flight_mode == FlightMode.HOVER else 72.0))
-	bolt.set_meta("damage", dps * 0.55)
-	bolt.set_meta("life", 1.6 if flight_mode == FlightMode.NAV else 1.25)
-	bolt.set_meta("faction", faction)
-	var scene := get_tree().current_scene
-	if scene:
-		scene.add_child(bolt)
-	else:
-		get_parent().add_child(bolt)
-	bolt.global_position = global_position - global_transform.basis.z * 2.2
+	var origin: Vector3 = global_position + dir * 2.2
+	var Hits = load("res://scripts/combat/CombatHits.gd")
+	if Hits:
+		var aim: Array = Hits.aim_from(self)
+		origin = aim[0]
+		dir = aim[1]
+	var spd: float = 95.0 if flight_mode == FlightMode.NAV else (55.0 if flight_mode == FlightMode.HOVER else 72.0)
+	var life: float = 1.6 if flight_mode == FlightMode.NAV else 1.25
+	var col := Color(0.3, 0.95, 1.0) if faction == "Cybernex" else Color(1.0, 0.2, 0.4)
+	var _Pool = load("res://scripts/combat/ProjectilePool.gd")
+	if _Pool:
+		_Pool.spawn(get_tree(), origin, dir, spd, dps * 0.55, str(faction), col, life, [self])
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	if gq == null or int(gq.tier) > 0:
+		var flash := OmniLight3D.new()
+		flash.light_energy = 6.0
+		flash.omni_range = 8.0
+		flash.light_color = Color(0.5, 0.85, 1.0) if faction != "gROT" else Color(1.0, 0.3, 0.4)
+		flash.shadow_enabled = false
+		add_child(flash)
+		flash.position = Vector3(0, 0, -2.0)
+		var flash_ref = flash
+		var tree := get_tree()
+		if tree:
+			tree.create_timer(0.07).timeout.connect(func():
+				if is_instance_valid(flash_ref):
+					flash_ref.queue_free()
+			)
+	if AudioDirector:
+		AudioDirector.play_hit(false)
 	var NP = load("res://scripts/fx/NeonParticles.gd")
 	if NP:
-		var col = NP.faction_color(str(faction))
-		NP.muzzle_flash(bolt.global_position, -global_transform.basis.z, col, get_tree())
-		NP.trail_attach(bolt, col, Vector3.ZERO)
-	var runner := Node.new()
-	runner.set_script(preload("res://scripts/abilities/ProjectileRunner.gd"))
-	bolt.add_child(runner)
+		NP.muzzle_flash(origin, dir, NP.faction_color(str(faction)), get_tree())
 
 func _spawn_module_visual(module: ShipModule) -> void:
 	if module_root == null:
@@ -716,21 +817,49 @@ func _claim_nearby_pad() -> void:
 				best_d = d
 				best = n
 	if best and best.has_method("claim"):
-		best.claim(faction, 1.25)
+		best.claim(faction, 0.5)
 		print("[Ship] Pad claim pulse → ", faction)
 
 func get_faction() -> String:
 	return faction
 
+
+func get_landed_pad() -> Node3D:
+	return _landed_pad if is_landed else null
+
 func take_damage(amount: float) -> void:
 	if CombatJuice:
 		CombatJuice.hit_feedback(float(amount), global_position, amount >= 40.0)
+	_shield_hold_t = _SHIELD_HOLD
 	var rest: float = amount
 	if shields > 0.0:
 		var absorbed: float = min(shields, rest)
 		shields -= absorbed
 		rest -= absorbed
 	health = max(0.0, health - rest)
+	if health <= 0.0:
+		_hull_critical()
+
+
+func _hull_critical() -> void:
+	health = max_health * _HULL_CRIT_HP
+	shields = 0.0
+	_hull_crit_t = _HULL_CRIT_T
+	_shield_hold_t = maxf(_shield_hold_t, _SHIELD_HOLD)
+	velocity *= 0.4
+	if flight_mode == FlightMode.NAV:
+		_set_mode(FlightMode.SCM)
+	if GameManager:
+		GameManager.toast_requested.emit("HULL CRITICAL — thrust cut, no permadeath")
+	print("[Ship] hull critical recover")
+
+
+func hurtbox_center() -> Vector3:
+	return global_position
+
+
+func hurtbox_radius() -> float:
+	return 2.4
 
 func _spawn_land_fx() -> void:
 	# Brief dust ring on pad touchdown
@@ -898,13 +1027,7 @@ func _update_thruster_fx(axes: Vector3, delta: float) -> void:
 func _ensure_cargo_systems() -> void:
 	if _cargo_hold != null:
 		return
-	# Scout/sniper must NOT spawn a belly ramp (was a black monolith under the hull)
-	var want_ramp := false
-	if _role != null:
-		want_ramp = bool(_role.has_cargo_ramp) or bool(_role.allows_cargo_open)
-	if not want_ramp:
-		print("[Ship] Cargo/ramp skipped (role has no hangar)")
-		return
+	# Every hull can fold one rover. Belly ramp is hangar-only (scout had a black monolith).
 	_cargo_hold = Node.new()
 	_cargo_hold.set_script(load("res://scripts/ship/CargoHold.gd"))
 	_cargo_hold.name = "CargoHold"
@@ -912,6 +1035,12 @@ func _ensure_cargo_systems() -> void:
 	_cargo_hold.set("max_vehicle_slots", 2)
 	_cargo_hold.set("volume_m3", 120.0)
 	_cargo_hold.set("mass_t", 40.0)
+	var want_ramp := false
+	if _role != null:
+		want_ramp = bool(_role.has_cargo_ramp) or bool(_role.allows_cargo_open)
+	if not want_ramp:
+		print("[Ship] CargoHold only (no hangar ramp)")
+		return
 	_cargo_ramp = Node3D.new()
 	_cargo_ramp.set_script(load("res://scripts/ship/CargoRamp.gd"))
 	_cargo_ramp.name = "CargoRamp"
@@ -955,9 +1084,24 @@ func _ensure_morph_and_hatch() -> void:
 
 func set_hatch_open(open: bool) -> void:
 	var door = get_node_or_null("HatchPoint/HatchDoor")
-	if door is MeshInstance3D:
+	if not (door is MeshInstance3D):
+		return
+	(door as MeshInstance3D).visible = true
+	var target_y := deg_to_rad(85.0) if open else 0.0
+	var tree := get_tree()
+	if tree:
+		var tw := tree.create_tween()
+		tw.tween_property(door, "rotation:y", target_y, 0.28)
+		if not open:
+			tw.tween_callback(func():
+				if is_instance_valid(door):
+					(door as MeshInstance3D).visible = false
+			)
+	else:
+		(door as MeshInstance3D).rotation.y = target_y
 		(door as MeshInstance3D).visible = open
-		(door as MeshInstance3D).rotation.y = deg_to_rad(85.0) if open else 0.0
+	if AudioDirector and AudioDirector.has_method("play_door"):
+		AudioDirector.play_door(open)
 
 
 func _toggle_siege() -> void:
@@ -1190,6 +1334,8 @@ func _tick_hull_ambient(axes: Vector3, _delta: float) -> void:
 	if _hull_ambient == null or not is_instance_valid(_hull_ambient):
 		return
 	var power: float = clampf(absf(axes.z) + absf(axes.x) * 0.4 + absf(axes.y) * 0.3, 0.0, 1.5)
+	if _burn_on:
+		power = maxf(power, 1.35)
 	if not pilot_active:
 		power = 0.0
 	if _hull_ambient.has_method("set_engine_power"):
@@ -1321,7 +1467,14 @@ func get_op_mode_name() -> String:
 
 
 func get_flight_status_line() -> String:
-	return "%s · %s · SPD %d" % [flight_mode_name(), get_op_mode_name(), int(velocity.length())]
+	var st := "%s · %s · SPD %d" % [flight_mode_name(), get_op_mode_name(), int(velocity.length())]
+	if _stall > 0.28:
+		st += " · STALL %.0f%%" % (_stall * 100.0)
+	return st
+
+
+func get_stall() -> float:
+	return _stall
 
 
 
@@ -1413,14 +1566,14 @@ func _toast_ship(msg: String) -> void:
 	print("[Ship] ", msg)
 
 
-
-func _auto_land_assist(_delta: float) -> void:
-	## Soft snap-land when nearly stopped above pad.
+func _auto_land_assist(delta: float) -> void:
+	## Hint only — E still commits. No auto-land (honest speed gate).
+	_land_hint_cd = maxf(0.0, _land_hint_cd - delta)
 	if is_landed or not pilot_active:
 		return
-	if _land_lock_t > 0.0:
+	if velocity.length() > 8.0:
 		return
-	if velocity.length() > 10.0:
+	if flight_mode != FlightMode.HOVER:
 		return
 	if _open_space == null or not _open_space.has_method("nearest_pad"):
 		return
@@ -1428,9 +1581,11 @@ func _auto_land_assist(_delta: float) -> void:
 	if pad == null or not is_instance_valid(pad):
 		return
 	var d: float = pad.global_position.distance_to(global_position)
-	if d > 45.0:
+	if d > 28.0:
 		return
-	# Near pad + slow → commit land once
-	_do_land()
+	_sync_landing_gear()
+	if _land_hint_cd <= 0.0:
+		_land_hint_cd = 3.5
+		_toast_ship("Pad %.0fm — E land (then C claim)" % d)
 
 

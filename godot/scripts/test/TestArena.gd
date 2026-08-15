@@ -43,8 +43,12 @@ func _ready() -> void:
 	_soft_neon_ambient()
 	_spawn_turrets()
 	_spawn_claim_nodes()
+	var CP = load("res://scripts/assets/CanonPlates.gd")
+	if CP:
+		CP.spawn_arena_wall(self, Vector3(0, 0, 8))
 	if kills_label:
 		kills_label.text = "Kills: 0"
+	_apply_arena_hud_layout()
 
 
 func _upgrade_environment_materials() -> void:
@@ -276,21 +280,22 @@ func _spawn_turrets() -> void:
 		turr.set("target_player", s[1] == "gROT")
 
 func _spawn_claim_nodes() -> void:
-	# Interactive ownership beacons using dual-theme mesh swap
+	# Lane beacons start Neutral — C pulse / Hack occupy-to-hold, no pre-claim.
 	var spots: Array = [
-		[Vector3(-1, 0, -14), "Cybernex"],
-		[Vector3(4, 0, -14), "gROT"],
+		[Vector3(0, 0, -12), "MID"],
+		[Vector3(14, 0, -10), "TOP"],
+		[Vector3(-14, 0, -10), "BOT"],
 	]
 	for s in spots:
 		var n := Node3D.new()
 		n.name = "ClaimNode"
+		n.set_meta("lane", str(s[1]))
 		var own := Node3D.new()
 		own.name = "Ownership"
 		own.set_script(preload("res://scripts/ownership/OwnershipComponent.gd"))
 		own.set("dual_mesh_base", "props/claim_beacon/claim_beacon")
 		own.set("claimable", true)
 		n.add_child(own)
-		# mesh placeholder under Ownership
 		var mesh := MeshInstance3D.new()
 		mesh.name = "Mesh"
 		var cyl := CylinderMesh.new()
@@ -301,8 +306,20 @@ func _spawn_claim_nodes() -> void:
 		own.add_child(mesh)
 		add_child(n)
 		n.global_position = s[0]
-		if own.has_method("claim"):
-			own.claim(str(s[1]), 2.0)
+		if own.has_signal("fully_claimed"):
+			own.fully_claimed.connect(_on_beacon_claimed.bind(str(s[1])))
+
+func _on_beacon_claimed(_fac, lane: String = "MID") -> void:
+	var md = get_node_or_null("ClashMatchDirector")
+	if md and md.has_method("register_objective"):
+		md.register_objective()
+	if _clash and _clash.has_method("_add_pressure"):
+		_clash._add_pressure(lane, 28.0)
+	elif _clash and "lane_pressure" in _clash:
+		var lp: Dictionary = _clash.lane_pressure
+		var k := lane if lp.has(lane) else "MID"
+		lp[k] = clampf(float(lp.get(k, 0.0)) + 28.0, 0.0, 100.0)
+
 
 func _on_dummy_died() -> void:
 	if SessionObjectives:
@@ -337,6 +354,7 @@ func _process(_delta: float) -> void:
 		return
 	_ui_accum = 0.0
 	_update_clash_radar()
+	_apply_arena_hud_layout()
 	if not ("health" in player):
 		return
 	bar_health.value = player.health
@@ -356,24 +374,25 @@ func _process(_delta: float) -> void:
 				lines.append("%s %s (%.1fs)" % [key, ab.ability_name, cd])
 			else:
 				lines.append("%s %s" % [key, ab.ability_name])
-	ability_label.text = "\n".join(lines)
+	if _arena_debug():
+		ability_label.text = "\n".join(lines)
+		var mvin: Vector2 = Vector2.ZERO
+		if "last_move_input" in player:
+			mvin = player.last_move_input
+		info_label.text = (
+			"NAEON CLASH | %s | Form %s | O=OpenSpace | 3 LANES + radar | soft WS\n" % [
+				player.faction, player.current_form
+			]
+			+ "Q/E/R/F abilities | input(%.0f,%.0f) floor=%s | med heals  |  F3 HUD" % [
+				mvin.x, mvin.y, str(player.is_on_floor())
+			]
+		)
 	if contrib_label and _clash and _clash.has_method("status_line"):
 		var econ2 := GameManager.economy_label() if GameManager and GameManager.has_method("economy_label") else ""
 		var obj := ""
 		if _clash.has_method("objectives_secured"):
 			obj = "  |  OBJ %d/3" % int(_clash.objectives_secured())
 		contrib_label.text = "%s  |  %s%s" % [econ2, _clash.status_line(), obj]
-	var mvin: Vector2 = Vector2.ZERO
-	if "last_move_input" in player:
-		mvin = player.last_move_input
-	info_label.text = (
-		"NAEON CLASH | %s | Form %s | O=OpenSpace | 3 LANES + radar | soft WS\n" % [
-			player.faction, player.current_form
-		]
-		+ "Q/E/R/F abilities | input(%.0f,%.0f) floor=%s | med heals" % [
-			mvin.x, mvin.y, str(player.is_on_floor())
-		]
-	)
 
 func _try_med_heal(delta: float) -> void:
 	if player == null or not ("health" in player):
@@ -460,8 +479,11 @@ func _update_clash_radar() -> void:
 		if _lane_hud and "player_lane" in _lanes:
 			var press := ""
 			if _clash and _clash.has_method("lane_hud_line"):
-				press = "  ·  " + str(_clash.lane_hud_line())
-			_lane_hud.text = "LANE · %s  |  TOP cyan · MID gold · BOT magenta%s" % [_lanes.player_lane, press]
+				press = str(_clash.lane_hud_line())
+			if press == "":
+				_lane_hud.text = "LANE %s" % _lanes.player_lane
+			else:
+				_lane_hud.text = "LANE %s  ·  %s" % [_lanes.player_lane, press]
 	if _radar == null or not _radar.has_method("set_snapshot"):
 		return
 	var ene: Array = []
@@ -493,7 +515,7 @@ func _update_clash_radar() -> void:
 func _maybe_refill_lane() -> void:
 	var alive := 0
 	for c in get_children():
-		if c is Node3D and c.has_meta("lane") and is_instance_valid(c):
+		if c is Node3D and c.has_meta("lane") and c.is_in_group("enemy") and is_instance_valid(c):
 			alive += 1
 	if alive >= 4 or dummy_scene == null:
 		return
@@ -666,3 +688,42 @@ func _apply_arena_perf() -> void:
 	# HUD refresh budget already 10Hz; mark FPS-friendly
 	Engine.max_fps = 0  # uncapped; GPU-bound preferred over artificial 30
 	print("[TestArena] arena perf tier=", tier)
+
+
+func _arena_debug() -> bool:
+	var h = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+	return h != null and h.has_method("is_debug_overlay") and bool(h.is_debug_overlay())
+
+
+func _apply_arena_hud_layout() -> void:
+	var dbg := _arena_debug()
+	if info_label:
+		info_label.visible = dbg
+	if bar_health:
+		bar_health.visible = dbg
+	if bar_energy:
+		bar_energy.visible = dbg
+	if ability_label:
+		ability_label.visible = dbg
+	if contrib_label:
+		contrib_label.visible = dbg
+	if kills_label:
+		kills_label.visible = dbg
+		kills_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		kills_label.offset_left = -420
+		kills_label.offset_right = -16
+		kills_label.offset_top = 40
+		kills_label.offset_bottom = 70
+		kills_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		kills_label.add_theme_font_size_override("font_size", 16)
+		kills_label.add_theme_color_override("font_color", Color(0.95, 0.9, 0.45))
+		kills_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+		kills_label.add_theme_constant_override("outline_size", 4)
+	if _lane_hud:
+		_lane_hud.visible = true
+		_lane_hud.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		_lane_hud.offset_left = -440
+		_lane_hud.offset_right = -16
+		_lane_hud.offset_top = 70
+		_lane_hud.offset_bottom = 100
+		_lane_hud.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT

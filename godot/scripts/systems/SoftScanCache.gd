@@ -6,6 +6,8 @@ const PAD_TTL := 0.8
 const PLANET_TTL := 1.2
 const TERRAIN_TTL := 0.7
 const HOST_FILE_TTL := 2.5
+const ENEMY_TTL := 0.22
+const SHIP_TTL := 0.35
 
 var _player: Node3D = null
 var _player_t: float = 99.0
@@ -17,6 +19,10 @@ var _terrain: Array = []
 var _terrain_t: float = 99.0
 var _host_hint: String = ""
 var _host_t: float = 99.0
+var _enemies: Array = []
+var _enemies_t: float = 99.0
+var _ships: Array = []
+var _ships_t: float = 99.0
 
 
 func _ready() -> void:
@@ -29,6 +35,8 @@ func _process(delta: float) -> void:
 	_planets_t += delta
 	_terrain_t += delta
 	_host_t += delta
+	_enemies_t += delta
+	_ships_t += delta
 
 
 func invalidate_player() -> void:
@@ -82,6 +90,55 @@ func get_planets() -> Array:
 			if n is Node3D and is_instance_valid(n):
 				_planets.append(n)
 	return _planets
+
+
+func get_enemies() -> Array:
+	if _enemies_t < ENEMY_TTL:
+		return _enemies
+	_enemies_t = 0.0
+	_enemies = []
+	var tree := get_tree()
+	if tree:
+		for n in tree.get_nodes_in_group("enemy"):
+			if is_instance_valid(n):
+				_enemies.append(n)
+	return _enemies
+
+
+func invalidate_enemies() -> void:
+	_enemies_t = 99.0
+	_enemies.clear()
+
+
+func get_ships() -> Array:
+	if _ships_t < SHIP_TTL:
+		return _ships
+	_ships_t = 0.0
+	_ships = []
+	var tree := get_tree()
+	if tree:
+		for n in tree.get_nodes_in_group("ship"):
+			if is_instance_valid(n):
+				_ships.append(n)
+	return _ships
+
+
+func invalidate_ships() -> void:
+	_ships_t = 99.0
+	_ships.clear()
+
+
+static func overlaps_hurtbox(at: Vector3, target: Node, radius: float) -> bool:
+	if target == null or not is_instance_valid(target) or not (target is Node3D):
+		return false
+	var n := target as Node3D
+	var c: Vector3 = n.global_position
+	var r := radius
+	if n.has_method("hurtbox_center"):
+		c = n.hurtbox_center()
+	if n.has_method("hurtbox_radius"):
+		r = maxf(radius, float(n.hurtbox_radius()))
+	return at.distance_squared_to(c) <= r * r
 
 
 func get_terrain_edits() -> Array:
@@ -151,7 +208,11 @@ func invalidate() -> void:
 	_planets_t = 99.0
 	_terrain_t = 99.0
 	_host_t = 99.0
+	_enemies_t = 99.0
+	_ships_t = 99.0
 	_player = null
 	_pads.clear()
 	_planets.clear()
 	_terrain.clear()
+	_enemies.clear()
+	_ships.clear()

@@ -60,7 +60,7 @@ func _ready() -> void:
 	_sub_label.outline_size = 6
 	_sub_label.position = Vector3(0, 7.2, 0)
 	_sub_label.modulate = Color(1.0, 0.9, 0.55)
-	_sub_label.text = "C to pulse claim"
+	_sub_label.text = "OCCUPY · C pulse · Hack"
 	_sub_label.no_depth_test = true
 	add_child(_sub_label)
 

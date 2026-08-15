@@ -5,15 +5,19 @@ const _AP = preload("res://scripts/assets/AssetPaths.gd")
 ## Hostile / friendly turret using generated emplacement mesh.
 
 signal killed_target
+signal died
 
 var _ai_accum: float = 0.0
 var faction: String = "gROT"
+var aim_up: Vector3 = Vector3.UP
 @export var aggro_range: float = 18.0
 @export var fire_rate: float = 1.1
 @export var damage: float = 8.0
 @export var projectile_speed: float = 42.0
 @export var max_health: float = 120.0
 @export var target_player: bool = true
+@export var skip_visual: bool = false
+@export var display_name: String = "TURRET"
 
 var health: float = 120.0
 var _cd: float = 0.0
@@ -53,52 +57,71 @@ func _process(delta: float) -> void:
 	var target := _find_target()
 	if target == null:
 		return
-	# yaw toward target
-	var to: Vector3 = target.global_position - global_position
-	to.y = 0.0
+	var up: Vector3 = _aim_up()
+	var aim_pt: Vector3 = target.global_position
+	if target.has_method("hurtbox_center"):
+		aim_pt = target.hurtbox_center()
+	var to: Vector3 = aim_pt - global_position
+	to -= up * to.dot(up)
 	if to.length() > 0.1:
-		_living_aim(target.global_position, 0.12)
-		look_at(global_position + to.normalized(), Vector3.UP)
-	if _cd <= 0.0 and global_position.distance_to(target.global_position) <= aggro_range:
+		_living_aim(aim_pt, 0.12)
+		var look := to.normalized()
+		if absf(up.dot(look)) < 0.97:
+			look_at(global_position + look, up)
+	if _cd <= 0.0 and global_position.distance_to(aim_pt) <= aggro_range:
 		_fire(target)
 		_cd = fire_rate
 
 func _find_target() -> Node3D:
 	var best: Node3D = null
 	var best_d: float = aggro_range
-	var groups: Array = ["player"] if target_player and faction == "gROT" else ["enemy"]
-	if faction == "Cybernex":
-		groups = ["enemy"]
-	for g in groups:
-		for n in get_tree().get_nodes_in_group(g):
-			if n == self or not is_instance_valid(n):
-				continue
-			if n is Node3D:
-				var d: float = global_position.distance_to((n as Node3D).global_position)
-				if d < best_d:
-					# faction filter
-					if n.has_method("get_faction") and str(n.get_faction()) == faction:
-						continue
-					best = n as Node3D
-					best_d = d
-	# also CharacterBody3D player without group
-	if best == null and target_player and faction == "gROT":
-		var p := get_tree().get_first_node_in_group("player")
-		if p is Node3D:
-			var d2: float = global_position.distance_to((p as Node3D).global_position)
-			if d2 <= aggro_range:
-				best = p as Node3D
+	var candidates: Array = []
+	var p: Node = SoftScanCache.get_player() if SoftScanCache else (get_tree().get_first_node_in_group("player") if get_tree() else null)
+	if p != null and is_instance_valid(p):
+		var pf := ""
+		if p.has_method("get_faction"):
+			pf = str(p.get_faction())
+		if pf != faction:
+			candidates.append(p)
+	if target_player and faction == "gROT" and p != null and not candidates.has(p):
+		candidates.append(p)
+	var extras: Array = SoftScanCache.get_enemies() if SoftScanCache else (get_tree().get_nodes_in_group("enemy") if get_tree() else [])
+	for n in extras:
+		candidates.append(n)
+	var hulls: Array = []
+	if SoftScanCache and SoftScanCache.has_method("get_ships"):
+		hulls = SoftScanCache.get_ships()
+	elif get_tree():
+		hulls = get_tree().get_nodes_in_group("ship")
+	for n in hulls:
+		candidates.append(n)
+	for n in candidates:
+		if n == self or not is_instance_valid(n) or not (n is Node3D):
+			continue
+		if n.has_method("get_faction") and str(n.get_faction()) == faction:
+			continue
+		if n.has_method("is_downed") and bool(n.is_downed()):
+			continue
+		var d: float = global_position.distance_to((n as Node3D).global_position)
+		if d < best_d:
+			best = n as Node3D
+			best_d = d
 	return best
 
 func _fire(target: Node3D) -> void:
 	_living_fire()
-	var dir: Vector3 = (target.global_position + Vector3(0, 1.0, 0) - global_position).normalized()
+	var aim_pt: Vector3 = target.global_position
+	if target.has_method("hurtbox_center"):
+		aim_pt = target.hurtbox_center()
+	var muzzle: Vector3 = global_position + _aim_up() * 1.4
+	var dir: Vector3 = (aim_pt - muzzle).normalized()
 	var col := Color(1.0, 0.2, 0.35) if faction == "gROT" else Color(0.2, 0.8, 1.0)
 	var _Pool = load("res://scripts/combat/ProjectilePool.gd")
 	var spd: float = 40.0
 	if "projectile_speed" in self:
 		spd = float(projectile_speed)
-	_Pool.spawn(get_tree(), global_position + Vector3(0, 1.4, 0) + dir * 0.8, dir, spd, damage, faction, col, 3.2)
+	# Headless spawn already hitscans; GUI flies a bolt.
+	_Pool.spawn(get_tree(), muzzle + dir * 0.8, dir, spd, damage, faction, col, 3.2, [self])
 
 
 func take_damage(amount: float) -> void:
@@ -113,30 +136,83 @@ func on_hacked(caster: Node, amount: float = 1.0) -> void:
 	take_damage(amount * 8.0)
 	if caster and caster.has_method("get_faction"):
 		faction = str(caster.get_faction())
-		target_player = faction == "gROT"
+		target_player = faction != _player_faction()
 		_update_label()
+	var pnode := get_parent()
+	if pnode and pnode.has_method("on_hacked"):
+		pnode.on_hacked(caster, amount * 0.5)
+
+
+func _player_faction() -> String:
+	var p: Node = SoftScanCache.get_player() if SoftScanCache else null
+	if p and p.has_method("get_faction"):
+		return str(p.get_faction())
+	return "Cybernex"
 
 func get_faction() -> String:
 	return faction
 
+
+func is_alive() -> bool:
+	return _alive
+
+
+func set_aim_up(u: Vector3) -> void:
+	if u.length_squared() > 0.01:
+		aim_up = u.normalized()
+
+
+func _aim_up() -> Vector3:
+	if aim_up.length_squared() > 0.01:
+		return aim_up.normalized()
+	var n: Node = get_parent()
+	while n:
+		if n.has_meta("pad_up"):
+			var u: Vector3 = n.get_meta("pad_up")
+			if u.length_squared() > 0.01:
+				return u.normalized()
+		n = n.get_parent()
+	return Vector3.UP
+
+
+func hurtbox_center() -> Vector3:
+	return global_position + _aim_up() * 1.1
+
+
+func hurtbox_radius() -> float:
+	return 1.15
+
 func _die() -> void:
+	if not _alive:
+		return
 	_alive = false
 	_update_label()
 	visible = false
-	await get_tree().create_timer(5.0).timeout
+	if SoftScanCache:
+		SoftScanCache.invalidate_enemies()
+	died.emit()
+	killed_target.emit()
+	print("[Turret] destroyed ", faction)
+
+
+func revive() -> void:
 	health = max_health
 	_alive = true
 	visible = true
 	_update_label()
+	if SoftScanCache:
+		SoftScanCache.invalidate_enemies()
 
 func _update_label() -> void:
 	if _label:
 		if not _alive:
-			_label.text = "TURRET DESTROYED"
+			_label.text = "%s DESTROYED" % display_name
 		else:
-			_label.text = "TURRET %s\nHP %.0f" % [faction, health]
+			_label.text = "%s %s\nHP %.0f" % [display_name, faction, health]
 
 func _load_mesh() -> void:
+	if skip_visual or DisplayServer.get_name() == "headless":
+		return
 	var fac := "grot" if faction == "gROT" else "cybernex"
 	# Prefer rotating barrel HQ; fallback emplacement
 	var candidates: Array = [
@@ -172,6 +248,8 @@ var _anim: Node = null
 
 func _ensure_animator() -> void:
 	if _anim:
+		return
+	if DisplayServer.get_name() == "headless" or skip_visual:
 		return
 	_anim = Node.new()
 	_anim.set_script(load("res://scripts/combat/TurretAnimator.gd"))

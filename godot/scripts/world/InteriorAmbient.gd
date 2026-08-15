@@ -11,6 +11,10 @@ var _panels: Array[Label3D] = []
 var _hum_t: float = 0.0
 var _env: WorldEnvironment = null
 var _prev_env: Environment = null
+var _atmo: float = 1.0
+var _sealed: bool = true
+var _recycler: bool = true
+var _status_line: String = ""
 
 
 func setup(kind: String, neon: Color) -> void:
@@ -112,6 +116,8 @@ func _spawn_floor_grid_decals() -> void:
 
 
 func _apply_env() -> void:
+	if not is_inside_tree():
+		return
 	var tree := get_tree()
 	if tree == null or tree.current_scene == null:
 		return
@@ -119,24 +125,42 @@ func _apply_env() -> void:
 	pass
 
 
+func sync_life_support(atmo: float, sealed: bool, recycler: bool, line: String = "") -> void:
+	_atmo = atmo
+	_sealed = sealed
+	_recycler = recycler
+	_status_line = line
+
+
 func _process(delta: float) -> void:
 	_t += delta
 	_hum_t += delta
-	# Light breathing
+	var dim := 1.0
+	if not _recycler:
+		dim = 0.48
+	if _atmo < 0.25:
+		dim *= 0.55
+	elif _atmo < 0.72:
+		dim *= 0.78
+	# Light breathing — dim when vented / thin atmo
 	var pulse := 0.85 + 0.15 * sin(_t * 1.7)
 	for i in _lights.size():
 		var L := _lights[i]
 		if not is_instance_valid(L):
 			continue
 		var base := 1.6 if _kind == "ship" else 1.8
-		L.light_energy = base * pulse * (1.0 + 0.05 * sin(_t * 2.3 + float(i)))
-	# Panel flicker / cycle text
+		L.light_energy = base * pulse * dim * (1.0 + 0.05 * sin(_t * 2.3 + float(i)))
 	if int(_t * 2.0) % 5 == 0:
 		for i in _panels.size():
 			var lab := _panels[i]
-			if is_instance_valid(lab):
-				lab.modulate = _neon.lerp(Color.WHITE, 0.15 * (0.5 + 0.5 * sin(_t * 3.0 + float(i))))
-	# Soft hum every ~4s
+			if not is_instance_valid(lab):
+				continue
+			if _status_line != "":
+				var bits: PackedStringArray = _status_line.split(" · ")
+				lab.text = bits[i % bits.size()] if bits.size() > 0 else _status_line
+			lab.modulate = _neon.lerp(Color.WHITE, 0.15 * (0.5 + 0.5 * sin(_t * 3.0 + float(i))))
+			if not _recycler or not _sealed:
+				lab.modulate = Color(1.0, 0.55, 0.25)
 	if _hum_t > 4.0:
 		_hum_t = 0.0
 		if AudioDirector and AudioDirector.has_method("play_interior_hum"):

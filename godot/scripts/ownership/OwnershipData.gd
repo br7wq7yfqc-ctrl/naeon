@@ -26,6 +26,8 @@ func is_fully_owned() -> bool:
 func start_transition(new_faction: Faction) -> void:
 	if new_faction == current_faction and transition_progress >= 1.0:
 		return
+	if new_faction == current_faction:
+		return
 	previous_faction = current_faction
 	current_faction = new_faction
 	transition_progress = 0.0

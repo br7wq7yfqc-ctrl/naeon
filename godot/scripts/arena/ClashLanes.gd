@@ -1,7 +1,7 @@
 extends Node3D
 class_name ClashLanes
 ## Three-lane readability for Aexion Clash (Predecessor bar).
-## Visual + spawn layout only — no combat power.
+## Strips + spawn layout; lane towers are live Turrets (faction fire, no P2W).
 
 signal lane_entered(lane_id: String)
 
@@ -48,6 +48,11 @@ func _box(size: Vector3, pos: Vector3, col: Color, parent: Node3D = self) -> Mes
 	return mi
 
 func _build_lanes() -> void:
+	# Perimeter — reads as an arena, not an infinite greybox
+	_box(Vector3(HALF * 2.0 + 1.2, 0.35, 0.45), Vector3(0, 0.7, HALF), Color(0.25, 0.7, 0.95) * 0.8)
+	_box(Vector3(HALF * 2.0 + 1.2, 0.35, 0.45), Vector3(0, 0.7, -HALF), Color(0.95, 0.2, 0.45) * 0.8)
+	_box(Vector3(0.45, 0.35, HALF * 2.0 + 1.2), Vector3(HALF, 0.7, 0), Color(0.7, 0.75, 0.85) * 0.6)
+	_box(Vector3(0.45, 0.35, HALF * 2.0 + 1.2), Vector3(-HALF, 0.7, 0), Color(0.7, 0.75, 0.85) * 0.6)
 	# Lanes run along Z (home south +Z Cybernex → north -Z gROT)
 	# TOP = +X, MID = 0, BOT = -X
 	var defs := [
@@ -70,7 +75,7 @@ func _build_lanes() -> void:
 		# Label3D at mid
 		var lab := Label3D.new()
 		lab.text = id
-		lab.font_size = 64
+		lab.font_size = 28
 		lab.modulate = col
 		lab.outline_modulate = Color(0, 0, 0, 0.9)
 		lab.outline_size = 12
@@ -96,11 +101,23 @@ func _nexus(pos: Vector3, col: Color, nname: String, fac: String) -> void:
 	mi.mesh = sp
 	mi.material_override = _mat(col, 2.0)
 	root.add_child(mi)
+	# halo ring
+	var halo := MeshInstance3D.new()
+	var torus := TorusMesh.new()
+	torus.inner_radius = 1.55
+	torus.outer_radius = 1.85
+	torus.rings = 10
+	torus.ring_segments = 20
+	halo.mesh = torus
+	halo.material_override = _mat(col, 2.4)
+	halo.position.y = 1.5
+	halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(halo)
 	# ring
 	_box(Vector3(5.5, 0.15, 5.5), Vector3(0, 0.1, 0), col * 0.8, root)
 	var lab := Label3D.new()
 	lab.text = "NEXUS\n%s" % fac
-	lab.font_size = 48
+	lab.font_size = 28
 	lab.modulate = col
 	lab.outline_size = 10
 	lab.outline_modulate = Color(0, 0, 0, 0.9)
@@ -117,20 +134,21 @@ func _nexus(pos: Vector3, col: Color, nname: String, fac: String) -> void:
 	root.add_child(body)
 
 func _build_towers() -> void:
-	# Mid-lane towers along Z for both sides
+	# Mid-lane towers along Z for both sides — live guns, visual spire stays.
 	var towers := [
-		[Vector3(0, 0, 12), Color(0.2, 0.8, 1.0), "T_CX_MID"],
-		[Vector3(0, 0, -12), Color(0.9, 0.2, 0.45), "T_GR_MID"],
-		[Vector3(14, 0, 10), Color(0.2, 0.8, 1.0), "T_CX_TOP"],
-		[Vector3(14, 0, -10), Color(0.9, 0.2, 0.45), "T_GR_TOP"],
-		[Vector3(-14, 0, 10), Color(0.2, 0.8, 1.0), "T_CX_BOT"],
-		[Vector3(-14, 0, -10), Color(0.9, 0.2, 0.45), "T_GR_BOT"],
+		[Vector3(0, 0, 12), Color(0.2, 0.8, 1.0), "T_CX_MID", "Cybernex", "MID"],
+		[Vector3(0, 0, -12), Color(0.9, 0.2, 0.45), "T_GR_MID", "gROT", "MID"],
+		[Vector3(14, 0, 10), Color(0.2, 0.8, 1.0), "T_CX_TOP", "Cybernex", "TOP"],
+		[Vector3(14, 0, -10), Color(0.9, 0.2, 0.45), "T_GR_TOP", "gROT", "TOP"],
+		[Vector3(-14, 0, 10), Color(0.2, 0.8, 1.0), "T_CX_BOT", "Cybernex", "BOT"],
+		[Vector3(-14, 0, -10), Color(0.9, 0.2, 0.45), "T_GR_BOT", "gROT", "BOT"],
 	]
 	for t in towers:
 		var root := Node3D.new()
 		root.name = str(t[2])
 		add_child(root)
 		root.position = t[0]
+		root.set_meta("clash_lane", str(t[4]))
 		var mi := MeshInstance3D.new()
 		var cyl := CylinderMesh.new()
 		cyl.top_radius = 0.45
@@ -139,13 +157,69 @@ func _build_towers() -> void:
 		mi.mesh = cyl
 		mi.material_override = _mat(t[1], 1.6)
 		mi.position.y = 1.6
+		mi.name = "Spire"
 		root.add_child(mi)
 		_box(Vector3(1.8, 0.12, 1.8), Vector3(0, 0.05, 0), t[1], root)
+		var body := StaticBody3D.new()
+		var cs := CollisionShape3D.new()
+		var cyls := CylinderShape3D.new()
+		cyls.radius = 0.72
+		cyls.height = 3.2
+		cs.shape = cyls
+		cs.position.y = 1.6
+		body.add_child(cs)
+		root.add_child(body)
+		var gun := Node3D.new()
+		gun.name = "Gun"
+		gun.set_script(preload("res://scripts/combat/Turret.gd"))
+		gun.set("faction", str(t[3]))
+		gun.set("target_player", true)
+		gun.set("aggro_range", 15.5)
+		gun.set("fire_rate", 1.35)
+		gun.set("damage", 6.0)
+		gun.set("max_health", 160.0)
+		gun.set("projectile_speed", 38.0)
+		gun.set("skip_visual", true)
+		gun.set("display_name", "TOWER")
+		root.add_child(gun)
+		if gun.get("_label") != null:
+			var lab = gun.get("_label")
+			if lab is Label3D:
+				(lab as Label3D).position.y = 3.35
+				(lab as Label3D).font_size = 18
+		if gun.is_in_group("ally"):
+			gun.remove_from_group("ally")
+		if not gun.is_in_group("enemy"):
+			gun.add_to_group("enemy")
+		if gun.has_signal("died"):
+			gun.died.connect(_on_tower_died.bind(root, str(t[4]), str(t[3])))
+
+
+func _on_tower_died(spire: Node3D, lane: String, fac: String) -> void:
+	if spire and is_instance_valid(spire):
+		var mesh: MeshInstance3D = spire.get_node_or_null("Spire") as MeshInstance3D
+		if mesh and mesh.material_override is StandardMaterial3D:
+			var mat: StandardMaterial3D = mesh.material_override
+			mat.emission_energy_multiplier = 0.18
+			var c: Color = mat.albedo_color
+			c.a = 0.4
+			mat.albedo_color = c
+	var tree := get_tree()
+	if tree:
+		var clash: Node = tree.get_first_node_in_group("aexion_clash")
+		if clash and clash.has_method("register_tower_down"):
+			clash.register_tower_down(lane)
+		var matchn: Node = tree.get_first_node_in_group("clash_match")
+		if matchn and matchn.has_method("register_objective"):
+			matchn.register_objective()
+	if GameManager:
+		GameManager.toast_requested.emit("Tower down (%s %s) — soft lane pressure only" % [fac, lane])
+	print("[ClashLanes] tower down ", fac, " ", lane)
 
 func _build_lane_markers() -> void:
 	_lane_label = Label3D.new()
 	_lane_label.name = "PlayerLaneHint"
-	_lane_label.font_size = 42
+	_lane_label.font_size = 22
 	_lane_label.modulate = Color(1, 1, 1)
 	_lane_label.outline_size = 8
 	_lane_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED

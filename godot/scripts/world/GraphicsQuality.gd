@@ -23,7 +23,15 @@ var max_enemies: int = 12
 var planet_segments: int = 64
 
 func _ready() -> void:
-	apply_tier(tier)
+	var start := TIER_MEDIUM
+	if DisplayServer.get_name() == "headless":
+		start = TIER_LOW
+	else:
+		var adapter := str(RenderingServer.get_video_adapter_name()).to_lower()
+		if adapter == "" or "llvmpipe" in adapter or "softpipe" in adapter or "swiftshader" in adapter:
+			start = TIER_LOW
+			print("[GraphicsQuality] software adapter → LOW (", adapter, ")")
+	apply_tier(start)
 
 func apply_tier(t: int) -> void:
 	tier = clampi(t, 0, 3)

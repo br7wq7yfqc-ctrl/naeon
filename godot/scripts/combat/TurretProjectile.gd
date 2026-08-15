@@ -32,16 +32,17 @@ func _process(delta: float) -> void:
 	p.global_position += dir * speed * delta
 	var dmg: float = float(p.get_meta("damage", 5.0))
 	var fac: String = str(p.get_meta("faction", "gROT"))
-	var player := get_tree().get_first_node_in_group("player")
+	var player: Node = SoftScanCache.get_player() if SoftScanCache else get_tree().get_first_node_in_group("player")
 	if player is Node3D and fac == "gROT":
-		if p.global_position.distance_to((player as Node3D).global_position) < 1.1:
+		if SoftScanCache.overlaps_hurtbox(p.global_position, player, 1.1):
 			if player.has_method("take_damage"):
 				player.take_damage(dmg)
 			_release(p)
 			return
 	if fac == "Cybernex":
-		for e in get_tree().get_nodes_in_group("enemy"):
-			if e is Node3D and p.global_position.distance_to((e as Node3D).global_position) < 1.2:
+		var enemies: Array = SoftScanCache.get_enemies() if SoftScanCache else get_tree().get_nodes_in_group("enemy")
+		for e in enemies:
+			if e is Node3D and is_instance_valid(e) and SoftScanCache.overlaps_hurtbox(p.global_position, e, 1.2):
 				if e.has_method("take_damage"):
 					e.take_damage(dmg)
 				_release(p)

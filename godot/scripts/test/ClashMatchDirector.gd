@@ -10,7 +10,7 @@ var _lane_pressure: Array = [0.35, 0.5, 0.4]  # TOP MID BOT 0..1 toward enemy
 var _kills: int = 0
 var _deaths: int = 0
 var _obj_score: float = 0.0
-var _banner: String = "CLASH — secure lanes · claim beacons · soft economy only"
+var _banner: String = "CLASH — TOP cyan · MID gold · BOT magenta · occupy beacons"
 var _hud: CanvasLayer
 
 func _ready() -> void:
@@ -58,39 +58,43 @@ func _build_hud() -> void:
 	var score := Label.new()
 	score.name = "ScoreLine"
 	score.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	score.offset_left = -280
+	score.offset_left = -420
 	score.offset_right = -16
-	score.offset_top = 56
-	score.offset_bottom = 120
+	score.offset_top = 102
+	score.offset_bottom = 128
 	score.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	score.add_theme_font_size_override("font_size", 14)
+	score.add_theme_font_size_override("font_size", 15)
+	score.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	score.add_theme_constant_override("outline_size", 4)
 	score.modulate = Color(0.85, 0.95, 1.0)
 	root.add_child(score)
 
 func register_kill() -> void:
 	_kills += 1
 	_obj_score += 8.0
-	_nudge_lanes(0.04)
 	if AudioDirector:
 		AudioDirector.play_hit(true)
 	if GameManager:
-		GameManager.deposit_economy(3.0)
+		if GameManager.player_faction == GameManager.Faction.GROT:
+			GameManager.add_biomass(3.0)
+		else:
+			GameManager.add_contribution(3.0)
+		GameManager.add_mastery("combat", 1.0)
 	if SessionObjectives:
-		SessionObjectives.on_landed_or_lane()
+		SessionObjectives.on_moved()
 	_flash("KILL + soft Contribution")
+
+func register_death() -> void:
+	_deaths += 1
+	_flash("DOWN — returning to nexus")
 
 func register_objective() -> void:
 	_obj_score += 15.0
-	_nudge_lanes(0.08)
 	if SessionObjectives:
 		SessionObjectives.on_claim_or_obj()
 	if AudioDirector:
 		AudioDirector.play_claim()
 	_flash("OBJECTIVE secured")
-
-func _nudge_lanes(amt: float) -> void:
-	for i in 3:
-		_lane_pressure[i] = clampf(float(_lane_pressure[i]) + amt * (0.7 + 0.3 * randf()), 0.05, 0.95)
 
 func _flash(msg: String) -> void:
 	_banner = msg
@@ -118,28 +122,41 @@ func _process(delta: float) -> void:
 		_lbl_banner = _find_label("MatchBanner")
 		_lbl_lanes = _find_label("LaneBar")
 		_lbl_score = _find_label("ScoreLine")
-	_t += delta
-	# Soft passive lane drift (alive match feel)
-	if int(_t) % 7 == 0 and fmod(_t, 1.0) < delta:
-		for i in 3:
-			_lane_pressure[i] = clampf(float(_lane_pressure[i]) + randf_range(-0.02, 0.015), 0.08, 0.92)
+	_t += tick_need
+	_sync_lanes_from_clash()
 	var top := _lbl_banner
 	var lanes := _lbl_lanes
 	var score := _lbl_score
 	if top:
-		top.text = _banner if _t < 4.0 or int(_t) % 12 < 3 else "AEXION CLASH  ·  TOP / MID / BOT  ·  soft War Score only"
+		if _t < 4.0:
+			top.visible = true
+			top.text = "CLASH — TOP cyan · MID gold · BOT magenta · occupy beacons"
+		else:
+			top.visible = false
 	if lanes:
-		lanes.text = "TOP %d%%   ·   MID %d%%   ·   BOT %d%%" % [
-			int(float(_lane_pressure[0]) * 100.0),
-			int(float(_lane_pressure[1]) * 100.0),
-			int(float(_lane_pressure[2]) * 100.0),
-		]
+		lanes.visible = false
 	if score:
-		var fac := GameManager.get_faction_name() if GameManager else "?"
 		var eco := 0.0
 		if GameManager:
 			eco = GameManager.biomass if GameManager.player_faction == GameManager.Faction.GROT else GameManager.contribution
-		score.text = "%s\nK %d  D %d  OBJ %.0f\nECO %.0f (soft)" % [fac, _kills, _deaths, _obj_score, eco]
+		score.text = "K %d  D %d  ·  OBJ %.0f  ·  ECO %.0f" % [_kills, _deaths, _obj_score, eco]
+
+func _sync_lanes_from_clash() -> void:
+	var clash: Node = null
+	if get_parent():
+		clash = get_parent().get_node_or_null("AexionClash")
+	if clash == null and get_tree():
+		clash = get_tree().get_first_node_in_group("aexion_clash")
+	if clash == null:
+		return
+	if "kills" in clash:
+		_kills = int(clash.kills)
+	if "lane_pressure" in clash:
+		var lp: Dictionary = clash.lane_pressure
+		_lane_pressure[0] = clampf(float(lp.get("TOP", 0.0)) / 100.0, 0.0, 1.0)
+		_lane_pressure[1] = clampf(float(lp.get("MID", 0.0)) / 100.0, 0.0, 1.0)
+		_lane_pressure[2] = clampf(float(lp.get("BOT", 0.0)) / 100.0, 0.0, 1.0)
+
 
 func _find_label(n: String) -> Label:
 	if _hud == null:

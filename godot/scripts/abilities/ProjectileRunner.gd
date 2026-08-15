@@ -2,6 +2,7 @@ extends Node
 ## Moves parent projectile; lifetime + pool-aware cleanup.
 
 const _Pool = preload("res://scripts/combat/ProjectilePool.gd")
+const _Hits = preload("res://scripts/combat/CombatHits.gd")
 
 var direction: Vector3 = Vector3.FORWARD
 var speed: float = 28.0
@@ -9,6 +10,7 @@ var life: float = 1.4
 var damage: float = 8.0
 var faction: String = "Cybernex"
 var _hit: bool = false
+var _exclude: Array = []
 
 
 func _ready() -> void:
@@ -17,6 +19,7 @@ func _ready() -> void:
 
 func reset() -> void:
 	_hit = false
+	_exclude = []
 	var p := get_parent()
 	if p == null:
 		return
@@ -32,6 +35,10 @@ func reset() -> void:
 		life = 1.4
 	if p.has_meta("faction"):
 		faction = str(p.get_meta("faction"))
+	if p.has_meta("exclude"):
+		var ex = p.get_meta("exclude")
+		if ex is Array:
+			_exclude = ex
 	set_process(true)
 
 
@@ -44,52 +51,20 @@ func _process(delta: float) -> void:
 		return
 	if p is Node3D and not (p as Node3D).visible:
 		return
-	p.global_position += direction.normalized() * speed * delta
+	var dir: Vector3 = direction.normalized() if direction.length_squared() > 0.0001 else Vector3(0, 0, -1)
+	var step: float = speed * delta
+	if damage > 0.0:
+		var hit: Node = _Hits.apply_shot(get_tree(), (p as Node3D).global_position, dir, damage, faction, step + 1.4, _exclude)
+		if hit != null:
+			_hit = true
+			if AudioDirector:
+				AudioDirector.play_hit(damage >= 20.0)
+			_expire(p)
+			return
+	p.global_position += dir * step
 	life -= delta
 	if life <= 0.0:
 		_expire(p)
-		return
-	if damage <= 0.0:
-		return
-	_proximity(p)
-
-
-func _proximity(p: Node) -> void:
-	var tree := get_tree()
-	if tree == null or not (p is Node3D):
-		return
-	var pos: Vector3 = (p as Node3D).global_position
-	var player := tree.get_first_node_in_group("player")
-	if player is Node3D:
-		var same := false
-		if "faction" in player and str(player.faction) == faction:
-			same = true
-		elif player.has_method("get_faction") and str(player.get_faction()) == faction:
-			same = true
-		if not same and pos.distance_to((player as Node3D).global_position) < 1.15:
-			_try_hit(player)
-			return
-	for e in tree.get_nodes_in_group("enemy"):
-		if e is Node3D and is_instance_valid(e) and pos.distance_to((e as Node3D).global_position) < 1.2:
-			_try_hit(e)
-			return
-
-
-func _try_hit(target: Node) -> void:
-	if _hit or target == null:
-		return
-	if "faction" in target and str(target.faction) == faction:
-		return
-	if target.has_method("get_faction") and str(target.get_faction()) == faction:
-		return
-	if target.has_method("take_damage"):
-		target.take_damage(damage)
-		_hit = true
-		if CombatJuice:
-			CombatJuice.hit_feedback(damage, (target as Node3D).global_position if target is Node3D else Vector3.ZERO, damage >= 20.0)
-		if AudioDirector:
-			AudioDirector.play_hit(damage >= 20.0)
-		_expire(get_parent())
 
 
 func _expire(p: Node) -> void:

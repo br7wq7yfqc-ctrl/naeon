@@ -26,11 +26,13 @@ func _ready() -> void:
 	war = _WarScore.new()
 	war.name = "WarScore"
 	add_child(war)
+	add_to_group("aexion_clash")
 	if LayerContext:
 		LayerContext.set_layer("Arena")
 		LayerContext.seamless_stage = "S1"
 		if LayerContext.active_quest_id == "":
 			LayerContext.set_quest("clash_slice_v0")
+		LayerContext.set_site_pin("SITE_TEST_ARENA_PILLAR")
 	if GameManager:
 		GameManager.toast_requested.emit(
 			"Aexion Clash — kills + soft lane pressure · WS cap 60/day · no planet flip"
@@ -53,6 +55,14 @@ func register_kill(lane: String = "MID") -> void:
 		GameManager.add_mastery("combat", 0.8)
 	if kills >= target_kills:
 		_end_match("player")
+
+
+func register_tower_down(lane: String = "MID") -> void:
+	if _ended or not active:
+		return
+	_add_pressure(lane, 28.0)
+	if GameManager:
+		GameManager.add_mastery("combat", 0.6)
 
 func _process(delta: float) -> void:
 	if _ended or not active or _player_ref == null or not is_instance_valid(_player_ref):

@@ -10,7 +10,8 @@ Single source: `EnergyEconomy.gd`
 | Rot Surge | 14 | 5s |
 | Form Cycle | 0 | 2s |
 | Ship bolt | 5 / 5.5 NAV · ×1.35 siege | fire CD |
+| Ship afterburn (W+Shift) | 16/s | while held; Shift without W still descends |
 
-Regen: player/walker 12/s · ship 8/s · max 100.
+Regen: player/walker 8/s · ship 8/s · max 100.
 
 Channel start failure **refunds** energy. Interrupt mid-channel keeps spend (risk).

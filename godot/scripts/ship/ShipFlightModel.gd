@@ -111,3 +111,60 @@ static func approach_assist(
 
 static func land_ok(speed: float, v_radial: float, max_spd: float = 18.0, max_sink: float = 12.0) -> bool:
 	return speed <= max_spd and absf(v_radial) <= max_sink
+
+
+static func hover_alt_accel(g: Vector3, alt: float, hold_alt: float, v_up: float) -> Vector3:
+	## PD toward a captured hover altitude. Presentation/feel only.
+	if g.length() < 0.01:
+		return Vector3.ZERO
+	var up_dir := (-g).normalized()
+	var err := hold_alt - alt
+	var spring := clampf(err * 0.55, -22.0, 22.0)
+	var damp := -v_up * 3.4
+	return up_dir * (spring + damp)
+
+
+static func ground_effect_accel(g: Vector3, height_agl: float, pad_dist: float, v_up: float) -> Vector3:
+	## Extra lift near terrain / pads — cushion, not an autopilot.
+	if g.length() < 0.01:
+		return Vector3.ZERO
+	var up_dir := (-g).normalized()
+	var h := clampf(height_agl, 0.15, 90.0)
+	var ge := 0.0
+	if h < 22.0:
+		var t := 1.0 - h / 22.0
+		ge = t * t
+	var pad_n := 0.0
+	if pad_dist >= 0.0 and pad_dist < 55.0:
+		pad_n = 1.0 - pad_dist / 55.0
+	var lift: float = g.length() * (ge * 0.38 + pad_n * ge * 0.32)
+	if v_up < -1.0 and ge > 0.04:
+		lift += (-v_up) * ge * 2.4
+	return up_dir * lift
+
+
+static func stall_speed(mode: int) -> float:
+	## Minimum flying speed in dense atmo. HOVER is VTOL — no stall.
+	match mode:
+		Mode.NAV:
+			return 48.0
+		Mode.HOVER:
+			return 0.0
+		_:
+			return 16.0
+
+
+static func stall_amount(atmo: float, speed: float, stall_spd: float) -> float:
+	## 0 flying … 1 fully stalled. Vacuum does not stall.
+	if stall_spd <= 0.05 or atmo < 0.22:
+		return 0.0
+	var need: float = stall_spd * (0.32 + atmo * 0.68)
+	if speed >= need:
+		return 0.0
+	return clampf(1.0 - speed / maxf(need, 0.15), 0.0, 1.0)
+
+
+static func stall_sink_accel(g: Vector3, stall: float) -> Vector3:
+	if stall <= 0.01 or g.length() < 0.01:
+		return Vector3.ZERO
+	return g * stall * 0.9

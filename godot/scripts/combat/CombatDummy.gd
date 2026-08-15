@@ -1,6 +1,7 @@
 extends CharacterBody3D
 class_name CombatDummy
 const _AP = preload("res://scripts/assets/AssetPaths.gd")
+const _ProcSil = preload("res://scripts/player/ProceduralHeroSilhouette.gd")
 
 ## Trainable combat target for TestArena. Takes damage, optional aggro fire.
 
@@ -30,6 +31,7 @@ var _spawn_pos: Vector3
 var _mat: StandardMaterial3D
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _stagger: float = 0.0
+var _windup_t: float = 0.0
 
 func _ready() -> void:
 	health = max_health
@@ -57,6 +59,10 @@ func _physics_process(delta: float) -> void:
 	_cd = max(0.0, _cd - delta)
 	if not is_on_floor():
 		velocity.y -= gravity * delta
+	# Knock must survive this frame — do not overwrite xz while staggered.
+	if _stagger > 0.0:
+		move_and_slide()
+		return
 
 	_ai_accum += delta
 	var ai_need := 0.1
@@ -73,12 +79,16 @@ func _physics_process(delta: float) -> void:
 	if player and global_position.distance_squared_to(player.global_position) > 55.0 * 55.0:
 		velocity.x = 0.0
 		velocity.z = 0.0
+		_windup_t = 0.0
 		move_and_slide()
 		return
-	if player and can_move:
-		var to_p: Vector3 = player.global_position - global_position
+	var dist := 999.0
+	var to_p := Vector3.ZERO
+	if player:
+		to_p = player.global_position - global_position
 		to_p.y = 0.0
-		var dist: float = to_p.length()
+		dist = to_p.length()
+	if player and can_move:
 		if dist < aggro_range and dist > 1.6:
 			var dir: Vector3 = to_p.normalized()
 			velocity.x = dir.x * move_speed
@@ -87,13 +97,46 @@ func _physics_process(delta: float) -> void:
 		else:
 			velocity.x = move_toward(velocity.x, 0.0, move_speed)
 			velocity.z = move_toward(velocity.z, 0.0, move_speed)
-		if dist <= attack_range and _cd <= 0.0:
-			_fire_at(player)
-			_cd = attack_cooldown
 	else:
 		velocity.x = 0.0
 		velocity.z = 0.0
+		if player and dist < aggro_range and to_p.length_squared() > 0.0001:
+			look_at(global_position + to_p.normalized(), Vector3.UP)
+	# Lane holds (can_move=false) still contest the strip — they fire, they don't chase.
+	var downed := _target_downed(player)
+	if _windup_t > 0.0:
+		_windup_t -= delta
+		if _windup_t <= 0.0 and player and dist <= attack_range * 1.15 and not downed:
+			_fire_at(player)
+			_cd = attack_cooldown
+	elif player and dist <= attack_range and _cd <= 0.0 and not downed:
+		_windup_t = 0.22
+		_begin_windup_fx()
 	move_and_slide()
+
+func _target_downed(player: Node) -> bool:
+	if player == null or not is_instance_valid(player):
+		return true
+	if player.has_method("is_downed"):
+		return bool(player.is_downed())
+	if "_down_t" in player:
+		return float(player._down_t) > 0.0
+	if "health" in player and float(player.health) <= 0.0:
+		return true
+	return false
+
+
+func _begin_windup_fx() -> void:
+	if _mat == null:
+		return
+	_mat.emission_energy_multiplier = 2.4
+	var tree := get_tree()
+	if tree:
+		tree.create_timer(0.22).timeout.connect(func():
+			if is_instance_valid(self) and _mat:
+				_mat.emission_energy_multiplier = 1.2
+		)
+
 
 func take_damage(amount: float) -> void:
 	if CombatJuice:
@@ -123,23 +166,49 @@ func on_hacked(caster: Node, amount: float = 1.0) -> void:
 func get_faction() -> String:
 	return faction
 
+
+func hurtbox_center() -> Vector3:
+	return global_position + Vector3(0, 0.85, 0)
+
+
+func hurtbox_radius() -> float:
+	return 0.95
+
 func _die() -> void:
 	if CombatJuice:
 		CombatJuice.hit_feedback(max_health, global_position + Vector3(0, 1.2, 0), true)
 	_alive = false
 	died.emit()
+	if SoftScanCache:
+		SoftScanCache.invalidate_enemies()
 	if CombatJuice:
 		CombatJuice.kill_pop(global_position)
-	visible = false
 	collision_layer = 0
 	velocity = Vector3.ZERO
 	if GameManager:
 		GameManager.add_contribution(2.5)
 		GameManager.add_mastery("combat", 1.5)
 	print("[CombatDummy] Downed")
+	var vis := _visual_root()
+	if vis and DisplayServer.get_name() != "headless" and get_tree():
+		var tw := get_tree().create_tween()
+		tw.tween_property(vis, "scale", Vector3(1.35, 0.08, 1.35), 0.28)
+		tw.tween_callback(_hide_corpse)
+	else:
+		visible = false
 	get_tree().create_timer(respawn_time).timeout.connect(_respawn)
 
+
+func _hide_corpse() -> void:
+	visible = false
+	var vis := _visual_root()
+	if vis:
+		vis.scale = Vector3.ONE
+
 func _respawn() -> void:
+	var vis := _visual_root()
+	if vis:
+		vis.scale = Vector3.ONE
 	health = max_health
 	_alive = true
 	visible = true
@@ -149,11 +218,18 @@ func _respawn() -> void:
 	if _mat:
 		_mat.emission = Color(0.9, 0.1, 0.35)
 	_update_labels()
+	if SoftScanCache:
+		SoftScanCache.invalidate_enemies()
 	print("[CombatDummy] Respawned")
 
 func _fire_at(player: Node) -> void:
 	if player.has_method("take_damage"):
 		player.take_damage(attack_damage)
+	if player is CharacterBody3D:
+		var Hits = load("res://scripts/combat/CombatHits.gd")
+		if Hits:
+			var away: Vector3 = (player as Node3D).global_position - global_position
+			Hits.apply_planar_knock(player, away, attack_damage, 1.0)
 	var target_pos: Vector3 = player.global_position + Vector3.UP * 1.2
 	var origin: Vector3 = global_position + Vector3.UP * 1.2
 	var dir: Vector3 = (target_pos - origin).normalized()
@@ -203,9 +279,10 @@ func _flash() -> void:
 
 func _update_labels() -> void:
 	if label:
-		label.text = "Dummy | %s" % faction
+		label.text = str(faction)
+		label.modulate = Color(0.95, 0.25, 0.5) if faction == "gROT" else Color(0.3, 0.9, 1.0)
 	if health_bar:
-		health_bar.text = "HP %d/%d" % [int(health), int(max_health)]
+		health_bar.text = "%d" % int(health)
 
 func try_load_drone() -> void:
 	if DisplayServer.get_name() == "headless":
@@ -213,31 +290,44 @@ func try_load_drone() -> void:
 	var path: String = _AP.resolve("characters/grot_infector/grot_infector_grot_lod0.glb")
 	if not FileAccess.file_exists(path):
 		path = _AP.resolve("characters/grot_thrall/grot_thrall_grot_lod0.glb")
-	if not FileAccess.file_exists(path):
-		return
-	var doc := GLTFDocument.new()
-	var state := GLTFState.new()
-	if doc.append_from_file(path, state) != OK:
-		return
-	var root := doc.generate_scene(state)
-	if root == null:
-		return
+	if path != "" and FileAccess.file_exists(path):
+		var doc := GLTFDocument.new()
+		var state := GLTFState.new()
+		if doc.append_from_file(path, state) == OK:
+			var root := doc.generate_scene(state)
+			if root != null:
+				if mesh:
+					mesh.visible = false
+				add_child(root)
+				root.name = "DroneGLB"
+				root.scale = Vector3.ONE * 0.9
+				print("[CombatDummy] drone mesh loaded")
+				return
+	_ProcSil.attach(self, "Infector" if faction == "gROT" else "Canine", faction, true)
 	if mesh:
 		mesh.visible = false
-	add_child(root)
-	root.name = "DroneGLB"
-	root.scale = Vector3.ONE * 0.9
-	print("[CombatDummy] drone mesh loaded")
+	print("[CombatDummy] procedural silhouette ", faction)
+
+
+func _visual_root() -> Node3D:
+	var g := get_node_or_null("FormGLB") as Node3D
+	if g:
+		return g
+	var d := get_node_or_null("DroneGLB") as Node3D
+	if d:
+		return d
+	return mesh
 
 
 
 func _hit_pop(amount: float) -> void:
-	if mesh == null or not is_instance_valid(mesh):
+	var vis := _visual_root()
+	if vis == null or not is_instance_valid(vis):
 		return
-	var base := mesh.scale
+	var base := vis.scale
 	var tw := get_tree().create_tween()
-	tw.tween_property(mesh, "scale", base * 1.12, 0.05)
-	tw.tween_property(mesh, "scale", base, 0.12)
+	tw.tween_property(vis, "scale", base * 1.12, 0.05)
+	tw.tween_property(vis, "scale", base, 0.12)
 	if _mat:
 		_mat.emission_energy_multiplier = 2.8 if amount >= 20.0 else 1.8
 		get_tree().create_timer(0.1).timeout.connect(func():

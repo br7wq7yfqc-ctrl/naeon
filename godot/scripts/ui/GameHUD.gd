@@ -44,6 +44,16 @@ var _toast_ttl: float = 0.0
 var _toast_queue: Array = []
 var _radar: Control
 var _radar_dots: Array = []
+var _debug_overlay: bool = false
+var _hp_bar: ProgressBar
+var _en_bar: ProgressBar
+var _hp_tag: Label
+var _en_tag: Label
+var _slot_row: HBoxContainer
+var _slots: Array = []
+var _pip_row: HBoxContainer
+var _pips: Array = []
+var _chrome_built: bool = false
 
 func _ready() -> void:
 	layer = 20
@@ -60,11 +70,12 @@ func _ready() -> void:
 			GameManager.biomass_changed.connect(_on_econ_tick)
 
 func bind_player(p: Node) -> void:
-	_player = p
-	if p:
-		_ability_sys = p.get_node_or_null("AbilitySystem")
-		if _ability_sys == null and p.get_child_count() > 0:
-			for c in p.get_children():
+	_player = p if p != null and is_instance_valid(p) else null
+	_ability_sys = null
+	if _player:
+		_ability_sys = _player.get_node_or_null("AbilitySystem")
+		if _ability_sys == null and _player.get_child_count() > 0:
+			for c in _player.get_children():
 				if c is AbilitySystem or (c.get_script() and "AbilitySystem" in str(c.get_script().resource_path)):
 					_ability_sys = c
 					break
@@ -363,6 +374,7 @@ func _build() -> void:
 		_radar.add_child(d)
 		_radar_dots.append(d)
 	_root.add_child(_radar)
+	_build_play_chrome()
 
 func _process(d: float) -> void:
 	_econ_flash = maxf(0.0, _econ_flash - d)
@@ -377,29 +389,119 @@ func _process(d: float) -> void:
 	_hud_accum = 0.0
 	_refresh()
 
+func _alive_player() -> Node:
+	if _player != null and is_instance_valid(_player):
+		return _player
+	_player = null
+	_ability_sys = null
+	return null
+
+
+func _interior_director() -> Node:
+	var tree := get_tree()
+	if tree == null:
+		return null
+	for n in tree.get_nodes_in_group("interior_director"):
+		if n != null and is_instance_valid(n) and n.has_method("is_inside") and bool(n.is_inside()):
+			return n
+	return null
+
+
+func _in_interior_pocket() -> bool:
+	if _interior_director() != null:
+		return true
+	if LayerContext:
+		var ly := str(LayerContext.current_layer).to_lower()
+		if ly in ["ship_int", "station", "interior"]:
+			return true
+	return false
+
+
+func _apply_interior_chrome(pocket: bool) -> void:
+	## Pocket: keep HP/EN, infection pips, ability chips, life-support, toasts, channel.
+	## Hide planet/space chrome that still thinks the walker is on the pad.
+	if not pocket:
+		if _owner_label:
+			_owner_label.visible = true
+		if _layer_label:
+			_layer_label.visible = true
+		return
+	if _radar:
+		_radar.visible = false
+	if _owner_label:
+		_owner_label.visible = false
+	if _terrain_label:
+		_terrain_label.visible = false
+	if _econ_label:
+		_econ_label.visible = false
+	if _econ_bar:
+		_econ_bar.visible = false
+	if _contest_banner:
+		_contest_banner.visible = false
+	if _claim_bar:
+		_claim_bar.visible = false
+	if _obj_label:
+		_obj_label.visible = false
+	if _layer_label:
+		_layer_label.visible = false
+	if _lead_pip:
+		_lead_pip.visible = false
+	if _edu_label:
+		_edu_label.visible = false
+	if _ctx_label:
+		_ctx_label.visible = false
+
+
+func _in_clash_arena() -> bool:
+	var tree := get_tree()
+	return tree != null and tree.current_scene != null and str(tree.current_scene.name) == "TestArena"
+
+
+func _apply_clash_chrome() -> void:
+	if _debug_overlay or not _in_clash_arena():
+		return
+	if _obj_label:
+		_obj_label.visible = false
+	if _layer_label:
+		_layer_label.visible = false
+	if _terrain_label:
+		_terrain_label.visible = false
+	if _econ_label:
+		_econ_label.visible = false
+	if _econ_bar:
+		_econ_bar.visible = false
+
+
 func _refresh() -> void:
-	_refresh_economy()
+	var director: Node = _interior_director()
+	var pocket: bool = director != null
+	if not pocket and LayerContext:
+		var ly := str(LayerContext.current_layer).to_lower()
+		pocket = ly in ["ship_int", "station", "interior"]
+	if not pocket:
+		_refresh_economy()
+	var actor: Node = _alive_player()
 	_refresh_ability_bar()
-	if _player != null and not is_instance_valid(_player):
-		_player = null
+	_apply_debug_vis()
+	_refresh_play_chrome()
 	if _obj_label and SessionObjectives:
 		_obj_label.text = SessionObjectives.briefing()
-		_obj_label.visible = true
+		_obj_label.visible = not pocket
 	var hp := "?"
 	var en := "?"
 	var fac := "?"
 	var form := ""
-	if _player:
-		if "health" in _player:
-			hp = str(int(_player.health))
-		if "energy" in _player:
-			en = str(int(_player.energy))
-		if _player.has_method("get_faction"):
-			fac = str(_player.get_faction())
-		if "current_form" in _player:
-			form = str(_player.current_form)
-		elif "form_name" in _player:
-			form = str(_player.form_name)
+	if actor:
+		if "health" in actor:
+			hp = str(int(actor.health))
+		if "energy" in actor:
+			en = str(int(actor.energy))
+		if actor.has_method("get_faction"):
+			fac = str(actor.get_faction())
+		if "current_form" in actor:
+			form = str(actor.current_form)
+		elif "form_name" in actor:
+			form = str(actor.form_name)
 	var contrib := 0.0
 	if GameManager:
 		contrib = GameManager.contribution
@@ -418,7 +520,7 @@ func _refresh() -> void:
 		_host_hint_cache = ""
 		host_hint = ""
 	var eva_line := ""
-	if _player and "eva_mode" in _player and bool(_player.eva_mode):
+	if _player and is_instance_valid(_player) and "eva_mode" in _player and bool(_player.eva_mode):
 		var mag_s := ""
 		if "mag_boot" in _player:
 			if "_mag_latched" in _player and bool(_player._mag_latched):
@@ -427,9 +529,17 @@ func _refresh() -> void:
 				mag_s = " MAG:ARM"
 			else:
 				mag_s = " MAG:off"
-		eva_line = "  |  EVA%s" % mag_s
+		var tether_s := ""
+		var tree_e := get_tree()
+		if tree_e:
+			var osp = tree_e.get_first_node_in_group("open_space")
+			if osp and osp.has_method("eva_tether_distance"):
+				var td: float = float(osp.eva_tether_distance())
+				if td >= 0.0:
+					tether_s = "  tether %.0fm" % td
+		eva_line = "  |  EVA%s%s" % [mag_s, tether_s]
 	var sys_line := ""
-	if LayerContext and str(LayerContext.current_layer) in ["Space", "space"]:
+	if not pocket and LayerContext and str(LayerContext.current_layer) in ["Space", "space"]:
 		var tree_s := get_tree()
 		if tree_s:
 			for sh in tree_s.get_nodes_in_group("ship"):
@@ -445,42 +555,48 @@ func _refresh() -> void:
 
 	# Terrain budget + interior status (soft info only)
 	if _terrain_label:
-		_terrain_t += 0.12
-		if _terrain_t >= 0.5:
-			_terrain_t = 0.0
-			var tline := ""
-			var tree := get_tree()
-			if tree and _player:
-				for n in (SoftScanCache.get_terrain_edits() if SoftScanCache else tree.get_nodes_in_group("terrain_edit")):
-					if n.has_method("get_budget_ratio") and n.has_method("remaining_volume"):
-						var pct := int(clampf(float(n.get_budget_ratio()), 0.0, 1.0) * 100.0)
-						var rem := float(n.remaining_volume())
-						tline = "TERRAIN  used %d%%  rem %.0f m³  ·  G raise B dig U undo" % [pct, rem]
-						break
-			_terrain_cache = tline
-		_terrain_label.text = _terrain_cache
-		_terrain_label.visible = _terrain_cache != ""
+		if pocket:
+			_terrain_label.visible = false
+		else:
+			_terrain_t += 0.12
+			if _terrain_t >= 0.5:
+				_terrain_t = 0.0
+				var tline := ""
+				var tree_t := get_tree()
+				if tree_t and _player:
+					for n in (SoftScanCache.get_terrain_edits() if SoftScanCache else tree_t.get_nodes_in_group("terrain_edit")):
+						if n.has_method("get_budget_ratio") and n.has_method("remaining_volume"):
+							var pct := int(clampf(float(n.get_budget_ratio()), 0.0, 1.0) * 100.0)
+							var rem := float(n.remaining_volume())
+							tline = "TERRAIN  used %d%%  rem %.0f m³  ·  G raise B dig U undo" % [pct, rem]
+							break
+				_terrain_cache = tline
+			_terrain_label.text = _terrain_cache
+			_terrain_label.visible = _terrain_cache != ""
 	if _interior_label:
 		var iline := ""
-		if LayerContext and str(LayerContext.current_layer).to_lower() in ["interior", "station", "ship_int"]:
-			iline = "INTERIOR · I to exit"
-		var tree2 := get_tree()
-		if tree2:
-			for n in tree2.get_nodes_in_group("interior_director"):
-				if n.has_method("is_inside") and n.is_inside():
-					var k := "pocket"
-					if n.has_method("get_kind"):
-						k = str(n.get_kind())
-					var seat_hint := ""
-					if str(k) == "ship" and n.has_method("is_near_seat") and _player and n.is_near_seat(_player):
-						seat_hint = " · SEAT [F] pilot"
-					iline = "INTERIOR · %s · I exit%s\nLIFE SUPPORT OK · ATMO 1.00 · POWER BUS STABLE" % [k, seat_hint]
-					break
+		if director:
+			var k := "pocket"
+			if director.has_method("get_kind"):
+				k = str(director.get_kind())
+			var ctx := "I"
+			if director.has_method("is_near_seat") and _player and director.is_near_seat(_player):
+				ctx = "F seat · I"
+			elif director.has_method("is_near_console") and _player and director.is_near_console(_player):
+				ctx = "E ops · I"
+			var ls := ""
+			if director.has_method("life_support_line"):
+				ls = str(director.life_support_line())
+			iline = "%s · %s" % [k, ctx]
+			if ls != "":
+				iline += "\n" + ls
+		elif pocket:
+			iline = "pocket · I"
 		_interior_label.text = iline
 		_interior_label.visible = iline != ""
 
-	# Contested pad readability (nearest active ring)
-	if _contest_banner and _contest_label:
+	# Contested pad readability (nearest active ring) — skip in pocket (walker is at y≈9200)
+	if _contest_banner and _contest_label and not pocket:
 		var best_d := 90.0
 		var best_pct := -1.0
 		var best_name := ""
@@ -515,8 +631,9 @@ func _refresh() -> void:
 	if _ctx_label and LayerContext:
 		var q := LayerContext.active_quest_id if LayerContext.active_quest_id != "" else "—"
 		var c := LayerContext.active_claim_id if LayerContext.active_claim_id != "" else "—"
+		var pin := LayerContext.site_pin_id if LayerContext.site_pin_id != "" else "—"
 		var risk := int(LayerContext.cargo_risk * 100.0)
-		_ctx_label.text = "quest %s | claim %s | cargo risk %d%%" % [q, c, risk]
+		_ctx_label.text = "quest %s | claim %s | pin %s | cargo risk %d%%" % [q, c, pin, risk]
 
 	# Soft physics lead marker (mastery ≥20) — visual aid only
 	if _lead_pip:
@@ -540,7 +657,7 @@ func _refresh() -> void:
 		var ar := GameManager.get_alliance_rank_name() if GameManager.has_method("get_alliance_rank_name") else ""
 		_mastery_label.text = "KNOWLEDGE r%d | %s %.1f | bio %.0f | insight +%.1f%% | %s | rank %s" % [rank, ops_key, colony, bio, soft, GameManager.economy_label(), ar]
 
-	# Infection pips — always visible danger colour
+	# Infection pips — always visible (shape + number, max 5)
 	var stacks := 0
 	var glitch := false
 	if _player:
@@ -548,21 +665,20 @@ func _refresh() -> void:
 		if inf:
 			stacks = int(inf.stacks)
 			glitch = float(inf.glitch_timer) > 0.0
-	if stacks > 0:
-		var pips := ""
-		for i in 5:
-			pips += "●" if i < stacks else "○"
-		var stage: String = _SoftK.infection_label(stacks)
-		if stage == "":
-			stage = "INFECTION %s" % pips
-		_infection_label.text = "%s%s" % [stage, "  GLITCH" if glitch else ""]
-		_infection_label.visible = true
+	var pips := ""
+	for i in 5:
+		pips += "●" if i < stacks else "○"
+	var stage: String = _SoftK.infection_label(stacks)
+	if stage == "":
+		stage = "INF %s  %d/5" % [pips, stacks]
 	else:
-		_infection_label.visible = false
+		stage = "%s  %s %d/5" % [stage, pips, stacks]
+	_infection_label.text = "%s%s" % [stage, "  GLITCH" if glitch else ""]
+	_infection_label.visible = true
 
 	# Ability bar
 	_update_channel_hud()
-	if show_ability_bar and _ability_sys and _ability_sys.get("abilities") != null:
+	if show_ability_bar and _ability_sys != null and is_instance_valid(_ability_sys) and _ability_sys.get("abilities") != null:
 		var lines: PackedStringArray = PackedStringArray()
 		var keys := ["Q", "E", "R", "F"]
 		var abs = _ability_sys.abilities
@@ -585,7 +701,7 @@ func _refresh() -> void:
 	var contested_near := false
 	var claim_ratio := 0.0
 	var tree := get_tree()
-	if tree and _player and _player is Node3D:
+	if not pocket and tree and _player and _player is Node3D:
 		var best_d := 80.0
 		var best_txt := ""
 		for n in (SoftScanCache.get_pads() if SoftScanCache else tree.get_nodes_in_group("pad_bases")):
@@ -593,32 +709,49 @@ func _refresh() -> void:
 				var d: float = (_player as Node3D).global_position.distance_to((n as Node3D).global_position)
 				if d < best_d:
 					best_d = d
-					var st := str(n.get("_status")) if "_status" in n else ""
+					var need := 1.75
+					if n.has_method("get_claim_need"):
+						need = float(n.get_claim_need())
+					var st := ""
+					if n.has_method("get_claim_status"):
+						st = str(n.get_claim_status())
+					elif "_status" in n:
+						st = str(n.get("_status"))
 					var cs := 0.0
 					if "ownership" in n and n.ownership:
 						cs = float(n.ownership.claim_strength)
-					claim_ratio = clampf(cs / 2.0, 0.0, 1.0)
-					best_txt = "PAD %s  %s  claim %.0f%%  (%.0fm)" % [n.get_faction(), st, claim_ratio * 100.0, d]
+					claim_ratio = clampf(cs / maxf(need, 0.01), 0.0, 1.0)
+					var side := ""
+					if n.has_method("get_contest_side"):
+						side = str(n.get_contest_side())
+					if side != "" and st == "contested":
+						best_txt = "PAD %s  occupy→%s %d%%  (%.0fm)" % [n.get_faction(), side, int(claim_ratio * 100.0), d]
+					elif st == "extracting" and n.has_method("harvest_hud_line"):
+						var hl := str(n.harvest_hud_line())
+						best_txt = "PAD %s  %s  (%.0fm)" % [n.get_faction(), hl, d] if hl != "" else "PAD %s  extracting  (%.0fm)" % [n.get_faction(), d]
+					else:
+						best_txt = "PAD %s  %s  claim %.0f%%  (%.0fm)" % [n.get_faction(), st, claim_ratio * 100.0, d]
 					if st == "contested" or str(n.get_faction()) == "Contested":
 						contested_near = true
 		nearest = best_txt
 
 	# Terrain budget
 	var terra := ""
-	if _player and _player is Node3D and get_tree():
+	if not pocket and _player and _player is Node3D and get_tree():
 		for n in (SoftScanCache.get_terrain_edits() if SoftScanCache else get_tree().get_nodes_in_group("terrain_edit")):
 			if n.has_method("get_budget_ratio") and n.visible:
 				terra = "TERRA %.0f%% used  G/B edit  U undo" % (float(n.get_budget_ratio()) * 100.0)
 				break
 	if terra != "":
 		nearest = (nearest + "\n" + terra) if nearest else terra
-	_owner_label.text = nearest
+	if _owner_label:
+		_owner_label.text = nearest
 
 	if _contest_banner:
 		_contest_banner.visible = contested_near
 		if contested_near:
 			var pulse := 0.55 + 0.45 * sin(Time.get_ticks_msec() * 0.01)
-			_contest_label.text = "CONTESTED OWNERSHIP  —  press C to contest  ·  claim %d%%" % int(claim_ratio * 100.0)
+			_contest_label.text = "CONTESTED — occupy to hold · C pulse · Hack  ·  %d%%" % int(claim_ratio * 100.0)
 			var st := _contest_banner.get_theme_stylebox("panel") as StyleBoxFlat
 			if st:
 				st.bg_color = Color(0.55, 0.18, 0.04, 0.55 + pulse * 0.35)
@@ -658,11 +791,11 @@ func _refresh() -> void:
 
 	if contested_near:
 		_owner_label.add_theme_color_override("font_color", Color(1.0, 0.55, 0.2))
-	else:
+	elif _owner_label:
 		_owner_label.add_theme_color_override("font_color", Color(0.95, 0.9, 0.55))
 
-	# Pad radar
-	if _radar and _player and _player is Node3D and get_tree():
+	# Pad radar — skip in pocket (no pads at y=9200)
+	if not pocket and _radar and _player and _player is Node3D and get_tree():
 		var origin: Vector3 = (_player as Node3D).global_position
 		var pads: Array = []
 		for n in (SoftScanCache.get_pads() if SoftScanCache else get_tree().get_nodes_in_group("pad_bases")):
@@ -711,6 +844,8 @@ func _refresh() -> void:
 				_:
 					dot.color = Color(0.7, 0.7, 0.75)
 			dot.visible = true
+	_apply_interior_chrome(pocket)
+	_apply_clash_chrome()
 
 func _on_gm_toast(msg: String) -> void:
 	push_toast(msg, 3.0)
@@ -724,9 +859,13 @@ func _soft_infection_text(stacks: int) -> String:
 func _refresh_ability_bar() -> void:
 	if _ability_label == null:
 		return
-	if _ability_sys == null and _player:
-		_ability_sys = _player.get_node_or_null("AbilitySystem")
-	if _ability_sys == null:
+	var actor: Node = _alive_player()
+	if _ability_sys != null and not is_instance_valid(_ability_sys):
+		_ability_sys = null
+	if _ability_sys == null and actor:
+		_ability_sys = actor.get_node_or_null("AbilitySystem")
+	if _ability_sys == null or not is_instance_valid(_ability_sys):
+		_ability_sys = null
 		_ability_label.text = ""
 		return
 	var keys := ["Q", "E", "R", "F"]
@@ -793,15 +932,15 @@ func _update_channel_hud() -> void:
 	var ratio := 0.0
 	var name := ""
 	var ch: Node = null
-	if _player:
-		ch = _player.get_node_or_null("ChannelController")
-		if ch == null and _ability_sys:
-			# channel lives on owner
-			pass
-	if ch and ch.has_method("is_channeling") and ch.is_channeling():
+	var actor: Node = _alive_player()
+	if actor:
+		ch = actor.get_node_or_null("ChannelController")
+	if _ability_sys != null and not is_instance_valid(_ability_sys):
+		_ability_sys = null
+	if ch and is_instance_valid(ch) and ch.has_method("is_channeling") and ch.is_channeling():
 		ratio = float(ch.get_ratio()) if ch.has_method("get_ratio") else 0.0
 		name = str(ch.ability_name) if "ability_name" in ch else "Channel"
-	elif _ability_sys and _ability_sys.has_method("get_channel_ratio"):
+	elif _ability_sys and is_instance_valid(_ability_sys) and _ability_sys.has_method("get_channel_ratio"):
 		ratio = float(_ability_sys.get_channel_ratio())
 		if ratio > 0.01:
 			name = "Channel"
@@ -812,3 +951,243 @@ func _update_channel_hud() -> void:
 		_channel_label.visible = ratio > 0.0
 		if ratio > 0.0:
 			_channel_label.text = "%s  %d%%" % [name, int(ratio * 100.0)]
+
+
+func is_debug_overlay() -> bool:
+	return _debug_overlay
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventKey and event.pressed and not event.echo):
+		return
+	var k: int = event.keycode if event.keycode != KEY_NONE else event.physical_keycode
+	if k == KEY_F3 or event.physical_keycode == KEY_F3:
+		_debug_overlay = not _debug_overlay
+		_apply_debug_vis()
+		_apply_interior_chrome(_in_interior_pocket())
+		_apply_clash_chrome()
+		if GameManager:
+			GameManager.toast_requested.emit("HUD debug %s" % ("ON" if _debug_overlay else "OFF"))
+		get_viewport().set_input_as_handled()
+
+
+func _flat(col: Color, border: Color = Color(0, 0, 0, 0), bw: int = 0, radius: int = 4) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color = col
+	s.border_color = border
+	s.set_border_width_all(bw)
+	s.corner_radius_top_left = radius
+	s.corner_radius_top_right = radius
+	s.corner_radius_bottom_left = radius
+	s.corner_radius_bottom_right = radius
+	s.content_margin_left = 6
+	s.content_margin_right = 6
+	s.content_margin_top = 4
+	s.content_margin_bottom = 4
+	return s
+
+
+func _style_bar(bar: ProgressBar, fill: Color, bg: Color) -> void:
+	bar.add_theme_stylebox_override("fill", _flat(fill, Color(0, 0, 0, 0), 0, 3))
+	bar.add_theme_stylebox_override("background", _flat(bg, Color(0.2, 0.3, 0.4, 0.5), 1, 3))
+	bar.show_percentage = false
+
+
+func _build_play_chrome() -> void:
+	if _chrome_built or _root == null:
+		return
+	_chrome_built = true
+	var vitals := Control.new()
+	vitals.name = "PlayVitals"
+	vitals.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	vitals.offset_left = 18
+	vitals.offset_top = -118
+	vitals.offset_right = 280
+	vitals.offset_bottom = -18
+	vitals.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(vitals)
+	_hp_tag = Label.new()
+	_hp_tag.text = "HP"
+	_hp_tag.position = Vector2(0, 0)
+	_hp_tag.add_theme_font_size_override("font_size", 12)
+	_hp_tag.add_theme_color_override("font_color", Color(1.0, 0.45, 0.48))
+	_hp_tag.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	_hp_tag.add_theme_constant_override("outline_size", 3)
+	vitals.add_child(_hp_tag)
+	_hp_bar = ProgressBar.new()
+	_hp_bar.position = Vector2(28, 2)
+	_hp_bar.size = Vector2(210, 16)
+	_hp_bar.max_value = 100
+	_hp_bar.value = 100
+	_style_bar(_hp_bar, Color(0.82, 0.18, 0.28, 0.95), Color(0.06, 0.04, 0.05, 0.82))
+	vitals.add_child(_hp_bar)
+	_en_tag = Label.new()
+	_en_tag.text = "EN"
+	_en_tag.position = Vector2(0, 22)
+	_en_tag.add_theme_font_size_override("font_size", 12)
+	_en_tag.add_theme_color_override("font_color", Color(0.45, 0.9, 1.0))
+	_en_tag.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	_en_tag.add_theme_constant_override("outline_size", 3)
+	vitals.add_child(_en_tag)
+	_en_bar = ProgressBar.new()
+	_en_bar.position = Vector2(28, 24)
+	_en_bar.size = Vector2(210, 14)
+	_en_bar.max_value = 100
+	_en_bar.value = 100
+	_style_bar(_en_bar, Color(0.15, 0.75, 0.95, 0.95), Color(0.04, 0.07, 0.1, 0.82))
+	vitals.add_child(_en_bar)
+	_pip_row = HBoxContainer.new()
+	_pip_row.position = Vector2(28, 44)
+	_pip_row.add_theme_constant_override("separation", 5)
+	vitals.add_child(_pip_row)
+	var inf_tag := Label.new()
+	inf_tag.text = "INF"
+	inf_tag.add_theme_font_size_override("font_size", 11)
+	inf_tag.add_theme_color_override("font_color", Color(1.0, 0.4, 0.55))
+	inf_tag.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	inf_tag.add_theme_constant_override("outline_size", 3)
+	_pip_row.add_child(inf_tag)
+	for i in 5:
+		var pip := ColorRect.new()
+		pip.custom_minimum_size = Vector2(12, 12)
+		pip.color = Color(0.25, 0.12, 0.16, 0.85)
+		_pip_row.add_child(pip)
+		_pips.append(pip)
+	_slot_row = HBoxContainer.new()
+	_slot_row.name = "AbilitySlots"
+	_slot_row.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_slot_row.offset_left = -300
+	_slot_row.offset_right = 300
+	_slot_row.offset_top = -78
+	_slot_row.offset_bottom = -14
+	_slot_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_slot_row.add_theme_constant_override("separation", 8)
+	_slot_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.add_child(_slot_row)
+	var keys := ["Q", "E", "R", "F"]
+	for i in 4:
+		var panel := PanelContainer.new()
+		panel.custom_minimum_size = Vector2(118, 56)
+		panel.add_theme_stylebox_override("panel", _flat(Color(0.05, 0.09, 0.14, 0.82), Color(0.25, 0.75, 0.95, 0.55), 1, 6))
+		var vbox := VBoxContainer.new()
+		vbox.add_theme_constant_override("separation", 0)
+		var key_l := Label.new()
+		key_l.text = keys[i]
+		key_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		key_l.add_theme_font_size_override("font_size", 11)
+		key_l.add_theme_color_override("font_color", Color(0.55, 0.9, 1.0))
+		var name_l := Label.new()
+		name_l.text = "—"
+		name_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name_l.add_theme_font_size_override("font_size", 13)
+		name_l.add_theme_color_override("font_color", Color(0.92, 0.96, 1.0))
+		name_l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+		name_l.add_theme_constant_override("outline_size", 3)
+		var cd_l := Label.new()
+		cd_l.text = "ready"
+		cd_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		cd_l.add_theme_font_size_override("font_size", 11)
+		cd_l.add_theme_color_override("font_color", Color(0.45, 0.95, 0.65))
+		vbox.add_child(key_l)
+		vbox.add_child(name_l)
+		vbox.add_child(cd_l)
+		panel.add_child(vbox)
+		_slot_row.add_child(panel)
+		_slots.append({"panel": panel, "name": name_l, "cd": cd_l})
+	if _obj_label:
+		_obj_label.add_theme_font_size_override("font_size", 15)
+		_obj_label.offset_top = 10
+		_obj_label.offset_bottom = 40
+	_apply_debug_vis()
+
+
+func _apply_debug_vis() -> void:
+	var dbg := _debug_overlay
+	if _status_label:
+		_status_label.visible = dbg
+	if _mastery_label:
+		_mastery_label.visible = dbg
+	if _ctx_label:
+		_ctx_label.visible = dbg
+	if _ability_label:
+		_ability_label.visible = dbg
+	if _infection_label:
+		_infection_label.visible = dbg
+	if _econ_label:
+		_econ_label.visible = true
+		_econ_label.position = Vector2(14, 52) if not dbg else Vector2(14, 128)
+	if _econ_bar:
+		_econ_bar.visible = true
+		_econ_bar.position = Vector2(14, 72) if not dbg else Vector2(14, 148)
+	if _slot_row:
+		_slot_row.visible = not dbg
+	if _radar:
+		var clash := false
+		var tree := get_tree()
+		if tree and tree.current_scene:
+			clash = str(tree.current_scene.name) == "TestArena"
+		_radar.visible = (not clash) or dbg
+
+
+func _refresh_play_chrome() -> void:
+	if not _chrome_built:
+		return
+	if _player and is_instance_valid(_player):
+		if "health" in _player and "max_health" in _player and _hp_bar:
+			var hp_now := float(_player.health)
+			var hp_max := float(_player.max_health)
+			if "shields" in _player and "max_shields" in _player:
+				hp_now += float(_player.shields)
+				hp_max += float(_player.max_shields)
+			_hp_bar.max_value = maxf(1.0, hp_max)
+			_hp_bar.value = hp_now
+			if _hp_tag:
+				if "shields" in _player:
+					_hp_tag.text = "%d +%d" % [int(_player.health), int(_player.shields)]
+				else:
+					_hp_tag.text = "%d" % int(_player.health)
+		if "energy" in _player and "max_energy" in _player and _en_bar:
+			_en_bar.max_value = maxf(1.0, float(_player.max_energy))
+			_en_bar.value = float(_player.energy)
+			if _en_tag:
+				_en_tag.text = "%d" % int(_player.energy)
+		var stacks := 0
+		var inf = _player.get_node_or_null("InfectionStatus")
+		if inf:
+			stacks = int(inf.stacks)
+		for i in _pips.size():
+			var pip: ColorRect = _pips[i]
+			if i < stacks:
+				pip.color = Color(0.95, 0.2, 0.42, 0.95)
+			else:
+				pip.color = Color(0.22, 0.1, 0.14, 0.75)
+	if _ability_sys != null and not is_instance_valid(_ability_sys):
+		_ability_sys = null
+	if _ability_sys == null and _player != null and is_instance_valid(_player):
+		_ability_sys = _player.get_node_or_null("AbilitySystem")
+	var keys := ["Q", "E", "R", "F"]
+	for i in _slots.size():
+		var slot: Dictionary = _slots[i]
+		var nm := "—"
+		var cd := 0.0
+		if _ability_sys != null and is_instance_valid(_ability_sys):
+			if _ability_sys.has_method("get_slot_label"):
+				nm = str(_ability_sys.get_slot_label(i))
+			elif "abilities" in _ability_sys and i < _ability_sys.abilities.size() and _ability_sys.abilities[i]:
+				nm = str(_ability_sys.abilities[i].ability_name)
+			if _ability_sys.has_method("get_cooldown_remaining"):
+				cd = float(_ability_sys.get_cooldown_remaining(i))
+		var short := nm
+		if short.length() > 12:
+			short = short.substr(0, 11)
+		(slot["name"] as Label).text = short
+		var cd_l: Label = slot["cd"]
+		var panel: PanelContainer = slot["panel"]
+		if cd > 0.05:
+			cd_l.text = "%.1fs" % cd
+			cd_l.add_theme_color_override("font_color", Color(1.0, 0.75, 0.35))
+			panel.modulate = Color(0.7, 0.75, 0.8, 0.95)
+		else:
+			cd_l.text = keys[i] + " ready"
+			cd_l.add_theme_color_override("font_color", Color(0.45, 0.95, 0.65))
+			panel.modulate = Color.WHITE
