@@ -1198,6 +1198,26 @@
       "position": "cybernex_light_armor",
       "dump_key": "generations/rendered/dK2D0.jpg",
       "manual": 12
+    },
+    {
+      "id": "bgC4w",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Light armor",
+      "position": "grot_light_armor",
+      "dump_key": "generations/rendered/bgC4w.jpg",
+      "manual": 13
+    },
+    {
+      "id": "2T4jW",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "armor",
+      "label": "Light armor",
+      "position": "grot_light_armor",
+      "dump_key": "generations/rendered/2T4jW.jpg",
+      "manual": 14
     }
   ],
   "note": "Manual rebuild started. #001 1p69s gROT Carrier cinematic. Generations Index wiped.",

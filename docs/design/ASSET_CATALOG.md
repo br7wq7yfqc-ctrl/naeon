@@ -184,8 +184,8 @@ Verified against the plate before bind.
 | Light armor | CX | ortho | `cybernex_light_armor` | `dK2D0` |
 | Medium armor | CX | cinematic | `cybernex_medium_armor` | `NsEul` |
 | Medium armor | CX | ortho | `cybernex_medium_armor` | `6mSp1` |
-| Light armor | GR | ortho | `grot_light_armor` | `XqU70` |
-| Light armor | GR | cinematic | `grot_light_armor` | `mfHHB`, `vB0CU`, `ZiYRJ` |
+| Light armor | GR | cinematic | `grot_light_armor` | `bgC4w` |
+| Light armor | GR | ortho | `grot_light_armor` | `2T4jW` |
 | Silent Prong | CX | cinematic | `cybernex_silent_prong` | `gjXDt` |
 | Logistic drone | CX | cinematic | `cybernex_logistic_drone` | `oAWSV` |
 | Logistic drone | GR | cinematic | `grot_logistic_drone` | `KcgoY` |

@@ -297,12 +297,31 @@
       "dump_key": "generations/rendered/XqU70.jpg",
       "locked_uuids": [
         {
+          "id": "bgC4w",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/bgC4w.jpg",
+          "manual": 13
+        },
+        {
+          "id": "2T4jW",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/2T4jW.jpg",
+          "manual": 14
+        },
+        {
           "id": "XqU70",
           "faction": "GR",
           "view": "ortho",
           "class": "armor",
           "label": "Light armor",
-          "dump_key": "generations/rendered/XqU70.jpg"
+          "dump_key": "generations/rendered/XqU70.jpg",
+          "notes": "superseded by manual #014 2T4jW"
         },
         {
           "id": "mfHHB",
@@ -310,7 +329,8 @@
           "view": "cinematic",
           "class": "armor",
           "label": "Light armor",
-          "dump_key": "generations/rendered/mfHHB.jpg"
+          "dump_key": "generations/rendered/mfHHB.jpg",
+          "notes": "superseded by manual #013 bgC4w"
         },
         {
           "id": "vB0CU",
@@ -318,7 +338,8 @@
           "view": "cinematic",
           "class": "armor",
           "label": "Light armor",
-          "dump_key": "generations/rendered/vB0CU.jpg"
+          "dump_key": "generations/rendered/vB0CU.jpg",
+          "notes": "superseded by manual #013 bgC4w"
         },
         {
           "id": "ZiYRJ",
@@ -326,7 +347,8 @@
           "view": "cinematic",
           "class": "armor",
           "label": "Light armor",
-          "dump_key": "generations/rendered/ZiYRJ.jpg"
+          "dump_key": "generations/rendered/ZiYRJ.jpg",
+          "notes": "superseded by manual #013 bgC4w"
         }
       ]
     },
