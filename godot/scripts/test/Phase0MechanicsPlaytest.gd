@@ -279,8 +279,10 @@ func _go() -> void:
 		var d0: float = w_eva.global_position.distance_to(sh_eva.global_position)
 		await get_tree().create_timer(0.45).timeout
 		var d1: float = w_eva.global_position.distance_to(sh_eva.global_position)
-		var tline := os.eva_tether_distance() if os.has_method("eva_tether_distance") else d1
-		print("[Playtest] EVA tether ", snapped(d0, 0.1), " -> ", snapped(d1, 0.1), " hud=", snapped(float(tline), 0.1))
+		var tline: float = d1
+		if os.has_method("eva_tether_distance"):
+			tline = float(os.eva_tether_distance())
+		print("[Playtest] EVA tether ", snapped(d0, 0.1), " -> ", snapped(d1, 0.1), " hud=", snapped(tline, 0.1))
 		if d1 >= d0 - 0.15:
 			fails.append("EVA tether did not reel toward ship")
 		os.set("_eva_mode", false)
