@@ -6,7 +6,13 @@
 No P2W · soft Knowledge · Infection max 5 · S1 · freemium ≠ power · Tripo-first · narrative ≠ power · perf/25 · site_pin catalog · constructor templates only
 
 ## Design corpus
-rules/00–26 · Act I–VI + premium · SITE_PIN · **CONSTRUCTOR_TEMPLATES** · **SIDE_QUEST_TEMPLATES** · **EDU_MODULE_LIBRARY** · skill v2.0
+rules/00–26 · Act I–VI + premium · SITE_PIN · **CONSTRUCTOR_TEMPLATES** · **SIDE_QUEST_TEMPLATES** · **EDU_MODULE_LIBRARY** · **GALAXY_LAYER_PLAN** · **TRIPO_ASSET_MANIFEST** · skill v2.0
+
+## Where things are authored
+- **Placement** of star / bodies / belt / gate anchors → `godot/scripts/world/StarSystemCatalog.gd`
+- **Physical envelopes** (radius, gravity, atmosphere) → `PlanetProfileCatalog.gd`
+- Travel, maps, gates, arena entry → `docs/design/GALAXY_LAYER_PLAN.md`
+- Every mesh path Tripo owes us → `docs/design/TRIPO_ASSET_MANIFEST.md`
 
 ## Gaps closed
 - Constructor template seed (8 templates, VS = 2)
@@ -125,6 +131,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-15 | Clash HUD collapse (banner/ScoreLine/LaneHUD); ship bolt sweep + hull crit recover + shield hold; pad turrets track hulls. No permadeath, no P2W. | sequential-dev |
 | 2026-08-15 | Clash towers are live Turrets; ship afterburn W+Shift (energy); walker variable jump cut. Soft pressure only. | sequential-dev |
 | 2026-08-15 | **Full code audit + hardening** — 101 scripts / 10 scenes / 12 autoloads. ~110 confirmed defects, blockers fixed, pad streaming memory climb closed. Single record: `docs/PROTOTYPE_TO_PLAYABLE.md` | owner brief: prototype → playable |
+| 2026-08-15 | **Galaxy layer planned + G0 built** — star at the system origin, bodies on distinct orbits, belt from data. Hyperspace, hyperdrives, NAEXOS gates, galaxy/system maps and arena-from-map specified. Authority: `docs/design/GALAXY_LAYER_PLAN.md`; assets: `docs/design/TRIPO_ASSET_MANIFEST.md` (78 assets); plan: `DEVELOPMENT_PLAN.md` Phase G | owner brief: star system + hyperspace + gates + map |
 
 ## Full code audit + hardening — 2026-08-15
 

@@ -1,8 +1,8 @@
 # NAEON — Подробный план разработки по фазам (для build-сессий)
 
-**Версия:** 2.0  
-**Дата:** 2026-08-05  
-**Основа:** CONCEPT.md v1.2  
+**Версия:** 2.1  
+**Дата:** 2026-08-15  
+**Основа:** CONCEPT.md v1.3  
 **Движок:** Godot 4.3+ / 4.4+  
 **Принцип:** Local-first → Vertical Slices → Iterative Multiplayer → Platform + AI + Educational Systems
 
@@ -103,7 +103,7 @@
 **Цель:** Playable vertical slice одной системы + полноценный MOBA + первые динамические трансформации + квесты + Knowledge foundation.
 
 ### Deliverables
-- Одна система (2–3 планеты + space + jump points) — предпочтительно ARK или Helios Reach
+- Одна система (звезда + 3 тела на разных орбитах + пояс + якоря гейтов) — ARK. Планировка сделана в **Phase G0**; jump points включаются в G3–G4
 - Persistent colonies / ships
 - Fleet system (до 10–15 кораблей, flagship overlay)
 - Carriers seed (hangar + drones/fighters)
@@ -121,6 +121,67 @@
 - Educational puzzle nodes + soft combat knowledge effects
 - Playable 5v5/3v3 MOBA + rewards
 - Low-end playable
+
+---
+
+## Phase G: Галактический слой — системы, гиперпространство, гейты, карта, вход в арену
+
+**Детальный дизайн:** `docs/design/GALAXY_LAYER_PLAN.md` · **Ассеты:** `docs/design/TRIPO_ASSET_MANIFEST.md`
+**Идёт параллельно Phase 3–4** — это то, что превращает «одну систему» в галактику.
+**Цель:** планеты естественно разнесены вокруг звезды; система пересекается целиком; между системами летают гиперпрыжком или через гейты; есть карта и навигация; арена открывается из мира.
+
+Каждая подфаза playable отдельно (принцип vertical slice).
+
+### G0 — Планировка системы — **СДЕЛАНО (2026-08-15)**
+- `StarSystemCatalog`: звезда в центре, тела на разных орбитах с углами и наклонениями
+- Видимое тело звезды с короной; направление света на каждую планету — от её звезды
+- Пояс астероидов берёт полосу из данных системы (до этого не вызывался вовсе)
+- Якоря гейтов авторские, но намеренно **не** спавнятся: гейт-пропс без прыжка — это ровно та «реализованная на вид, но мёртвая» система, которую вычищал аудит
+- **DoD выполнен:** тела на орбитах 3800 / 7400 / 11800, smoke зелёный
+
+### G1 — CRUISE (внутрисистемный сверхсвет)
+- Режим `4`: 200 м/с → 4 км/с, throttle-scaled, warp-визуал, сдвиг FOV
+- **Mass lock** в радиусе `2.5 × (радиус тела + атмосфера)` — не даёт включить и сбрасывает
+- Расход топлива 0.05/мин; выход по `4` или автоматически по mass lock
+- В том же проходе орбиты умножаются на ~2.8 (внешний гейт ≈ 40 км): именно CRUISE делает такой масштаб играбельным
+- **DoD:** от орбиты Nex-Prime до внешнего гейта меньше 30 с; mass lock отказывает у планеты; после выхода корабль управляем
+- *Затрагивает:* `ShipController`, `ShipFlightModel`, `StarSystemCatalog`, `GameHUD`
+
+### G2 — Данные галактики + карты
+- `GalaxyCatalog` (системы, координаты в св. годах, связи), `NavState` (текущая система, маршрут, топливо, разведанное)
+- Галактическая карта `M`: цвет по контролю фракций, связи гейтов, доступные прыжки, скрытое неразведанное, фильтры
+- Карта системы `N`: звезда, орбиты, тела, станции, гейты
+- Прокладка маршрута с **названной причиной** отказа для каждого участка
+- **DoD:** маршрут из 3 участков строится и читается; ни один отказ не молчит
+- *Затрагивает:* новое `scripts/galaxy/`, `scripts/ui/GalaxyMap.gd`, `LayerContext`
+
+### G3 — Гипердвигатель и прыжки
+- Новый тип модуля `HYPERDRIVE`, один хардпоинт; классы Relay-1/2, Nex-Lattice (CX), Spore-Fold (GR) — зеркальные, не сильнее
+- Шесть состояний: TARGET → ALIGN (15°) → CHARGE → JUMP (3 с) → ARRIVAL у звезды → COOLDOWN
+- Топливо, заправка на падах, буксир при нуле; отказы называют числа
+- Дальность падает от массы груза
+- **DoD:** ARK → ROT-Prime и обратно, все состояния видны, отказы по дальности и топливу названы
+- *Затрагивает:* `ShipModule`, `ShipController`, новый `HyperdriveController`, `NavState`, `OpenSpace`
+
+### G4 — Гейты
+- `HyperGate`: кольцо, пилоны, ядро; состояния open / dormant / infected / contested
+- Проход: влёт под 100 м/с → 2 с раскрутки → выход у парного гейта, целевая система стримится во время раскрутки
+- Владение через `OwnershipData`; dormant будится каналом Probe; infected накладывает Infection (кап 5), Firewall снимает
+- Переиспользуются уже отремонтированные системы: `InfectionStatus`, `ChannelController`, occupy-to-hold падов
+- **DoD:** ARK → Helios Reach и обратно; пробуждение dormant; infected даёт стаки, Firewall чистит
+- *Затрагивает:* новый `scripts/world/HyperGate.gd`, `StarSystemCatalog`, `OwnershipData`, `InfectionStatus`
+
+### G5 — Арена из мира
+- `ClashBeacon`: орбитальная станция и наземная арена у пада
+- Подлёт на 300 м → `ENTER CLASH — hold F` (1.2 с, чтобы не входить случайно)
+- Возврат **в ту же систему к тому же маяку** с сохранённым кораблём и грузом
+- Soft-влияние матча ложится на пады этой системы через `apply_arena_influence`
+- `M` освобождается под карту; `Tab` остаётся девелоперским шорткатом под F3
+- **DoD:** матч с маяка ARK и возврат туда же; влияние видно на паде ARK
+- *Затрагивает:* новый `scripts/world/ClashBeacon.gd`, `LayerContext`, `TestArena`, `OpenSpace`
+
+### G6 — Контент и полировка
+Остальные системы из лорного сида, сети гейтов по фракциям, interdiction, топливный скуп у звезды, буксир, фильтры и поиск на карте.
 
 ---
 
@@ -162,7 +223,7 @@
 - Interest management / spatial partitioning
 - Aggressive LOD, MultiMesh, animation compression, distant AI simplification
 - Load testing (entities + MOBA instances + voice)
-- Full star systems set (ARK, ROT-Prime, Helios Reach, Verdant Veil, Forge Depths, Echo Ruins…)
+- Full star systems set (ARK, ROT-Prime, Helios Reach, Veil Reach, Forge Depths, Echo Ruins…) — Phase G6 наполняет `GalaxyCatalog` и сети гейтов
 - More campaign chapters, generated content variety, educational tracks
 - Balance pass (PvP, Hacking/Firewall, RBE vs Biomass, MOBA, soft knowledge effects)
 - Terraform / IaC для Yandex Cloud
@@ -214,6 +275,10 @@
 
 | Риск | Вероятность | Влияние | Митигация |
 |------|-------------|---------|-----------|
+| CRUISE делает систему пустой | Средняя | Среднее | Mass lock заставляет реально подходить к телам; пояс, станции и гейты дают смысл внешней системе |
+| Два способа перемещения путают | Средняя | Среднее | Разные роли: гейт фиксирован, бесплатен, оспариваем; прыжок свободен и стоит топлива. Карта подписывает каждый участок |
+| Хитч при стриминге системы через гейт | Средняя | Высокое | Переиспользовать staggered-билдер `PlanetBody`; время раскрутки = бюджет стриминга; пады уже выгружаются при отлёте |
+| Топливо превращается в рутину | Средняя | Среднее | Щедрый расход в CRUISE, бесплатная заправка на своих падах, буксир, который не даёт застрять |
 | Netcode desync / lag | Высокая | Высокое | Server authority + prediction early |
 | Scope creep (много систем) | Высокая | Высокое | Жёсткий vertical slice, reuse ability/AI systems |
 | Performance (entities + MOBA + voice + transformation) | Средняя | Высокое | Interest management, LOD, separate instances, open-source voice first |

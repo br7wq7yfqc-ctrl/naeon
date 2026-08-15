@@ -2,6 +2,9 @@
 
 **Single record of the 2026-08-15 hardening work.** Owner brief: audit the whole
 codebase, fix what is broken, and move the build away from "raw prototype".
+A follow-up brief then added the galaxy layer — see §7, with the design in
+`docs/design/GALAXY_LAYER_PLAN.md` and the asset list in
+`docs/design/TRIPO_ASSET_MANIFEST.md`.
 
 This is the one document to read before touching combat, pads, ship flight, the
 walker or the arena. It supersedes the scattered notes; `docs/SHARED_AGENT_MEMORY.md`
@@ -375,5 +378,89 @@ When observation and code disagree, measure.
 
 ---
 
+## 7. Galaxy layer — the follow-up brief
+
+Second owner brief on the same day: planets must be naturally spread around their
+star; add hyperspace between systems the way Elite Dangerous does it, with
+hyperdrives; every system carries gates to its neighbours; add a galaxy map and
+navigation; let the player enter the arena from the OpenSpace map; and produce the
+full Tripo asset list.
+
+**Design:** `docs/design/GALAXY_LAYER_PLAN.md` — the authority, specified to the
+point of implementation. **Assets:** `docs/design/TRIPO_ASSET_MANIFEST.md` — 78
+assets with class, faction variant, LODs, priority and generation order.
+**Plan:** `DEVELOPMENT_PLAN.md` Phase G (G0–G6). **Concept:** `CONCEPT.md` §6.
+
+### 7.1 Built now — G0, star system layout
+
+The three planets sat on hand-typed coordinates inside one ~4 km clump, and "the
+sun" was a `DirectionalLight3D` with a fixed rotation and no body behind it.
+Nothing orbited anything.
+
+`StarSystemCatalog` now owns placement, and `PlanetProfileCatalog` keeps only the
+physical envelopes:
+
+| Body | Orbit | Angle | Inclination |
+|------|-------|-------|-------------|
+| Star **Aex** (G, r=900) | 0 | — | — |
+| Nex-Prime | 3800 | 24° | 0° |
+| ROT-Hive | 7400 | 158° | +6.5° |
+| Shard-Moon | 11800 | 268° | −9° |
+| Belt | 9000–10400 | ring | ±210 |
+| Gates (×3) | 13600–15200 | authored | not spawned |
+
+Distinct angles keep the bodies from lining up; distinct inclinations keep them
+out of one plane. The star is a visible emissive body with a corona, each planet
+takes its light direction from the star it orbits, and the shadow light aims along
+the star→observer line so the terminator matches where the star actually is. The
+asteroid belt is called for the first time and takes its band from the layout.
+
+Measured: `Nex-Prime at orbit 3800 · ROT-Hive at orbit 7400 · Shard-Moon at orbit
+11800 · system ARK bodies=3`, smoke green.
+
+### 7.2 Deliberately not built yet
+
+Gate anchors are authored in the catalog and **nothing spawns them**. A gate prop
+with no jump behind it is precisely the "looks implemented, is inert" defect class
+this whole branch spent its time removing — `ChannelController` outside its group,
+`InfectionStatus` with no callers, `match_ended` with no listener. Authoring the
+data without the prop keeps the layout honest and leaves G4 a clean start.
+
+The same reasoning holds the orbits at their current scale. The plan's target is
+~2.8× larger, but at NAV's 180 m/s the outer gate would already be a four-minute
+hold of W. The scale-up ships in the same pass as CRUISE (G1), which is what makes
+it playable.
+
+### 7.3 Why gates, and why they matter
+
+Gates are not generic sci-fi furniture. The existing lore already says NAEXOS
+built a transgalactic network and gROT used it as an **infection vector** after
+the Schism. So a gate is exactly where Infection should arrive from, which gives
+gate ownership real stakes and lets the design reuse three systems this audit had
+just repaired — `InfectionStatus` (hard cap 5), `ChannelController` (Probe to wake
+a dormant gate, Firewall to cleanse an infected one), and the pads'
+occupy-to-hold meter for the contested state — instead of inventing parallels.
+
+Gate ownership grants **soft** benefits only: faster spool, a traffic readout. No
+tolls, no blocking the other faction. A gate the enemy cannot use at all would be
+hard power, which rules/04 forbids.
+
+### 7.4 What the audit taught this design
+
+Three lessons from §1 are written into the galaxy plan as requirements:
+
+- **Every refusal names its failing term.** The land gate was honest but illegible
+  and read as a bug. So the jump sequence gets `jump_readiness_line()`, and route
+  plotting states *why* a leg is impossible rather than omitting it.
+- **One owner per readout and per input.** `M` becomes the galaxy map, `N` the
+  system map, `F` the beacon interact; `Tab` drops to an F3-gated developer
+  shortcut instead of a second way into the arena.
+- **Streaming means freeing.** Gate traversal reuses the staggered `PlanetBody`
+  builder and the pad unload measured flat in §2, rather than adding a second
+  system that only toggles `visible`.
+
+---
+
 Updated: 2026-08-15. Authority for the hardening pass; see
-`docs/SHARED_AGENT_MEMORY.md` for the short form every agent loads.
+`docs/SHARED_AGENT_MEMORY.md` for the short form every agent loads, and
+`docs/design/GALAXY_LAYER_PLAN.md` for the galaxy layer.

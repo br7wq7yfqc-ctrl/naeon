@@ -98,3 +98,9 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 76. Harvest VFX called; pad loss announced while you are away; siege denies unsupported hulls; F3 detail counter reads `queue_depth`
 77. ENERGY_ECONOMY doc re-synced to the constants (it listed Pulse 6/0.55s against the real 18/5.0s)
 78. Land gate is legible: `land_readiness_line()` on the ship HUD says which term still fails (`alt 600→120`, `pad 148m→90m`, `slow 12.3→12`, `LAND READY — E`); the refusal toast names the same term, and gate + readout share one `_land_envelope()`
+
+## Galaxy layer G0 2026-08-15
+79. `StarSystemCatalog` owns placement: star at the system origin, bodies on distinct orbits with distinct angles and inclinations (3800 / 7400 / 11800) instead of one hand-typed clump
+80. Visible emissive star with corona; each planet takes its light direction from the star it orbits; the shadow light aims along the star-to-observer line
+81. Asteroid belt is called for the first time and takes its band from the system layout
+82. Gate anchors to ROT-Prime / Helios Reach / Echo Ruins authored but not spawned — a gate prop with no jump is the inert-system trap this branch was removing
