@@ -884,7 +884,19 @@
       "merged_from": [
         "grot_ddc_sf_prop_4v_001"
       ],
+      "chat_lock": true,
+      "file_id": "auivA",
+      "dump_key": "generations/rendered/auivA.jpg",
       "locked_uuids": [
+        {
+          "id": "auivA",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "prop",
+          "label": "Spore Feast",
+          "dump_key": "generations/rendered/auivA.jpg",
+          "manual": 32
+        },
         {
           "id": "397a2a17-8f81-45dd-b235-c34e6ed57edc",
           "faction": "GR",
@@ -897,7 +909,8 @@
           "faction": "GR",
           "view": "ortho",
           "class": "module",
-          "label": "Spore-cloud generator"
+          "label": "Spore-cloud generator",
+          "notes": "superseded by manual #032 auivA"
         }
       ]
     },

@@ -89,8 +89,7 @@ APC / hover / mech guns bind to the **hull** they sit on. Tank main has no Heavy
 |--------|---------|------|----------|----|
 | Firewall projector | CX | cinematic | `cybernex_defense_systems` | `2c84bb7f-58a7-4114-88fe-523eb491dca2` |
 | Firewall projector | CX | ortho | `cybernex_defense_systems` | `1d07c7fc-7876-4aef-99ec-62ff5602308c` |
-| Spore-cloud generator | GR | cinematic | `grot_spore_prop` | `397a2a17-8f81-45dd-b235-c34e6ed57edc` |
-| Spore-cloud generator | GR | ortho | `grot_spore_prop` | `77a7cc90-2b95-4100-8f0a-3b1798306104` |
+| Spore Feast | GR | ortho | `grot_spore_prop` | `auivA` |
 | Quantum-thrust + RCS | CX | cinematic | `thruster_cluster_neon` | `6f743074-1a2e-4f4b-b796-599166bc80b9` |
 | Quantum-thrust + RCS | CX | ortho | `thruster_cluster_neon` | `26e6e753-ff0a-4a0b-b7c7-0134f23f5a63` |
 | Engine module | GR | cinematic | `gr-contractile` | `b85d041d-3a81-43e7-a2ba-b0b195b53e94` |

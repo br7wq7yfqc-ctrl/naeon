@@ -352,6 +352,16 @@
       "manual": 31
     },
     {
+      "id": "auivA",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "prop",
+      "label": "Spore Feast",
+      "position": "grot_spore_prop",
+      "dump_key": "generations/rendered/auivA.jpg",
+      "manual": 32
+    },
+    {
       "id": "899de1b8-9179-452c-bc75-dee69352c374",
       "faction": "CX",
       "view": "cinematic",
