@@ -51,6 +51,9 @@ static func spawn(tree: SceneTree, at: Vector3, dir: Vector3, speed: float, dmg:
 	if tree == null or tree.current_scene == null:
 		return null
 	if DisplayServer.get_name() == "headless":
+		var Hits = load("res://scripts/combat/CombatHits.gd")
+		if Hits:
+			Hits.apply_shot(tree, at, dir, dmg, faction, maxf(speed * life, 12.0))
 		return null
 	var bolt: MeshInstance3D = null
 	while not _free.is_empty() and bolt == null:

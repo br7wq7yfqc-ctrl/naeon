@@ -1,6 +1,6 @@
 # Session Status
 **2026-08-15**
-Phase 0 mechanics depth: interiors (pocket outside planet + walker reparent), occupy-to-hold, HOVER ground-effect, atmospheric stall. No DMG.
+Phase 0 mechanics depth: interiors, occupy-to-hold, HOVER/stall, pad-guard combat. No DMG.
 
 **Last update:** 2026-08-15
 **Skill:** sequential-dev + holistic v2.0
@@ -8,9 +8,9 @@ Phase 0 mechanics depth: interiors (pocket outside planet + walker reparent), oc
 | Track | Status |
 |-------|--------|
 | Design VS + campaign + constructor/side/edu templates | **Gaps closed** |
-| A | Combat + HUD + honest 10-min loop steps |
 | B | Continuum: land gate, HOVER hold + ground-effect, atmo NAV lock, stall |
 | C | Walker coyote/slope; rover grip/brake; interior walk/life-support (pocket + cam) |
+| A | Combat + HUD + pad-guard occupy fight + honest 10-min loop steps |
 | D | Design ready (constructor + 26) |
 | E | Act I implement first |
 

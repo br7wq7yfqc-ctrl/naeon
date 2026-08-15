@@ -115,6 +115,41 @@ func _go() -> void:
 				print("[Playtest] occupy presence meter ", snapped(before, 0.01), " -> ", snapped(after, 0.01))
 				if is_equal_approx(after, before):
 					fails.append("occupy presence did not move the contest meter")
+			# Pad-guard combat: walker as trespasser vs previous-owner turret
+			if walker2 and is_instance_valid(walker2):
+				walker2.set("faction", "gROT")
+			if SoftScanCache:
+				SoftScanCache.invalidate_player()
+				SoftScanCache.invalidate_enemies()
+			await get_tree().process_frame
+			var guard: Node3D = pad.get_guard() if pad.has_method("get_guard") else null
+			if guard == null or not is_instance_valid(guard):
+				fails.append("no contest guard after rival claim")
+			else:
+				print("[Playtest] guard fac=", guard.get_faction() if guard.has_method("get_faction") else "?", " hp=", guard.get("health"))
+				var hp0: float = float(walker2.health) if walker2 else 0.0
+				if guard.has_method("_fire") and walker2:
+					guard._fire(walker2)
+				var hp1: float = float(walker2.health) if walker2 else 0.0
+				print("[Playtest] guard shot walker hp ", snapped(hp0, 0.1), " -> ", snapped(hp1, 0.1))
+				if walker2 and hp1 >= hp0:
+					fails.append("guard shot did not hit walker")
+				var Hits = load("res://scripts/combat/CombatHits.gd")
+				var ghp0: float = float(guard.get("health"))
+				if Hits and walker2 and guard.has_method("hurtbox_center"):
+					var origin: Vector3 = walker2.hurtbox_center() if walker2.has_method("hurtbox_center") else walker2.global_position
+					var dir: Vector3 = (guard.hurtbox_center() - origin).normalized()
+					Hits.apply_shot(get_tree(), origin, dir, 18.0, "gROT", 60.0)
+				var ghp1: float = float(guard.get("health"))
+				print("[Playtest] walker bolt guard hp ", snapped(ghp0, 0.1), " -> ", snapped(ghp1, 0.1))
+				if ghp1 >= ghp0:
+					fails.append("walker bolt did not hit pad guard")
+				elif guard.has_method("take_damage"):
+					guard.take_damage(999.0)
+					if guard.has_method("is_alive") and bool(guard.is_alive()):
+						fails.append("guard still alive after lethal")
+					else:
+						print("[Playtest] guard down")
 
 	# --- HOVER mode + vacuum stall ---
 	var ship: Node = os.get("ship")

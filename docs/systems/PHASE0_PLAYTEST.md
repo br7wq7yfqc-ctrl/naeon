@@ -39,3 +39,4 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 22. Atmospheric stall (vacuum=0, HOVER=0); NAV drops to SCM; HUD STALL line
 23. Headless `--playtest-mechanics` gate in `scripts/playtest_headless_smoke.sh` (`timeout`, not `--quit-after` frames)
 24. Interior HUD uses POCKET, not leftover ship AGL; occupy presence moves the contest meter
+25. Pad contest guard actually fights: headless hitscan, pad_up aim, stays dead until 8s respawn; walker Pulse uses CamPivot

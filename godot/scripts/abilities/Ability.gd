@@ -201,12 +201,13 @@ func _apply_firewall(caster: Node) -> void:
 func _spawn_projectile(caster: Node, dmg: float, color: Color) -> void:
 	if caster == null or not caster.is_inside_tree():
 		return
+	var Hits = load("res://scripts/combat/CombatHits.gd")
 	var origin: Vector3 = caster.global_position + Vector3.UP * 1.4
 	var dir: Vector3 = -caster.global_transform.basis.z
-	if caster.has_node("CameraPivot/Camera3D"):
-		var cam: Camera3D = caster.get_node("CameraPivot/Camera3D")
-		dir = -cam.global_transform.basis.z
-		origin = cam.global_position + dir * 0.8
+	if Hits:
+		var aim: Array = Hits.aim_from(caster)
+		origin = aim[0]
+		dir = aim[1]
 	var final_dmg: float = dmg
 	if GameManager:
 		final_dmg *= 1.0 + GameManager.knowledge_insight_bonus()
@@ -259,12 +260,13 @@ func _ray_query(caster: Node, max_range: float) -> Dictionary:
 	if caster == null or not caster.is_inside_tree():
 		return {}
 	var space: PhysicsDirectSpaceState3D = caster.get_world_3d().direct_space_state
+	var Hits = load("res://scripts/combat/CombatHits.gd")
 	var from: Vector3 = caster.global_position + Vector3.UP * 1.4
 	var dir: Vector3 = -caster.global_transform.basis.z
-	if caster.has_node("CameraPivot/Camera3D"):
-		var cam: Camera3D = caster.get_node("CameraPivot/Camera3D")
-		from = cam.global_position
-		dir = -cam.global_transform.basis.z
+	if Hits:
+		var aim: Array = Hits.aim_from(caster)
+		from = aim[0]
+		dir = aim[1]
 	var to: Vector3 = from + dir * max_range
 	var q: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(from, to)
 	if caster is CollisionObject3D:

@@ -27,6 +27,7 @@ var _guard: Node3D = null
 var _occupy_in_t: float = 0.0
 var _occupy_label_t: float = 0.0
 var _seeding: bool = false
+var _guard_respawn_t: float = 0.0
 
 const CLAIM_NEED := 1.75
 const OCCUPY_RATE := 0.32
@@ -77,6 +78,7 @@ func _process(delta: float) -> void:
 			_update_city_density()
 			_refresh_label()
 	_tick_occupy(delta)
+	_tick_guard_respawn(delta)
 	if running and ownership and ownership.is_fully_owned() and _status != "contested":
 		_tick_harvest(delta)
 	_try_player_claim()
@@ -339,15 +341,42 @@ func _pulse_feedback(strong: bool) -> void:
 func _guard_alive() -> bool:
 	if _guard == null or not is_instance_valid(_guard):
 		return false
+	if _guard.has_method("is_alive"):
+		return bool(_guard.is_alive())
 	if "_alive" in _guard and not bool(_guard._alive):
 		return false
 	return true
 
 
-func _ensure_guard() -> void:
+func get_guard() -> Node3D:
+	return _guard if _guard_alive() else null
+
+
+func _tick_guard_respawn(delta: float) -> void:
+	if _status != "contested":
+		_guard_respawn_t = 0.0
+		return
 	if _guard_alive():
 		return
-	if DisplayServer.get_name() == "headless":
+	if _guard_respawn_t <= 0.0:
+		return
+	_guard_respawn_t -= delta
+	if _guard_respawn_t > 0.0:
+		return
+	if _guard != null and is_instance_valid(_guard):
+		_guard.queue_free()
+	_guard = null
+	_ensure_guard()
+
+
+func _on_guard_died() -> void:
+	_guard_respawn_t = 8.0
+	_notify_hud("PAD GUARD DOWN — occupy the ring")
+	print("[PadBase] guard down @ ", name)
+
+
+func _ensure_guard() -> void:
+	if _guard_alive():
 		return
 	var fac := "gROT"
 	if ownership:
@@ -371,6 +400,17 @@ func _ensure_guard() -> void:
 	t.set("damage", 5.0)
 	add_child(t)
 	t.position = Vector3(9.0, 1.15, 7.0)
+	var up := Vector3.UP
+	var pad_n: Node = get_parent()
+	while pad_n:
+		if pad_n.has_meta("pad_up"):
+			up = pad_n.get_meta("pad_up")
+			break
+		pad_n = pad_n.get_parent()
+	if t.has_method("set_aim_up"):
+		t.set_aim_up(up)
+	if t.has_signal("died") and not t.died.is_connected(_on_guard_died):
+		t.died.connect(_on_guard_died)
 	if t.is_in_group("ally"):
 		t.remove_from_group("ally")
 	t.add_to_group("enemy")

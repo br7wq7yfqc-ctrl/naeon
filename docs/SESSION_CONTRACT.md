@@ -27,7 +27,8 @@
 8. 10-min loop steps no longer self-complete on toast (this pass)
 9. Stations interiors: life-support, doors, ops console, seat gating (this pass)
 10. Stall in dense atmo (NAV drops to SCM); interior pocket outside planet mesh (this pass)
-11. Next: 10-min soak on Mac GPU; pad-guard combat while occupying
+11. Pad-guard combat while occupying (this pass)
+12. Next: 10-min soak on Mac GPU; land-to-harvest loop depth
 
 ## Tripo
 - Balance check when generating; code-first when zero.

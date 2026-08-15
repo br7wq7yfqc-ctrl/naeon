@@ -5,9 +5,11 @@ const _AP = preload("res://scripts/assets/AssetPaths.gd")
 ## Hostile / friendly turret using generated emplacement mesh.
 
 signal killed_target
+signal died
 
 var _ai_accum: float = 0.0
 var faction: String = "gROT"
+var aim_up: Vector3 = Vector3.UP
 @export var aggro_range: float = 18.0
 @export var fire_rate: float = 1.1
 @export var damage: float = 8.0
@@ -53,13 +55,18 @@ func _process(delta: float) -> void:
 	var target := _find_target()
 	if target == null:
 		return
-	# yaw toward target
-	var to: Vector3 = target.global_position - global_position
-	to.y = 0.0
+	var up: Vector3 = _aim_up()
+	var aim_pt: Vector3 = target.global_position
+	if target.has_method("hurtbox_center"):
+		aim_pt = target.hurtbox_center()
+	var to: Vector3 = aim_pt - global_position
+	to -= up * to.dot(up)
 	if to.length() > 0.1:
-		_living_aim(target.global_position, 0.12)
-		look_at(global_position + to.normalized(), Vector3.UP)
-	if _cd <= 0.0 and global_position.distance_to(target.global_position) <= aggro_range:
+		_living_aim(aim_pt, 0.12)
+		var look := to.normalized()
+		if absf(up.dot(look)) < 0.97:
+			look_at(global_position + look, up)
+	if _cd <= 0.0 and global_position.distance_to(aim_pt) <= aggro_range:
 		_fire(target)
 		_cd = fire_rate
 
@@ -92,13 +99,18 @@ func _find_target() -> Node3D:
 
 func _fire(target: Node3D) -> void:
 	_living_fire()
-	var dir: Vector3 = (target.global_position + Vector3(0, 1.0, 0) - global_position).normalized()
+	var aim_pt: Vector3 = target.global_position
+	if target.has_method("hurtbox_center"):
+		aim_pt = target.hurtbox_center()
+	var muzzle: Vector3 = global_position + _aim_up() * 1.4
+	var dir: Vector3 = (aim_pt - muzzle).normalized()
 	var col := Color(1.0, 0.2, 0.35) if faction == "gROT" else Color(0.2, 0.8, 1.0)
 	var _Pool = load("res://scripts/combat/ProjectilePool.gd")
 	var spd: float = 40.0
 	if "projectile_speed" in self:
 		spd = float(projectile_speed)
-	_Pool.spawn(get_tree(), global_position + Vector3(0, 1.4, 0) + dir * 0.8, dir, spd, damage, faction, col, 3.2)
+	# Headless spawn already hitscans; GUI flies a bolt.
+	_Pool.spawn(get_tree(), muzzle + dir * 0.8, dir, spd, damage, faction, col, 3.2)
 
 
 func take_damage(amount: float) -> void:
@@ -130,24 +142,55 @@ func get_faction() -> String:
 	return faction
 
 
+func is_alive() -> bool:
+	return _alive
+
+
+func set_aim_up(u: Vector3) -> void:
+	if u.length_squared() > 0.01:
+		aim_up = u.normalized()
+
+
+func _aim_up() -> Vector3:
+	if aim_up.length_squared() > 0.01:
+		return aim_up.normalized()
+	var n: Node = get_parent()
+	while n:
+		if n.has_meta("pad_up"):
+			var u: Vector3 = n.get_meta("pad_up")
+			if u.length_squared() > 0.01:
+				return u.normalized()
+		n = n.get_parent()
+	return Vector3.UP
+
+
 func hurtbox_center() -> Vector3:
-	return global_position + Vector3(0, 1.1, 0)
+	return global_position + _aim_up() * 1.1
 
 
 func hurtbox_radius() -> float:
 	return 1.15
 
 func _die() -> void:
+	if not _alive:
+		return
 	_alive = false
 	_update_label()
 	visible = false
 	if SoftScanCache:
 		SoftScanCache.invalidate_enemies()
-	await get_tree().create_timer(5.0).timeout
+	died.emit()
+	killed_target.emit()
+	print("[Turret] destroyed ", faction)
+
+
+func revive() -> void:
 	health = max_health
 	_alive = true
 	visible = true
 	_update_label()
+	if SoftScanCache:
+		SoftScanCache.invalidate_enemies()
 
 func _update_label() -> void:
 	if _label:
@@ -157,6 +200,8 @@ func _update_label() -> void:
 			_label.text = "TURRET %s\nHP %.0f" % [faction, health]
 
 func _load_mesh() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	var fac := "grot" if faction == "gROT" else "cybernex"
 	# Prefer rotating barrel HQ; fallback emplacement
 	var candidates: Array = [
@@ -192,6 +237,8 @@ var _anim: Node = null
 
 func _ensure_animator() -> void:
 	if _anim:
+		return
+	if DisplayServer.get_name() == "headless":
 		return
 	_anim = Node.new()
 	_anim.set_script(load("res://scripts/combat/TurretAnimator.gd"))
