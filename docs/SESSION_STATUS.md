@@ -2,7 +2,7 @@
 **2026-08-15**
 Local code marathon + GitHub design catalog skills merged.
 
-**Last update:** 2026-08-15 03:00 EEST
+**Last update:** 2026-08-15 03:37 EEST
 **Skill:** v2.0
 
 | Track | Status |
@@ -13,17 +13,14 @@ Local code marathon + GitHub design catalog skills merged.
 | E | Act I implement first |
 | C | Ops Tripo/neon + generation bind |
 
-## Marathon 2026-08-08T00:37:18.886364+00:00
-- dig continuum + cave protect + crystal V scan + FOV
-
-## 2026-08-14 bind
-- OCR-bound 213 sheets → 129 catalog positions
-- Chat-lock empty: 0. OCR unresolved: 0 (7 unreadable kept)
-
 ## 2026-08-15 Tripo
 - Owner confirmed: image-to-model batch **still running** on Mac
 - Do **not** start a second `tripo_image2model.py`
-- Live log (Mac only): `logs/tripo_image2model.jsonl`
-- Inbox: `pipeline/inbox/<slug>/model.glb`
 - Harvest (copy-only → `s3://neon/dev/tripo/`): `scripts/assets/harvest_tripo_inbox.sh`
-- Mac already receives GLBs as tasks finish; harvest is for the bucket
+
+## 2026-08-15 Batch 20
+- CX fighter pair locked (`4ca9faf0` / `eb126daa`)
+- CX bomber pair locked (`6c3799b6` / `78162909`)
+- CX support cinematic locked (`3bf43918`, B minus iroquois)
+- CX support ortho `cab4e36b` in review
+- Next after ortho lock: CX stealth

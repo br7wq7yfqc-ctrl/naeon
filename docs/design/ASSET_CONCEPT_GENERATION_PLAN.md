@@ -1,4 +1,4 @@
-**Version:** 1.16  
+**Version:** 1.17  
 **Status:** Batches 1–19 CLOSED · **Batch 20 IN PROGRESS**  
 **Updated:** 2026-08-15  
 
@@ -26,9 +26,11 @@ Cinematics carry a title bar naming the object.
 | CX T1 bomber cinematic `6c3799b6` | **locked** |
 | CX T1 bomber `c76ccb6f` + noisy first pass | rejected |
 | CX T1 bomber ortho `78162909` | **locked** |
-| CX support | cinematic in review |
+| CX support cinematic `3bf43918` (B minus iroquois) | **locked** |
+| CX support `0735138d` / `0fdb14fa` / `71cd1130` | rejected |
+| CX support ortho `cab4e36b` | in review |
 
 ## Ledger
 Chat-lock `file_id` null: **0**. OCR unresolved: **0**.  
-7 OCR-unreadable titles kept (no dump match). Bound sheets **213**. Positions **128**. Locked UUID **58**.
+7 OCR-unreadable titles kept (no dump match). Bound sheets **213**. Positions **129**. Locked UUID **59**.
 S3 `generations/catalog.json` not patched this session (no bucket key).
