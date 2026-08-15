@@ -31,13 +31,17 @@ static func apply_shot(tree: SceneTree, origin: Vector3, dir: Vector3, dmg: floa
 		var hit_s: Array = _consider(origin, n, max_range, faction, s, exclude, best, best_t)
 		best = hit_s[0]
 		best_t = hit_s[1]
+	# Friendly emplacements live in "ally"; _ray_hit_t still blocks same-faction hits.
+	for a in tree.get_nodes_in_group("ally"):
+		var hit_a: Array = _consider(origin, n, max_range, faction, a, exclude, best, best_t)
+		best = hit_a[0]
+		best_t = hit_a[1]
 	if best == null or not is_instance_valid(best):
 		return null
+	# take_damage owners raise their own hit feedback — do not double it here.
 	if best.has_method("take_damage"):
 		best.take_damage(dmg)
 	apply_planar_knock(best, n, dmg)
-	if CombatJuice and best is Node3D:
-		CombatJuice.hit_feedback(dmg, (best as Node3D).global_position, dmg >= 20.0)
 	return best
 
 
