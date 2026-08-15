@@ -9,7 +9,7 @@ Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **67 U
 Bucket: `s3://neon/generations/canon/{class}/{id}/master.jpg`  
 Grok: `https://assets.grok.com/users/77c65418-d257-47c3-8504-4540b6e0a754/generated/{UUID}/image.jpg`
 
-S3 Index `generations/catalog.json` is **not** in git and is not patched by this revision.
+S3 Index `generations/catalog.json` is **WIPED** (2026-08-15). Do not use. Rebuild manually.
 
 | Ledger | Count |
 |--------|------:|
