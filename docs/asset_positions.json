@@ -1408,6 +1408,13 @@
           "view": "cinematic",
           "class": "ship-single",
           "label": "Sniper"
+        },
+        {
+          "id": "ad12b79f-bf19-4a1e-b446-af612399b0b0",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "ship-single",
+          "label": "Sniper"
         }
       ]
     },
