@@ -83,3 +83,7 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 63. Ship: HOVER hold only inside a gravity well, commanded-lift-only strip, launch stays in HOVER, one hardpoint per module type, recovery runs with no pilot
 64. Clash: match_ended shows a result panel (Enter rematches), kills come from AexionClash, minimap orientation fixed, lane refill counts the living
 65. Perf: shared arena meshes/materials, 10 Hz ownership visuals, one-time HUD styling, preloaded per-shot scripts, bolt pool counter reset on scene change
+66. Arena Barrier moved out of the MID lane (it was a 2.5m wall lying along the lane that the player could stand on and fall off — the real "invisible ledge")
+67. Friendly Clash towers moved behind the spawn camera (the MID tower at z=12 sat inside the chase camera and hid the player)
+68. F3 overlay: GameHUD owns every stat readout; legacy TestArena labels off; the debug left column has a fixed stacked layout; pad radar clear of the vitals block
+69. Match result panel is compact and top-centre so the fight stays visible

@@ -331,14 +331,14 @@ func _build() -> void:
 	_toast_label.visible = false
 	_root.add_child(_toast_label)
 
-	# Mini pad radar (bottom-left)
+	# Mini pad radar (bottom-left, above the vitals block at y=-118..-18)
 	_radar = Control.new()
-	_radar.position = Vector2(14, -170)
+	_radar.position = Vector2(14, -300)
 	_radar.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	_radar.offset_left = 14
-	_radar.offset_top = -170
+	_radar.offset_top = -300
 	_radar.offset_right = 150
-	_radar.offset_bottom = -34
+	_radar.offset_bottom = -164
 	_radar.custom_minimum_size = Vector2(136, 136)
 	_radar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var rpanel := Panel.new()
@@ -458,7 +458,31 @@ func _in_clash_arena() -> bool:
 
 
 func _apply_clash_chrome() -> void:
-	if _debug_overlay or not _in_clash_arena():
+	if not _in_clash_arena():
+		return
+	if _debug_overlay:
+		# ClashMatchDirector owns the top-right ScoreLine and TestArena owns the
+		# top-left lane line. Give the F3 dump one deterministic left column so
+		# nothing lands on top of anything else.
+		if _infection_label:
+			_infection_label.position = Vector2(14, 70)
+		if _status_label:
+			_status_label.position = Vector2(14, 100)
+		if _mastery_label:
+			_mastery_label.position = Vector2(14, 148)
+		if _econ_label:
+			_econ_label.visible = true
+			_econ_label.position = Vector2(14, 172)
+		if _econ_bar:
+			_econ_bar.visible = true
+			_econ_bar.position = Vector2(14, 194)
+		if _obj_label:
+			_obj_label.visible = false
+		if _layer_label:
+			_layer_label.visible = false
+		if _ctx_label:
+			_ctx_label.offset_top = 138
+			_ctx_label.offset_bottom = 170
 		return
 	if _obj_label:
 		_obj_label.visible = false

@@ -14,7 +14,6 @@ extends Node3D
 
 var kills: int = 0
 var _match_over: bool = false
-var _hud_styled: bool = false
 var _clash: Node = null
 var _lanes: Node3D = null
 var _radar: Control = null
@@ -73,7 +72,7 @@ func _upgrade_environment_materials() -> void:
 			mat.uv1_scale = Vector3(12, 12, 12)
 			mat.uv1_triplanar = true
 			mesh_i.material_override = mat
-	for pillar_name in ["PillarA", "PillarB", "Wall"]:
+	for pillar_name in ["ClaimPillarA", "ClaimPillarB", "Barrier"]:
 		var n := get_node_or_null(pillar_name)
 		if n == null:
 			continue
@@ -489,13 +488,14 @@ func _show_match_result(text: String) -> void:
 		return
 	if root.has_node("MatchResult"):
 		return
+	# Top-centre and compact: a centred panel covered the fight underneath it.
 	var panel := PanelContainer.new()
 	panel.name = "MatchResult"
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.offset_left = -280
-	panel.offset_right = 280
-	panel.offset_top = -110
-	panel.offset_bottom = 110
+	panel.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	panel.offset_left = -250
+	panel.offset_right = 250
+	panel.offset_top = 96
+	panel.offset_bottom = 208
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.03, 0.06, 0.1, 0.88)
@@ -511,7 +511,7 @@ func _show_match_result(text: String) -> void:
 	lab.text = text
 	lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lab.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lab.add_theme_font_size_override("font_size", 20)
+	lab.add_theme_font_size_override("font_size", 17)
 	lab.add_theme_color_override("font_color", Color(0.9, 0.97, 1.0))
 	lab.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
 	lab.add_theme_constant_override("outline_size", 5)
@@ -538,7 +538,14 @@ func _setup_clash_radar() -> void:
 	root.add_child(_radar)
 	_lane_hud = Label.new()
 	_lane_hud.name = "LaneHUD"
-	_lane_hud.position = Vector2(14, 130)
+	# Anchored here, not in the per-tick layout pass: that pass first runs from
+	# _ready, before this label exists, so the styling never landed.
+	_lane_hud.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_lane_hud.offset_left = -440
+	_lane_hud.offset_right = -16
+	_lane_hud.offset_top = 70
+	_lane_hud.offset_bottom = 100
+	_lane_hud.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_lane_hud.add_theme_font_size_override("font_size", 14)
 	_lane_hud.add_theme_color_override("font_color", Color(0.95, 0.9, 0.4))
 	_lane_hud.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
@@ -779,39 +786,19 @@ func _arena_debug() -> bool:
 func _apply_arena_hud_layout() -> void:
 	# Styling happens once: re-applying theme overrides five times a second
 	# fired NOTIFICATION_THEME_CHANGED and queued a redraw each tick.
-	if not _hud_styled:
-		_hud_styled = true
-		if kills_label:
-			kills_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-			kills_label.offset_left = -420
-			kills_label.offset_right = -16
-			kills_label.offset_top = 40
-			kills_label.offset_bottom = 70
-			kills_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-			kills_label.add_theme_font_size_override("font_size", 16)
-			kills_label.add_theme_color_override("font_color", Color(0.95, 0.9, 0.45))
-			kills_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
-			kills_label.add_theme_constant_override("outline_size", 4)
-		if _lane_hud:
-			_lane_hud.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-			_lane_hud.offset_left = -440
-			_lane_hud.offset_right = -16
-			_lane_hud.offset_top = 70
-			_lane_hud.offset_bottom = 100
-			_lane_hud.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	var dbg := _arena_debug()
-	# GameHUD owns the debug overlay; these legacy labels would overprint it.
+	# GameHUD owns every stat readout, including the F3 overlay. These legacy
+	# labels occupy the same screen corners and overprinted it — keep them off.
 	if info_label:
 		info_label.visible = false
 	if bar_health:
-		bar_health.visible = dbg
+		bar_health.visible = false
 	if bar_energy:
-		bar_energy.visible = dbg
+		bar_energy.visible = false
 	if ability_label:
 		ability_label.visible = false
 	if contrib_label:
 		contrib_label.visible = false
 	if kills_label:
-		kills_label.visible = dbg
+		kills_label.visible = false
 	if _lane_hud:
 		_lane_hud.visible = true

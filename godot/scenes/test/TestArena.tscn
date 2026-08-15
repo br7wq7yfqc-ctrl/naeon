@@ -127,7 +127,7 @@ mesh_path = NodePath("../Mesh")
 label_height = 4.0
 
 [node name="Barrier" type="StaticBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, -14)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 1.25, -14)
 collision_layer = 1
 
 [node name="Mesh" type="MeshInstance3D" parent="Barrier"]
