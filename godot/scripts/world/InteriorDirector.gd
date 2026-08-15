@@ -164,6 +164,9 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	_set_world_hidden(true)
 
 	# Cancel any pending surface snap / exterior physics on walker
+	# EVA off first: set_eva_profile overwrites the interior movement profile.
+	if player != null and is_instance_valid(player) and player.has_method("set_eva_profile"):
+		player.set_eva_profile(false)
 	if player != null and is_instance_valid(player) and player.has_method("set_interior_mode"):
 		player.set_interior_mode(true)
 	elif "interior_mode" in player:
@@ -177,8 +180,6 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 		player.set_planet_gravity_provider(self)
 	if player != null and is_instance_valid(player) and player.has_method("set_spawn_basis"):
 		player.set_spawn_basis(Vector3.UP, PI)
-	if player != null and is_instance_valid(player) and player.has_method("set_eva_profile"):
-		player.set_eva_profile(false)
 
 	# Place on spawn marker (floor + clearance)
 	var spawn: Node3D = _active.get_node_or_null("Spawn") as Node3D

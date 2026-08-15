@@ -64,7 +64,12 @@ var _up: Vector3 = Vector3.UP
 var _coyote_t: float = 0.0
 var _jump_buf_t: float = 0.0
 var _jump_cut: bool = false
+var _jumped: bool = false
+var _down_t: float = 0.0
+var _air_v_up: float = 0.0
 var _was_on_floor: bool = false
+
+const DOWN_TIME := 2.2
 var _space_held: bool = false
 var cam_pivot: Node3D
 var camera: Camera3D
@@ -104,7 +109,11 @@ func _notification(what: int) -> void:
 func set_interior_mode(on: bool) -> void:
 	interior_mode = on
 	if on:
-		eva_mode = false
+		# EVA leaves the body FLOATING; a pocket needs GROUNDED or is_on_floor()
+		# never becomes true and the player sinks with no jump.
+		if eva_mode:
+			set_eva_profile(false)
+		motion_mode = CharacterBody3D.MOTION_MODE_GROUNDED
 		velocity = Vector3.ZERO
 		_up = Vector3.UP
 		up_direction = Vector3.UP
@@ -132,6 +141,7 @@ func set_eva_profile(enabled: bool) -> void:
 	mag_boot = false
 	_mag_latched = false
 	_thrust_smooth = Vector3.ZERO
+	eva_time = 0.0
 	if enabled:
 		speed = 5.5
 		sprint_mult = 1.2
@@ -160,7 +170,8 @@ func set_eva_profile(enabled: bool) -> void:
 func _ready() -> void:
 	add_to_group("player")
 	collision_layer = 2
-	collision_mask = 1
+	# World + ship/vehicle hulls, so you cannot walk through your own ship.
+	collision_mask = 1 | 2
 	floor_snap_length = 0.25
 	floor_max_angle = deg_to_rad(60.0)
 	up_direction = Vector3.UP
@@ -438,7 +449,9 @@ func _input(event: InputEvent) -> void:
 		if cam_pivot:
 			cam_pivot.rotation.x = _pitch
 	if event is InputEventMouseButton and event.pressed:
-		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+		# Do not fight the Esc release — a click over UI must stay a UI click.
+		if get_viewport() and get_viewport().gui_get_hovered_control() == null:
+			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_V:
 			_cycle_form()
@@ -455,10 +468,8 @@ func _input(event: InputEvent) -> void:
 				_try_ability(1)
 		elif event.keycode == KEY_R:
 			_try_ability(2)
-		elif event.keycode == KEY_F:
-			# Interior seat is OpenSpace F — do not cycle form on the same tap
-			if not interior_mode:
-				_try_ability(3)
+		# F is the OpenSpace interact key (board / seat / EVA). V cycles forms;
+		# firing the Form Cycle ability here made every interact morph the hero.
 		# G/B terrain edit handled by PlanetTerrainEdit while in player group
 	if event.is_action_pressed("ui_cancel"):
 		Input.set_mouse_mode(
@@ -476,6 +487,18 @@ func _physics_process(delta: float) -> void:
 	else:
 		_update_up()
 	_terrain_hint_tick(delta)
+	firewall_timer = maxf(0.0, firewall_timer - delta)
+	if _down_t > 0.0:
+		_down_t = maxf(0.0, _down_t - delta)
+		var vd := velocity.dot(_up)
+		if not is_on_floor():
+			vd += _gravity_vec().dot(_up) * delta
+		var planar_d := velocity - _up * velocity.dot(_up)
+		velocity = planar_d.move_toward(Vector3.ZERO, 40.0 * delta) + _up * vd
+		move_and_slide()
+		if _down_t <= 0.0:
+			_recover_from_down()
+		return
 	if _spawn_grace_t > 0.0:
 		_spawn_grace_t = maxf(0.0, _spawn_grace_t - delta)
 		# Hold still while settling out of embed
@@ -484,12 +507,15 @@ func _physics_process(delta: float) -> void:
 			var v_up0 := velocity.dot(_up)
 			if v_up0 < 0.0:
 				velocity -= _up * v_up0  # no dig into surface
-	energy = minf(max_energy, energy + energy_regen * delta)
-	var g_vec := -_up * 14.0
-	if _provider and _provider.has_method("gravity_at"):
-		var pg: Vector3 = _provider.gravity_at(global_position)
-		if pg.length() > 0.2:
-			g_vec = pg
+	var g_vec := _gravity_vec()
+	var regen_mult := 1.0
+	var inf_n := get_node_or_null("InfectionStatus")
+	if inf_n and inf_n.has_method("energy_regen_mult"):
+		regen_mult = float(inf_n.energy_regen_mult())
+	if eva_mode:
+		# EVA thrusters must be a real fuel budget — passive regen would out-pace them.
+		regen_mult *= 0.25
+	energy = minf(max_energy, energy + energy_regen * regen_mult * delta)
 
 	var input := Vector2.ZERO
 	if Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_W):
@@ -535,7 +561,8 @@ func _physics_process(delta: float) -> void:
 			sp *= 0.85
 	var slope_ang := 0.0
 	if is_on_floor():
-		slope_ang = get_floor_angle()
+		# Radial up, not world +Y — otherwise flat ground reads as a cliff on a sphere.
+		slope_ang = get_floor_angle(_up)
 		sp *= clampf(1.0 - (slope_ang / deg_to_rad(58.0)) * 0.38, 0.52, 1.0)
 	var target_planar := wish * sp
 	# Smooth accel on ground, weaker air control (not ice-skating)
@@ -555,34 +582,41 @@ func _physics_process(delta: float) -> void:
 	else:
 		_coyote_t = maxf(0.0, _coyote_t - delta)
 		v_up += g_vec.dot(_up) * delta
+	_jump_buf_t = maxf(0.0, _jump_buf_t - delta)
 	if Input.is_physical_key_pressed(KEY_SPACE) or (InputMap.has_action("jump") and Input.is_action_pressed("jump")):
 		if not _space_held:
 			_jump_buf_t = 0.12
 		_space_held = true
 	else:
 		_space_held = false
-		_jump_buf_t = maxf(0.0, _jump_buf_t - delta)
 	var can_jump := _coyote_t > 0.0 or eva_mode
 	if _jump_buf_t > 0.0 and can_jump:
 		v_up = jump_velocity
 		_jump_buf_t = 0.0
 		_coyote_t = 0.0
 		_jump_cut = false
+		_jumped = true
 		_spawn_jump_fx()
 	elif is_on_floor():
 		# stick: small downward bias helps floor contact on spheres
 		v_up = minf(v_up, -0.4)
 		_jump_cut = false
-	elif not _space_held and not _jump_cut and v_up > 2.0:
+		_jumped = false
+	elif _jumped and not _space_held and not _jump_cut and v_up > 2.0:
+		# Variable height — only for a jump the player asked for, never for knockback.
 		v_up *= 0.42
 		_jump_cut = true
 
-	# Landing absorb (radial)
-	if is_on_floor() and not _was_on_floor and v_up < -7.5:
-		v_up = -0.5
+	# Landing absorb (radial). move_and_slide already flattened v_up on the
+	# touchdown frame, so judge the impact by the last airborne value.
+	if is_on_floor() and not _was_on_floor and _air_v_up < -7.5:
 		planar *= 0.72
 		if CombatJuice:
 			CombatJuice.hit_feedback(4.0, global_position, false)
+	if is_on_floor():
+		_air_v_up = 0.0
+	else:
+		_air_v_up = v_up
 	_was_on_floor = is_on_floor()
 
 	velocity = planar + _up * v_up
@@ -599,6 +633,20 @@ func _physics_process(delta: float) -> void:
 		apply_floor_snap()
 
 	_update_anim(delta)
+
+func _real_gravity() -> Vector3:
+	## Provider gravity only — zero in vacuum, so EVA stays weightless in space.
+	if _provider and _provider.has_method("gravity_at"):
+		var pg: Vector3 = _provider.gravity_at(global_position)
+		if pg.length() > 0.2:
+			return pg
+	return Vector3.ZERO
+
+
+func _gravity_vec() -> Vector3:
+	var pg := _real_gravity()
+	return pg if pg.length_squared() > 0.04 else -_up * 14.0
+
 
 func _basis_from_up() -> Basis:
 	# Shared pure math (SurfaceFacing) — det(+1), W along −Z at yaw0
@@ -995,6 +1043,10 @@ func _process_eva(delta: float, wish: Vector3, forward: Vector3, right: Vector3)
 		wish_raw = wish_raw - _mag_normal * wish_raw.dot(_mag_normal)
 		wish_raw *= 0.45
 	_thrust_smooth = _thrust_smooth.move_toward(wish_raw, THRUST_RAMP * delta)
+	# Real gravity still applies in EVA (zero in vacuum) — otherwise stepping off
+	# a hovering ship inside an atmosphere hands the player free flight.
+	if not _mag_latched:
+		velocity += _real_gravity() * delta
 	var thruster_on := _thrust_smooth.length_squared() > 0.01
 	var thruster_accel_eff: float = thruster_accel
 	var thruster_energy := EVA_EN_RATE * delta if thruster_on else 0.0
@@ -1034,7 +1086,8 @@ func _tick_mag_boot(delta: float) -> void:
 		_mag_normal = (global_position - ship_n.global_position).normalized()
 		# Soft attraction when armed in range (before hard latch)
 		if not _mag_latched and hull_clear < MAG_RANGE:
-			var pull := (3.5 - hull_clear) * 2.2
+			# Never negative — past the lock range this used to push you away.
+			var pull := maxf(0.0, MAG_LOCK_RANGE - hull_clear) * 2.2
 			velocity += -_mag_normal * pull * delta
 		if hull_clear < MAG_LOCK_RANGE:
 			if not _mag_latched:
@@ -1242,24 +1295,45 @@ func _toast_self(msg: String) -> void:
 
 
 
+func is_downed() -> bool:
+	return _down_t > 0.0
+
+
 func take_damage(amount: float) -> void:
-	health = maxf(0.0, health - amount)
+	if _dying or _down_t > 0.0:
+		return
+	var dmg: float = amount
+	if firewall_timer > 0.0:
+		dmg *= 0.35
+	health = maxf(0.0, health - dmg)
 	var ch = get_node_or_null("ChannelController")
 	if ch and ch.has_method("notify_damage"):
 		ch.notify_damage()
 	if CombatJuice:
-		CombatJuice.damage_taken(amount)
-		CombatJuice.hit_feedback(amount, global_position + _up * 1.2, amount >= 20.0)
+		CombatJuice.damage_taken(dmg)
+		CombatJuice.hit_feedback(dmg, global_position + _up * 1.2, dmg >= 20.0)
 	if health <= 0.0:
-		# Soft respawn at current planet pad-ish — no permadeath Phase 0
-		health = max_health
-		energy = max_energy
-		if has_method("snap_to_surface"):
-			call_deferred("snap_to_surface")
-		print("[SurfaceWalker] soft down → recover")
-		_toast_self("DOWN — recovered (Phase 0, no permadeath)")
+		_go_down()
 	else:
-		_toast_self("HIT −%.0f  HP %.0f" % [amount, health])
+		_toast_self("HIT −%.0f  HP %.0f" % [dmg, health])
+
+
+func _go_down() -> void:
+	## Soft down: attackers disengage for the window, then recover. No permadeath.
+	_down_t = DOWN_TIME
+	health = 0.0
+	velocity = Vector3.ZERO
+	print("[SurfaceWalker] downed → recover in %.1fs" % DOWN_TIME)
+	_toast_self("DOWN — recovering (no permadeath)")
+
+
+func _recover_from_down() -> void:
+	health = max_health
+	energy = max_energy
+	firewall_timer = 0.0
+	if not eva_mode and not interior_mode:
+		call_deferred("snap_to_surface")
+	_toast_self("RECOVERED  HP %.0f" % health)
 
 
 

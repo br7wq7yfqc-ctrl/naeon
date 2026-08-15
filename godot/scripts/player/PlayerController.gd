@@ -40,6 +40,7 @@ var _loco = null
 var _coyote_t: float = 0.0
 var _jump_buf_t: float = 0.0
 var _jump_cut: bool = false
+var _jumped: bool = false
 var _down_t: float = 0.0
 var _spawn_pos: Vector3 = Vector3(0, 1.2, 6)
 
@@ -126,6 +127,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 		else:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+		# Consume it: TestArena also listens for Esc and would abandon the match.
+		get_viewport().set_input_as_handled()
 
 func _physics_process(delta: float) -> void:
 	if firewall_timer > 0.0:
@@ -149,6 +152,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		_coyote_t = 0.12
 		_jump_cut = false
+		_jumped = false
 	if _pressed_jump():
 		_jump_buf_t = 0.1
 	else:
@@ -158,9 +162,11 @@ func _physics_process(delta: float) -> void:
 		_jump_buf_t = 0.0
 		_coyote_t = 0.0
 		_jump_cut = false
+		_jumped = true
 	var jump_held := (InputMap.has_action("jump") and Input.is_action_pressed("jump")) \
 		or Input.is_physical_key_pressed(KEY_SPACE)
-	if not is_on_floor() and not jump_held and not _jump_cut and velocity.y > 2.2:
+	# Variable height — only for a jump the player asked for, never for knockback.
+	if _jumped and not is_on_floor() and not jump_held and not _jump_cut and velocity.y > 2.2:
 		velocity.y *= 0.42
 		_jump_cut = true
 
@@ -300,10 +306,11 @@ func heal(amount: float) -> void:
 func take_damage(amount: float) -> void:
 	if _down_t > 0.0:
 		return
-	if CombatJuice:
-		CombatJuice.hit_feedback(float(amount), global_position)
 	if firewall_timer > 0.0:
 		amount *= 0.35
+	# Feedback after mitigation — else Firewall looks like it does nothing.
+	if CombatJuice:
+		CombatJuice.hit_feedback(float(amount), global_position)
 	health = max(0.0, health - amount)
 	if CombatJuice:
 		CombatJuice.damage_taken(amount)
