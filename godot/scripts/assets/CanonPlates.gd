@@ -156,6 +156,7 @@ static func spawn_space_hud(hud_root: Control) -> void:
 		if e.is_empty():
 			continue
 		row.add_child(_make_card(e, Vector2(168, 92)))
+	print("[CanonPlates] space hud n=", row.get_child_count(), " locked=", _locked.size())
 
 
 static func _make_card(entry: Dictionary, size: Vector2) -> Control:

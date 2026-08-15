@@ -33,6 +33,7 @@ func _ready() -> void:
 		LayerContext.seamless_stage = "S1"
 		if LayerContext.site_pin_id == "":
 			LayerContext.set_site_pin("SITE_SPACE_TEST_PAD")
+	print("[OpenSpace] site_pin=", LayerContext.site_pin_id if LayerContext else "")
 	_spawn_starfield()
 	_spawn_planets()
 	_spawn_orbital_stations()

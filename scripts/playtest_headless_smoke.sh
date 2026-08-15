@@ -12,9 +12,14 @@ if ! command -v godot >/dev/null 2>&1; then
   fi
 fi
 echo "[playtest] using $GODOT root=$ROOT"
+# Global class_name cache (Ability, ShipModule, …) — required on a cold checkout
+"$GODOT" --headless --editor --quit-after 20 --path "$ROOT/godot" > /tmp/pt_import.log 2>&1 || true
 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/world/OpenSpace.tscn --quit-after 12 > /tmp/pt_os.log 2>&1 || true
 echo OS_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_os.log || true)
 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/test/TestArena.tscn --quit-after 6 > /tmp/pt_ta.log 2>&1 || true
 echo TA_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_ta.log || true)
-grep -E 'SurfaceWater|CaveInterior|SurfaceFauna|SCRIPT ERROR|CanonPlates|PadAmbientLife|AbilitySystem' /tmp/pt_os.log | head -20 || true
-grep -E 'SCRIPT ERROR|CanonPlates|TestArena' /tmp/pt_ta.log | head -20 || true
+"$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/ui/MainMenu.tscn --quit-after 4 > /tmp/pt_mm.log 2>&1 || true
+echo MM_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_mm.log || true)
+grep -E 'SurfaceWater|CaveInterior|SurfaceFauna|SCRIPT ERROR|CanonPlates|PadAmbientLife|site_pin' /tmp/pt_os.log | head -20 || true
+grep -E 'SCRIPT ERROR|CanonPlates|TestArena|AbilitySystem' /tmp/pt_ta.log | head -20 || true
+grep -E 'SCRIPT ERROR|CanonPlates' /tmp/pt_mm.log | head -20 || true
