@@ -208,7 +208,7 @@ func _tick_harvest(delta: float) -> void:
 	var econ: float = got * contribution_per_unit
 	if GameManager:
 		# Asymmetric soft economy (CONCEPT): Cybernex Contribution vs gROT Biomass
-		GameManager.deposit_economy(econ)
+		GameManager.deposit_economy(econ, true)
 		_harvest_accum_fx += econ
 		_harvest_fx_cd -= delta
 		if _harvest_fx_cd <= 0.0 and _harvest_accum_fx > 0.4:

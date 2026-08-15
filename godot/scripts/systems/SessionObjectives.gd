@@ -43,7 +43,7 @@ func complete(id: String) -> void:
 		AudioDirector.play_claim()
 	if GameManager:
 		GameManager.toast_requested.emit("Objective complete: %s" % id)
-		GameManager.deposit_economy(5.0)
+	# No economy grant here — harvest/claim work is the economy beat (no P2W, no skip)
 	# advance
 	var idx := _order.find(current)
 	if id == current and idx >= 0 and idx + 1 < _order.size():

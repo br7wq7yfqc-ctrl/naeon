@@ -357,7 +357,7 @@ func _try_crystal_scan() -> void:
 		_scan_cd = 2.0
 		return
 	if GameManager and GameManager.has_method("deposit_economy"):
-		GameManager.deposit_economy(1.5)
+		GameManager.deposit_economy(1.5, true)
 		_scan_session_total += 1.5
 	_notify("Crystal scan +1.5  (session %.0f/%.0f)" % [_scan_session_total, SCAN_SESSION_CAP])
 	_spawn_scan_fx(crystal_pos)

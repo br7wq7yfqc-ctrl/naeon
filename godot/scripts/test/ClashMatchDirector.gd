@@ -74,9 +74,13 @@ func register_kill() -> void:
 	if AudioDirector:
 		AudioDirector.play_hit(true)
 	if GameManager:
-		GameManager.deposit_economy(3.0)
+		if GameManager.player_faction == GameManager.Faction.GROT:
+			GameManager.add_biomass(3.0)
+		else:
+			GameManager.add_contribution(3.0)
+		GameManager.add_mastery("combat", 1.0)
 	if SessionObjectives:
-		SessionObjectives.on_landed_or_lane()
+		SessionObjectives.on_moved()
 	_flash("KILL + soft Contribution")
 
 func register_objective() -> void:

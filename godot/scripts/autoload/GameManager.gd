@@ -57,7 +57,7 @@ func add_biomass(amount: float) -> void:
 	biomass_changed.emit(biomass)
 
 ## Faction-aware soft economy deposit from harvest/work
-func deposit_economy(amount: float) -> void:
+func deposit_economy(amount: float, from_harvest: bool = false) -> void:
 	if amount <= 0.0:
 		return
 	if player_faction == Faction.GROT:
@@ -66,7 +66,7 @@ func deposit_economy(amount: float) -> void:
 	else:
 		add_contribution(amount)
 		add_mastery("colony_ops", amount * 0.02)
-	if SessionObjectives:
+	if from_harvest and SessionObjectives:
 		SessionObjectives.on_economy()
 
 func get_alliance_rank_name() -> String:
