@@ -180,8 +180,8 @@ Verified against the plate before bind.
 | Hoverbike | CX | ortho | `cybernex_hoverbike` | `WrLuh` |
 | Hoverbike | GR | cinematic | `grot_hoverbike` | `KCHaV` |
 | Light crawler scout | GR | cinematic | `grot_crawler` | `YTTxi` |
-| Light armor | CX | ortho | `cybernex_light_armor` | `vYOfQ` |
-| Light armor | CX | cinematic | `cybernex_light_armor` | `G1DlH`, `mYaBr` |
+| Light armor | CX | cinematic | `cybernex_light_armor` | `VNKg2` |
+| Light armor | CX | ortho | `cybernex_light_armor` | `dK2D0` |
 | Medium armor | CX | cinematic | `cybernex_medium_armor` | `NsEul` |
 | Medium armor | CX | ortho | `cybernex_medium_armor` | `6mSp1` |
 | Light armor | GR | ortho | `grot_light_armor` | `XqU70` |

@@ -133,12 +133,31 @@
       "dump_key": "generations/rendered/vYOfQ.jpg",
       "locked_uuids": [
         {
+          "id": "VNKg2",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/VNKg2.jpg",
+          "manual": 11
+        },
+        {
+          "id": "dK2D0",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/dK2D0.jpg",
+          "manual": 12
+        },
+        {
           "id": "vYOfQ",
           "faction": "CX",
           "view": "ortho",
           "class": "armor",
           "label": "Light armor",
-          "dump_key": "generations/rendered/vYOfQ.jpg"
+          "dump_key": "generations/rendered/vYOfQ.jpg",
+          "notes": "superseded by manual #012 dK2D0"
         },
         {
           "id": "G1DlH",
@@ -146,7 +165,8 @@
           "view": "cinematic",
           "class": "armor",
           "label": "Light armor silhouette",
-          "dump_key": "generations/rendered/G1DlH.jpg"
+          "dump_key": "generations/rendered/G1DlH.jpg",
+          "notes": "superseded by manual #011 VNKg2"
         },
         {
           "id": "mYaBr",
@@ -154,7 +174,8 @@
           "view": "cinematic",
           "class": "armor",
           "label": "Light armor",
-          "dump_key": "generations/rendered/mYaBr.jpg"
+          "dump_key": "generations/rendered/mYaBr.jpg",
+          "notes": "superseded by manual #011 VNKg2"
         }
       ]
     },

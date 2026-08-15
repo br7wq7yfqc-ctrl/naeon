@@ -15,5 +15,7 @@ Old `generations/catalog.json` and the visual album are **void**.
 | 008 | Cybernex Heavy armor — ortho | CX | ortho | `97pBo` | `generations/rendered/97pBo.jpg` |
 | 009 | Cybernex Medium armor — cinematic | CX | cinematic | `NsEul` | `generations/rendered/NsEul.jpg` |
 | 010 | Cybernex Medium armor — ortho | CX | ortho | `6mSp1` | `generations/rendered/6mSp1.jpg` |
+| 011 | Cybernex Light armor — cinematic | CX | cinematic | `VNKg2` | `generations/rendered/VNKg2.jpg` |
+| 012 | Cybernex Light armor — ortho | CX | ortho | `dK2D0` | `generations/rendered/dK2D0.jpg` |
 
 Next: wait for the next plate.
