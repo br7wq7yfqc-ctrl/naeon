@@ -23,6 +23,7 @@ var _rover: Node3D = null
 var _eva_warn_t: float = 0.0
 var _eva_tether_t: float = 0.0
 var _spawn_ship_pos := Vector3(0, 0, 2800)
+var _interior_view: bool = false
 
 func _ready() -> void:
 	_phase0_space_feel()
@@ -39,6 +40,7 @@ func _ready() -> void:
 	_spawn_orbital_stations()
 	_spawn_ship()
 	_setup_interior()
+	_setup_mechanics_playtest()
 	if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
 		floating.set_target(ship)
 	# Graphics
@@ -152,6 +154,14 @@ func _setup_interior() -> void:
 	if _interior.has_method("setup"):
 		_interior.setup(world_root, self)
 
+
+func _setup_mechanics_playtest() -> void:
+	var n := Node.new()
+	n.set_script(preload("res://scripts/test/Phase0MechanicsPlaytest.gd"))
+	n.name = "Phase0MechanicsPlaytest"
+	add_child(n)
+
+
 func _spawn_ship() -> void:
 	ship = ShipScene.instantiate()
 	world_root.add_child(ship)
@@ -191,6 +201,12 @@ func _sync_planet_sun() -> void:
 
 func _update_altitude_fog() -> void:
 	## Height fog + ambient tint near planets (SC-lite continuum, min-spec safe).
+	if _interior_view:
+		_apply_interior_env()
+		return
+	if _interior != null and is_instance_valid(_interior) and _interior.has_method("is_inside") and bool(_interior.is_inside()):
+		_apply_interior_env()
+		return
 	var we := $WorldEnvironment as WorldEnvironment
 	if we == null or we.environment == null or ship == null or not is_instance_valid(ship):
 		return
@@ -239,6 +255,37 @@ func _update_altitude_fog() -> void:
 	if sun:
 		sun.light_color = Color(1, 0.96, 0.9).lerp(fog_col.lightened(0.4), depth * 0.35)
 		sun.light_energy = 1.15 + depth * 0.45
+
+
+func set_interior_view(on: bool) -> void:
+	_interior_view = on
+	var sun := $Sun as DirectionalLight3D
+	if on:
+		_apply_interior_env()
+		if sun:
+			sun.light_energy = 0.22
+			sun.shadow_enabled = false
+	else:
+		if sun:
+			sun.light_energy = 1.35
+			sun.shadow_enabled = true
+		_update_altitude_fog()
+
+
+func _apply_interior_env() -> void:
+	var we := $WorldEnvironment as WorldEnvironment
+	if we == null or we.environment == null:
+		return
+	var env := we.environment
+	env.fog_enabled = false
+	env.volumetric_fog_enabled = false
+	env.fog_density = 0.0
+	env.background_color = Color(0.04, 0.05, 0.08)
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color(0.88, 0.92, 0.98)
+	env.ambient_light_energy = 0.9
+	env.glow_intensity = 0.18
+	env.glow_enabled = true
 
 
 func gravity_at(global_pos: Vector3) -> Vector3:
@@ -542,6 +589,8 @@ func _update_hud() -> void:
 		mode = str(ship.call("flight_mode_name")) if is_instance_valid(ship) and ship.has_method("flight_mode_name") else mode
 	if _in_rover:
 		mode = "ROVER"
+	elif _interior != null and is_instance_valid(_interior) and _interior.has_method("is_inside") and bool(_interior.is_inside()):
+		mode = "INTERIOR"
 	elif _eva_mode:
 		mode = "EVA"
 	elif not _in_ship:
@@ -557,8 +606,15 @@ func _update_hud() -> void:
 	var gh = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
 	if gh and gh.has_method("is_debug_overlay"):
 		dbg = bool(gh.is_debug_overlay())
-	var brief := "%s  ·  %s  ·  %dm  ·  %d m/s  ·  HP %d  SHD %d  ·  occupy/C  E land  F EVA" % [
-		mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields)
+	var extra := ""
+	if mode == "INTERIOR" and _interior.has_method("life_support_line"):
+		extra = "  ·  " + str(_interior.life_support_line())
+	elif _in_ship and ship.has_method("get_flight_status_line"):
+		var fl := str(ship.get_flight_status_line())
+		if "STALL" in fl:
+			extra = "  ·  STALL"
+	var brief := "%s  ·  %s  ·  %dm  ·  %d m/s  ·  HP %d  SHD %d%s  ·  occupy/C  E land  F EVA" % [
+		mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields), extra
 	]
 	if not dbg:
 		hud_label.text = brief
@@ -1043,7 +1099,8 @@ func _apply_openspace_perf() -> void:
 		if tier <= 1:
 			e.glow_intensity = 0.0
 			e.glow_bloom = 0.0
-		e.fog_enabled = tier >= 1  # altitude fog script may still tint
+		if not _interior_view:
+			e.fog_enabled = tier >= 1  # altitude fog script may still tint
 	# Directional only shadows
 	for n in get_tree().get_nodes_in_group("planets") if get_tree() else []:
 		pass
@@ -1053,6 +1110,8 @@ func _apply_openspace_perf() -> void:
 
 func _park_far_planets() -> void:
 	## Only nearest planet runs full surface systems; far planets = impostor + no process.
+	if _interior_view:
+		return
 	var obs: Node3D = null
 	if _in_ship and ship and is_instance_valid(ship):
 		obs = ship

@@ -20,6 +20,12 @@ echo OS_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_os.log || true)
 echo TA_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_ta.log || true)
 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/ui/MainMenu.tscn --quit-after 4 > /tmp/pt_mm.log 2>&1 || true
 echo MM_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_mm.log || true)
+set +e
+"$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/world/OpenSpace.tscn --quit-after 18 -- --playtest-mechanics > /tmp/pt_mech.log 2>&1
+MECH_CODE=$?
+set -e
+echo MECH_CODE=$MECH_CODE MECH_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_mech.log || true)
+grep -E 'Playtest|SCRIPT ERROR' /tmp/pt_mech.log | head -30 || true
 grep -E 'SurfaceWater|CaveInterior|SurfaceFauna|SCRIPT ERROR|CanonPlates|PadAmbientLife|site_pin' /tmp/pt_os.log | head -20 || true
 grep -E 'SCRIPT ERROR|CanonPlates|TestArena|AbilitySystem' /tmp/pt_ta.log | head -20 || true
 grep -E 'SCRIPT ERROR|CanonPlates' /tmp/pt_mm.log | head -20 || true

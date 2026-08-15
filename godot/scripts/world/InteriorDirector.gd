@@ -8,8 +8,9 @@ signal entered(kind: String)
 signal exited(kind: String)
 
 const _Gen = preload("res://scripts/world/InteriorGenerator.gd")
-## Fixed local pocket under OpenSpace — near scene origin, away from planets.
-const POCKET_LOCAL := Vector3(0.0, 120.0, 0.0)
+## Pocket is parented under OpenSpace (NOT WorldRoot). Nex-Prime sits at
+## origin with radius 1400 — y=120 was inside the planet mesh.
+const POCKET_LOCAL := Vector3(0.0, 9200.0, 0.0)
 
 var _root: Node3D  ## WorldRoot (legacy; not used for pocket parent)
 var _active: Node3D
@@ -151,6 +152,10 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	if _active is Node3D:
 		(_active as Node3D).position = POCKET_LOCAL
 		(_active as Node3D).rotation = Vector3.ZERO
+	# Walker + TPS camera live under WorldRoot. Hide the planet only after
+	# the camera is parented out, or the interior is a black frame.
+	_host_player_outside_world()
+	_set_world_hidden(true)
 
 	# Cancel any pending surface snap / exterior physics on walker
 	if player != null and is_instance_valid(player) and player.has_method("set_interior_mode"):
@@ -253,6 +258,54 @@ func gravity_at(_global_pos: Vector3) -> Vector3:
 	return Vector3(0, -16.0, 0)
 
 
+func _set_world_hidden(hidden: bool) -> void:
+	## Pocket must not sit inside Nex-Prime or inherit surface fog.
+	if _root and is_instance_valid(_root):
+		_root.visible = not hidden
+	if _open_space and _open_space.has_method("set_interior_view"):
+		_open_space.set_interior_view(hidden)
+
+
+func _host_player_outside_world() -> void:
+	## Keep walker+camera as a sibling of WorldRoot so hiding the planet
+	## does not hide the TPS camera (black void).
+	if _player == null or not is_instance_valid(_player):
+		return
+	var dest: Node = _open_space if _open_space else _active
+	if dest == null or not is_instance_valid(dest):
+		return
+	if _player.get_parent() == dest:
+		return
+	_player_was_parent = _player.get_parent()
+	_player.reparent(dest, true)
+	_make_player_camera_current()
+
+
+func _restore_player_parent() -> void:
+	if _player == null or not is_instance_valid(_player):
+		_player_was_parent = null
+		return
+	var dest: Node = _player_was_parent
+	_player_was_parent = null
+	if dest == null or not is_instance_valid(dest):
+		dest = _root
+	if dest == null or not is_instance_valid(dest):
+		return
+	if _player.get_parent() == dest:
+		return
+	_player.reparent(dest, true)
+
+
+func _make_player_camera_current() -> void:
+	if _player == null or not is_instance_valid(_player):
+		return
+	var cam: Camera3D = _player.get_node_or_null("CamPivot/Camera3D") as Camera3D
+	if cam == null and "camera" in _player:
+		cam = _player.camera as Camera3D
+	if cam:
+		cam.current = true
+
+
 func exit_interior() -> void:
 	if not _inside:
 		return
@@ -267,6 +320,8 @@ func exit_interior() -> void:
 			_player.set_planet_gravity_provider(_open_space)
 		if _player != null and is_instance_valid(_player) and _player.has_method("set_spawn_basis"):
 			_player.set_spawn_basis(_return_up, 0.0)
+		# Must leave the pocket before queue_free, or the walker is freed with it.
+		_restore_player_parent()
 		_player.global_position = _return_pos
 		if _player is CharacterBody3D:
 			(_player as CharacterBody3D).velocity = Vector3.ZERO
@@ -278,6 +333,7 @@ func exit_interior() -> void:
 	_active = null
 	_inside = false
 
+	_set_world_hidden(false)
 	# Resume floating origin on walker/ship
 	if _open_space:
 		var fo = _open_space.get("floating")
@@ -392,11 +448,13 @@ func exit_for_pilot() -> void:
 			_player.mark_dying()
 		elif _player.has_method("set_interior_mode"):
 			_player.set_interior_mode(false)
+	_restore_player_parent()
 	if _active and is_instance_valid(_active):
 		_active.queue_free()
 	_active = null
 	_inside = false
 	_player = null
+	_set_world_hidden(false)
 	if _open_space:
 		var fo = _open_space.get("floating")
 		if fo != null and is_instance_valid(fo) and fo.has_method("set_physics_process"):
