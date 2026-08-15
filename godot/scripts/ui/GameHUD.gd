@@ -487,7 +487,10 @@ func _refresh() -> void:
 					var seat_hint := ""
 					if str(k) == "ship" and n.has_method("is_near_seat") and _player and n.is_near_seat(_player):
 						seat_hint = " · SEAT [F] pilot"
-					iline = "INTERIOR · %s · I exit%s\nLIFE SUPPORT OK · ATMO 1.00 · POWER BUS STABLE" % [k, seat_hint]
+					var ls := "LIFE SUPPORT OK · ATMO 1.00 · POWER BUS STABLE"
+					if n.has_method("life_support_line"):
+						ls = str(n.life_support_line())
+					iline = "INTERIOR · %s · I exit%s\n%s" % [k, seat_hint, ls]
 					break
 		_interior_label.text = iline
 		_interior_label.visible = iline != ""

@@ -108,6 +108,14 @@ func set_interior_mode(on: bool) -> void:
 		up_direction = Vector3.UP
 		_spawn_grace_t = 0.5
 		floor_snap_length = 0.55
+		speed = 5.4
+		sprint_mult = 1.28
+		jump_velocity = 6.2
+	else:
+		speed = 6.5
+		sprint_mult = 1.75
+		jump_velocity = 7.0
+		floor_snap_length = 0.25
 	print("[SurfaceWalker] interior_mode=", on)
 
 
@@ -395,7 +403,9 @@ func _input(event: InputEvent) -> void:
 		elif event.keycode == KEY_Q:
 			_try_ability(0)
 		elif event.keycode == KEY_E:
-			if eva_mode:
+			if interior_mode and _try_interior_console():
+				pass
+			elif eva_mode:
 				mag_boot = not mag_boot
 				print("[SurfaceWalker] mag-boot ", mag_boot)
 				_toast_self("MAG-BOOT ARMED" if mag_boot else "MAG-BOOT OFF")
@@ -404,7 +414,9 @@ func _input(event: InputEvent) -> void:
 		elif event.keycode == KEY_R:
 			_try_ability(2)
 		elif event.keycode == KEY_F:
-			_try_ability(3)
+			# Interior seat is OpenSpace F — do not cycle form on the same tap
+			if not interior_mode:
+				_try_ability(3)
 		# G/B terrain edit handled by PlanetTerrainEdit while in player group
 	if event.is_action_pressed("ui_cancel"):
 		Input.set_mouse_mode(
@@ -419,10 +431,9 @@ func _physics_process(delta: float) -> void:
 		# Flat Y-up pocket — never radial planet gravity / surface snap
 		_up = Vector3.UP
 		up_direction = Vector3.UP
-		if _provider == null or not _provider.has_method("gravity_at"):
-			pass
+	else:
+		_update_up()
 	_terrain_hint_tick(delta)
-	_update_up()
 	if _spawn_grace_t > 0.0:
 		_spawn_grace_t = maxf(0.0, _spawn_grace_t - delta)
 		# Hold still while settling out of embed
@@ -472,6 +483,14 @@ func _physics_process(delta: float) -> void:
 		_process_eva(delta, wish, forward, right)
 		return
 	var sp := speed * (sprint_mult if Input.is_physical_key_pressed(KEY_SHIFT) else 1.0) * _infection_move_mult()
+	if interior_mode:
+		var atmo := 1.0
+		if _provider and _provider.has_method("get_atmo"):
+			atmo = float(_provider.get_atmo())
+		if atmo < 0.25:
+			sp *= 0.62
+		elif atmo < 0.72:
+			sp *= 0.85
 	var slope_ang := 0.0
 	if is_on_floor():
 		slope_ang = get_floor_angle()
@@ -479,8 +498,8 @@ func _physics_process(delta: float) -> void:
 	var target_planar := wish * sp
 	# Smooth accel on ground, weaker air control (not ice-skating)
 	var planar := velocity - _up * velocity.dot(_up)
-	var accel_rate := 26.0 if is_on_floor() else 11.0
-	var decel_rate := 34.0 if is_on_floor() else 5.5
+	var accel_rate := 32.0 if interior_mode and is_on_floor() else (26.0 if is_on_floor() else 11.0)
+	var decel_rate := 42.0 if interior_mode and is_on_floor() else (34.0 if is_on_floor() else 5.5)
 	if target_planar.length_squared() > 0.01:
 		planar = planar.move_toward(target_planar, accel_rate * delta)
 	else:
@@ -603,6 +622,16 @@ func _cycle_form() -> void:
 	_load_form_visual()
 	_ensure_face_arrow()
 	print("[SurfaceWalker] form → ", form_name)
+
+func _try_interior_console() -> bool:
+	var tree := get_tree()
+	if tree == null:
+		return false
+	for n in tree.get_nodes_in_group("interior_director"):
+		if n.has_method("try_use_console") and bool(n.try_use_console()):
+			return true
+	return false
+
 
 func _try_ability(idx: int) -> void:
 	var ab = get_node_or_null("AbilitySystem")

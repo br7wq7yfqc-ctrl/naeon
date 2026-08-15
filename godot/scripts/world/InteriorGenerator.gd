@@ -91,7 +91,10 @@ static func build_station(faction: String = "Cybernex") -> Node3D:
 	spawn.position = Vector3(0, 1.35, 2)
 	root.add_child(spawn)
 	_add_neon_strips(root, faction)
-	_ensure_seat_markers(root)
+	_door_portal(root, Vector3(0, 0, 7), neon, 6.0)
+	_door_portal(root, Vector3(0, 0, 22), neon, 6.0)
+	_door_portal(root, Vector3(5, 0, 14), neon, 8.0)
+	_console_volume(root, Vector3(0, 0, 30), neon, "OPS")
 	return root
 
 static func build_ship(faction: String = "Cybernex") -> Node3D:
@@ -133,6 +136,9 @@ static func build_ship(faction: String = "Cybernex") -> Node3D:
 	_add_neon_strips(root, faction)
 	_attach_ambient(root, "ship", neon)
 	_ensure_seat_markers(root)
+	_door_portal(root, Vector3(0, 0, 4.0), neon, 5.0)
+	_door_portal(root, Vector3(0, 0, 11.0), neon, 5.0)
+	_console_volume(root, Vector3(0, 0, 0.2), neon, "COCKPIT")
 	return root
 
 static func _room(parent: Node3D, pos: Vector3, size: Vector3, rname: String, neon: Color) -> void:
@@ -334,6 +340,14 @@ static func build_from_profile(profile_id: String, faction: String = "Cybernex")
 	_interior_point_lights(root, neon)
 	_add_neon_strips(root, faction)
 	_attach_ambient(root, "ship", neon)
+	_console_volume(root, seat_pos + Vector3(1.4, 0, 0.2), neon, "COCKPIT")
+	var rooms: Array = prof.get("rooms", [])
+	if rooms.size() >= 2:
+		var a: Dictionary = rooms[0]
+		var b: Dictionary = rooms[1]
+		var az: float = float(a["pos"].z) + float(a["size"].z) * 0.5
+		var bz: float = float(b["pos"].z) - float(b["size"].z) * 0.5
+		_door_portal(root, Vector3(0, 0, (az + bz) * 0.5), neon, 5.0)
 	return root
 
 
@@ -427,6 +441,67 @@ static func _seat_glow(root: Node3D, seat_pos: Vector3, neon: Color) -> void:
 	root.add_child(lab)
 	if seat_v is Node3D:
 		pass
+
+static func _console_volume(root: Node3D, pos: Vector3, neon: Color, tag: String = "OPS") -> void:
+	var vol := Marker3D.new()
+	vol.name = "ConsoleVolume"
+	vol.position = pos + Vector3(0, 1.0, 0)
+	root.add_child(vol)
+	var lab := Label3D.new()
+	lab.name = "ConsoleLabel"
+	lab.text = "%s CONSOLE  [E]" % tag
+	lab.font_size = 36
+	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lab.modulate = neon
+	lab.position = pos + Vector3(0, 2.15, 0)
+	root.add_child(lab)
+	_box_mesh(root, pos + Vector3(0, 0.55, 0), Vector3(1.4, 1.1, 0.7), Color(0.08, 0.09, 0.11), true)
+	_box_mesh(root, pos + Vector3(0, 1.05, 0.28), Vector3(1.1, 0.08, 0.08), neon, false, true)
+
+
+static func _door_portal(root: Node3D, pos: Vector3, neon: Color, hall_w: float = 6.0) -> void:
+	## Sliding slab + side fills so the opening is the only walk path.
+	var door := Node3D.new()
+	var idx := 0
+	while root.get_node_or_null("DoorPortal_%d" % idx) != null:
+		idx += 1
+	door.name = "DoorPortal_%d" % idx
+	door.position = pos
+	root.add_child(door)
+	var half := hall_w * 0.5
+	var gap := 2.2
+	var fill_w: float = maxf(0.4, half - gap * 0.5)
+	var fill_c: float = half - fill_w * 0.5
+	var wall_c := Color(0.08, 0.09, 0.12)
+	_box_mesh(door, Vector3(-fill_c, 1.2, 0), Vector3(fill_w, 2.4, 0.32), wall_c, true)
+	_box_mesh(door, Vector3(fill_c, 1.2, 0), Vector3(fill_w, 2.4, 0.32), wall_c, true)
+	_box_mesh(door, Vector3(0, 2.4, 0), Vector3(hall_w * 0.92, 0.22, 0.32), wall_c, true)
+	_box_mesh(door, Vector3(0, 2.28, 0), Vector3(gap + 0.2, 0.05, 0.12), neon, false, true)
+	var slab := MeshInstance3D.new()
+	slab.name = "Slab"
+	var bm := BoxMesh.new()
+	bm.size = Vector3(gap, 2.15, 0.1)
+	slab.mesh = bm
+	slab.position = Vector3(0, 1.1, 0)
+	slab.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.07, 0.1, 0.13)
+	mat.metallic = 0.55
+	mat.roughness = 0.35
+	mat.emission_enabled = true
+	mat.emission = neon
+	mat.emission_energy_multiplier = 0.55
+	slab.material_override = mat
+	door.add_child(slab)
+	var sb := StaticBody3D.new()
+	sb.collision_layer = 1
+	var cs := CollisionShape3D.new()
+	var sh := BoxShape3D.new()
+	sh.size = bm.size
+	cs.shape = sh
+	sb.add_child(cs)
+	slab.add_child(sb)
+
 
 static func _attach_ambient(root: Node3D, kind: String, neon: Color) -> void:
 	_try_neon_props(root, kind)

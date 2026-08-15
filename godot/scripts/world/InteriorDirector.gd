@@ -21,6 +21,11 @@ var _open_space: Node
 var _inside: bool = false
 var _exit_hint_t: float = 0.0
 var _player_was_parent: Node = null
+var _sealed: bool = true
+var _atmo: float = 1.0
+var _recycler_on: bool = true
+var _console_cd: float = 0.0
+var _console_hint_t: float = 0.0
 
 
 func setup(world_root: Node3D, open_space: Node) -> void:
@@ -39,6 +44,27 @@ func get_kind() -> String:
 
 func get_active_interior() -> Node3D:
 	return _active
+
+
+func get_atmo() -> float:
+	return _atmo if _inside else 1.0
+
+
+func is_sealed() -> bool:
+	return _sealed
+
+
+func life_support_line() -> String:
+	if not _inside:
+		return ""
+	var bus := "POWER BUS STABLE" if _recycler_on else "POWER IDLE · VENTED"
+	if _kind == "ship":
+		return "HULL SEALED · ATMO %.2f · %s" % [_atmo, bus]
+	if _atmo >= 0.72:
+		return "LIFE SUPPORT OK · ATMO %.2f · %s" % [_atmo, bus]
+	if _atmo >= 0.25:
+		return "LIFE SUPPORT MARGINAL · ATMO %.2f · SUIT READY · %s" % [_atmo, bus]
+	return "SUIT REQUIRED · ATMO %.2f · %s" % [_atmo, bus]
 
 
 func try_toggle(player: Node3D, ship: Node3D = null) -> void:
@@ -172,14 +198,20 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 			fo.set_physics_process(false)
 
 	_inside = true
+	_recycler_on = true
+	_sealed = kind == "ship"
+	_refresh_life_support()
 	if LayerContext:
 		LayerContext.current_layer = "ship_int" if kind == "ship" else "station"
 		if "seamless_stage" in LayerContext:
 			LayerContext.seamless_stage = "interior"
 	_hatch_fx(true)
 	entered.emit(kind)
-	_toast("Entered %s · I exit · F seat (ship)" % kind)
-	print("[Interior] entered ", kind, " at ", target)
+	if kind == "ship":
+		_toast("Entered ship · I hatch · F seat · E console")
+	else:
+		_toast("Entered station · I exit · E ops console")
+	print("[Interior] entered ", kind, " at ", target, " atmo=", snapped(_atmo, 0.01))
 	set_process(true)
 
 	# Deferred floor settle (same-frame collision may not be ready)
@@ -217,8 +249,8 @@ func _settle_player_on_floor() -> void:
 
 
 func gravity_at(_global_pos: Vector3) -> Vector3:
-	## Flat down — Y-up interior (never radial planet gravity).
-	return Vector3(0, -14.0, 0)
+	## Flat down — Y-up interior (never radial planet gravity). Slightly snappier than surface 14.
+	return Vector3(0, -16.0, 0)
 
 
 func exit_interior() -> void:
@@ -303,19 +335,51 @@ func _hatch_fx(entering: bool) -> void:
 		(door as MeshInstance3D).rotation.y = deg_to_rad(75.0) if entering else 0.0
 
 
-func is_near_seat(player: Node3D, max_dist: float = 7.5) -> bool:
+func is_near_seat(player: Node3D, max_dist: float = 3.6) -> bool:
+	if _kind != "ship":
+		return false
 	if player == null or not is_instance_valid(player) or not _inside or _active == null:
 		return false
 	if not is_instance_valid(_active):
 		return false
-	for nm in ["SeatVolume", "Seat", "Spawn"]:
+	for nm in ["SeatVolume", "Seat"]:
 		var n: Node = _active.get_node_or_null(nm)
 		if n is Node3D:
 			if player.global_position.distance_to((n as Node3D).global_position) <= max_dist:
 				return true
-	if _kind == "ship" and player.global_position.distance_to(_active.global_position) < 14.0:
-		return true
 	return false
+
+
+func is_near_console(player: Node3D, max_dist: float = 3.4) -> bool:
+	if player == null or not is_instance_valid(player) or not _inside or _active == null:
+		return false
+	if not is_instance_valid(_active):
+		return false
+	var n: Node = _active.get_node_or_null("ConsoleVolume")
+	if n is Node3D:
+		return player.global_position.distance_to((n as Node3D).global_position) <= max_dist
+	return false
+
+
+func try_use_console() -> bool:
+	if not _inside or _player == null or not is_instance_valid(_player):
+		return false
+	if not is_near_console(_player):
+		return false
+	if _console_cd > 0.0:
+		return true
+	_console_cd = 0.5
+	_refresh_life_support()
+	if _kind == "station":
+		_recycler_on = not _recycler_on
+		_refresh_life_support()
+		var rec := "HABITAT SEALED" if _recycler_on else "VENTED TO PLANET"
+		_toast("%s · ATMO %.2f · %s" % [rec, _atmo, _pad_status_line()])
+	else:
+		_toast("COCKPIT · %s · F seat · I hatch" % life_support_line())
+	if AudioDirector and AudioDirector.has_method("play_ui"):
+		AudioDirector.play_ui()
+	return true
 
 
 func exit_for_pilot() -> void:
@@ -352,6 +416,9 @@ func _process(delta: float) -> void:
 		return
 	if not is_instance_valid(_active):
 		return
+	_console_cd = maxf(0.0, _console_cd - delta)
+	_refresh_life_support()
+	_tick_doors(delta)
 	# Keep player from falling out of pocket bounds
 	var anchor: Vector3 = _active.global_position
 	var ppos: Vector3 = _player.global_position
@@ -361,7 +428,7 @@ func _process(delta: float) -> void:
 		if _player is CharacterBody3D:
 			(_player as CharacterBody3D).velocity = Vector3.ZERO
 
-	var near_seat := is_near_seat(_player, 7.5)
+	var near_seat := is_near_seat(_player, 3.6)
 	var lab = _active.get_node_or_null("SeatLabel")
 	if lab is Label3D:
 		(lab as Label3D).modulate.a = 1.0 if near_seat else 0.55
@@ -370,6 +437,18 @@ func _process(delta: float) -> void:
 	var seat_n = _active.get_node_or_null("SeatGlow")
 	if seat_n is MeshInstance3D:
 		(seat_n as MeshInstance3D).visible = near_seat
+	var clab = _active.get_node_or_null("ConsoleLabel")
+	if clab is Label3D:
+		var near_c := is_near_console(_player)
+		(clab as Label3D).modulate.a = 1.0 if near_c else 0.5
+		(clab as Label3D).text = "OPS CONSOLE · E" if near_c else "OPS CONSOLE"
+	if is_near_console(_player):
+		_console_hint_t += delta
+		if _console_hint_t > 1.1:
+			_console_hint_t = -2.4
+			_toast("E — ops console")
+	else:
+		_console_hint_t = maxf(0.0, _console_hint_t - delta)
 	var exit_v = _active.get_node_or_null("ExitVolume")
 	if exit_v is Node3D:
 		var d: float = _player.global_position.distance_to((exit_v as Node3D).global_position)
@@ -380,3 +459,57 @@ func _process(delta: float) -> void:
 				_toast("HATCH — press I to exit")
 		else:
 			_exit_hint_t = maxf(0.0, _exit_hint_t - delta)
+
+
+func _refresh_life_support() -> void:
+	if not _inside:
+		_atmo = 1.0
+		_sealed = true
+		return
+	if _kind == "ship":
+		_sealed = true
+		_atmo = 1.0
+		return
+	var planet := 0.0
+	if _open_space and _open_space.has_method("atmosphere_density_at"):
+		planet = float(_open_space.atmosphere_density_at(_return_pos))
+	if _recycler_on:
+		_atmo = clampf(maxf(0.88, planet), 0.0, 1.0)
+		_sealed = true
+	else:
+		_atmo = clampf(planet, 0.0, 1.0)
+		_sealed = _atmo >= 0.72
+
+
+func _pad_status_line() -> String:
+	if _open_space == null or not _open_space.has_method("nearest_pad"):
+		return "no pad link"
+	var pad: Node3D = _open_space.nearest_pad(_return_pos)
+	if pad == null or not is_instance_valid(pad):
+		return "no pad link"
+	var fac := "?"
+	var st := ""
+	var cs := 0.0
+	if pad.has_method("get_faction"):
+		fac = str(pad.get_faction())
+	if pad.get("ownership") != null and pad.ownership:
+		cs = float(pad.ownership.claim_strength)
+	if pad.has_method("get_claim_status"):
+		st = str(pad.get_claim_status())
+	return "PAD %s %s claim %.0f%%" % [fac, st, clampf(cs / 1.75, 0.0, 1.0) * 100.0]
+
+
+func _tick_doors(delta: float) -> void:
+	if _active == null or _player == null:
+		return
+	for n in _active.get_children():
+		if not (n is Node3D):
+			continue
+		if not str(n.name).begins_with("DoorPortal"):
+			continue
+		var slab: Node3D = n.get_node_or_null("Slab") as Node3D
+		if slab == null:
+			continue
+		var near := _player.global_position.distance_to((n as Node3D).global_position) < 3.2
+		var target_x := 1.55 if near else 0.0
+		slab.position.x = move_toward(slab.position.x, target_x, delta * 3.4)

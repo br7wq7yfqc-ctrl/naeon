@@ -715,9 +715,11 @@ func _try_seat_to_pilot() -> bool:
 		return false
 	if ship == null or not is_instance_valid(ship):
 		return false
-	var seat_near := true  # inside ship pocket seat is near by design
+	if _interior.has_method("get_kind") and str(_interior.get_kind()) != "ship":
+		return false
+	var seat_near := false
 	if _interior.has_method("is_near_seat"):
-		seat_near = bool(_interior.is_near_seat(player, 12.0))
+		seat_near = bool(_interior.is_near_seat(player, 3.8))
 	if not seat_near:
 		_toast_hud("Move to PILOT SEAT, then F")
 		return false

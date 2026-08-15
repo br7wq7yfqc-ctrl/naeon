@@ -271,8 +271,8 @@ func _refresh_label() -> void:
 		_:
 			_label.modulate = Color(0.85, 0.85, 0.9)
 
-func get_faction() -> String:
-	return ownership.faction_name() if ownership else "Neutral"
+func get_claim_status() -> String:
+	return _status
 
 func swap_cluster_theme(faction_name: String) -> void:
 	var cluster := get_parent()
