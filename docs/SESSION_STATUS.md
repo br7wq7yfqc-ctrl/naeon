@@ -14,7 +14,7 @@ Phase 0 mechanics depth: interiors, occupy-to-hold, HOVER/stall, pad-guard comba
 | D | Design ready (constructor + 26) |
 | E | Act I implement first |
 
-Smoke: `scripts/playtest_headless_smoke.sh` (includes `--playtest-mechanics`). Running this pass.
+Smoke: `scripts/playtest_headless_smoke.sh` (includes `--playtest-mechanics`). This pass: hull crit recover; rover `board` parse guard.
 
 ## Marathon 2026-08-08T00:37:18.886364+00:00
 - dig continuum + cave protect + crystal V scan + FOV
