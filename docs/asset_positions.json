@@ -1430,6 +1430,13 @@
           "class": "drone",
           "label": "Medium drone",
           "dump_key": "generations/rendered/QdM8V.jpg"
+        },
+        {
+          "id": "f60f0126-9881-4ffd-836d-ebdb1d07a64b",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "drone",
+          "label": "Medium drone"
         }
       ]
     },

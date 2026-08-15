@@ -1072,9 +1072,18 @@
       "label": "Sniper",
       "position": "grot_sniper",
       "batch": 20
+    },
+    {
+      "id": "f60f0126-9881-4ffd-836d-ebdb1d07a64b",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "drone",
+      "label": "Medium drone",
+      "position": "grot_medium_drone",
+      "batch": 20
     }
   ],
-  "note": "Batch 20: GR medium drone cinematic QdM8V locked (rebound off CX interceptor). Ortho f60f0126 in review. S3 Index not patched.",
-  "positions_bound": 123,
+  "note": "Batch 20 CLOSED. GR medium drone pair locked (QdM8V + f60f0126). CX interceptor unbound. S3 Index not patched.",
+  "positions_bound": 124,
   "positions_unbound": 1
 }
