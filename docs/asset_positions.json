@@ -1981,13 +1981,26 @@
         "I GRDT FLAGSHIP- 4-VIEW ORTHOGRAPHIC",
         "gROT FLAGSHIP- ASYMMETRIC CONFIGURATION"
       ],
+      "chat_lock": true,
+      "file_id": "COmSz",
+      "dump_key": "generations/rendered/COmSz.jpg",
       "locked_uuids": [
+        {
+          "id": "COmSz",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Flagship",
+          "dump_key": "generations/rendered/COmSz.jpg",
+          "manual": 36
+        },
         {
           "id": "e0d7837c-0d25-4c70-92f6-82bc4f478f84",
           "faction": "GR",
           "view": "cinematic",
           "class": "ship-capital",
-          "label": "Flagship"
+          "label": "Flagship",
+          "notes": "superseded by manual #036 COmSz"
         }
       ]
     },

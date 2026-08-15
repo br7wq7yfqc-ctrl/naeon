@@ -248,6 +248,16 @@
       "manual": 35
     },
     {
+      "id": "COmSz",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-capital",
+      "label": "Flagship",
+      "position": "grot_flagship",
+      "dump_key": "generations/rendered/COmSz.jpg",
+      "manual": 36
+    },
+    {
       "id": "44ef17f1-73f4-43ad-b878-524b48321c41",
       "faction": "GR",
       "view": "cinematic",

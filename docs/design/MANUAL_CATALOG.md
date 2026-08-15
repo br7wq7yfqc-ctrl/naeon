@@ -40,5 +40,6 @@ Old `generations/catalog.json` and the visual album are **void**.
 | 033 | gROT Drone carrier — cinematic | GR | cinematic | `B2g0Z` | `generations/rendered/B2g0Z.jpg` |
 | 034 | Cybernex Tank gun — ortho | CX | ortho | `cade3b02-acb5-432b-8d08-8fe653ce657d` | imagine |
 | 035 | Cybernex Sidearm — sheet | CX | ortho | `cb6c3686-91b2-46b2-ad58-a8299cb7ff31` | imagine |
+| 036 | gROT Flagship — cinematic | GR | cinematic | `COmSz` | `generations/rendered/COmSz.jpg` |
 
-Next: wait. Heavy GR armor ortho still open. Hover cannon ortho open.
+Next: flagship ortho in review. Heavy GR armor ortho still open.

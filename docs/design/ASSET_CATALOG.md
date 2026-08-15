@@ -39,7 +39,7 @@ S3 Index `generations/catalog.json` is **WIPED** (2026-08-15). Do not use. Rebui
 | Cruiser | GR | cinematic | `grot_capital_cruiser` | `763a575f-4c77-4ed8-a678-6e2057ff3af6` |
 | Cruiser | GR | ortho | `grot_capital_cruiser` | `2x5uF` |
 | Flagship | CX | cinematic | `cybernex_flagship` | `c535edd0-f3c2-48cf-b70b-ce859d82ca2f` |
-| Flagship | GR | cinematic | `grot_flagship` | `e0d7837c-0d25-4c70-92f6-82bc4f478f84` |
+| Flagship | GR | cinematic | `grot_flagship` | `COmSz` |
 | Carrier (side hangars) | CX | cinematic | `cybernex_capital_carrier` | `3c3e054e-1968-41ac-a630-bfc2eb424f01` |
 | Carrier | GR | cinematic | `grot_capital_carrier` | `1p69s` |
 | Carrier | GR | ortho | `grot_capital_carrier` | `10d946d1-9954-4d9e-b02b-14b2905c9c8d` |
