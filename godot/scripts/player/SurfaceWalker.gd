@@ -36,6 +36,7 @@ var _face_arrow: MeshInstance3D = null
 var _move_amount: float = 0.0
 var eva_mode: bool = false
 var interior_mode: bool = false
+var firewall_timer: float = 0.0
 var _dying: bool = false
 var thruster_accel: float = 14.0
 var mag_boot: bool = false
@@ -331,7 +332,33 @@ func heal(amount: float) -> void:
 func on_hacked(caster: Node, amount: float = 1.0) -> void:
 	var inf = get_node_or_null("InfectionStatus")
 	if inf and inf.has_method("add_stacks"):
-		inf.add_stacks(2)
+		inf.add_stacks(2 if amount >= 1.0 else 1)
+
+
+func apply_firewall(duration: float, heal_amount: float = 0.0) -> void:
+	## rules/04: Nex-Firewall cleanses all Infection stacks (max 5).
+	firewall_timer = maxf(firewall_timer, duration)
+	var inf = get_node_or_null("InfectionStatus")
+	if inf and inf.has_method("cleanse"):
+		inf.cleanse(5)
+	if heal_amount > 0.0:
+		heal(heal_amount)
+	_firewall_break_nearby_channels()
+
+
+func _firewall_break_nearby_channels() -> void:
+	var tree := get_tree()
+	if tree == null:
+		return
+	for n in tree.get_nodes_in_group("channel_controllers"):
+		if n == null or not is_instance_valid(n):
+			continue
+		if n.has_method("interrupt"):
+			var owner_n = n.get_parent()
+			if owner_n is Node3D and global_position.distance_to((owner_n as Node3D).global_position) < 18.0:
+				n.interrupt("firewall")
+		elif n.has_method("cancel"):
+			n.cancel()
 
 func snap_to_surface() -> void:
 	if interior_mode:

@@ -185,6 +185,20 @@ func _go() -> void:
 			# Harvest only while the owning faction stands in the ring
 			if walker2 and is_instance_valid(walker2):
 				walker2.set("faction", "Cybernex")
+			if walker2 and is_instance_valid(walker2) and walker2.has_method("on_hacked"):
+				for _i in range(4):
+					walker2.on_hacked(null, 1.0)
+				var inf: Node = walker2.get_node_or_null("InfectionStatus")
+				var st: int = int(inf.get("stacks")) if inf else -1
+				print("[Playtest] infection after 4 hacks=", st)
+				if st != 5:
+					fails.append("Infection not capped at 5 (got %s)" % st)
+				if walker2.has_method("apply_firewall"):
+					walker2.apply_firewall(2.5, 0.0)
+					st = int(inf.get("stacks")) if inf else -1
+					print("[Playtest] infection after Firewall=", st)
+					if st != 0:
+						fails.append("Firewall did not cleanse Infection")
 			if pad.has_method("claim"):
 				pad.claim("Cybernex", 2.0)
 			var ow = pad.get("ownership")
