@@ -3,6 +3,7 @@ extends Node
 ## Enabled with: godot --path godot --scene res://scenes/world/OpenSpace.tscn -- --playtest-mechanics
 
 const _Flight = preload("res://scripts/ship/ShipFlightModel.gd")
+const _Hits = preload("res://scripts/combat/CombatHits.gd")
 
 
 func _ready() -> void:
@@ -447,6 +448,25 @@ func _go() -> void:
 						fails.append("not piloting after seat→pilot")
 					else:
 						print("[Playtest] seat→pilot OK")
+
+	# --- ship hull critical recover (no permadeath) ---
+	var sh_c: Node = os.get("ship")
+	if sh_c == null or not sh_c.has_method("take_damage"):
+		fails.append("no ship for hull crit")
+	else:
+		sh_c.set("health", 4.0)
+		sh_c.set("shields", 0.0)
+		sh_c.take_damage(12.0)
+		var hp_c: float = float(sh_c.health)
+		var crit_t: float = float(sh_c._hull_crit_t)
+		print("[Playtest] hull crit hp=", snapped(hp_c, 0.1), " t=", snapped(crit_t, 0.01))
+		if hp_c <= 0.05:
+			fails.append("hull critical did not recover")
+		elif crit_t <= 0.05:
+			fails.append("hull crit timer not armed")
+		var miss_self: Node = _Hits.apply_shot(get_tree(), sh_c.global_position, Vector3(0, 1, 0), 8.0, str(sh_c.get_faction()), 3.0, [sh_c])
+		if miss_self == sh_c:
+			fails.append("ship shot hit self")
 
 	_finish(fails, 0 if fails.is_empty() else 1)
 

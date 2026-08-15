@@ -59,3 +59,7 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 42. Mac 10-min soak still needs owner GPU (this VM is llvmpipe)
 43. Cave crystal is a named `Crystal` node; V scan only inside the pocket; prompt at the deposit
 44. Rover mouse look (yaw + cam pitch) while boarded
+45. Clash HUD: MatchBanner legend ~4s then hide; ScoreLine `K D · OBJ · ECO`; LaneHUD lane+pressure only; GameHUD econ hidden (F3 dump)
+46. GUI bolts sweep `CombatHits.apply_shot` along the step (no tunnel at ship speeds); shooter excluded
+47. CombatHits considers `ship` hurtboxes; pad turrets track hulls; no planar knock on a landed ship
+48. Hull critical: recover 35% HP, thrust cut 1.8s, shield hold 2.4s after hit, HP chrome shows hull+shields
