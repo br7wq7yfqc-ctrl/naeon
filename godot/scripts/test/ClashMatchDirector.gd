@@ -10,7 +10,7 @@ var _lane_pressure: Array = [0.35, 0.5, 0.4]  # TOP MID BOT 0..1 toward enemy
 var _kills: int = 0
 var _deaths: int = 0
 var _obj_score: float = 0.0
-var _banner: String = "CLASH — secure lanes · claim beacons · soft economy only"
+var _banner: String = "CLASH — TOP cyan · MID gold · BOT magenta · occupy beacons"
 var _hud: CanvasLayer
 
 func _ready() -> void:
@@ -58,12 +58,14 @@ func _build_hud() -> void:
 	var score := Label.new()
 	score.name = "ScoreLine"
 	score.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	score.offset_left = -280
+	score.offset_left = -420
 	score.offset_right = -16
-	score.offset_top = 56
-	score.offset_bottom = 120
+	score.offset_top = 102
+	score.offset_bottom = 128
 	score.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	score.add_theme_font_size_override("font_size", 14)
+	score.add_theme_font_size_override("font_size", 15)
+	score.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	score.add_theme_constant_override("outline_size", 4)
 	score.modulate = Color(0.85, 0.95, 1.0)
 	root.add_child(score)
 
@@ -126,16 +128,18 @@ func _process(delta: float) -> void:
 	var lanes := _lbl_lanes
 	var score := _lbl_score
 	if top:
-		top.text = _banner if _t < 4.0 or int(_t) % 12 < 3 else "AEXION CLASH  ·  TOP / MID / BOT  ·  soft War Score only"
+		if _t < 4.0:
+			top.visible = true
+			top.text = "CLASH — TOP cyan · MID gold · BOT magenta · occupy beacons"
+		else:
+			top.visible = false
 	if lanes:
-		# TestArena LaneHUD already shows AexionClash pressure — don't duplicate.
 		lanes.visible = false
 	if score:
-		var fac := GameManager.get_faction_name() if GameManager else "?"
 		var eco := 0.0
 		if GameManager:
 			eco = GameManager.biomass if GameManager.player_faction == GameManager.Faction.GROT else GameManager.contribution
-		score.text = "%s\nK %d  D %d  OBJ %.0f\nECO %.0f (soft)" % [fac, _kills, _deaths, _obj_score, eco]
+		score.text = "K %d  D %d  ·  OBJ %.0f  ·  ECO %.0f" % [_kills, _deaths, _obj_score, eco]
 
 func _sync_lanes_from_clash() -> void:
 	var clash: Node = null

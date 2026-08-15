@@ -479,8 +479,11 @@ func _update_clash_radar() -> void:
 		if _lane_hud and "player_lane" in _lanes:
 			var press := ""
 			if _clash and _clash.has_method("lane_hud_line"):
-				press = "  ·  " + str(_clash.lane_hud_line())
-			_lane_hud.text = "LANE · %s  |  TOP cyan · MID gold · BOT magenta%s" % [_lanes.player_lane, press]
+				press = str(_clash.lane_hud_line())
+			if press == "":
+				_lane_hud.text = "LANE %s" % _lanes.player_lane
+			else:
+				_lane_hud.text = "LANE %s  ·  %s" % [_lanes.player_lane, press]
 	if _radar == null or not _radar.has_method("set_snapshot"):
 		return
 	var ene: Array = []
@@ -719,7 +722,7 @@ func _apply_arena_hud_layout() -> void:
 	if _lane_hud:
 		_lane_hud.visible = true
 		_lane_hud.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-		_lane_hud.offset_left = -560
+		_lane_hud.offset_left = -440
 		_lane_hud.offset_right = -16
 		_lane_hud.offset_top = 70
 		_lane_hud.offset_bottom = 100

@@ -466,6 +466,10 @@ func _apply_clash_chrome() -> void:
 		_layer_label.visible = false
 	if _terrain_label:
 		_terrain_label.visible = false
+	if _econ_label:
+		_econ_label.visible = false
+	if _econ_bar:
+		_econ_bar.visible = false
 
 
 func _refresh() -> void:
@@ -1130,10 +1134,18 @@ func _refresh_play_chrome() -> void:
 		return
 	if _player and is_instance_valid(_player):
 		if "health" in _player and "max_health" in _player and _hp_bar:
-			_hp_bar.max_value = maxf(1.0, float(_player.max_health))
-			_hp_bar.value = float(_player.health)
+			var hp_now := float(_player.health)
+			var hp_max := float(_player.max_health)
+			if "shields" in _player and "max_shields" in _player:
+				hp_now += float(_player.shields)
+				hp_max += float(_player.max_shields)
+			_hp_bar.max_value = maxf(1.0, hp_max)
+			_hp_bar.value = hp_now
 			if _hp_tag:
-				_hp_tag.text = "%d" % int(_player.health)
+				if "shields" in _player:
+					_hp_tag.text = "%d +%d" % [int(_player.health), int(_player.shields)]
+				else:
+					_hp_tag.text = "%d" % int(_player.health)
 		if "energy" in _player and "max_energy" in _player and _en_bar:
 			_en_bar.max_value = maxf(1.0, float(_player.max_energy))
 			_en_bar.value = float(_player.energy)
