@@ -45,8 +45,6 @@ func _go() -> void:
 		fails.append("interior not inside after toggle")
 	else:
 		print("[Playtest] interior kind=", d.get_kind(), " atmo=", d.get_atmo(), " ls=", d.life_support_line())
-		if d.has_method("try_use_console"):
-			d.try_use_console()
 		var pocket: Node3D = d.get_active_interior() if d.has_method("get_active_interior") else null
 		if pocket:
 			print("[Playtest] pocket y=", pocket.global_position.y)
@@ -66,6 +64,40 @@ func _go() -> void:
 				fails.append("walker/camera hidden (black interior)")
 			if walker.global_position.y < 2000.0:
 				fails.append("walker y still inside Nex-Prime")
+			if pocket:
+				var door: Node3D = pocket.get_node_or_null("DoorPortal_0") as Node3D
+				if door == null:
+					fails.append("no DoorPortal in ship pocket")
+				else:
+					var slab: Node3D = door.get_node_or_null("Slab") as Node3D
+					var x0: float = slab.position.x if slab else -1.0
+					walker.global_position = door.global_position + Vector3(0, 1.15, 0)
+					await get_tree().create_timer(0.5).timeout
+					var x1: float = slab.position.x if slab else -1.0
+					print("[Playtest] door slab ", snapped(x0, 0.01), " -> ", snapped(x1, 0.01))
+					if x1 < 0.6:
+						fails.append("interior door did not slide open")
+					else:
+						var open_ok := false
+						if slab:
+							for c in slab.get_children():
+								if c is CollisionObject3D and int((c as CollisionObject3D).collision_layer) == 0:
+									open_ok = true
+						print("[Playtest] door collision open=", open_ok)
+						if not open_ok:
+							fails.append("open door still blocking collision")
+				var cv: Node3D = pocket.get_node_or_null("ConsoleVolume") as Node3D
+				if cv == null:
+					fails.append("no ConsoleVolume in ship pocket")
+				else:
+					walker.global_position = cv.global_position
+					await get_tree().process_frame
+					var used := false
+					if d.has_method("try_use_console"):
+						used = bool(d.try_use_console())
+					print("[Playtest] console used=", used, " ls=", d.life_support_line())
+					if not used:
+						fails.append("cockpit console not usable when standing on it")
 		if d.has_method("exit_interior"):
 			d.exit_interior()
 		await get_tree().create_timer(0.35).timeout

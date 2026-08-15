@@ -571,3 +571,9 @@ func _tick_doors(delta: float) -> void:
 		var near := _player.global_position.distance_to((n as Node3D).global_position) < 3.2
 		var target_x := 1.55 if near else 0.0
 		slab.position.x = move_toward(slab.position.x, target_x, delta * 3.4)
+		# Open slab must not block the hall — collision rides the mesh otherwise.
+		var blocking := slab.position.x < 0.85
+		for c in slab.get_children():
+			if c is CollisionObject3D:
+				(c as CollisionObject3D).collision_layer = 1 if blocking else 0
+				(c as CollisionObject3D).collision_mask = 1 if blocking else 0
