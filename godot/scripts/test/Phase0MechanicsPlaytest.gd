@@ -256,6 +256,37 @@ func _go() -> void:
 					if c7 - c6 > 0.08:
 						fails.append("harvest continued after launch with nobody in ring")
 
+	# --- EVA tether reel-in (no death) ---
+	var w_eva: Node3D = os.get("player") as Node3D
+	var sh_eva: Node3D = os.get("ship") as Node3D
+	if w_eva == null or not is_instance_valid(w_eva) or sh_eva == null or not is_instance_valid(sh_eva):
+		fails.append("no walker/ship for EVA tether")
+	else:
+		os.set("_eva_mode", true)
+		os.set("_in_ship", false)
+		if w_eva.has_method("set_eva_profile"):
+			w_eva.set_eva_profile(true)
+		if "velocity" in sh_eva:
+			sh_eva.velocity = Vector3.ZERO
+		var away: Vector3 = w_eva.global_position - sh_eva.global_position
+		if away.length_squared() < 1.0:
+			away = Vector3(1, 0, 0)
+		else:
+			away = away.normalized()
+		w_eva.global_position = sh_eva.global_position + away * 130.0
+		if "velocity" in w_eva:
+			w_eva.velocity = Vector3.ZERO
+		var d0: float = w_eva.global_position.distance_to(sh_eva.global_position)
+		await get_tree().create_timer(0.45).timeout
+		var d1: float = w_eva.global_position.distance_to(sh_eva.global_position)
+		var tline := os.eva_tether_distance() if os.has_method("eva_tether_distance") else d1
+		print("[Playtest] EVA tether ", snapped(d0, 0.1), " -> ", snapped(d1, 0.1), " hud=", snapped(float(tline), 0.1))
+		if d1 >= d0 - 0.15:
+			fails.append("EVA tether did not reel toward ship")
+		os.set("_eva_mode", false)
+		if w_eva.has_method("set_eva_profile"):
+			w_eva.set_eva_profile(false)
+
 	# --- HOVER mode + vacuum stall ---
 	var ship: Node = os.get("ship")
 	if ship and ship.has_method("get_stall"):

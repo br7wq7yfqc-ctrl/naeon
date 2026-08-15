@@ -564,16 +564,42 @@ func _process(delta: float) -> void:
 				_eva_warn_t = 0.0
 				_toast_hud("EVA suit — reboard soon (soft warn)")
 				print("[OpenSpace] EVA soft warning — reboard soon")
-		# Soft tether distance (presentation, no death)
-		if ship and is_instance_valid(ship):
-			var td: float = player.global_position.distance_to(ship.global_position)
-			if td > 80.0:
-				_eva_tether_t += delta
-				if _eva_tether_t > 5.0:
-					_eva_tether_t = 0.0
-					_toast_hud("EVA tether soft — ship %.0fm" % td)
-			else:
-				_eva_tether_t = 0.0
+		_tick_eva_tether(delta)
+
+
+func eva_tether_distance() -> float:
+	if not _eva_mode or player == null or not is_instance_valid(player):
+		return -1.0
+	if ship == null or not is_instance_valid(ship):
+		return -1.0
+	return player.global_position.distance_to(ship.global_position)
+
+
+func _tick_eva_tether(delta: float) -> void:
+	## Soft reel-in past 120m. Warn at 80m. Never lethal.
+	if ship == null or not is_instance_valid(ship) or player == null or not is_instance_valid(player):
+		return
+	var td: float = player.global_position.distance_to(ship.global_position)
+	if td <= 80.0:
+		_eva_tether_t = 0.0
+		return
+	_eva_tether_t += delta
+	if _eva_tether_t > 5.0:
+		_eva_tether_t = 0.0
+		_toast_hud("EVA tether soft — ship %.0fm" % td)
+	if td <= 120.0:
+		return
+	if player.get("_mag_latched"):
+		return
+	var dir: Vector3 = ship.global_position - player.global_position
+	if dir.length_squared() < 0.01:
+		return
+	dir = dir.normalized()
+	if player is CharacterBody3D:
+		(player as CharacterBody3D).velocity += dir * 7.5 * delta
+	if player is Node3D:
+		(player as Node3D).global_position += dir * 5.0 * delta
+
 
 func _update_hud() -> void:
 	if hud_label == null or ship == null or not is_instance_valid(ship):

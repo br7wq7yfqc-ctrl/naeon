@@ -439,7 +439,7 @@ func _refresh() -> void:
 		_host_hint_cache = ""
 		host_hint = ""
 	var eva_line := ""
-	if _player and "eva_mode" in _player and bool(_player.eva_mode):
+	if _player and is_instance_valid(_player) and "eva_mode" in _player and bool(_player.eva_mode):
 		var mag_s := ""
 		if "mag_boot" in _player:
 			if "_mag_latched" in _player and bool(_player._mag_latched):
@@ -448,7 +448,15 @@ func _refresh() -> void:
 				mag_s = " MAG:ARM"
 			else:
 				mag_s = " MAG:off"
-		eva_line = "  |  EVA%s" % mag_s
+		var tether_s := ""
+		var tree_e := get_tree()
+		if tree_e:
+			var osp = tree_e.get_first_node_in_group("open_space")
+			if osp and osp.has_method("eva_tether_distance"):
+				var td: float = float(osp.eva_tether_distance())
+				if td >= 0.0:
+					tether_s = "  tether %.0fm" % td
+		eva_line = "  |  EVA%s%s" % [mag_s, tether_s]
 	var sys_line := ""
 	if LayerContext and str(LayerContext.current_layer) in ["Space", "space"]:
 		var tree_s := get_tree()
