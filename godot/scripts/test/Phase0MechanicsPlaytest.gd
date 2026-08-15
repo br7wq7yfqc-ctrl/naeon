@@ -384,6 +384,8 @@ func _go() -> void:
 			print("[Playtest] rover deployed=", rov != null)
 			if rov == null or not is_instance_valid(rov):
 				fails.append("rover did not deploy on landed pad")
+			elif not rov.has_method("board"):
+				fails.append("rover script missing board (parse)")
 			else:
 				if os.has_method("_try_store_rover"):
 					os._try_store_rover()

@@ -63,3 +63,5 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 46. GUI bolts sweep `CombatHits.apply_shot` along the step (no tunnel at ship speeds); shooter excluded
 47. CombatHits considers `ship` hurtboxes; pad turrets track hulls; no planar knock on a landed ship
 48. Hull critical: recover 35% HP, thrust cut 1.8s, shield hold 2.4s after hit, HP chrome shows hull+shields
+
+49. Rover drive stays in `_physics_process`; mouse look stays in `_unhandled_input` (delta parse)

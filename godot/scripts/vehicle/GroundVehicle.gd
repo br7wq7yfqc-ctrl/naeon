@@ -118,6 +118,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _cam:
 			_cam.rotation.x = _cam_pitch
 		get_viewport().set_input_as_handled()
+
+
+func _physics_process(delta: float) -> void:
 	# Radial up
 	if _provider and _provider.has_method("gravity_at"):
 		var g: Vector3 = _provider.gravity_at(global_position)
