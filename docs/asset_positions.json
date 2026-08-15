@@ -823,13 +823,6 @@
           "view": "cinematic",
           "class": "module",
           "label": "Turret + seed-torpedo"
-        },
-        {
-          "id": "41624757-559c-4757-a0dd-bcf549779e91",
-          "faction": "GR",
-          "view": "ortho",
-          "class": "module",
-          "label": "Turret + seed-torpedo"
         }
       ]
     },
@@ -2338,6 +2331,14 @@
       ],
       "locked_uuids": [
         {
+          "id": "41624757-559c-4757-a0dd-bcf549779e91",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "weapon-vehicle",
+          "label": "APC gun",
+          "manual": 27
+        },
+        {
           "id": "02dfbd93-d19f-4230-85cd-97840f0db3de",
           "faction": "GR",
           "view": "cinematic",
@@ -2349,7 +2350,8 @@
           "faction": "GR",
           "view": "ortho",
           "class": "weapon-vehicle",
-          "label": "APC autocannon/infection"
+          "label": "APC autocannon/infection",
+          "notes": "superseded by manual #027 41624757"
         }
       ]
     },

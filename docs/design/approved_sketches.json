@@ -375,9 +375,10 @@
       "id": "41624757-559c-4757-a0dd-bcf549779e91",
       "faction": "GR",
       "view": "ortho",
-      "class": "module",
-      "label": "Turret + seed-torpedo",
-      "position": "gr-turret-torpedo"
+      "class": "weapon-vehicle",
+      "label": "APC gun",
+      "position": "grot_apc",
+      "manual": 27
     },
     {
       "id": "ba11d579-8ea9-4650-a070-a1932b1d6eb6",

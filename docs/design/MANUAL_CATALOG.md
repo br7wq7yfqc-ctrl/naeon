@@ -31,5 +31,6 @@ Old `generations/catalog.json` and the visual album are **void**.
 | 024 | Cybernex Hand utility — sheet | CX | ortho | `641c9c0c-45bd-41fa-a3fc-875e0b99fc24` | imagine |
 | 025 | Cybernex Hover cannon — cinematic | CX | cinematic | `576b48ad-426c-4b15-8292-fdd117ff43c3` | imagine |
 | 026 | Cybernex Tank gun — cinematic | CX | cinematic | `22365d81-9d7a-4784-9057-8d90337e40b8` | imagine |
+| 027 | gROT APC gun — sheet | GR | ortho | `41624757-559c-4757-a0dd-bcf549779e91` | imagine |
 
 Next: wait. Heavy GR armor ortho still open.

@@ -73,8 +73,7 @@ APC / hover / mech guns bind to the **hull** they sit on. Tank main has no Heavy
 | Tank main | GR | ortho | `gr-tank-gun` | `e996c312-7056-4d6c-9bf2-435f12155119` |
 | APC gun | CX | cinematic | `cybernex_apc` | `024be4f6-45a0-43fa-bc62-055f920ec7ab` |
 | APC autocannon/EW | CX | ortho | `cybernex_apc` | `a077f3ce-615f-4bb3-bdc7-5bbfcb5bc859` |
-| APC autocannon/infection | GR | cinematic | `grot_apc` | `02dfbd93-d19f-4230-85cd-97840f0db3de` |
-| APC autocannon/infection | GR | ortho | `grot_apc` | `a722bad1-3db4-444c-ad6a-1abd2641d401` |
+| APC gun | GR | sheet | `grot_apc` | `41624757-559c-4757-a0dd-bcf549779e91` |
 | Hover cannon | CX | cinematic | `cybernex_hover_tank` | `576b48ad-426c-4b15-8292-fdd117ff43c3` |
 | Hover energy cannon | CX | ortho | `cybernex_hover_tank` | `cade3b02-acb5-432b-8d08-8fe653ce657d` |
 | Hover canal-cannon | GR | cinematic | `grot_hover_tank` | `44ef17f1-73f4-43ad-b878-524b48321c41` |
@@ -99,7 +98,6 @@ APC / hover / mech guns bind to the **hull** they sit on. Tank main has no Heavy
 | Turret + hex launcher | CX | cinematic | `cx-turret-launcher` | `899de1b8-9179-452c-bc75-dee69352c374` |
 | Turret + hex launcher | CX | ortho | `cx-turret-launcher` | `8e742135-e693-4ad7-bbc2-fd9f4fcb092f` |
 | Turret + seed-torpedo | GR | cinematic | `gr-turret-torpedo` | `01ca395f-bd23-43b2-9252-a59297638be0` |
-| Turret + seed-torpedo | GR | ortho | `gr-turret-torpedo` | `41624757-559c-4757-a0dd-bcf549779e91` |
 | Scanner + repair arm | GR | cinematic | `gr-scanner-repair` | `ba11d579-8ea9-4650-a070-a1932b1d6eb6` |
 | Scanner + repair arm | GR | ortho | `gr-scanner-repair` | `f545cfc5-7c79-46af-a486-81d374ab0f74` |
 | Scanner + repair lattice | CX | cinematic | `cx-scanner-repair` | `9671aa91-1d4d-4499-8ce6-5498592f5321` |
