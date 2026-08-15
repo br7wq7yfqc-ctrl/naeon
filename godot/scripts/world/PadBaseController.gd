@@ -79,7 +79,7 @@ func _process(delta: float) -> void:
 			_refresh_label()
 	_tick_occupy(delta)
 	_tick_guard_respawn(delta)
-	if running and ownership and ownership.is_fully_owned() and _status != "contested":
+	if running and ownership and ownership.is_fully_owned() and _status != "contested" and _owner_in_zone():
 		_tick_harvest(delta)
 	_try_player_claim()
 	_try_pad_scan()
@@ -510,6 +510,22 @@ func get_claim_status() -> String:
 
 func get_occupy_strength() -> float:
 	return ownership.claim_strength if ownership else 0.0
+
+
+func _owner_in_zone() -> bool:
+	if ownership == null or not ownership.is_fully_owned():
+		return false
+	var actor := _find_actor()
+	if actor == null or not is_instance_valid(actor):
+		return false
+	if actor.global_position.distance_to(global_position) > claim_radius:
+		return false
+	var pfac := "Cybernex"
+	if actor.has_method("get_faction"):
+		pfac = str(actor.get_faction())
+	elif GameManager:
+		pfac = GameManager.get_faction_name()
+	return pfac == ownership.faction_name()
 
 
 func get_faction() -> String:
