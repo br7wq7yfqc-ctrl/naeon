@@ -21,6 +21,8 @@ var _col: Color = Color(0.25, 0.9, 1.0)
 
 
 func _ready() -> void:
+	# Firewall counterplay scans this group to break enemy channels.
+	add_to_group("channel_controllers")
 	set_process(true)
 
 

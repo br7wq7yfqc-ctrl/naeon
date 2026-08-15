@@ -40,6 +40,7 @@ var _loco = null
 var _coyote_t: float = 0.0
 var _jump_buf_t: float = 0.0
 var _jump_cut: bool = false
+var _jumped: bool = false
 var _down_t: float = 0.0
 var _spawn_pos: Vector3 = Vector3(0, 1.2, 6)
 
@@ -126,6 +127,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 		else:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+		# Consume it: TestArena also listens for Esc and would abandon the match.
+		get_viewport().set_input_as_handled()
 
 func _physics_process(delta: float) -> void:
 	if firewall_timer > 0.0:
@@ -149,6 +152,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		_coyote_t = 0.12
 		_jump_cut = false
+		_jumped = false
 	if _pressed_jump():
 		_jump_buf_t = 0.1
 	else:
@@ -158,9 +162,11 @@ func _physics_process(delta: float) -> void:
 		_jump_buf_t = 0.0
 		_coyote_t = 0.0
 		_jump_cut = false
+		_jumped = true
 	var jump_held := (InputMap.has_action("jump") and Input.is_action_pressed("jump")) \
 		or Input.is_physical_key_pressed(KEY_SPACE)
-	if not is_on_floor() and not jump_held and not _jump_cut and velocity.y > 2.2:
+	# Variable height — only for a jump the player asked for, never for knockback.
+	if _jumped and not is_on_floor() and not jump_held and not _jump_cut and velocity.y > 2.2:
 		velocity.y *= 0.42
 		_jump_cut = true
 
@@ -207,8 +213,10 @@ func _physics_process(delta: float) -> void:
 		if ability_system and _down_t <= 0.0:
 			ability_system.try_activate(2)
 	if _just_ability(4):
-		if _down_t <= 0.0:
-			cycle_form()
+		# Through the ability so the F slot's cooldown in the HUD is real.
+		# _on_ability_activated performs the actual form cycle.
+		if ability_system and _down_t <= 0.0:
+			ability_system.try_activate(3)
 
 
 ## Robust WASD: InputMap first, then physical keys + keycodes + arrows.
@@ -297,13 +305,19 @@ func get_faction() -> String:
 func heal(amount: float) -> void:
 	health = min(max_health, health + amount)
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, source_faction: String = "") -> void:
 	if _down_t > 0.0:
 		return
-	if CombatJuice:
-		CombatJuice.hit_feedback(float(amount), global_position)
+	# Infection is gROT pressure: stacks amplify gROT damage (rules/04).
+	if source_faction == "gROT":
+		var inf_t = get_node_or_null("InfectionStatus")
+		if inf_t and inf_t.has_method("damage_taken_mult_from_grot"):
+			amount *= float(inf_t.damage_taken_mult_from_grot())
 	if firewall_timer > 0.0:
 		amount *= 0.35
+	# Feedback after mitigation — else Firewall looks like it does nothing.
+	if CombatJuice:
+		CombatJuice.hit_feedback(float(amount), global_position)
 	health = max(0.0, health - amount)
 	if CombatJuice:
 		CombatJuice.damage_taken(amount)
@@ -466,6 +480,9 @@ func try_load_form_mesh() -> void:
 		body_mesh.visible = false
 	root.name = "FormGLB"
 	_MeshOrient.face_neg_z(root as Node3D, true)
+	# Bind the skeleton or the arena hero stays in bind pose while the same
+	# asset animates on the planet surface.
+	_form_skel = _FormAnim.find_skeleton(root)
 	add_child.call_deferred(root)
 	root.scale = Vector3.ONE * 0.85
 	root.position = Vector3(0, 0, 0)
@@ -514,6 +531,7 @@ func _strip_colliders(n: Node) -> void:
 			(n as RigidBody3D).freeze = true
 
 func _clear_form_glb() -> void:
+	_form_skel = null
 	var old := get_node_or_null("FormGLB")
 	if old:
 		old.name = "_FormGLBDead"

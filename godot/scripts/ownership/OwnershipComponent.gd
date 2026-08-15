@@ -17,6 +17,8 @@ signal fully_claimed(faction: OwnershipData.Faction)
 var _dual_root: Node3D
 var _pulse_cd: float = 0.0
 var _claimed_emitted: bool = false
+var _tick_accum: float = 0.0
+var _visual_sig: String = ""
 const OCCUPY_NEED := 1.75
 const OCCUPY_PULSE := 0.38
 const OCCUPY_DECAY := 0.16
@@ -44,11 +46,21 @@ func _ready() -> void:
 	set_process(true)
 
 func _process(delta: float) -> void:
-	_tick_occupy(delta)
+	# ~10 Hz: _apply_visual writes three material params and formats a string,
+	# and those only change on a claim (rules/25 no per-frame allocations).
+	_tick_accum += delta
+	if _tick_accum < 0.1:
+		return
+	var step := _tick_accum
+	_tick_accum = 0.0
+	_tick_occupy(step)
 	if data:
 		if not data.is_fully_owned():
 			data.transition_progress = clampf(data.claim_strength / OCCUPY_NEED, 0.0, 1.0)
-		_apply_visual(false)
+		var sig := "%d/%d/%.3f" % [int(data.current_faction), int(data.previous_faction), data.transition_progress]
+		if sig != _visual_sig:
+			_visual_sig = sig
+			_apply_visual(false)
 		if data.claim_strength >= OCCUPY_NEED:
 			_emit_claimed()
 
@@ -58,7 +70,16 @@ func claim(faction_name: String, strength: float = 1.0) -> void:
 		return
 	var f: OwnershipData.Faction = OwnershipData.from_string(faction_name)
 	if data.current_faction != f:
-		if data.current_faction != OwnershipData.Faction.NEUTRAL and data.current_faction != OwnershipData.Faction.CONTESTED:
+		# A held beacon must be worn down first: reassigning the faction on the
+		# very first pulse let one tap strip an owner for free.
+		if data.is_fully_owned():
+			data.claim_strength = maxf(0.0, data.claim_strength - strength)
+			data.transition_progress = clampf(data.claim_strength / OCCUPY_NEED, 0.0, 1.0)
+			ownership_changed.emit(data.current_faction, data.transition_progress)
+			if data.claim_strength > 0.02:
+				return
+			data.claim_strength = 0.0
+		elif data.current_faction != OwnershipData.Faction.NEUTRAL and data.current_faction != OwnershipData.Faction.CONTESTED:
 			data.claim_strength *= 0.35
 		data.start_transition(f)
 		_claimed_emitted = false
@@ -107,8 +128,16 @@ func _tick_occupy(delta: float) -> void:
 	elif not near and not data.is_fully_owned():
 		data.claim_strength = maxf(0.0, data.claim_strength - OCCUPY_DECAY * delta)
 		if data.claim_strength <= 0.02 and data.current_faction != OwnershipData.Faction.NEUTRAL:
-			data.current_faction = OwnershipData.Faction.NEUTRAL
-			data.transition_progress = 0.0
+			# Fall back to the previous holder, not Neutral — abandoning a
+			# contest should not hand the beacon to nobody.
+			var prev := data.previous_faction
+			if prev == OwnershipData.Faction.CYBERNEX or prev == OwnershipData.Faction.GROT:
+				data.current_faction = prev
+				data.claim_strength = OCCUPY_NEED
+				data.transition_progress = 1.0
+			else:
+				data.current_faction = OwnershipData.Faction.NEUTRAL
+				data.transition_progress = 0.0
 			_claimed_emitted = false
 
 

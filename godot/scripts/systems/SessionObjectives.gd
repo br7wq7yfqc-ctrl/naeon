@@ -49,16 +49,11 @@ func complete(id: String) -> void:
 	if id == current and idx >= 0 and idx + 1 < _order.size():
 		current = _order[idx + 1]
 	elif id in _order:
-		# jump forward if out-of-order complete
+		# Out-of-order completion advances one step at a time so the player is
+		# never silently walked past a step they did not perform.
 		var j := _order.find(id)
-		if j + 1 < _order.size() and (_order.find(current) <= j):
-			current = _order[j + 1]
-	# all done?
-	var all := true
-	for k in _order:
-		if not _done.get(k, false) and k != "boot":
-			# boot auto-done on menu leave
-			pass
+		if idx >= 0 and idx <= j and idx + 1 < _order.size():
+			current = _order[idx + 1]
 	if _done.get("economy_tick", false):
 		current = ""
 	_emit()

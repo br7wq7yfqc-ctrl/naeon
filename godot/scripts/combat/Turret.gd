@@ -24,13 +24,15 @@ var _cd: float = 0.0
 var _alive: bool = true
 var _label: Label3D
 var _barrel: Node3D
+var _gq: Node = null
 
 func _ready() -> void:
-	_ensure_animator()
+	_gq = get_node_or_null("/root/GraphicsQuality")
 	health = max_health
 	add_to_group("enemy" if faction == "gROT" else "ally")
 	add_to_group("hackable")
 	_load_mesh()
+	_ensure_animator()
 	_label = Label3D.new()
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.font_size = 22
@@ -42,18 +44,19 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_ai_accum += delta
 	var ai_dt := 0.12
-	var gq := get_node_or_null("/root/GraphicsQuality")
-	if gq:
-		match int(gq.tier):
+	if _gq:
+		match int(_gq.tier):
 			0: ai_dt = 0.22
 			1: ai_dt = 0.16
 			_: ai_dt = 0.12
 	if _ai_accum < ai_dt:
 		return
+	# Drain by the gated interval, not one frame — else fire_rate scales with FPS.
+	var elapsed: float = _ai_accum
 	_ai_accum = 0.0
 	if not _alive:
 		return
-	_cd = max(0.0, _cd - delta)
+	_cd = max(0.0, _cd - elapsed)
 	var target := _find_target()
 	if target == null:
 		return
@@ -102,6 +105,10 @@ func _find_target() -> Node3D:
 			continue
 		if n.has_method("is_downed") and bool(n.is_downed()):
 			continue
+		if n.has_method("is_alive") and not bool(n.is_alive()):
+			continue
+		if "_alive" in n and not bool(n._alive):
+			continue
 		var d: float = global_position.distance_to((n as Node3D).global_position)
 		if d < best_d:
 			best = n as Node3D
@@ -124,15 +131,19 @@ func _fire(target: Node3D) -> void:
 	_Pool.spawn(get_tree(), muzzle + dir * 0.8, dir, spd, damage, faction, col, 3.2, [self])
 
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, _source_faction: String = "") -> void:
 	if not _alive:
 		return
+	if CombatJuice:
+		CombatJuice.hit_feedback(float(amount), hurtbox_center(), amount >= 20.0)
 	health = max(0.0, health - amount)
 	_update_label()
 	if health <= 0.0:
 		_die()
 
 func on_hacked(caster: Node, amount: float = 1.0) -> void:
+	if caster and caster.has_method("get_faction") and str(caster.get_faction()) == faction:
+		return
 	take_damage(amount * 8.0)
 	if caster and caster.has_method("get_faction"):
 		faction = str(caster.get_faction())
@@ -188,6 +199,11 @@ func _die() -> void:
 	_alive = false
 	_update_label()
 	visible = false
+	# Leave the target groups or every scan keeps aiming at a corpse.
+	if is_in_group("enemy"):
+		remove_from_group("enemy")
+	if is_in_group("ally"):
+		remove_from_group("ally")
 	if SoftScanCache:
 		SoftScanCache.invalidate_enemies()
 	died.emit()
@@ -199,6 +215,9 @@ func revive() -> void:
 	health = max_health
 	_alive = true
 	visible = true
+	var grp := "enemy" if faction == "gROT" else "ally"
+	if not is_in_group(grp):
+		add_to_group(grp)
 	_update_label()
 	if SoftScanCache:
 		SoftScanCache.invalidate_enemies()

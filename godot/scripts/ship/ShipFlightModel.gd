@@ -97,16 +97,23 @@ static func approach_assist(
 	velocity: Vector3,
 	to_pad: Vector3,
 	dist: float,
-	snap_dist: float
+	snap_dist: float,
+	delta: float = 0.0
 ) -> Vector3:
-	## Soft brake when near pad and closing in (landing assist, not autopilot).
+	## Soft brake when near a pad and closing in (landing assist, not autopilot).
+	## `to_pad` points at the pad, so closing speed is a positive dot product.
 	if dist > snap_dist or dist < 2.0:
 		return velocity
-	var closing := -velocity.dot(to_pad.normalized()) if to_pad.length_squared() > 0.01 else 0.0
+	if to_pad.length_squared() <= 0.01:
+		return velocity
+	var closing := velocity.dot(to_pad.normalized())
 	if closing < 2.0:
 		return velocity
 	var t := 1.0 - dist / snap_dist
-	return velocity.lerp(Vector3.ZERO, t * t * 0.08)
+	# Frame-rate independent, and weak enough that it cannot sneak a fast
+	# approach past the land gate.
+	var w: float = t * t * 1.6 * (delta if delta > 0.0 else 0.016)
+	return velocity.lerp(Vector3.ZERO, clampf(w, 0.0, 0.2))
 
 
 static func land_ok(speed: float, v_radial: float, max_spd: float = 18.0, max_sink: float = 12.0) -> bool:

@@ -25,7 +25,15 @@ func _ready() -> void:
 	_build_lane_markers()
 	print("[ClashLanes] TOP/MID/BOT + dual nexus ready")
 
+var _mat_cache: Dictionary = {}
+var _mesh_cache: Dictionary = {}
+
 func _mat(col: Color, emit: float = 1.2) -> StandardMaterial3D:
+	# Share by colour+emission: the arena built 45+ unique materials for a
+	# handful of colours, and each one is its own draw call on min spec.
+	var key := "%d_%d_%d_%d" % [int(col.r * 32.0), int(col.g * 32.0), int(col.b * 32.0), int(emit * 8.0)]
+	if _mat_cache.has(key):
+		return _mat_cache[key]
 	var m := StandardMaterial3D.new()
 	m.albedo_color = col * 0.35
 	m.metallic = 0.4
@@ -35,13 +43,21 @@ func _mat(col: Color, emit: float = 1.2) -> StandardMaterial3D:
 	m.emission_energy_multiplier = emit
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	m.albedo_color.a = 0.85
+	_mat_cache[key] = m
 	return m
+
+func _shared_box(size: Vector3) -> BoxMesh:
+	var key := "%.2f_%.2f_%.2f" % [size.x, size.y, size.z]
+	if _mesh_cache.has(key):
+		return _mesh_cache[key]
+	var bm := BoxMesh.new()
+	bm.size = size
+	_mesh_cache[key] = bm
+	return bm
 
 func _box(size: Vector3, pos: Vector3, col: Color, parent: Node3D = self) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
-	var bm := BoxMesh.new()
-	bm.size = size
-	mi.mesh = bm
+	mi.mesh = _shared_box(size)
 	mi.material_override = _mat(col)
 	parent.add_child(mi)
 	mi.position = pos
@@ -135,13 +151,15 @@ func _nexus(pos: Vector3, col: Color, nname: String, fac: String) -> void:
 
 func _build_towers() -> void:
 	# Mid-lane towers along Z for both sides — live guns, visual spire stays.
+	# Friendly towers sit behind the spawn camera (player spawns at z=6, the
+	# chase camera trails to about z=11) — at z=12 the MID tower stood inside it.
 	var towers := [
-		[Vector3(0, 0, 12), Color(0.2, 0.8, 1.0), "T_CX_MID", "Cybernex", "MID"],
-		[Vector3(0, 0, -12), Color(0.9, 0.2, 0.45), "T_GR_MID", "gROT", "MID"],
-		[Vector3(14, 0, 10), Color(0.2, 0.8, 1.0), "T_CX_TOP", "Cybernex", "TOP"],
-		[Vector3(14, 0, -10), Color(0.9, 0.2, 0.45), "T_GR_TOP", "gROT", "TOP"],
-		[Vector3(-14, 0, 10), Color(0.2, 0.8, 1.0), "T_CX_BOT", "Cybernex", "BOT"],
-		[Vector3(-14, 0, -10), Color(0.9, 0.2, 0.45), "T_GR_BOT", "gROT", "BOT"],
+		[Vector3(0, 0, 18), Color(0.2, 0.8, 1.0), "T_CX_MID", "Cybernex", "MID"],
+		[Vector3(0, 0, -14), Color(0.9, 0.2, 0.45), "T_GR_MID", "gROT", "MID"],
+		[Vector3(14, 0, 16), Color(0.2, 0.8, 1.0), "T_CX_TOP", "Cybernex", "TOP"],
+		[Vector3(14, 0, -12), Color(0.9, 0.2, 0.45), "T_GR_TOP", "gROT", "TOP"],
+		[Vector3(-14, 0, 16), Color(0.2, 0.8, 1.0), "T_CX_BOT", "Cybernex", "BOT"],
+		[Vector3(-14, 0, -12), Color(0.9, 0.2, 0.45), "T_GR_BOT", "gROT", "BOT"],
 	]
 	for t in towers:
 		var root := Node3D.new()
@@ -187,10 +205,8 @@ func _build_towers() -> void:
 			if lab is Label3D:
 				(lab as Label3D).position.y = 3.35
 				(lab as Label3D).font_size = 18
-		if gun.is_in_group("ally"):
-			gun.remove_from_group("ally")
-		if not gun.is_in_group("enemy"):
-			gun.add_to_group("enemy")
+		# Turret._ready already files itself by faction. Forcing every tower into
+		# "enemy" let the player farm their own base for lane pressure.
 		if gun.has_signal("died"):
 			gun.died.connect(_on_tower_died.bind(root, str(t[4]), str(t[3])))
 
@@ -204,16 +220,20 @@ func _on_tower_died(spire: Node3D, lane: String, fac: String) -> void:
 			var c: Color = mat.albedo_color
 			c.a = 0.4
 			mat.albedo_color = c
+	# Only an enemy tower is progress. Losing your own must not reward you.
+	var player_fac := GameManager.get_faction_name() if GameManager else "Cybernex"
 	var tree := get_tree()
-	if tree:
+	if fac != player_fac and tree:
 		var clash: Node = tree.get_first_node_in_group("aexion_clash")
 		if clash and clash.has_method("register_tower_down"):
 			clash.register_tower_down(lane)
 		var matchn: Node = tree.get_first_node_in_group("clash_match")
 		if matchn and matchn.has_method("register_objective"):
 			matchn.register_objective()
-	if GameManager:
-		GameManager.toast_requested.emit("Tower down (%s %s) — soft lane pressure only" % [fac, lane])
+		if GameManager:
+			GameManager.toast_requested.emit("Tower down (%s %s) — soft lane pressure only" % [fac, lane])
+	elif GameManager:
+		GameManager.toast_requested.emit("Your %s tower is down (%s)" % [lane, fac])
 	print("[ClashLanes] tower down ", fac, " ", lane)
 
 func _build_lane_markers() -> void:

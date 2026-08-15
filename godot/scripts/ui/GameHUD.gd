@@ -331,14 +331,14 @@ func _build() -> void:
 	_toast_label.visible = false
 	_root.add_child(_toast_label)
 
-	# Mini pad radar (bottom-left)
+	# Mini pad radar (bottom-left, above the vitals block at y=-118..-18)
 	_radar = Control.new()
-	_radar.position = Vector2(14, -170)
+	_radar.position = Vector2(14, -300)
 	_radar.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	_radar.offset_left = 14
-	_radar.offset_top = -170
+	_radar.offset_top = -300
 	_radar.offset_right = 150
-	_radar.offset_bottom = -34
+	_radar.offset_bottom = -164
 	_radar.custom_minimum_size = Vector2(136, 136)
 	_radar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var rpanel := Panel.new()
@@ -458,7 +458,31 @@ func _in_clash_arena() -> bool:
 
 
 func _apply_clash_chrome() -> void:
-	if _debug_overlay or not _in_clash_arena():
+	if not _in_clash_arena():
+		return
+	if _debug_overlay:
+		# ClashMatchDirector owns the top-right ScoreLine and TestArena owns the
+		# top-left lane line. Give the F3 dump one deterministic left column so
+		# nothing lands on top of anything else.
+		if _infection_label:
+			_infection_label.position = Vector2(14, 70)
+		if _status_label:
+			_status_label.position = Vector2(14, 100)
+		if _mastery_label:
+			_mastery_label.position = Vector2(14, 148)
+		if _econ_label:
+			_econ_label.visible = true
+			_econ_label.position = Vector2(14, 172)
+		if _econ_bar:
+			_econ_bar.visible = true
+			_econ_bar.position = Vector2(14, 194)
+		if _obj_label:
+			_obj_label.visible = false
+		if _layer_label:
+			_layer_label.visible = false
+		if _ctx_label:
+			_ctx_label.offset_top = 138
+			_ctx_label.offset_bottom = 170
 		return
 	if _obj_label:
 		_obj_label.visible = false
@@ -485,8 +509,9 @@ func _refresh() -> void:
 	_apply_debug_vis()
 	_refresh_play_chrome()
 	if _obj_label and SessionObjectives:
-		_obj_label.text = SessionObjectives.briefing()
 		_obj_label.visible = not pocket
+		if _obj_label.visible:
+			_obj_label.text = SessionObjectives.briefing()
 	var hp := "?"
 	var en := "?"
 	var fac := "?"
@@ -551,7 +576,9 @@ func _refresh() -> void:
 						if sl != "":
 							sys_line += "  ·  " + sl
 						break
-	_status_label.text = "HP %s  EN %s  |  %s %s%s%s%s\nCONTRIB %.0f  ·  4=form F9=fac F10=host F11=join  (no P2W)%s" % [hp, en, fac, form, net, host_hint, eva_line, contrib, sys_line]
+	# Debug-only block: skip the string build when it is not on screen.
+	if _status_label.visible:
+		_status_label.text = "HP %s  EN %s  |  %s %s%s%s%s\nCONTRIB %.0f  ·  V=form F9=fac F10=host F11=join  (no P2W)%s" % [hp, en, fac, form, net, host_hint, eva_line, contrib, sys_line]
 
 	# Terrain budget + interior status (soft info only)
 	if _terrain_label:
@@ -595,35 +622,7 @@ func _refresh() -> void:
 		_interior_label.text = iline
 		_interior_label.visible = iline != ""
 
-	# Contested pad readability (nearest active ring) — skip in pocket (walker is at y≈9200)
-	if _contest_banner and _contest_label and not pocket:
-		var best_d := 90.0
-		var best_pct := -1.0
-		var best_name := ""
-		var tree_c := get_tree()
-		if tree_c and _player:
-			for n in tree_c.get_nodes_in_group("contested_ring"):
-				if n is Node3D and n.get("active") == true:
-					var d: float = _player.global_position.distance_to((n as Node3D).global_position)
-					if d < best_d:
-						best_d = d
-						best_pct = float(n.get_progress()) * 100.0 if n.has_method("get_progress") else float(n.get("progress")) * 100.0
-						best_name = str(n.get_parent().name) if n.get_parent() else "PAD"
-			# also rings not in group
-			if best_pct < 0.0:
-				for n in tree_c.get_nodes_in_group("pad_base"):
-					var ring = n.get_node_or_null("ContestedRing")
-					if ring and ring.get("active") == true and n is Node3D:
-						var d2: float = _player.global_position.distance_to((n as Node3D).global_position)
-						if d2 < best_d:
-							best_d = d2
-							best_pct = float(ring.get("progress")) * 100.0
-							best_name = str(n.name)
-		if best_pct >= 0.0:
-			_contest_banner.visible = true
-			_contest_label.text = "⚠ CONTESTED  %s  ·  %d%%  ·  %.0fm  ·  C pulse" % [best_name, int(best_pct), best_d]
-		else:
-			_contest_banner.visible = false
+	# The contested banner is written once, from the pad_bases pass further down.
 
 	# Layer chip + context (S1 seamless)
 	if _layer_label and LayerContext:
@@ -674,27 +673,10 @@ func _refresh() -> void:
 	else:
 		stage = "%s  %s %d/5" % [stage, pips, stacks]
 	_infection_label.text = "%s%s" % [stage, "  GLITCH" if glitch else ""]
-	_infection_label.visible = true
+	# Visibility is owned by _apply_debug_vis — do not fight it here.
 
-	# Ability bar
-	_update_channel_hud()
-	if show_ability_bar and _ability_sys != null and is_instance_valid(_ability_sys) and _ability_sys.get("abilities") != null:
-		var lines: PackedStringArray = PackedStringArray()
-		var keys := ["Q", "E", "R", "F"]
-		var abs = _ability_sys.abilities
-		for i in mini(abs.size(), 4):
-			var ab = abs[i]
-			if ab == null:
-				continue
-			var cd: float = _ability_sys.get_cooldown_remaining(i)
-			var name: String = ab.ability_name
-			if cd > 0.05:
-				lines.append("%s %s [%.1fs]" % [keys[i], name, cd])
-			else:
-				lines.append("%s %s  ready" % [keys[i], name])
-		_ability_label.text = "  ·  ".join(lines)
-	else:
-		_ability_label.text = ""
+	# Ability chips and the channel bar are written by _refresh_ability_bar /
+	# _update_channel_hud, which _refresh already called.
 
 	# Nearest pad ownership + contested banner
 	var nearest := ""
@@ -771,23 +753,7 @@ func _refresh() -> void:
 		else:
 			_edu_label.visible = false
 
-	# Channel bar
-	var ch_ratio := 0.0
-	var channeling := false
-	var ch_name := ""
-	if _player:
-		var ch = _player.get_node_or_null("ChannelController")
-		if ch and ch.has_method("is_channeling") and ch.is_channeling():
-			channeling = true
-			ch_ratio = float(ch.get_ratio())
-			ch_name = str(ch.ability_name)
-	if _channel_bar and _channel_label:
-		_channel_bar.visible = channeling
-		_channel_label.visible = channeling
-		if channeling:
-			_channel_bar.value = ch_ratio
-			_channel_label.text = "CHANNEL %s  %d%%" % [ch_name, int(ch_ratio * 100)]
-			_channel_label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.6))
+	# Channel bar is owned by _update_channel_hud (called above).
 
 	if contested_near:
 		_owner_label.add_theme_color_override("font_color", Color(1.0, 0.55, 0.2))
@@ -795,18 +761,16 @@ func _refresh() -> void:
 		_owner_label.add_theme_color_override("font_color", Color(0.95, 0.9, 0.55))
 
 	# Pad radar — skip in pocket (no pads at y=9200)
-	if not pocket and _radar and _player and _player is Node3D and get_tree():
+	if not pocket and _radar and _radar.visible and _player and _player is Node3D and get_tree():
 		var origin: Vector3 = (_player as Node3D).global_position
 		var pads: Array = []
 		for n in (SoftScanCache.get_pads() if SoftScanCache else get_tree().get_nodes_in_group("pad_bases")):
-			if n is Node3D:
+			if n is Node3D and n.is_inside_tree():
 				pads.append(n)
-		for a in range(pads.size()):
-			for b in range(a + 1, pads.size()):
-				if pads[a].global_position.distance_to(origin) > pads[b].global_position.distance_to(origin):
-					var tmp = pads[a]
-					pads[a] = pads[b]
-					pads[b] = tmp
+		# One distance per pad, then sort — the old O(n^2) swap recomputed two
+		# distances per comparison, eight times a second.
+		pads.sort_custom(func(a, b): return a.global_position.distance_squared_to(origin) \
+			< b.global_position.distance_squared_to(origin))
 		var range_m := 400.0
 		for i in _radar_dots.size():
 			var dot: ColorRect = _radar_dots[i]

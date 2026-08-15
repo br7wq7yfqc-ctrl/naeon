@@ -164,6 +164,9 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	_set_world_hidden(true)
 
 	# Cancel any pending surface snap / exterior physics on walker
+	# EVA off first: set_eva_profile overwrites the interior movement profile.
+	if player != null and is_instance_valid(player) and player.has_method("set_eva_profile"):
+		player.set_eva_profile(false)
 	if player != null and is_instance_valid(player) and player.has_method("set_interior_mode"):
 		player.set_interior_mode(true)
 	elif "interior_mode" in player:
@@ -177,8 +180,6 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 		player.set_planet_gravity_provider(self)
 	if player != null and is_instance_valid(player) and player.has_method("set_spawn_basis"):
 		player.set_spawn_basis(Vector3.UP, PI)
-	if player != null and is_instance_valid(player) and player.has_method("set_eva_profile"):
-		player.set_eva_profile(false)
 
 	# Place on spawn marker (floor + clearance)
 	var spawn: Node3D = _active.get_node_or_null("Spawn") as Node3D
@@ -235,6 +236,12 @@ func _settle_player_on_floor() -> void:
 	if not _inside or _player == null or not is_instance_valid(_player) or _active == null:
 		return
 	if not is_instance_valid(_active):
+		return
+	# The pocket's StaticBody shapes were added this frame; wait for the physics
+	# server to commit them or the floor ray finds nothing on a cold entry.
+	if get_tree():
+		await get_tree().physics_frame
+	if not _inside or _player == null or not is_instance_valid(_player) or not is_instance_valid(_active):
 		return
 	var space = _player.get_world_3d().direct_space_state if _player.get_world_3d() else null
 	if space == null:
@@ -587,8 +594,9 @@ func _tick_doors(delta: float) -> void:
 		elif prev_x > 1.25 and slab.position.x <= 1.25 and not want_open:
 			if AudioDirector and AudioDirector.has_method("play_door"):
 				AudioDirector.play_door(false)
-		# Open slab must not block the hall — collision rides the mesh otherwise.
-		var blocking := slab.position.x < 0.85
+		# Open slab must not block the hall — but drop collision only once the
+		# slab has actually cleared the opening, else you clip through it.
+		var blocking := slab.position.x < 1.4
 		for c in slab.get_children():
 			if c is CollisionObject3D:
 				(c as CollisionObject3D).collision_layer = 1 if blocking else 0

@@ -103,7 +103,9 @@ func can_activate(caster: Node) -> bool:
 func activate(caster: Node, target = null) -> void:
 	var EE = load("res://scripts/systems/EnergyEconomy.gd")
 	if EE and caster != null:
-		EE.spend(caster, energy_cost)
+		if not EE.spend(caster, energy_cost):
+			print("[Ability] ", ability_name, " denied — energy")
+			return
 	elif caster != null and caster.has_method("spend_energy"):
 		caster.spend_energy(energy_cost)
 	var VFX = load("res://scripts/abilities/AbilityVfx.gd")
@@ -153,12 +155,16 @@ func _apply_aoe_burst(caster: Node) -> void:
 		fac = str(caster.faction)
 	elif caster.has_method("get_faction"):
 		fac = str(caster.get_faction())
+	# Knowledge stays soft (rules/08) — no raw damage bonus here.
 	var dmg: float = damage
-	if GameManager:
-		dmg *= 1.0 + GameManager.knowledge_insight_bonus()
 	var Hits = load("res://scripts/combat/CombatHits.gd")
-	var enemies: Array = SoftScanCache.get_enemies() if SoftScanCache else tree.get_nodes_in_group("enemy")
-	for e in enemies:
+	# Snapshot: a kill inside the loop invalidates the shared cache array.
+	var targets: Array = []
+	for g in ["enemy", "player", "ship", "ally"]:
+		for n in tree.get_nodes_in_group(g):
+			if n != null and is_instance_valid(n) and not targets.has(n):
+				targets.append(n)
+	for e in targets:
 		if e == null or not is_instance_valid(e) or e == caster or not (e is Node3D):
 			continue
 		if e.has_method("get_faction") and str(e.get_faction()) == fac:
@@ -169,7 +175,7 @@ func _apply_aoe_burst(caster: Node) -> void:
 		if dist > rad:
 			continue
 		if e.has_method("take_damage"):
-			e.take_damage(dmg)
+			e.take_damage(dmg, fac)
 		if Hits:
 			var away: Vector3 = (e as Node3D).global_position - origin
 			var knock_dmg := force if force > 0.05 else dmg
@@ -209,6 +215,11 @@ func _nearest_hack_pad(caster: Node) -> Node:
 	var origin: Vector3 = (caster as Node3D).global_position
 	var best: Node = null
 	var best_d := self.range
+	var fac := ""
+	if "faction" in caster:
+		fac = str(caster.faction)
+	elif caster.has_method("get_faction"):
+		fac = str(caster.get_faction())
 	for n in caster.get_tree().get_nodes_in_group("pad_bases"):
 		if n == null or not is_instance_valid(n) or not (n is Node3D):
 			continue
@@ -222,6 +233,9 @@ func _nearest_hack_pad(caster: Node) -> Node:
 		if n == null or not is_instance_valid(n) or n == caster or not (n is Node3D):
 			continue
 		if not n.has_method("on_hacked"):
+			continue
+		# Never auto-acquire your own side (rules/04 counterplay, no friendly fire).
+		if fac != "" and n.has_method("get_faction") and str(n.get_faction()) == fac:
 			continue
 		var d2: float = origin.distance_to((n as Node3D).global_position)
 		if d2 < best_d:
@@ -261,9 +275,8 @@ func _spawn_projectile(caster: Node, dmg: float, color: Color) -> void:
 		var aim: Array = Hits.aim_from(caster)
 		origin = aim[0]
 		dir = aim[1]
+	# Knowledge stays soft (rules/08) — no raw damage bonus here.
 	var final_dmg: float = dmg
-	if GameManager:
-		final_dmg *= 1.0 + GameManager.knowledge_insight_bonus()
 	var fac := "Cybernex"
 	if "faction" in caster:
 		fac = str(caster.faction)

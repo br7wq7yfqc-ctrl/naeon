@@ -17,7 +17,10 @@ var glow: bool = true
 var ssao: bool = false
 var ssil: bool = false
 var sdfgi: bool = false
-var far_clip: float = 12000.0
+var far_clip: float = 28000.0
+## Pushed off 0.05: the near/far ratio drives depth precision, and the ship hull
+## is metres away, so 0.25 costs nothing visible and buys a lot of Z accuracy.
+var near_clip: float = 0.25
 var prop_lod_bias: float = 1.0
 var max_enemies: int = 12
 var planet_segments: int = 64
@@ -43,7 +46,10 @@ func apply_tier(t: int) -> void:
 			glow = false
 			ssao = false
 			ssil = false
-			far_clip = 8000.0
+			# Must clear the whole star system or the outer bodies are simply
+			# clipped away: with 8000 the two far planets (10382 / 15953 from
+			# the spawn) and every gate anchor were invisible on this preset.
+			far_clip = 22000.0
 			prop_lod_bias = 1.35
 			max_enemies = 8
 			planet_segments = 48
@@ -54,7 +60,7 @@ func apply_tier(t: int) -> void:
 			glow = true
 			ssao = false
 			ssil = false
-			far_clip = 14000.0
+			far_clip = 28000.0
 			prop_lod_bias = 1.0
 			max_enemies = 14
 			planet_segments = 64
@@ -65,7 +71,7 @@ func apply_tier(t: int) -> void:
 			glow = true
 			ssao = true
 			ssil = false
-			far_clip = 22000.0
+			far_clip = 36000.0
 			prop_lod_bias = 0.75
 			max_enemies = 24
 			planet_segments = 96
@@ -76,7 +82,7 @@ func apply_tier(t: int) -> void:
 			glow = true
 			ssao = true
 			ssil = true
-			far_clip = 32000.0
+			far_clip = 48000.0
 			prop_lod_bias = 0.55
 			max_enemies = 32
 			planet_segments = 128

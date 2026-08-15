@@ -1,5 +1,6 @@
 extends CharacterBody3D
 class_name GroundVehicle
+const _Facing = preload("res://scripts/player/SurfaceFacing.gd")
 ## Surface rover — radial gravity drive, nose = −Z, board/exit F.
 
 @export var class_id: String = "rover"
@@ -15,6 +16,7 @@ class_name GroundVehicle
 var pilot: Node3D = null
 var _provider: Node = null
 var _up: Vector3 = Vector3.UP
+var _ref_fwd: Vector3 = Vector3(0, 0, -1)
 var _yaw: float = 0.0
 var _cam: Camera3D
 var _speed_along: float = 0.0
@@ -78,6 +80,13 @@ func board(actor: Node3D) -> void:
 		actor.visible = false
 		if actor is CollisionObject3D:
 			(actor as CollisionObject3D).collision_layer = 0
+		# Park the walker: otherwise WASD drives the rover AND walks the hidden
+		# body away, Space jumps it, and its abilities still fire.
+		if actor is CharacterBody3D:
+			(actor as CharacterBody3D).velocity = Vector3.ZERO
+		actor.set_physics_process(false)
+		actor.set_process_input(false)
+		actor.set_process_unhandled_input(false)
 	if _cam:
 		_cam.current = true
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -88,14 +97,27 @@ func unboard() -> Node3D:
 	var a := pilot
 	pilot = null
 	_speed_along = 0.0
-	if _cam:
-		_cam.current = false
 	set_process_unhandled_input(false)
 	if a and is_instance_valid(a):
 		a.visible = true
 		a.global_position = global_position + _up * 1.6 + global_transform.basis.x * 2.2
 		if a is CollisionObject3D:
 			(a as CollisionObject3D).collision_layer = 2
+		if a is CharacterBody3D:
+			(a as CharacterBody3D).velocity = Vector3.ZERO
+		a.set_physics_process(true)
+		a.set_process_input(true)
+		a.set_process_unhandled_input(true)
+		# Hand the view back explicitly — clearing _cam.current promotes a random camera.
+		var pc := a.get_node_or_null("CamPivot/Camera3D") as Camera3D
+		if pc == null:
+			pc = a.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+		if pc:
+			pc.current = true
+		elif _cam:
+			_cam.current = false
+	elif _cam:
+		_cam.current = false
 	return a
 
 
@@ -144,7 +166,8 @@ func _physics_process(delta: float) -> void:
 
 	var grip := 1.0
 	if is_on_floor():
-		grip = clampf(1.0 - get_floor_angle() / deg_to_rad(52.0), 0.38, 1.0)
+		# Radial up, not world +Y — otherwise flat ground pins grip at the floor.
+		grip = clampf(1.0 - get_floor_angle(_up) / deg_to_rad(52.0), 0.38, 1.0)
 	var max_spd := speed * grip
 
 	# Space = brake (rover envelope)
@@ -167,15 +190,10 @@ func _physics_process(delta: float) -> void:
 
 
 func _apply_basis() -> void:
-	var t: Array = []
-	# stable tangent like SurfaceChunkMath
-	var ref := Vector3.UP
-	if absf(_up.dot(ref)) > 0.92:
-		ref = Vector3.RIGHT
-	var east := ref.cross(_up).normalized()
-	var north := _up.cross(east).normalized()
-	var b := Basis(east, _up, -north)
-	b = Basis(_up, _yaw) * b
+	# Transported reference instead of a world axis: switching the seed axis
+	# snapped the chassis — and therefore the drive direction — 90 degrees.
+	_ref_fwd = _Facing.transport_ref(_up, _ref_fwd)
+	var b := _Facing.basis_from_up_ref(_up, _yaw, _ref_fwd)
 	global_transform = Transform3D(b.orthonormalized(), global_position)
 
 
@@ -197,8 +215,6 @@ func _apply_velocity(delta: float) -> void:
 		v_up = minf(v_up, -0.5)
 	velocity = planar + _up * v_up
 	move_and_slide()
-	if is_on_floor():
-		apply_floor_snap()
 
 
 

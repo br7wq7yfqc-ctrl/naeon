@@ -134,6 +134,13 @@ static func release(bolt: Node) -> void:
 		bolt.queue_free()
 
 
+static func reset_counters() -> void:
+	## Bolts freed with the scene never reach release(), so the live counter
+	## drifted upward across every scene change.
+	_active = 0
+	_free.clear()
+
+
 static func active_count() -> int:
 	return _active
 

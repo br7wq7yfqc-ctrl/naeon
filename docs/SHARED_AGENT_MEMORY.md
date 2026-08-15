@@ -6,7 +6,13 @@
 No P2W · soft Knowledge · Infection max 5 · S1 · freemium ≠ power · Tripo-first · narrative ≠ power · perf/25 · site_pin catalog · constructor templates only
 
 ## Design corpus
-rules/00–26 · Act I–VI + premium · SITE_PIN · **CONSTRUCTOR_TEMPLATES** · **SIDE_QUEST_TEMPLATES** · **EDU_MODULE_LIBRARY** · skill v2.0
+rules/00–26 · Act I–VI + premium · SITE_PIN · **CONSTRUCTOR_TEMPLATES** · **SIDE_QUEST_TEMPLATES** · **EDU_MODULE_LIBRARY** · **GALAXY_LAYER_PLAN** · **TRIPO_ASSET_MANIFEST** · skill v2.0
+
+## Where things are authored
+- **Placement** of star / bodies / belt / gate anchors → `godot/scripts/world/StarSystemCatalog.gd`
+- **Physical envelopes** (radius, gravity, atmosphere) → `PlanetProfileCatalog.gd`
+- Travel, maps, gates, arena entry → `docs/design/GALAXY_LAYER_PLAN.md`
+- Every mesh path Tripo owes us → `docs/design/TRIPO_ASSET_MANIFEST.md`
 
 ## Gaps closed
 - Constructor template seed (8 templates, VS = 2)
@@ -124,4 +130,76 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-14 | Phase 0 playtest: AbilitySystem activate, rules/04 costs, enemy scan cache, CombatJuice label pool, site_pin, canon identity cards. No DMG. | sequential-dev |
 | 2026-08-15 | Clash HUD collapse (banner/ScoreLine/LaneHUD); ship bolt sweep + hull crit recover + shield hold; pad turrets track hulls. No permadeath, no P2W. | sequential-dev |
 | 2026-08-15 | Clash towers are live Turrets; ship afterburn W+Shift (energy); walker variable jump cut. Soft pressure only. | sequential-dev |
+| 2026-08-15 | **Full code audit + hardening** — 101 scripts / 10 scenes / 12 autoloads. ~110 confirmed defects, blockers fixed, pad streaming memory climb closed. Single record: `docs/PROTOTYPE_TO_PLAYABLE.md` | owner brief: prototype → playable |
+| 2026-08-15 | **Galaxy layer planned + G0 built** — star at the system origin, bodies on distinct orbits, belt from data. Hyperspace, hyperdrives, NAEXOS gates, galaxy/system maps and arena-from-map specified. Authority: `docs/design/GALAXY_LAYER_PLAN.md`; assets: `docs/design/TRIPO_ASSET_MANIFEST.md` (78 assets); plan: `DEVELOPMENT_PLAN.md` Phase G | owner brief: star system + hyperspace + gates + map |
+
+## Full code audit + hardening — 2026-08-15
+
+Authority: **`docs/PROTOTYPE_TO_PLAYABLE.md`** — the single record of this pass.
+Read it before touching combat, pads, ship flight, the walker or the arena.
+Summary of what every agent must now assume:
+
+### Traps found here — do not reintroduce
+
+- `get_floor_angle()` **must** be passed radial up on a planet. The default is
+  world +Y, which reads flat ground as a cliff.
+- Never derive a tangent frame from a fixed world seed axis. `SurfaceFacing`
+  exposes `basis_from_up_ref` + `transport_ref`; carry the reference between
+  frames or the frame snaps 90° near world ±Z.
+- A gated AI tick must drain cooldowns by the **gated interval**, not one
+  `delta`, or rates silently scale with FPS.
+- Set `faction` **before** `add_child`: `_ready` picks groups, mesh and label
+  from it.
+- Never iterate `SoftScanCache.get_enemies()` while damaging — a kill clears the
+  shared array. Snapshot first.
+- "Planar" on a sphere means the target's own ground plane, not world XZ.
+- Streaming that only toggles `visible` is not streaming — free the subtree and
+  reset every flag the builder reads.
+- Only one owner per HUD line, and only one initiator per input action. Two
+  systems polling the same key double its effect.
+- A one-time styling pass must run after the nodes it styles exist.
+- `--check-only --script` does not register autoloads, and `--script` cannot load
+  a scene script that references them; "Identifier not found: GameManager" from
+  those modes is a false positive. Probe inside a scene instead.
+- Headless frames run far faster than wall clock — await timers, not
+  `process_frame`, when testing anything time-throttled.
+
+### Invariants (re-established, must hold)
+
+1. Knowledge / Contribution / Biomass are soft only — never damage, HP, CDR or
+   claim strength (rules/08, rules/04).
+2. No friendly fire, and no self-damage. Guard at the receiver, not just the
+   caster.
+3. Infection hard cap 5, with a real bounded effect via the attacker faction
+   passed into `take_damage(amount, source_faction)`.
+4. No permadeath anywhere: walker, arena hero and ship all recover.
+5. Arena influence on the persistent map is capped, temporary and decaying
+   (`PadBaseController.apply_arena_influence`), never a raw `claim_strength`
+   write.
+6. Claims need presence, and one press is one pulse
+   (`PadBaseController.claim_pulse_from`).
+7. Harvest credits the **owning** faction, not the local player's selection.
+
+8. Every HUD line has exactly one writer, in play mode and under F3.
+
+### Measured, not asserted
+
+- Arena floor: every capsule probe rests at `y=0.750`, MID lane worst step
+  `0.000` (it was `3.250` — the player stood on a wall lying down the lane).
+- Pad streaming: node count peaks at 688 with pads up and returns to 502 after
+  retreat, and a second lap returns to exactly 502 again. The +90 residual is
+  one-time pool allocation, not a leak; no planet stays built.
+
+### Known debt left open (with reasons)
+
+- `harvested` / `contribution_gained` / `influence_emitted` have no listeners
+  yet. `claimed` now also drives a "pad lost while you were away" toast from
+  inside the controller.
+- `_spawn_asteroid_belt`, `_schedule_surface_settle` are content hooks, still
+  uncalled.
+- The arena hero's procedural silhouette has no locomotion animation — art work,
+  not a logic defect.
+- Mac 10-minute soak still needs the owner's GPU for the FPS half of rules/25;
+  this VM is llvmpipe, so only the memory half is signed off.
+
 

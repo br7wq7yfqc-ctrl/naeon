@@ -68,3 +68,41 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 50. Clash lane towers are live Turrets (faction, 160 HP, collision); death = +28 soft pressure, not a planet flip
 51. Ship afterburn: W+Shift spends 16 EN/s, thrust×1.55, speed×1.18; hull-crit and landed deny; Shift without W still descends
 52. Walker + Clash jump: release Space while rising cuts upward speed (variable height)
+
+## Audit pass 2026-08-15 (full code audit)
+53. Arena Barrier uses a wall-sized collision shape (was the 60x1x60 floor shape — invisible slab, player spawned above the lanes)
+54. `get_floor_angle(_up)` on walker + rover; sphere frames parallel-transport a tangent reference (no 90-degree snap near world +/-Z)
+55. Turret cooldown drains the gated AI interval, so fire_rate is honest and FPS-independent; dead turrets/dummies leave the target groups
+56. Pad contest holds transition 1.0 (a partial write flipped status to owned and killed decay); reserves regenerate while idle
+57. One press = one claim pulse via `claim_pulse_from`; the ship must be landed; harvest credits the owning faction
+58. `approach_assist` brakes on approach, not departure, and scales with delta
+59. No-P2W: Knowledge no longer multiplies ability damage; War Score cap persists to user://; arena influence is capped + decaying
+60. No friendly fire: hack, dummy fire and tower kills all check faction at the receiver
+61. Infection amplifies gROT damage via `take_damage(amount, source_faction)`; Firewall decays and mitigates on the walker
+62. Walker has a real downed window and `is_downed()`, so attackers disengage; EVA has a fuel budget and keeps planet gravity
+63. Ship: HOVER hold only inside a gravity well, commanded-lift-only strip, launch stays in HOVER, one hardpoint per module type, recovery runs with no pilot
+64. Clash: match_ended shows a result panel (Enter rematches), kills come from AexionClash, minimap orientation fixed, lane refill counts the living
+65. Perf: shared arena meshes/materials, 10 Hz ownership visuals, one-time HUD styling, preloaded per-shot scripts, bolt pool counter reset on scene change
+66. Arena Barrier moved out of the MID lane (it was a 2.5m wall lying along the lane that the player could stand on and fall off — the real "invisible ledge")
+67. Friendly Clash towers moved behind the spawn camera (the MID tower at z=12 sat inside the chase camera and hid the player)
+68. F3 overlay: GameHUD owns every stat readout; legacy TestArena labels off; the debug left column has a fixed stacked layout; pad radar clear of the vitals block
+69. Match result panel is compact and top-centre so the fight stays visible
+
+## Continuation pass 2026-08-15 (hardening to playable)
+70. Pad streaming really unloads past 1.35x the build radius (was hide-only); measured flat at 502 nodes across two laps of all three planets, no planet left built
+71. `Pads` joins the parked-node list, so far controllers stop polling input and scanning groups
+72. Knock is built in the target ground plane (`up_direction`), not world XZ+Y — hits no longer shove a walker sideways on a sphere
+73. Surface walker movement/sprint read the InputMap first (rebinding + gamepad now work on the main character)
+74. `snap_to_surface` probes from just above the head and only reaches higher on a miss (was +40, which could strand you on a roof)
+75. Perf: pooled jump FX, cached ship scan in EVA, ship Label3D written on change, `_recompute_stats` on attach/detach, attitude applied once per tick
+76. Harvest VFX called; pad loss announced while you are away; siege denies unsupported hulls; F3 detail counter reads `queue_depth`
+77. ENERGY_ECONOMY doc re-synced to the constants (it listed Pulse 6/0.55s against the real 18/5.0s)
+78. Land gate is legible: `land_readiness_line()` on the ship HUD says which term still fails (`alt 600→120`, `pad 148m→90m`, `slow 12.3→12`, `LAND READY — E`); the refusal toast names the same term, and gate + readout share one `_land_envelope()`
+
+## Galaxy layer G0 2026-08-15
+79. `StarSystemCatalog` owns placement: star at the system origin, bodies on distinct orbits with distinct angles and inclinations (3800 / 7400 / 11800) instead of one hand-typed clump
+80. Visible emissive star with corona; each planet takes its light direction from the star it orbits; the shadow light aims along the star-to-observer line
+81. Asteroid belt is called for the first time and takes its band from the system layout
+82. Gate anchors to ROT-Prime / Helios Reach / Echo Ruins authored but not spawned — a gate prop with no jump is the inert-system trap this branch was removing
+83. Per-tier camera far clip sized to contain a system (LOW 22000 -> ULTRA 48000) with near 0.05 -> 0.25: at 8000 the two far bodies (10383 / 15960 from spawn) and every gate anchor were clipped away entirely
+84. Star corona shell removed — a constant-alpha additive sphere rendered as a flat grey ring, not a glow; real corona needs rim falloff (manifest polish)

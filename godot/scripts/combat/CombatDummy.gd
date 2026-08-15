@@ -2,6 +2,8 @@ extends CharacterBody3D
 class_name CombatDummy
 const _AP = preload("res://scripts/assets/AssetPaths.gd")
 const _ProcSil = preload("res://scripts/player/ProceduralHeroSilhouette.gd")
+const _Hits = preload("res://scripts/combat/CombatHits.gd")
+const _Pool = preload("res://scripts/combat/ProjectilePool.gd")
 
 ## Trainable combat target for TestArena. Takes damage, optional aggro fire.
 
@@ -32,8 +34,10 @@ var _mat: StandardMaterial3D
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _stagger: float = 0.0
 var _windup_t: float = 0.0
+var _gq: Node = null
 
 func _ready() -> void:
+	_gq = get_node_or_null("/root/GraphicsQuality")
 	health = max_health
 	_spawn_pos = global_position
 	collision_layer = 4  # Enemy
@@ -68,8 +72,7 @@ func _physics_process(delta: float) -> void:
 	var ai_need := 0.1
 	if not can_move:
 		ai_need = 0.28  # static lane holds — rare retarget
-	var gq := get_node_or_null("/root/GraphicsQuality")
-	if gq and int(gq.tier) == 0:
+	if _gq and int(_gq.tier) == 0:
 		ai_need *= 1.6
 	var do_ai := _ai_accum >= ai_need
 	if do_ai:
@@ -138,7 +141,7 @@ func _begin_windup_fx() -> void:
 		)
 
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, _source_faction: String = "") -> void:
 	if CombatJuice:
 		var crit := amount >= max_health * 0.35 or amount >= 25.0
 		CombatJuice.hit_feedback(float(amount), global_position + Vector3(0, 1.2, 0), crit)
@@ -154,6 +157,8 @@ func take_damage(amount: float) -> void:
 		_die()
 
 func on_hacked(caster: Node, amount: float = 1.0) -> void:
+	if _same_faction(caster):
+		return
 	take_damage(amount * 1.5)
 	# Partial claim visual toward caster faction
 	if _mat and caster and caster.has_method("get_faction"):
@@ -179,6 +184,9 @@ func _die() -> void:
 		CombatJuice.hit_feedback(max_health, global_position + Vector3(0, 1.2, 0), true)
 	_alive = false
 	died.emit()
+	# A corpse in the enemy group blocks lane refill and soaks target scans.
+	if is_in_group("enemy"):
+		remove_from_group("enemy")
 	if SoftScanCache:
 		SoftScanCache.invalidate_enemies()
 	if CombatJuice:
@@ -213,6 +221,8 @@ func _respawn() -> void:
 	_alive = true
 	visible = true
 	collision_layer = 4
+	if not is_in_group("enemy"):
+		add_to_group("enemy")
 	global_position = _spawn_pos
 	velocity = Vector3.ZERO
 	if _mat:
@@ -223,18 +233,28 @@ func _respawn() -> void:
 	print("[CombatDummy] Respawned")
 
 func _fire_at(player: Node) -> void:
+	if _same_faction(player):
+		return
 	if player.has_method("take_damage"):
-		player.take_damage(attack_damage)
+		player.take_damage(attack_damage, str(faction))
 	if player is CharacterBody3D:
-		var Hits = load("res://scripts/combat/CombatHits.gd")
-		if Hits:
-			var away: Vector3 = (player as Node3D).global_position - global_position
-			Hits.apply_planar_knock(player, away, attack_damage, 1.0)
+		var away: Vector3 = (player as Node3D).global_position - global_position
+		_Hits.apply_planar_knock(player, away, attack_damage, 1.0)
 	var target_pos: Vector3 = player.global_position + Vector3.UP * 1.2
 	var origin: Vector3 = global_position + Vector3.UP * 1.2
 	var dir: Vector3 = (target_pos - origin).normalized()
-	var _Pool = load("res://scripts/combat/ProjectilePool.gd")
-	_Pool.spawn(get_tree(), origin, dir, 18.0, 0.0, "gROT", Color(1.0, 0.2, 0.4), 0.7)
+	var col := Color(1.0, 0.2, 0.4) if faction == "gROT" else Color(0.3, 0.95, 1.0)
+	_Pool.spawn(get_tree(), origin, dir, 18.0, 0.0, str(faction), col, 0.7, [self])
+
+
+func _same_faction(other: Node) -> bool:
+	if other == null or not is_instance_valid(other):
+		return false
+	if other.has_method("get_faction"):
+		return str(other.get_faction()) == faction
+	if "faction" in other:
+		return str(other.faction) == faction
+	return false
 
 
 func _find_player() -> Node3D:
@@ -246,11 +266,11 @@ func _find_player() -> Node3D:
 	# Prefer group once
 	if SoftScanCache:
 		var sp = SoftScanCache.get_player()
-		if sp is Node3D:
+		if sp is Node3D and not _same_faction(sp):
 			_player_cache = sp as Node3D
 			return _player_cache
 	var nodes := tree.get_nodes_in_group("player")
-	if nodes.size() > 0 and nodes[0] is Node3D:
+	if nodes.size() > 0 and nodes[0] is Node3D and not _same_faction(nodes[0]):
 		_player_cache = nodes[0]
 		return _player_cache
 	for n in tree.get_nodes_in_group("players"):

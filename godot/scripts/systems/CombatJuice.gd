@@ -1,4 +1,5 @@
 extends Node
+const _NP = preload("res://scripts/fx/NeonParticles.gd")
 static var _shared_impact_mat: StandardMaterial3D = null
 static var _torus_n: TorusMesh = null
 static var _torus_c: TorusMesh = null
@@ -30,6 +31,7 @@ var _hitstop_left: float = 0.0
 var _marker: Control
 var _marker_t: float = 0.0
 var _impact_budget: int = 12
+var _impact_budget_f: float = 12.0
 var _hurt_t: float = 0.0
 var _hurt_flash: ColorRect
 var _label_pool: Array = []
@@ -77,7 +79,9 @@ func _ready() -> void:
 	set_process(true)
 
 func _process(delta: float) -> void:
-	_impact_budget = mini(12, _impact_budget + int(delta * 18.0))
+	# Float accumulator: int(delta * 18) truncates to 0 above ~18 FPS.
+	_impact_budget_f = minf(12.0, _impact_budget_f + delta * 18.0)
+	_impact_budget = int(_impact_budget_f)
 	if _hurt_t > 0.0:
 		_hurt_t = maxf(0.0, _hurt_t - delta)
 		if _hurt_flash:
@@ -97,13 +101,16 @@ func hit_feedback(amount: float, world_pos: Vector3, crit: bool = false) -> void
 	# Soft budget: when flooded, UI flash only (no numbers/particles)
 	var flooded := _impact_budget <= 0 and not crit
 	if not flooded:
-		_impact_budget = maxi(0, _impact_budget - 1)
+		_impact_budget_f = maxf(0.0, _impact_budget_f - 1.0)
+		_impact_budget = int(_impact_budget_f)
 	_flash_col = Color(1.0, 0.85, 0.2, 0) if crit else Color(1.0, 0.25, 0.18, 0)
 	_flash_t = 0.16 if crit else 0.08
 	_marker_t = 0.18 if crit else 0.12
 	_marker.visible = true
 	if AudioDirector:
 		AudioDirector.play_hit(crit)
+	if flooded:
+		return
 	_spawn_number(amount, world_pos, crit)
 	_spawn_impact(world_pos, crit)
 	_spawn_hit_ring(world_pos, crit)
@@ -141,18 +148,8 @@ func _spawn_number(amount: float, world_pos: Vector3, crit: bool) -> void:
 
 
 func _spawn_impact(world_pos: Vector3, crit: bool) -> void:
-	var NP = load("res://scripts/fx/NeonParticles.gd")
-	if NP:
-		var col := Color(1.0, 0.85, 0.3, 0.9) if crit else Color(1.0, 0.4, 0.25, 0.85)
-		NP.burst(world_pos, col, get_tree(), 10 if crit else 6, 7.0 if crit else 4.5)
-		return
-	if _impact_budget >= 3:
-		return
-	# fallback minimal
-	_impact_budget += 1
-	var tree := get_tree()
-	if tree:
-		tree.create_timer(0.3).timeout.connect(func(): _impact_budget = maxi(0, _impact_budget - 1))
+	var col := Color(1.0, 0.85, 0.3, 0.9) if crit else Color(1.0, 0.4, 0.25, 0.85)
+	_NP.burst(world_pos, col, get_tree(), 10 if crit else 6, 7.0 if crit else 4.5)
 
 
 func _spawn_hit_ring(world_pos: Vector3, crit: bool) -> void:
@@ -176,7 +173,8 @@ func _spawn_hit_ring(world_pos: Vector3, crit: bool) -> void:
 			_torus_n.rings = 8
 			_torus_n.ring_segments = 12
 		mi.mesh = _torus_n
-	var mat := _impact_mat(Color(1.0, 0.7, 0.2))
+	# Per-ring copy: overlapping hits tween alpha on their own material.
+	var mat: StandardMaterial3D = _impact_mat(Color(1.0, 0.7, 0.2)).duplicate()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.albedo_color = Color(1.0, 0.85, 0.25, 0.85) if crit else Color(1.0, 0.4, 0.25, 0.7)
 	mat.emission_enabled = true
