@@ -60,6 +60,10 @@ var energy_regen: float = 8.0  # EnergyEconomy.REGEN_WALKER
 var health: float = 100.0
 var max_health: float = 100.0
 var _up: Vector3 = Vector3.UP
+var _coyote_t: float = 0.0
+var _jump_buf_t: float = 0.0
+var _was_on_floor: bool = false
+var _space_held: bool = false
 var cam_pivot: Node3D
 var camera: Camera3D
 
@@ -468,11 +472,15 @@ func _physics_process(delta: float) -> void:
 		_process_eva(delta, wish, forward, right)
 		return
 	var sp := speed * (sprint_mult if Input.is_physical_key_pressed(KEY_SHIFT) else 1.0) * _infection_move_mult()
+	var slope_ang := 0.0
+	if is_on_floor():
+		slope_ang = get_floor_angle()
+		sp *= clampf(1.0 - (slope_ang / deg_to_rad(58.0)) * 0.38, 0.52, 1.0)
 	var target_planar := wish * sp
 	# Smooth accel on ground, weaker air control (not ice-skating)
 	var planar := velocity - _up * velocity.dot(_up)
-	var accel_rate := 28.0 if is_on_floor() else 8.0
-	var decel_rate := 32.0 if is_on_floor() else 4.0
+	var accel_rate := 26.0 if is_on_floor() else 11.0
+	var decel_rate := 34.0 if is_on_floor() else 5.5
 	if target_planar.length_squared() > 0.01:
 		planar = planar.move_toward(target_planar, accel_rate * delta)
 	else:
@@ -481,25 +489,44 @@ func _physics_process(delta: float) -> void:
 
 	# Gravity integrate along radial up
 	var v_up := velocity.dot(_up)
-	if not is_on_floor():
-		v_up += g_vec.dot(_up) * delta
+	if is_on_floor():
+		_coyote_t = 0.14
 	else:
+		_coyote_t = maxf(0.0, _coyote_t - delta)
+		v_up += g_vec.dot(_up) * delta
+	if Input.is_physical_key_pressed(KEY_SPACE) or (InputMap.has_action("jump") and Input.is_action_pressed("jump")):
+		if not _space_held:
+			_jump_buf_t = 0.12
+		_space_held = true
+	else:
+		_space_held = false
+		_jump_buf_t = maxf(0.0, _jump_buf_t - delta)
+	var can_jump := _coyote_t > 0.0 or eva_mode
+	if _jump_buf_t > 0.0 and can_jump:
+		v_up = jump_velocity
+		_jump_buf_t = 0.0
+		_coyote_t = 0.0
+		_spawn_jump_fx()
+	elif is_on_floor():
 		# stick: small downward bias helps floor contact on spheres
 		v_up = minf(v_up, -0.4)
-	if Input.is_physical_key_pressed(KEY_SPACE) and (is_on_floor() or eva_mode):
-		v_up = jump_velocity
-		_spawn_jump_fx()
+
+	# Landing absorb (radial)
+	if is_on_floor() and not _was_on_floor and v_up < -7.5:
+		v_up = -0.5
+		planar *= 0.72
+		if CombatJuice:
+			CombatJuice.hit_feedback(4.0, global_position, false)
+	_was_on_floor = is_on_floor()
 
 	velocity = planar + _up * v_up
 	up_direction = _up
 	floor_snap_length = 0.35
 	floor_max_angle = deg_to_rad(55.0)
-	# Canyon/steep assist: stickier steps on high slopes
-	if is_on_floor() and get_floor_angle() > deg_to_rad(40.0):
-		floor_snap_length = 0.55
+	# Canyon/steep: stickier snap, no launch boost
+	if is_on_floor() and slope_ang > deg_to_rad(40.0):
+		floor_snap_length = 0.6
 		floor_max_angle = deg_to_rad(70.0)
-		if _move_amount > 0.2:
-			velocity += _up * 2.5 * delta  # soft climb boost
 	_apply_body_basis()
 	move_and_slide()
 	if is_on_floor():
