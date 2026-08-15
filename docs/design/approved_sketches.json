@@ -338,16 +338,18 @@
       "faction": "GR",
       "view": "cinematic",
       "class": "module",
-      "label": "Contractile main + RCS",
-      "position": "gr-contractile"
+      "label": "Engine module",
+      "position": "gr-contractile",
+      "manual": 30
     },
     {
       "id": "a25897c9-1a4f-4bbd-9b50-31f7b715590a",
       "faction": "GR",
       "view": "ortho",
       "class": "module",
-      "label": "Contractile main + RCS",
-      "position": "gr-contractile"
+      "label": "Engine module",
+      "position": "gr-contractile",
+      "manual": 31
     },
     {
       "id": "899de1b8-9179-452c-bc75-dee69352c374",

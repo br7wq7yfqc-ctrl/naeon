@@ -731,14 +731,16 @@
           "faction": "GR",
           "view": "cinematic",
           "class": "module",
-          "label": "Contractile main + RCS"
+          "label": "Engine module",
+          "manual": 30
         },
         {
           "id": "a25897c9-1a4f-4bbd-9b50-31f7b715590a",
           "faction": "GR",
           "view": "ortho",
           "class": "module",
-          "label": "Contractile main + RCS"
+          "label": "Engine module",
+          "manual": 31
         }
       ]
     },

@@ -93,8 +93,8 @@ APC / hover / mech guns bind to the **hull** they sit on. Tank main has no Heavy
 | Spore-cloud generator | GR | ortho | `grot_spore_prop` | `77a7cc90-2b95-4100-8f0a-3b1798306104` |
 | Quantum-thrust + RCS | CX | cinematic | `thruster_cluster_neon` | `6f743074-1a2e-4f4b-b796-599166bc80b9` |
 | Quantum-thrust + RCS | CX | ortho | `thruster_cluster_neon` | `26e6e753-ff0a-4a0b-b7c7-0134f23f5a63` |
-| Contractile main + RCS | GR | cinematic | `gr-contractile` | `b85d041d-3a81-43e7-a2ba-b0b195b53e94` |
-| Contractile main + RCS | GR | ortho | `gr-contractile` | `a25897c9-1a4f-4bbd-9b50-31f7b715590a` |
+| Engine module | GR | cinematic | `gr-contractile` | `b85d041d-3a81-43e7-a2ba-b0b195b53e94` |
+| Engine module | GR | ortho | `gr-contractile` | `a25897c9-1a4f-4bbd-9b50-31f7b715590a` |
 | Turret + hex launcher | CX | cinematic | `cx-turret-launcher` | `899de1b8-9179-452c-bc75-dee69352c374` |
 | Turret + hex launcher | CX | ortho | `cx-turret-launcher` | `8e742135-e693-4ad7-bbc2-fd9f4fcb092f` |
 | Turret + seed-torpedo | GR | cinematic | `gr-turret-torpedo` | `01ca395f-bd23-43b2-9252-a59297638be0` |
