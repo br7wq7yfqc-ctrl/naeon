@@ -3,7 +3,7 @@
   "updated": "2026-08-15",
   "source": "v2.8 + batch 20 CX fighter pair + CX bomber pair",
   "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Dump short IDs are existing neon rendered files, not invented UUIDs.",
-  "positions": 129,
+  "positions": 130,
   "bound_sheets": 213,
   "merged_slugs": {
     "heawy_5ault_i8reakt4fough": "heavy_assault",
@@ -1339,6 +1339,32 @@
           "view": "ortho",
           "class": "ship-multi",
           "label": "Support"
+        }
+      ]
+    },
+    "cybernex_stealth": {
+      "category": "ships",
+      "count": 0,
+      "titles": [
+        "CYBERNEX STEALTH"
+      ],
+      "ocr": false,
+      "source": "batch20_gap",
+      "notes": "Adapted from existing dump LsBZ6; class template stealth_ship (eBFi8/LEThZ) stays unfactioned.",
+      "locked_uuids": [
+        {
+          "id": "33ad6f0c-b9cc-427a-ab4f-aee596b91b10",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-single",
+          "label": "Stealth"
+        },
+        {
+          "id": "70a6d3e1-8cc9-4df4-9fe8-747b00704eff",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "ship-single",
+          "label": "Stealth"
         }
       ]
     },

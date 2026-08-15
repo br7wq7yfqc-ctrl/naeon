@@ -1,5 +1,5 @@
 {
-  "version": "1.16",
+  "version": "1.17",
   "updated": "2026-08-15",
   "rule": "locked only",
   "user": "77c65418-d257-47c3-8504-4540b6e0a754",
@@ -1014,9 +1014,28 @@
       "label": "Support",
       "position": "cybernex_support",
       "batch": 20
+    },
+    {
+      "id": "33ad6f0c-b9cc-427a-ab4f-aee596b91b10",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ship-single",
+      "label": "Stealth",
+      "position": "cybernex_stealth",
+      "batch": 20,
+      "notes": "from dump LsBZ6"
+    },
+    {
+      "id": "70a6d3e1-8cc9-4df4-9fe8-747b00704eff",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "ship-single",
+      "label": "Stealth",
+      "position": "cybernex_stealth",
+      "batch": 20
     }
   ],
-  "note": "Batch 20: CX fighter + bomber + support pairs locked. Support cinematic patched 3bf43918→877b315c (devices). Next: CX stealth. S3 Index not patched.",
-  "positions_bound": 117,
+  "note": "Batch 20: CX fighter/bomber/support/stealth pairs locked. Next: GR scout. S3 Index not patched.",
+  "positions_bound": 119,
   "positions_unbound": 0
 }
