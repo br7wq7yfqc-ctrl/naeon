@@ -308,6 +308,57 @@ func _go() -> void:
 		if w_eva.has_method("set_eva_profile"):
 			w_eva.set_eva_profile(false)
 
+	# --- station recycler (pad habitat, not ship hull) ---
+	var d_st: Node = os.get("_interior")
+	var w_st: Node3D = os.get("player") as Node3D
+	var pad_deck: Node3D = null
+	if not pads.is_empty() and pads[0] is Node:
+		var hostp: Node = pads[0]
+		while hostp:
+			if hostp.has_meta("pad_up") and hostp is Node3D:
+				pad_deck = hostp as Node3D
+				break
+			hostp = hostp.get_parent()
+	if d_st == null or w_st == null or not is_instance_valid(w_st) or pad_deck == null:
+		fails.append("no station enter setup (interior/walker/pad)")
+	elif d_st.has_method("enter_station"):
+		if d_st.has_method("is_inside") and bool(d_st.is_inside()) and d_st.has_method("exit_interior"):
+			d_st.exit_interior()
+			await get_tree().create_timer(0.2).timeout
+		w_st.global_position = pad_deck.global_position + Vector3(0, 4.0, 0)
+		d_st.enter_station(w_st, pad_deck)
+		await get_tree().create_timer(0.45).timeout
+		print("[Playtest] station kind=", d_st.get_kind() if d_st.has_method("get_kind") else "?", " ls=", d_st.life_support_line() if d_st.has_method("life_support_line") else "")
+		if not (d_st.has_method("get_kind") and str(d_st.get_kind()) == "station"):
+			fails.append("enter_station did not open station pocket")
+		else:
+			var ls0 := str(d_st.life_support_line()) if d_st.has_method("life_support_line") else ""
+			if ls0.find("POWER BUS STABLE") < 0:
+				fails.append("station recycler not sealed at enter")
+			var pocket_st: Node3D = d_st.get_active_interior() if d_st.has_method("get_active_interior") else null
+			var cv_st: Node3D = pocket_st.get_node_or_null("ConsoleVolume") as Node3D if pocket_st else null
+			if cv_st == null:
+				fails.append("no ConsoleVolume in station")
+			else:
+				w_st.global_position = cv_st.global_position
+				await get_tree().process_frame
+				if d_st.has_method("try_use_console"):
+					d_st.try_use_console()
+				var ls1 := str(d_st.life_support_line()) if d_st.has_method("life_support_line") else ""
+				print("[Playtest] station vented ls=", ls1, " recycler=", d_st.recycler_on() if d_st.has_method("recycler_on") else "?")
+				if ls1.find("VENTED") < 0 and ls1.find("POWER IDLE") < 0:
+					fails.append("station E did not vent recycler")
+				await get_tree().create_timer(0.55).timeout
+				if d_st.has_method("try_use_console"):
+					d_st.try_use_console()
+				var ls2 := str(d_st.life_support_line()) if d_st.has_method("life_support_line") else ""
+				print("[Playtest] station restored ls=", ls2)
+				if ls2.find("POWER BUS STABLE") < 0:
+					fails.append("station E did not restore recycler")
+			if d_st.has_method("exit_interior"):
+				d_st.exit_interior()
+			await get_tree().create_timer(0.25).timeout
+
 	# --- HOVER mode + vacuum stall ---
 	var ship: Node = os.get("ship")
 	if ship and ship.has_method("get_stall"):

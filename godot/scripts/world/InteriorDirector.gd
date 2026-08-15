@@ -55,6 +55,10 @@ func is_sealed() -> bool:
 	return _sealed
 
 
+func recycler_on() -> bool:
+	return _recycler_on
+
+
 func life_support_line() -> String:
 	if not _inside:
 		return ""
