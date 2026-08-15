@@ -391,6 +391,15 @@ func _go() -> void:
 				print("[Playtest] rover stored=", rov2 == null)
 				if rov2 != null and is_instance_valid(rov2):
 					fails.append("rover still deployed after store")
+				var hold: Node = sh_r.get_node_or_null("CargoHold")
+				var nveh: int = 0
+				if hold != null:
+					var vehs: Variant = hold.get("vehicles")
+					if vehs is Array:
+						nveh = (vehs as Array).size()
+				print("[Playtest] cargo vehicles=", nveh)
+				if nveh < 1:
+					fails.append("rover store did not land in CargoHold")
 
 	# --- HOVER mode + vacuum stall ---
 	var ship: Node = os.get("ship")

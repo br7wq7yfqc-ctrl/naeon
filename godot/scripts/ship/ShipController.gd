@@ -967,13 +967,7 @@ func _update_thruster_fx(axes: Vector3, delta: float) -> void:
 func _ensure_cargo_systems() -> void:
 	if _cargo_hold != null:
 		return
-	# Scout/sniper must NOT spawn a belly ramp (was a black monolith under the hull)
-	var want_ramp := false
-	if _role != null:
-		want_ramp = bool(_role.has_cargo_ramp) or bool(_role.allows_cargo_open)
-	if not want_ramp:
-		print("[Ship] Cargo/ramp skipped (role has no hangar)")
-		return
+	# Every hull can fold one rover. Belly ramp is hangar-only (scout had a black monolith).
 	_cargo_hold = Node.new()
 	_cargo_hold.set_script(load("res://scripts/ship/CargoHold.gd"))
 	_cargo_hold.name = "CargoHold"
@@ -981,6 +975,12 @@ func _ensure_cargo_systems() -> void:
 	_cargo_hold.set("max_vehicle_slots", 2)
 	_cargo_hold.set("volume_m3", 120.0)
 	_cargo_hold.set("mass_t", 40.0)
+	var want_ramp := false
+	if _role != null:
+		want_ramp = bool(_role.has_cargo_ramp) or bool(_role.allows_cargo_open)
+	if not want_ramp:
+		print("[Ship] CargoHold only (no hangar ramp)")
+		return
 	_cargo_ramp = Node3D.new()
 	_cargo_ramp.set_script(load("res://scripts/ship/CargoRamp.gd"))
 	_cargo_ramp.name = "CargoRamp"
