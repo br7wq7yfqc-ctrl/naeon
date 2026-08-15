@@ -141,16 +141,32 @@ func _die() -> void:
 		SoftScanCache.invalidate_enemies()
 	if CombatJuice:
 		CombatJuice.kill_pop(global_position)
-	visible = false
 	collision_layer = 0
 	velocity = Vector3.ZERO
 	if GameManager:
 		GameManager.add_contribution(2.5)
 		GameManager.add_mastery("combat", 1.5)
 	print("[CombatDummy] Downed")
+	var vis := _visual_root()
+	if vis and DisplayServer.get_name() != "headless" and get_tree():
+		var tw := get_tree().create_tween()
+		tw.tween_property(vis, "scale", Vector3(1.35, 0.08, 1.35), 0.28)
+		tw.tween_callback(_hide_corpse)
+	else:
+		visible = false
 	get_tree().create_timer(respawn_time).timeout.connect(_respawn)
 
+
+func _hide_corpse() -> void:
+	visible = false
+	var vis := _visual_root()
+	if vis:
+		vis.scale = Vector3.ONE
+
 func _respawn() -> void:
+	var vis := _visual_root()
+	if vis:
+		vis.scale = Vector3.ONE
 	health = max_health
 	_alive = true
 	visible = true
@@ -216,9 +232,10 @@ func _flash() -> void:
 
 func _update_labels() -> void:
 	if label:
-		label.text = "Dummy | %s" % faction
+		label.text = str(faction)
+		label.modulate = Color(0.95, 0.25, 0.5) if faction == "gROT" else Color(0.3, 0.9, 1.0)
 	if health_bar:
-		health_bar.text = "HP %d/%d" % [int(health), int(max_health)]
+		health_bar.text = "%d" % int(health)
 
 func try_load_drone() -> void:
 	if DisplayServer.get_name() == "headless":

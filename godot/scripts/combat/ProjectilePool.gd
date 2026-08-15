@@ -1,25 +1,34 @@
 extends RefCounted
 class_name ProjectilePool
-## Recycle MeshInstance3D bolts. Shared mesh + faction mats.
+## Recycle MeshInstance3D bolts. Streak mesh + faction mats. Oriented along velocity.
 
 const POOL_MAX := 20
 
 static var _free: Array = []
-static var _mesh: SphereMesh = null
+static var _mesh: BoxMesh = null
+static var _head_mesh: SphereMesh = null
 static var _mats: Dictionary = {}
 static var _active: int = 0
 static var _created: int = 0
 
 
-static func _shared_mesh() -> SphereMesh:
+static func _shared_mesh() -> BoxMesh:
 	if _mesh == null:
-		var sm := SphereMesh.new()
-		sm.radius = 0.14
-		sm.height = 0.28
-		sm.radial_segments = 8
-		sm.rings = 6
-		_mesh = sm
+		var bm := BoxMesh.new()
+		bm.size = Vector3(0.07, 0.07, 0.62)
+		_mesh = bm
 	return _mesh
+
+
+static func _shared_head() -> SphereMesh:
+	if _head_mesh == null:
+		var sm := SphereMesh.new()
+		sm.radius = 0.11
+		sm.height = 0.22
+		sm.radial_segments = 8
+		sm.rings = 4
+		_head_mesh = sm
+	return _head_mesh
 
 
 static func _mat(col: Color) -> StandardMaterial3D:
@@ -31,7 +40,7 @@ static func _mat(col: Color) -> StandardMaterial3D:
 	m.albedo_color = col
 	m.emission_enabled = true
 	m.emission = col
-	m.emission_energy_multiplier = 2.8
+	m.emission_energy_multiplier = 3.6
 	if _mats.size() > 12:
 		_mats.clear()
 	_mats[key] = m
@@ -59,9 +68,15 @@ static func spawn(tree: SceneTree, at: Vector3, dir: Vector3, speed: float, dmg:
 		bolt.add_child(runner)
 		tree.current_scene.add_child(bolt)
 		_created += 1
+	bolt.mesh = _shared_mesh()
+	_ensure_head(bolt)
 	bolt.material_override = _mat(color)
+	var head := bolt.get_node_or_null("Head") as MeshInstance3D
+	if head:
+		head.material_override = bolt.material_override
 	bolt.visible = true
 	bolt.global_position = at
+	_orient(bolt, dir)
 	bolt.set_meta("direction", dir)
 	bolt.set_meta("speed", speed)
 	bolt.set_meta("damage", dmg)
@@ -73,6 +88,30 @@ static func spawn(tree: SceneTree, at: Vector3, dir: Vector3, speed: float, dmg:
 		r.reset()
 	_active += 1
 	return bolt
+
+
+static func _ensure_head(bolt: MeshInstance3D) -> void:
+	if bolt.get_node_or_null("Head") != null:
+		return
+	var head := MeshInstance3D.new()
+	head.name = "Head"
+	head.mesh = _shared_head()
+	head.position = Vector3(0, 0, -0.32)
+	head.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	head.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	bolt.add_child(head)
+
+
+static func _orient(bolt: MeshInstance3D, dir: Vector3) -> void:
+	if bolt == null or not bolt.is_inside_tree():
+		return
+	var n := dir.normalized()
+	if n.length_squared() < 0.0001:
+		return
+	var up := Vector3.UP
+	if absf(n.dot(up)) > 0.95:
+		up = Vector3.RIGHT
+	bolt.look_at(bolt.global_position + n, up)
 
 
 static func release(bolt: Node) -> void:
