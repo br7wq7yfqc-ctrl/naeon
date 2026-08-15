@@ -51,7 +51,9 @@ func _process(delta: float) -> void:
 	total_extracted += got
 	var contrib: float = got * contribution_per_unit
 	if GameManager:
-		GameManager.add_contribution(contrib)
+		# Route through the shared deposit so a gROT-owned extractor pays
+		# Biomass and the harvest objective actually ticks.
+		GameManager.deposit_economy(contrib, true, ownership.get_faction() if ownership else "")
 	contribution_gained.emit(contrib)
 	if label:
 		var fac: String = ownership.get_faction() if ownership else "?"

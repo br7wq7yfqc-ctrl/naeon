@@ -827,6 +827,9 @@ func _apply_faction_skin() -> void:
 
 
 func _claim_nearby_pad() -> void:
+	if not is_landed:
+		_toast_ship("Land before claiming — occupy the pad")
+		return
 	var best: Node = null
 	var best_d := 60.0
 	for n in get_tree().get_nodes_in_group("pad_bases"):
@@ -835,9 +838,11 @@ func _claim_nearby_pad() -> void:
 			if d < best_d:
 				best_d = d
 				best = n
-	if best and best.has_method("claim"):
-		best.claim(faction, 0.5)
-		print("[Ship] Pad claim pulse → ", faction)
+	# One pulse per press through the pad's own cooldown, so ship + pad polling
+	# can no longer stack two claims on a single C.
+	if best and best.has_method("claim_pulse_from"):
+		if bool(best.claim_pulse_from(self)):
+			print("[Ship] Pad claim pulse → ", faction)
 
 func get_faction() -> String:
 	return faction

@@ -9,6 +9,8 @@ signal harvested(amount: float, total: float)
 @export var extract_rate: float = 4.0
 @export var contribution_per_unit: float = 0.35
 @export var crystal_reserves: float = 120.0
+@export var max_reserves: float = 120.0
+@export var reserve_regen: float = 1.6
 @export var claim_radius: float = 40.0
 
 var ownership: OwnershipData
@@ -19,9 +21,11 @@ var _status: String = "unclaimed"
 var _contest_ring: Node3D = null
 var _contest_fov_t: float = 0.0
 var _base_fov: float = 70.0
+var _base_fov_captured: bool = false
 var _claim_cd: float = 0.0
 var _harvest_fx_cd: float = 0.0
 var _harvest_accum_fx: float = 0.0
+var _harvest_label_t: float = 0.0
 var _contest_side: String = ""
 var _guard: Node3D = null
 var _occupy_in_t: float = 0.0
@@ -41,7 +45,9 @@ func _ready() -> void:
 	add_to_group("hackable")
 	call_deferred("_ensure_claim_beacon")
 	ownership = OwnershipData.new()
-	ownership.object_id = "%s/%s" % [get_parent().name if get_parent() else "pad", name]
+	# Unique per pad: every cluster is named "BaseCluster", so parent+self
+	# collided across all planets and soft influence landed on a random pad.
+	ownership.object_id = _unique_object_id()
 	ownership.current_faction = OwnershipData.Faction.NEUTRAL
 	_ensure_label()
 	set_process(true)
@@ -56,6 +62,24 @@ func _ready() -> void:
 		claim(default_faction, 0.5)
 		_seeding = false
 
+func _unique_object_id() -> String:
+	var pad_name := ""
+	var planet_name := ""
+	var n: Node = get_parent()
+	while n:
+		if pad_name == "" and n.has_meta("pad_up"):
+			pad_name = str(n.name)
+		if "planet_name" in n:
+			planet_name = str(n.planet_name)
+			break
+		n = n.get_parent()
+	if pad_name == "":
+		pad_name = str(get_parent().name) if get_parent() else "pad"
+	if planet_name == "":
+		planet_name = "world"
+	return "%s/%s/%s" % [planet_name, pad_name, name]
+
+
 func _ensure_label() -> void:
 	_label = Label3D.new()
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -68,7 +92,8 @@ func _ensure_label() -> void:
 func _process(delta: float) -> void:
 	_tick_contest_fov(delta)
 	_claim_cd = maxf(0.0, _claim_cd - delta)
-	if ownership and ownership.transition_progress < 1.0:
+	if ownership and ownership.transition_progress < 1.0 \
+		and ownership.current_faction != OwnershipData.Faction.CONTESTED:
 		ownership.advance_transition(delta, 5.0)
 		_apply_faction_visual()
 		if ownership.transition_progress >= 1.0:
@@ -81,22 +106,24 @@ func _process(delta: float) -> void:
 	_tick_guard_respawn(delta)
 	if running and ownership and ownership.is_fully_owned() and _status != "contested" and _owner_in_zone():
 		_tick_harvest(delta)
-	elif _status == "extracting":
-		_status = "owned"
-		_refresh_label()
-	_try_player_claim()
+	else:
+		if _status == "extracting":
+			_status = "owned"
+			_refresh_label()
+		_tick_reserve_regen(delta)
 	_try_pad_scan()
 
-func _try_player_claim() -> void:
-	if _claim_cd > 0.0:
-		return
-	if not Input.is_physical_key_pressed(KEY_C):
-		return
-	var actor := _find_actor()
-	if actor == null:
-		return
+
+func claim_pulse_from(actor: Node3D) -> bool:
+	## Single entry point for a C pulse. The pad used to poll KEY_C itself while
+	## the ship also claimed on the same press, applying 0.88 per tap and making
+	## the occupy meter decorative.
+	if _claim_cd > 0.0 or actor == null or not is_instance_valid(actor):
+		return false
+	if not actor.is_inside_tree():
+		return false
 	if actor.global_position.distance_to(global_position) > claim_radius:
-		return
+		return false
 	var fac := "Cybernex"
 	if actor.has_method("get_faction"):
 		fac = str(actor.get_faction())
@@ -104,6 +131,7 @@ func _try_player_claim() -> void:
 		fac = GameManager.get_faction_name()
 	claim(fac, PULSE_STR)
 	_claim_cd = 0.85
+	return true
 
 func _find_actor() -> Node3D:
 	_actor_cache_t -= get_process_delta_time() if is_inside_tree() else 0.0
@@ -111,17 +139,20 @@ func _find_actor() -> Node3D:
 		return _actor_cache
 	_actor_cache_t = 0.4
 	if SoftScanCache:
-		_actor_cache = SoftScanCache.get_player()
+		var sp: Node3D = SoftScanCache.get_player()
+		# A de-parented walker still passes is_instance_valid but has no
+		# global_transform, so distance checks would read the identity origin.
+		_actor_cache = sp if sp != null and sp.is_inside_tree() else null
 		return _actor_cache
 	var tree := get_tree()
 	if tree == null:
 		return null
 	for p in tree.get_nodes_in_group("player"):
-		if p is Node3D:
+		if p is Node3D and p.is_inside_tree():
 			_actor_cache = p as Node3D
 			return _actor_cache
-	for s in tree.get_nodes_in_group("ship"):
-		if s is Node3D:
+	for s in SoftScanCache.get_ships() if SoftScanCache else tree.get_nodes_in_group("ship"):
+		if s is Node3D and s.is_inside_tree():
 			_actor_cache = s as Node3D
 			return _actor_cache
 	_actor_cache = null
@@ -269,7 +300,9 @@ func _meter_toward(faction_name: String, amount: float) -> void:
 func _open_contest(f: OwnershipData.Faction, faction_name: String, amount: float) -> void:
 	ownership.previous_faction = ownership.current_faction
 	ownership.current_faction = OwnershipData.Faction.CONTESTED
-	ownership.transition_progress = 0.35
+	# Must be 1.0: a partial transition let _process flip _status to "owned",
+	# which permanently disabled decay and froze the pad in CONTESTED.
+	ownership.transition_progress = 1.0
 	_contest_side = faction_name
 	ownership.claim_strength = maxf(amount, 0.05)
 	_status = "contested"
@@ -366,6 +399,7 @@ func _tick_guard_respawn(delta: float) -> void:
 	_guard_respawn_t -= delta
 	if _guard_respawn_t > 0.0:
 		return
+	_guard_respawn_t = 0.0
 	if _guard != null and is_instance_valid(_guard):
 		_guard.queue_free()
 	_guard = null
@@ -381,6 +415,13 @@ func _on_guard_died() -> void:
 func _ensure_guard() -> void:
 	if _guard_alive():
 		return
+	if _guard_respawn_t > 0.0:
+		# Respect the 8s window, else a killed guard returns the next frame.
+		return
+	if _guard != null and is_instance_valid(_guard):
+		# Free the corpse first — it used to be orphaned on every rebuild.
+		_guard.queue_free()
+		_guard = null
 	var fac := "gROT"
 	if ownership:
 		if ownership.is_fully_owned():
@@ -430,16 +471,18 @@ func _clear_guard() -> void:
 
 func _tick_harvest(delta: float) -> void:
 	if crystal_reserves <= 0.0:
-		_status = "depleted"
-		_refresh_label()
+		if _status != "depleted":
+			_status = "depleted"
+			_refresh_label()
 		return
 	var got: float = minf(crystal_reserves, extract_rate * delta)
 	crystal_reserves -= got
 	total_extracted += got
 	var econ: float = got * contribution_per_unit
 	if GameManager:
-		# Asymmetric soft economy (CONCEPT): Cybernex Contribution vs gROT Biomass
-		GameManager.deposit_economy(econ, true)
+		# Asymmetric soft economy (CONCEPT): Cybernex Contribution vs gROT Biomass.
+		# Credit the pad's owner, not whichever faction the local player picked.
+		GameManager.deposit_economy(econ, true, ownership.faction_name() if ownership else "")
 		_harvest_accum_fx += econ
 		_harvest_fx_cd -= delta
 		if _harvest_fx_cd <= 0.0 and _harvest_accum_fx > 0.4:
@@ -450,7 +493,24 @@ func _tick_harvest(delta: float) -> void:
 			_harvest_accum_fx = 0.0
 	harvested.emit(got, total_extracted)
 	_status = "extracting"
-	_refresh_label()
+	# Label is a formatted string + Label3D glyph rebuild — throttle it.
+	_harvest_label_t += delta
+	if _harvest_label_t >= 0.35:
+		_harvest_label_t = 0.0
+		_refresh_label()
+
+
+func _tick_reserve_regen(delta: float) -> void:
+	## Nodes recharge while nobody is extracting. Without this every pad ran dry
+	## after ~42 economy and the whole progression track became unreachable.
+	if _status == "extracting":
+		return
+	if crystal_reserves >= max_reserves:
+		return
+	crystal_reserves = minf(max_reserves, crystal_reserves + reserve_regen * delta)
+	if _status == "depleted" and crystal_reserves > max_reserves * 0.08:
+		_status = "owned" if ownership and ownership.is_fully_owned() else "unclaimed"
+		_refresh_label()
 
 func _apply_faction_visual() -> void:
 	var fac := ownership.faction_name() if ownership else "Neutral"
@@ -554,8 +614,8 @@ func _landed_ship_holds_zone(own_fac: String) -> bool:
 	var tree := get_tree()
 	if tree == null:
 		return false
-	for s in tree.get_nodes_in_group("ship"):
-		if s == null or not is_instance_valid(s):
+	for s in SoftScanCache.get_ships() if SoftScanCache else tree.get_nodes_in_group("ship"):
+		if s == null or not is_instance_valid(s) or not s.is_inside_tree():
 			continue
 		if not bool(s.get("is_landed")):
 			continue
@@ -619,8 +679,11 @@ func _notify_hud(msg: String) -> void:
 
 
 func _ensure_claim_beacon() -> void:
-	if has_node("ClaimBeaconVis"):
-		return
+	# Rebuild on every ownership flip — returning early left the pylon showing
+	# the previous owner's colours.
+	var old := get_node_or_null("ClaimBeaconVis")
+	if old:
+		old.queue_free()
 	var root := Node3D.new()
 	root.name = "ClaimBeaconVis"
 	add_child(root)
@@ -882,15 +945,17 @@ func _tick_contest_fov(delta: float) -> void:
 			break
 	if cam == null:
 		return
-	if _contest_fov_t <= 0.0:
+	if not _base_fov_captured:
+		# Capture once: re-capturing from an already-widened value ratcheted FOV.
 		_base_fov = cam.fov
+		_base_fov_captured = true
 	_contest_fov_t = 0.5
 	var target := minf(_base_fov + 6.0, 85.0)
 	cam.fov = lerpf(cam.fov, target, clampf(delta * 3.0, 0.0, 1.0))
 
 
 func _restore_fov(delta: float) -> void:
-	if _contest_fov_t <= 0.0:
+	if not _base_fov_captured or _base_fov <= 1.0:
 		return
 	_contest_fov_t = maxf(0.0, _contest_fov_t - delta)
 	var actor := _find_actor()
@@ -901,8 +966,17 @@ func _restore_fov(delta: float) -> void:
 		cam = actor.get_node("CameraPivot/Camera3D") as Camera3D
 	elif actor.has_node("CamPivot/Camera3D"):
 		cam = actor.get_node("CamPivot/Camera3D") as Camera3D
-	if cam and _base_fov > 1.0:
-		cam.fov = lerpf(cam.fov, _base_fov, clampf(delta * 2.5, 0.0, 1.0))
+	else:
+		for c in actor.find_children("*", "Camera3D", true, false):
+			cam = c as Camera3D
+			break
+	if cam == null:
+		return
+	# Run until it actually lands, not just for the 0.5s contest window.
+	if absf(cam.fov - _base_fov) < 0.01:
+		cam.fov = _base_fov
+		return
+	cam.fov = lerpf(cam.fov, _base_fov, clampf(delta * 2.5, 0.0, 1.0))
 
 
 

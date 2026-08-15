@@ -39,6 +39,9 @@ func _ready() -> void:
 	_spawn_planets()
 	_spawn_orbital_stations()
 	_spawn_ship()
+	# HUD must exist before any walker does, or every claim / contest / harvest
+	# toast of the opening flight is dropped on the floor.
+	_ensure_game_hud()
 	_setup_interior()
 	_setup_mechanics_playtest()
 	if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
@@ -53,6 +56,19 @@ func _ready() -> void:
 	var CP = load("res://scripts/assets/CanonPlates.gd")
 	if CP and hud_root:
 		CP.spawn_space_hud(hud_root)
+
+func _ensure_game_hud() -> void:
+	var tree := get_tree()
+	if tree == null or tree.get_first_node_in_group("game_hud") != null:
+		return
+	var hud := CanvasLayer.new()
+	hud.set_script(load("res://scripts/ui/GameHUD.gd"))
+	hud.name = "GameHUD"
+	hud.add_to_group("game_hud")
+	add_child(hud)
+	if hud.has_method("bind_player") and ship != null and is_instance_valid(ship):
+		hud.bind_player(ship)
+
 
 func _on_tier(_t: int) -> void:
 	var gq := get_node_or_null("/root/GraphicsQuality")

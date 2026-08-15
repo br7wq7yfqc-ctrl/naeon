@@ -56,11 +56,20 @@ func add_biomass(amount: float) -> void:
 	biomass += amount
 	biomass_changed.emit(biomass)
 
-## Faction-aware soft economy deposit from harvest/work
-func deposit_economy(amount: float, from_harvest: bool = false) -> void:
+## Faction-aware soft economy deposit from harvest/work.
+## `owner_faction` names the side that earned it; empty means the local player.
+func deposit_economy(amount: float, from_harvest: bool = false, owner_faction: String = "") -> void:
 	if amount <= 0.0:
 		return
-	if player_faction == Faction.GROT:
+	var grot := player_faction == Faction.GROT
+	if owner_faction != "":
+		if owner_faction == "Cybernex":
+			grot = false
+		elif owner_faction == "gROT":
+			grot = true
+		else:
+			return  # Neutral / Contested pays nobody
+	if grot:
 		add_biomass(amount)
 		add_mastery("biomass_ops", amount * 0.02)
 	else:

@@ -468,6 +468,8 @@ func _input(event: InputEvent) -> void:
 				_try_ability(1)
 		elif event.keycode == KEY_R:
 			_try_ability(2)
+		elif event.keycode == KEY_C:
+			_try_claim_pulse()
 		# F is the OpenSpace interact key (board / seat / EVA). V cycles forms;
 		# firing the Form Cycle ability here made every interact morph the hero.
 		# G/B terrain edit handled by PlanetTerrainEdit while in player group
@@ -633,6 +635,24 @@ func _physics_process(delta: float) -> void:
 		apply_floor_snap()
 
 	_update_anim(delta)
+
+func _try_claim_pulse() -> void:
+	## One C pulse to the nearest pad. Pads no longer poll the key themselves,
+	## so a single press can only ever apply one pulse.
+	var tree := get_tree()
+	if tree == null or interior_mode:
+		return
+	var best: Node = null
+	var best_d := 60.0
+	for n in tree.get_nodes_in_group("pad_bases"):
+		if n is Node3D and is_instance_valid(n):
+			var d: float = global_position.distance_to((n as Node3D).global_position)
+			if d < best_d:
+				best_d = d
+				best = n
+	if best and best.has_method("claim_pulse_from"):
+		best.claim_pulse_from(self)
+
 
 func _real_gravity() -> Vector3:
 	## Provider gravity only — zero in vacuum, so EVA stays weightless in space.

@@ -200,6 +200,9 @@ func set_observer(node: Node3D) -> void:
 	var _fl := get_node_or_null("SurfaceFlora")
 	if _fl and _fl.has_method("set_observer"):
 		_fl.set_observer(node)
+	var fa := get_node_or_null("SurfaceFauna")
+	if fa and fa.has_method("set_observer"):
+		fa.set_observer(node)
 	_observer = node
 	if _surface_detail and _surface_detail.has_method("set_observer"):
 		_surface_detail.set_observer(node)
@@ -563,9 +566,11 @@ func gravity_at(global_pos: Vector3) -> Vector3:
 	return to_c.normalized() * strength
 
 func nearest_pad(global_pos: Vector3) -> Node3D:
-	# Ensure pads exist if player is trying to land nearby
+	# Queue the staggered build instead of forcing the whole pad complex in one
+	# frame: ShipController calls this every physics frame, so the synchronous
+	# path froze the game each time a ship crossed 500 m AGL.
 	if has_base and not _pads_built and altitude_of(global_pos) < 500.0:
-		_build_pads()
+		_pad_build_pending = true
 	var best: Node3D = null
 	var best_d := INF
 	for p in _pads:
@@ -592,12 +597,19 @@ func _spawn_pad_density() -> void:
 	_ensure_surface_fauna()
 	if _pads_root == null:
 		return
-	if _pads_root.has_node("PadDensityCluster"):
+	# Parent to a real pad, not the pads root: the root sits at the planet
+	# centre, so props / ambient life / city towers were built underground.
+	var host: Node3D = _pads_root
+	for p in _pads:
+		if p != null and is_instance_valid(p):
+			host = p
+			break
+	if host.has_node("PadDensityCluster"):
 		return
 	var d := Node3D.new()
 	d.set_script(load("res://scripts/world/PadDensity.gd"))
 	d.name = "PadDensityCluster"
-	_pads_root.add_child(d)
+	host.add_child(d)
 	var fac := "Cybernex"
 	if "faction_base" in self:
 		fac = str(faction_base)
@@ -621,19 +633,19 @@ func _spawn_pad_density() -> void:
 				city_n = 9
 	if d.has_method("build"):
 		d.build(fac, 22.0, dens_n)
-	if not _pads_root.has_node("PadAmbientLife"):
+	if not host.has_node("PadAmbientLife"):
 		var life := Node3D.new()
 		life.set_script(load("res://scripts/world/PadAmbientLife.gd"))
 		life.name = "PadAmbientLife"
-		_pads_root.add_child(life)
+		host.add_child(life)
 		if life.has_method("build"):
 			life.build(life_n, fac)
-	if not _pads_root.has_node("CityNightLights"):
+	if not host.has_node("CityNightLights"):
 		var city := Node3D.new()
 		var cscr: Script = load("res://scripts/world/CityNightLights.gd") as Script
 		city.set_script(cscr)
 		city.name = "CityNightLights"
-		_pads_root.add_child(city)
+		host.add_child(city)
 		if city.has_method("build"):
 			city.call("build", fac, 26.0, city_n)
 
