@@ -177,10 +177,14 @@ static func _box_mesh(parent: Node3D, pos: Vector3, size: Vector3, color: Color,
 	mat.albedo_color = color
 	mat.roughness = 0.7
 	mat.metallic = 0.35
+	# Compatibility / llvmpipe: shaded interiors read as black without IBL.
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.emission_enabled = true
+	mat.emission = color
 	if emit:
-		mat.emission_enabled = true
-		mat.emission = color
 		mat.emission_energy_multiplier = 2.2
+	else:
+		mat.emission_energy_multiplier = 0.45
 	mi.material_override = mat
 	parent.add_child(mi)
 	if collision:
