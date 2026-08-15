@@ -452,6 +452,22 @@ func _apply_interior_chrome(pocket: bool) -> void:
 		_ctx_label.visible = false
 
 
+func _in_clash_arena() -> bool:
+	var tree := get_tree()
+	return tree != null and tree.current_scene != null and str(tree.current_scene.name) == "TestArena"
+
+
+func _apply_clash_chrome() -> void:
+	if _debug_overlay or not _in_clash_arena():
+		return
+	if _obj_label:
+		_obj_label.visible = false
+	if _layer_label:
+		_layer_label.visible = false
+	if _terrain_label:
+		_terrain_label.visible = false
+
+
 func _refresh() -> void:
 	var director: Node = _interior_director()
 	var pocket: bool = director != null
@@ -825,6 +841,7 @@ func _refresh() -> void:
 					dot.color = Color(0.7, 0.7, 0.75)
 			dot.visible = true
 	_apply_interior_chrome(pocket)
+	_apply_clash_chrome()
 
 func _on_gm_toast(msg: String) -> void:
 	push_toast(msg, 3.0)
@@ -944,6 +961,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_debug_overlay = not _debug_overlay
 		_apply_debug_vis()
 		_apply_interior_chrome(_in_interior_pocket())
+		_apply_clash_chrome()
 		if GameManager:
 			GameManager.toast_requested.emit("HUD debug %s" % ("ON" if _debug_overlay else "OFF"))
 		get_viewport().set_input_as_handled()
