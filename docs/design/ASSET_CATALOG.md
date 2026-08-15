@@ -3,7 +3,7 @@
 **Version:** 1.25 · **Updated:** 2026-08-15  
 **Rule:** this file lists **locked only**. In-review / draft / dump do not belong here.
 
-Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **133 positions, 213 sheets**.  
+Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **134 positions, 213 sheets**.  
 Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **67 UUID + 58 dump IDs**, none invented.
 
 Bucket: `s3://neon/generations/canon/{class}/{id}/master.jpg`  
@@ -115,6 +115,7 @@ APC / hover / mech guns bind to the **hull** they sit on. Tank main has no Heavy
 |--------|---------|------|----------|----|
 | Fighter | CX | cinematic | `cybernex_fighter` | `4ca9faf0-e533-403b-bc6e-2f6263d6a4d7` |
 | Fighter | CX | ortho | `cybernex_fighter` | `eb126daa-d380-4db6-bc95-9fde9e4e6846` |
+| Heavy fighter (multicrew) | CX | cinematic | `cybernex_heavy_fighter` | `7GPCx` |
 | Bomber | CX | cinematic | `cybernex_bomber` | `6c3799b6-f741-4ab2-aa5c-a86d564c5493` |
 | Bomber | CX | ortho | `cybernex_bomber` | `78162909-d59f-47be-a58c-c7fde0f19ad8` |
 | Support | CX | cinematic | `cybernex_support` | `877b315c-e073-4cf6-a455-2483332d63f4` |

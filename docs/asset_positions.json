@@ -3,7 +3,7 @@
   "updated": "2026-08-15",
   "source": "v2.8 + batch 20 CX fighter pair + CX bomber pair",
   "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Dump short IDs are existing neon rendered files, not invented UUIDs.",
-  "positions": 133,
+  "positions": 134,
   "bound_sheets": 213,
   "merged_slugs": {
     "heawy_5ault_i8reakt4fough": "heavy_assault",
@@ -1404,6 +1404,30 @@
           "view": "ortho",
           "class": "ship-single",
           "label": "Fighter"
+        }
+      ]
+    },
+    "cybernex_heavy_fighter": {
+      "category": "ships",
+      "count": 0,
+      "titles": [
+        "CYBERNEX HEAVY FIGHTER"
+      ],
+      "ocr": false,
+      "source": "manual_rebuild",
+      "chat_lock": true,
+      "file_id": "7GPCx",
+      "dump_key": "generations/rendered/7GPCx.jpg",
+      "notes": "New class: multicrew small ship. Not T1 single-seat fighter.",
+      "locked_uuids": [
+        {
+          "id": "7GPCx",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-small-multicrew",
+          "label": "Heavy fighter",
+          "dump_key": "generations/rendered/7GPCx.jpg",
+          "manual": 20
         }
       ]
     },
