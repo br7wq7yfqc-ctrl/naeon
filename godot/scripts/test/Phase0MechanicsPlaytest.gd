@@ -150,6 +150,54 @@ func _go() -> void:
 						fails.append("guard still alive after lethal")
 					else:
 						print("[Playtest] guard down")
+			# Harvest only while the owning faction stands in the ring
+			if walker2 and is_instance_valid(walker2):
+				walker2.set("faction", "Cybernex")
+			if pad.has_method("claim"):
+				pad.claim("Cybernex", 2.0)
+			var ow = pad.get("ownership")
+			if ow and ow.has_method("advance_transition"):
+				ow.advance_transition(8.0, 5.0)
+			await get_tree().process_frame
+			await get_tree().process_frame
+			if walker2 and is_instance_valid(walker2) and pad is Node3D:
+				walker2.global_position = (pad as Node3D).global_position + Vector3(0, 4.0, 0)
+			var c0: float = float(GameManager.contribution) if GameManager else 0.0
+			await get_tree().create_timer(0.7).timeout
+			var c1: float = float(GameManager.contribution) if GameManager else 0.0
+			print("[Playtest] harvest in-zone ", snapped(c0, 0.01), " -> ", snapped(c1, 0.01), " status=", pad.get_claim_status() if pad.has_method("get_claim_status") else "?")
+			if c1 <= c0 + 0.001:
+				fails.append("no harvest while owner in ring")
+			if walker2 and is_instance_valid(walker2) and pad is Node3D:
+				walker2.global_position = (pad as Node3D).global_position + Vector3(0, 0, 420)
+			await get_tree().create_timer(0.2).timeout
+			var c2: float = float(GameManager.contribution) if GameManager else 0.0
+			await get_tree().create_timer(0.55).timeout
+			var c3: float = float(GameManager.contribution) if GameManager else 0.0
+			print("[Playtest] harvest out-zone ", snapped(c2, 0.01), " -> ", snapped(c3, 0.01))
+			if c3 - c2 > 0.08:
+				fails.append("harvest continued after leaving ring")
+			# Honest land on the same pad
+			var land_ship: Node = os.get("ship")
+			var up := Vector3.UP
+			var host: Node = pad
+			while host:
+				if host.has_meta("pad_up"):
+					up = host.get_meta("pad_up")
+					break
+				host = host.get_parent()
+			var deck: Node3D = host as Node3D if host is Node3D else (pad as Node3D)
+			if land_ship and deck:
+				if "velocity" in land_ship:
+					land_ship.velocity = Vector3.ZERO
+				land_ship.global_position = deck.global_position + up * 6.0
+				if land_ship.has_method("_set_mode"):
+					land_ship._set_mode(2)
+				if land_ship.has_method("_do_land"):
+					land_ship._do_land()
+				print("[Playtest] ship landed=", land_ship.get("is_landed"), " pad=", deck.name)
+				if not bool(land_ship.get("is_landed")):
+					fails.append("ship did not land on pad")
 
 	# --- HOVER mode + vacuum stall ---
 	var ship: Node = os.get("ship")
@@ -164,6 +212,40 @@ func _go() -> void:
 		if ship.has_method("flight_mode_name") and str(ship.flight_mode_name()) != "HOVER":
 			fails.append("HOVER mode not applied")
 
+	# --- seat → pilot ---
+	var d2: Node = os.get("_interior")
+	var w3: Node3D = os.get("player") as Node3D
+	if d2 and d2.has_method("is_inside") and bool(d2.is_inside()) and d2.has_method("exit_interior"):
+		d2.exit_interior()
+		await get_tree().create_timer(0.2).timeout
+	w3 = os.get("player") as Node3D
+	if d2 == null or w3 == null or os.get("ship") == null:
+		fails.append("no interior/walker/ship for seat→pilot")
+	elif d2.has_method("enter_ship"):
+		d2.enter_ship(w3, os.ship)
+		await get_tree().create_timer(0.45).timeout
+		if not bool(d2.is_inside()):
+			fails.append("enter_ship failed for seat test")
+		else:
+			var pocket2: Node3D = d2.get_active_interior() if d2.has_method("get_active_interior") else null
+			var seat: Node3D = pocket2.get_node_or_null("Seat") as Node3D if pocket2 else null
+			if seat == null:
+				fails.append("no Seat marker in ship pocket")
+			else:
+				w3.global_position = seat.global_position + Vector3(0, 1.05, 0)
+				await get_tree().process_frame
+				if d2.has_method("is_near_seat") and not bool(d2.is_near_seat(w3, 3.8)):
+					fails.append("walker not near seat after teleport")
+				elif os.has_method("_try_seat_to_pilot"):
+					os._try_seat_to_pilot()
+					await get_tree().create_timer(0.25).timeout
+					if d2.has_method("is_inside") and bool(d2.is_inside()):
+						fails.append("still inside after seat→pilot")
+					if not bool(os.get("_in_ship")):
+						fails.append("not piloting after seat→pilot")
+					else:
+						print("[Playtest] seat→pilot OK")
+
 	_finish(fails, 0 if fails.is_empty() else 1)
 
 
@@ -174,4 +256,11 @@ func _finish(fails: PackedStringArray, code: int) -> void:
 		print("[Playtest] FAIL")
 		for f in fails:
 			print("[Playtest]  - ", f)
-	get_tree().quit(code)
+	if AutoUpdater and AutoUpdater.has_method("abort_pending"):
+		AutoUpdater.abort_pending()
+	OS.set_exit_code(code)
+	var tree := get_tree()
+	if tree:
+		tree.quit(code)
+	# Godot 4.3 dummy renderer keeps iterating after quit() (mesh_get_surface_count).
+	OS.kill(OS.get_process_id())

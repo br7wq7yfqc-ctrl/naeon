@@ -24,8 +24,14 @@ set +e
 timeout 45 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/world/OpenSpace.tscn -- --playtest-mechanics > /tmp/pt_mech.log 2>&1
 MECH_CODE=$?
 set -e
-if ! grep -q '\[Playtest\] PASS' /tmp/pt_mech.log; then
-  if [ "$MECH_CODE" -eq 0 ]; then MECH_CODE=1; fi
+# Verdict is the [Playtest] line. Godot 4.3 dummy renderer may not exit after quit()
+# (timeout 124) or the harness may OS.kill itself (137).
+if grep -q '\[Playtest\] PASS' /tmp/pt_mech.log; then
+  MECH_CODE=0
+elif grep -q '\[Playtest\] FAIL' /tmp/pt_mech.log; then
+  MECH_CODE=1
+elif [ "$MECH_CODE" -eq 0 ]; then
+  MECH_CODE=1
 fi
 echo MECH_CODE=$MECH_CODE MECH_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_mech.log || true)
 grep -E 'Playtest|SCRIPT ERROR' /tmp/pt_mech.log | head -40 || true
