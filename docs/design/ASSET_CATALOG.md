@@ -1,10 +1,10 @@
 # NAEON — Approved sketch catalog
 
-**Version:** 1.16 · **Updated:** 2026-08-15  
+**Version:** 1.17 · **Updated:** 2026-08-15  
 **Rule:** this file lists **locked only**. In-review / draft / dump do not belong here.
 
 Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **129 positions, 213 sheets**.  
-Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **59 UUID + 58 dump IDs**, none invented.
+Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **60 UUID + 58 dump IDs**, none invented.
 
 Bucket: `s3://neon/generations/canon/{class}/{id}/master.jpg`  
 Grok: `https://assets.grok.com/users/77c65418-d257-47c3-8504-4540b6e0a754/generated/{UUID}/image.jpg`
@@ -15,7 +15,7 @@ S3 Index `generations/catalog.json` is **not** in git and is not patched by this
 |--------|------:|
 | Positions after OCR merge + Index keys + batch 20 | 129 |
 | Bound sheets (invariant) | 213 |
-| Locked UUID | 59 |
+| Locked UUID | 60 |
 | Dump file IDs rebound (existing neon files) | 58 |
 | Chat-lock still `file_id` null | 0 |
 | UUID with no position | 0 |
@@ -115,9 +115,10 @@ APC / hover / mech guns bind to the **hull** they sit on. Tank main has no Heavy
 | Fighter | CX | ortho | `cybernex_fighter` | `eb126daa-d380-4db6-bc95-9fde9e4e6846` |
 | Bomber | CX | cinematic | `cybernex_bomber` | `6c3799b6-f741-4ab2-aa5c-a86d564c5493` |
 | Bomber | CX | ortho | `cybernex_bomber` | `78162909-d59f-47be-a58c-c7fde0f19ad8` |
-| Support | CX | cinematic | `cybernex_support` | `3bf43918-d24d-486c-8787-26f28704ff94` |
+| Support | CX | cinematic | `cybernex_support` | `877b315c-e073-4cf6-a455-2483332d63f4` |
+| Support | CX | ortho | `cybernex_support` | `7c53217f-5bf1-4dc3-80be-dfe7612e997c` |
 
-`8b074991` and ortho `93a363a3` rejected (fighter). Bomber `c76ccb6f` and noisy first pass (`b88f2e19`, `d0b8899a`, `ea61b36d`) rejected. Support `0735138d` (A), `0fdb14fa` (B with iroquois), `71cd1130` (wrong silhouette) rejected.
+`8b074991` and ortho `93a363a3` rejected (fighter). Bomber `c76ccb6f` and noisy first pass (`b88f2e19`, `d0b8899a`, `ea61b36d`) rejected. Support rejected: `0735138d` (A), `0fdb14fa` (iroquois), `71cd1130` (wrong silhouette), `3bf43918` (no devices), `181ba89a` (ridge), `0259484b` (belly dish), `cab4e36b` (old hull ortho).
 
 ### Rebound from dump (short IDs — existing `rendered/` / `imagine_images/` files, not invented UUIDs)
 
@@ -139,7 +140,7 @@ Verified against the plate before bind.
 | Heavy Freighter | GR | cinematic | `grot_freighter` | `8WNxd` |
 | Gunship | CX | cinematic | `cybernex_gunship` | `l5qg1` |
 | Gunship | GR | cinematic | `grot_gunship` | `7zIwZ` |
-| Support | CX | cinematic | `cybernex_support` | `3bf43918` (UUID, §A) |
+| Support | CX | cinematic + ortho | `cybernex_support` | `877b315c` / `7c53217f` (UUID, §A) |
 | Support | GR | cinematic | `grot_support_ship` | `mmaTy` |
 | Fighter | CX | cinematic | `cybernex_fighter` | `4ca9faf0` (UUID, §A) |
 | Fighter | GR | cinematic | `grot_fighter` | `1HmNd` |

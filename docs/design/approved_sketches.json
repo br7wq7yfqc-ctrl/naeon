@@ -1,5 +1,5 @@
 {
-  "version": "1.15",
+  "version": "1.16",
   "updated": "2026-08-15",
   "rule": "locked only",
   "user": "77c65418-d257-47c3-8504-4540b6e0a754",
@@ -997,16 +997,26 @@
       "batch": 20
     },
     {
-      "id": "3bf43918-d24d-486c-8787-26f28704ff94",
+      "id": "877b315c-e073-4cf6-a455-2483332d63f4",
       "faction": "CX",
       "view": "cinematic",
+      "class": "ship-multi",
+      "label": "Support",
+      "position": "cybernex_support",
+      "batch": 20,
+      "supersedes": "3bf43918-d24d-486c-8787-26f28704ff94"
+    },
+    {
+      "id": "7c53217f-5bf1-4dc3-80be-dfe7612e997c",
+      "faction": "CX",
+      "view": "ortho",
       "class": "ship-multi",
       "label": "Support",
       "position": "cybernex_support",
       "batch": 20
     }
   ],
-  "note": "Batch 20: CX fighter + bomber pairs locked; CX support cinematic locked (B minus iroquois). Next: CX support ortho then CX stealth. S3 Index not patched.",
-  "positions_bound": 116,
+  "note": "Batch 20: CX fighter + bomber + support pairs locked. Support cinematic patched 3bf43918→877b315c (devices). Next: CX stealth. S3 Index not patched.",
+  "positions_bound": 117,
   "positions_unbound": 0
 }

@@ -1327,9 +1327,16 @@
       "source": "batch20_gap",
       "locked_uuids": [
         {
-          "id": "3bf43918-d24d-486c-8787-26f28704ff94",
+          "id": "877b315c-e073-4cf6-a455-2483332d63f4",
           "faction": "CX",
           "view": "cinematic",
+          "class": "ship-multi",
+          "label": "Support"
+        },
+        {
+          "id": "7c53217f-5bf1-4dc3-80be-dfe7612e997c",
+          "faction": "CX",
+          "view": "ortho",
           "class": "ship-multi",
           "label": "Support"
         }

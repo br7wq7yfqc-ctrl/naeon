@@ -2,7 +2,7 @@
 **2026-08-15**
 Local code marathon + GitHub design catalog skills merged.
 
-**Last update:** 2026-08-15 03:37 EEST
+**Last update:** 2026-08-15 03:44 EEST
 **Skill:** v2.0
 
 | Track | Status |
@@ -21,6 +21,5 @@ Local code marathon + GitHub design catalog skills merged.
 ## 2026-08-15 Batch 20
 - CX fighter pair locked (`4ca9faf0` / `eb126daa`)
 - CX bomber pair locked (`6c3799b6` / `78162909`)
-- CX support cinematic locked (`3bf43918`, B minus iroquois)
-- CX support ortho `cab4e36b` in review
-- Next after ortho lock: CX stealth
+- CX support pair locked (`877b315c` / `7c53217f`) — cinematic patched off `3bf43918`
+- Next: CX stealth cinematic in review
