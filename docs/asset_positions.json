@@ -3,7 +3,7 @@
   "updated": "2026-08-15",
   "source": "v2.8 + batch 20 CX fighter pair + CX bomber pair",
   "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Dump short IDs are existing neon rendered files, not invented UUIDs.",
-  "positions": 136,
+  "positions": 137,
   "bound_sheets": 213,
   "merged_slugs": {
     "heawy_5ault_i8reakt4fough": "heavy_assault",
@@ -701,6 +701,26 @@
       "titles": [
         "CYBERNEX WAKE DRILL",
         "I CYBERNEX WAKE"
+      ]
+    },
+    "cybernex_sidearm": {
+      "category": "props",
+      "count": 0,
+      "titles": [
+        "CYBERNEX SIDEARM"
+      ],
+      "ocr": false,
+      "source": "manual_rebuild",
+      "chat_lock": true,
+      "locked_uuids": [
+        {
+          "id": "cb6c3686-91b2-46b2-ad58-a8299cb7ff31",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "weapon-infantry",
+          "label": "Sidearm",
+          "manual": 35
+        }
       ]
     },
     "cybernex_weapon_carbine": {

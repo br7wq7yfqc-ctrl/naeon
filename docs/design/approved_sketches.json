@@ -239,6 +239,15 @@
       "manual": 34
     },
     {
+      "id": "cb6c3686-91b2-46b2-ad58-a8299cb7ff31",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "weapon-infantry",
+      "label": "Sidearm",
+      "position": "cybernex_sidearm",
+      "manual": 35
+    },
+    {
       "id": "44ef17f1-73f4-43ad-b878-524b48321c41",
       "faction": "GR",
       "view": "cinematic",
