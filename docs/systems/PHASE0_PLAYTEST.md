@@ -27,3 +27,4 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 10. Compact play HUD: HP/EN bars, ability chips, Infection 5 pips; F3 debug dump
 11. Pulse bolts as oriented streaks; dummy death collapse (not instant hide)
 12. Pad claim pylon (base/shaft/crown); ship cruise nacelles; OpenSpace HUD one-liner (F3 dump)
+13. Clash arena perimeter + nexus halo (less greybox)
