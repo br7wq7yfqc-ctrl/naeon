@@ -361,6 +361,37 @@ func _go() -> void:
 				d_st.exit_interior()
 			await get_tree().create_timer(0.25).timeout
 
+	# --- rover deploy / store on a landed pad ---
+	var sh_r: Node = os.get("ship")
+	if sh_r == null or pad_deck == null or not bool(sh_r.has_method("_try_deploy_rover")):
+		fails.append("no ship/pad for rover deploy")
+	else:
+		var up_r: Vector3 = pad_deck.get_meta("pad_up") if pad_deck.has_meta("pad_up") else Vector3.UP
+		if "velocity" in sh_r:
+			sh_r.velocity = Vector3.ZERO
+		sh_r.global_position = pad_deck.global_position + up_r * 6.0
+		if sh_r.has_method("_set_mode"):
+			sh_r._set_mode(2)
+		if sh_r.has_method("_do_land"):
+			sh_r._do_land()
+		if not bool(sh_r.get("is_landed")):
+			fails.append("ship not landed for rover deploy")
+		else:
+			sh_r._try_deploy_rover()
+			await get_tree().process_frame
+			var rov: Node3D = sh_r.get_deployed_rover() if sh_r.has_method("get_deployed_rover") else null
+			print("[Playtest] rover deployed=", rov != null)
+			if rov == null or not is_instance_valid(rov):
+				fails.append("rover did not deploy on landed pad")
+			else:
+				if os.has_method("_try_store_rover"):
+					os._try_store_rover()
+				await get_tree().process_frame
+				var rov2: Node3D = sh_r.get_deployed_rover() if sh_r.has_method("get_deployed_rover") else null
+				print("[Playtest] rover stored=", rov2 == null)
+				if rov2 != null and is_instance_valid(rov2):
+					fails.append("rover still deployed after store")
+
 	# --- HOVER mode + vacuum stall ---
 	var ship: Node = os.get("ship")
 	if ship and ship.has_method("get_stall"):
