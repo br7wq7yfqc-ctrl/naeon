@@ -37,6 +37,10 @@ var _form_index: int = 0
 var _body_mat: StandardMaterial3D
 var last_move_input: Vector2 = Vector2.ZERO
 var _loco = null
+var _coyote_t: float = 0.0
+var _jump_buf_t: float = 0.0
+var _down_t: float = 0.0
+var _spawn_pos: Vector3 = Vector3(0, 1.2, 6)
 
 func _ready() -> void:
 	health = max_health
@@ -47,6 +51,7 @@ func _ready() -> void:
 	floor_snap_length = 0.2
 	# Capture mouse so look + window focus work on first click too
 	call_deferred("_ensure_input_ready")
+	call_deferred("_capture_spawn")
 	_body_mat = StandardMaterial3D.new()
 	_body_mat.albedo_color = Color(0.08, 0.12, 0.18)
 	_body_mat.metallic = 0.6
@@ -126,10 +131,30 @@ func _physics_process(delta: float) -> void:
 		firewall_timer = max(0.0, firewall_timer - delta)
 	energy = min(max_energy, energy + energy_regen * _infection_energy_mult() * delta)
 
+	if _down_t > 0.0:
+		_down_t = maxf(0.0, _down_t - delta)
+		if not is_on_floor():
+			velocity.y -= gravity * delta
+		velocity.x = move_toward(velocity.x, 0.0, 40.0 * delta)
+		velocity.z = move_toward(velocity.z, 0.0, 40.0 * delta)
+		move_and_slide()
+		if _down_t <= 0.0:
+			_respawn()
+		return
+
 	if not is_on_floor():
 		velocity.y -= gravity * delta
-	if _pressed_jump() and is_on_floor():
+		_coyote_t = maxf(0.0, _coyote_t - delta)
+	else:
+		_coyote_t = 0.12
+	if _pressed_jump():
+		_jump_buf_t = 0.1
+	else:
+		_jump_buf_t = maxf(0.0, _jump_buf_t - delta)
+	if _jump_buf_t > 0.0 and _coyote_t > 0.0:
 		velocity.y = jump_velocity
+		_jump_buf_t = 0.0
+		_coyote_t = 0.0
 
 	var input_dir: Vector2 = _read_move_vector()
 	last_move_input = input_dir
@@ -147,12 +172,14 @@ func _physics_process(delta: float) -> void:
 		velocity.y += 2.5 * delta
 		speed *= 1.1
 
+	var accel := 28.0 if is_on_floor() else 12.0
+	var decel := 36.0 if is_on_floor() else 6.0
 	if direction != Vector3.ZERO:
-		velocity.x = direction.x * speed
-		velocity.z = direction.z * speed
+		velocity.x = move_toward(velocity.x, direction.x * speed, accel * delta)
+		velocity.z = move_toward(velocity.z, direction.z * speed, accel * delta)
 	else:
-		velocity.x = move_toward(velocity.x, 0.0, speed)
-		velocity.z = move_toward(velocity.z, 0.0, speed)
+		velocity.x = move_toward(velocity.x, 0.0, decel * delta)
+		velocity.z = move_toward(velocity.z, 0.0, decel * delta)
 
 	move_and_slide()
 	if last_move_input.length_squared() > 0.01 and SessionObjectives:
@@ -163,16 +190,17 @@ func _physics_process(delta: float) -> void:
 	_update_locomotion(delta)
 
 	if _just_ability(1):
-		if ability_system:
+		if ability_system and _down_t <= 0.0:
 			ability_system.try_activate(0)
 	if _just_ability(2):
-		if ability_system:
+		if ability_system and _down_t <= 0.0:
 			ability_system.try_activate(1)
 	if _just_ability(3):
-		if ability_system:
+		if ability_system and _down_t <= 0.0:
 			ability_system.try_activate(2)
 	if _just_ability(4):
-		cycle_form()
+		if _down_t <= 0.0:
+			cycle_form()
 
 
 ## Robust WASD: InputMap first, then physical keys + keycodes + arrows.
@@ -262,6 +290,8 @@ func heal(amount: float) -> void:
 	health = min(max_health, health + amount)
 
 func take_damage(amount: float) -> void:
+	if _down_t > 0.0:
+		return
 	if CombatJuice:
 		CombatJuice.hit_feedback(float(amount), global_position)
 	if firewall_timer > 0.0:
@@ -274,7 +304,7 @@ func take_damage(amount: float) -> void:
 	if ch and ch.has_method("notify_damage"):
 		ch.notify_damage()
 	if health <= 0.0:
-		_respawn()
+		_begin_down()
 
 func apply_firewall(duration: float, heal_amount: float = 0.0) -> void:
 	firewall_timer = max(firewall_timer, duration)
@@ -301,10 +331,35 @@ func _firewall_break_nearby_channels() -> void:
 		elif n.has_method("cancel"):
 			n.cancel()
 
+func _capture_spawn() -> void:
+	_spawn_pos = global_position
+
+
+func is_downed() -> bool:
+	return _down_t > 0.0
+
+
+func _begin_down() -> void:
+	if _down_t > 0.0:
+		return
+	_down_t = 0.7
+	health = 0.0
+	velocity *= 0.35
+	var tree := get_tree()
+	if tree:
+		var md = tree.get_first_node_in_group("clash_match")
+		if md and md.has_method("register_death"):
+			md.register_death()
+	if GameManager:
+		GameManager.toast_requested.emit("DOWN — returning to nexus")
+	print("[Player] Down")
+
+
 func _respawn() -> void:
 	health = max_health
 	energy = max_energy
-	global_position = Vector3(0, 2, 6)
+	_down_t = 0.0
+	global_position = _spawn_pos
 	velocity = Vector3.ZERO
 	print("[Player] Respawned")
 
