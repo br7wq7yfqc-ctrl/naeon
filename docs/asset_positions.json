@@ -535,13 +535,6 @@
       "source": "index_slug",
       "locked_uuids": [
         {
-          "id": "576b48ad-426c-4b15-8292-fdd117ff43c3",
-          "faction": "CX",
-          "view": "cinematic",
-          "class": "weapon-vehicle",
-          "label": "Tank main"
-        },
-        {
           "id": "f6ba51ce-9f94-44ff-84e4-aee90fa3c1bc",
           "faction": "CX",
           "view": "ortho",
@@ -2172,13 +2165,23 @@
       "titles": [
         "CYBERNEX LIGHT HOVER TANK"
       ],
+      "chat_lock": true,
       "locked_uuids": [
+        {
+          "id": "576b48ad-426c-4b15-8292-fdd117ff43c3",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "weapon-vehicle",
+          "label": "Hover cannon",
+          "manual": 25
+        },
         {
           "id": "22365d81-9d7a-4784-9057-8d90337e40b8",
           "faction": "CX",
           "view": "cinematic",
           "class": "weapon-vehicle",
-          "label": "Hover energy cannon"
+          "label": "Hover energy cannon",
+          "notes": "superseded by manual #025 576b48ad"
         },
         {
           "id": "cade3b02-acb5-432b-8d08-8fe653ce657d",

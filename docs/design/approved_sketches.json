@@ -157,8 +157,9 @@
       "faction": "CX",
       "view": "cinematic",
       "class": "weapon-vehicle",
-      "label": "Tank main",
-      "position": "cx-tank-gun"
+      "label": "Hover cannon",
+      "position": "cybernex_hover_tank",
+      "manual": 25
     },
     {
       "id": "f6ba51ce-9f94-44ff-84e4-aee90fa3c1bc",
