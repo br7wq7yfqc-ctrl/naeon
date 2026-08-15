@@ -17,15 +17,16 @@
 - Exit remains a 10-minute intentional loop — reached by **deepening** systems, not checklist theater.
 
 ## Physics / mechanics depth track (active)
-1. Ship continuum: atmo density + drag, HOVER altitude hold, honest land speed gate (this pass)
+1. Ship continuum: atmo density + drag, HOVER altitude hold + pad ground-effect, honest land speed gate (this pass)
 2. Surface walker: coyote jump, slope grip, landing absorb (this pass)
 3. Rover: slope grip + Space brake + planet gravity (this pass)
 4. Chunk streaming (done)
 5. Terrain stability (done)
-6. Pad claim is C after land — not auto (this pass)
+6. Pad claim is occupy-to-hold after land — C/Hack pulses, not auto (this pass)
 7. Combat hurtboxes + ability costs from rules/04
 8. 10-min loop steps no longer self-complete on toast (this pass)
-9. Next: stations interiors, ownership contest depth, 10-min soak on Mac GPU
+9. Stations interiors: life-support, doors, ops console, seat gating (this pass)
+10. Next: 10-min soak on Mac GPU; stall / full ground-effect polish
 
 ## Tripo
 - Balance check when generating; code-first when zero.

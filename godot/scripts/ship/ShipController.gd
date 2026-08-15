@@ -409,6 +409,18 @@ func _physics_process(delta: float) -> void:
 			accel -= lift_axis * accel.dot(lift_axis)
 			var v_up: float = velocity.dot((-g).normalized())
 			accel += _Flight.hover_alt_accel(g, _altitude_now(), _hover_hold_alt, v_up)
+			var pad_d := 999.0
+			if _open_space and _open_space.has_method("nearest_pad"):
+				var hpad: Node3D = _open_space.nearest_pad(global_position)
+				if hpad and is_instance_valid(hpad):
+					pad_d = hpad.global_position.distance_to(global_position)
+					if pad_d < 52.0 and _open_space.has_method("nearest_planet"):
+						var plp: Node3D = _open_space.nearest_planet(hpad.global_position)
+						if plp and plp.has_method("altitude_of"):
+							var deck: float = float(plp.altitude_of(hpad.global_position)) + 8.0
+							if _hover_hold_alt < deck:
+								_hover_hold_alt = move_toward(_hover_hold_alt, deck, delta * 10.0)
+			accel += _Flight.ground_effect_accel(g, _altitude_now(), pad_d, v_up)
 		elif flight_mode == FlightMode.SCM:
 			# Partial gravity in atmo; almost free in vacuum
 			accel += g * lerpf(0.08, 0.45, atmo)

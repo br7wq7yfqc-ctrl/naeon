@@ -1,6 +1,6 @@
 # Session Status
 **2026-08-15**
-Phase 0 mechanics depth: honest land, HOVER hold, walker/rover envelopes, 10-min loop. No DMG.
+Phase 0 mechanics depth: interiors, occupy-to-hold ownership, HOVER ground-effect. No DMG.
 
 **Last update:** 2026-08-15
 **Skill:** sequential-dev + holistic v2.0
@@ -9,8 +9,8 @@ Phase 0 mechanics depth: honest land, HOVER hold, walker/rover envelopes, 10-min
 |-------|--------|
 | Design VS + campaign + constructor/side/edu templates | **Gaps closed** |
 | A | Combat + HUD + honest 10-min loop steps |
-| B | Continuum: land gate, HOVER altitude, atmo NAV lock |
-| C | Walker coyote/slope; rover grip/brake |
+| B | Continuum: land gate, HOVER hold + ground-effect, atmo NAV lock |
+| C | Walker coyote/slope; rover grip/brake; interior walk/life-support |
 | D | Design ready (constructor + 26) |
 | E | Act I implement first |
 

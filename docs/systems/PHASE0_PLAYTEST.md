@@ -6,7 +6,7 @@ Smoke: `scripts/playtest_headless_smoke.sh` → OS_ERR=0 · TA_ERR=0. No DMG.
 ## Play
 - Menu → Open Space or Aexion Clash
 - GUI: `scripts/run_godot_playtest.sh` (gl_compatibility on software GL)
-- 10-min loop: fly/fight → land/lane → C claim → harvest Contribution/Biomass
+- 10-min loop: fly/fight → land/lane → occupy/claim → harvest Contribution/Biomass
 
 ## Canon plates
 Locked IDs: `godot/resources/canon_plates.json` (mirror of `docs/design/approved_sketches.json`).
@@ -32,3 +32,6 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 15. HOVER altitude hold; NAV locked in dense atmosphere
 16. 10-min loop: harvest-only economy_tick; objectives do not self-complete
 17. Surface walker coyote/slope/landing; rover grip + Space brake
+18. Station/ship interiors: honest atmo/life-support, sliding doors, E console, F seat only at ship seat
+19. Pad contest: occupy-to-hold meter, decay on leave, turret guard, no harvest while contested, Hack/C pulses
+20. HOVER ground-effect + pad-aware hold altitude

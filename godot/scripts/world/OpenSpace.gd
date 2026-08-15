@@ -557,7 +557,7 @@ func _update_hud() -> void:
 	var gh = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
 	if gh and gh.has_method("is_debug_overlay"):
 		dbg = bool(gh.is_debug_overlay())
-	var brief := "%s  ·  %s  ·  %dm  ·  %d m/s  ·  HP %d  SHD %d  ·  C claim  E land  F EVA" % [
+	var brief := "%s  ·  %s  ·  %dm  ·  %d m/s  ·  HP %d  SHD %d  ·  occupy/C  E land  F EVA" % [
 		mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields)
 	]
 	if not dbg:
@@ -565,7 +565,7 @@ func _update_hud() -> void:
 	else:
 		hud_label.text = (
 			"NAEON OpenSpace  |  free flight · seamless land · surface walk\n"
-			+ "WASD thrust  Space/Shift lift  Mouse=flight plane  Z/X roll  |  1/2/3 flight  4 siege  5 ramp  6 rover  7 store  |  E land  F exit/EVA/board  C claim  G/B terra  U undo  I interior  Q hack\n"
+			+ "WASD thrust  Space/Shift lift  Mouse=flight plane  Z/X roll  |  1/2/3 flight  4 siege  5 ramp  6 rover  7 store  |  E land  F exit/EVA/board  C pulse  G/B terra  U undo  I interior  Q hack\n"
 			+ "F1 cycle quality  F3 HUD debug  |  Tab → TestArena\n"
 			+ "Mode: %s  Planet: %s  Alt: %dm  Spd: %d  HP:%d SHD:%d  PLOD:%s  CONTRIB:%.0f" % [
 				mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields), (pl.current_lod_name() if pl and is_instance_valid(pl) and pl.has_method("current_lod_name") else "-"), (GameManager.contribution if GameManager else 0.0)

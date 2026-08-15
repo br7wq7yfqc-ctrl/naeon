@@ -122,3 +122,22 @@ static func hover_alt_accel(g: Vector3, alt: float, hold_alt: float, v_up: float
 	var spring := clampf(err * 0.55, -22.0, 22.0)
 	var damp := -v_up * 3.4
 	return up_dir * (spring + damp)
+
+
+static func ground_effect_accel(g: Vector3, height_agl: float, pad_dist: float, v_up: float) -> Vector3:
+	## Extra lift near terrain / pads — cushion, not an autopilot.
+	if g.length() < 0.01:
+		return Vector3.ZERO
+	var up_dir := (-g).normalized()
+	var h := clampf(height_agl, 0.15, 90.0)
+	var ge := 0.0
+	if h < 22.0:
+		var t := 1.0 - h / 22.0
+		ge = t * t
+	var pad_n := 0.0
+	if pad_dist >= 0.0 and pad_dist < 55.0:
+		pad_n = 1.0 - pad_dist / 55.0
+	var lift: float = g.length() * (ge * 0.38 + pad_n * ge * 0.32)
+	if v_up < -1.0 and ge > 0.04:
+		lift += (-v_up) * ge * 2.4
+	return up_dir * lift
