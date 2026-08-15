@@ -86,6 +86,13 @@ func _find_target() -> Node3D:
 	var extras: Array = SoftScanCache.get_enemies() if SoftScanCache else (get_tree().get_nodes_in_group("enemy") if get_tree() else [])
 	for n in extras:
 		candidates.append(n)
+	var hulls: Array = []
+	if SoftScanCache and SoftScanCache.has_method("get_ships"):
+		hulls = SoftScanCache.get_ships()
+	elif get_tree():
+		hulls = get_tree().get_nodes_in_group("ship")
+	for n in hulls:
+		candidates.append(n)
 	for n in candidates:
 		if n == self or not is_instance_valid(n) or not (n is Node3D):
 			continue
@@ -112,7 +119,7 @@ func _fire(target: Node3D) -> void:
 	if "projectile_speed" in self:
 		spd = float(projectile_speed)
 	# Headless spawn already hitscans; GUI flies a bolt.
-	_Pool.spawn(get_tree(), muzzle + dir * 0.8, dir, spd, damage, faction, col, 3.2)
+	_Pool.spawn(get_tree(), muzzle + dir * 0.8, dir, spd, damage, faction, col, 3.2, [self])
 
 
 func take_damage(amount: float) -> void:

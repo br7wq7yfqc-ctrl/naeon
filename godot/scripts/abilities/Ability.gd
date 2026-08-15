@@ -270,7 +270,7 @@ func _spawn_projectile(caster: Node, dmg: float, color: Color) -> void:
 	elif caster.has_method("get_faction"):
 		fac = str(caster.get_faction())
 	var _Pool = load("res://scripts/combat/ProjectilePool.gd")
-	_Pool.spawn(caster.get_tree(), origin, dir, 28.0, final_dmg, fac, color, 1.4)
+	_Pool.spawn(caster.get_tree(), origin, dir, 28.0, final_dmg, fac, color, 1.4, [caster])
 	var NP = load("res://scripts/fx/NeonParticles.gd")
 	if NP:
 		NP.muzzle_flash(origin, dir, color, caster.get_tree())

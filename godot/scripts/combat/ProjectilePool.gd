@@ -47,13 +47,13 @@ static func _mat(col: Color) -> StandardMaterial3D:
 	return m
 
 
-static func spawn(tree: SceneTree, at: Vector3, dir: Vector3, speed: float, dmg: float, faction: String, color: Color, life: float = 1.4) -> MeshInstance3D:
+static func spawn(tree: SceneTree, at: Vector3, dir: Vector3, speed: float, dmg: float, faction: String, color: Color, life: float = 1.4, exclude: Array = []) -> MeshInstance3D:
 	if tree == null or tree.current_scene == null:
 		return null
 	if DisplayServer.get_name() == "headless":
 		var Hits = load("res://scripts/combat/CombatHits.gd")
 		if Hits:
-			Hits.apply_shot(tree, at, dir, dmg, faction, maxf(speed * life, 12.0))
+			Hits.apply_shot(tree, at, dir, dmg, faction, maxf(speed * life, 12.0), exclude)
 		return null
 	var bolt: MeshInstance3D = null
 	while not _free.is_empty() and bolt == null:
@@ -86,6 +86,7 @@ static func spawn(tree: SceneTree, at: Vector3, dir: Vector3, speed: float, dmg:
 	bolt.set_meta("faction", faction)
 	bolt.set_meta("life", life)
 	bolt.set_meta("pooled", true)
+	bolt.set_meta("exclude", exclude)
 	var r := bolt.get_node_or_null("Runner")
 	if r != null and r.has_method("reset"):
 		r.reset()

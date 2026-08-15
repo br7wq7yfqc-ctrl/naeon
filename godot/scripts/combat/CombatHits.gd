@@ -5,7 +5,7 @@ class_name CombatHits
 ## cannot spawn meshes, and a shared helper for tests.
 
 
-static func apply_shot(tree: SceneTree, origin: Vector3, dir: Vector3, dmg: float, faction: String, max_range: float = 42.0) -> Node:
+static func apply_shot(tree: SceneTree, origin: Vector3, dir: Vector3, dmg: float, faction: String, max_range: float = 42.0, exclude: Array = []) -> Node:
 	if tree == null or dmg <= 0.0 or max_range <= 0.05:
 		return null
 	var n := dir.normalized()
@@ -14,16 +14,23 @@ static func apply_shot(tree: SceneTree, origin: Vector3, dir: Vector3, dmg: floa
 	var best: Node = null
 	var best_t := max_range
 	var player: Node = SoftScanCache.get_player() if SoftScanCache else tree.get_first_node_in_group("player")
-	var t0: float = _ray_hit_t(origin, n, max_range, faction, player)
-	if t0 < best_t:
-		best = player
-		best_t = t0
+	var hit_p: Array = _consider(origin, n, max_range, faction, player, exclude, best, best_t)
+	best = hit_p[0]
+	best_t = hit_p[1]
 	var enemies: Array = SoftScanCache.get_enemies() if SoftScanCache else tree.get_nodes_in_group("enemy")
 	for e in enemies:
-		var te: float = _ray_hit_t(origin, n, max_range, faction, e)
-		if te < best_t:
-			best = e
-			best_t = te
+		var hit_e: Array = _consider(origin, n, max_range, faction, e, exclude, best, best_t)
+		best = hit_e[0]
+		best_t = hit_e[1]
+	var ships: Array = []
+	if SoftScanCache and SoftScanCache.has_method("get_ships"):
+		ships = SoftScanCache.get_ships()
+	else:
+		ships = tree.get_nodes_in_group("ship")
+	for s in ships:
+		var hit_s: Array = _consider(origin, n, max_range, faction, s, exclude, best, best_t)
+		best = hit_s[0]
+		best_t = hit_s[1]
 	if best == null or not is_instance_valid(best):
 		return null
 	if best.has_method("take_damage"):
@@ -34,8 +41,21 @@ static func apply_shot(tree: SceneTree, origin: Vector3, dir: Vector3, dmg: floa
 	return best
 
 
+static func _consider(origin: Vector3, dir: Vector3, max_range: float, faction: String, target: Node, exclude: Array, best: Node, best_t: float) -> Array:
+	if target == null or target == best:
+		return [best, best_t]
+	if exclude.has(target):
+		return [best, best_t]
+	var t: float = _ray_hit_t(origin, dir, max_range, faction, target)
+	if t < best_t:
+		return [target, t]
+	return [best, best_t]
+
+
 static func apply_planar_knock(body: Node, dir: Vector3, dmg: float, extra_y: float = 1.2) -> void:
 	if body == null or not (body is CharacterBody3D):
+		return
+	if "is_landed" in body and bool(body.is_landed):
 		return
 	var n := Vector3(dir.x, 0.0, dir.z)
 	if n.length_squared() < 0.0001:
