@@ -1383,6 +1383,13 @@
           "view": "cinematic",
           "class": "ship-single",
           "label": "Scout"
+        },
+        {
+          "id": "0df4f683-60ce-4da3-8d21-8fff1a027bfb",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "ship-single",
+          "label": "Scout"
         }
       ]
     },
