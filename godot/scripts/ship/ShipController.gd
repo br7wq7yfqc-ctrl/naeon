@@ -51,6 +51,7 @@ var pilot_active: bool = true
 var _open_space: Node = null
 var _landed_pad: Node3D = null
 var _land_hint_cd: float = 0.0
+var _hover_hold_alt: float = -1.0
 var _landing_gear: Node3D = null
 var _thruster_fx: GPUParticles3D = null
 var _cargo_hold: Node = null
@@ -191,6 +192,7 @@ func _input(event: InputEvent) -> void:
 			sens *= 0.55
 		elif flight_mode == FlightMode.HOVER:
 			sens *= 0.85
+		sens *= (1.0 - _atmo_now() * 0.42)
 		if op_mode == 1 and _role:
 			sens *= float(_role.siege_turn_mult)
 		_yaw -= event.relative.x * sens
@@ -204,7 +206,15 @@ func _input(event: InputEvent) -> void:
 		)
 
 func _set_mode(m: int) -> void:
+	if m == FlightMode.NAV and _atmo_now() > 0.45:
+		_toast_ship("NAV locked in atmosphere — SCM / HOVER")
+		m = FlightMode.SCM
+	var prev: int = flight_mode
 	flight_mode = m
+	if m == FlightMode.HOVER:
+		_hover_hold_alt = _altitude_now()
+	elif prev == FlightMode.HOVER:
+		_hover_hold_alt = -1.0
 	flight_mode_changed.emit(m)
 	print("[Ship] Flight mode ", flight_mode_name())
 
@@ -226,6 +236,20 @@ func _damp_mult() -> float:
 	elif op_mode == 2:
 		m *= 1.25
 	return m
+
+
+func _atmo_now() -> float:
+	if _open_space and _open_space.has_method("atmosphere_density_at"):
+		return float(_open_space.atmosphere_density_at(global_position))
+	return 0.0
+
+
+func _altitude_now() -> float:
+	if _open_space and _open_space.has_method("nearest_planet"):
+		var pl: Node3D = _open_space.nearest_planet(global_position)
+		if pl and pl.has_method("altitude_of"):
+			return float(pl.altitude_of(global_position))
+	return 0.0
 
 func _ship_axis() -> Vector3:
 	var thrust := 0.0
@@ -369,10 +393,22 @@ func _physics_process(delta: float) -> void:
 
 	# Gravity by mode (g toward planet)
 	if g.length() > 0.01:
+		if flight_mode == FlightMode.NAV and atmo > 0.5:
+			_set_mode(FlightMode.SCM)
 		if flight_mode == FlightMode.HOVER:
 			var hh: Array = _Flight.hover_hold(velocity, g, accel, delta, 1.0)
 			accel = hh[0]
 			velocity = hh[1]
+			# Vertical stick trims hold altitude; PD holds it
+			if _hover_hold_alt < 0.0:
+				_hover_hold_alt = _altitude_now()
+			if absf(axes.y) > 0.12:
+				_hover_hold_alt = maxf(4.0, _hover_hold_alt + axes.y * 22.0 * delta)
+			# Strip raw lift so HOVER is an altitude hold, not a second SCM
+			var lift_axis: Vector3 = global_transform.basis.y
+			accel -= lift_axis * accel.dot(lift_axis)
+			var v_up: float = velocity.dot((-g).normalized())
+			accel += _Flight.hover_alt_accel(g, _altitude_now(), _hover_hold_alt, v_up)
 		elif flight_mode == FlightMode.SCM:
 			# Partial gravity in atmo; almost free in vacuum
 			accel += g * lerpf(0.08, 0.45, atmo)

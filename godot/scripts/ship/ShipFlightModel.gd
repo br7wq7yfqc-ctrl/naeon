@@ -111,3 +111,14 @@ static func approach_assist(
 
 static func land_ok(speed: float, v_radial: float, max_spd: float = 18.0, max_sink: float = 12.0) -> bool:
 	return speed <= max_spd and absf(v_radial) <= max_sink
+
+
+static func hover_alt_accel(g: Vector3, alt: float, hold_alt: float, v_up: float) -> Vector3:
+	## PD toward a captured hover altitude. Presentation/feel only.
+	if g.length() < 0.01:
+		return Vector3.ZERO
+	var up_dir := (-g).normalized()
+	var err := hold_alt - alt
+	var spring := clampf(err * 0.55, -22.0, 22.0)
+	var damp := -v_up * 3.4
+	return up_dir * (spring + damp)
