@@ -34,9 +34,11 @@
 15. Clash lane towers fight; ship afterburn W+Shift; walker variable jump (this pass)
 16. **Full code audit**: sphere physics, turret cadence, pad contest deadlock, economy
     regen, pad brake sign, no-P2W / no-friendly-fire enforcement, real Infection,
-    downed state, match conclusion. See `docs/CODE_AUDIT_2026_08_15.md` (this pass)
-17. Next: pad streaming teardown (only remaining monotonic memory climb); 10-min
-    soak on Mac GPU (this VM is llvmpipe)
+    downed state, match conclusion, pad streaming teardown (memory climb closed,
+    measured flat across two laps). Single record:
+    **`docs/PROTOTYPE_TO_PLAYABLE.md`** (this pass)
+17. Next: 10-min soak on Mac GPU for the FPS half of rules/25 (this VM is
+    llvmpipe, so only the memory half could be signed off here)
 
 ## Tripo
 - Balance check when generating; code-first when zero.

@@ -87,3 +87,13 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 67. Friendly Clash towers moved behind the spawn camera (the MID tower at z=12 sat inside the chase camera and hid the player)
 68. F3 overlay: GameHUD owns every stat readout; legacy TestArena labels off; the debug left column has a fixed stacked layout; pad radar clear of the vitals block
 69. Match result panel is compact and top-centre so the fight stays visible
+
+## Continuation pass 2026-08-15 (hardening to playable)
+70. Pad streaming really unloads past 1.35x the build radius (was hide-only); measured flat at 502 nodes across two laps of all three planets, no planet left built
+71. `Pads` joins the parked-node list, so far controllers stop polling input and scanning groups
+72. Knock is built in the target ground plane (`up_direction`), not world XZ+Y — hits no longer shove a walker sideways on a sphere
+73. Surface walker movement/sprint read the InputMap first (rebinding + gamepad now work on the main character)
+74. `snap_to_surface` probes from just above the head and only reaches higher on a miss (was +40, which could strand you on a roof)
+75. Perf: pooled jump FX, cached ship scan in EVA, ship Label3D written on change, `_recompute_stats` on attach/detach, attitude applied once per tick
+76. Harvest VFX called; pad loss announced while you are away; siege denies unsupported hulls; F3 detail counter reads `queue_depth`
+77. ENERGY_ECONOMY doc re-synced to the constants (it listed Pulse 6/0.55s against the real 18/5.0s)
