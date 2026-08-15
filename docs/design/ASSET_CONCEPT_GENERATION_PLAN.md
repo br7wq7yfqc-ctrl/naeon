@@ -1,4 +1,4 @@
-**Version:** 1.23  
+**Version:** 1.24  
 **Status:** Batches 1–19 CLOSED · **Batch 20 IN PROGRESS**  
 **Updated:** 2026-08-15  
 
@@ -8,10 +8,12 @@
 | Object | Status |
 |--------|--------|
 | CX fighter / bomber / support / stealth pairs | **locked** |
-| GR scout pair `ada7fd55` / `0df4f683` | **locked** |
-| GR sniper | cinematic in review |
-| GR medium drone | not started |
+| GR scout pair | **locked** |
+| GR sniper cinematic `05073615` | **locked** (B) |
+| GR sniper `1799f43a` | rejected |
+| GR sniper ortho `0d043b88` | in review |
+| GR medium drone | next |
 
 ## Ledger
-Positions **131**. Locked UUID **64**. Bound sheets **213**.
+Positions **132**. Locked UUID **65**. Bound sheets **213**.
 S3 Index not patched.

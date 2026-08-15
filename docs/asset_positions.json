@@ -3,7 +3,7 @@
   "updated": "2026-08-15",
   "source": "v2.8 + batch 20 CX fighter pair + CX bomber pair",
   "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Dump short IDs are existing neon rendered files, not invented UUIDs.",
-  "positions": 131,
+  "positions": 132,
   "bound_sheets": 213,
   "merged_slugs": {
     "heawy_5ault_i8reakt4fough": "heavy_assault",
@@ -1390,6 +1390,24 @@
           "view": "ortho",
           "class": "ship-single",
           "label": "Scout"
+        }
+      ]
+    },
+    "grot_sniper": {
+      "category": "ships",
+      "count": 0,
+      "titles": [
+        "gROT SNIPER"
+      ],
+      "ocr": false,
+      "source": "batch20_gap",
+      "locked_uuids": [
+        {
+          "id": "05073615-7510-408d-8dfe-4dbe7d5357e4",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-single",
+          "label": "Sniper"
         }
       ]
     },

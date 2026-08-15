@@ -1053,9 +1053,18 @@
       "label": "Scout",
       "position": "grot_scout",
       "batch": 20
+    },
+    {
+      "id": "05073615-7510-408d-8dfe-4dbe7d5357e4",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-single",
+      "label": "Sniper",
+      "position": "grot_sniper",
+      "batch": 20
     }
   ],
-  "note": "Batch 20: GR scout pair locked (cin ada7fd55, ortho 0df4f683). Next: GR sniper. S3 Index not patched.",
-  "positions_bound": 121,
+  "note": "Batch 20: GR sniper cinematic 05073615 locked (B). Ortho 0d043b88 in review. 1799f43a rejected. S3 Index not patched.",
+  "positions_bound": 122,
   "positions_unbound": 0
 }

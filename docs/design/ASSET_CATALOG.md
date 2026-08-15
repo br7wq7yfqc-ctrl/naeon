@@ -1,10 +1,10 @@
 # NAEON — Approved sketch catalog
 
-**Version:** 1.21 · **Updated:** 2026-08-15  
+**Version:** 1.22 · **Updated:** 2026-08-15  
 **Rule:** this file lists **locked only**. In-review / draft / dump do not belong here.
 
-Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **131 positions, 213 sheets**.  
-Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **64 UUID + 58 dump IDs**, none invented.
+Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **132 positions, 213 sheets**.  
+Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **65 UUID + 58 dump IDs**, none invented.
 
 Bucket: `s3://neon/generations/canon/{class}/{id}/master.jpg`  
 Grok: `https://assets.grok.com/users/77c65418-d257-47c3-8504-4540b6e0a754/generated/{UUID}/image.jpg`
@@ -13,14 +13,14 @@ S3 Index `generations/catalog.json` is **not** in git and is not patched by this
 
 | Ledger | Count |
 |--------|------:|
-| Positions after OCR merge + Index keys + batch 20 | 131 |
+| Positions after OCR merge + Index keys + batch 20 | 132 |
 | Bound sheets (invariant) | 213 |
-| Locked UUID | 64 |
+| Locked UUID | 65 |
 | Dump file IDs rebound (existing neon files) | 58 |
 | Chat-lock still `file_id` null | 0 |
 | UUID with no position | 0 |
 | Index-only positions (`ocr: false`, `count: 0`) | 13 |
-| New batch-20 slugs (`ocr: false`) | 5 |
+| New batch-20 slugs (`ocr: false`) | 6 |
 | Unfactioned class plates kept as templates | 11 |
 | OCR slugs still unresolved | 0 |
 | OCR unreadable (title noise, sheet kept, no dump match) | 7 |
@@ -121,6 +121,7 @@ APC / hover / mech guns bind to the **hull** they sit on. Tank main has no Heavy
 | Stealth | CX | ortho | `cybernex_stealth` | `70a6d3e1-8cc9-4df4-9fe8-747b00704eff` |
 | Scout | GR | cinematic | `grot_scout` | `ada7fd55-bc6e-448a-909c-79ffb31fdf5d` |
 | Scout | GR | ortho | `grot_scout` | `0df4f683-60ce-4da3-8d21-8fff1a027bfb` |
+| Sniper | GR | cinematic | `grot_sniper` | `05073615-7510-408d-8dfe-4dbe7d5357e4` |
 
 `8b074991` and ortho `93a363a3` rejected (fighter). Bomber `c76ccb6f` and noisy first pass (`b88f2e19`, `d0b8899a`, `ea61b36d`) rejected. Support rejected: `0735138d` (A), `0fdb14fa` (iroquois), `71cd1130` (wrong silhouette), `3bf43918` (no devices), `181ba89a` (ridge), `0259484b` (belly dish), `cab4e36b` (old hull ortho). GR scout A `19addf56` / `9cf29ba4` superseded. Ortho `5b8a6601` / `17f82b0a` rejected.
 
@@ -157,6 +158,7 @@ Verified against the plate before bind.
 | Interceptor | CX | cinematic | `cybernex_interceptor` | `QdM8V` |
 | Interceptor | GR | cinematic | `grot_interceptor` | `l6zkI` |
 | Sniper | CX | ortho | `cybernex_sniper_ship` | `82c99f90` + `307rv` |
+| Sniper | GR | cinematic | `grot_sniper` | `05073615` (UUID, §A) |
 | Light drone | CX | cinematic | `cybernex_light_drone` | `EKJFX` |
 | Light drone | GR | cinematic | `grot_light_drone` | `FRKhQ` |
 | Medium drone | CX | ortho | `cybernex_medium_drone` | `HT5Yn` |
