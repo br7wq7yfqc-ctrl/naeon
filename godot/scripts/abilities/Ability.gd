@@ -133,10 +133,54 @@ func _apply_effect(caster: Node, _target) -> void:
 		_apply_hacking(caster)
 	elif is_firewall:
 		_apply_firewall(caster)
+	elif damage > 0.0 and aoe_radius > 0.05:
+		_apply_aoe_burst(caster)
 	elif damage > 0.0:
 		_spawn_projectile(caster, damage, effect_color)
 	elif heal > 0.0 and caster.has_method("heal"):
 		caster.heal(heal)
+
+func _apply_aoe_burst(caster: Node) -> void:
+	if caster == null or not (caster is Node3D) or not caster.is_inside_tree():
+		return
+	var origin: Vector3 = (caster as Node3D).global_position
+	var tree: SceneTree = caster.get_tree()
+	if tree == null:
+		return
+	var rad := maxf(aoe_radius, 0.5)
+	var fac := "Cybernex"
+	if "faction" in caster:
+		fac = str(caster.faction)
+	elif caster.has_method("get_faction"):
+		fac = str(caster.get_faction())
+	var dmg: float = damage
+	if GameManager:
+		dmg *= 1.0 + GameManager.knowledge_insight_bonus()
+	var Hits = load("res://scripts/combat/CombatHits.gd")
+	var enemies: Array = SoftScanCache.get_enemies() if SoftScanCache else tree.get_nodes_in_group("enemy")
+	for e in enemies:
+		if e == null or not is_instance_valid(e) or e == caster or not (e is Node3D):
+			continue
+		if e.has_method("get_faction") and str(e.get_faction()) == fac:
+			continue
+		if "faction" in e and str(e.faction) == fac:
+			continue
+		var dist: float = origin.distance_to((e as Node3D).global_position)
+		if dist > rad:
+			continue
+		if e.has_method("take_damage"):
+			e.take_damage(dmg)
+		if Hits:
+			var away: Vector3 = (e as Node3D).global_position - origin
+			var knock_dmg := force if force > 0.05 else dmg
+			Hits.apply_planar_knock(e, away, knock_dmg, 1.6)
+	var NP = load("res://scripts/fx/NeonParticles.gd")
+	if NP:
+		NP.burst(origin + Vector3(0, 0.6, 0), effect_color, tree, 14, 7.0)
+	var VFX = load("res://scripts/abilities/AbilityVfx.gd")
+	if VFX:
+		VFX.cast_flash(caster, effect_color, 3.2)
+
 
 func _apply_hacking(caster: Node) -> void:
 	var hit: Dictionary = _ray_query(caster, range)

@@ -82,6 +82,10 @@ static func _surge() -> Ability:
 	a.cooldown = EE.CD_SURGE
 	a.energy_cost = EE.ROT_SURGE
 	a.damage = 16.0
+	a.range = 5.0
+	a.aoe_radius = 4.5
+	a.force = 8.0
+	a.targeting = Ability.TargetingType.AOE
 	a.effect_color = Color(0.9, 0.12, 0.4)
 	return a
 
