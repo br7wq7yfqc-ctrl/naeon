@@ -43,6 +43,7 @@ S3 Index `generations/catalog.json` is **WIPED** (2026-08-15). Do not use. Rebui
 | Carrier (side hangars) | CX | cinematic | `cybernex_capital_carrier` | `3c3e054e-1968-41ac-a630-bfc2eb424f01` |
 | Carrier | GR | cinematic | `grot_capital_carrier` | `1p69s` |
 | Carrier | GR | ortho | `grot_capital_carrier` | `10d946d1-9954-4d9e-b02b-14b2905c9c8d` |
+| Drone carrier | GR | cinematic | `grot_drone_carrier` | `B2g0Z` |
 
 ### Infantry T0–T1
 

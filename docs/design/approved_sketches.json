@@ -362,6 +362,16 @@
       "manual": 32
     },
     {
+      "id": "B2g0Z",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-capital",
+      "label": "Drone carrier",
+      "position": "grot_drone_carrier",
+      "dump_key": "generations/rendered/B2g0Z.jpg",
+      "manual": 33
+    },
+    {
       "id": "899de1b8-9179-452c-bc75-dee69352c374",
       "faction": "CX",
       "view": "cinematic",

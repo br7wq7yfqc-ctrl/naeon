@@ -37,5 +37,6 @@ Old `generations/catalog.json` and the visual album are **void**.
 | 030 | gROT Engine module — cinematic | GR | cinematic | `b85d041d-3a81-43e7-a2ba-b0b195b53e94` | imagine |
 | 031 | gROT Engine module — ortho | GR | ortho | `a25897c9-1a4f-4bbd-9b50-31f7b715590a` | imagine |
 | 032 | gROT Spore Feast — ortho | GR | ortho | `auivA` | `generations/rendered/auivA.jpg` |
+| 033 | gROT Drone carrier — cinematic | GR | cinematic | `B2g0Z` | `generations/rendered/B2g0Z.jpg` |
 
-Next: wait. Heavy GR armor ortho still open.
+Next: wait. Heavy GR armor ortho still open. Distinct from #001 capital carrier.

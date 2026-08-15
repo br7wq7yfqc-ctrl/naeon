@@ -3,7 +3,7 @@
   "updated": "2026-08-15",
   "source": "v2.8 + batch 20 CX fighter pair + CX bomber pair",
   "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Dump short IDs are existing neon rendered files, not invented UUIDs.",
-  "positions": 135,
+  "positions": 136,
   "bound_sheets": 213,
   "merged_slugs": {
     "heawy_5ault_i8reakt4fough": "heavy_assault",
@@ -1800,6 +1800,30 @@
           "class": "ship-single",
           "label": "Bomber",
           "dump_key": "generations/rendered/JJUvM.jpg"
+        }
+      ]
+    },
+    "grot_drone_carrier": {
+      "category": "ships",
+      "count": 0,
+      "titles": [
+        "GROT DRONE CARRIER"
+      ],
+      "ocr": false,
+      "source": "manual_rebuild",
+      "chat_lock": true,
+      "file_id": "B2g0Z",
+      "dump_key": "generations/rendered/B2g0Z.jpg",
+      "notes": "Distinct from grot_capital_carrier #001 1p69s. User label: drone carrier.",
+      "locked_uuids": [
+        {
+          "id": "B2g0Z",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Drone carrier",
+          "dump_key": "generations/rendered/B2g0Z.jpg",
+          "manual": 33
         }
       ]
     },
