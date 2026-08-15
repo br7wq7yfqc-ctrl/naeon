@@ -218,6 +218,15 @@ func _nearest_hack_pad(caster: Node) -> Node:
 		if d < best_d:
 			best = n
 			best_d = d
+	for n in caster.get_tree().get_nodes_in_group("hackable"):
+		if n == null or not is_instance_valid(n) or n == caster or not (n is Node3D):
+			continue
+		if not n.has_method("on_hacked"):
+			continue
+		var d2: float = origin.distance_to((n as Node3D).global_position)
+		if d2 < best_d:
+			best = n
+			best_d = d2
 	return best
 
 func _find_hackable(node: Node) -> Node:

@@ -1024,9 +1024,24 @@ func _ensure_morph_and_hatch() -> void:
 
 func set_hatch_open(open: bool) -> void:
 	var door = get_node_or_null("HatchPoint/HatchDoor")
-	if door is MeshInstance3D:
+	if not (door is MeshInstance3D):
+		return
+	(door as MeshInstance3D).visible = true
+	var target_y := deg_to_rad(85.0) if open else 0.0
+	var tree := get_tree()
+	if tree:
+		var tw := tree.create_tween()
+		tw.tween_property(door, "rotation:y", target_y, 0.28)
+		if not open:
+			tw.tween_callback(func():
+				if is_instance_valid(door):
+					(door as MeshInstance3D).visible = false
+			)
+	else:
+		(door as MeshInstance3D).rotation.y = target_y
 		(door as MeshInstance3D).visible = open
-		(door as MeshInstance3D).rotation.y = deg_to_rad(85.0) if open else 0.0
+	if AudioDirector and AudioDirector.has_method("play_door"):
+		AudioDirector.play_door(open)
 
 
 func _toggle_siege() -> void:
