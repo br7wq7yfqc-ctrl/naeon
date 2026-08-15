@@ -1,6 +1,6 @@
 # NAEON — Asset Concept Generation Plan
 
-**Version:** 1.13  
+**Version:** 1.14  
 **Status:** Batches 1–19 CLOSED · **Batch 20 IN PROGRESS**  
 **Updated:** 2026-08-15  
 
@@ -23,9 +23,9 @@ Cinematics carry a title bar naming the object.
 | Object | Status |
 |--------|--------|
 | CX T1 fighter cinematic `4ca9faf0` | **locked** |
-| CX T1 fighter `8b074991` | rejected |
-| CX T1 fighter ortho | in review |
-| CX bomber / support / stealth | not started |
+| CX T1 fighter ortho `eb126daa` | **locked** |
+| CX T1 fighter `8b074991` / ortho `93a363a3` | rejected |
+| CX bomber | in review |
 
 ## Ledger
 Chat-lock `file_id` null: **0**. OCR unresolved: **0**.  

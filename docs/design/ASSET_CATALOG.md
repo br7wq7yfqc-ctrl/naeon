@@ -1,10 +1,10 @@
 # NAEON — Approved sketch catalog
 
-**Version:** 1.12 · **Updated:** 2026-08-15  
+**Version:** 1.13 · **Updated:** 2026-08-15  
 **Rule:** this file lists **locked only**. In-review / draft / dump do not belong here.
 
 Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **127 positions, 213 sheets**.  
-Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **55 UUID + 58 dump IDs**, none invented.
+Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **56 UUID + 58 dump IDs**, none invented.
 
 Bucket: `s3://neon/generations/canon/{class}/{id}/master.jpg`  
 Grok: `https://assets.grok.com/users/77c65418-d257-47c3-8504-4540b6e0a754/generated/{UUID}/image.jpg`
@@ -15,7 +15,7 @@ S3 Index `generations/catalog.json` is **not** in git and is not patched by this
 |--------|------:|
 | Positions after OCR merge + Index keys + batch 20 | 127 |
 | Bound sheets (invariant) | 213 |
-| Locked UUID | 55 |
+| Locked UUID | 56 |
 | Dump file IDs rebound (existing neon files) | 58 |
 | Chat-lock still `file_id` null | 0 |
 | UUID with no position | 0 |
@@ -112,8 +112,9 @@ APC / hover / mech guns bind to the **hull** they sit on. Tank main has no Heavy
 | Object | Faction | View | Position | ID |
 |--------|---------|------|----------|----|
 | Fighter | CX | cinematic | `cybernex_fighter` | `4ca9faf0-e533-403b-bc6e-2f6263d6a4d7` |
+| Fighter | CX | ortho | `cybernex_fighter` | `eb126daa-d380-4db6-bc95-9fde9e4e6846` |
 
-`8b074991` rejected. Ortho of this hull is in review — not locked.
+`8b074991` and ortho `93a363a3` rejected.
 
 ### Rebound from dump (short IDs — existing `rendered/` / `imagine_images/` files, not invented UUIDs)
 

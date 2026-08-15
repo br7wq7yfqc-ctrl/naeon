@@ -1,7 +1,7 @@
 {
   "version": 2.9,
   "updated": "2026-08-15",
-  "source": "asset_positions.json v2.9 + batch20 CX fighter cinematic lock",
+  "source": "asset_positions.json v2.9 + batch20 CX fighter pair lock",
   "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Dump short IDs are existing neon rendered files, not invented UUIDs.",
   "positions": 127,
   "bound_sheets": 213,
@@ -1280,6 +1280,13 @@
           "id": "4ca9faf0-e533-403b-bc6e-2f6263d6a4d7",
           "faction": "CX",
           "view": "cinematic",
+          "class": "ship-single",
+          "label": "Fighter"
+        },
+        {
+          "id": "eb126daa-d380-4db6-bc95-9fde9e4e6846",
+          "faction": "CX",
+          "view": "ortho",
           "class": "ship-single",
           "label": "Fighter"
         }

@@ -1,5 +1,5 @@
 {
-  "version": "1.12",
+  "version": "1.13",
   "updated": "2026-08-15",
   "rule": "locked only",
   "user": "77c65418-d257-47c3-8504-4540b6e0a754",
@@ -968,9 +968,18 @@
       "label": "Fighter",
       "position": "cybernex_fighter",
       "batch": 20
+    },
+    {
+      "id": "eb126daa-d380-4db6-bc95-9fde9e4e6846",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "ship-single",
+      "label": "Fighter",
+      "position": "cybernex_fighter",
+      "batch": 20
     }
   ],
-  "note": "Batch 20: CX fighter cinematic 4ca9faf0 locked; 8b074991 rejected. S3 Index not patched (no bucket key this session).",
-  "positions_bound": 113,
+  "note": "Batch 20: CX fighter pair locked (cin 4ca9faf0, ortho eb126daa). 8b074991 and ortho 93a363a3 rejected. S3 Index not patched (no bucket key this session).",
+  "positions_bound": 114,
   "positions_unbound": 0
 }
