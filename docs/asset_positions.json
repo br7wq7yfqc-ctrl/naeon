@@ -252,12 +252,22 @@
       "dump_key": "generations/rendered/oci1u.jpg",
       "locked_uuids": [
         {
+          "id": "zyFa0",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Heavy armor",
+          "dump_key": "generations/rendered/zyFa0.jpg",
+          "manual": 17
+        },
+        {
           "id": "oci1u",
           "faction": "GR",
           "view": "cinematic",
           "class": "armor",
           "label": "Heavy armor",
-          "dump_key": "generations/rendered/oci1u.jpg"
+          "dump_key": "generations/rendered/oci1u.jpg",
+          "notes": "superseded by manual #017 zyFa0"
         }
       ]
     },

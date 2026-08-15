@@ -1229,6 +1229,16 @@
       "position": "grot_medium_armor",
       "dump_key": "generations/rendered/fDy43.jpg",
       "manual": 16
+    },
+    {
+      "id": "zyFa0",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Heavy armor",
+      "position": "grot_heavy_armor",
+      "dump_key": "generations/rendered/zyFa0.jpg",
+      "manual": 17
     }
   ],
   "note": "Manual rebuild started. #001 1p69s gROT Carrier cinematic. Generations Index wiped.",

@@ -21,5 +21,6 @@ Old `generations/catalog.json` and the visual album are **void**.
 | 014 | gROT Light armor — ortho | GR | ortho | `2T4jW` | `generations/rendered/2T4jW.jpg` |
 | 015 | gROT Medium armor — cinematic | GR | cinematic | `opzQg` | `generations/rendered/opzQg.jpg` |
 | 016 | gROT Medium armor — ortho | GR | ortho | `fDy43` | `generations/rendered/fDy43.jpg` |
+| 017 | gROT Heavy armor — cinematic | GR | cinematic | `zyFa0` | `generations/rendered/zyFa0.jpg` |
 
-Next: wait for the next plate.
+Next: heavy ortho. `UEp3P` not locked — plate title is LIGHT, silhouette is not the tank.
