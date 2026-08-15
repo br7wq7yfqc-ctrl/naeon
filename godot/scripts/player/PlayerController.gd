@@ -39,6 +39,7 @@ var last_move_input: Vector2 = Vector2.ZERO
 var _loco = null
 var _coyote_t: float = 0.0
 var _jump_buf_t: float = 0.0
+var _jump_cut: bool = false
 var _down_t: float = 0.0
 var _spawn_pos: Vector3 = Vector3(0, 1.2, 6)
 
@@ -147,6 +148,7 @@ func _physics_process(delta: float) -> void:
 		_coyote_t = maxf(0.0, _coyote_t - delta)
 	else:
 		_coyote_t = 0.12
+		_jump_cut = false
 	if _pressed_jump():
 		_jump_buf_t = 0.1
 	else:
@@ -155,6 +157,12 @@ func _physics_process(delta: float) -> void:
 		velocity.y = jump_velocity
 		_jump_buf_t = 0.0
 		_coyote_t = 0.0
+		_jump_cut = false
+	var jump_held := (InputMap.has_action("jump") and Input.is_action_pressed("jump")) \
+		or Input.is_physical_key_pressed(KEY_SPACE)
+	if not is_on_floor() and not jump_held and not _jump_cut and velocity.y > 2.2:
+		velocity.y *= 0.42
+		_jump_cut = true
 
 	var input_dir: Vector2 = _read_move_vector()
 	last_move_input = input_dir

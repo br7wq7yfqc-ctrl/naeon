@@ -63,6 +63,7 @@ var max_health: float = 100.0
 var _up: Vector3 = Vector3.UP
 var _coyote_t: float = 0.0
 var _jump_buf_t: float = 0.0
+var _jump_cut: bool = false
 var _was_on_floor: bool = false
 var _space_held: bool = false
 var cam_pivot: Node3D
@@ -566,10 +567,15 @@ func _physics_process(delta: float) -> void:
 		v_up = jump_velocity
 		_jump_buf_t = 0.0
 		_coyote_t = 0.0
+		_jump_cut = false
 		_spawn_jump_fx()
 	elif is_on_floor():
 		# stick: small downward bias helps floor contact on spheres
 		v_up = minf(v_up, -0.4)
+		_jump_cut = false
+	elif not _space_held and not _jump_cut and v_up > 2.0:
+		v_up *= 0.42
+		_jump_cut = true
 
 	# Landing absorb (radial)
 	if is_on_floor() and not _was_on_floor and v_up < -7.5:
