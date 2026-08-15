@@ -48,6 +48,11 @@ func _box(size: Vector3, pos: Vector3, col: Color, parent: Node3D = self) -> Mes
 	return mi
 
 func _build_lanes() -> void:
+	# Perimeter — reads as an arena, not an infinite greybox
+	_box(Vector3(HALF * 2.0 + 1.2, 0.35, 0.45), Vector3(0, 0.7, HALF), Color(0.25, 0.7, 0.95) * 0.8)
+	_box(Vector3(HALF * 2.0 + 1.2, 0.35, 0.45), Vector3(0, 0.7, -HALF), Color(0.95, 0.2, 0.45) * 0.8)
+	_box(Vector3(0.45, 0.35, HALF * 2.0 + 1.2), Vector3(HALF, 0.7, 0), Color(0.7, 0.75, 0.85) * 0.6)
+	_box(Vector3(0.45, 0.35, HALF * 2.0 + 1.2), Vector3(-HALF, 0.7, 0), Color(0.7, 0.75, 0.85) * 0.6)
 	# Lanes run along Z (home south +Z Cybernex → north -Z gROT)
 	# TOP = +X, MID = 0, BOT = -X
 	var defs := [
@@ -70,7 +75,7 @@ func _build_lanes() -> void:
 		# Label3D at mid
 		var lab := Label3D.new()
 		lab.text = id
-		lab.font_size = 64
+		lab.font_size = 28
 		lab.modulate = col
 		lab.outline_modulate = Color(0, 0, 0, 0.9)
 		lab.outline_size = 12
@@ -96,11 +101,23 @@ func _nexus(pos: Vector3, col: Color, nname: String, fac: String) -> void:
 	mi.mesh = sp
 	mi.material_override = _mat(col, 2.0)
 	root.add_child(mi)
+	# halo ring
+	var halo := MeshInstance3D.new()
+	var torus := TorusMesh.new()
+	torus.inner_radius = 1.55
+	torus.outer_radius = 1.85
+	torus.rings = 10
+	torus.ring_segments = 20
+	halo.mesh = torus
+	halo.material_override = _mat(col, 2.4)
+	halo.position.y = 1.5
+	halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(halo)
 	# ring
 	_box(Vector3(5.5, 0.15, 5.5), Vector3(0, 0.1, 0), col * 0.8, root)
 	var lab := Label3D.new()
 	lab.text = "NEXUS\n%s" % fac
-	lab.font_size = 48
+	lab.font_size = 28
 	lab.modulate = col
 	lab.outline_size = 10
 	lab.outline_modulate = Color(0, 0, 0, 0.9)
@@ -145,7 +162,7 @@ func _build_towers() -> void:
 func _build_lane_markers() -> void:
 	_lane_label = Label3D.new()
 	_lane_label.name = "PlayerLaneHint"
-	_lane_label.font_size = 42
+	_lane_label.font_size = 22
 	_lane_label.modulate = Color(1, 1, 1)
 	_lane_label.outline_size = 8
 	_lane_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED

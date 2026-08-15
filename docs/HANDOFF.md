@@ -1,6 +1,6 @@
 # NAEON — Unified Handoff
 
-**Date:** 2026-08-14
+**Date:** 2026-08-15
 **Skill:** `naeon-holistic-economical` **v2.0**
 **Repo:** https://github.com/br7wq7yfqc-ctrl/naeon
 
