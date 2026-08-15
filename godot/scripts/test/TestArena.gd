@@ -512,7 +512,7 @@ func _update_clash_radar() -> void:
 func _maybe_refill_lane() -> void:
 	var alive := 0
 	for c in get_children():
-		if c is Node3D and c.has_meta("lane") and is_instance_valid(c):
+		if c is Node3D and c.has_meta("lane") and c.is_in_group("enemy") and is_instance_valid(c):
 			alive += 1
 	if alive >= 4 or dummy_scene == null:
 		return

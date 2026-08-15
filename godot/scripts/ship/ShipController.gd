@@ -644,41 +644,17 @@ func _fire_weapon() -> void:
 		dps += m.weapon_dps
 	if op_mode == 1 and _role:
 		dps *= float(_role.siege_dps_mult) if "siege_dps_mult" in _role else 1.35
-	var bolt := Area3D.new()
-	bolt.name = "ShipBolt"
-	var mi := MeshInstance3D.new()
-	var mesh := SphereMesh.new()
-	mesh.radius = 0.14
-	mesh.height = 0.28
-	mi.mesh = mesh
-	var mat := StandardMaterial3D.new()
-	mat.emission_enabled = true
-	mat.emission = Color(0.3, 0.95, 1.0) if faction == "Cybernex" else Color(1.0, 0.2, 0.4)
-	mat.emission_energy_multiplier = 3.0
-	mat.albedo_color = mat.emission
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mi.material_override = mat
-	bolt.add_child(mi)
 	var dir: Vector3 = -global_transform.basis.z
-	bolt.set_meta("direction", dir)
-	bolt.set_meta("speed", 95.0 if flight_mode == FlightMode.NAV else (55.0 if flight_mode == FlightMode.HOVER else 72.0))
-	bolt.set_meta("damage", dps * 0.55)
-	bolt.set_meta("life", 1.6 if flight_mode == FlightMode.NAV else 1.25)
-	bolt.set_meta("faction", faction)
-	var scene := get_tree().current_scene
-	if scene:
-		scene.add_child(bolt)
-	else:
-		get_parent().add_child(bolt)
-	bolt.global_position = global_position - global_transform.basis.z * 2.2
+	var origin: Vector3 = global_position + dir * 2.2
+	var spd: float = 95.0 if flight_mode == FlightMode.NAV else (55.0 if flight_mode == FlightMode.HOVER else 72.0)
+	var life: float = 1.6 if flight_mode == FlightMode.NAV else 1.25
+	var col := Color(0.3, 0.95, 1.0) if faction == "Cybernex" else Color(1.0, 0.2, 0.4)
+	var _Pool = load("res://scripts/combat/ProjectilePool.gd")
+	if _Pool:
+		_Pool.spawn(get_tree(), origin, dir, spd, dps * 0.55, str(faction), col, life)
 	var NP = load("res://scripts/fx/NeonParticles.gd")
 	if NP:
-		var col = NP.faction_color(str(faction))
-		NP.muzzle_flash(bolt.global_position, -global_transform.basis.z, col, get_tree())
-		NP.trail_attach(bolt, col, Vector3.ZERO)
-	var runner := Node.new()
-	runner.set_script(preload("res://scripts/abilities/ProjectileRunner.gd"))
-	bolt.add_child(runner)
+		NP.muzzle_flash(origin, dir, NP.faction_color(str(faction)), get_tree())
 
 func _spawn_module_visual(module: ShipModule) -> void:
 	if module_root == null:

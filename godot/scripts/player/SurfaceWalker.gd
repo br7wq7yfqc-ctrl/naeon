@@ -1238,6 +1238,9 @@ func _toast_self(msg: String) -> void:
 
 func take_damage(amount: float) -> void:
 	health = maxf(0.0, health - amount)
+	var ch = get_node_or_null("ChannelController")
+	if ch and ch.has_method("notify_damage"):
+		ch.notify_damage()
 	if CombatJuice:
 		CombatJuice.damage_taken(amount)
 		CombatJuice.hit_feedback(amount, global_position + _up * 1.2, amount >= 20.0)

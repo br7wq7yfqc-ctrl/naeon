@@ -20,13 +20,11 @@ var _return_up: Vector3 = Vector3.UP
 var _player: Node3D
 var _open_space: Node
 var _inside: bool = false
-var _exit_hint_t: float = 0.0
 var _player_was_parent: Node = null
 var _sealed: bool = true
 var _atmo: float = 1.0
 var _recycler_on: bool = true
 var _console_cd: float = 0.0
-var _console_hint_t: float = 0.0
 var _door_hold: Dictionary = {}  # portal name -> remain-open seconds
 
 
@@ -144,7 +142,6 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	_kind = kind
 	_player = player
 	_console_cd = 0.0
-	_console_hint_t = 0.0
 	_door_hold.clear()
 	_recycler_on = true
 	_return_up = ret_up.normalized() if ret_up.length_squared() > 0.01 else Vector3.UP
@@ -509,23 +506,6 @@ func _process(delta: float) -> void:
 		var near_c := is_near_console(_player)
 		(clab as Label3D).modulate.a = 1.0 if near_c else 0.5
 		(clab as Label3D).text = "OPS CONSOLE · E" if near_c else "OPS CONSOLE"
-	if is_near_console(_player):
-		_console_hint_t += delta
-		if _console_hint_t > 1.1:
-			_console_hint_t = -2.4
-			_toast("E — ops console")
-	else:
-		_console_hint_t = maxf(0.0, _console_hint_t - delta)
-	var exit_v = _active.get_node_or_null("ExitVolume")
-	if exit_v is Node3D:
-		var d: float = _player.global_position.distance_to((exit_v as Node3D).global_position)
-		if d < 2.2:
-			_exit_hint_t += delta
-			if _exit_hint_t > 0.6:
-				_exit_hint_t = -2.0
-				_toast("HATCH — press I to exit")
-		else:
-			_exit_hint_t = maxf(0.0, _exit_hint_t - delta)
 
 
 func _refresh_life_support() -> void:
