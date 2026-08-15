@@ -1,5 +1,5 @@
 {
-  "version": "1.13",
+  "version": "1.14",
   "updated": "2026-08-15",
   "rule": "locked only",
   "user": "77c65418-d257-47c3-8504-4540b6e0a754",
@@ -986,9 +986,18 @@
       "label": "Bomber",
       "position": "cybernex_bomber",
       "batch": 20
+    },
+    {
+      "id": "78162909-d59f-47be-a58c-c7fde0f19ad8",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "ship-single",
+      "label": "Bomber",
+      "position": "cybernex_bomber",
+      "batch": 20
     }
   ],
-  "note": "Batch 20: CX fighter pair locked. CX bomber cinematic 6c3799b6 locked; c76ccb6f + noisy first pass rejected. Ortho 78162909 in review. S3 Index not patched.",
-  "positions_bound": 115,
+  "note": "Batch 20: CX fighter pair + CX bomber pair locked. Next: CX support cinematic. S3 Index not patched.",
+  "positions_bound": 116,
   "positions_unbound": 0
 }
