@@ -1,7 +1,7 @@
 # NAEON — Asset Concept Generation Plan
 
-**Version:** 1.12  
-**Status:** Batches 1–19 CLOSED  
+**Version:** 1.13  
+**Status:** Batches 1–19 CLOSED · **Batch 20 IN PROGRESS**  
 **Updated:** 2026-08-15  
 
 **Approved index (authority):** `docs/design/ASSET_CATALOG.md` + `docs/design/approved_sketches.json`  
@@ -16,6 +16,18 @@ Drone bay **locked**.
 - gROT cinematic `4dab3ea3` + ortho `f569980e`
 - Cybernex hive cinematic `e0df2d07` + ortho `9bacf651`
 
+## Batch 20 — missing faction hulls (in progress)
+Order: CX fighter → CX bomber → CX support → CX stealth → GR scout → GR sniper → GR medium drone.
+Cinematics carry a title bar naming the object.
+
+| Object | Status |
+|--------|--------|
+| CX T1 fighter cinematic `4ca9faf0` | **locked** |
+| CX T1 fighter `8b074991` | rejected |
+| CX T1 fighter ortho | in review |
+| CX bomber / support / stealth | not started |
+
 ## Ledger
 Chat-lock `file_id` null: **0**. OCR unresolved: **0**.  
-7 OCR-unreadable titles kept (no dump match). Bound sheets **213**.
+7 OCR-unreadable titles kept (no dump match). Bound sheets **213**. Positions **127**.
+S3 `generations/catalog.json` not patched this session (no bucket key).

@@ -1,5 +1,5 @@
 {
-  "version": "1.11",
+  "version": "1.12",
   "updated": "2026-08-15",
   "rule": "locked only",
   "user": "77c65418-d257-47c3-8504-4540b6e0a754",
@@ -959,9 +959,18 @@
       "class": "ui",
       "label": "Resource HUD icons",
       "position": "ui-resource-icons"
+    },
+    {
+      "id": "4ca9faf0-e533-403b-bc6e-2f6263d6a4d7",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ship-single",
+      "label": "Fighter",
+      "position": "cybernex_fighter",
+      "batch": 20
     }
   ],
-  "note": "position = slug in docs/asset_positions.json. OCR-9 closed 2026-08-15: uixgemient→ui-resource-icons (hK3hw), fjaid_wd→shield_emitter. 7 unreadable titles kept.",
-  "positions_bound": 112,
+  "note": "Batch 20: CX fighter cinematic 4ca9faf0 locked; 8b074991 rejected. S3 Index not patched (no bucket key this session).",
+  "positions_bound": 113,
   "positions_unbound": 0
 }

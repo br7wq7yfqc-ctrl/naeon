@@ -1,9 +1,9 @@
 {
-  "version": 2.8,
+  "version": 2.9,
   "updated": "2026-08-15",
-  "source": "asset_positions.json v2.8 + OCR-9 close (2 merges, 7 unreadable-kept)",
+  "source": "asset_positions.json v2.9 + batch20 CX fighter cinematic lock",
   "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Dump short IDs are existing neon rendered files, not invented UUIDs.",
-  "positions": 126,
+  "positions": 127,
   "bound_sheets": 213,
   "merged_slugs": {
     "heawy_5ault_i8reakt4fough": "heavy_assault",
@@ -1264,6 +1264,24 @@
           "class": "ship-single",
           "label": "Interceptor",
           "dump_key": "generations/rendered/QdM8V.jpg"
+        }
+      ]
+    },
+    "cybernex_fighter": {
+      "category": "ships",
+      "count": 0,
+      "titles": [
+        "CYBERNEX T1 FIGHTER"
+      ],
+      "ocr": false,
+      "source": "batch20_gap",
+      "locked_uuids": [
+        {
+          "id": "4ca9faf0-e533-403b-bc6e-2f6263d6a4d7",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-single",
+          "label": "Fighter"
         }
       ]
     },
