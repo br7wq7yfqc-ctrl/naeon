@@ -29,7 +29,8 @@
 10. Stall in dense atmo (NAV drops to SCM); interior pocket outside planet mesh (this pass)
 11. Pad-guard combat while occupying (this pass)
 12. Land-to-harvest loop: in-ring / landed-ship extractor, EXTRACTING HUD, rover CargoHold (this pass)
-13. Next: 10-min soak on Mac GPU; Clash feel; interior HUD clutter
+13. Interior HUD clutter collapsed in pocket; Clash feel (movement, knock, honest lanes, occupy beacons) (this pass)
+14. Next: 10-min soak on Mac GPU; remaining Clash HUD duplication (kills vs ScoreLine); ship combat depth
 
 ## Tripo
 - Balance check when generating; code-first when zero.

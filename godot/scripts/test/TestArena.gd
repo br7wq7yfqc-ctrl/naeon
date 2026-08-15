@@ -705,7 +705,7 @@ func _apply_arena_hud_layout() -> void:
 	if contrib_label:
 		contrib_label.visible = dbg
 	if kills_label:
-		kills_label.visible = true
+		kills_label.visible = dbg
 		kills_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 		kills_label.offset_left = -420
 		kills_label.offset_right = -16

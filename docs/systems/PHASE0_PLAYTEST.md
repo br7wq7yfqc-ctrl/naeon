@@ -47,3 +47,13 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 30. Surface walker Nex-Firewall cleanses Infection (cap 5); pad V `soft_scan` is callable intel
 31. Station recycler E vents POWER IDLE then restores POWER BUS; leftover console cooldown no longer blocks the next pocket
 32. Scout hulls keep a CargoHold (no belly ramp); rover deploys on a landed pad and stores as a vehicle entry
+33. Interior pocket HUD: GameHUD keeps HP/EN, infection, abilities, compact kind + I/F/E + life-support; radar/pads/CONTRIB/LAYER/briefing hidden; OpenSpace occupy one-liner off unless F3
+34. Clash walker: planar accel/decel (not xz snap), coyote + jump buffer, 0.7s downed return to nexus spawn, ClashMatchDirector deaths
+35. Pulse/dummy knock: CombatHits planar knock; dummy stagger skips AI so knock holds; lane holds fire after 0.22s windup
+36. Clash lanes: K/D and pressure sync from AexionClash (0..100); random LaneBar drift removed
+37. Rot Surge is a 4.5m AOE burst + knock (EE.ROT_SURGE / CD_SURGE); Cybernex kit unchanged
+38. Interior doors: open hysteresis 0.55s, faster slide, emission + play_door; panels/lights follow recycler/atmo
+39. Clash beacons start Neutral; C/Hack occupy-to-hold (1.75, decays on leave); full claim = objective + lane pressure
+40. Extractor harvest only while owned by the player faction; ship bolts use ProjectilePool
+41. Clash HUD drops SessionObjectives briefing / LAYER chip (F3 still dumps)
+42. Mac 10-min soak still needs owner GPU (this VM is llvmpipe)
