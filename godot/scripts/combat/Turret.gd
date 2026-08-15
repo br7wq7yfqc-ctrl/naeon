@@ -91,6 +91,8 @@ func _find_target() -> Node3D:
 			continue
 		if n.has_method("get_faction") and str(n.get_faction()) == faction:
 			continue
+		if n.has_method("is_downed") and bool(n.is_downed()):
+			continue
 		var d: float = global_position.distance_to((n as Node3D).global_position)
 		if d < best_d:
 			best = n as Node3D

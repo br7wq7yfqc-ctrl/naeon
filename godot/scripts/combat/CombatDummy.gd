@@ -31,6 +31,7 @@ var _spawn_pos: Vector3
 var _mat: StandardMaterial3D
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _stagger: float = 0.0
+var _windup_t: float = 0.0
 
 func _ready() -> void:
 	health = max_health
@@ -78,12 +79,16 @@ func _physics_process(delta: float) -> void:
 	if player and global_position.distance_squared_to(player.global_position) > 55.0 * 55.0:
 		velocity.x = 0.0
 		velocity.z = 0.0
+		_windup_t = 0.0
 		move_and_slide()
 		return
-	if player and can_move:
-		var to_p: Vector3 = player.global_position - global_position
+	var dist := 999.0
+	var to_p := Vector3.ZERO
+	if player:
+		to_p = player.global_position - global_position
 		to_p.y = 0.0
-		var dist: float = to_p.length()
+		dist = to_p.length()
+	if player and can_move:
 		if dist < aggro_range and dist > 1.6:
 			var dir: Vector3 = to_p.normalized()
 			velocity.x = dir.x * move_speed
@@ -92,19 +97,46 @@ func _physics_process(delta: float) -> void:
 		else:
 			velocity.x = move_toward(velocity.x, 0.0, move_speed)
 			velocity.z = move_toward(velocity.z, 0.0, move_speed)
-		if dist <= attack_range and _cd <= 0.0:
-			var downed := false
-			if player.has_method("is_downed"):
-				downed = bool(player.is_downed())
-			elif "_down_t" in player:
-				downed = float(player._down_t) > 0.0
-			if not downed:
-				_fire_at(player)
-				_cd = attack_cooldown
 	else:
 		velocity.x = 0.0
 		velocity.z = 0.0
+		if player and dist < aggro_range and to_p.length_squared() > 0.0001:
+			look_at(global_position + to_p.normalized(), Vector3.UP)
+	# Lane holds (can_move=false) still contest the strip — they fire, they don't chase.
+	var downed := _target_downed(player)
+	if _windup_t > 0.0:
+		_windup_t -= delta
+		if _windup_t <= 0.0 and player and dist <= attack_range * 1.15 and not downed:
+			_fire_at(player)
+			_cd = attack_cooldown
+	elif player and dist <= attack_range and _cd <= 0.0 and not downed:
+		_windup_t = 0.22
+		_begin_windup_fx()
 	move_and_slide()
+
+func _target_downed(player: Node) -> bool:
+	if player == null or not is_instance_valid(player):
+		return true
+	if player.has_method("is_downed"):
+		return bool(player.is_downed())
+	if "_down_t" in player:
+		return float(player._down_t) > 0.0
+	if "health" in player and float(player.health) <= 0.0:
+		return true
+	return false
+
+
+func _begin_windup_fx() -> void:
+	if _mat == null:
+		return
+	_mat.emission_energy_multiplier = 2.4
+	var tree := get_tree()
+	if tree:
+		tree.create_timer(0.22).timeout.connect(func():
+			if is_instance_valid(self) and _mat:
+				_mat.emission_energy_multiplier = 1.2
+		)
+
 
 func take_damage(amount: float) -> void:
 	if CombatJuice:
