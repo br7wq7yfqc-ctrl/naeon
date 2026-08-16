@@ -40,12 +40,11 @@ Updated: 2026-08-07T23:03:47.555592+00:00
 
 | Priority | Owner | Task |
 |----------|--------|------|
-| **P0** | A | Ability activate + costs/04 + Infection 5 pips — **this pass** |
-| **P0** | B | LayerContext site_pin_id — **this pass** |
-| **P0** | All | ~60 FPS; no memory climb — even primitive |
-| P1 | E | Act I Quest Resources |
-| P2 | D | Constructor CT_* + ranks UI 26 |
-| Ops | Owner | Tripo; neon public-read; local generations/ for real plate JPGs |
+| **P0.1** | terrain | Stabilize: stop live chaos. One seed. No rebuild of visible chunks. Stitch or disable far fake. `DEVELOPMENT_PLAN.md` |
+| **P0.2** | slice | 1 pad + 1 CC0 prop + 1 unique Tripo hero |
+| **P0.3–P0.5** | slice | one chunk → one body → ARK. Galaxy locked |
+| rules/25 FPS | owner GPU | llvmpipe does not sign off |
+| Ops | Owner | No S3 Index patch from plan PRs. No `assets/` / `generations/` in git |
 
 ---
 

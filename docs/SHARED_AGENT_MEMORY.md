@@ -1,18 +1,22 @@
 # NAEON — Shared Agent Memory
 
-**Last updated:** 2026-08-07 (design gaps closed)
+**Last updated:** 2026-08-16 (P0 ladder; prototype unfit)
 
 ## Core constraints
-No P2W · soft Knowledge · Infection max 5 · S1 · freemium ≠ power · Tripo-first · narrative ≠ power · perf/25 · site_pin catalog · constructor templates only
+No P2W · soft Knowledge · Infection max 5 · story ≠ power · Godot 4.3 · adult hard-sci-fi · site_pin catalog only · WorldFill = authored skeleton + unnamed filler · ready-made assets first, Tripo unique only · perf/25 (FPS on owner GPU, not llvmpipe)
 
 ## Design corpus
-rules/00–26 · Act I–VI + premium · SITE_PIN · **CONSTRUCTOR_TEMPLATES** · **SIDE_QUEST_TEMPLATES** · **EDU_MODULE_LIBRARY** · **GALAXY_LAYER_PLAN** · **TRIPO_ASSET_MANIFEST** · skill v2.0
+rules/00–26 · **DEVELOPMENT_PLAN v3** · **ASSET_SOURCE_CANON** · **WORLD_FILL** · **PLAYTEST_SANDBOX** · SITE_PIN · GALAXY_LAYER_PLAN (locked until P0) · TRIPO_ASSET_MANIFEST
 
 ## Where things are authored
+- **Order of work** → `DEVELOPMENT_PLAN.md` (P0 first; G1–G6 locked)
+- **Mesh source** → `docs/design/ASSET_SOURCE_CANON.md`
+- **Fill vs authored** → `docs/design/WORLD_FILL.md`
+- **Human-fitness run** → `docs/PLAYTEST_SANDBOX.md`
 - **Placement** of star / bodies / belt / gate anchors → `godot/scripts/world/StarSystemCatalog.gd`
 - **Physical envelopes** (radius, gravity, atmosphere) → `PlanetProfileCatalog.gd`
-- Travel, maps, gates, arena entry → `docs/design/GALAXY_LAYER_PLAN.md`
-- Every mesh path Tripo owes us → `docs/design/TRIPO_ASSET_MANIFEST.md`
+- Travel, maps, gates, arena entry → `docs/design/GALAXY_LAYER_PLAN.md` (do not implement until P0 green)
+- Unique mesh list → `docs/design/TRIPO_ASSET_MANIFEST.md` (not T1 until an island exists)
 
 ## Gaps closed
 - Constructor template seed (8 templates, VS = 2)
@@ -128,6 +132,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 
 | 2026-08-13 | `s3://neon/generations/` = approved design renders + orthogonal Tripo schemes; index `generations/catalog.json` updated on every ingest | Owner + sequential-dev |
 | 2026-08-14 | Phase 0 playtest: AbilitySystem activate, rules/04 costs, enemy scan cache, CombatJuice label pool, site_pin, canon identity cards. No DMG. | sequential-dev |
+| 2026-08-16 | P0 ladder: prototype unfit. Asset source canon. Terrain live-chaos is P0.1. G1–G6 locked. Playtest sandbox HUMAN_UNFIT. No S3 Index patch. | canon-plan |
 | 2026-08-15 | Clash HUD collapse (banner/ScoreLine/LaneHUD); ship bolt sweep + hull crit recover + shield hold; pad turrets track hulls. No permadeath, no P2W. | sequential-dev |
 | 2026-08-15 | Clash towers are live Turrets; ship afterburn W+Shift (energy); walker variable jump cut. Soft pressure only. | sequential-dev |
 | 2026-08-15 | **Full code audit + hardening** — 101 scripts / 10 scenes / 12 autoloads. ~110 confirmed defects, blockers fixed, pad streaming memory climb closed. Single record: `docs/PROTOTYPE_TO_PLAYABLE.md` | owner brief: prototype → playable |

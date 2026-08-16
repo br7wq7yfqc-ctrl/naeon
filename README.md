@@ -17,12 +17,16 @@ cd naeon
 # Main scene: scenes/test/TestArena.tscn
 ```
 
-### Что уже playable
+### Что стартует (не «playable для человека»)
 
-| Сцена | Содержание |
-|-------|------------|
-| `TestArena` | TPS, abilities (Pulse / Firewall / Probe), form cycle, Ownership pillars, extractor → Contribution |
-| `SpaceTest` | Semi-Newtonian ship, modules, fire, land → TestArena |
+Прототип на 2026-08-16 **непригоден для человека**. План: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) v3 (P0). Отчёт VM: [docs/PLAYTEST_SANDBOX.md](docs/PLAYTEST_SANDBOX.md).
+
+| Сцена | Содержание | Статус |
+|-------|------------|--------|
+| `MainMenu` | Boot | стартует |
+| `OpenSpace` | Полёт + 3 тела + live terrain | стартует, **хаос террейна** |
+| `TestArena` | Clash sandbox (`M`/`Tab` режут сюда) | стартует; это не карта галактики |
+| `SpaceTest` | Старый ship shell | стартует |
 
 **Управление (TestArena):** WASD, мышь, Space, Shift, Q/E/R/F, Tab → космос  
 **Управление (Ship):** WASD + Space/Shift, Q огонь, E посадка, R модуль

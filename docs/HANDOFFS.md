@@ -1,5 +1,7 @@
 # NAEON — Build-Session Briefs (Design-Aware)
 
+> **2026-08-16:** queue is `DEVELOPMENT_PLAN.md` v3 (P0 first). These session briefs are historical. Do not start G1 or “60 FPS closed” from here.
+
 **Date:** 2026-08-07  
 **Companion:** `docs/HANDOFF.md`  
 **Skill:** `naeon-holistic-economical` **v2.0**  

@@ -1,303 +1,198 @@
-# NAEON — Подробный план разработки по фазам (для build-сессий)
+# NAEON — План разработки (лестница стабильных шагов)
 
-**Версия:** 2.1  
-**Дата:** 2026-08-15  
-**Основа:** CONCEPT.md v1.3  
-**Движок:** Godot 4.3+ / 4.4+  
-**Принцип:** Local-first → Vertical Slices → Iterative Multiplayer → Platform + AI + Educational Systems
+**Версия:** 3.0  
+**Дата:** 2026-08-16  
+**Движок:** Godot 4.3 (не 4.4+ как цель)  
+**Принцип:** сначала один неломающийся остров. Не «ещё один слой сверху на мёртвый прототип».
 
----
-
-## Общие принципы
-
-- **Local-first**: всё работает offline / в локальной сети максимально долго. Yandex Cloud — только после устойчивого vertical slice.
-- **Vertical Slice**: каждый значимый билд playable end-to-end.
-- **Build-сессии**: 1–2 недельные спринты или 3–5 дневные интенсивные сессии.
-- **Definition of Done**: код + playable в editor/export + low-end check + docs + PR.
-- **Инструменты**: GitHub Issues/Projects, Docker Compose (Postgres/Redis), Godot Profiler, CI export checks.
-- **Приоритет**: low-end optimization с Phase 0, data-driven systems (abilities, blueprints, quests), modular voice & AI providers.
-- **Reuse**: Ability system → open-world TPS + MOBA + Hacking/Firewall. AI-bots → all layers. Prompt Studio / aiNEX → content + educational generation.
+Канон: нет P2W · Knowledge soft · Infection max 5 · story ≠ power · взрослый hard-sci-fi.  
+WorldFill: авторский скелет (системы, гейты, `SITE_*`); процедурный только безымянный filler — `docs/design/WORLD_FILL.md`.  
+Ассеты: `docs/design/ASSET_SOURCE_CANON.md`.  
+Честный прогон: `docs/PLAYTEST_SANDBOX.md`.  
+Галактика (когда P0 зелёный): `docs/design/GALAXY_LAYER_PLAN.md`.
 
 ---
 
-## Phase 0: Setup & Foundation
-**Длительность:** 1–2 недели  
-**Effort:** 4–8 чел/дн  
-**Цель:** Рабочий скелет проекта + локальная инфраструктура.
+## 0. Вердикт
 
-### Deliverables
-- Структура репозитория (`/godot`, `/docs`, `/docker`, `/scripts`)
-- Godot 4.x проект, placeholder scenes (player, space, planet surface)
-- Input + third-person camera skeleton
-- Docker Compose: Postgres + Redis (+ MinIO)
-- Godot headless + dedicated server scene + MultiplayerAPI/ENet skeleton
-- Basic GitHub Actions export check
-- README с local launch instructions
+Прототип **непригоден для человека**. Террейн в хаосе и генерятся на ходу. Headless `[Playtest] PASS` — это механик-зонд, не 5 минут игры. `docs/PLAYTEST_REPORT.md` «10/10 PASS» от 2026-08-06 — ложь относительно текущего рантайма.
 
-### DoD
-- Headless server запускается
-- Client подключается локально
-- Docker up работает
-- Проект открывается без ошибок
+Гипотеза (подтверждена кодом; рантайм — в PLAYTEST_SANDBOX): чинить надо не «ещё больше генерации», а **выключить live regen** и сузить срез до одного острова.
+
+Галактика / G1–G6 **закрыты**, пока P0 не зелёный. G2–G6 в коде 404. G0 — планировка ARK, не playable slice.
 
 ---
 
-## Phase 1: Core Prototypes (TPS + Ship + Colony + Ability Foundation)
-**Длительность:** 2–4 недели  
-**Effort:** 16–25 чел/дн  
-**Цель:** Три playable прототипа + data-driven Ability System (основа для combat, MOBA, Hacking/Firewall).
+## 1. Что уже есть — честно (built / inert / cut)
 
-### 1.1 TPS Core + Ability System
-- Character controller + 3–4 формы (Canine, Feline, Avian, Human-cyborg + gROT placeholders)
-- AnimationTree + IK
-- Data-driven Ability System (Resources): cooldown, cost, targeting, effects
-- Базовый combat + 2–3 abilities
-- Health / Stamina / inventory skeleton
-- **DoD**: переключение форм, бой, abilities, 60+ FPS low-end
+| Система | Статус | Факт |
+|---------|--------|------|
+| Godot 4.3 проект, MainMenu / OpenSpace / TestArena | **built** | Сцены стартуют. Это не значит «человек может играть». |
+| `StarSystemCatalog` ARK: Aex + 3 тела на 3800 / 7400 / 11800, пояс | **built** | G0 layout. Одна система в памяти. |
+| Якоря гейтов в каталоге | **inert** | Авторские, **не спавнятся**. Правильно: проп без прыжка = декорация. |
+| `M` / `Tab` | **inert** | Режут в `TestArena`. Это не карта галактики (G2/G5). |
+| CRUISE / `GalaxyCatalog` / `NavState` / Hyperdrive / `HyperGate` / ClashBeacon | **cut** | Файлов нет. G1–G6 — бумага. |
+| `SurfaceDetail` + `PlanetRelief` + чанки 40 м | **built, unstable** | Бюджет/гистерезис написаны. На подходе — live build; park >140 м AGL сбрасывает живое; quality drop чистит cache. |
+| Дальняя сфера `planet_surface.gdshader` | **built, conflict** | Второй FBM, seed `% 97`. Чанки: Relief, seed `% 10000`. Орбита ≠ грунт. |
+| Flora / Fauna / Landscape / Water / Caves / TerrainEdit | **built, live chaos** | Семь стримеров на одном подходе. Flora сеется от `hash(node.name)`. |
+| Пады (plate + occupy/harvest) | **built** | Staggered build; unload → rebuild с нуля. GLB пада часто отсутствует. |
+| Headless mechanics (`--playtest-mechanics`) | **built, inert as gate** | Телепорты и `has_method`. Не 5 мин soak. Не закрывает rules/25 FPS. |
+| Audit 2026-08-15 (пол, турели, Knowledge, Infection 5) | **built** | Логика починена. Не отменяет террейн-хаос и непригодность к игре. |
+| rules/25 ~60 FPS | **inert here** | VM = llvmpipe. FPS-половину не подписывать. Память — только если soak это показал. |
+| Tripo-манифест 78 ассетов / T1 hypergate | **cut from now** | Не генерировать гейты, пока нет острова. |
 
-### 1.2 Space Ship Core
-- Модульный корабль (Hull + engine/weapon/shield/cargo)
-- Custom force physics, camera, basic combat
-- **DoD**: экипировать, летать, стрелять, save/load
-
-### 1.3 Colony / Strategy Core
-- Поверхность + размещение зданий (habitat, extractor, turret)
-- Ресурсные ноды + extraction + локальный Contribution
-- Простейший RBE allocator
-- **DoD**: построить outpost, добыть ресурс, увидеть Contribution
-
-### Cross
-- Asset pipeline (GLTF + LOD), dark-neon materials, local save
-
-**DoD Phase 1:** Три отдельных playable демо + гибкая ability system.
+Старое «DONE» в v2.1 (Phase 0–1 «playable демо», G0 «СДЕЛАНО» как будто дальше G1) — **склад фич**. Дальше только лестница ниже.
 
 ---
 
-## Phase 2: Core Loop Integration + Multiplayer + AI-bots + MOBA Seed + Basic Hacking/Firewall
-**Длительность:** 3–5 недель  
-**Effort:** 22–35 чел/дн  
-**Цель:** Единый local multiplayer loop + AI-боты + PvP + MOBA seed + асимметричные способности.
+## 2. Лестница
 
-### Задачи
-- Seamless / loading transition (ship → TPS)
-- Multi-crew (2–4 игрока, роли)
-- AI-bots (Cybernex animal-robots + gROT swarms) — BehaviorTree / Navigation
-- Basic Strategy / Space / TPS PvP
-- RBE / Biomass pools + Contribution / Biomass Rank
-- **Hacking / Infection (gROT) + Nex-Firewall (Cybernex)** — первые версии abilities (TPS + simple Strategy)
-- **MOBA Seed**: arena, 4 heroes (kits на ability system), minion waves, XP/leveling, basic items, win condition
-- Networking: server authority + prediction
+Каждый шаг имеет один DoD. Следующий шаг не начинать, пока текущий красный.
 
-### DoD
-- 2–4 игрока: multi-crew → высадка → колония / бой с AI
-- Обе фракции playable
-- Hacking vs Firewall работают в TPS
-- MOBA 3v3/4v4 prototype playable
-- Нет критических desync
+Общий DoD шага:
 
----
+- Сцена **запускается** (editor или export).
+- Человек (или честный зонд с тем же бюджетом) держит **5 мин soak** без вылета.
+- Нет freeze **> 100 мс** в нормальном движении (не на llvmpipe — на GPU владельца).
+- Память **не монотонно растёт**.
+- `site_pin` только из `docs/lore/SITE_PIN_CATALOG.md`.
+- Нет live-пересборки уже видимого чанка.
 
-## Phase 3: Vertical Slice + Full MOBA + Dynamic Ownership Seed + Basic Quests & Knowledge
-**Длительность:** 4–6 недель  
-**Effort:** 28–42 чел/дн  
-**Цель:** Playable vertical slice одной системы + полноценный MOBA + первые динамические трансформации + квесты + Knowledge foundation.
+### P0 — Stabilization (сейчас)
 
-### Deliverables
-- Одна система (звезда + 3 тела на разных орбитах + пояс + якоря гейтов) — ARK. Планировка сделана в **Phase G0**; jump points включаются в G3–G4
-- Persistent colonies / ships
-- Fleet system (до 10–15 кораблей, flagship overlay)
-- Carriers seed (hangar + drones/fighters)
-- **Dynamic Ownership Transformation** (prototype): visual + mechanical swap Cybernex (Venus Project) ↔ gROT (biomass industrial) на 1–2 объектах
-- Advanced AI-bots + NPC quest givers skeleton
-- **Quest system foundation**: Contract Board, generated quests (templates), basic Alliance Quest Constructor
-- **Knowledge & Skills foundation**: Knowledge Rank / Subject Mastery, optional Learning Nodes в квестах, soft combat integration (informational)
-- **MOBA Full Prototype**: 5v5/3v3, 6–8 heroes, lanes + jungle, items, objectives, rewards pipeline, basic matchmaking
-- aiNEX basic (colony planner + MOBA builds + simple educational puzzle generation)
-- Voice foundation (open-source STT/TTS path first)
+Не контент. Один запускаемый вертикальный срез, который человек может потрогать 5 минут.
 
-### DoD
-- Полный цикл Strategy → Space → TPS → back
-- Ownership transformation работает на prototype objects
-- Educational puzzle nodes + soft combat knowledge effects
-- Playable 5v5/3v3 MOBA + rewards
-- Low-end playable
+#### P0.0 — Честный gate
 
----
+- `docs/PLAYTEST_SANDBOX.md` — что ломается, не «PASS».
+- Headless mechanics не считать человеческим gate.
+- llvmpipe ≠ Mac GPU: rules/25 FPS не закрывать.
 
-## Phase G: Галактический слой — системы, гиперпространство, гейты, карта, вход в арену
+**DoD:** отчёт есть; ни один документ не врёт «playable».
 
-**Детальный дизайн:** `docs/design/GALAXY_LAYER_PLAN.md` · **Ассеты:** `docs/design/TRIPO_ASSET_MANIFEST.md`
-**Идёт параллельно Phase 3–4** — это то, что превращает «одну систему» в галактику.
-**Цель:** планеты естественно разнесены вокруг звезды; система пересекается целиком; между системами летают гиперпрыжком или через гейты; есть карта и навигация; арена открывается из мира.
+#### P0.1 — Terrain: stabilize, stop live chaos
 
-Каждая подфаза playable отдельно (принцип vertical slice).
+Симптомы владельца (не смягчать):
 
-### G0 — Планировка системы — **СДЕЛАНО (2026-08-15)**
-- `StarSystemCatalog`: звезда в центре, тела на разных орбитах с углами и наклонениями
-- Видимое тело звезды с короной; направление света на каждую планету — от её звезды
-- Пояс астероидов берёт полосу из данных системы (до этого не вызывался вовсе)
-- Якоря гейтов авторские, но намеренно **не** спавнятся: гейт-пропс без прыжка — это ровно та «реализованная на вид, но мёртвая» система, которую вычищал аудит
-- **DoD выполнен:** тела на орбитах 3800 / 7400 / 11800, smoke зелёный
+- Террейны в полном хаосе и нестабильны, генерятся на ходу.
+- Прототип сломан: вылеты и фризы, не пригоден даже для тестирования человеком.
+- Выглядит так, будто надо пересобирать всё с нуля, начиная с самых малых объектов.
 
-### G1 — CRUISE (внутрисистемный сверхсвет)
-- Режим `4`: 200 м/с → 4 км/с, throttle-scaled, warp-визуал, сдвиг FOV
-- **Mass lock** в радиусе `2.5 × (радиус тела + атмосфера)` — не даёт включить и сбрасывает
-- Расход топлива 0.05/мин; выход по `4` или автоматически по mass lock
-- В том же проходе орбиты умножаются на ~2.8 (внешний гейт ≈ 40 км): именно CRUISE делает такой масштаб играбельным
-- **DoD:** от орбиты Nex-Prime до внешнего гейта меньше 30 с; mass lock отказывает у планеты; после выхода корабль управляем
-- *Затрагивает:* `ShipController`, `ShipFlightModel`, `StarSystemCatalog`, `GameHUD`
+Корневая причина (код; рантайм в PLAYTEST_SANDBOX):
 
-### G2 — Данные галактики + карты
-- `GalaxyCatalog` (системы, координаты в св. годах, связи), `NavState` (текущая система, маршрут, топливо, разведанное)
-- Галактическая карта `M`: цвет по контролю фракций, связи гейтов, доступные прыжки, скрытое неразведанное, фильтры
-- Карта системы `N`: звезда, орбиты, тела, станции, гейты
-- Прокладка маршрута с **названной причиной** отказа для каждого участка
-- **DoD:** маршрут из 3 участков строится и читается; ни один отказ не молчит
-- *Затрагивает:* новое `scripts/galaxy/`, `scripts/ui/GalaxyMap.gd`, `LayerContext`
+1. **Runtime rebuild как источник правды.** `SurfaceDetail` строит heightfield в `_process`. Уход >140 м AGL → `_park_all` + drop cache. Повторный заход — полная пересборка уже виденного. `PlanetBody._unload_pads` явно «rebuilds from scratch». Quality change чистит `_mesh_cache`.
+2. **Два сэмплера.** Шейдер сферы: value-noise FBM на нормали, seed `hash % 97`. Грунт: `PlanetRelief.height_at` на касательной `x,z`, seed `hash % 10000`. Не воксельный шар — два разных мира на одном теле.
+3. **Семь live-колец без общего бюджета.** Detail + Flora + Fauna + Water + Caves + Landscape + TerrainEdit. У Flora свой seed от `node.name`. Load ring в коде есть; в реальном прогоне он делит кадр с остальными стримерами.
+4. **Три тела сразу.** OpenSpace грузит всю ARK. Человеческий тест не должен платить за три планеты, пока не стоит один чанк.
 
-### G3 — Гипердвигатель и прыжки
-- Новый тип модуля `HYPERDRIVE`, один хардпоинт; классы Relay-1/2, Nex-Lattice (CX), Spore-Fold (GR) — зеркальные, не сильнее
-- Шесть состояний: TARGET → ALIGN (15°) → CHARGE → JUMP (3 с) → ARRIVAL у звезды → COOLDOWN
-- Топливо, заправка на падах, буксир при нуле; отказы называют числа
-- Дальность падает от массы груза
-- **DoD:** ARK → ROT-Prime и обратно, все состояния видны, отказы по дальности и топливу названы
-- *Затрагивает:* `ShipModule`, `ShipController`, новый `HyperdriveController`, `NavState`, `OpenSpace`
+Что сделать (не «ещё генерации»):
 
-### G4 — Гейты
-- `HyperGate`: кольцо, пилоны, ядро; состояния open / dormant / infected / contested
-- Проход: влёт под 100 м/с → 2 с раскрутки → выход у парного гейта, целевая система стримится во время раскрутки
-- Владение через `OwnershipData`; dormant будится каналом Probe; infected накладывает Infection (кап 5), Firewall снимает
-- Переиспользуются уже отремонтированные системы: `InfectionStatus`, `ChannelController`, occupy-to-hold падов
-- **DoD:** ARK → Helios Reach и обратно; пробуждение dormant; infected даёт стаки, Firewall чистит
-- *Затрагивает:* новый `scripts/world/HyperGate.gd`, `StarSystemCatalog`, `OwnershipData`, `InfectionStatus`
+- Seed **один на тело**, стабилен. Чанк либо запечён/закэширован, либо стримится с бюджетом **без пересборки уже видимого**.
+- Сшить два шума **или явно выключить дальний фейк**, пока не один сэмплер (`WORLD_FILL.md` §5).
+- Выключить flora/fauna/landscape/caves/water/terrain-edit в P0-срезе.
+- Не воксельный шар.
 
-### G5 — Арена из мира
-- `ClashBeacon`: орбитальная станция и наземная арена у пада
-- Подлёт на 300 м → `ENTER CLASH — hold F` (1.2 с, чтобы не входить случайно)
-- Возврат **в ту же систему к тому же маяку** с сохранённым кораблём и грузом
-- Soft-влияние матча ложится на пады этой системы через `apply_arena_influence`
-- `M` освобождается под карту; `Tab` остаётся девелоперским шорткатом под F3
-- **DoD:** матч с маяка ARK и возврат туда же; влияние видно на паде ARK
-- *Затрагивает:* новый `scripts/world/ClashBeacon.gd`, `LayerContext`, `TestArena`, `OpenSpace`
+**DoD P0.1:** один и тот же чанк после отлёта/зале́та не пересобирается; орбита не врёт про грунт (или дальний фейк выключен); 5 мин у поверхности без вылета и без роста памяти; freeze-бюджет на GPU владельца.
 
-### G6 — Контент и полировка
-Остальные системы из лорного сида, сети гейтов по фракциям, interdiction, топливный скуп у звезды, буксир, фильтры и поиск на карте.
+#### P0.2 — Самый малый объект: 1 пад + 1 проп + 1 герой
+
+- 1 посадочный пад (code-first plate или CC0).
+- 1 generic проп (CC0 → neon + манифест).
+- 1 уникальный Tripo-герой (фракционный, dual-theme). Не hypergate.
+
+**DoD:** человек видит три объекта 5 мин. Нет live-gen вокруг них. `site_pin` только каталог (VS-пин допустим).
+
+#### P0.3 — Один чанк
+
+Один 40 м cell, seed стабилен, mesh cache переживает отлёт в пределах сессии.
+
+**DoD:** повторный заход = cache hit, не `_build_height_mesh`. Walker стоит на Relief, не на гладкой сфере вразрез с чанком.
+
+#### P0.4 — Одно тело
+
+Один `PlanetBody` (Nex-Prime). Без ROT-Hive / Shard-Moon в тестовом срезе.
+
+**DoD:** подход / посадка / шаг на грунте / отлёт. Один сэмплер или выключенный фейк. Пады не пересобирают весь комплекс каждый заход, если чанк ещё в cache.
+
+#### P0.5 — ARK (одна система)
+
+Вернуть три тела **только** когда P0.1–P0.4 зелёные. Пояс — unnamed fill в авторской полосе. Гейты по-прежнему dark.
+
+**DoD:** одна система в памяти; человек летает 5 мин без вылета. G1 не открыт.
+
+**P0 зелёный** = P0.0–P0.5 все зелёные. До тех пор G1–G6, новые системы, новые Tripo-батчи T1+ — нет.
 
 ---
 
-## Phase 4: Full Systems — Quests, Campaigns, Voice, Education, Social, Platform Hooks
-**Длительность:** 4–6 недель  
-**Effort:** 25–40 чел/дн  
-**Цель:** Глубокие системы контента, социального взаимодействия, AI и образования.
+### P1 — Playable island (после P0)
 
-### Задачи
-- **Сюжетные кампании** (Cybernex «Awakening of NAEXOS» + gROT «Ascension of the Swarm») — первые 1–2 главы
-- Полный Quest system: generated NPC quests, Alliance Quest Constructor, Premium narrative quests (story-only)
-- **Educational Quests** с AI-генерируемыми головоломками как тестами (aiNEX)
-- Полная soft-интеграция Subject Mastery в combat (все слои)
-- **Voice stack**: Yandex SpeechKit / Alice + open-source providers (Whisper/Vosk/Piper/Silero), natural NPC dialogue, voice commands, alliance voice channels (Premium/achievements)
-- Alliance social: hierarchy, permissions, shared resources/tasks, Communication Hubs
-- Logistics + Transport Contracts + Carriers polish
-- Crafting + full blueprints (включая decorations)
-- Dynamic Ownership на большем числе объектов + contested transition states
-- Account linking + Knowledge gates + Trust Score / Qualifications sync prototype
-- Subscription flags + cosmetics pipeline
-- Ranked MOBA + seasons + Trust Score sync
+Занять пад, добыть, улететь, сесть снова. Ability kit на герое. Infection cap 5, Knowledge soft.
 
-### DoD
-- Кампании playable (первые главы)
-- Educational quests + combat knowledge effects работают end-to-end
-- Voice dialogue + commands (hybrid open/Yandex)
-- Alliance hubs + voice channels
-- Platform gates prototype
-- No-P2W соблюдён
+**DoD:** тот же 5-мин soak + петля claim/harvest без смерти экономики за сессию.
+
+### P2 — Континуум одного тела
+
+Walker / rover / ship на одном Relief. Интерьер как отдельный карман, не как вторая планета.
+
+### G — Галактика (закрыто до P0)
+
+Спека жива в `GALAXY_LAYER_PLAN.md`. Порядок G1→G6 не меняется. **Работать по ним нельзя**, пока P0 красный.
+
+| Фаза | Статус |
+|------|--------|
+| G0 layout | **built** (данные). Не playable. |
+| G1 CRUISE | **locked** |
+| G2 карты / `GalaxyCatalog` | **locked** (404) |
+| G3 hyperdrive | **locked** (404) |
+| G4 гейты | **locked** (якоря inert) |
+| G5 арена из мира | **locked** (`M` inert → арена) |
+| G6 контент систем | **locked** |
 
 ---
 
-## Phase 5: Optimization, Scale Prep, Content Expansion & Polish
-**Длительность:** 3–5 недель  
-**Effort:** 18–30 чел/дн  
-**Цель:** Готовность к closed alpha + подготовка Yandex Cloud + контент.
+## 3. Что выкинуть из прототипа, чтобы человек мог тестировать
 
-### Задачи
-- Interest management / spatial partitioning
-- Aggressive LOD, MultiMesh, animation compression, distant AI simplification
-- Load testing (entities + MOBA instances + voice)
-- Full star systems set (ARK, ROT-Prime, Helios Reach, Veil Reach, Forge Depths, Echo Ruins…) — Phase G6 наполняет `GalaxyCatalog` и сети гейтов
-- More campaign chapters, generated content variety, educational tracks
-- Balance pass (PvP, Hacking/Firewall, RBE vs Biomass, MOBA, soft knowledge effects)
-- Terraform / IaC для Yandex Cloud
-- Monitoring, anti-cheat basics, moderation tools for generated content
-- Full low-end presets + graphics options
-- Spectator / replay для MOBA
-- UX polish (including educational UI, voice settings, ownership transition feedback)
+Пока P0 красный, в человеческом срезе **выключить**:
 
-### DoD
-- Стабильная симуляция 50–100+ entities + multiple MOBA + voice
-- Infra-as-code ready
-- Closed alpha build
-- Performance targets достигнуты
+- Live flora / fauna / landscape / cave mouths / cave interior / surface water / terrain-edit.
+- Дальний шейдер-фейк **или** признать его отключённым (не «планета с орбиты»).
+- Спавн ROT-Hive и Shard-Moon в playtest-срезе.
+- `M`/`Tab` как «карта» (оставить явную кнопку «Clash sandbox»).
+- Headless PASS как критерий «можно давать человеку».
+- Генерацию T1 hypergate / Galaxy meshes.
+
+Оставить: MainMenu → один остров (пад + проп + герой) → позже один чанк.
 
 ---
 
-## Phase 6: Closed Alpha → Open Beta → Launch Prep
-**Длительность:** ongoing  
-**Цель:** Живой сервис + live-ops + полный контент.
+## 4. Ассеты на лестнице
 
-- Deploy на Yandex Cloud
-- Real NAEXOS.ONLINE API integration (Trust Score, Knowledge gates, skill exchange)
-- Content expansion (больше систем, квестов, рас, MOBA maps/heroes, educational modules)
-- Full monetization (Premium + tokens)
-- Analytics, support tools, community events, MOBA tournaments
-- Living history / global events pipeline
-- Continuous balance и educational content updates
+| Шаг | Меш |
+|-----|-----|
+| P0.2 | 1 CC0 проп + 1 Tripo-герой |
+| P0.3–P0.4 | грунт/скалы CC0 или code-first; не Tripo-горы |
+| P1 | второй unique только если остров зелёный |
+| G3+ | T1 hypergate — не раньше |
 
 ---
 
-## Рекомендуемый порядок первых build-сессий (ориентир 12–16 недель)
+## 5. Риски (коротко)
 
-| Сессия | Фокус | Главный результат |
-|--------|-------|------------------|
-| 1 | Phase 0 + TPS controller + Ability System | Playable form + 1–2 abilities |
-| 2 | Ship physics + modules | Fly & shoot |
-| 3 | Colony + resources + Contribution | Build outpost |
-| 4 | Multi-crew + basic net | 2 players on one ship |
-| 5 | AI-bots + TPS combat + Hacking/Firewall seed | Fight with/against AI + asymmetric abilities |
-| 6 | Landing + PvP arena + Knowledge Rank foundation | Full local loop + soft knowledge |
-| 7 | MOBA Seed (arena + 4 heroes + minions) | Playable 3v3/4v4 MOBA |
-| 8–9 | Fleet + Carriers seed + Dynamic Ownership prototype + RBE | Vertical slice skeleton + transformable object |
-| 10 | Quest system + Educational Nodes + aiNEX puzzles | Generated quests + learning tests |
-| 11+ | Voice foundation + Alliance social + Campaigns seed + MOBA polish | Voice dialogue + social hubs + story start |
+| Риск | Митигация |
+|------|-----------|
+| «Ещё один слой шума закроет дыры» | Запрет. Сшить или выключить фейк. |
+| Scope creep (MOBA + голос + галактика) | P0 режет всё, что не остров. |
+| llvmpipe рисует PASS | Не закрывать FPS. |
+| Параллельный агент пишет WorldFill | Ссылаться, не копировать. |
 
 ---
 
-## Матрица рисков (топ)
+## 6. Следующий конкретный шаг
 
-| Риск | Вероятность | Влияние | Митигация |
-|------|-------------|---------|-----------|
-| CRUISE делает систему пустой | Средняя | Среднее | Mass lock заставляет реально подходить к телам; пояс, станции и гейты дают смысл внешней системе |
-| Два способа перемещения путают | Средняя | Среднее | Разные роли: гейт фиксирован, бесплатен, оспариваем; прыжок свободен и стоит топлива. Карта подписывает каждый участок |
-| Хитч при стриминге системы через гейт | Средняя | Высокое | Переиспользовать staggered-билдер `PlanetBody`; время раскрутки = бюджет стриминга; пады уже выгружаются при отлёте |
-| Топливо превращается в рутину | Средняя | Среднее | Щедрый расход в CRUISE, бесплатная заправка на своих падах, буксир, который не даёт застрять |
-| Netcode desync / lag | Высокая | Высокое | Server authority + prediction early |
-| Scope creep (много систем) | Высокая | Высокое | Жёсткий vertical slice, reuse ability/AI systems |
-| Performance (entities + MOBA + voice + transformation) | Средняя | Высокое | Interest management, LOD, separate instances, open-source voice first |
-| Educational content quality / generation cost | Средняя | Среднее | Templates + curated knowledge base + rate limits + offline fallback |
-| Voice latency / provider complexity | Средняя | Среднее | Modular providers, open-source first, hybrid mode |
-| Ownership transformation visual complexity | Средняя | Среднее | Shader/material swap + gradual transition, start with few objects |
-| Hacking/Firewall balance | Средняя | Высокое | Early playtests, strong counterplay, caps |
-| Integration with NAEXOS.ONLINE delays | Средняя | Среднее | Full local mocks + browser gates |
+1. Читать `docs/PLAYTEST_SANDBOX.md` — что сломано в этом прогоне.
+2. Делать **P0.1**, не G1.
+3. Не патчить S3 Index. Не класть `assets/` / `generations/` в git.
 
 ---
 
-## Следующие шаги прямо сейчас
-
-1. Создать / обновить GitHub Project и Issues по Phase 0–1 (включая Ability System + Hacking/Firewall foundation).
-2. Назначить owners на подсистемы (TPS/Abilities, Space/Carriers, Strategy/RBE, AI/Voice, Quests/Education, MOBA).
-3. Провести Phase 0 build-сессию.
-4. Ежедневно: short playtest + update Issues.
-5. Параллельно вести TECHNICAL_ARCHITECTURE.md и GDD-секции (особенно Abilities, Knowledge, Voice, Dynamic Ownership).
-
----
-
-*План живой. Обновляется по итогам каждой build-сессии. Актуальная версия CONCEPT.md — v1.2.*
+*План живой. «DONE» без DoD soak = inert. CONCEPT.md остаётся видением, не очередью работ.*

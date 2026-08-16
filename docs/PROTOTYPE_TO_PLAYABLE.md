@@ -1,5 +1,11 @@
 # NAEON — From prototype to playable
 
+> **2026-08-16 — historical audit, not the current gate.**  
+> Owner: prototype still unfit for a human. Terrain is live chaos.  
+> Current order: `DEVELOPMENT_PLAN.md` v3 (P0 first). Honest VM run: `docs/PLAYTEST_SANDBOX.md`.  
+> Headless `[Playtest] PASS` below is a mechanics probe, **not** “a person can play.”  
+> Galaxy G1–G6 stay locked until P0 is green.
+
 **Single record of the 2026-08-15 hardening work.** Owner brief: audit the whole
 codebase, fix what is broken, and move the build away from "raw prototype".
 A follow-up brief then added the galaxy layer — see §7, with the design in
