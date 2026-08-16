@@ -1,7 +1,7 @@
 # NAEON — WorldFill
 
 **Status:** design authority for unnamed fill inside an already-loaded body or
-system. **Version 1.1, 2026-08-16.**
+system. **Version 1.2, 2026-08-16.**
 
 This document is the contract. It does **not** replace
 `docs/design/GALAXY_LAYER_PLAN.md` (authored galaxy, travel, maps, gates) or
@@ -108,30 +108,75 @@ Meshes for **named** places stay Tripo-first
 CC0 libraries, or stay code-first — see §3.1. Do not commit `assets/` or
 `generations/`.
 
-### 3.1 Filler asset sources (scans, not a universe generator)
+### 3.1 Filler asset sources — ready-made first
 
 WorldFill **places** unnamed scatter. It does not mint systems or pins.
-The meshes for that scatter may come from libraries. Seed, domain, and
-“authored vs unnamed” stay §2–§4.
+Seed, domain, and “authored vs unnamed” stay §2–§4.
 
-| Source | Licence (as published) | Role here |
-|--------|------------------------|-----------|
-| **[ScansLibrary](https://www.scanslibrary.com/)** — FAQ/licence [content/licence](https://www.scanslibrary.com/content/licence) | Paid **royalty-free** scan library (surfaces / 3D / plants / atlases, PBR, LOD0–3, OBJ/FBX). **Not** open source. | Unnamed ground / flora / rock scatter only. **Not** Cybernex/gROT heroes. **Not** `SITE_*`. |
-| **[Poly Haven](https://polyhaven.com/license)** | **CC0** | Same unnamed-scatter role. Preferred **open** path if we skip a paid subscription. |
-| **[ambientCG](https://docs.ambientcg.com/license/)** | **CC0 1.0 Universal** | Same unnamed-scatter role; same open path. |
+**Pipeline rule:** maximum ready-made from the net. Generate (Tripo) only
+unique objects. Do not spend the Tripo budget on dirt or unnamed rocks.
+Pipeline how-to stays in `docs/ASSET_PIPELINE.md`; locked plates stay in
+`docs/design/ASSET_CATALOG.md`. This section is the split.
 
-**ScansLibrary — hard rules** (re-read the live FAQ/licence before any purchase; this file does not quote prices):
+#### Unique → Tripo-first (catalog, lock, dual-theme CX/GR)
 
-- Free-section assets **without** an active paid plan or on-demand credits are **not** for commercial use.
-- No redistribution: not the public git repo, not FAB / marketplaces, not a Creative Commons package. Their licence is **incompatible** with an OSS or CC licence on the game while those assets are in the pipeline.
-- GitHub `license` / SPDX on `br7wq7yfqc-ctrl/naeon` is **`null`**. Leave it null while ScansLibrary scans are in the pipeline.
-- Do not put ScansLibrary files in the public `naeon` repo. Heavy assets stay on `s3://neon` and local `assets/` (`docs/ASSETS_STORAGE.md`), same as the rest of the pipeline.
-- If a mesh can be extracted from a shipped build, include a text notice: `Contains assets from ScansLibrary.com - Assets may not be redistributed`.
+- Faction-readable heroes: ships, weapons, modules, armor, drones, a unique
+  prop that carries a canon label
+- `SITE_*` / legendary / quest places
+- Anything already locked by UUID in `approved_sketches.json` /
+  `docs/asset_positions.json`
+- Anything that needs a paired Cybernex and gROT look a scan does not have
 
-**Tripo-first** stays for faction-locked and catalog-locked positions
-(`docs/design/TRIPO_ASSET_MANIFEST.md`). A scan does **not** replace
-dual-theme CX/GR. Code-first proxies remain valid until a scan or CC0 mesh
-is ingested to the bucket.
+A scan does **not** replace dual-theme. Code-first proxies remain valid
+until a unique mesh is generated or a generic mesh is ingested to the bucket.
+
+#### Non-unique → take ready-made, do not generate
+
+- Ground, rock, bark, dust, tileable surfaces
+- Vegetation and unnamed biome scatter
+- Generic rock / crate / pipe / cable with no faction
+- HDRI, sky, far-plane impostors
+- Water / foam / WorldFill chunk decor
+
+If a ready mesh does not read as Aexion (too Earth, too fantasy): **re-skin
+in Blender** toward CX/GR, or refuse. Do not regenerate in Tripo while a
+re-skin would close the gap.
+
+A ready-made asset never becomes a `SITE_*` and never grants power or
+Knowledge.
+
+#### Preference order
+
+| Order | Source | Licence (as published) | Storage |
+|------:|--------|------------------------|---------|
+| 1 | **[Poly Haven](https://polyhaven.com/license)**, **[ambientCG](https://docs.ambientcg.com/license/)**, NASA/USGS 3D where the **item** page is public-domain / agency-media (do not assume CC0 — record the page), Sketchfab **CC0 + downloadable** filter | CC0 / public domain. Safe to **document** in git. | Binary → `s3://neon`. Git → `source`, `license`, `url` on the position only |
+| 2 | **[ScansLibrary](https://www.scanslibrary.com/)** ([licence](https://www.scanslibrary.com/content/licence)) and other royalty-free paid scans (surfaces / 3D / plants / atlases, PBR, LOD0–3, OBJ/FBX). **Not** open source. | Paid royalty-free. Incompatible with OSS/CC on the game while in the pipeline. | **`s3://neon` only. Never git.** Build notice if extractable (below) |
+| 3 | Mixed libraries (OpenGameArt, Fab, Megascans, …) | Only if the licence **explicitly** allows a commercial game without redistributing source files. Doubt → refuse. | Same as the licence requires; default `s3://neon`, never git |
+
+Write `source`, `license`, `url` on the position / `assets_manifest` row.
+Never the GLB or textures. Do not patch S3 Index
+(`generations/catalog.json` is wiped).
+
+**ScansLibrary — hard rules** (re-read the live FAQ/licence before any
+purchase; this file does not quote prices):
+
+- Free-section assets **without** an active paid plan or on-demand credits
+  are **not** for commercial use.
+- No redistribution: not the public git repo, not FAB / marketplaces, not a
+  Creative Commons package.
+- GitHub `license` / SPDX on `br7wq7yfqc-ctrl/naeon` is **`null`**. Leave it
+  null while ScansLibrary scans are in the pipeline.
+- If a mesh can be extracted from a shipped build, include a text notice:
+  `Contains assets from ScansLibrary.com - Assets may not be redistributed`.
+
+#### Decision
+
+| Case | Do |
+|------|----|
+| Unique (hero, lock, `SITE_*`, dual-theme a scan cannot pair) | **Tripo** → bucket + catalog lock. Not a library grab. |
+| Generic + CC0 / public domain | **`s3://neon` + git manifest** (`source`, `license`, `url`). No Tripo. |
+| Generic + paid scan | **`s3://neon` + build notice**. Never git. SPDX stays null. No Tripo. |
+| Unclear licence | **Refuse.** Do not generate “to be safe.” |
 
 ---
 
@@ -151,6 +196,7 @@ is ingested to the bucket.
 | Story power from filler (unique weapons, claim strength, Infection > 5) | story ≠ power; Infection max 5 |
 | Secrets, bucket keys, or generated plates in git | `.gitignore` already excludes `assets/`, `generations/`, `.env` |
 | ScansLibrary (or any paid scan) binaries in git / FAB / CC | Royalty-free ≠ redistributable; see §3.1 |
+| Tripo (or Meshy/Rodin) on unnamed dirt, rocks, tileable ground, HDRI | Ready-made first; budget is for unique only |
 
 ---
 
@@ -280,6 +326,7 @@ implement WorldFill, not for this document PR.
 | **Knowledge / P2W inert** | Rank and subscription do not change fill density, rarity, pad count, or jump math. | Soft-mastery extra nodes; paid richer terrain. |
 | **No voxel shell** | Heightfield + analytic SDF only. | Planetary voxel volume. |
 | **Filler mesh is not a hero / not a pin** | Scan or CC0 used only as unnamed ground/flora/rock; CX/GR heroes and `SITE_*` stay Tripo + catalog. ScansLibrary files absent from git. | Scan as a faction hero, a `SITE_*`, or a blob on `main`. |
+| **Tripo not spent on dirt** | Generic ground/rock/flora/HDRI ingested ready-made (or still code-first). Manifest has `source`/`license`/`url`, no binary in git. | Tripo job whose brief is “unnamed rock” or tileable dirt. |
 
 ---
 
@@ -294,8 +341,8 @@ implement WorldFill, not for this document PR.
   them.
 - Not permission to validate-or-invent pins in `LayerContext` in the same
   breath as fill. Validate later; invent never.
-- Not a price list, not a download, and not a patch to S3 Index. §3.1 only
-  names licences and storage.
+- Not a price list, not a download, and not a patch to S3 Index. §3.1 names
+  licences, storage, and the ready-made vs Tripo split.
 
 ---
 
