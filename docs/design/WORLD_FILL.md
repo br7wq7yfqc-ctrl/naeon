@@ -1,12 +1,13 @@
 # NAEON — WorldFill
 
 **Status:** design authority for unnamed fill inside an already-loaded body or
-system. **Version 1.2, 2026-08-16.**
+system. **Version 1.3, 2026-08-16.**
 
 This document is the contract. It does **not** replace
 `docs/design/GALAXY_LAYER_PLAN.md` (authored galaxy, travel, maps, gates) or
 `docs/lore/SITE_PIN_CATALOG.md` (named site IDs). It does **not** ship a
-runtime universe generator.
+runtime universe generator. Schedule, playtest, and terrain-code work live
+in `DEVELOPMENT_PLAN.md` — not here.
 
 WorldFill answers one question: once a system and a body are already loaded
 from authored data, what may the engine grow around the player — and what
@@ -242,14 +243,14 @@ stitch, not a third noise.
 6. **No voxels.** Heightfield chunks + analytic SDF. Not a planetary voxel
    shell.
 
-### 5.3 First code after this spec
+### 5.3 Next code (not this document)
 
 **Shared Relief sampler for the sphere shader and `SurfaceDetail` — not
-`GalaxyCatalog`.**
+`GalaxyCatalog`.** That stitch is a later code PR. See `DEVELOPMENT_PLAN.md`.
 
 `GalaxyCatalog` is G2 authored data (eight systems, light-year coordinates,
 gate links). It does not make Nex-Prime one planet. The stitch is local to
-bodies already in memory (ARK). It can land in G0 without waiting for G2.
+bodies already in memory (ARK) and does not wait on G2.
 
 ---
 
@@ -268,7 +269,7 @@ Authored galaxy data          GalaxyCatalog (G2)     — not WorldFill
 
 | Phase | Galaxy plan | WorldFill |
 |-------|-------------|-----------|
-| **G0** (done: layout) | ARK star, orbits, belt band, dark gate anchors | **Now:** this contract. **Next code:** stitch far sphere ↔ Relief on the three ARK bodies. Do not spawn gates. Do not add systems. Do not mint pins. |
+| **G0** (done: layout) | ARK star, orbits, belt band, dark gate anchors | This contract applies now. Do not spawn gates, add systems, or mint pins. Sampler stitch is later code — see `DEVELOPMENT_PLAN.md`. |
 | **G1** CRUISE + 2.8× orbits | Far clip LOW 22000 … ULTRA 48000; deep-space impostor pass | Fill must not fight G1. Far sphere / impostor is the cheap Relief preview. Do **not** grow chunk rings to “paint the planet from CRUISE.” Impostor already uses `planet_surface.gdshader` — that is the stitch target. |
 | **G2** galaxy data + maps | `GalaxyCatalog`, `NavState`, `M` / `N`, honest refusals | **Wait.** Do not fill non-ARK systems. Unnamed pads stay off the named map. Maps show authored systems and (later) authored gates / beacons only. |
 | **G3** hyperdrive | Module, fuel, star-adjacent arrival | Fill does not add range, systems, or fuel. Arrival still loads **one** authored system; fill runs after that load. |
@@ -276,11 +277,9 @@ Authored galaxy data          GalaxyCatalog (G2)     — not WorldFill
 | **G5** Clash Beacons | Authored objects, hold-F, return to same beacon | No generated beacons. No filler pin for the arena. |
 | **G6** more systems | Remaining lore-seed systems, authored gate nets | After a system is authored **and** loaded, WorldFill may fill its bodies the same way. Still no noise galaxy. |
 
-**G0 this week:** write the contract (this file). Optionally implement the
-sampler stitch in a later PR. Do not wait for G2 to fix orbit ≠ dirt.
-
-**Wait for G2:** any fill outside ARK; any galaxy-map marker for filler;
-anything that looks like a generated system list.
+Schedule and playtest: see `DEVELOPMENT_PLAN.md`. This file only states the
+boundary. Wait for G2 before any fill outside ARK, any galaxy-map marker for
+filler, or anything that looks like a generated system list.
 
 ---
 
@@ -343,6 +342,7 @@ implement WorldFill, not for this document PR.
   breath as fill. Validate later; invent never.
 - Not a price list, not a download, and not a patch to S3 Index. §3.1 names
   licences, storage, and the ready-made vs Tripo split.
+- Not `DEVELOPMENT_PLAN.md`, not a playtest, and not a terrain-code fix.
 
 ---
 
