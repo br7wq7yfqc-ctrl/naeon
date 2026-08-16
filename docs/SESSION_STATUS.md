@@ -56,9 +56,18 @@ leak test. Both in `docs/PROTOTYPE_TO_PLAYABLE.md` §2.
   silhouette has no locomotion animation (art work). Both in
   `docs/PROTOTYPE_TO_PLAYABLE.md` §6.
 
+## Asset catalog (merged from `catalog/ocr-merge-v2`)
+
+- Git ledger `docs/asset_positions.json` — 134 positions across 213 sheets.
+- Locks `docs/design/approved_sketches.json` — 67 UUID + 58 dump IDs, none invented.
+- `docs/design/MANUAL_CATALOG.md` — manual rebuild at **#043**; next up is infantry
+  tools and the remaining ships, heavy gROT armour ortho still open.
+- The S3 index `generations/catalog.json` was **wiped 2026-08-15**; rebuild from the
+  manual catalog, do not trust the old album.
+- `scripts/assets/harvest_tripo_inbox.sh` ingests a Tripo inbox.
+
+These are approved **sketches** (concept plates). The list of **meshes** Tripo still
+owes us is separate: `docs/design/TRIPO_ASSET_MANIFEST.md`, 78 assets in ten batches.
+
 ## Marathon 2026-08-08T00:37:18.886364+00:00
 - dig continuum + cave protect + crystal V scan + FOV
-
-## 2026-08-14 bind
-- OCR-bound 213 sheets → 129 catalog positions
-- Tripo image-to-model batch in flight

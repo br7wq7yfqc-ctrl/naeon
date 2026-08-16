@@ -1,21 +1,448 @@
 {
-  "version": 1,
-  "source": "generations/catalog.json + OCR bind",
-  "positions": 129,
+  "version": 2.1,
+  "updated": "2026-08-15",
+  "source": "v2.8 + batch 20 CX fighter pair + CX bomber pair",
+  "note": "S3 Index generations/catalog.json is authority for approved plates; this file is the git position ledger. Dump short IDs are existing neon rendered files, not invented UUIDs.",
+  "positions": 137,
   "bound_sheets": 213,
+  "merged_slugs": {
+    "heawy_5ault_i8reakt4fough": "heavy_assault",
+    "tapltai_tarrier": "capital_carrier",
+    "capital_arrier": "capital_carrier",
+    "laftice_stori": "lattice_storm",
+    "cla_swarii_ombat_drone": "combat_drone",
+    "mediun_player_armor_set": "medium_player_armor_set",
+    "logisflc_drowe": "logistic_drone",
+    "owner5hip_cla1m_beacon": "ownership_claim_beacon",
+    "vehitle_tliss_support_logistic": "support_logistics_vehicle",
+    "rot_support_logistics_vehicle": "support_logistics_vehicle",
+    "cybefinex": "cybernex_shield_emitter",
+    "cybeftinea_llc": "cybernex_shield_emitter",
+    "cybernex_doc_cnx_ocb_4v_001": "cybernex_claim_beacon",
+    "grot_document_ms_4v_ortho": "grot_mothership",
+    "grot_ddc_sf_prop_4v_001": "grot_spore_prop",
+    "tripo_id_rot_ha_801_accpt": "grot_heavy_armor",
+    "cybernex_CNX-88": "cybernex_heavy_armor",
+    "iasym_scouti": "grot_crawler",
+    "cybernex_utility_drone_UX-7": "cybernex_utility_drone_CNX-7",
+    "cybernex_uixgemient": "ui-resource-icons",
+    "cybernex_fjaid_wd": "cybernex_shield_emitter"
+  },
   "items": {
-    "cybernex_battleship_CNX-9": {
-      "category": "ships",
+    "cybernex_avian_pathfinder": {
+      "category": "characters",
       "count": 1,
       "titles": [
-        "CYBERNEX BATTLESHIP - CNX-9 'NEXUS BLACK'"
+        "CYBERNEX V AVIAN PATHFINDER"
       ]
     },
-    "11_iiiirfi_iiiiiiiiiiii_iii_illllli": {
-      "category": "props",
+    "cybernex_feline_scout": {
+      "category": "characters",
       "count": 1,
       "titles": [
-        "j 11,Iiiirfi¥iiiiiiiiiiii,iii,Illllli,"
+        "CYBERNEX FELINE SCOUT"
+      ]
+    },
+    "cybernex_heavy_armor": {
+      "category": "characters",
+      "count": 4,
+      "titles": [
+        "CYBERNEX HEAVY ARMOR - MODULAR EXO",
+        "CYBERNEX HEAVY ARMOR - MODULAR EXO-ARMOR SYSTEM",
+        "CYBERNEX HEAVY ARMOR TANK - 4-VIEW ORTHOGRAPHIC",
+        "CYBERNEX // CNX-88"
+      ],
+      "merged_from": [
+        "cybernex_CNX-88"
+      ],
+      "chat_lock": true,
+      "file_id": "ozs5C",
+      "dump_key": "generations/imagine_images/ozs5C.jpg",
+      "locked_uuids": [
+        {
+          "id": "5juQw",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Heavy armor",
+          "dump_key": "generations/rendered/5juQw.jpg",
+          "manual": 7
+        },
+        {
+          "id": "97pBo",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Heavy armor",
+          "dump_key": "generations/rendered/97pBo.jpg",
+          "manual": 8
+        },
+        {
+          "id": "ozs5C",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Heavy armor",
+          "dump_key": "generations/imagine_images/ozs5C.jpg",
+          "notes": "superseded by manual #007 5juQw"
+        },
+        {
+          "id": "iw9mb",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Heavy exo CNX-88",
+          "dump_key": "generations/imagine_images/iw9mb.jpg",
+          "notes": "superseded by manual #008 97pBo"
+        }
+      ]
+    },
+    "cybernex_helmet_CNX-7": {
+      "category": "characters",
+      "count": 3,
+      "titles": [
+        "CYBERNEX HELMET",
+        "CYBERNEX HELMET - DESIGN LOCK",
+        "CYBERNEX HELMET // CNX-7"
+      ],
+      "chat_lock": true,
+      "file_id": "icjiG",
+      "dump_key": "generations/imagine_images/icjiG.jpg",
+      "locked_uuids": [
+        {
+          "id": "A2cmE",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Pilot helmet",
+          "dump_key": "generations/rendered/A2cmE.jpg",
+          "manual": 18
+        },
+        {
+          "id": "icjiG",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Helmet",
+          "dump_key": "generations/imagine_images/icjiG.jpg",
+          "notes": "superseded by manual #018 A2cmE"
+        }
+      ]
+    },
+    "cybernex_light_armor": {
+      "category": "characters",
+      "count": 4,
+      "titles": [
+        "CYBERNEX LIGHT ARMOR",
+        "CYBERNEX LIGHT ARMOR - MODULAR EXO-ARMOR SILHOUETTE",
+        "CYBERNEX LIGHT ARMOR- 4-VIEW ORTHOGRAPHIC",
+        "CYBERNEX LIGHT ARMOR- EXO/IL1"
+      ],
+      "chat_lock": true,
+      "file_id": "vYOfQ",
+      "dump_key": "generations/rendered/vYOfQ.jpg",
+      "locked_uuids": [
+        {
+          "id": "VNKg2",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/VNKg2.jpg",
+          "manual": 11
+        },
+        {
+          "id": "dK2D0",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/dK2D0.jpg",
+          "manual": 12
+        },
+        {
+          "id": "vYOfQ",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/vYOfQ.jpg",
+          "notes": "superseded by manual #012 dK2D0"
+        },
+        {
+          "id": "G1DlH",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Light armor silhouette",
+          "dump_key": "generations/rendered/G1DlH.jpg",
+          "notes": "superseded by manual #011 VNKg2"
+        },
+        {
+          "id": "mYaBr",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/mYaBr.jpg",
+          "notes": "superseded by manual #011 VNKg2"
+        }
+      ]
+    },
+    "cybernex_medium_armor": {
+      "category": "characters",
+      "count": 2,
+      "titles": [
+        "CYBERNEX MEDIUM ARMOR- 4-VIEW ORTHOGRAPHIC SHEET",
+        "I CYBERNEX MEDIUM ARMOR- DESIGN LOCK"
+      ],
+      "chat_lock": true,
+      "file_id": "XDhht",
+      "dump_key": "generations/rendered/XDhht.jpg",
+      "locked_uuids": [
+        {
+          "id": "NsEul",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Medium armor",
+          "dump_key": "generations/rendered/NsEul.jpg",
+          "manual": 9
+        },
+        {
+          "id": "6mSp1",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Medium armor",
+          "dump_key": "generations/rendered/6mSp1.jpg",
+          "manual": 10
+        },
+        {
+          "id": "XDhht",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Medium armor",
+          "dump_key": "generations/rendered/XDhht.jpg",
+          "notes": "superseded by manual #010 6mSp1"
+        },
+        {
+          "id": "3KCUS",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Medium armor",
+          "dump_key": "generations/rendered/3KCUS.jpg",
+          "notes": "superseded by manual #009 NsEul"
+        }
+      ]
+    },
+    "grot_graft_hound": {
+      "category": "characters",
+      "count": 1,
+      "titles": [
+        "gROT GRAFT HOUND"
+      ]
+    },
+    "grot_heavy_armor": {
+      "category": "characters",
+      "count": 4,
+      "titles": [
+        "GROT HEAVY ARMOR - 4-VIEW ORTHOGRAPHIC",
+        "gROT HEAVY ARMOR",
+        "gROT HEAVY ARMOR // GENETIC CYBER-BIOMASS SUIT",
+        "TRIpo ID.. &ROT-HA-801-ACCPT"
+      ],
+      "merged_from": [
+        "tripo_id_rot_ha_801_accpt"
+      ],
+      "chat_lock": true,
+      "file_id": "oci1u",
+      "dump_key": "generations/rendered/oci1u.jpg",
+      "locked_uuids": [
+        {
+          "id": "zyFa0",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Heavy armor",
+          "dump_key": "generations/rendered/zyFa0.jpg",
+          "manual": 17
+        },
+        {
+          "id": "oci1u",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Heavy armor",
+          "dump_key": "generations/rendered/oci1u.jpg",
+          "notes": "superseded by manual #017 zyFa0"
+        }
+      ]
+    },
+    "grot_helmet": {
+      "category": "characters",
+      "count": 3,
+      "titles": [
+        "GROT HELMET // DESIGN LOCK",
+        "GROT HELMET 1/ 4-VIEW ORTHOGRAPHIC",
+        "gROT HELMET // GENETIC-ROBOTIC OPERATIVE TRUNK"
+      ],
+      "chat_lock": true,
+      "file_id": "fMeN1",
+      "dump_key": "generations/imagine_images/fMeN1.jpg",
+      "locked_uuids": [
+        {
+          "id": "agxTz",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Pilot helmet",
+          "dump_key": "generations/rendered/agxTz.jpg",
+          "manual": 19
+        },
+        {
+          "id": "fMeN1",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Helmet",
+          "dump_key": "generations/imagine_images/fMeN1.jpg",
+          "notes": "superseded by manual #019 agxTz; ortho not required"
+        }
+      ]
+    },
+    "grot_light_armor": {
+      "category": "characters",
+      "count": 4,
+      "titles": [
+        "' gROT LIGHT ARMOR",
+        "GROT LIGHT ARMOR - 4-VIEW ORTHOGRAPHIC TECHNICAL SHEET",
+        "I GROT LIGHT",
+        "I GROT LIGHT ARMOR"
+      ],
+      "chat_lock": true,
+      "file_id": "XqU70",
+      "dump_key": "generations/rendered/XqU70.jpg",
+      "locked_uuids": [
+        {
+          "id": "bgC4w",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/bgC4w.jpg",
+          "manual": 13
+        },
+        {
+          "id": "2T4jW",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/2T4jW.jpg",
+          "manual": 14
+        },
+        {
+          "id": "XqU70",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/XqU70.jpg",
+          "notes": "superseded by manual #014 2T4jW"
+        },
+        {
+          "id": "mfHHB",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/mfHHB.jpg",
+          "notes": "superseded by manual #013 bgC4w"
+        },
+        {
+          "id": "vB0CU",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/vB0CU.jpg",
+          "notes": "superseded by manual #013 bgC4w"
+        },
+        {
+          "id": "ZiYRJ",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Light armor",
+          "dump_key": "generations/rendered/ZiYRJ.jpg",
+          "notes": "superseded by manual #013 bgC4w"
+        }
+      ]
+    },
+    "grot_medium_armor": {
+      "category": "characters",
+      "count": 3,
+      "titles": [
+        "GROT MEDIUM ARMOR - 4-VIEW ORTHOGRAPHIC SHEET",
+        "gROT MEDIUM ARMOR",
+        "gROT MEDIUM ARMOR - 4-VIEW ORTHOGRAPHIC"
+      ],
+      "chat_lock": true,
+      "file_id": "opzQg",
+      "dump_key": "generations/imagine_images/opzQg.jpg",
+      "locked_uuids": [
+        {
+          "id": "opzQg",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "armor",
+          "label": "Medium armor",
+          "dump_key": "generations/rendered/opzQg.jpg",
+          "manual": 15
+        },
+        {
+          "id": "fDy43",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "armor",
+          "label": "Medium armor",
+          "dump_key": "generations/rendered/fDy43.jpg",
+          "manual": 16
+        }
+      ]
+    },
+    "heavy_player_armor_set": {
+      "category": "characters",
+      "count": 1,
+      "titles": [
+        "HEAVY PLAYER ARMOR SET"
+      ]
+    },
+    "light_player_armor_set": {
+      "category": "characters",
+      "count": 1,
+      "titles": [
+        "LIGHT PLAYER ARMOR SET"
+      ]
+    },
+    "medium_player_armor_set": {
+      "category": "characters",
+      "count": 1,
+      "titles": [
+        "MEDIUN PLAYER ARMOR SET"
+      ],
+      "merged_from": [
+        "mediun_player_armor_set"
+      ]
+    },
+    "t1_resource_extractor": {
+      "category": "colony",
+      "count": 1,
+      "titles": [
+        "T1 RESOURCE EXTRACTOR"
       ]
     },
     "debris_cluster": {
@@ -29,315 +456,495 @@
         "SCHISM WRECK DEBRIS CLUSTER 4-VIEW ORTHOGRAPHIC"
       ]
     },
-    "cybernex_battlecruiser_CNH-09": {
-      "category": "ships",
+    "hexarena_moba_map_schematic": {
+      "category": "environments",
+      "count": 1,
+      "titles": [
+        "HEXARENA // MOBA MAP SCHEMATIC"
+      ]
+    },
+    "landing_pad": {
+      "category": "environments",
+      "count": 1,
+      "titles": [
+        "NAEON DOCK LANDING PAD"
+      ]
+    },
+    "moba_arena": {
+      "category": "environments",
       "count": 2,
       "titles": [
-        "CYBERNEX HEAVY BATTLECRUISER",
-        "CYBERNEX HEAVY BATTLECRUISER - CNH-09"
+        "HEXAGONAL MOBA ARENA",
+        "i<I NAEON MOBA ARENA"
       ]
     },
-    "grot_capital_cruiser": {
-      "category": "ships",
-      "count": 6,
-      "titles": [
-        "GROT CAPITAL CRUISER - 4-VIEW ORTHOGRAPHIC",
-        "GROT CAPITAL CRUISER ASYMMETRIC CONFIGURATION",
-        "GROT CAPITAL CRUISER- ASYMMETRIC 4-VIEW ORTHOGRAPHIC",
-        "Ii/ gROT CAPITAL CRUISER",
-        "S I GROT CAPITAL CRUISER",
-        "gROT CAPITAL CRUISER"
-      ]
-    },
-    "grot_battleship": {
-      "category": "ships",
-      "count": 2,
-      "titles": [
-        "GROT BATTLESHIP - ASYMMETRIC ELONGATED CONFIGURATION",
-        "GROT BATTLESHIP - ELONGATED ASYMMETRIC (CINEMATIC DESIGN LOCK)"
-      ]
-    },
-    "il_ili": {
+    "11_iiiirfi_iiiiiiiiiiii_iii_illllli": {
       "category": "props",
       "count": 1,
       "titles": [
-        "Il. Ili I"
+        "j 11,Iiiirfi¥iiiiiiiiiiii,iii,Illllli,"
+      ],
+      "ocr_unresolved": false,
+      "ocr_unreadable": true,
+      "note": "title unrecoverable; no matching dump plate; sheet kept"
+    },
+    "cx-dmr": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "d9115a7c-147a-4393-8ded-c5f252989328",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "weapon-infantry",
+          "label": "DMR",
+          "manual": 38
+        },
+        {
+          "id": "cf8e7639-1399-4544-858d-a957bb18c945",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "weapon-infantry",
+          "label": "DMR",
+          "manual": 39
+        }
       ]
     },
-    "cybernex_uixgemient": {
+    "cx-firewall-gadget": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "68663b86-f177-4594-b70b-deec857abe88",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "weapon-infantry",
+          "label": "Firewall gadget"
+        }
+      ]
+    },
+    "cx-tank-gun": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "22365d81-9d7a-4784-9057-8d90337e40b8",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "weapon-vehicle",
+          "label": "Tank gun",
+          "manual": 26
+        },
+        {
+          "id": "cade3b02-acb5-432b-8d08-8fe653ce657d",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "weapon-vehicle",
+          "label": "Tank gun",
+          "manual": 34
+        },
+        {
+          "id": "f6ba51ce-9f94-44ff-84e4-aee90fa3c1bc",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "weapon-vehicle",
+          "label": "Tank main",
+          "notes": "old ortho, not in manual catalog"
+        }
+      ]
+    },
+    "cx-turret-launcher": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "899de1b8-9179-452c-bc75-dee69352c374",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Turret + hex launcher"
+        },
+        {
+          "id": "8e742135-e693-4ad7-bbc2-fd9f4fcb092f",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "module",
+          "label": "Turret + hex launcher"
+        }
+      ]
+    },
+    "cybernex_CN-8800": {
       "category": "props",
       "count": 1,
       "titles": [
-        "CYBERNEX UIXGEMIENT"
+        "CYBERNEX CN-8800"
       ]
     },
-    "ty_jjbllv": {
+    "cybernex_CNX-1": {
       "category": "props",
       "count": 1,
       "titles": [
-        "1*•.ty..4!¥JJblLV.¢1 4>. • •"
+        "CYBERNEX CNX-1"
       ]
     },
-    "knowledge": {
+    "cybernex_CNX-98B": {
       "category": "props",
-      "count": 2,
+      "count": 1,
       "titles": [
-        "KNOWLEDGE"
+        "CYBERNEX CNX-98B"
       ]
     },
-    "cybernex_frigate": {
-      "category": "ships",
-      "count": 5,
+    "cybernex_CNX-9B": {
+      "category": "props",
+      "count": 1,
       "titles": [
-        "CYBERNEX MULTI-CREW FRIGATE",
-        "CYBERNEX MULTI-CREW FRIGATE - CN-FR102",
-        "CYBERNEX MULTI-CREW FRIGATE - CNX-7 'NEXUS'",
-        "CYBERNEX MULTI-CREW FRIGATE - DESIGN LOCK (ORTHOGRAPHIC)",
-        "CYBERNEX MULTI-CREW FRIGATE- 4-VIEW ORTHOGRAPHIC"
-      ]
-    },
-    "cybernex_medium_armor": {
-      "category": "characters",
-      "count": 2,
-      "titles": [
-        "CYBERNEX MEDIUM ARMOR- 4-VIEW ORTHOGRAPHIC SHEET",
-        "I CYBERNEX MEDIUM ARMOR- DESIGN LOCK"
+        "CYBERNEX CNX-9B"
       ]
     },
     "cybernex_claim_beacon": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "CYBERNEX OWNERSHIP CLAIM BEACON"
-      ]
-    },
-    "cybernex_doc_cnx_ocb_4v_001": {
       "category": "props",
-      "count": 1,
+      "count": 2,
       "titles": [
+        "CYBERNEX OWNERSHIP CLAIM BEACON",
         "DOC.. CNX-OCB-4V-001 | REV.. A1"
+      ],
+      "merged_from": [
+        "cybernex_doc_cnx_ocb_4v_001"
+      ],
+      "chat_lock": true,
+      "file_id": "phjM0",
+      "dump_key": "generations/imagine_images/phjM0.jpg",
+      "locked_uuids": [
+        {
+          "id": "phjM0",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "module",
+          "label": "Claim beacon",
+          "dump_key": "generations/imagine_images/phjM0.jpg"
+        }
       ]
     },
-    "grot_flagship": {
-      "category": "ships",
-      "count": 5,
-      "titles": [
-        "\"%,41 GROT FLAGSHIP",
-        "GROT FLAGSHIP",
-        "GROT FLAGSHIP - ASYMMETRIC ICANNONICAL 4-VIEW)",
-        "I GRDT FLAGSHIP- 4-VIEW ORTHOGRAPHIC",
-        "gROT FLAGSHIP- ASYMMETRIC CONFIGURATION"
-      ]
-    },
-    "cybernex_heavy_armor": {
-      "category": "characters",
-      "count": 3,
-      "titles": [
-        "CYBERNEX HEAVY ARMOR - MODULAR EXO",
-        "CYBERNEX HEAVY ARMOR - MODULAR EXO-ARMOR SYSTEM",
-        "CYBERNEX HEAVY ARMOR TANK - 4-VIEW ORTHOGRAPHIC"
-      ]
-    },
-    "cybernex_helmet_CNX-7": {
-      "category": "characters",
-      "count": 3,
-      "titles": [
-        "CYBERNEX HELMET",
-        "CYBERNEX HELMET - DESIGN LOCK",
-        "CYBERNEX HELMET // CNX-7"
-      ]
-    },
-    "grot_document_ms_4v_ortho": {
+    "cybernex_defense_systems": {
       "category": "props",
       "count": 1,
       "titles": [
-        "DOCUMENT' GROT-MS-4V-ORTHO"
+        "O CYBERNEX DEFENSE SYSTEMS"
+      ],
+      "locked_uuids": [
+        {
+          "id": "2c84bb7f-58a7-4114-88fe-523eb491dca2",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Firewall projector"
+        },
+        {
+          "id": "1d07c7fc-7876-4aef-99ec-62ff5602308c",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "module",
+          "label": "Firewall projector"
+        }
       ]
     },
-    "cybernex_capital_cruiser_CNX-9": {
-      "category": "ships",
-      "count": 5,
-      "titles": [
-        "CYBERNEX CAPITAL CRUISER - CNX-9",
-        "CYBERNEX CAPITAL CRUISER - CNX-9 'HEPHAESTUS'",
-        "CYBERNEX CAPITAL CRUISER - CNX-9 'SENTINEL'",
-        "CYBERNEX CAPITAL CRUISER . CNX-9 \"HEPHAESTUS'",
-        "CYBERNEX CAPITAL CRUISER- CNX-9"
-      ]
-    },
-    "grot_helmet": {
-      "category": "characters",
-      "count": 3,
-      "titles": [
-        "GROT HELMET // DESIGN LOCK",
-        "GROT HELMET 1/ 4-VIEW ORTHOGRAPHIC",
-        "gROT HELMET // GENETIC-ROBOTIC OPERATIVE TRUNK"
-      ]
-    },
-    "cybernex_mothership": {
-      "category": "ships",
-      "count": 4,
-      "titles": [
-        "CYBERNEX MOTHERSHIP",
-        "CYBERNEX MOTHERSHIP - 4-VIEW ORTHOGRAPHIC",
-        "CYBERNEX MOTHERSHIP - DESIGN LOCK",
-        "CYBERNEX MOTHERSHIP- CNX-1"
-      ]
-    },
-    "heavy_assault": {
+    "cybernex_shield_emitter": {
       "category": "props",
-      "count": 2,
-      "titles": [
-        "CLASS.. HEAVY ASSAULT I SIEGE DRONE",
-        "CLASS.. HEAVY I ASSAULT"
-      ]
-    },
-    "cybernex_flagship": {
-      "category": "ships",
       "count": 6,
       "titles": [
-        "CYBERNEX FLAGSHIP - CNX-1",
-        "CYBERNEX FLAGSHIP . CNX-1",
-        "CYBERNEX FLAGSHIP . CNX-9 \"NEXUS PRIME\"",
-        "CYBERNEX FLAGSHIP DESIGN LOCK",
-        "CYBERNEX FLAGSHIP- CNX-1",
-        "CYBERNEX FLAGSHIP- CNX-I"
+        ". w CYBERNEX",
+        "CYBERNE*",
+        "CYBERNEX':",
+        "CYBEfiNEX",
+        "CYBEftINEA LlC.p.r",
+        "CYBERNEX i FJAID.WD"
+      ],
+      "merged_from": [
+        "cybefinex",
+        "cybeftinea_llc",
+        "cybernex_fjaid_wd"
       ]
     },
-    "ritual_infrastructure": {
+    "cybernex_silent_prong": {
       "category": "props",
       "count": 1,
       "titles": [
-        "RITUAL INFRASTRUCTURE"
+        "CYBERNEX CBX-1 'SILENT PRONG\""
+      ],
+      "chat_lock": true,
+      "file_id": "gjXDt",
+      "dump_key": "generations/rendered/gjXDt.jpg",
+      "locked_uuids": [
+        {
+          "id": "gjXDt",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "weapon-infantry",
+          "label": "Silent Prong",
+          "dump_key": "generations/rendered/gjXDt.jpg"
+        }
       ]
     },
-    "l4_cyb8rne": {
+    "cybernex_wake_drill": {
       "category": "props",
-      "count": 1,
+      "count": 2,
       "titles": [
-        ".L4 CYB8RNÉK"
+        "CYBERNEX WAKE DRILL",
+        "I CYBERNEX WAKE"
       ]
     },
-    "grot_heavy_armor": {
-      "category": "characters",
+    "cybernex_sidearm": {
+      "category": "props",
+      "count": 0,
+      "titles": [
+        "CYBERNEX SIDEARM"
+      ],
+      "ocr": false,
+      "source": "manual_rebuild",
+      "chat_lock": true,
+      "locked_uuids": [
+        {
+          "id": "cb6c3686-91b2-46b2-ad58-a8299cb7ff31",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "weapon-infantry",
+          "label": "Sidearm",
+          "manual": 35
+        }
+      ]
+    },
+    "cybernex_weapon_carbine": {
+      "category": "props",
       "count": 3,
       "titles": [
-        "GROT HEAVY ARMOR - 4-VIEW ORTHOGRAPHIC",
-        "gROT HEAVY ARMOR",
-        "gROT HEAVY ARMOR // GENETIC CYBER-BIOMASS SUIT"
+        "CYBERNEX TO SIDEARM",
+        "CYBERNEX TO-TI ASSAULT CARBINE"
+      ],
+      "locked_uuids": [
+        {
+          "id": "cdbfa627-e7cf-46c6-9738-efdc944733bd",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "weapon-infantry",
+          "label": "Assault Carbine"
+        },
+        {
+          "id": "41700055-4027-4db9-b162-8233ff2705e6",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "weapon-infantry",
+          "label": "Carbine",
+          "manual": 28
+        }
       ]
     },
-    "cybernex_utility_drone_CNX-7": {
-      "category": "vehicles",
-      "count": 2,
-      "titles": [
-        "CYBERNEX UTILITY DRONE // CNX-U7",
-        "CYBERNEX UTILITY DRONE- CNX-7"
-      ]
-    },
-    "grot_capital_carrier": {
-      "category": "ships",
-      "count": 3,
-      "titles": [
-        "GROT CAPITAL CARRIER",
-        "GROT CAPITAL CARRIER - 4 VIEW ORTHOGRAPHIC",
-        "gROT CAPITAL CARRIER"
-      ]
-    },
-    "spore_prop": {
+    "gr-contractile": {
       "category": "props",
-      "count": 2,
-      "titles": [
-        "SPORE FEAST"
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "b85d041d-3a81-43e7-a2ba-b0b195b53e94",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Engine module",
+          "manual": 30
+        },
+        {
+          "id": "a25897c9-1a4f-4bbd-9b50-31f7b715590a",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "module",
+          "label": "Engine module",
+          "manual": 31
+        }
       ]
     },
-    "grot_light_armor": {
-      "category": "characters",
-      "count": 4,
-      "titles": [
-        "' gROT LIGHT ARMOR",
-        "GROT LIGHT ARMOR - 4-VIEW ORTHOGRAPHIC TECHNICAL SHEET",
-        "I GROT LIGHT",
-        "I GROT LIGHT ARMOR"
+    "gr-dmr": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "4034222f-86ee-413c-a48a-43ca948dffde",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "weapon-infantry",
+          "label": "DMR",
+          "manual": 40
+        },
+        {
+          "id": "37750a80-84c5-485c-94db-8bfddd976640",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "weapon-infantry",
+          "label": "DMR",
+          "manual": 41
+        }
       ]
     },
-    "grot_mothership": {
-      "category": "ships",
-      "count": 2,
-      "titles": [
-        "GROT MOTHERSHIP",
-        "gROT MOTHERSHIP - 4-VIEW ORTHOGRAPHIC"
+    "gr-infection-tool": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "6e058bb5-29ce-4f77-9542-3fb90a822ebe",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "weapon-infantry",
+          "label": "Infection tool"
+        },
+        {
+          "id": "4a1cfd7b-c75d-46f6-ab79-66d6f0c0c6b3",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "weapon-infantry",
+          "label": "Infection tool"
+        }
       ]
     },
-    "cybernex_light_armor": {
-      "category": "characters",
-      "count": 4,
-      "titles": [
-        "CYBERNEX LIGHT ARMOR",
-        "CYBERNEX LIGHT ARMOR - MODULAR EXO-ARMOR SILHOUETTE",
-        "CYBERNEX LIGHT ARMOR- 4-VIEW ORTHOGRAPHIC",
-        "CYBERNEX LIGHT ARMOR- EXO/IL1"
+    "gr-tank-gun": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "ce213a7c-d304-4a32-98c1-0a404c2bc7c9",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "weapon-vehicle",
+          "label": "Tank main"
+        },
+        {
+          "id": "e996c312-7056-4d6c-9bf2-435f12155119",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "weapon-vehicle",
+          "label": "Tank main"
+        }
       ]
     },
-    "utility_drone": {
-      "category": "vehicles",
-      "count": 1,
-      "titles": [
-        "UTILITY DRONE.S"
+    "gr-turret-torpedo": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "01ca395f-bd23-43b2-9252-a59297638be0",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Turret + seed-torpedo"
+        }
       ]
     },
-    "cybernex_capital_carrier": {
-      "category": "ships",
-      "count": 6,
-      "titles": [
-        "CYBERNEX CAPITAL CARRIER",
-        "CYBERNEX CAPITAL CARRIER - 4-VIEW ORTHOGRAPHIC",
-        "CYBERNEX CAPITAL CARRIER - CNX-9 \"SENTINEL\"",
-        "CYBERNEX CAPITAL CARRIER- CNX-1"
-      ]
-    },
-    "grot_frigate": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "gROT MULTI-CREW FRIGATE"
+    "gr-scanner-repair": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "ba11d579-8ea9-4650-a070-a1932b1d6eb6",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Scanner + repair arm"
+        },
+        {
+          "id": "f545cfc5-7c79-46af-a486-81d374ab0f74",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "module",
+          "label": "Scanner + repair arm"
+        }
       ]
     },
     "grot_claim_beacon": {
-      "category": "ships",
+      "category": "props",
       "count": 3,
       "titles": [
         "GROT OWNERSHIP CLAIM BEACON",
         "gROT OWNERSHIP CLAIM BEACON",
         "gROT OWNERSHIP CLAIM BEACON - 4-VIEW ORTHOGRAPHIC TECHNICAL SHEET"
-      ]
-    },
-    "in_iiiiiir": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "In Iiiiiir"
-      ]
-    },
-    "cybernex_fjaid_wd": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "CYBERNEX i FJAID.WD"
+      ],
+      "chat_lock": true,
+      "file_id": "nFxgT",
+      "dump_key": "generations/imagine_images/nFxgT.jpg",
+      "locked_uuids": [
+        {
+          "id": "nFxgT",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Claim beacon",
+          "dump_key": "generations/imagine_images/nFxgT.jpg"
+        }
       ]
     },
     "grot_spore_prop": {
       "category": "props",
-      "count": 1,
+      "count": 2,
       "titles": [
-        "GROT SPORE FEAST RITUAL PROP"
-      ]
-    },
-    "cybernex_utility_drone_UX-7": {
-      "category": "vehicles",
-      "count": 1,
-      "titles": [
-        "CYBERNEX UTILITY DRONE | UX-7"
+        "GROT SPORE FEAST RITUAL PROP",
+        "DDC.. GROT-SF-PROP-4V-001"
+      ],
+      "merged_from": [
+        "grot_ddc_sf_prop_4v_001"
+      ],
+      "chat_lock": true,
+      "file_id": "auivA",
+      "dump_key": "generations/rendered/auivA.jpg",
+      "locked_uuids": [
+        {
+          "id": "auivA",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "prop",
+          "label": "Spore Feast",
+          "dump_key": "generations/rendered/auivA.jpg",
+          "manual": 32
+        },
+        {
+          "id": "397a2a17-8f81-45dd-b235-c34e6ed57edc",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Spore-cloud generator"
+        },
+        {
+          "id": "77a7cc90-2b95-4100-8f0a-3b1798306104",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "module",
+          "label": "Spore-cloud generator",
+          "notes": "superseded by manual #032 auivA"
+        }
       ]
     },
     "grot_weapon_carbine": {
@@ -350,224 +957,145 @@
         "GROTTO-TI",
         "gROT TO-T1",
         "gROT TO-TI"
+      ],
+      "locked_uuids": [
+        {
+          "id": "b8e46c7f-70aa-463f-aa30-1ff714867f36",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "weapon-infantry",
+          "label": "Carbine",
+          "manual": 42
+        },
+        {
+          "id": "e09e9b53-dd95-455c-ad3b-53a2e626c708",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "weapon-infantry",
+          "label": "Carbine",
+          "manual": 43
+        }
       ]
     },
-    "grot_medium_armor": {
-      "category": "characters",
-      "count": 3,
-      "titles": [
-        "GROT MEDIUM ARMOR - 4-VIEW ORTHOGRAPHIC SHEET",
-        "gROT MEDIUM ARMOR",
-        "gROT MEDIUM ARMOR - 4-VIEW ORTHOGRAPHIC"
-      ]
-    },
-    "grot_combat_drone": {
-      "category": "vehicles",
-      "count": 2,
-      "titles": [
-        "I' gROT SWARM COMBAT DRONE",
-        "gROT SWARM COMBAT DRONE"
-      ]
-    },
-    "umeia_ie_ln": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "uMEIA T .IE; LN F."
-      ]
-    },
-    "cybernex_CNX-88": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "CYBERNEX // CNX-88"
-      ]
-    },
-    "grot_battlecruiser": {
-      "category": "ships",
-      "count": 2,
-      "titles": [
-        "GROT HEAVY BATTLECRUISER",
-        "gROT HEAVY BATTLECRUISER"
-      ]
-    },
-    "laftice_stori": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "LAfTICE STORI"
-      ]
-    },
-    "mediun_player_armor_set": {
-      "category": "characters",
-      "count": 1,
-      "titles": [
-        "MEDIUN PLAYER ARMOR SET"
-      ]
-    },
-    "tripo_id_rot_ha_801_accpt": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "TRIpo ID.. &ROT-HA-801-ACCPT"
-      ]
-    },
-    "cybernex_shield_emitter": {
+    "heavy_assault": {
       "category": "props",
       "count": 3,
       "titles": [
-        ". w CYBERNEX",
-        "CYBERNE*",
-        "CYBERNEX':"
+        "CLASS.. HEAVY ASSAULT I SIEGE DRONE",
+        "CLASS.. HEAVY I ASSAULT",
+        "CLASS. HEAWY 1$5AULT I8REAKT4FOUGH"
+      ],
+      "merged_from": [
+        "heawy_5ault_i8reakt4fough"
+      ],
+      "chat_lock": true,
+      "file_id": "nwXlo",
+      "dump_key": "generations/rendered/nwXlo.jpg",
+      "locked_uuids": [
+        {
+          "id": "nwXlo",
+          "faction": "NEUT",
+          "view": "cinematic",
+          "class": "drone",
+          "label": "Heavy assault / siege drone",
+          "dump_key": "generations/rendered/nwXlo.jpg"
+        }
       ]
     },
-    "lattice_storm": {
-      "category": "props",
-      "count": 3,
-      "titles": [
-        "\"LATTICE STORM",
-        "LATTICE STORM"
-      ]
-    },
-    "battlecruiser": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "CLASS.' HEAVY BATTLECRUISER"
-      ]
-    },
-    "cybernex_sniper_ship": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "CYBERNEX SINGLE-SEAT SNIPER"
-      ]
-    },
-    "landing_pad": {
-      "category": "environments",
-      "count": 1,
-      "titles": [
-        "NAEON DOCK LANDING PAD"
-      ]
-    },
-    "cybernex_hover_tank": {
-      "category": "vehicles",
-      "count": 2,
-      "titles": [
-        "CYBERNEX LIGHT HOVER TANK"
-      ]
-    },
-    "cybernex_logistic_drone": {
-      "category": "vehicles",
-      "count": 1,
-      "titles": [
-        "CYBERNEX LOGISTIC DRONE"
-      ]
-    },
-    "mothership": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "CLASS.. $IOMASS CAPITAL I MOTHERSHIP"
-      ]
-    },
-    "cybernex_interceptor": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "CYBERNEX SINGLE-SEAT INTERCEPTOR - DESIGN LOCK"
-      ]
-    },
-    "vehitle_tliss_support_logistic": {
+    "il_ili": {
       "category": "props",
       "count": 1,
       "titles": [
-        "VEHItLE tLISS- SUPPORT I LOGISTIC$"
-      ]
+        "Il. Ili I"
+      ],
+      "ocr_unresolved": false,
+      "ocr_unreadable": true,
+      "note": "title unrecoverable; no matching dump plate; sheet kept"
     },
-    "frigate": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "CLASS.. FRIGATE"
-      ]
-    },
-    "cybernex_freighter": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "CYBERNEX MULTI-CREW HEAVY FREIGHTER"
-      ]
-    },
-    "grot_hoverbike": {
-      "category": "vehicles",
-      "count": 1,
-      "titles": [
-        "gROT Light SlNGLE-SEAT HOVERBIKE"
-      ]
-    },
-    "capital_cruiser": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "CLASS.. CAPITAL CRUISER"
-      ]
-    },
-    "grot_hover_tank": {
-      "category": "vehicles",
-      "count": 1,
-      "titles": [
-        "gROT LIGHT HOVER TANK"
-      ]
-    },
-    "cybernex_scout_rover": {
-      "category": "vehicles",
-      "count": 2,
-      "titles": [
-        "CYBERNEX LIGHT SCOUT ROVER"
-      ]
-    },
-    "cybernex_silent_prong": {
+    "in_iiiiiir": {
       "category": "props",
       "count": 1,
       "titles": [
-        "CYBERNEX CBX-1 'SILENT PRONG\""
-      ]
-    },
-    "moba_arena": {
-      "category": "environments",
-      "count": 2,
-      "titles": [
-        "HEXAGONAL MOBA ARENA",
-        "i<I NAEON MOBA ARENA"
-      ]
-    },
-    "tower_iouter_mid_inhibi": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "TOWER IOUTER I MID I INHIBI"
-      ]
-    },
-    "owner5hip_cla1m_beacon": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "OWNER5HIP CLA1M BEAcoN"
-      ]
-    },
-    "heavy_player_armor_set": {
-      "category": "characters",
-      "count": 1,
-      "titles": [
-        "HEAVY PLAYER ARMOR SET"
-      ]
+        "In Iiiiiir"
+      ],
+      "ocr_unresolved": false,
+      "ocr_unreadable": true,
+      "note": "title unrecoverable; no matching dump plate; sheet kept"
     },
     "it4luurfi": {
       "category": "props",
       "count": 1,
       "titles": [
         "IT4LUURFI"
+      ],
+      "ocr_unresolved": false,
+      "ocr_unreadable": true,
+      "note": "title unrecoverable; no matching dump plate; sheet kept"
+    },
+    "knowledge": {
+      "category": "props",
+      "count": 2,
+      "titles": [
+        "KNOWLEDGE"
+      ]
+    },
+    "l4_cyb8rne": {
+      "category": "props",
+      "count": 1,
+      "titles": [
+        ".L4 CYB8RNÉK"
+      ],
+      "ocr_unresolved": false,
+      "ocr_unreadable": true,
+      "note": "title unrecoverable; no matching dump plate; sheet kept"
+    },
+    "lattice_storm": {
+      "category": "props",
+      "count": 4,
+      "titles": [
+        "\"LATTICE STORM",
+        "LATTICE STORM",
+        "LAfTICE STORI"
+      ],
+      "merged_from": [
+        "laftice_stori"
+      ]
+    },
+    "ownership_claim_beacon": {
+      "category": "props",
+      "count": 1,
+      "titles": [
+        "OWNER5HIP CLA1M BEAcoN"
+      ],
+      "merged_from": [
+        "owner5hip_cla1m_beacon"
+      ],
+      "chat_lock": true,
+      "file_id": "yGSDn",
+      "dump_key": "generations/rendered/yGSDn.jpg",
+      "locked_uuids": [
+        {
+          "id": "yGSDn",
+          "faction": "NEUT",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Ownership claim beacon",
+          "dump_key": "generations/rendered/yGSDn.jpg"
+        }
+      ]
+    },
+    "ritual_infrastructure": {
+      "category": "props",
+      "count": 1,
+      "titles": [
+        "RITUAL INFRASTRUCTURE"
+      ]
+    },
+    "spore_prop": {
+      "category": "props",
+      "count": 2,
+      "titles": [
+        "SPORE FEAST"
       ]
     },
     "third_throat": {
@@ -577,33 +1105,616 @@
         "THIRD THROAT"
       ]
     },
-    "cybernex_wake_drill": {
+    "thruster_cluster_neon": {
       "category": "props",
+      "count": 1,
+      "titles": [
+        "thruster"
+      ],
+      "locked_uuids": [
+        {
+          "id": "6f743074-1a2e-4f4b-b796-599166bc80b9",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Quantum-thrust + RCS"
+        },
+        {
+          "id": "26e6e753-ff0a-4a0b-b7c7-0134f23f5a63",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "module",
+          "label": "Quantum-thrust + RCS"
+        }
+      ]
+    },
+    "tower_iouter_mid_inhibi": {
+      "category": "props",
+      "count": 1,
+      "titles": [
+        "TOWER IOUTER I MID I INHIBI"
+      ]
+    },
+    "ty_jjbllv": {
+      "category": "props",
+      "count": 1,
+      "titles": [
+        "1*•.ty..4!¥JJblLV.¢1 4>. • •"
+      ],
+      "ocr_unresolved": false,
+      "ocr_unreadable": true,
+      "note": "title unrecoverable; no matching dump plate; sheet kept"
+    },
+    "umeia_ie_ln": {
+      "category": "props",
+      "count": 1,
+      "titles": [
+        "uMEIA T .IE; LN F."
+      ],
+      "ocr_unresolved": false,
+      "ocr_unreadable": true,
+      "note": "title unrecoverable; no matching dump plate; sheet kept"
+    },
+    "utility_bay": {
+      "category": "props",
+      "count": 1,
+      "titles": [
+        "UTILITY BAY 2"
+      ]
+    },
+    "wake_drill": {
+      "category": "props",
+      "count": 1,
+      "titles": [
+        "WAKE DRILL"
+      ]
+    },
+    "battlecruiser": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "CLASS.' HEAVY BATTLECRUISER"
+      ],
+      "unfactioned_duplicate": true,
+      "see": [
+        "cybernex_battlecruiser_CNH-09",
+        "grot_battlecruiser"
+      ]
+    },
+    "battleship": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "CLASS.. BATTLESHIP"
+      ],
+      "unfactioned_duplicate": true,
+      "see": [
+        "cybernex_battleship_CNX-9",
+        "grot_battleship"
+      ]
+    },
+    "capital_carrier": {
+      "category": "ships",
+      "count": 3,
+      "titles": [
+        "CLASS.- CAPITAL CARRIER",
+        "CLASS. tAPlTAI tARRIER",
+        "CLASS.. CAPITAL I ¢ARRIER"
+      ],
+      "merged_from": [
+        "tapltai_tarrier",
+        "capital_arrier"
+      ],
+      "unfactioned_duplicate": true,
+      "see": [
+        "cybernex_capital_carrier",
+        "grot_capital_carrier"
+      ]
+    },
+    "capital_cruiser": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "CLASS.. CAPITAL CRUISER"
+      ],
+      "unfactioned_duplicate": true,
+      "see": [
+        "cybernex_capital_cruiser_CNX-9",
+        "grot_capital_cruiser"
+      ]
+    },
+    "cybernex_battlecruiser_CNH-09": {
+      "category": "ships",
       "count": 2,
       "titles": [
-        "CYBERNEX WAKE DRILL",
-        "I CYBERNEX WAKE"
+        "CYBERNEX HEAVY BATTLECRUISER",
+        "CYBERNEX HEAVY BATTLECRUISER - CNH-09"
+      ],
+      "chat_lock": true,
+      "file_id": "1TV3u",
+      "dump_key": "generations/rendered/1TV3u.jpg",
+      "locked_uuids": [
+        {
+          "id": "1TV3u",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Heavy Battlecruiser",
+          "dump_key": "generations/rendered/1TV3u.jpg"
+        }
       ]
     },
-    "heawy_5ault_i8reakt4fough": {
+    "cybernex_battleship_CNX-9": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "CYBERNEX BATTLESHIP - CNX-9 'NEXUS BLACK'"
+      ],
+      "chat_lock": true,
+      "file_id": "kfNYX",
+      "dump_key": "generations/rendered/kfNYX.jpg",
+      "locked_uuids": [
+        {
+          "id": "kfNYX",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Battleship",
+          "dump_key": "generations/rendered/kfNYX.jpg"
+        }
+      ]
+    },
+    "cybernex_capital_carrier": {
+      "category": "ships",
+      "count": 6,
+      "titles": [
+        "CYBERNEX CAPITAL CARRIER",
+        "CYBERNEX CAPITAL CARRIER - 4-VIEW ORTHOGRAPHIC",
+        "CYBERNEX CAPITAL CARRIER - CNX-9 \"SENTINEL\"",
+        "CYBERNEX CAPITAL CARRIER- CNX-1"
+      ],
+      "locked_uuids": [
+        {
+          "id": "3c3e054e-1968-41ac-a630-bfc2eb424f01",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Carrier side hangars"
+        }
+      ]
+    },
+    "cybernex_capital_cruiser_CNX-9": {
+      "category": "ships",
+      "count": 5,
+      "titles": [
+        "CYBERNEX CAPITAL CRUISER - CNX-9",
+        "CYBERNEX CAPITAL CRUISER - CNX-9 'HEPHAESTUS'",
+        "CYBERNEX CAPITAL CRUISER - CNX-9 'SENTINEL'",
+        "CYBERNEX CAPITAL CRUISER . CNX-9 \"HEPHAESTUS'",
+        "CYBERNEX CAPITAL CRUISER- CNX-9"
+      ],
+      "locked_uuids": [
+        {
+          "id": "c9eb72ec-7603-48f9-98ff-93f9c2b9cead",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Cruiser"
+        }
+      ]
+    },
+    "cybernex_corvette_CNX-77": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "CYBERNEX MULTI-CREW CORVETTE - CNX-77"
+      ],
+      "chat_lock": true,
+      "file_id": "7Ypuk",
+      "dump_key": "generations/rendered/7Ypuk.jpg",
+      "locked_uuids": [
+        {
+          "id": "7Ypuk",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-multicrew",
+          "label": "Corvette",
+          "dump_key": "generations/rendered/7Ypuk.jpg"
+        }
+      ]
+    },
+    "cybernex_flagship": {
+      "category": "ships",
+      "count": 6,
+      "titles": [
+        "CYBERNEX FLAGSHIP - CNX-1",
+        "CYBERNEX FLAGSHIP . CNX-1",
+        "CYBERNEX FLAGSHIP . CNX-9 \"NEXUS PRIME\"",
+        "CYBERNEX FLAGSHIP DESIGN LOCK",
+        "CYBERNEX FLAGSHIP- CNX-1",
+        "CYBERNEX FLAGSHIP- CNX-I"
+      ],
+      "locked_uuids": [
+        {
+          "id": "c535edd0-f3c2-48cf-b70b-ce859d82ca2f",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Flagship"
+        }
+      ]
+    },
+    "cybernex_freighter": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "CYBERNEX MULTI-CREW HEAVY FREIGHTER"
+      ],
+      "chat_lock": true,
+      "file_id": "oEnF2",
+      "dump_key": "generations/rendered/oEnF2.jpg",
+      "locked_uuids": [
+        {
+          "id": "oEnF2",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-multicrew",
+          "label": "Heavy Freighter",
+          "dump_key": "generations/rendered/oEnF2.jpg"
+        }
+      ]
+    },
+    "cybernex_frigate": {
+      "category": "ships",
+      "count": 5,
+      "titles": [
+        "CYBERNEX MULTI-CREW FRIGATE",
+        "CYBERNEX MULTI-CREW FRIGATE - CN-FR102",
+        "CYBERNEX MULTI-CREW FRIGATE - CNX-7 'NEXUS'",
+        "CYBERNEX MULTI-CREW FRIGATE - DESIGN LOCK (ORTHOGRAPHIC)",
+        "CYBERNEX MULTI-CREW FRIGATE- 4-VIEW ORTHOGRAPHIC"
+      ],
+      "chat_lock": true,
+      "file_id": "kcldc",
+      "dump_key": "generations/rendered/kcldc.jpg",
+      "locked_uuids": [
+        {
+          "id": "kcldc",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-multicrew",
+          "label": "Frigate",
+          "dump_key": "generations/rendered/kcldc.jpg"
+        }
+      ]
+    },
+    "cybernex_gunship": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "CYBERNEX MULTI-CREW GUNSHIP"
+      ],
+      "chat_lock": true,
+      "file_id": "l5qg1",
+      "dump_key": "generations/rendered/l5qg1.jpg",
+      "locked_uuids": [
+        {
+          "id": "l5qg1",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-multicrew",
+          "label": "Gunship",
+          "dump_key": "generations/rendered/l5qg1.jpg"
+        }
+      ]
+    },
+    "cybernex_interceptor": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "CYBERNEX SINGLE-SEAT INTERCEPTOR - DESIGN LOCK"
+      ],
+      "chat_lock": true,
+      "file_id": null,
+      "dump_key": null,
+      "notes": "QdM8V unbound — plate is gROT medium drone, not CX interceptor. Rebound to grot_medium_drone.",
+      "locked_uuids": []
+    },
+    "cybernex_fighter": {
+      "category": "ships",
+      "count": 0,
+      "titles": [
+        "CYBERNEX T1 FIGHTER"
+      ],
+      "ocr": false,
+      "source": "batch20_gap",
+      "locked_uuids": [
+        {
+          "id": "4ca9faf0-e533-403b-bc6e-2f6263d6a4d7",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-single",
+          "label": "Fighter"
+        },
+        {
+          "id": "eb126daa-d380-4db6-bc95-9fde9e4e6846",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "ship-single",
+          "label": "Fighter"
+        }
+      ]
+    },
+    "cybernex_hand_utility": {
       "category": "props",
-      "count": 1,
+      "count": 0,
       "titles": [
-        "CLASS. HEAWY 1$5AULT I8REAKT4FOUGH"
+        "CYBERNEX HAND UTILITY"
+      ],
+      "ocr": false,
+      "source": "manual_rebuild",
+      "chat_lock": true,
+      "notes": "Rebound off cx-firewall-gadget. Plate is a hand utility, not a firewall gun.",
+      "locked_uuids": [
+        {
+          "id": "641c9c0c-45bd-41fa-a3fc-875e0b99fc24",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "gadget",
+          "label": "Hand utility",
+          "manual": 24
+        }
       ]
     },
-    "cybernex_CNX-98B": {
-      "category": "props",
-      "count": 1,
+    "cybernex_heavy_fighter": {
+      "category": "ships",
+      "count": 0,
       "titles": [
-        "CYBERNEX CNX-98B"
+        "CYBERNEX HEAVY FIGHTER"
+      ],
+      "ocr": false,
+      "source": "manual_rebuild",
+      "chat_lock": true,
+      "file_id": "7GPCx",
+      "dump_key": "generations/rendered/7GPCx.jpg",
+      "notes": "New class: multicrew small ship. Not T1 single-seat fighter.",
+      "locked_uuids": [
+        {
+          "id": "7GPCx",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-small-multicrew",
+          "label": "Heavy fighter",
+          "dump_key": "generations/rendered/7GPCx.jpg",
+          "manual": 20
+        },
+        {
+          "id": "f9b60ddc-94d9-4705-87dc-d784f9cb01a5",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "ship-small-multicrew",
+          "label": "Heavy fighter",
+          "manual": 21
+        }
       ]
     },
-    "light_player_armor_set": {
-      "category": "characters",
+    "cybernex_bomber": {
+      "category": "ships",
+      "count": 0,
+      "titles": [
+        "CYBERNEX T1 BOMBER"
+      ],
+      "ocr": false,
+      "source": "batch20_gap",
+      "locked_uuids": [
+        {
+          "id": "6c3799b6-f741-4ab2-aa5c-a86d564c5493",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-single",
+          "label": "Bomber"
+        },
+        {
+          "id": "78162909-d59f-47be-a58c-c7fde0f19ad8",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "ship-single",
+          "label": "Bomber"
+        }
+      ]
+    },
+    "cybernex_support": {
+      "category": "ships",
+      "count": 0,
+      "titles": [
+        "CYBERNEX SUPPORT"
+      ],
+      "ocr": false,
+      "source": "batch20_gap",
+      "locked_uuids": [
+        {
+          "id": "877b315c-e073-4cf6-a455-2483332d63f4",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-multi",
+          "label": "Support"
+        },
+        {
+          "id": "7c53217f-5bf1-4dc3-80be-dfe7612e997c",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "ship-multi",
+          "label": "Support"
+        }
+      ]
+    },
+    "cybernex_stealth": {
+      "category": "ships",
+      "count": 0,
+      "titles": [
+        "CYBERNEX STEALTH"
+      ],
+      "ocr": false,
+      "source": "batch20_gap",
+      "notes": "Adapted from existing dump LsBZ6; class template stealth_ship (eBFi8/LEThZ) stays unfactioned.",
+      "locked_uuids": [
+        {
+          "id": "33ad6f0c-b9cc-427a-ab4f-aee596b91b10",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-single",
+          "label": "Stealth"
+        },
+        {
+          "id": "70a6d3e1-8cc9-4df4-9fe8-747b00704eff",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "ship-single",
+          "label": "Stealth"
+        }
+      ]
+    },
+    "grot_scout": {
+      "category": "ships",
+      "count": 0,
+      "titles": [
+        "gROT SCOUT"
+      ],
+      "ocr": false,
+      "source": "batch20_gap",
+      "locked_uuids": [
+        {
+          "id": "ada7fd55-bc6e-448a-909c-79ffb31fdf5d",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-single",
+          "label": "Scout"
+        },
+        {
+          "id": "0df4f683-60ce-4da3-8d21-8fff1a027bfb",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "ship-single",
+          "label": "Scout"
+        }
+      ]
+    },
+    "grot_sniper": {
+      "category": "ships",
+      "count": 0,
+      "titles": [
+        "gROT SNIPER"
+      ],
+      "ocr": false,
+      "source": "batch20_gap",
+      "locked_uuids": [
+        {
+          "id": "05073615-7510-408d-8dfe-4dbe7d5357e4",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-single",
+          "label": "Sniper"
+        },
+        {
+          "id": "ad12b79f-bf19-4a1e-b446-af612399b0b0",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "ship-single",
+          "label": "Sniper"
+        }
+      ]
+    },
+    "grot_medium_drone": {
+      "category": "vehicles",
       "count": 1,
       "titles": [
-        "LIGHT PLAYER ARMOR SET"
+        "gROT MEDIUM DRONE"
+      ],
+      "ocr": false,
+      "source": "batch20_rebind",
+      "chat_lock": true,
+      "file_id": "QdM8V",
+      "dump_key": "generations/rendered/QdM8V.jpg",
+      "notes": "Rebound from mislabeled CX interceptor title. Plate is gROT.",
+      "locked_uuids": [
+        {
+          "id": "QdM8V",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "drone",
+          "label": "Medium drone",
+          "dump_key": "generations/rendered/QdM8V.jpg"
+        },
+        {
+          "id": "f60f0126-9881-4ffd-836d-ebdb1d07a64b",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "drone",
+          "label": "Medium drone"
+        }
+      ]
+    },
+    "cybernex_mothership": {
+      "category": "ships",
+      "count": 4,
+      "titles": [
+        "CYBERNEX MOTHERSHIP",
+        "CYBERNEX MOTHERSHIP - 4-VIEW ORTHOGRAPHIC",
+        "CYBERNEX MOTHERSHIP - DESIGN LOCK",
+        "CYBERNEX MOTHERSHIP- CNX-1"
+      ],
+      "chat_lock": true,
+      "file_id": "jfwHn",
+      "dump_key": "generations/rendered/jfwHn.jpg",
+      "locked_uuids": [
+        {
+          "id": "jfwHn",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Mothership",
+          "dump_key": "generations/rendered/jfwHn.jpg"
+        }
+      ]
+    },
+    "cybernex_scout_single_seat_recon_light": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "CYBERNEX SCOUT . SINGLE-SEAT RECON / LIGHT SCOUT CRAFT"
+      ],
+      "chat_lock": true,
+      "file_id": "kGA5q",
+      "dump_key": "generations/rendered/kGA5q.jpg",
+      "locked_uuids": [
+        {
+          "id": "kGA5q",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ship-single",
+          "label": "Scout",
+          "dump_key": "generations/rendered/kGA5q.jpg"
+        }
+      ]
+    },
+    "cybernex_sniper_ship": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "CYBERNEX SINGLE-SEAT SNIPER"
+      ],
+      "chat_lock": true,
+      "file_id": "82c99f90-ef80-4e30-9fd5-ff2c9aec3c9d",
+      "dump_key": "generations/imagine_images/307rv.jpg",
+      "locked_uuids": [
+        {
+          "id": "82c99f90-ef80-4e30-9fd5-ff2c9aec3c9d",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "ship-single",
+          "label": "Sniper",
+          "dump_key": "generations/imagine_images/307rv.jpg"
+        }
       ]
     },
     "cybernex_starter_hull_cyan_lattice_style": {
@@ -613,25 +1724,237 @@
         "NAEON STARTER HULL - CYBERNEX CYAN LATTICE STYLE"
       ]
     },
-    "grot_ddc_sf_prop_4v_001": {
-      "category": "props",
+    "fighter": {
+      "category": "ships",
       "count": 1,
       "titles": [
-        "DDC.. GROT-SF-PROP-4V-001"
+        "NAEON T1 FIGHTER"
+      ],
+      "unfactioned_duplicate": true,
+      "see": [
+        "grot_fighter"
       ]
     },
-    "cybernex_feline_scout": {
-      "category": "props",
+    "freighter": {
+      "category": "ships",
       "count": 1,
       "titles": [
-        "CYBERNEX FELINE SCOUT"
+        "CLASS.. HEAVY FREIGHTER"
+      ],
+      "unfactioned_duplicate": true,
+      "see": [
+        "cybernex_freighter",
+        "grot_freighter"
       ]
     },
-    "combat_drone": {
-      "category": "characters",
+    "frigate": {
+      "category": "ships",
       "count": 1,
       "titles": [
-        "SWARM COMBAT DRONE"
+        "CLASS.. FRIGATE"
+      ],
+      "unfactioned_duplicate": true,
+      "see": [
+        "cybernex_frigate",
+        "grot_frigate"
+      ]
+    },
+    "grot_battlecruiser": {
+      "category": "ships",
+      "count": 2,
+      "titles": [
+        "GROT HEAVY BATTLECRUISER",
+        "gROT HEAVY BATTLECRUISER"
+      ],
+      "chat_lock": true,
+      "file_id": "7o4tp",
+      "dump_key": "generations/rendered/7o4tp.jpg",
+      "locked_uuids": [
+        {
+          "id": "7o4tp",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Heavy Battlecruiser",
+          "dump_key": "generations/rendered/7o4tp.jpg"
+        }
+      ]
+    },
+    "grot_battleship": {
+      "category": "ships",
+      "count": 2,
+      "titles": [
+        "GROT BATTLESHIP - ASYMMETRIC ELONGATED CONFIGURATION",
+        "GROT BATTLESHIP - ELONGATED ASYMMETRIC (CINEMATIC DESIGN LOCK)"
+      ],
+      "chat_lock": true,
+      "file_id": "fCrw7",
+      "dump_key": "generations/rendered/fCrw7.jpg",
+      "locked_uuids": [
+        {
+          "id": "fCrw7",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Battleship",
+          "dump_key": "generations/rendered/fCrw7.jpg"
+        },
+        {
+          "id": "3guBl",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "ship-capital",
+          "label": "Battleship",
+          "dump_key": "generations/rendered/3guBl.jpg",
+          "manual": 5
+        },
+        {
+          "id": "3a8de11f-6f48-42b4-887b-4e0c34e41ca9",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Battleship",
+          "manual": 6
+        }
+      ]
+    },
+    "grot_bomber": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "gROT SINGLE-SEAT BOMBER - ASYMMETRIC ELONGATED CONFIGURATION"
+      ],
+      "chat_lock": true,
+      "file_id": "JJUvM",
+      "dump_key": "generations/rendered/JJUvM.jpg",
+      "locked_uuids": [
+        {
+          "id": "JJUvM",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-single",
+          "label": "Bomber",
+          "dump_key": "generations/rendered/JJUvM.jpg"
+        }
+      ]
+    },
+    "grot_drone_carrier": {
+      "category": "ships",
+      "count": 0,
+      "titles": [
+        "GROT DRONE CARRIER"
+      ],
+      "ocr": false,
+      "source": "manual_rebuild",
+      "chat_lock": true,
+      "file_id": "B2g0Z",
+      "dump_key": "generations/rendered/B2g0Z.jpg",
+      "notes": "Distinct from grot_capital_carrier #001 1p69s. User label: drone carrier.",
+      "locked_uuids": [
+        {
+          "id": "B2g0Z",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Drone carrier",
+          "dump_key": "generations/rendered/B2g0Z.jpg",
+          "manual": 33
+        }
+      ]
+    },
+    "grot_capital_carrier": {
+      "category": "ships",
+      "count": 3,
+      "titles": [
+        "GROT CAPITAL CARRIER",
+        "GROT CAPITAL CARRIER - 4 VIEW ORTHOGRAPHIC",
+        "gROT CAPITAL CARRIER"
+      ],
+      "locked_uuids": [
+        {
+          "id": "1p69s",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Carrier",
+          "dump_key": "generations/rendered/1p69s.jpg",
+          "manual": 1
+        },
+        {
+          "id": "10d946d1-9954-4d9e-b02b-14b2905c9c8d",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "ship-capital",
+          "label": "Carrier",
+          "manual": 2
+        },
+        {
+          "id": "390de03e-2dfc-4b4f-ac4c-dec037fa2ef5",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "ship-capital",
+          "label": "Carrier",
+          "notes": "old UUID, file missing — not in manual catalog until verified"
+        }
+      ]
+    },
+    "grot_capital_cruiser": {
+      "category": "ships",
+      "count": 6,
+      "titles": [
+        "GROT CAPITAL CRUISER - 4-VIEW ORTHOGRAPHIC",
+        "GROT CAPITAL CRUISER ASYMMETRIC CONFIGURATION",
+        "GROT CAPITAL CRUISER- ASYMMETRIC 4-VIEW ORTHOGRAPHIC",
+        "Ii/ gROT CAPITAL CRUISER",
+        "S I GROT CAPITAL CRUISER",
+        "gROT CAPITAL CRUISER"
+      ],
+      "locked_uuids": [
+        {
+          "id": "2x5uF",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "ship-capital",
+          "label": "Cruiser",
+          "dump_key": "generations/rendered/2x5uF.jpg",
+          "manual": 3
+        },
+        {
+          "id": "763a575f-4c77-4ed8-a678-6e2057ff3af6",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Cruiser",
+          "manual": 4
+        },
+        {
+          "id": "9633a0a4-98a5-4ea0-8cad-78798f1cbce6",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Cruiser",
+          "notes": "old UUID, file missing — not in manual catalog until verified"
+        }
+      ]
+    },
+    "grot_corvette": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "gROT-CLASS MULTI-CREW CORVETTE"
+      ],
+      "chat_lock": true,
+      "file_id": "MeMG7",
+      "dump_key": "generations/rendered/MeMG7.jpg",
+      "locked_uuids": [
+        {
+          "id": "MeMG7",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-multicrew",
+          "label": "Corvette",
+          "dump_key": "generations/rendered/MeMG7.jpg"
+        }
       ]
     },
     "grot_fighter": {
@@ -639,6 +1962,429 @@
       "count": 1,
       "titles": [
         "gROT SINGLE-SEAT FIGHTER"
+      ],
+      "chat_lock": true,
+      "file_id": "1HmNd",
+      "dump_key": "generations/rendered/1HmNd.jpg",
+      "locked_uuids": [
+        {
+          "id": "1HmNd",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-single",
+          "label": "Fighter",
+          "dump_key": "generations/rendered/1HmNd.jpg"
+        }
+      ]
+    },
+    "grot_flagship": {
+      "category": "ships",
+      "count": 5,
+      "titles": [
+        "\"%,41 GROT FLAGSHIP",
+        "GROT FLAGSHIP",
+        "GROT FLAGSHIP - ASYMMETRIC ICANNONICAL 4-VIEW)",
+        "I GRDT FLAGSHIP- 4-VIEW ORTHOGRAPHIC",
+        "gROT FLAGSHIP- ASYMMETRIC CONFIGURATION"
+      ],
+      "chat_lock": true,
+      "file_id": "COmSz",
+      "dump_key": "generations/rendered/COmSz.jpg",
+      "locked_uuids": [
+        {
+          "id": "COmSz",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Flagship",
+          "dump_key": "generations/rendered/COmSz.jpg",
+          "manual": 36
+        },
+        {
+          "id": "730ceba8-94f4-4207-a9b1-cce2489a1848",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "ship-capital",
+          "label": "Flagship",
+          "manual": 37
+        },
+        {
+          "id": "e0d7837c-0d25-4c70-92f6-82bc4f478f84",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Flagship",
+          "notes": "superseded by manual #036 COmSz"
+        }
+      ]
+    },
+    "grot_freighter": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "GROT MULTI-CREW HEAVY FREIGHTER- 4-VIEW ORTHOGRAPHIC"
+      ],
+      "chat_lock": true,
+      "file_id": "8WNxd",
+      "dump_key": "generations/rendered/8WNxd.jpg",
+      "locked_uuids": [
+        {
+          "id": "8WNxd",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-multicrew",
+          "label": "Heavy Freighter",
+          "dump_key": "generations/rendered/8WNxd.jpg"
+        }
+      ]
+    },
+    "grot_frigate": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "gROT MULTI-CREW FRIGATE"
+      ],
+      "chat_lock": true,
+      "file_id": "QZsJN",
+      "dump_key": "generations/rendered/QZsJN.jpg",
+      "locked_uuids": [
+        {
+          "id": "QZsJN",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "ship-multicrew",
+          "label": "Frigate",
+          "dump_key": "generations/rendered/QZsJN.jpg"
+        }
+      ]
+    },
+    "grot_gunship": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "GROT MULTI-CREW GUNSHIP"
+      ],
+      "chat_lock": true,
+      "file_id": "7zIwZ",
+      "dump_key": "generations/rendered/7zIwZ.jpg",
+      "locked_uuids": [
+        {
+          "id": "7zIwZ",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-multicrew",
+          "label": "Gunship",
+          "dump_key": "generations/rendered/7zIwZ.jpg"
+        }
+      ]
+    },
+    "grot_interceptor": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "GROT INTERCEPTOR"
+      ],
+      "chat_lock": true,
+      "file_id": "l6zkI",
+      "dump_key": "generations/rendered/l6zkI.jpg",
+      "locked_uuids": [
+        {
+          "id": "l6zkI",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-single",
+          "label": "Interceptor",
+          "dump_key": "generations/rendered/l6zkI.jpg"
+        }
+      ]
+    },
+    "grot_mothership": {
+      "category": "ships",
+      "count": 3,
+      "titles": [
+        "GROT MOTHERSHIP",
+        "gROT MOTHERSHIP - 4-VIEW ORTHOGRAPHIC",
+        "DOCUMENT' GROT-MS-4V-ORTHO"
+      ],
+      "merged_from": [
+        "grot_document_ms_4v_ortho"
+      ],
+      "chat_lock": true,
+      "file_id": "1lgj1",
+      "dump_key": "generations/rendered/1lgj1.jpg",
+      "locked_uuids": [
+        {
+          "id": "1lgj1",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-capital",
+          "label": "Mothership",
+          "dump_key": "generations/rendered/1lgj1.jpg"
+        }
+      ]
+    },
+    "grot_support_ship": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "gROT MULTI-CREW SUPPORT SHIP - 4-VIEW ORTHOGRAPHIC"
+      ],
+      "chat_lock": true,
+      "file_id": "mmaTy",
+      "dump_key": "generations/rendered/mmaTy.jpg",
+      "locked_uuids": [
+        {
+          "id": "mmaTy",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ship-multicrew",
+          "label": "Support",
+          "dump_key": "generations/rendered/mmaTy.jpg"
+        }
+      ]
+    },
+    "gunship": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "CLASS.. MULTI-CREW GUNSHIP"
+      ],
+      "unfactioned_duplicate": true,
+      "see": [
+        "cybernex_gunship",
+        "grot_gunship"
+      ]
+    },
+    "mothership": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "CLASS.. $IOMASS CAPITAL I MOTHERSHIP"
+      ],
+      "unfactioned_duplicate": true,
+      "see": [
+        "cybernex_mothership",
+        "grot_mothership"
+      ]
+    },
+    "sniper_ship": {
+      "category": "ships",
+      "count": 1,
+      "titles": [
+        "SINGLE-SEAT SNIPER SHIP"
+      ],
+      "unfactioned_duplicate": true,
+      "see": [
+        "cybernex_sniper_ship"
+      ],
+      "chat_lock": true,
+      "file_id": "cHfB3",
+      "dump_key": "generations/rendered/cHfB3.jpg",
+      "locked_uuids": [
+        {
+          "id": "cHfB3",
+          "faction": "NEUT",
+          "view": "cinematic",
+          "class": "ship-single",
+          "label": "Sniper ship (class)",
+          "dump_key": "generations/rendered/cHfB3.jpg"
+        }
+      ]
+    },
+    "stealth_ship": {
+      "category": "ships",
+      "count": 2,
+      "titles": [
+        "SINGLE-SEA T STEALTH SHIP 11 4-VIEII OR THOGRAPHIC",
+        "SINGLE-SEAT STEALTH SHIP"
+      ],
+      "unfactioned_duplicate": true,
+      "chat_lock": true,
+      "file_id": "LEThZ",
+      "dump_key": "generations/rendered/LEThZ.jpg",
+      "locked_uuids": [
+        {
+          "id": "LEThZ",
+          "faction": "NEUT",
+          "view": "ortho",
+          "class": "ship-single",
+          "label": "Stealth ship (class)",
+          "dump_key": "generations/rendered/LEThZ.jpg"
+        },
+        {
+          "id": "eBFi8",
+          "faction": "NEUT",
+          "view": "cinematic",
+          "class": "ship-single",
+          "label": "Stealth ship (class)",
+          "dump_key": "generations/rendered/eBFi8.jpg"
+        }
+      ]
+    },
+    "combat_drone": {
+      "category": "vehicles",
+      "count": 2,
+      "titles": [
+        "SWARM COMBAT DRONE",
+        "CLA%S.. SWARII ¢OMBAT DRONE"
+      ],
+      "merged_from": [
+        "cla_swarii_ombat_drone"
+      ]
+    },
+    "cybernex_apc": {
+      "category": "vehicles",
+      "count": 1,
+      "titles": [
+        "CYBERNEX APC / IFV"
+      ],
+      "locked_uuids": [
+        {
+          "id": "024be4f6-45a0-43fa-bc62-055f920ec7ab",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "weapon-vehicle",
+          "label": "APC gun",
+          "manual": 23
+        },
+        {
+          "id": "a077f3ce-615f-4bb3-bdc7-5bbfcb5bc859",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "weapon-vehicle",
+          "label": "APC gun",
+          "manual": 29
+        }
+      ]
+    },
+    "cybernex_hover_tank": {
+      "category": "vehicles",
+      "count": 2,
+      "titles": [
+        "CYBERNEX LIGHT HOVER TANK"
+      ],
+      "chat_lock": true,
+      "locked_uuids": [
+        {
+          "id": "576b48ad-426c-4b15-8292-fdd117ff43c3",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "weapon-vehicle",
+          "label": "Hover cannon",
+          "manual": 25
+        }
+      ]
+    },
+    "cybernex_hoverbike": {
+      "category": "vehicles",
+      "count": 2,
+      "titles": [
+        "CYBERNEX LIGHT - SINGLE-SEAT HOVERBIKE"
+      ],
+      "chat_lock": true,
+      "file_id": "WrLuh",
+      "dump_key": "generations/imagine_images/WrLuh.jpg",
+      "locked_uuids": [
+        {
+          "id": "WrLuh",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "ground",
+          "label": "Hoverbike",
+          "dump_key": "generations/imagine_images/WrLuh.jpg"
+        }
+      ]
+    },
+    "cybernex_light_drone": {
+      "category": "vehicles",
+      "count": 1,
+      "titles": [
+        "CYBERNEX LIGHT DRONE"
+      ],
+      "chat_lock": true,
+      "file_id": "EKJFX",
+      "dump_key": "generations/rendered/EKJFX.jpg",
+      "locked_uuids": [
+        {
+          "id": "EKJFX",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "drone",
+          "label": "Light drone",
+          "dump_key": "generations/rendered/EKJFX.jpg"
+        }
+      ]
+    },
+    "cybernex_logistic_drone": {
+      "category": "vehicles",
+      "count": 1,
+      "titles": [
+        "CYBERNEX LOGISTIC DRONE"
+      ],
+      "chat_lock": true,
+      "file_id": "oAWSV",
+      "dump_key": "generations/rendered/oAWSV.jpg",
+      "locked_uuids": [
+        {
+          "id": "oAWSV",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "drone",
+          "label": "Logistic drone",
+          "dump_key": "generations/rendered/oAWSV.jpg"
+        }
+      ]
+    },
+    "cybernex_medium_drone": {
+      "category": "vehicles",
+      "count": 1,
+      "titles": [
+        "CYBERNEX MEDIUM DRONE - 4-VIEW ORTHOGRAPHIC"
+      ],
+      "chat_lock": true,
+      "file_id": "HT5Yn",
+      "dump_key": "generations/rendered/HT5Yn.jpg",
+      "locked_uuids": [
+        {
+          "id": "HT5Yn",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "drone",
+          "label": "Medium drone",
+          "dump_key": "generations/rendered/HT5Yn.jpg"
+        }
+      ]
+    },
+    "cybernex_scout_rover": {
+      "category": "vehicles",
+      "count": 2,
+      "titles": [
+        "CYBERNEX LIGHT SCOUT ROVER"
+      ],
+      "chat_lock": true,
+      "file_id": "DvC3C",
+      "dump_key": "generations/rendered/DvC3C.jpg",
+      "locked_uuids": [
+        {
+          "id": "DvC3C",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "ground",
+          "label": "Scout rover",
+          "dump_key": "generations/rendered/DvC3C.jpg"
+        }
+      ]
+    },
+    "cybernex_utility_drone_CNX-7": {
+      "category": "vehicles",
+      "count": 3,
+      "titles": [
+        "CYBERNEX UTILITY DRONE // CNX-U7",
+        "CYBERNEX UTILITY DRONE- CNX-7",
+        "CYBERNEX UTILITY DRONE | UX-7"
+      ],
+      "merged_from": [
+        "cybernex_utility_drone_UX-7"
       ]
     },
     "cybernex_walker": {
@@ -649,218 +2395,22 @@
         "CYBERNEX MECH / WALKER- CNX-WLK/01",
         "CYBERNEX MECH I WALKER - DESIGN LOCK IAPPROVED CINEMATICI",
         "CYBERNEX WALKER - 4-VIEW ORTHOGRAPHIC"
-      ]
-    },
-    "cybernex_gunship": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "CYBERNEX MULTI-CREW GUNSHIP"
-      ]
-    },
-    "wake_drill": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "WAKE DRILL"
-      ]
-    },
-    "cybefinex": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "CYBEfiNEX"
-      ]
-    },
-    "cybernex_light_drone": {
-      "category": "vehicles",
-      "count": 1,
-      "titles": [
-        "CYBERNEX LIGHT DRONE"
-      ]
-    },
-    "rot_support_logistics_vehicle": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "ROT SUPPORT I LOGISTICS VEHICLE"
-      ]
-    },
-    "fighter": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "NAEON T1 FIGHTER"
-      ]
-    },
-    "cybernex_CNX-9B": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "CYBERNEX CNX-9B"
-      ]
-    },
-    "battleship": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "CLASS.. BATTLESHIP"
-      ]
-    },
-    "cybernex_defense_systems": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "O CYBERNEX DEFENSE SYSTEMS"
-      ]
-    },
-    "capital_arrier": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "CLASS.. CAPITAL I ¢ARRIER"
-      ]
-    },
-    "grot_walker": {
-      "category": "vehicles",
-      "count": 1,
-      "titles": [
-        "gROT MECH I WALKER"
-      ]
-    },
-    "grot_freighter": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "GROT MULTI-CREW HEAVY FREIGHTER- 4-VIEW ORTHOGRAPHIC"
-      ]
-    },
-    "logisflc_drowe": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "LOGISflC DROWE"
-      ]
-    },
-    "cla_swarii_ombat_drone": {
-      "category": "vehicles",
-      "count": 1,
-      "titles": [
-        "CLA%S.. SWARII ¢OMBAT DRONE"
-      ]
-    },
-    "tapltai_tarrier": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "CLASS. tAPlTAI tARRIER"
-      ]
-    },
-    "grot_support_ship": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "gROT MULTI-CREW SUPPORT SHIP - 4-VIEW ORTHOGRAPHIC"
-      ]
-    },
-    "heavy_drone": {
-      "category": "vehicles",
-      "count": 1,
-      "titles": [
-        "CLASS.' ASSAVLT I HEAVY DRONE"
-      ]
-    },
-    "grot_crawler": {
-      "category": "vehicles",
-      "count": 1,
-      "titles": [
-        "gROT LIGHT CRAWLER SCOUT"
-      ]
-    },
-    "sniper_ship": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "SINGLE-SEAT SNIPER SHIP"
-      ]
-    },
-    "cybernex_CNX-1": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "CYBERNEX CNX-1"
-      ]
-    },
-    "stealth_ship": {
-      "category": "ships",
-      "count": 2,
-      "titles": [
-        "SINGLE-SEA T STEALTH SHIP 11 4-VIEII OR THOGRAPHIC",
-        "SINGLE-SEAT STEALTH SHIP"
-      ]
-    },
-    "gunship": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "CLASS.. MULTI-CREW GUNSHIP"
-      ]
-    },
-    "cybernex_scout_single_seat_recon_light": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "CYBERNEX SCOUT . SINGLE-SEAT RECON / LIGHT SCOUT CRAFT"
-      ]
-    },
-    "cybeftinea_llc": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "CYBEftINEA LlC.p.r"
-      ]
-    },
-    "cybernex_apc": {
-      "category": "vehicles",
-      "count": 1,
-      "titles": [
-        "CYBERNEX APC / IFV"
-      ]
-    },
-    "cybernex_weapon_carbine": {
-      "category": "props",
-      "count": 3,
-      "titles": [
-        "CYBERNEX TO SIDEARM",
-        "CYBERNEX TO-TI ASSAULT CARBINE"
-      ]
-    },
-    "grot_gunship": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "GROT MULTI-CREW GUNSHIP"
-      ]
-    },
-    "grot_bomber": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "gROT SINGLE-SEAT BOMBER - ASYMMETRIC ELONGATED CONFIGURATION"
-      ]
-    },
-    "cybernex_hoverbike": {
-      "category": "vehicles",
-      "count": 2,
-      "titles": [
-        "CYBERNEX LIGHT - SINGLE-SEAT HOVERBIKE"
-      ]
-    },
-    "cybernex_corvette_CNX-77": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "CYBERNEX MULTI-CREW CORVETTE - CNX-77"
+      ],
+      "locked_uuids": [
+        {
+          "id": "9ec6f2e9-a825-418f-b427-b725ed066df9",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "weapon-vehicle",
+          "label": "Mech 4-gun cluster"
+        },
+        {
+          "id": "236731c5-ac40-4a3d-a439-a4c1bb689118",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "weapon-vehicle",
+          "label": "Mech 4-gun cluster"
+        }
       ]
     },
     "grot_apc": {
@@ -868,41 +2418,106 @@
       "count": 1,
       "titles": [
         "gROT APC / IFV - 4-VIEW ORTHOGRAPHIC"
+      ],
+      "locked_uuids": [
+        {
+          "id": "41624757-559c-4757-a0dd-bcf549779e91",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "weapon-vehicle",
+          "label": "APC gun",
+          "manual": 27
+        },
+        {
+          "id": "02dfbd93-d19f-4230-85cd-97840f0db3de",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "weapon-vehicle",
+          "label": "APC autocannon/infection"
+        },
+        {
+          "id": "a722bad1-3db4-444c-ad6a-1abd2641d401",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "weapon-vehicle",
+          "label": "APC autocannon/infection",
+          "notes": "superseded by manual #027 41624757"
+        }
       ]
     },
-    "iasym_scouti": {
-      "category": "props",
-      "count": 1,
+    "grot_combat_drone": {
+      "category": "vehicles",
+      "count": 2,
       "titles": [
+        "I' gROT SWARM COMBAT DRONE",
+        "gROT SWARM COMBAT DRONE"
+      ]
+    },
+    "grot_crawler": {
+      "category": "vehicles",
+      "count": 2,
+      "titles": [
+        "gROT LIGHT CRAWLER SCOUT",
         "IASYM-SCOUTI"
+      ],
+      "merged_from": [
+        "iasym_scouti"
+      ],
+      "chat_lock": true,
+      "file_id": "YTTxi",
+      "dump_key": "generations/imagine_images/YTTxi.jpg",
+      "locked_uuids": [
+        {
+          "id": "YTTxi",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ground",
+          "label": "Light crawler scout",
+          "dump_key": "generations/imagine_images/YTTxi.jpg"
+        }
       ]
     },
-    "cybernex_CN-8800": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "CYBERNEX CN-8800"
-      ]
-    },
-    "medium_drone": {
+    "grot_hover_tank": {
       "category": "vehicles",
       "count": 1,
       "titles": [
-        "CLASS.. MEDIUM DRONE"
+        "gROT LIGHT HOVER TANK"
+      ],
+      "locked_uuids": [
+        {
+          "id": "44ef17f1-73f4-43ad-b878-524b48321c41",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "weapon-vehicle",
+          "label": "Hover canal-cannon"
+        },
+        {
+          "id": "27a2dc10-2759-4b82-8422-d76121cedf39",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "weapon-vehicle",
+          "label": "Hover canal-cannon"
+        }
       ]
     },
-    "grot_corvette": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "gROT-CLASS MULTI-CREW CORVETTE"
-      ]
-    },
-    "grot_logistic_drone": {
+    "grot_hoverbike": {
       "category": "vehicles",
       "count": 1,
       "titles": [
-        "gROT LOGISTIC DRONE"
+        "gROT Light SlNGLE-SEAT HOVERBIKE"
+      ],
+      "chat_lock": true,
+      "file_id": "KCHaV",
+      "dump_key": "generations/rendered/KCHaV.jpg",
+      "locked_uuids": [
+        {
+          "id": "KCHaV",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ground",
+          "label": "Hoverbike",
+          "dump_key": "generations/rendered/KCHaV.jpg"
+        }
       ]
     },
     "grot_light_drone": {
@@ -910,77 +2525,284 @@
       "count": 1,
       "titles": [
         "gROT LIGHT DRONE"
+      ],
+      "chat_lock": true,
+      "file_id": "FRKhQ",
+      "dump_key": "generations/rendered/FRKhQ.jpg",
+      "locked_uuids": [
+        {
+          "id": "FRKhQ",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "drone",
+          "label": "Light drone",
+          "dump_key": "generations/rendered/FRKhQ.jpg"
+        }
       ]
     },
-    "cybernex_avian_pathfinder": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "CYBERNEX V AVIAN PATHFINDER"
-      ]
-    },
-    "capital_carrier": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "CLASS.- CAPITAL CARRIER"
-      ]
-    },
-    "cybernex_medium_drone": {
+    "grot_logistic_drone": {
       "category": "vehicles",
       "count": 1,
       "titles": [
-        "CYBERNEX MEDIUM DRONE - 4-VIEW ORTHOGRAPHIC"
+        "gROT LOGISTIC DRONE"
+      ],
+      "chat_lock": true,
+      "file_id": "KcgoY",
+      "dump_key": "generations/rendered/KcgoY.jpg",
+      "locked_uuids": [
+        {
+          "id": "KcgoY",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "drone",
+          "label": "Logistic drone",
+          "dump_key": "generations/rendered/KcgoY.jpg"
+        }
       ]
     },
-    "hexarena_moba_map_schematic": {
-      "category": "environments",
+    "grot_walker": {
+      "category": "vehicles",
       "count": 1,
       "titles": [
-        "HEXARENA // MOBA MAP SCHEMATIC"
+        "gROT MECH I WALKER"
+      ],
+      "locked_uuids": [
+        {
+          "id": "3f6045a5-ef27-49dc-ad81-fcd49c209437",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "weapon-vehicle",
+          "label": "Mech gun pair"
+        },
+        {
+          "id": "d97a41c5-1b5b-4472-9917-43ef42b59973",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "weapon-vehicle",
+          "label": "Mech gun pair"
+        }
       ]
     },
-    "t1_resource_extractor": {
-      "category": "colony",
+    "heavy_drone": {
+      "category": "vehicles",
       "count": 1,
       "titles": [
-        "T1 RESOURCE EXTRACTOR"
+        "CLASS.' ASSAVLT I HEAVY DRONE"
+      ],
+      "chat_lock": true,
+      "file_id": "Bp9Gi",
+      "dump_key": "generations/rendered/Bp9Gi.jpg",
+      "locked_uuids": [
+        {
+          "id": "Bp9Gi",
+          "faction": "NEUT",
+          "view": "cinematic",
+          "class": "drone",
+          "label": "Heavy drone (class)",
+          "dump_key": "generations/rendered/Bp9Gi.jpg"
+        }
       ]
     },
-    "thruster_cluster_neon": {
-      "category": "ships",
+    "logistic_drone": {
+      "category": "vehicles",
       "count": 1,
       "titles": [
-        "thruster"
+        "LOGISflC DROWE"
+      ],
+      "merged_from": [
+        "logisflc_drowe"
+      ],
+      "chat_lock": true,
+      "file_id": "o55Js",
+      "dump_key": "generations/rendered/o55Js.jpg",
+      "locked_uuids": [
+        {
+          "id": "o55Js",
+          "faction": "NEUT",
+          "view": "cinematic",
+          "class": "drone",
+          "label": "Logistic drone (class)",
+          "dump_key": "generations/rendered/o55Js.jpg"
+        }
       ]
     },
-    "grot_interceptor": {
-      "category": "ships",
+    "medium_drone": {
+      "category": "vehicles",
       "count": 1,
       "titles": [
-        "GROT INTERCEPTOR"
+        "CLASS.. MEDIUM DRONE"
+      ],
+      "chat_lock": true,
+      "file_id": "hpvGX",
+      "dump_key": "generations/rendered/hpvGX.jpg",
+      "locked_uuids": [
+        {
+          "id": "hpvGX",
+          "faction": "NEUT",
+          "view": "cinematic",
+          "class": "drone",
+          "label": "Medium drone (class)",
+          "dump_key": "generations/rendered/hpvGX.jpg"
+        }
       ]
     },
-    "grot_graft_hound": {
+    "support_logistics_vehicle": {
+      "category": "vehicles",
+      "count": 2,
+      "titles": [
+        "VEHItLE tLISS- SUPPORT I LOGISTIC$",
+        "ROT SUPPORT I LOGISTICS VEHICLE"
+      ],
+      "merged_from": [
+        "vehitle_tliss_support_logistic",
+        "rot_support_logistics_vehicle"
+      ],
+      "chat_lock": true,
+      "file_id": "lYaDV",
+      "dump_key": "generations/rendered/lYaDV.jpg",
+      "locked_uuids": [
+        {
+          "id": "lYaDV",
+          "faction": "NEUT",
+          "view": "cinematic",
+          "class": "ground",
+          "label": "Support logistics vehicle",
+          "dump_key": "generations/rendered/lYaDV.jpg"
+        },
+        {
+          "id": "MnVIJ",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "ground",
+          "label": "Support logistics vehicle",
+          "dump_key": "generations/rendered/MnVIJ.jpg"
+        }
+      ]
+    },
+    "utility_drone": {
+      "category": "vehicles",
+      "count": 1,
+      "titles": [
+        "UTILITY DRONE.S"
+      ]
+    },
+    "cx-scanner-repair": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "9671aa91-1d4d-4499-8ce6-5498592f5321",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Scanner + repair lattice"
+        },
+        {
+          "id": "02275317-e746-4c3e-95b9-9e32e4ecccc9",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "module",
+          "label": "Scanner + repair lattice"
+        }
+      ]
+    },
+    "gr-drone-bay": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "4dab3ea3-cf73-4f75-818c-c983c6f2d43c",
+          "faction": "GR",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Drone bay"
+        },
+        {
+          "id": "f569980e-7ebc-466f-90d9-ca1f744163ad",
+          "faction": "GR",
+          "view": "ortho",
+          "class": "module",
+          "label": "Drone bay"
+        }
+      ]
+    },
+    "cx-drone-bay": {
+      "category": "props",
+      "count": 0,
+      "titles": [],
+      "ocr": false,
+      "source": "index_slug",
+      "locked_uuids": [
+        {
+          "id": "e0df2d07-e567-4060-a9d7-03dc53666f51",
+          "faction": "CX",
+          "view": "cinematic",
+          "class": "module",
+          "label": "Drone bay hive"
+        },
+        {
+          "id": "9bacf651-688d-4848-8299-6320b86e1905",
+          "faction": "CX",
+          "view": "ortho",
+          "class": "module",
+          "label": "Drone bay hive"
+        }
+      ]
+    },
+    "ui-resource-icons": {
       "category": "props",
       "count": 1,
       "titles": [
-        "gROT GRAFT HOUND"
-      ]
-    },
-    "freighter": {
-      "category": "ships",
-      "count": 1,
-      "titles": [
-        "CLASS.. HEAVY FREIGHTER"
-      ]
-    },
-    "utility_bay": {
-      "category": "props",
-      "count": 1,
-      "titles": [
-        "UTILITY BAY 2"
+        "KNOWLEDGE / OWNERSHIP CLAIM / ALLIANCE / SALVAGE"
+      ],
+      "merged_from": [
+        "cybernex_uixgemient"
+      ],
+      "chat_lock": true,
+      "file_id": "6CC4f",
+      "dump_key": "generations/rendered/6CC4f.jpg",
+      "source": "manual_rebuild",
+      "locked_uuids": [
+        {
+          "id": "6CC4f",
+          "faction": "NEUT",
+          "view": "icon",
+          "class": "ui",
+          "label": "Resource badges",
+          "dump_key": "generations/rendered/6CC4f.jpg",
+          "manual": 22
+        },
+        {
+          "id": "hK3hw",
+          "faction": "NEUT",
+          "view": "icon",
+          "class": "ui",
+          "label": "Resource HUD icons",
+          "dump_key": "generations/imagine_images/hK3hw.jpg",
+          "notes": "superseded by manual #022 6CC4f"
+        }
       ]
     }
-  }
+  },
+  "index_only_slugs": [
+    "cx-dmr",
+    "cx-drone-bay",
+    "cx-firewall-gadget",
+    "cx-scanner-repair",
+    "cx-tank-gun",
+    "cx-turret-launcher",
+    "gr-contractile",
+    "gr-dmr",
+    "gr-drone-bay",
+    "gr-infection-tool",
+    "gr-scanner-repair",
+    "gr-tank-gun",
+    "gr-turret-torpedo"
+  ]
 }

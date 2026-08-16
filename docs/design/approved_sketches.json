@@ -1,57 +1,1360 @@
 {
-  "version": "1.2",
-  "updated": "2026-08-13",
+  "version": "1.19",
+  "updated": "2026-08-15",
   "rule": "locked only",
   "user": "77c65418-d257-47c3-8504-4540b6e0a754",
   "bucket": "neon",
   "canon_prefix": "generations/canon/{class}/{id}/master.jpg",
   "grok_url": "https://assets.grok.com/users/77c65418-d257-47c3-8504-4540b6e0a754/generated/{id}/image.jpg",
   "locked": [
-    {"id": "c9eb72ec-7603-48f9-98ff-93f9c2b9cead", "faction": "CX", "view": "cinematic", "class": "ship-capital", "label": "Cruiser"},
-    {"id": "9633a0a4-98a5-4ea0-8cad-78798f1cbce6", "faction": "GR", "view": "cinematic", "class": "ship-capital", "label": "Cruiser"},
-    {"id": "c535edd0-f3c2-48cf-b70b-ce859d82ca2f", "faction": "CX", "view": "cinematic", "class": "ship-capital", "label": "Flagship"},
-    {"id": "e0d7837c-0d25-4c70-92f6-82bc4f478f84", "faction": "GR", "view": "cinematic", "class": "ship-capital", "label": "Flagship"},
-    {"id": "3c3e054e-1968-41ac-a630-bfc2eb424f01", "faction": "CX", "view": "cinematic", "class": "ship-capital", "label": "Carrier side hangars"},
-    {"id": "390de03e-2dfc-4b4f-ac4c-dec037fa2ef5", "faction": "GR", "view": "ortho", "class": "ship-capital", "label": "Carrier"},
-    {"id": "cdbfa627-e7cf-46c6-9738-efdc944733bd", "faction": "CX", "view": "cinematic", "class": "weapon-infantry", "label": "Assault Carbine"},
-    {"id": "41700055-4027-4db9-b162-8233ff2705e6", "faction": "CX", "view": "ortho", "class": "weapon-infantry", "label": "Assault Carbine"},
-    {"id": "b8e46c7f-70aa-463f-aa30-1ff714867f36", "faction": "GR", "view": "cinematic", "class": "weapon-infantry", "label": "Assault Carbine"},
-    {"id": "e09e9b53-dd95-455c-ad3b-53a2e626c708", "faction": "GR", "view": "ortho", "class": "weapon-infantry", "label": "Assault Carbine"},
-    {"id": "d9115a7c-147a-4393-8ded-c5f252989328", "faction": "CX", "view": "cinematic", "class": "weapon-infantry", "label": "DMR"},
-    {"id": "cf8e7639-1399-4544-858d-a957bb18c945", "faction": "CX", "view": "ortho", "class": "weapon-infantry", "label": "DMR"},
-    {"id": "4034222f-86ee-413c-a48a-43ca948dffde", "faction": "GR", "view": "cinematic", "class": "weapon-infantry", "label": "DMR"},
-    {"id": "37750a80-84c5-485c-94db-8bfddd976640", "faction": "GR", "view": "ortho", "class": "weapon-infantry", "label": "DMR"},
-    {"id": "68663b86-f177-4594-b70b-deec857abe88", "faction": "CX", "view": "cinematic", "class": "weapon-infantry", "label": "Firewall gadget"},
-    {"id": "641c9c0c-45bd-41fa-a3fc-875e0b99fc24", "faction": "CX", "view": "ortho", "class": "weapon-infantry", "label": "Firewall gadget"},
-    {"id": "6e058bb5-29ce-4f77-9542-3fb90a822ebe", "faction": "GR", "view": "cinematic", "class": "weapon-infantry", "label": "Infection tool"},
-    {"id": "4a1cfd7b-c75d-46f6-ab79-66d6f0c0c6b3", "faction": "GR", "view": "ortho", "class": "weapon-infantry", "label": "Infection tool"},
-    {"id": "576b48ad-426c-4b15-8292-fdd117ff43c3", "faction": "CX", "view": "cinematic", "class": "weapon-vehicle", "label": "Tank main"},
-    {"id": "f6ba51ce-9f94-44ff-84e4-aee90fa3c1bc", "faction": "CX", "view": "ortho", "class": "weapon-vehicle", "label": "Tank main"},
-    {"id": "ce213a7c-d304-4a32-98c1-0a404c2bc7c9", "faction": "GR", "view": "cinematic", "class": "weapon-vehicle", "label": "Tank main"},
-    {"id": "e996c312-7056-4d6c-9bf2-435f12155119", "faction": "GR", "view": "ortho", "class": "weapon-vehicle", "label": "Tank main"},
-    {"id": "024be4f6-45a0-43fa-bc62-055f920ec7ab", "faction": "CX", "view": "cinematic", "class": "weapon-vehicle", "label": "APC autocannon/EW"},
-    {"id": "a077f3ce-615f-4bb3-bdc7-5bbfcb5bc859", "faction": "CX", "view": "ortho", "class": "weapon-vehicle", "label": "APC autocannon/EW"},
-    {"id": "02dfbd93-d19f-4230-85cd-97840f0db3de", "faction": "GR", "view": "cinematic", "class": "weapon-vehicle", "label": "APC autocannon/infection"},
-    {"id": "a722bad1-3db4-444c-ad6a-1abd2641d401", "faction": "GR", "view": "ortho", "class": "weapon-vehicle", "label": "APC autocannon/infection"},
-    {"id": "22365d81-9d7a-4784-9057-8d90337e40b8", "faction": "CX", "view": "cinematic", "class": "weapon-vehicle", "label": "Hover energy cannon"},
-    {"id": "cade3b02-acb5-432b-8d08-8fe653ce657d", "faction": "CX", "view": "ortho", "class": "weapon-vehicle", "label": "Hover energy cannon"},
-    {"id": "44ef17f1-73f4-43ad-b878-524b48321c41", "faction": "GR", "view": "cinematic", "class": "weapon-vehicle", "label": "Hover canal-cannon"},
-    {"id": "27a2dc10-2759-4b82-8422-d76121cedf39", "faction": "GR", "view": "ortho", "class": "weapon-vehicle", "label": "Hover canal-cannon"},
-    {"id": "9ec6f2e9-a825-418f-b427-b725ed066df9", "faction": "CX", "view": "cinematic", "class": "weapon-vehicle", "label": "Mech 4-gun cluster"},
-    {"id": "236731c5-ac40-4a3d-a439-a4c1bb689118", "faction": "CX", "view": "ortho", "class": "weapon-vehicle", "label": "Mech 4-gun cluster"},
-    {"id": "3f6045a5-ef27-49dc-ad81-fcd49c209437", "faction": "GR", "view": "cinematic", "class": "weapon-vehicle", "label": "Mech gun pair"},
-    {"id": "d97a41c5-1b5b-4472-9917-43ef42b59973", "faction": "GR", "view": "ortho", "class": "weapon-vehicle", "label": "Mech gun pair"},
-    {"id": "2c84bb7f-58a7-4114-88fe-523eb491dca2", "faction": "CX", "view": "cinematic", "class": "module", "label": "Firewall projector"},
-    {"id": "1d07c7fc-7876-4aef-99ec-62ff5602308c", "faction": "CX", "view": "ortho", "class": "module", "label": "Firewall projector"},
-    {"id": "397a2a17-8f81-45dd-b235-c34e6ed57edc", "faction": "GR", "view": "cinematic", "class": "module", "label": "Spore-cloud generator"},
-    {"id": "77a7cc90-2b95-4100-8f0a-3b1798306104", "faction": "GR", "view": "ortho", "class": "module", "label": "Spore-cloud generator"},
-    {"id": "6f743074-1a2e-4f4b-b796-599166bc80b9", "faction": "CX", "view": "cinematic", "class": "module", "label": "Quantum-thrust + RCS"},
-    {"id": "26e6e753-ff0a-4a0b-b7c7-0134f23f5a63", "faction": "CX", "view": "ortho", "class": "module", "label": "Quantum-thrust + RCS"},
-    {"id": "b85d041d-3a81-43e7-a2ba-b0b195b53e94", "faction": "GR", "view": "cinematic", "class": "module", "label": "Contractile main + RCS"},
-    {"id": "a25897c9-1a4f-4bbd-9b50-31f7b715590a", "faction": "GR", "view": "ortho", "class": "module", "label": "Contractile main + RCS"},
-    {"id": "899de1b8-9179-452c-bc75-dee69352c374", "faction": "CX", "view": "cinematic", "class": "module", "label": "Turret + hex launcher"},
-    {"id": "8e742135-e693-4ad7-bbc2-fd9f4fcb092f", "faction": "CX", "view": "ortho", "class": "module", "label": "Turret + hex launcher"},
-    {"id": "01ca395f-bd23-43b2-9252-a59297638be0", "faction": "GR", "view": "cinematic", "class": "module", "label": "Turret + seed-torpedo"},
-    {"id": "41624757-559c-4757-a0dd-bcf549779e91", "faction": "GR", "view": "ortho", "class": "module", "label": "Turret + seed-torpedo"}
-  ]
+    {
+      "id": "c9eb72ec-7603-48f9-98ff-93f9c2b9cead",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ship-capital",
+      "label": "Cruiser",
+      "position": "cybernex_capital_cruiser_CNX-9"
+    },
+    {
+      "id": "9633a0a4-98a5-4ea0-8cad-78798f1cbce6",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-capital",
+      "label": "Cruiser",
+      "position": "grot_capital_cruiser"
+    },
+    {
+      "id": "c535edd0-f3c2-48cf-b70b-ce859d82ca2f",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ship-capital",
+      "label": "Flagship",
+      "position": "cybernex_flagship"
+    },
+    {
+      "id": "e0d7837c-0d25-4c70-92f6-82bc4f478f84",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-capital",
+      "label": "Flagship",
+      "position": "grot_flagship"
+    },
+    {
+      "id": "3c3e054e-1968-41ac-a630-bfc2eb424f01",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ship-capital",
+      "label": "Carrier side hangars",
+      "position": "cybernex_capital_carrier"
+    },
+    {
+      "id": "390de03e-2dfc-4b4f-ac4c-dec037fa2ef5",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "ship-capital",
+      "label": "Carrier",
+      "position": "grot_capital_carrier"
+    },
+    {
+      "id": "cdbfa627-e7cf-46c6-9738-efdc944733bd",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "weapon-infantry",
+      "label": "Assault Carbine",
+      "position": "cybernex_weapon_carbine"
+    },
+    {
+      "id": "41700055-4027-4db9-b162-8233ff2705e6",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "weapon-infantry",
+      "label": "Carbine",
+      "position": "cybernex_weapon_carbine",
+      "manual": 28
+    },
+    {
+      "id": "b8e46c7f-70aa-463f-aa30-1ff714867f36",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "weapon-infantry",
+      "label": "Carbine",
+      "position": "grot_weapon_carbine",
+      "manual": 42
+    },
+    {
+      "id": "e09e9b53-dd95-455c-ad3b-53a2e626c708",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "weapon-infantry",
+      "label": "Carbine",
+      "position": "grot_weapon_carbine",
+      "manual": 43
+    },
+    {
+      "id": "d9115a7c-147a-4393-8ded-c5f252989328",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "weapon-infantry",
+      "label": "DMR",
+      "position": "cx-dmr",
+      "manual": 38
+    },
+    {
+      "id": "cf8e7639-1399-4544-858d-a957bb18c945",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "weapon-infantry",
+      "label": "DMR",
+      "position": "cx-dmr",
+      "manual": 39
+    },
+    {
+      "id": "4034222f-86ee-413c-a48a-43ca948dffde",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "weapon-infantry",
+      "label": "DMR",
+      "position": "gr-dmr",
+      "manual": 40
+    },
+    {
+      "id": "37750a80-84c5-485c-94db-8bfddd976640",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "weapon-infantry",
+      "label": "DMR",
+      "position": "gr-dmr",
+      "manual": 41
+    },
+    {
+      "id": "68663b86-f177-4594-b70b-deec857abe88",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "weapon-infantry",
+      "label": "Firewall gadget",
+      "position": "cx-firewall-gadget"
+    },
+    {
+      "id": "641c9c0c-45bd-41fa-a3fc-875e0b99fc24",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "gadget",
+      "label": "Hand utility",
+      "position": "cybernex_hand_utility",
+      "manual": 24
+    },
+    {
+      "id": "6e058bb5-29ce-4f77-9542-3fb90a822ebe",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "weapon-infantry",
+      "label": "Infection tool",
+      "position": "gr-infection-tool"
+    },
+    {
+      "id": "4a1cfd7b-c75d-46f6-ab79-66d6f0c0c6b3",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "weapon-infantry",
+      "label": "Infection tool",
+      "position": "gr-infection-tool"
+    },
+    {
+      "id": "576b48ad-426c-4b15-8292-fdd117ff43c3",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "weapon-vehicle",
+      "label": "Hover cannon",
+      "position": "cybernex_hover_tank",
+      "manual": 25
+    },
+    {
+      "id": "f6ba51ce-9f94-44ff-84e4-aee90fa3c1bc",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "weapon-vehicle",
+      "label": "Tank main",
+      "position": "cx-tank-gun"
+    },
+    {
+      "id": "ce213a7c-d304-4a32-98c1-0a404c2bc7c9",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "weapon-vehicle",
+      "label": "Tank main",
+      "position": "gr-tank-gun"
+    },
+    {
+      "id": "e996c312-7056-4d6c-9bf2-435f12155119",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "weapon-vehicle",
+      "label": "Tank main",
+      "position": "gr-tank-gun"
+    },
+    {
+      "id": "024be4f6-45a0-43fa-bc62-055f920ec7ab",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "weapon-vehicle",
+      "label": "APC gun",
+      "position": "cybernex_apc",
+      "manual": 23
+    },
+    {
+      "id": "a077f3ce-615f-4bb3-bdc7-5bbfcb5bc859",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "weapon-vehicle",
+      "label": "APC gun",
+      "position": "cybernex_apc",
+      "manual": 29
+    },
+    {
+      "id": "02dfbd93-d19f-4230-85cd-97840f0db3de",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "weapon-vehicle",
+      "label": "APC autocannon/infection",
+      "position": "grot_apc"
+    },
+    {
+      "id": "a722bad1-3db4-444c-ad6a-1abd2641d401",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "weapon-vehicle",
+      "label": "APC autocannon/infection",
+      "position": "grot_apc"
+    },
+    {
+      "id": "22365d81-9d7a-4784-9057-8d90337e40b8",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "weapon-vehicle",
+      "label": "Tank gun",
+      "position": "cx-tank-gun",
+      "manual": 26
+    },
+    {
+      "id": "cade3b02-acb5-432b-8d08-8fe653ce657d",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "weapon-vehicle",
+      "label": "Tank gun",
+      "position": "cx-tank-gun",
+      "manual": 34
+    },
+    {
+      "id": "cb6c3686-91b2-46b2-ad58-a8299cb7ff31",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "weapon-infantry",
+      "label": "Sidearm",
+      "position": "cybernex_sidearm",
+      "manual": 35
+    },
+    {
+      "id": "COmSz",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-capital",
+      "label": "Flagship",
+      "position": "grot_flagship",
+      "dump_key": "generations/rendered/COmSz.jpg",
+      "manual": 36
+    },
+    {
+      "id": "730ceba8-94f4-4207-a9b1-cce2489a1848",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "ship-capital",
+      "label": "Flagship",
+      "position": "grot_flagship",
+      "manual": 37
+    },
+    {
+      "id": "44ef17f1-73f4-43ad-b878-524b48321c41",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "weapon-vehicle",
+      "label": "Hover canal-cannon",
+      "position": "grot_hover_tank"
+    },
+    {
+      "id": "27a2dc10-2759-4b82-8422-d76121cedf39",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "weapon-vehicle",
+      "label": "Hover canal-cannon",
+      "position": "grot_hover_tank"
+    },
+    {
+      "id": "9ec6f2e9-a825-418f-b427-b725ed066df9",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "weapon-vehicle",
+      "label": "Mech 4-gun cluster",
+      "position": "cybernex_walker"
+    },
+    {
+      "id": "236731c5-ac40-4a3d-a439-a4c1bb689118",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "weapon-vehicle",
+      "label": "Mech 4-gun cluster",
+      "position": "cybernex_walker"
+    },
+    {
+      "id": "3f6045a5-ef27-49dc-ad81-fcd49c209437",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "weapon-vehicle",
+      "label": "Mech gun pair",
+      "position": "grot_walker"
+    },
+    {
+      "id": "d97a41c5-1b5b-4472-9917-43ef42b59973",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "weapon-vehicle",
+      "label": "Mech gun pair",
+      "position": "grot_walker"
+    },
+    {
+      "id": "2c84bb7f-58a7-4114-88fe-523eb491dca2",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "module",
+      "label": "Firewall projector",
+      "position": "cybernex_defense_systems"
+    },
+    {
+      "id": "1d07c7fc-7876-4aef-99ec-62ff5602308c",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "module",
+      "label": "Firewall projector",
+      "position": "cybernex_defense_systems"
+    },
+    {
+      "id": "397a2a17-8f81-45dd-b235-c34e6ed57edc",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "module",
+      "label": "Spore-cloud generator",
+      "position": "grot_spore_prop"
+    },
+    {
+      "id": "77a7cc90-2b95-4100-8f0a-3b1798306104",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "module",
+      "label": "Spore-cloud generator",
+      "position": "grot_spore_prop"
+    },
+    {
+      "id": "6f743074-1a2e-4f4b-b796-599166bc80b9",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "module",
+      "label": "Quantum-thrust + RCS",
+      "position": "thruster_cluster_neon"
+    },
+    {
+      "id": "26e6e753-ff0a-4a0b-b7c7-0134f23f5a63",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "module",
+      "label": "Quantum-thrust + RCS",
+      "position": "thruster_cluster_neon"
+    },
+    {
+      "id": "b85d041d-3a81-43e7-a2ba-b0b195b53e94",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "module",
+      "label": "Engine module",
+      "position": "gr-contractile",
+      "manual": 30
+    },
+    {
+      "id": "a25897c9-1a4f-4bbd-9b50-31f7b715590a",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "module",
+      "label": "Engine module",
+      "position": "gr-contractile",
+      "manual": 31
+    },
+    {
+      "id": "auivA",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "prop",
+      "label": "Spore Feast",
+      "position": "grot_spore_prop",
+      "dump_key": "generations/rendered/auivA.jpg",
+      "manual": 32
+    },
+    {
+      "id": "B2g0Z",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-capital",
+      "label": "Drone carrier",
+      "position": "grot_drone_carrier",
+      "dump_key": "generations/rendered/B2g0Z.jpg",
+      "manual": 33
+    },
+    {
+      "id": "899de1b8-9179-452c-bc75-dee69352c374",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "module",
+      "label": "Turret + hex launcher",
+      "position": "cx-turret-launcher"
+    },
+    {
+      "id": "8e742135-e693-4ad7-bbc2-fd9f4fcb092f",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "module",
+      "label": "Turret + hex launcher",
+      "position": "cx-turret-launcher"
+    },
+    {
+      "id": "01ca395f-bd23-43b2-9252-a59297638be0",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "module",
+      "label": "Turret + seed-torpedo",
+      "position": "gr-turret-torpedo"
+    },
+    {
+      "id": "41624757-559c-4757-a0dd-bcf549779e91",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "weapon-vehicle",
+      "label": "APC gun",
+      "position": "grot_apc",
+      "manual": 27
+    },
+    {
+      "id": "ba11d579-8ea9-4650-a070-a1932b1d6eb6",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "module",
+      "label": "Scanner + repair arm",
+      "position": "gr-scanner-repair"
+    },
+    {
+      "id": "f545cfc5-7c79-46af-a486-81d374ab0f74",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "module",
+      "label": "Scanner + repair arm",
+      "position": "gr-scanner-repair"
+    },
+    {
+      "id": "9671aa91-1d4d-4499-8ce6-5498592f5321",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "module",
+      "label": "Scanner + repair lattice",
+      "position": "cx-scanner-repair"
+    },
+    {
+      "id": "02275317-e746-4c3e-95b9-9e32e4ecccc9",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "module",
+      "label": "Scanner + repair lattice",
+      "position": "cx-scanner-repair"
+    },
+    {
+      "id": "4dab3ea3-cf73-4f75-818c-c983c6f2d43c",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "module",
+      "label": "Drone bay",
+      "position": "gr-drone-bay"
+    },
+    {
+      "id": "f569980e-7ebc-466f-90d9-ca1f744163ad",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "module",
+      "label": "Drone bay",
+      "position": "gr-drone-bay"
+    },
+    {
+      "id": "e0df2d07-e567-4060-a9d7-03dc53666f51",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "module",
+      "label": "Drone bay hive",
+      "position": "cx-drone-bay"
+    },
+    {
+      "id": "9bacf651-688d-4848-8299-6320b86e1905",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "module",
+      "label": "Drone bay hive",
+      "position": "cx-drone-bay"
+    },
+    {
+      "id": "1TV3u",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ship-capital",
+      "label": "Heavy Battlecruiser",
+      "position": "cybernex_battlecruiser_CNH-09",
+      "dump_key": "generations/rendered/1TV3u.jpg"
+    },
+    {
+      "id": "7o4tp",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-capital",
+      "label": "Heavy Battlecruiser",
+      "position": "grot_battlecruiser",
+      "dump_key": "generations/rendered/7o4tp.jpg"
+    },
+    {
+      "id": "kfNYX",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ship-capital",
+      "label": "Battleship",
+      "position": "cybernex_battleship_CNX-9",
+      "dump_key": "generations/rendered/kfNYX.jpg"
+    },
+    {
+      "id": "fCrw7",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-capital",
+      "label": "Battleship",
+      "position": "grot_battleship",
+      "dump_key": "generations/rendered/fCrw7.jpg"
+    },
+    {
+      "id": "jfwHn",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ship-capital",
+      "label": "Mothership",
+      "position": "cybernex_mothership",
+      "dump_key": "generations/rendered/jfwHn.jpg"
+    },
+    {
+      "id": "1lgj1",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-capital",
+      "label": "Mothership",
+      "position": "grot_mothership",
+      "dump_key": "generations/rendered/1lgj1.jpg"
+    },
+    {
+      "id": "kcldc",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ship-multicrew",
+      "label": "Frigate",
+      "position": "cybernex_frigate",
+      "dump_key": "generations/rendered/kcldc.jpg"
+    },
+    {
+      "id": "QZsJN",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "ship-multicrew",
+      "label": "Frigate",
+      "position": "grot_frigate",
+      "dump_key": "generations/rendered/QZsJN.jpg"
+    },
+    {
+      "id": "7Ypuk",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ship-multicrew",
+      "label": "Corvette",
+      "position": "cybernex_corvette_CNX-77",
+      "dump_key": "generations/rendered/7Ypuk.jpg"
+    },
+    {
+      "id": "MeMG7",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-multicrew",
+      "label": "Corvette",
+      "position": "grot_corvette",
+      "dump_key": "generations/rendered/MeMG7.jpg"
+    },
+    {
+      "id": "oEnF2",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ship-multicrew",
+      "label": "Heavy Freighter",
+      "position": "cybernex_freighter",
+      "dump_key": "generations/rendered/oEnF2.jpg"
+    },
+    {
+      "id": "8WNxd",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-multicrew",
+      "label": "Heavy Freighter",
+      "position": "grot_freighter",
+      "dump_key": "generations/rendered/8WNxd.jpg"
+    },
+    {
+      "id": "l5qg1",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ship-multicrew",
+      "label": "Gunship",
+      "position": "cybernex_gunship",
+      "dump_key": "generations/rendered/l5qg1.jpg"
+    },
+    {
+      "id": "7zIwZ",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-multicrew",
+      "label": "Gunship",
+      "position": "grot_gunship",
+      "dump_key": "generations/rendered/7zIwZ.jpg"
+    },
+    {
+      "id": "mmaTy",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-multicrew",
+      "label": "Support",
+      "position": "grot_support_ship",
+      "dump_key": "generations/rendered/mmaTy.jpg"
+    },
+    {
+      "id": "1HmNd",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-single",
+      "label": "Fighter",
+      "position": "grot_fighter",
+      "dump_key": "generations/rendered/1HmNd.jpg"
+    },
+    {
+      "id": "JJUvM",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-single",
+      "label": "Bomber",
+      "position": "grot_bomber",
+      "dump_key": "generations/rendered/JJUvM.jpg"
+    },
+    {
+      "id": "kGA5q",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ship-single",
+      "label": "Scout",
+      "position": "cybernex_scout_single_seat_recon_light",
+      "dump_key": "generations/rendered/kGA5q.jpg"
+    },
+    {
+      "id": "QdM8V",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "drone",
+      "label": "Medium drone",
+      "position": "grot_medium_drone",
+      "dump_key": "generations/rendered/QdM8V.jpg",
+      "notes": "rebound off cybernex_interceptor — plate is gROT"
+    },
+    {
+      "id": "l6zkI",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-single",
+      "label": "Interceptor",
+      "position": "grot_interceptor",
+      "dump_key": "generations/rendered/l6zkI.jpg"
+    },
+    {
+      "id": "EKJFX",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "drone",
+      "label": "Light drone",
+      "position": "cybernex_light_drone",
+      "dump_key": "generations/rendered/EKJFX.jpg"
+    },
+    {
+      "id": "FRKhQ",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "drone",
+      "label": "Light drone",
+      "position": "grot_light_drone",
+      "dump_key": "generations/rendered/FRKhQ.jpg"
+    },
+    {
+      "id": "HT5Yn",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "drone",
+      "label": "Medium drone",
+      "position": "cybernex_medium_drone",
+      "dump_key": "generations/rendered/HT5Yn.jpg"
+    },
+    {
+      "id": "ozs5C",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Heavy armor",
+      "position": "cybernex_heavy_armor",
+      "dump_key": "generations/imagine_images/ozs5C.jpg"
+    },
+    {
+      "id": "iw9mb",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "armor",
+      "label": "Heavy exo CNX-88",
+      "position": "cybernex_heavy_armor",
+      "dump_key": "generations/imagine_images/iw9mb.jpg"
+    },
+    {
+      "id": "opzQg",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Medium armor",
+      "position": "grot_medium_armor",
+      "dump_key": "generations/rendered/opzQg.jpg",
+      "manual": 15
+    },
+    {
+      "id": "oci1u",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Heavy armor",
+      "position": "grot_heavy_armor",
+      "dump_key": "generations/rendered/oci1u.jpg"
+    },
+    {
+      "id": "icjiG",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Helmet",
+      "position": "cybernex_helmet_CNX-7",
+      "dump_key": "generations/imagine_images/icjiG.jpg"
+    },
+    {
+      "id": "fMeN1",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "armor",
+      "label": "Helmet",
+      "position": "grot_helmet",
+      "dump_key": "generations/imagine_images/fMeN1.jpg"
+    },
+    {
+      "id": "nFxgT",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "module",
+      "label": "Claim beacon",
+      "position": "grot_claim_beacon",
+      "dump_key": "generations/imagine_images/nFxgT.jpg"
+    },
+    {
+      "id": "phjM0",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "module",
+      "label": "Claim beacon",
+      "position": "cybernex_claim_beacon",
+      "dump_key": "generations/imagine_images/phjM0.jpg"
+    },
+    {
+      "id": "WrLuh",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "ground",
+      "label": "Hoverbike",
+      "position": "cybernex_hoverbike",
+      "dump_key": "generations/imagine_images/WrLuh.jpg"
+    },
+    {
+      "id": "YTTxi",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ground",
+      "label": "Light crawler scout",
+      "position": "grot_crawler",
+      "dump_key": "generations/imagine_images/YTTxi.jpg"
+    },
+    {
+      "id": "vYOfQ",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "armor",
+      "label": "Light armor",
+      "position": "cybernex_light_armor",
+      "dump_key": "generations/rendered/vYOfQ.jpg"
+    },
+    {
+      "id": "G1DlH",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Light armor silhouette",
+      "position": "cybernex_light_armor",
+      "dump_key": "generations/rendered/G1DlH.jpg"
+    },
+    {
+      "id": "mYaBr",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Light armor",
+      "position": "cybernex_light_armor",
+      "dump_key": "generations/rendered/mYaBr.jpg"
+    },
+    {
+      "id": "XDhht",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "armor",
+      "label": "Medium armor",
+      "position": "cybernex_medium_armor",
+      "dump_key": "generations/rendered/XDhht.jpg"
+    },
+    {
+      "id": "3KCUS",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Medium armor",
+      "position": "cybernex_medium_armor",
+      "dump_key": "generations/rendered/3KCUS.jpg"
+    },
+    {
+      "id": "XqU70",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "armor",
+      "label": "Light armor",
+      "position": "grot_light_armor",
+      "dump_key": "generations/rendered/XqU70.jpg"
+    },
+    {
+      "id": "mfHHB",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Light armor",
+      "position": "grot_light_armor",
+      "dump_key": "generations/rendered/mfHHB.jpg"
+    },
+    {
+      "id": "vB0CU",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Light armor",
+      "position": "grot_light_armor",
+      "dump_key": "generations/rendered/vB0CU.jpg"
+    },
+    {
+      "id": "ZiYRJ",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Light armor",
+      "position": "grot_light_armor",
+      "dump_key": "generations/rendered/ZiYRJ.jpg"
+    },
+    {
+      "id": "gjXDt",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "weapon-infantry",
+      "label": "Silent Prong",
+      "position": "cybernex_silent_prong",
+      "dump_key": "generations/rendered/gjXDt.jpg"
+    },
+    {
+      "id": "oAWSV",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "drone",
+      "label": "Logistic drone",
+      "position": "cybernex_logistic_drone",
+      "dump_key": "generations/rendered/oAWSV.jpg"
+    },
+    {
+      "id": "KcgoY",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "drone",
+      "label": "Logistic drone",
+      "position": "grot_logistic_drone",
+      "dump_key": "generations/rendered/KcgoY.jpg"
+    },
+    {
+      "id": "o55Js",
+      "faction": "NEUT",
+      "view": "cinematic",
+      "class": "drone",
+      "label": "Logistic drone (class)",
+      "position": "logistic_drone",
+      "dump_key": "generations/rendered/o55Js.jpg"
+    },
+    {
+      "id": "hpvGX",
+      "faction": "NEUT",
+      "view": "cinematic",
+      "class": "drone",
+      "label": "Medium drone (class)",
+      "position": "medium_drone",
+      "dump_key": "generations/rendered/hpvGX.jpg"
+    },
+    {
+      "id": "Bp9Gi",
+      "faction": "NEUT",
+      "view": "cinematic",
+      "class": "drone",
+      "label": "Heavy drone (class)",
+      "position": "heavy_drone",
+      "dump_key": "generations/rendered/Bp9Gi.jpg"
+    },
+    {
+      "id": "nwXlo",
+      "faction": "NEUT",
+      "view": "cinematic",
+      "class": "drone",
+      "label": "Heavy assault / siege drone",
+      "position": "heavy_assault",
+      "dump_key": "generations/rendered/nwXlo.jpg"
+    },
+    {
+      "id": "DvC3C",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ground",
+      "label": "Scout rover",
+      "position": "cybernex_scout_rover",
+      "dump_key": "generations/rendered/DvC3C.jpg"
+    },
+    {
+      "id": "KCHaV",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ground",
+      "label": "Hoverbike",
+      "position": "grot_hoverbike",
+      "dump_key": "generations/rendered/KCHaV.jpg"
+    },
+    {
+      "id": "lYaDV",
+      "faction": "NEUT",
+      "view": "cinematic",
+      "class": "ground",
+      "label": "Support logistics vehicle",
+      "position": "support_logistics_vehicle",
+      "dump_key": "generations/rendered/lYaDV.jpg"
+    },
+    {
+      "id": "MnVIJ",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ground",
+      "label": "Support logistics vehicle",
+      "position": "support_logistics_vehicle",
+      "dump_key": "generations/rendered/MnVIJ.jpg"
+    },
+    {
+      "id": "yGSDn",
+      "faction": "NEUT",
+      "view": "cinematic",
+      "class": "module",
+      "label": "Ownership claim beacon",
+      "position": "ownership_claim_beacon",
+      "dump_key": "generations/rendered/yGSDn.jpg"
+    },
+    {
+      "id": "cHfB3",
+      "faction": "NEUT",
+      "view": "cinematic",
+      "class": "ship-single",
+      "label": "Sniper ship (class)",
+      "position": "sniper_ship",
+      "dump_key": "generations/rendered/cHfB3.jpg"
+    },
+    {
+      "id": "LEThZ",
+      "faction": "NEUT",
+      "view": "ortho",
+      "class": "ship-single",
+      "label": "Stealth ship (class)",
+      "position": "stealth_ship",
+      "dump_key": "generations/rendered/LEThZ.jpg"
+    },
+    {
+      "id": "eBFi8",
+      "faction": "NEUT",
+      "view": "cinematic",
+      "class": "ship-single",
+      "label": "Stealth ship (class)",
+      "position": "stealth_ship",
+      "dump_key": "generations/rendered/eBFi8.jpg"
+    },
+    {
+      "id": "hK3hw",
+      "faction": "NEUT",
+      "view": "icon",
+      "class": "ui",
+      "label": "Resource HUD icons",
+      "position": "ui-resource-icons"
+    },
+    {
+      "id": "4ca9faf0-e533-403b-bc6e-2f6263d6a4d7",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ship-single",
+      "label": "Fighter",
+      "position": "cybernex_fighter",
+      "batch": 20
+    },
+    {
+      "id": "eb126daa-d380-4db6-bc95-9fde9e4e6846",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "ship-single",
+      "label": "Fighter",
+      "position": "cybernex_fighter",
+      "batch": 20
+    },
+    {
+      "id": "6c3799b6-f741-4ab2-aa5c-a86d564c5493",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ship-single",
+      "label": "Bomber",
+      "position": "cybernex_bomber",
+      "batch": 20
+    },
+    {
+      "id": "78162909-d59f-47be-a58c-c7fde0f19ad8",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "ship-single",
+      "label": "Bomber",
+      "position": "cybernex_bomber",
+      "batch": 20
+    },
+    {
+      "id": "877b315c-e073-4cf6-a455-2483332d63f4",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ship-multi",
+      "label": "Support",
+      "position": "cybernex_support",
+      "batch": 20,
+      "supersedes": "3bf43918-d24d-486c-8787-26f28704ff94"
+    },
+    {
+      "id": "7c53217f-5bf1-4dc3-80be-dfe7612e997c",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "ship-multi",
+      "label": "Support",
+      "position": "cybernex_support",
+      "batch": 20
+    },
+    {
+      "id": "33ad6f0c-b9cc-427a-ab4f-aee596b91b10",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ship-single",
+      "label": "Stealth",
+      "position": "cybernex_stealth",
+      "batch": 20,
+      "notes": "from dump LsBZ6"
+    },
+    {
+      "id": "70a6d3e1-8cc9-4df4-9fe8-747b00704eff",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "ship-single",
+      "label": "Stealth",
+      "position": "cybernex_stealth",
+      "batch": 20
+    },
+    {
+      "id": "ada7fd55-bc6e-448a-909c-79ffb31fdf5d",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-single",
+      "label": "Scout",
+      "position": "grot_scout",
+      "batch": 20,
+      "supersedes": "19addf56-5247-4cb8-8a22-d65d5ca49fc3",
+      "notes": "user picked B; A cin/ortho un-locked"
+    },
+    {
+      "id": "0df4f683-60ce-4da3-8d21-8fff1a027bfb",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "ship-single",
+      "label": "Scout",
+      "position": "grot_scout",
+      "batch": 20
+    },
+    {
+      "id": "05073615-7510-408d-8dfe-4dbe7d5357e4",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-single",
+      "label": "Sniper",
+      "position": "grot_sniper",
+      "batch": 20
+    },
+    {
+      "id": "ad12b79f-bf19-4a1e-b446-af612399b0b0",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "ship-single",
+      "label": "Sniper",
+      "position": "grot_sniper",
+      "batch": 20
+    },
+    {
+      "id": "f60f0126-9881-4ffd-836d-ebdb1d07a64b",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "drone",
+      "label": "Medium drone",
+      "position": "grot_medium_drone",
+      "batch": 20
+    },
+    {
+      "id": "1p69s",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-capital",
+      "label": "Carrier",
+      "position": "grot_capital_carrier",
+      "dump_key": "generations/rendered/1p69s.jpg",
+      "manual": 1
+    },
+    {
+      "id": "10d946d1-9954-4d9e-b02b-14b2905c9c8d",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "ship-capital",
+      "label": "Carrier",
+      "position": "grot_capital_carrier",
+      "manual": 2
+    },
+    {
+      "id": "2x5uF",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "ship-capital",
+      "label": "Cruiser",
+      "position": "grot_capital_cruiser",
+      "dump_key": "generations/rendered/2x5uF.jpg",
+      "manual": 3
+    },
+    {
+      "id": "763a575f-4c77-4ed8-a678-6e2057ff3af6",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-capital",
+      "label": "Cruiser",
+      "position": "grot_capital_cruiser",
+      "manual": 4
+    },
+    {
+      "id": "3guBl",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "ship-capital",
+      "label": "Battleship",
+      "position": "grot_battleship",
+      "dump_key": "generations/rendered/3guBl.jpg",
+      "manual": 5
+    },
+    {
+      "id": "3a8de11f-6f48-42b4-887b-4e0c34e41ca9",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "ship-capital",
+      "label": "Battleship",
+      "position": "grot_battleship",
+      "manual": 6
+    },
+    {
+      "id": "5juQw",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Heavy armor",
+      "position": "cybernex_heavy_armor",
+      "dump_key": "generations/rendered/5juQw.jpg",
+      "manual": 7
+    },
+    {
+      "id": "97pBo",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "armor",
+      "label": "Heavy armor",
+      "position": "cybernex_heavy_armor",
+      "dump_key": "generations/rendered/97pBo.jpg",
+      "manual": 8
+    },
+    {
+      "id": "NsEul",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Medium armor",
+      "position": "cybernex_medium_armor",
+      "dump_key": "generations/rendered/NsEul.jpg",
+      "manual": 9
+    },
+    {
+      "id": "6mSp1",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "armor",
+      "label": "Medium armor",
+      "position": "cybernex_medium_armor",
+      "dump_key": "generations/rendered/6mSp1.jpg",
+      "manual": 10
+    },
+    {
+      "id": "VNKg2",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Light armor",
+      "position": "cybernex_light_armor",
+      "dump_key": "generations/rendered/VNKg2.jpg",
+      "manual": 11
+    },
+    {
+      "id": "dK2D0",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "armor",
+      "label": "Light armor",
+      "position": "cybernex_light_armor",
+      "dump_key": "generations/rendered/dK2D0.jpg",
+      "manual": 12
+    },
+    {
+      "id": "bgC4w",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Light armor",
+      "position": "grot_light_armor",
+      "dump_key": "generations/rendered/bgC4w.jpg",
+      "manual": 13
+    },
+    {
+      "id": "2T4jW",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "armor",
+      "label": "Light armor",
+      "position": "grot_light_armor",
+      "dump_key": "generations/rendered/2T4jW.jpg",
+      "manual": 14
+    },
+    {
+      "id": "fDy43",
+      "faction": "GR",
+      "view": "ortho",
+      "class": "armor",
+      "label": "Medium armor",
+      "position": "grot_medium_armor",
+      "dump_key": "generations/rendered/fDy43.jpg",
+      "manual": 16
+    },
+    {
+      "id": "zyFa0",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Heavy armor",
+      "position": "grot_heavy_armor",
+      "dump_key": "generations/rendered/zyFa0.jpg",
+      "manual": 17
+    },
+    {
+      "id": "A2cmE",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "armor",
+      "label": "Pilot helmet",
+      "position": "cybernex_helmet_CNX-7",
+      "dump_key": "generations/rendered/A2cmE.jpg",
+      "manual": 18
+    },
+    {
+      "id": "agxTz",
+      "faction": "GR",
+      "view": "cinematic",
+      "class": "armor",
+      "label": "Pilot helmet",
+      "position": "grot_helmet",
+      "dump_key": "generations/rendered/agxTz.jpg",
+      "manual": 19
+    },
+    {
+      "id": "7GPCx",
+      "faction": "CX",
+      "view": "cinematic",
+      "class": "ship-small-multicrew",
+      "label": "Heavy fighter",
+      "position": "cybernex_heavy_fighter",
+      "dump_key": "generations/rendered/7GPCx.jpg",
+      "manual": 20
+    },
+    {
+      "id": "f9b60ddc-94d9-4705-87dc-d784f9cb01a5",
+      "faction": "CX",
+      "view": "ortho",
+      "class": "ship-small-multicrew",
+      "label": "Heavy fighter",
+      "position": "cybernex_heavy_fighter",
+      "manual": 21
+    },
+    {
+      "id": "6CC4f",
+      "faction": "NEUT",
+      "view": "icon",
+      "class": "ui",
+      "label": "Resource badges",
+      "position": "ui-resource-icons",
+      "dump_key": "generations/rendered/6CC4f.jpg",
+      "manual": 22
+    }
+  ],
+  "note": "Manual rebuild started. #001 1p69s gROT Carrier cinematic. Generations Index wiped.",
+  "positions_bound": 124,
+  "positions_unbound": 1
 }
