@@ -1,110 +1,66 @@
-# NAEON Asset Pipeline (Tripo-first, minimal cost)
+# NAEON Asset Pipeline
 
-## Goal
-
-Fully automated (as much as possible) generation and processing of 3D assets with **minimal external spend**.
-
-Primary generation service: **Tripo**  
-Secondary: Meshy (fallback)  
-Rare: Rodin (hero assets only)
-
-All heavy processing (LOD, dual-theme materials, export) happens on the Yandex Cloud VM + local `assets/` folder synced with bucket `neon`.
+**Канон источника важнее автоматизации.** Версия 2.0, 2026-08-16.  
+Короткий якорь: `docs/design/ASSET_SOURCE_CANON.md`.  
+WorldFill (авторский скелет / безымянный filler): `docs/design/WORLD_FILL.md` — не дублируется здесь.
 
 ---
 
-## Priority System
+## 0. Canon — откуда берётся меш
 
-| Priority | Description | Generation source | Notes |
-|----------|-------------|-------------------|-------|
-| **A** | Hero characters, flagship ships, key buildings | Tripo (paid if needed) → Rodin only if critical | Highest quality |
-| **B** | Regular units, modules, important props | Tripo free credits / Meshy free | Good enough + variants |
-| **C** | Mass decoration, repeated elements | Procedural / reused base meshes + Blender variants | Almost free |
+Нет P2W · Knowledge soft · Infection max 5 · story ≠ power · Godot 4.3 · взрослый hard-sci-fi.
+
+Максимум готовых ассетов из сети. **Tripo только для уникального.** Генерировать «ещё один слой грунта» запрещено.
+
+| Класс | Что это | Источник | Куда класть | Git |
+|-------|---------|----------|-------------|-----|
+| **unique → Tripo** | Фракционные герои, dual-theme CX/GR, `site_pin`, позиции locked-каталога (`TRIPO_ASSET_MANIFEST`, `approved_sketches`) | Tripo (один прогон) → Blender LOD0/1/2 + faction kit | `s3://neon/generations/` + строка манифеста | меш никогда |
+| **generic + CC0 → neon + манифест** | Грунт, скалы, флора, HDRI, unnamed scatter, belt rocks | [Poly Haven](https://polyhaven.com/license) **CC0**, [AmbientCG](https://docs.ambientcg.com/license/) **CC0 1.0** | `s3://neon` + строка манифеста (лицензия, URL, дата) | никогда |
+| **paid scan → neon + notice** | Сканы поверхностей / растений / камня | [ScansLibrary](https://www.scanslibrary.com/content/licence) — **royalty-free, не OSS** | `s3://neon` + notice в билде: `Contains assets from ScansLibrary.com - Assets may not be redistributed` | никогда |
+| **неясное → отказ** | Нет SPDX / «found on Discord» / перепакованный сток | не брать | — | — |
+
+Запреты:
+
+- Готовый меш не становится `SITE_*` и не даёт combat / claim / Infection power.
+- Free-секция ScansLibrary без оплаченного плана — не в коммерцию.
+- ScansLibrary несовместим с OSS/CC на игру, пока сканы в пайплайне. SPDX репо = `null`.
+- Не патчить S3 Index (`generations/catalog.json`) из этого документа.
+- Не коммитить `assets/`, `generations/`, `.env`, ключи.
+
+P0 остров (см. `DEVELOPMENT_PLAN.md`): **1 пад** (code-first или CC0) + **1 generic CC0 проп** + **1 уникальный Tripo-герой**. Остальное — после зелёного P0.
 
 ---
 
-## High-level Flow
+## 1. Pipeline (после канона, не вместо)
+
+Тяжёлая обработка (LOD, dual-theme, export) — на VM + локальный `assets/` (gitignore) ↔ бакет `neon`.
 
 ```
-1. Brief / Prompt (A/B/C priority)
-2. Tripo generation (prefer free credits)
-3. Download .glb → pipeline/inbox/
-4. Blender headless processing
-   - Cleanup
-   - LOD0/1/2
-   - Cybernex material variant
-   - gROT material variant
-   - Collision
-5. Export to assets/{category}/{name}/
-6. Update assets_manifest.json
-7. rclone sync → s3://neon/dev/
+1. Класс (unique / generic+CC0 / paid scan / отказ) — сначала это, не промпт
+2. unique: Tripo → pipeline/inbox/
+   generic/paid: download from named library → inbox/ + licence note
+3. Blender headless: cleanup, LOD0/1/2, CX/GR kit только для unique
+4. Export → assets/{category}/{name}/  (local, gitignored)
+5. Манифест + rclone/aws → s3://neon/dev/ или generations/
 ```
-
----
-
-## Folder Structure
 
 ```
 naeon/
-├── pipeline/
-│   ├── inbox/              # raw downloads from Tripo/Meshy
-│   ├── processing/         # temp Blender work
-│   ├── processed/          # final godot-ready assets
-│   ├── briefs/             # json briefs
-│   └── scripts/
-│       ├── generate_tripo.py
-│       ├── process_asset.py
-│       ├── make_faction_variants.py
-│       └── run_pipeline.sh
-├── assets/                 # local working copy (gitignored)
-└── godot/
+├── pipeline/inbox|processing|processed|briefs|scripts/
+├── assets/          # gitignored
+└── godot/           # placeholders only
 ```
 
----
+Tripo key: `TRIPO_API_KEY` в окружении. Никогда в git. Скрипт: `pipeline/scripts/generate_tripo.py`.
 
-## Tripo Integration
-
-- API key must be provided via environment variable:
-  ```bash
-  export TRIPO_API_KEY="tsk_..."
-  ```
-- Never commit the real key.
-- Script `pipeline/scripts/generate_tripo.py` will:
-  - Accept a prompt + priority
-  - Call Tripo API
-  - Poll for result
-  - Download GLB into `pipeline/inbox/`
+Dual-theme (CX cyan / GR biomass) — только для **unique**. Generic CC0 и paid scan остаются нейтральным filler; WorldFill не красит их во фракционных героев.
 
 ---
 
-## Free-tier Strategy
+## 2. Status
 
-1. Always exhaust Tripo free credits first.
-2. Use Meshy free tier as second source.
-3. Generate one good base mesh → create many variants in Blender (Cybernex / gROT + color / wear variations).
-4. Only upgrade to paid when free limits are exhausted and the asset is Priority A.
+- Канон источника записан (этот файл + `ASSET_SOURCE_CANON.md`).
+- Структура пайплайна есть; генерация «всего подряд в Tripo» **снята с приоритета**.
+- Следующий ingest: один P0-герой из манифеста, когда P0-остров дойдёт до ассета — не T1 hypergate.
 
----
-
-## Dual Faction Variants (almost free)
-
-After a base mesh is ready, Blender scripts automatically produce:
-
-- `*_cybernex.glb` + materials (clean, cyan/white/green emission, Venus Project style)
-- `*_grot.glb` + materials (dark, organic, red-purple, biomass overlays)
-
-This is the main cost-saving mechanism of the pipeline.
-
----
-
-## Current Status
-
-- Documentation and structure defined
-- Scripts to be expanded on the Asset Pipeline VM
-- Local `assets/` + rclone sync already prepared
-- Godot `AssetLoader` supports threaded loading
-
-Next steps after VM setup:
-1. Install Blender headless + dependencies
-2. Implement `generate_tripo.py`
-3. Implement `process_asset.py` (LOD + dual materials)
-4. Connect watch → process → sync loop
+S3 Index `generations/catalog.json` был стёрт 2026-08-15. Этот PR его не чинит.
