@@ -52,6 +52,7 @@ func _ready() -> void:
 	_ensure_game_hud()
 	_setup_interior()
 	_setup_mechanics_playtest()
+	_setup_sandbox_playtest()
 	if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
 		floating.set_target(ship)
 	# Graphics
@@ -250,6 +251,13 @@ func _setup_mechanics_playtest() -> void:
 	var n := Node.new()
 	n.set_script(preload("res://scripts/test/Phase0MechanicsPlaytest.gd"))
 	n.name = "Phase0MechanicsPlaytest"
+	add_child(n)
+
+
+func _setup_sandbox_playtest() -> void:
+	var n := Node.new()
+	n.set_script(preload("res://scripts/test/SandboxPlaytest.gd"))
+	n.name = "SandboxPlaytest"
 	add_child(n)
 
 
