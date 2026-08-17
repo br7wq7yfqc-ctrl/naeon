@@ -17,7 +17,8 @@ Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (arena COD
 | **OS-B** оболочка атмосферы | **built** | envelope + лимб/туман + drag/потолок; 770 м S-sink жив |
 | **OS-C** лестница 5–15 км | **built** | спавн 8 км AGL; far/лимб до 15 км; без G1 CRUISE |
 | **OS-D** unnamed fill с 2 км | **built** | 3 unnamed пада + редкий rock/crate; без SITE_*; без семи стримеров |
-| **OS-E … OS-H** | after OS-D | near read → atmo flight → силуэт → ритуал |
+| **OS-E** чтение у ног | **built** | near shader на чанках: albedo / декали / near LOD; Relief тот же; без GLB в git |
+| **OS-F … OS-H** | after OS-E | atmo flight → силуэт → ритуал |
 | **G1 CRUISE** | later | Не нужен для 5–15 км; mass lock только вместе с CRUISE |
 | **G2–G6** | **locked** | Пока петля OPEN SPACE не честна. В коде 404 |
 
