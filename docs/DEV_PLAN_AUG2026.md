@@ -5,7 +5,8 @@
 
 ## Current focus: OPEN SPACE → бар подхода (OS-A … OS-H)
 
-SC roles → NAEON: `docs/design/SC_FEATURE_MAP.md` (OS-A first).
+SC roles → NAEON: `docs/design/SC_FEATURE_MAP.md` (OS-A first).  
+Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (arena CODE after OS-A).
 
 Не галактический слой. Петля P0.6 на RTX 3090 жива — не ломать.
 

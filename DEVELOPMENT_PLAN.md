@@ -5,7 +5,8 @@
 **Основа:** CONCEPT.md v1.3  
 **Движок:** Godot 4.3 (не 4.4+ как цель)  
 **Принцип:** Local-first → Vertical Slices → Iterative Multiplayer → Platform + AI + Educational Systems  
-**SC → NAEON (роли, не клон):** `docs/design/SC_FEATURE_MAP.md` · бар подхода OS-A…OS-H: `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (CODE очередь = OS-A).
+**SC → NAEON (роли, не клон):** `docs/design/SC_FEATURE_MAP.md` · бар подхода OS-A…OS-H: `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (CODE очередь = OS-A).  
+**Clash нативен; бар арены — Predecessor/Paragon, не Arena Commander:** `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (AR-A…AR-F; код арены не вытесняет OS-A).
 
 **2026-08-17 — текущий бар OPEN SPACE (не галактика):**  
 `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (срезы OS-A … OS-H).  
