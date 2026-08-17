@@ -5,6 +5,8 @@
 
 ## Current focus: OPEN SPACE → бар подхода (OS-A … OS-H)
 
+SC roles → NAEON: `docs/design/SC_FEATURE_MAP.md` (OS-A first).
+
 Не галактический слой. Петля P0.6 на RTX 3090 жива — не ломать.
 
 | Шаг | State | Gist |

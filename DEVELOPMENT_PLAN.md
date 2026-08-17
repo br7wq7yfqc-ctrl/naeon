@@ -1,10 +1,11 @@
 # NAEON — Подробный план разработки по фазам (для build-сессий)
 
-**Версия:** 2.1  
-**Дата:** 2026-08-15  
+**Версия:** 2.2  
+**Дата:** 2026-08-17  
 **Основа:** CONCEPT.md v1.3  
 **Движок:** Godot 4.3 (не 4.4+ как цель)  
-**Принцип:** Local-first → Vertical Slices → Iterative Multiplayer → Platform + AI + Educational Systems
+**Принцип:** Local-first → Vertical Slices → Iterative Multiplayer → Platform + AI + Educational Systems  
+**SC → NAEON (роли, не клон):** `docs/design/SC_FEATURE_MAP.md` · бар подхода OS-A…OS-H: `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (CODE очередь = OS-A).
 
 **2026-08-17 — текущий бар OPEN SPACE (не галактика):**  
 `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (срезы OS-A … OS-H).  

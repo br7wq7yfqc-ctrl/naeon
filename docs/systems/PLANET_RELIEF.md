@@ -20,7 +20,7 @@ Planets must **not** read as flat featureless spheres. Macro LOD is spherical sh
 | **R1** | SurfaceDetail uses relief + shore/ocean/alpine colors | done |
 | **R2** | Water material / sea plane juice | next |
 | **R3** | Cave mouths + tunnel SDF near player | queued |
-| **R4** | Macro ocean/land bands on far sphere | queued |
+| **R4** | Macro ocean/land bands on far sphere | OS-A (`WORLD_FILL.md` §5) — same FBM / seed / sphere_xz |
 | **R5** | Per-planet profiles | done (with R0) |
 | **R6** | Terrain edit respects sea floor & caves | later |
 

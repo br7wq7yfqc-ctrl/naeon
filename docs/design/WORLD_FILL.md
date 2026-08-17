@@ -10,6 +10,7 @@ runtime universe generator. Schedule, playtest, and terrain-code work live
 in `DEVELOPMENT_PLAN.md` — not here.
 Mesh-source anchor: `docs/design/ASSET_SOURCE_CANON.md`.
 OPEN SPACE approach bar: `docs/design/OPEN_SPACE_SC_BENCHMARK.md`.
+SC roles (not a CIG clone): `docs/design/SC_FEATURE_MAP.md`.
 
 WorldFill answers one question: once a system and a body are already loaded
 from authored data, what may the engine grow around the player — and what
@@ -248,7 +249,9 @@ stitch, not a third noise.
 ### 5.3 Next code (not this document)
 
 **Shared Relief sampler for the sphere shader and `SurfaceDetail` — not
-`GalaxyCatalog`.** That stitch is a later code PR. See `DEVELOPMENT_PLAN.md`.
+`GalaxyCatalog`.** That stitch is **OS-A** (this PR): `body_seed` +
+`sphere_xz` + the same macro FBM in `planet_surface.gdshader`. See
+`DEVELOPMENT_PLAN.md`.
 
 `GalaxyCatalog` is G2 authored data (eight systems, light-year coordinates,
 gate links). It does not make Nex-Prime one planet. The stitch is local to
