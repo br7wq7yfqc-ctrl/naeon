@@ -163,7 +163,7 @@ func _nexus(pos: Vector3, col: Color, nname: String, fac: String) -> void:
 func _build_towers() -> void:
 	# Mid-lane towers along Z for both sides — live guns, visual spire stays.
 	# Friendly towers sit behind the spawn camera (player spawns at z=6, the
-	# chase camera trails to about z=11) — at z=12 the MID tower stood inside it.
+	# AR-A OTS boom trails to about z=8.6) — at z=12 the MID tower stood inside it.
 	var towers := [
 		[Vector3(0, 0, 18), Color(0.2, 0.8, 1.0), "T_CX_MID", "Cybernex", "MID"],
 		[Vector3(0, 0, -14), Color(0.9, 0.2, 0.45), "T_GR_MID", "gROT", "MID"],

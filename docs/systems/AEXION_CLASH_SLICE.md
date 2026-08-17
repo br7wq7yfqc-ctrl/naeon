@@ -19,6 +19,11 @@ Full MOBA lanes, items shop P2W, arena flipping capitals.
 ## Play
 OpenSpace → **M** or **Tab** → TestArena Clash · kill dummies to 5 · soft influence toast
 
+## Camera (AR-A)
+- TestArena / Clash hero: over-the-shoulder 3rd person (`PlayerController.apply_clash_ots`)
+- Right-shoulder boom, FOV 70, default pitch −8°, clamp blocks top-down RTS
+- Same 3 strips; no new map, no travel-mode name, no G5
+
 ## Lane readability (0.3.3+)
 - TOP +X cyan · MID gold · BOT -X magenta strips + Label3D
 - NEXUS Cybernex south (+Z) / gROT north (-Z)

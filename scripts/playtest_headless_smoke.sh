@@ -18,6 +18,19 @@ echo "[playtest] using $GODOT root=$ROOT"
 echo OS_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_os.log || true)
 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/test/TestArena.tscn --quit-after 6 > /tmp/pt_ta.log 2>&1 || true
 echo TA_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_ta.log || true)
+set +e
+timeout 20 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/test/TestArena.tscn -- --playtest-arena > /tmp/pt_ar.log 2>&1
+AR_CODE=$?
+set -e
+if grep -q '\[Playtest\] PASS arena AR-A' /tmp/pt_ar.log; then
+  AR_CODE=0
+elif grep -q '\[Playtest\] FAIL arena AR-A' /tmp/pt_ar.log; then
+  AR_CODE=1
+elif [ "$AR_CODE" -eq 0 ]; then
+  AR_CODE=1
+fi
+echo AR_CODE=$AR_CODE AR_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_ar.log || true)
+grep -E 'Playtest|SCRIPT ERROR|AR-A' /tmp/pt_ar.log | head -30 || true
 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/ui/MainMenu.tscn --quit-after 4 > /tmp/pt_mm.log 2>&1 || true
 echo MM_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_mm.log || true)
 set +e

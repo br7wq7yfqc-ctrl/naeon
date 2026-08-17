@@ -9,8 +9,15 @@ const _ProcLoco = preload("res://scripts/player/ProceduralLocomotion.gd")
 const _ProcSil = preload("res://scripts/player/ProceduralHeroSilhouette.gd")
 
 ## TPS controller — robust WASD (InputMap + physical/keycode fallback).
+## Clash (TestArena) uses an over-the-shoulder boom — AR-A, not RTS / Dota cam.
 
 const FORMS := ["Canine", "Feline", "Avian", "Human"]
+const OTS_PIVOT_Y := 1.42
+const OTS_SHOULDER := Vector3(1.05, 0.38, 2.55)
+const OTS_FOV := 70.0
+const OTS_PITCH_DEFAULT := deg_to_rad(-8.0)
+const OTS_PITCH_MIN := deg_to_rad(-36.0)
+const OTS_PITCH_MAX := deg_to_rad(18.0)
 
 @export var move_speed: float = 8.0
 @export var sprint_multiplier: float = 1.6
@@ -43,6 +50,7 @@ var _jump_cut: bool = false
 var _jumped: bool = false
 var _down_t: float = 0.0
 var _spawn_pos: Vector3 = Vector3(0, 1.2, 6)
+var _ots_active: bool = false
 
 func _ready() -> void:
 	health = max_health
@@ -74,6 +82,7 @@ func _ready() -> void:
 	_ensure_infection()
 	call_deferred("_ensure_channel_hooks")
 	_ensure_hud()
+	call_deferred("_maybe_apply_clash_ots")
 	print("[Player] Ready form=", current_form, " faction=", faction)
 	if SoftSession:
 		SoftSession.apply_to_player(self)
@@ -95,6 +104,45 @@ func _ensure_input_ready() -> void:
 	# Re-assert focus for exported .app on macOS
 	if get_viewport():
 		get_viewport().gui_release_focus()
+
+
+func _maybe_apply_clash_ots() -> void:
+	var tree := get_tree()
+	if tree == null or tree.current_scene == null:
+		return
+	if str(tree.current_scene.name) != "TestArena":
+		return
+	apply_clash_ots()
+
+
+func apply_clash_ots() -> void:
+	## AR-A: right-shoulder boom, slight down-lane pitch. Not top-down, not travel-mode.
+	_ots_active = true
+	if camera_pivot:
+		camera_pivot.position = Vector3(0.0, OTS_PIVOT_Y, 0.0)
+		camera_pivot.rotation.x = OTS_PITCH_DEFAULT
+	if camera:
+		camera.position = OTS_SHOULDER
+		camera.rotation = Vector3.ZERO
+		camera.fov = OTS_FOV
+		camera.current = true
+	print("[Player] AR-A OTS shoulder=", OTS_SHOULDER, " fov=", OTS_FOV, " pitch=", rad_to_deg(OTS_PITCH_DEFAULT), " cam_y=", camera.global_position.y if camera else 0.0)
+
+
+func ots_evidence() -> Dictionary:
+	var cam_pos := camera.position if camera else Vector3.ZERO
+	var pitch := rad_to_deg(camera_pivot.rotation.x) if camera_pivot else 0.0
+	return {
+		"active": _ots_active,
+		"shoulder_x": cam_pos.x,
+		"cam_y": cam_pos.y,
+		"boom_z": cam_pos.z,
+		"world_y": camera.global_position.y if camera else 0.0,
+		"fov": camera.fov if camera else 0.0,
+		"pitch_deg": pitch,
+		"pitch_min": rad_to_deg(OTS_PITCH_MIN),
+		"pitch_max": rad_to_deg(OTS_PITCH_MAX),
+	}
 
 func _unhandled_input(event: InputEvent) -> void:
 
@@ -126,7 +174,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		rotate_y(-event.relative.x * mouse_sensitivity)
 		if camera_pivot:
 			camera_pivot.rotate_x(-event.relative.y * mouse_sensitivity)
-			camera_pivot.rotation.x = clamp(camera_pivot.rotation.x, deg_to_rad(-80), deg_to_rad(80))
+			var pmin := OTS_PITCH_MIN if _ots_active else deg_to_rad(-80)
+			var pmax := OTS_PITCH_MAX if _ots_active else deg_to_rad(80)
+			camera_pivot.rotation.x = clamp(camera_pivot.rotation.x, pmin, pmax)
 	if event.is_action_pressed("ui_cancel"):
 		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)

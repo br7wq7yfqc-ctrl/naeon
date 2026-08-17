@@ -19,7 +19,7 @@ Clash — **нативный** слой NAEON. Бар подхода космо�
 
 | # | Роль Predecessor / Paragon | Эквивалент NAEON | Сейчас (репо) | Next | Отказ |
 |---|----------------------------|------------------|---------------|------|-------|
-| 1 | Камера / feel: OTS 3rd person, не top-down | `PlayerController` + `CameraPivot` в `TestArena`; спринт Shift | TPS chase, мышь, coyote/jump-cut; **travel-mode нет** (спринт = аналог) | AR-A: читаемый OTS на 3 полосах; не изобретать named travel / героя | Dota-камера; клон travel-mode IP |
+| 1 | Камера / feel: OTS 3rd person, не top-down | `PlayerController` + `CameraPivot` в `TestArena`; спринт Shift | **AR-A:** OTS правое плечо, FOV 70, pitch −8° (clamp не RTS); спринт = Shift; **travel-mode нет** | feel lock; не named travel / герой | Dota-камера; клон travel-mode IP |
 | 2 | Топология: 3 линии, jungle, river, вертикаль / jump pads | `ClashLanes` TOP/MID/BOT на полу ~60×60 | **3 линии** (не 2): +X cyan / 0 gold / −X magenta; jungle/river/pads **нет**; плоско | AR-D на том же футпринте TestArena | новая city-map; SITE_* mint |
 | 3 | Структуры: towers / inhibitors / core | башни = live `Turret` 160 HP; nexus = prop | 6 башен (по 1 на сторону × 3 линии); NEXUS_CX / NEXUS_GR — коллизия, **без HP**; inhibitors нет | AR-B: честный core HP; inhibitor = второй ряд или wait | P2W-ремонт башен |
 | 4 | Objectives: camps / fangtooth / prime | claim beacons + lane pressure + tower-down | 3 Neutral beacon (occupy C/Hack); pressure 0..100; tower death +28 soft; WS cap 60/день | AR-C/D: лагеря wait; **не** story-power drop | unique DPS с босса; Knowledge→урон |
@@ -54,7 +54,7 @@ Clash — **нативный** слой NAEON. Бар подхода космо�
 
 | ID | Роль | Сейчас | Когда код | Отказ |
 |----|------|--------|-----------|-------|
-| **AR-A** | OTS feel + 3 полосы читаются без top-down | TPS + 3 strips живы | после OS-A green | новая карта; named hero |
+| **AR-A** | OTS feel + 3 полосы читаются без top-down | **сделано:** OTS + те же 3 strips | этот срез | новая карта; named hero |
 | **AR-B** | Структуры честные: tower → (inhibitor) → core | towers HP; nexus prop | после AR-A | pay-to-repair |
 | **AR-C** | Волны миньонов по линиям | dummy once | после AR-B | P2W waves |
 | **AR-D** | Jungle / river / вертикаль на **том же** футпринте | плоско 60×60 | после AR-C | SITE_* city-map |
@@ -71,4 +71,4 @@ Clash — **нативный** слой NAEON. Бар подхода космо�
 
 ## Этот PR
 
-План only для арены. Код OS-A (одно тело Nex-Prime) не откатывать. Дверь арены по-прежнему F5 / меню → AEXION CLASH, не Open Space.
+AR-A only: OTS feel на существующем TestArena / ClashLanes. OS-A не трогать. Дверь: редактор / меню → AEXION CLASH → TestArena. AR-B…F не начинать.
