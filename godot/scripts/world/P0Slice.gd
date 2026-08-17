@@ -9,8 +9,10 @@ const ONLY_BODY := "Nex-Prime"
 ## Flora / fauna / water / caves / landscape / terrain-edit: seven independent
 ## live waves. Off until one heightfield ring restores without a rebuild.
 const FILL_STREAMERS := false
-## P0.2: one pad plate + one CC0 filler. No density cluster, no extra pads.
+## P0.2: no density cluster. OS-D still adds extra unnamed pads + sparse scatter.
 const ONE_PAD := true
+## OS-D: Pad_North + two extra unnamed plates + rare rock/crate proxies.
+const OS_D_FILL := true
 const FILLER_PROP_ID := "pad_crate_cc0"
 const ORBITAL_STATIONS := false
 const PAD_DENSITY := false

@@ -7,6 +7,7 @@ const MANIFEST := "res://../docs/design/p0_filler_manifest.json"
 const _AP = preload("res://scripts/assets/AssetPaths.gd")
 
 @export var prop_id: String = "pad_crate_cc0"
+@export var scale_factor: float = 1.0
 
 var _entry: Dictionary = {}
 
@@ -66,11 +67,15 @@ func _manifest_path() -> String:
 	return p
 
 
+func _kind() -> String:
+	return str(_entry.get("kind", "crate"))
+
+
 func _build() -> void:
 	for c in get_children():
 		remove_child(c)
 		c.queue_free()
-	var rel := "filler/wooden_crate_01/wooden_crate_01.glb"
+	var rel := str(_entry.get("local_rel", "filler/wooden_crate_01/wooden_crate_01.glb"))
 	var path: String = _AP.resolve(rel)
 	if DisplayServer.get_name() != "headless" and path != "" and FileAccess.file_exists(path):
 		var doc := GLTFDocument.new()
@@ -79,7 +84,7 @@ func _build() -> void:
 			var root := doc.generate_scene(state)
 			if root:
 				add_child(root)
-				root.scale = Vector3.ONE * 1.4
+				root.scale = Vector3.ONE * (1.4 * maxf(scale_factor, 0.2))
 				_tag()
 				print("[FillerProp] loaded ", path)
 				return
@@ -91,27 +96,61 @@ func _build() -> void:
 func _spawn_proxy() -> void:
 	if DisplayServer.get_name() == "headless":
 		return
+	if _kind() == "rock":
+		_spawn_rock_proxy()
+		return
+	var s := maxf(scale_factor, 0.2)
 	var mi := MeshInstance3D.new()
 	mi.name = "Proxy"
 	var box := BoxMesh.new()
-	box.size = Vector3(1.6, 1.4, 1.6)
+	box.size = Vector3(1.6, 1.4, 1.6) * s
 	mi.mesh = box
 	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.albedo_color = Color(0.42, 0.32, 0.18)
-	mat.roughness = 0.85
-	mat.metallic = 0.05
+	mat.emission_enabled = true
+	mat.emission = Color(0.28, 0.20, 0.10)
+	mat.emission_energy_multiplier = 0.45
 	mi.material_override = mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mi)
 	var band := MeshInstance3D.new()
 	var strap := BoxMesh.new()
-	strap.size = Vector3(1.66, 0.12, 1.66)
+	strap.size = Vector3(1.66, 0.12, 1.66) * s
 	band.mesh = strap
 	var sm := StandardMaterial3D.new()
+	sm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	sm.albedo_color = Color(0.22, 0.2, 0.16)
 	band.material_override = sm
-	band.position.y = 0.15
+	band.position.y = 0.15 * s
 	add_child(band)
+
+
+func _spawn_rock_proxy() -> void:
+	var s := maxf(scale_factor, 0.2)
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(0.36, 0.32, 0.26)
+	mat.emission_enabled = true
+	mat.emission = Color(0.20, 0.18, 0.14)
+	mat.emission_energy_multiplier = 0.5
+	var core := MeshInstance3D.new()
+	core.name = "Proxy"
+	var box := BoxMesh.new()
+	box.size = Vector3(2.4, 1.6, 2.1) * s
+	core.mesh = box
+	core.material_override = mat
+	core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(core)
+	var cap := MeshInstance3D.new()
+	var cap_box := BoxMesh.new()
+	cap_box.size = Vector3(1.5, 1.1, 1.7) * s
+	cap.mesh = cap_box
+	cap.material_override = mat
+	cap.position = Vector3(0.35 * s, 0.55 * s, -0.15 * s)
+	cap.rotation = Vector3(0.2, 0.4, 0.15)
+	cap.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(cap)
 
 
 func _tag() -> void:
