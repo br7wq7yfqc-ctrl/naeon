@@ -21,7 +21,7 @@ Clash — **нативный** слой NAEON. Бар подхода космо�
 | # | Роль Predecessor / Paragon | Эквивалент NAEON | Сейчас (репо) | Next | Отказ |
 |---|----------------------------|------------------|---------------|------|-------|
 | 1 | Камера / feel: OTS 3rd person, не top-down | `PlayerController` + `CameraPivot` в `TestArena`; спринт Shift | **AR-A:** OTS правое плечо, FOV 70, pitch −8° (clamp не RTS); спринт = Shift; **travel-mode нет** | feel lock; не named travel / герой | Dota-камера; клон travel-mode IP |
-| 2 | Топология: 3 линии, jungle, river, вертикаль / jump pads | `ClashLanes` TOP/MID/BOT на полу ~60×60 | **3 линии** + **AR-D:** один off-lane `ClashCamp` (pit) на том же 60×60; river/pads **нет** | river/pads later; не city-map | новая city-map; SITE_* mint |
+| 2 | Топология: 3 линии, jungle, river, вертикаль / jump pads | `ClashLanes` TOP/MID/BOT на полу ~60×60 | **3 линии** + **AR-D** camp + **река** (`ClashRiver`) на том же 60×60; pads **нет** (бьют OTS) | pads later only if camera holds; не city-map | новая city-map; SITE_* mint |
 | 3 | Структуры: towers / inhibitors / core | башни = live `Turret` 160 HP; nexus = prop | **AR-B:** OUTER×6 + MID×6 + INHIB×2 + CORE×2, все с HP (`Turret`); inhib = gate у ядра (не 3-й полный ряд); нет P2W-ремонта | AR-C волны; не city-map | P2W-ремонт башен |
 | 4 | Objectives: camps / fangtooth / prime | claim beacons + lane pressure + tower-down | **AR-D:** один jungle camp (fangtooth-роль, не IP); damageable; soft contest; drop = soft WS, не unique weapon; Knowledge только подпись | prime later; **не** story-power drop | unique DPS с босса; Knowledge→урон |
 | 5 | Waves / minions | `CombatDummy` с `lane_spawn_table()` | **AR-C:** `ClashWaves` — периодические волны `CombatDummy` по линии; march к OUTER; без магазина | feel lock | магазин-миньоны |
@@ -42,7 +42,8 @@ Clash — **нативный** слой NAEON. Бар подхода космо�
 | `AexionClash.gd` | kills→5, pressure TOP/MID/BOT, soft WS, `SITE_TEST_ARENA_PILLAR` уже в LayerContext (не чеканить новый) |
 | `ClashMatchDirector.gd` | K/D, banner, lane HUD; no P2W |
 | `ClashCamp.gd` | один off-lane pit; HP; soft contest announce; drop = soft WS (не оружие) |
-| `TestArena.gd` | дверь слоя; beacons Neutral; `ClashWaves` на полосах; один `ClashCamp`; один `ClashModuleBench` |
+| `ClashRiver.gd` | река на том же 60×60: mid-crossing + каналы между полосами; terrain/read, не objective; pads нет |
+| `TestArena.gd` | дверь слоя; beacons Neutral; `ClashWaves` на полосах; один `ClashCamp`; один `ClashModuleBench`; `ClashRiver` |
 | `AbilityKitCatalog.gd` | 4 кита; costs из `EnergyEconomy`; `kit_for_faction` = прежний default |
 | `HeroFormCatalog.gd` | Canine/Feline/Avian/Human + лёгкие loco-числа — **не** rank; не усиливать |
 | `docs/systems/AEXION_CLASH_SLICE.md` | бар уже назван Predecessor; non-goal: full lanes/items P2W |
@@ -60,7 +61,7 @@ Clash — **нативный** слой NAEON. Бар подхода космо�
 | **AR-A** | OTS feel + 3 полосы читаются без top-down | **сделано:** OTS + те же 3 strips | этот срез | новая карта; named hero |
 | **AR-B** | Структуры честные: tower → (inhibitor) → core | **сделано:** OUTER→MID→INHIB→CORE с HP | этот срез | pay-to-repair |
 | **AR-C** | Волны миньонов по линиям | **сделано:** timed `ClashWaves` + lane march | этот срез | P2W waves |
-| **AR-D** | Jungle / river / вертикаль на **том же** футпринте | **сделано:** один off-lane camp (fangtooth-роль) | этот срез | SITE_* city-map |
+| **AR-D** | Jungle / river / вертикаль на **том же** футпринте | **сделано:** один off-lane camp + река на том же 60×60; pads нет | этот срез | SITE_* city-map |
 | **AR-E** | 4–8 китов; предметы = modules/blueprints | **сделано:** 4 кита + один session-bench | этот срез | Paragon deck; форма=стат |
 | **AR-F** | 3v3 local authority, затем 5v5 | SoftNet visual | Phase 2/3; G5 всё ещё закрыт | вход из мира сейчас |
 
@@ -74,4 +75,4 @@ Clash — **нативный** слой NAEON. Бар подхода космо�
 
 ## Этот PR
 
-AR-E only: 4 кита (2 существующих + CX Grid + GR Spore) и один module/blueprint bench на футпринте TestArena. AR-A…AR-D не откатывать. OS-* / OpenSpace / Planet* не трогать. G5 закрыт. Не mint SITE_*. Не hero IP. Не колода Paragon. Дверь: меню → AEXION CLASH → TestArena. AR-F не начинать.
+Река на том же 60×60 TestArena (code-first меш, не objective, не новая карта). Pads нет — бьют OTS. AR-A…AR-E не откатывать. OS-* / OpenSpace / Planet* не трогать. G5 закрыт. Не mint SITE_*. Не hero IP. Дверь: меню → AEXION CLASH → TestArena. AR-F не начинать.
