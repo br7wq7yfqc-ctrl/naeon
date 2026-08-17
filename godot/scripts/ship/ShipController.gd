@@ -322,6 +322,34 @@ func _ship_axis() -> Vector3:
 	return Vector3(strafe, lift, thrust)
 
 
+func _sink_key_held() -> bool:
+	if is_landed:
+		return false
+	if InputMap.has_action("move_back") and Input.is_action_pressed("move_back"):
+		return true
+	if Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_S):
+		return true
+	if Input.is_physical_key_pressed(KEY_DOWN) or Input.is_key_pressed(KEY_DOWN):
+		return true
+	return false
+
+
+func _planet_inward() -> Vector3:
+	## Geometric toward-planet. gravity_at is ZERO above atmo*1.8 (~504 m),
+	## which is why P0.4 sink never fired at the 770 m OPEN SPACE spawn.
+	if _open_space and _open_space.has_method("nearest_planet"):
+		var pl: Node3D = _open_space.nearest_planet(global_position)
+		if pl != null and is_instance_valid(pl):
+			var to_c: Vector3 = pl.global_position - global_position
+			if to_c.length_squared() > 1.0:
+				return to_c.normalized()
+	if _open_space and _open_space.has_method("gravity_at"):
+		var gg: Vector3 = _open_space.gravity_at(global_position)
+		if gg.length() > 0.05:
+			return gg.normalized()
+	return Vector3.ZERO
+
+
 func _apply_attitude() -> void:
 	# Right-handed free-flight attitude: yaw around ref-up, pitch around local right, roll around nose.
 	# Must keep det(+1). Old up.cross(f0) flipped the X axis → ship flew "sideways" + inverted mouse.
@@ -436,9 +464,10 @@ func _physics_process(delta: float) -> void:
 		if _open_space.has_method("gravity_at"):
 			g = _open_space.gravity_at(global_position)
 
-	# S = planet-radial sink a human can hold. Nose reverse is not descent
-	# unless the mouse already aims at the planet (P0.4 3090: stalled at 438 m).
-	var sink_held := axes.z < -0.15 and g.length() > 0.05
+	# S = toward planet, not nose/camera thrust. At spawn the nose faces the
+	# planet; treating S as reverse climbs. gravity_at is 0 above ~504 m.
+	var inward := _planet_inward()
+	var sink_held := _sink_key_held() and inward.length() > 0.5
 	if sink_held:
 		axes.z = 0.0
 
@@ -487,13 +516,20 @@ func _physics_process(delta: float) -> void:
 		else:
 			# NAV: light gravity bias only near surface
 			accel += g * lerpf(0.02, 0.2, atmo)
-		if sink_held:
-			var sink_acc := 16.0
-			if flight_mode == FlightMode.SCM:
-				sink_acc = 22.0
-			elif flight_mode == FlightMode.NAV:
-				sink_acc = 18.0
-			accel += g.normalized() * sink_acc
+
+	if sink_held:
+		var sink_acc := 28.0
+		if flight_mode == FlightMode.HOVER:
+			sink_acc = 32.0
+		elif flight_mode == FlightMode.NAV:
+			sink_acc = 24.0
+		var alt_now := _altitude_now()
+		if alt_now < 100.0:
+			sink_acc *= clampf(alt_now / 100.0, 0.2, 1.0)
+		accel += inward * sink_acc
+		var outward := velocity.dot(-inward)
+		if outward > 0.2:
+			velocity += inward * outward * clampf(8.0 * delta, 0.0, 1.0)
 
 	_stall = _Flight.stall_amount(atmo, velocity.length(), _Flight.stall_speed(flight_mode))
 	if _stall > 0.01 and g.length() > 0.01:
