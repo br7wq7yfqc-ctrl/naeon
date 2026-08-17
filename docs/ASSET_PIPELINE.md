@@ -4,7 +4,12 @@
 
 Fully automated (as much as possible) generation and processing of 3D assets with **minimal external spend**.
 
-Primary generation service: **Tripo**  
+**Maximum ready-made from the net. Generate (Tripo) only unique objects.**
+Authority for the unique / generic split, source order, and licence table:
+`docs/design/WORLD_FILL.md` §3.1. Do not spend Tripo on dirt or unnamed rocks.
+Git holds `source` / `license` / `url` on the position — never GLB or textures.
+
+Primary generation service (unique only): **Tripo**  
 Secondary: Meshy (fallback)  
 Rare: Rodin (hero assets only)
 
@@ -18,7 +23,7 @@ All heavy processing (LOD, dual-theme materials, export) happens on the Yandex C
 |----------|-------------|-------------------|-------|
 | **A** | Hero characters, flagship ships, key buildings | Tripo (paid if needed) → Rodin only if critical | Highest quality |
 | **B** | Regular units, modules, important props | Tripo free credits / Meshy free | Good enough + variants |
-| **C** | Mass decoration, repeated elements | Procedural / reused base meshes + Blender variants | Almost free |
+| **C** | Mass decoration, repeated elements | **Ready-made** (CC0 / paid scan) or procedural + Blender re-skin — not Tripo | WorldFill generic; see §3.1 |
 
 ---
 
@@ -78,7 +83,7 @@ naeon/
 
 ## Free-tier Strategy
 
-1. Always exhaust Tripo free credits first.
+1. Always exhaust Tripo free credits first — and only on **unique** A/B (WORLD_FILL §3.1).
 2. Use Meshy free tier as second source.
 3. Generate one good base mesh → create many variants in Blender (Cybernex / gROT + color / wear variations).
 4. Only upgrade to paid when free limits are exhausted and the asset is Priority A.
