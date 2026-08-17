@@ -556,6 +556,44 @@ func _osa_same_body(fails: PackedStringArray) -> void:
 		var dseed: int = int(detail.get("_seed"))
 		if dseed != seed_b:
 			fails.append("OS-A SurfaceDetail seed != body_seed")
+	# DoD path: 770 m AGL over Nex-Prime, then EVA + relief snap (P0.6)
+	var os: Node = get_parent()
+	var ship: Node3D = null
+	if os:
+		ship = os.get("ship") as Node3D
+	var up: Vector3 = Vector3(0.18, 0.96, 0.12).normalized()
+	var hover: Vector3 = nex.global_position + up * (rad + 770.0)
+	if ship:
+		ship.global_position = hover
+	var agl: float = 770.0
+	if nex.has_method("altitude_of"):
+		agl = float(nex.call("altitude_of", hover))
+	print("[Playtest] OS-A approach AGL=", snapped(agl, 0.1))
+	if absf(agl - 770.0) > 8.0:
+		fails.append("OS-A 770m approach place failed")
+	if os and os.has_method("_spawn_eva_near_ship"):
+		os.call("_spawn_eva_near_ship")
+	var walker: Node3D = null
+	if os:
+		walker = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("OS-A EVA spawn failed at 770m")
+	else:
+		var eva_agl: float = walker.global_position.distance_to(nex.global_position) - rad
+		print("[Playtest] OS-A EVA AGL=", snapped(eva_agl, 0.1))
+		if eva_agl < 600.0:
+			fails.append("OS-A EVA not at approach altitude")
+		walker.global_position = nex.global_position + up * (rad + 12.0)
+		if walker.has_method("_relief_snap_fallback"):
+			var ok: bool = bool(walker.call("_relief_snap_fallback"))
+			if not ok:
+				fails.append("OS-A relief snap returned false")
+		elif walker.has_method("snap_to_surface"):
+			walker.call("snap_to_surface")
+		var after: float = walker.global_position.distance_to(nex.global_position) - rad
+		print("[Playtest] OS-A EVA snap AGL=", snapped(after, 0.01))
+		if after > 40.0 or after < -6.0:
+			fails.append("OS-A EVA snap left walker off relief")
 
 
 func _finish(fails: PackedStringArray, code: int) -> void:
