@@ -683,17 +683,7 @@ func harvest_hud_line() -> String:
 		unit = "BIOMASS"
 	elif ownership and ownership.faction_name() == "gROT":
 		unit = "BIOMASS"
-	var line := "EXTRACTING  %s +%.1f/s  R%.0f" % [unit, rate, crystal_reserves]
-	var repair := pad_repair_hud_line()
-	if repair != "":
-		line += "  ·  " + repair
-	var refuel := pad_refuel_hud_line()
-	if refuel != "":
-		line += "  ·  " + refuel
-	var cargo := pad_cargo_hud_line()
-	if cargo != "":
-		line += "  ·  " + cargo
-	return line
+	return "EXTRACTING  %s +%.1f/s  R%.0f" % [unit, rate, crystal_reserves]
 
 
 func pad_repair_hud_line() -> String:

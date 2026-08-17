@@ -144,6 +144,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-17 | SC pillar 7 zero-G EVA near ship (not dirt): no planet gravity, fuel+tether stay, F reboard. OS-H ritual intact. Still ARK. | zero-g-eva |
 | 2026-08-17 | SC pillar 11 pad fuel: SCM/HOVER tank spends; occupy-to-hold refill; Knowledge labels pump only; empty = limited thrust / no afterburn. No G1 CRUISE. | pad-fuel |
 | 2026-08-17 | SC pillar 3 ship as place: seat→pocket→hatch EVA; doors lead to pocket or EVA. No multi-crew. No SITE_*. | ship-as-place |
+| 2026-08-17 | OpenSpace HUD stack: fuel / cargo / worst module / landed·occupy / EVA 0G. No overlap with GFX/FPS/OBJECTIVE or no-P2W. Clash unchanged. | openspace-hud-stack |
 
 ## Full code audit + hardening — 2026-08-15
 
