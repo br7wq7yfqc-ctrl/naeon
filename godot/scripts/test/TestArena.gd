@@ -1,6 +1,6 @@
 extends Node3D
 
-## Aexion Clash vertical slice — TPS MOBA kits + soft War Score (Predecessor bar).
+## Aexion Clash vertical slice — OTS 3rd-person kits + soft War Score (Predecessor bar).
 ## Soft world influence only; never permanent planet flip from Arena alone.
 
 @onready var hud: CanvasLayer = $HUD
@@ -28,6 +28,8 @@ func _ready() -> void:
 	_phase0_arena_feel()
 	_ensure_clash_director()
 	print("[TestArena] Loaded — Aexion Clash slice")
+	if player and player.has_method("apply_clash_ots"):
+		player.apply_clash_ots()
 	_clash = Node.new()
 	_clash.set_script(preload("res://scripts/arena/AexionClash.gd"))
 	_clash.name = "AexionClash"
@@ -468,6 +470,8 @@ func _finish_clash_layout() -> void:
 		_clash.match_ended.connect(_on_match_ended)
 	if SoftNetSession and player:
 		SoftNetSession.bind_player(player)
+	_evidence_ar_a()
+	_setup_arena_playtest()
 
 
 func _on_match_ended(winner: String) -> void:
@@ -783,6 +787,26 @@ func _apply_arena_perf() -> void:
 func _arena_debug() -> bool:
 	var h = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
 	return h != null and h.has_method("is_debug_overlay") and bool(h.is_debug_overlay())
+
+
+func _evidence_ar_a() -> void:
+	var ev: Dictionary = {}
+	if player and player.has_method("ots_evidence"):
+		ev = player.ots_evidence()
+	var table: Array = _lanes.lane_spawn_table() if _lanes and _lanes.has_method("lane_spawn_table") else []
+	var ids: PackedStringArray = PackedStringArray()
+	for e in table:
+		var lane_id := str(e[1])
+		if not ids.has(lane_id):
+			ids.append(lane_id)
+	print("[AR-A] ots=", ev, " lanes=", ",".join(ids), " pin=", LayerContext.site_pin_id if LayerContext else "")
+
+
+func _setup_arena_playtest() -> void:
+	var n := Node.new()
+	n.set_script(preload("res://scripts/test/ArenaOTSPlaytest.gd"))
+	n.name = "ArenaOTSPlaytest"
+	add_child(n)
 
 
 func _apply_arena_hud_layout() -> void:
