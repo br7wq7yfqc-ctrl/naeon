@@ -1,73 +1,51 @@
 # Session Status
 
-**2026-08-15**
-Full code audit + hardening: 101 scripts / 10 scenes / 12 autoloads, ~110
-confirmed defects, blockers fixed. Single record:
-**`docs/PROTOTYPE_TO_PLAYABLE.md`**. No DMG.
+**2026-08-17 — P0.6 на RTX 3090 жив; бар подхода записан**
 
-**Skill:** sequential-dev + holistic v2.0
+Не «unfit». Петля OPEN SPACE на GPU владельца: land / EVA / takeoff, hold-S 770→0, HOVER+S тонет, EVA на Relief, 6 мин / 60 FPS, 0 debugger errors (`ca904ec` / squash `987cd34`). Галактику не открывали. llvmpipe ≠ FPS PASS.
 
-## What changed for playability
+Следующий код — шов сферы (OS-A), не G2. План: `docs/design/OPEN_SPACE_SC_BENCHMARK.md`.  
+Канон ассетов (уникальное из PR #7): `docs/design/ASSET_SOURCE_CANON.md`.  
+WorldFill (PR #6, на main): `docs/design/WORLD_FILL.md`.
 
-| Was | Now |
-|-----|-----|
-| Invisible floor slab over ~77% of the arena, plus a walkable wall down the MID lane | Wall-sized shape, moved off the lane; every probe rests at `y=0.750`, worst step `0.000` |
-| Flat ground read as a cliff on every planet | `get_floor_angle(_up)` — walker at full speed, rover at real grip |
-| Body / camera / rover drive direction snapped 90° near world ±Z | Parallel-transported tangent frame |
-| Turrets fired 7–13× too slowly, and slower on faster machines | Cooldown drains the gated interval |
-| Pads could freeze in CONTESTED forever | Contest holds transition 1.0; decay always reachable |
-| Economy died after ~3 min (42 per pad, ever) | Reserves regenerate while idle |
-| Leaving a pad cost ~79% of speed per second | `approach_assist` sign fixed, delta-scaled |
-| Knowledge bought +15% weapon damage | Removed (rules/08) |
-| Friendly fire via Hack, dummies and your own towers | Guarded at the receiver |
-| Infection was cosmetic | `take_damage(amount, source_faction)` amplifies gROT |
-| Walker refilled in place; attackers never disengaged | Real downed window + `is_downed()` |
-| Match ended silently | Result panel, Enter rematches |
-| War Score daily cap reset on every arena load | Persisted to `user://` |
-| Pads leaked per visited planet | Real unload; flat at 502 nodes across two laps |
-| Knock used world Y on a sphere | Built in the target's own ground plane |
-| Walker ignored rebinds and gamepad | Movement/sprint read the InputMap first |
-| Every launch began at a 76% stall; HOVER could refuse to descend | Launch stays in HOVER; hold altitude only captured in a gravity well |
+**Skill:** sequential-dev + holistic. Не ломать P0.6 runtime.
 
-## Gate
+## Что теперь правда
 
-`scripts/playtest_headless_smoke.sh` →
-`OS_ERR=0 · TA_ERR=0 · MM_ERR=0 · MECH_CODE=0 · MECH_ERR=0 · [Playtest] PASS`
+| Документ | Роль |
+|----------|------|
+| `docs/design/OPEN_SPACE_SC_BENCHMARK.md` | Бар подхода OS-A…OS-H. G1 только для масштаба. G2–G6 закрыты |
+| `docs/design/ASSET_SOURCE_CANON.md` | unique→Tripo / CC0→neon / paid→neon+notice / отказ |
+| `docs/design/WORLD_FILL.md` | Авторский скелет / безымянный filler. Не чеканит `SITE_*` |
+| `docs/PLAYTEST_SANDBOX.md` | 3090 факт + исторический dummy-зонд. Не FPS PASS на llvmpipe |
+| `DEVELOPMENT_PLAN.md` v2.1 | Длинный план фаз. Указатель на SC-бар в шапке |
+| `docs/PROTOTYPE_TO_PLAYABLE.md` | Исторический audit 2026-08-15 |
 
-Plus two measurements: arena floor geometry probe and a two-lap pad streaming
-leak test. Both in `docs/PROTOTYPE_TO_PLAYABLE.md` §2.
+## Старое «DONE»
+
+`scripts/playtest_headless_smoke.sh` → mechanics PASS — **не human gate**.  
+`docs/PLAYTEST_REPORT.md` 10/10 — **stale smoke**.  
+G0 «СДЕЛАНО» — **built layout**, не галактика.  
+PR #7 писал HUMAN_UNFIT на llvmpipe — **снято** фактом 3090 / P0.6.
 
 ## Tracks
 
 | Track | Status |
 |-------|--------|
-| Design VS + campaign + constructor/side/edu templates | **Gaps closed** |
-| B | Continuum: land gate, HOVER hold, stall, EVA tether + fuel, hull crit, afterburn |
-| C | Walker coyote/jump-cut/slope/downed; rover grip + parked-while-boarded; interiors; pocket HUD |
-| A | Clash towers live; lanes/K/D/beacons; pad-guard; bolt sweep; Rot Surge reaches everything |
-| D | Design ready (constructor + 26) |
-| E | Act I implement first |
+| P0.6 runtime (HUD, descend, EVA, HOVER S) | **built** на 3090 — не регрессить |
+| OPEN SPACE SC bar | **open** — следующий код = OS-A stitch |
+| Galaxy G2–G6 | **locked** |
+| G1 CRUISE | **in-scope only for OS-C scale** |
+| Asset ingest T1 hypergate | **locked** |
+| S3 Index rebuild | **не этот PR** |
 
-## Debt left open
+## Asset catalog (не трогали)
 
-- Mac 10-minute soak for the FPS half of rules/25 — this VM is llvmpipe, so only
-  the memory half could be signed off.
-- A few correct signals still have no listeners; the arena hero's procedural
-  silhouette has no locomotion animation (art work). Both in
-  `docs/PROTOTYPE_TO_PLAYABLE.md` §6.
+- Ledger / locks / MANUAL_CATALOG — как на main. UUID не выдумывать.
+- S3 Index стёрт 2026-08-15. Не патчили.
+- Канон источника: готовое из сети максимум; Tripo только unique.
 
-## Asset catalog (merged from `catalog/ocr-merge-v2`)
+## Исторический audit 2026-08-15
 
-- Git ledger `docs/asset_positions.json` — 134 positions across 213 sheets.
-- Locks `docs/design/approved_sketches.json` — 67 UUID + 58 dump IDs, none invented.
-- `docs/design/MANUAL_CATALOG.md` — manual rebuild at **#043**; next up is infantry
-  tools and the remaining ships, heavy gROT armour ortho still open.
-- The S3 index `generations/catalog.json` was **wiped 2026-08-15**; rebuild from the
-  manual catalog, do not trust the old album.
-- `scripts/assets/harvest_tripo_inbox.sh` ingests a Tripo inbox.
-
-These are approved **sketches** (concept plates). The list of **meshes** Tripo still
-owes us is separate: `docs/design/TRIPO_ASSET_MANIFEST.md`, 78 assets in ten batches.
-
-## Marathon 2026-08-08T00:37:18.886364+00:00
-- dig continuum + cave protect + crystal V scan + FOV
+101 scripts / 10 scenes / 12 autoloads, ~110 confirmed defects, blockers fixed.  
+Запись: `docs/PROTOTYPE_TO_PLAYABLE.md`. Не текущий бар подхода.

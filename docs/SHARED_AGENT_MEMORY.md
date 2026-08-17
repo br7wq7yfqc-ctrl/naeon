@@ -1,18 +1,22 @@
 # NAEON — Shared Agent Memory
 
-**Last updated:** 2026-08-07 (design gaps closed)
+**Last updated:** 2026-08-17 (OPEN SPACE SC bar; P0.6 3090 loop)
 
 ## Core constraints
-No P2W · soft Knowledge · Infection max 5 · S1 · freemium ≠ power · Tripo-first · narrative ≠ power · perf/25 · site_pin catalog · constructor templates only
+No P2W · soft Knowledge · Infection max 5 · story ≠ power · Godot 4.3 · adult hard-sci-fi · site_pin catalog only · WorldFill = authored skeleton + unnamed filler · ready-made assets first, Tripo unique only · one resident system (ARK) · no planetary voxel shell · perf/25 (FPS on owner GPU, not llvmpipe)
 
 ## Design corpus
-rules/00–26 · Act I–VI + premium · SITE_PIN · **CONSTRUCTOR_TEMPLATES** · **SIDE_QUEST_TEMPLATES** · **EDU_MODULE_LIBRARY** · **GALAXY_LAYER_PLAN** · **TRIPO_ASSET_MANIFEST** · skill v2.0
+rules/00–26 · **OPEN_SPACE_SC_BENCHMARK** · **ASSET_SOURCE_CANON** · **WORLD_FILL** · DEVELOPMENT_PLAN 2.1 · SITE_PIN · GALAXY_LAYER_PLAN (G2–G6 locked) · TRIPO_ASSET_MANIFEST
 
 ## Where things are authored
+- **Order of work** → `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (OS-A first). Pointer in `DEVELOPMENT_PLAN.md`
+- **Mesh source** → `docs/design/ASSET_SOURCE_CANON.md`
+- **Fill vs authored** → `docs/design/WORLD_FILL.md`
+- **Human GPU fact** → `docs/PLAYTEST_SANDBOX.md` (3090 / P0.6; not FPS PASS on llvmpipe)
 - **Placement** of star / bodies / belt / gate anchors → `godot/scripts/world/StarSystemCatalog.gd`
 - **Physical envelopes** (radius, gravity, atmosphere) → `PlanetProfileCatalog.gd`
-- Travel, maps, gates, arena entry → `docs/design/GALAXY_LAYER_PLAN.md`
-- Every mesh path Tripo owes us → `docs/design/TRIPO_ASSET_MANIFEST.md`
+- Travel, maps, gates, arena entry → `docs/design/GALAXY_LAYER_PLAN.md` (do not implement G2–G6 until OPEN SPACE loop is honest)
+- Unique mesh list → `docs/design/TRIPO_ASSET_MANIFEST.md` (not T1 until OS bar is honest)
 
 ## Gaps closed
 - Constructor template seed (8 templates, VS = 2)
@@ -132,6 +136,9 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-15 | Clash towers are live Turrets; ship afterburn W+Shift (energy); walker variable jump cut. Soft pressure only. | sequential-dev |
 | 2026-08-15 | **Full code audit + hardening** — 101 scripts / 10 scenes / 12 autoloads. ~110 confirmed defects, blockers fixed, pad streaming memory climb closed. Single record: `docs/PROTOTYPE_TO_PLAYABLE.md` | owner brief: prototype → playable |
 | 2026-08-15 | **Galaxy layer planned + G0 built** — star at the system origin, bodies on distinct orbits, belt from data. Hyperspace, hyperdrives, NAEXOS gates, galaxy/system maps and arena-from-map specified. Authority: `docs/design/GALAXY_LAYER_PLAN.md`; assets: `docs/design/TRIPO_ASSET_MANIFEST.md` (78 assets); plan: `DEVELOPMENT_PLAN.md` Phase G | owner brief: star system + hyperspace + gates + map |
+| 2026-08-16 | WorldFill canon + asset source split (PR #6). Authored skeleton vs unnamed fill. No SITE_* mint. | world-fill |
+| 2026-08-17 | P0.6 squash on main: HUD, hold-S 770→0, EVA on Relief, HOVER S. RTX 3090: land/EVA/takeoff, 6 min / 60 FPS, 0 debugger errors. Not FPS PASS on llvmpipe. | P0 runtime |
+| 2026-08-17 | OPEN SPACE SC benchmark plan (OS-A…OS-H). Port unique #7 canon docs; drop #7 code. HUMAN_UNFIT superseded by 3090 fact. G2–G6 stay closed. | open-space-sc |
 
 ## Full code audit + hardening — 2026-08-15
 
