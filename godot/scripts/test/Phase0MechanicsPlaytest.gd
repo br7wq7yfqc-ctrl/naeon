@@ -495,6 +495,8 @@ func _go() -> void:
 		if sh_m.has_method("repair_modules"):
 			sh_m.repair_modules(999.0)
 
+	await _zero_g_eva_near_ship(fails)
+
 	_osa_same_body(fails)
 	_osb_atmosphere_shell(fails)
 	_osc_scale_ladder(fails, osc_spawn_agl)
@@ -504,6 +506,83 @@ func _go() -> void:
 	_osg_outpost_silhouette(fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
+
+
+func _zero_g_eva_near_ship(fails: PackedStringArray) -> void:
+	## Pillar 7: near-ship EVA in the gravity well is zero-G. Dirt walker stays
+	## grounded (OS-H). Fuel + tether stay. F reboards the seat.
+	var os: Node = get_parent()
+	var nex: Node = _osh_nex()
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	if os == null or nex == null or ship == null or not is_instance_valid(ship):
+		fails.append("zero-G EVA: no OpenSpace/Nex-Prime/ship")
+		return
+	var rad: float = float(nex.get("radius"))
+	var up: Vector3 = Vector3(0.18, 0.96, 0.12).normalized()
+	# Inside the well (Nex-Prime well ≈ 576 m) but not on dirt.
+	var hover: Vector3 = nex.global_position + up * (rad + 250.0)
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	ship.global_position = hover
+	if ship.has_method("_do_launch") and bool(ship.get("is_landed")):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+	if "is_landed" in ship:
+		ship.set("is_landed", false)
+	var g_here: Vector3 = Vector3.ZERO
+	if os.has_method("gravity_at"):
+		g_here = os.gravity_at(hover)
+	print("[Playtest] zero-G well g=", snapped(g_here.length(), 0.01), " AGL=250")
+	if g_here.length() < 1.0:
+		fails.append("zero-G EVA test not inside gravity well (g=%s)" % snapped(g_here.length(), 0.01))
+		return
+	if os.has_method("_spawn_eva_near_ship"):
+		os.call("_spawn_eva_near_ship")
+	os.set("_eva_mode", true)
+	os.set("_in_ship", false)
+	var walker: Node3D = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("zero-G EVA spawn failed")
+		return
+	if not bool(walker.get("eva_mode")):
+		fails.append("zero-G EVA walker not in eva_mode")
+	if walker.has_method("is_zero_g") and not bool(walker.is_zero_g()):
+		fails.append("zero-G EVA flag off near ship")
+	if "velocity" in walker:
+		walker.velocity = Vector3.ZERO
+	var r0: float = walker.global_position.distance_to(nex.global_position)
+	await get_tree().create_timer(0.5).timeout
+	var r1: float = walker.global_position.distance_to(nex.global_position)
+	print("[Playtest] zero-G coast r ", snapped(r0, 0.01), " → ", snapped(r1, 0.01))
+	if r1 < r0 - 0.25:
+		fails.append("zero-G EVA fell toward planet (%s → %s)" % [snapped(r0, 0.01), snapped(r1, 0.01)])
+	# Translate around the hull, then spend fuel on the same thruster path.
+	var side: Vector3 = ship.global_transform.basis.x
+	var fwd: Vector3 = -ship.global_transform.basis.z
+	var p0: Vector3 = walker.global_position
+	if "velocity" in walker:
+		walker.velocity = side * 8.0
+	await get_tree().create_timer(0.25).timeout
+	var moved: float = walker.global_position.distance_to(p0)
+	var e0: float = float(walker.get("energy")) if "energy" in walker else -1.0
+	if walker.has_method("_process_eva"):
+		walker.call("_process_eva", 0.25, side, fwd, side)
+	var e1: float = float(walker.get("energy")) if "energy" in walker else -1.0
+	print("[Playtest] zero-G translate ", snapped(moved, 0.01), " EN ", snapped(e0, 0.1), " → ", snapped(e1, 0.1))
+	if moved < 0.15:
+		fails.append("zero-G EVA did not translate around hull")
+	if e0 >= 0.0 and e1 > e0 - 0.15:
+		fails.append("zero-G EVA fuel did not spend")
+	# F reboard seat
+	var hatch: Node3D = ship.get_node_or_null("HatchPoint") as Node3D
+	var board_at: Vector3 = hatch.global_position if hatch else ship.global_position
+	walker.global_position = board_at + side * 2.0
+	if os.has_method("try_enter_ship"):
+		os.try_enter_ship()
+	await get_tree().create_timer(0.4).timeout
+	print("[Playtest] zero-G reboard in_ship=", os.get("_in_ship"))
+	if not bool(os.get("_in_ship")):
+		fails.append("zero-G EVA did not reboard (F)")
 
 
 func _osa_same_body(fails: PackedStringArray) -> void:
