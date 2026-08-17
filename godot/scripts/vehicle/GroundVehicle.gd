@@ -39,6 +39,13 @@ func _ready() -> void:
 
 
 func _build_proxy() -> void:
+	if DisplayServer.get_name() == "headless":
+		_cam = Camera3D.new()
+		_cam.position = Vector3(0, 2.2, 5.5)
+		_cam.look_at_from_position(_cam.position, Vector3(0, 1.0, 0), Vector3.UP)
+		add_child(_cam)
+		_cam.current = false
+		return
 	if _try_load_chassis():
 		pass
 	else:

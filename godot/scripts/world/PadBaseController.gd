@@ -771,6 +771,9 @@ func _notify_hud(msg: String) -> void:
 
 
 func _ensure_claim_beacon() -> void:
+	# Dummy: building then freeing the pylon is 7× mesh_get_surface_count.
+	if DisplayServer.get_name() == "headless":
+		return
 	# Rebuild on every ownership flip — returning early left the pylon showing
 	# the previous owner's colours.
 	var old := get_node_or_null("ClaimBeaconVis")
@@ -815,6 +818,8 @@ func _ensure_claim_beacon() -> void:
 
 
 func _build_proc_pylon(root: Node3D) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	var fac := "Cybernex"
 	if ownership:
 		fac = ownership.faction_name() if ownership.has_method("faction_name") else fac

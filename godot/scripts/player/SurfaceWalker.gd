@@ -791,6 +791,8 @@ func _try_ability(idx: int) -> void:
 
 func _ensure_limb_rig() -> void:
 	# Lightweight procedural limbs when GLB has no skeleton (code-first).
+	if DisplayServer.get_name() == "headless":
+		return
 	if _visual == null:
 		return
 	if _limb_rig and is_instance_valid(_limb_rig):
