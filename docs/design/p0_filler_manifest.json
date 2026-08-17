@@ -1,11 +1,11 @@
 {
-  "version": 1,
+  "version": 2,
   "updated": "2026-08-17",
-  "note": "Unnamed WorldFill props for the P0 human slice. Git holds source/license/url only. Binaries stay on s3://neon. Not SITE_*. Not Tripo.",
+  "note": "Unnamed WorldFill props for the P0 / OS-D human slice. Git holds source/license/url only. Binaries stay on s3://neon. Not SITE_*. Not Tripo.",
   "props": [
     {
       "id": "pad_crate_cc0",
-      "kind": "generic",
+      "kind": "crate",
       "role": "unnamed_pad_clutter",
       "title": "Wooden Crate 01",
       "source": "Poly Haven",
@@ -13,6 +13,35 @@
       "url": "https://polyhaven.com/a/wooden_crate_01",
       "license_url": "https://polyhaven.com/license",
       "bucket": "s3://neon/filler/wooden_crate_01/wooden_crate_01.glb",
+      "local_rel": "filler/wooden_crate_01/wooden_crate_01.glb",
+      "git_binary": false,
+      "site_pin": ""
+    },
+    {
+      "id": "scatter_crate_cc0",
+      "kind": "crate",
+      "role": "unnamed_scatter",
+      "title": "Wooden Crate 01",
+      "source": "Poly Haven",
+      "license": "CC0-1.0",
+      "url": "https://polyhaven.com/a/wooden_crate_01",
+      "license_url": "https://polyhaven.com/license",
+      "bucket": "s3://neon/filler/wooden_crate_01/wooden_crate_01.glb",
+      "local_rel": "filler/wooden_crate_01/wooden_crate_01.glb",
+      "git_binary": false,
+      "site_pin": ""
+    },
+    {
+      "id": "scatter_rock_cc0",
+      "kind": "rock",
+      "role": "unnamed_scatter",
+      "title": "Boulder 01",
+      "source": "Poly Haven",
+      "license": "CC0-1.0",
+      "url": "https://polyhaven.com/a/boulder_01",
+      "license_url": "https://polyhaven.com/license",
+      "bucket": "s3://neon/filler/boulder_01/boulder_01.glb",
+      "local_rel": "filler/boulder_01/boulder_01.glb",
       "git_binary": false,
       "site_pin": ""
     }

@@ -93,7 +93,9 @@ func _configure_from_quality() -> void:
 	lod_far = (radius + 16000.0) * bias
 	lod_impostor = (radius + 28000.0) * bias
 	atmo_max_dist = (radius + 18000.0) * bias
-	pad_stream_dist = radius + 400.0 * bias
+	# OS-D: unnamed plates + sparse scatter must stream from ~2 km AGL.
+	# Quality only delays GLB / bases, not the plate silhouette.
+	pad_stream_dist = radius + 2400.0
 
 func _on_quality_changed(_t: int) -> void:
 	_configure_from_quality()
@@ -289,6 +291,7 @@ func refresh_approach_lod() -> void:
 	_pending_lod = -1
 	_lod_hold = 0.0
 	_update_atmosphere(dist, lod, obs)
+	_update_pads(dist)
 	_sync_surface_visibility(dist)
 
 
@@ -340,11 +343,9 @@ func _update_pads(dist: float) -> void:
 	if gq:
 		match int(gq.tier):
 			0:
-				stream_d = radius + 220.0
 				glb_d = radius + 90.0
 				base_d = radius + 110.0
 			1:
-				stream_d = radius + 320.0
 				glb_d = radius + 140.0
 				base_d = radius + 170.0
 	if dist < stream_d:
@@ -403,20 +404,31 @@ func _step_pad_build() -> void:
 			_spawn_pad("Pad_North", Vector3.UP)
 			_pad_build_stage = 1
 		1:
-			if _P0.ONE_PAD:
+			if _P0.ONE_PAD and not _P0.OS_D_FILL:
 				_spawn_filler_on_first_pad()
 				_pad_build_stage = 4
 				_pads_built = true
 				_pad_build_pending = false
 				print("[PlanetBody] P0 one pad + filler")
+			elif _P0.OS_D_FILL:
+				_spawn_pad("Pad_Approach", _osd_pad_dir(0))
+				_pad_build_stage = 2
 			else:
 				_spawn_pad("Pad_Eq", Vector3(1, 0.15, 0).normalized())
 				_pad_build_stage = 2
 		2:
-			_spawn_pad("Pad_Far", Vector3(-0.7, 0.2, 0.7).normalized())
+			if _P0.OS_D_FILL:
+				_spawn_pad("Pad_Flank", _osd_pad_dir(1))
+			else:
+				_spawn_pad("Pad_Far", Vector3(-0.7, 0.2, 0.7).normalized())
 			_pad_build_stage = 3
 		3:
-			_spawn_pad_density()
+			if _P0.OS_D_FILL:
+				_spawn_filler_on_first_pad()
+				_spawn_worldfill_scatter()
+				print("[PlanetBody] OS-D unnamed pads n=", _pads.size())
+			else:
+				_spawn_pad_density()
 			_pad_build_stage = 4
 			_pads_built = true
 			_pad_build_pending = false
@@ -438,8 +450,17 @@ func _build_pads() -> void:
 	_pads_built = true
 	_pad_build_stage = 4
 	_pad_build_pending = false
-	if _P0.ONE_PAD:
+	if _P0.ONE_PAD and not _P0.OS_D_FILL:
 		_spawn_filler_on_first_pad()
+		return
+	if _P0.OS_D_FILL:
+		if _pad_named("Pad_Approach") == null:
+			_spawn_pad("Pad_Approach", _osd_pad_dir(0))
+		if _pad_named("Pad_Flank") == null:
+			_spawn_pad("Pad_Flank", _osd_pad_dir(1))
+		_spawn_filler_on_first_pad()
+		_spawn_worldfill_scatter()
+		print("[PlanetBody] OS-D unnamed pads n=", _pads.size())
 		return
 	_spawn_pad("Pad_Eq", Vector3(1, 0.15, 0).normalized())
 	_spawn_pad("Pad_Far", Vector3(-0.7, 0.2, 0.7).normalized())
@@ -457,6 +478,8 @@ func ensure_pad_bases() -> void:
 
 
 func _spawn_pad(pad_name: String, dir: Vector3) -> void:
+	if _pad_named(pad_name) != null:
+		return
 	dir = dir.normalized()
 	var pad_root := Node3D.new()
 	pad_root.name = pad_name
@@ -491,6 +514,7 @@ func _spawn_pad(pad_name: String, dir: Vector3) -> void:
 		pmat.emission_energy_multiplier = 1.2
 		plate.material_override = pmat
 		pad_root.add_child(plate)
+		_add_pad_far_read(pad_root)
 
 	var sb := StaticBody3D.new()
 	sb.collision_layer = 1
@@ -504,7 +528,89 @@ func _spawn_pad(pad_name: String, dir: Vector3) -> void:
 	pad_root.set_meta("landing_pad", true)
 	pad_root.set_meta("planet", self)
 	pad_root.set_meta("pad_up", dir)
+	pad_root.set_meta("site_pin", "")
 	_pads.append(pad_root)
+
+
+func _add_pad_far_read(pad_root: Node3D) -> void:
+	## Unshaded silhouette so a 28 m collision plate still reads from ~2 km.
+	if DisplayServer.get_name() == "headless" or pad_root == null:
+		return
+	var col := Color(0.95, 0.18, 0.38) if faction_base == "gROT" else Color(0.25, 0.85, 1.0)
+	var far := MeshInstance3D.new()
+	far.name = "FarPlate"
+	var box := BoxMesh.new()
+	box.size = Vector3(96, 2.2, 96)
+	far.mesh = box
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = col
+	mat.emission_enabled = true
+	mat.emission = col
+	mat.emission_energy_multiplier = 1.8
+	far.material_override = mat
+	far.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	far.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	far.visibility_range_end = 3200.0
+	far.visibility_range_end_margin = 240.0
+	far.position = Vector3(0, 0.4, 0)
+	pad_root.add_child(far)
+	var mast := MeshInstance3D.new()
+	mast.name = "FarMast"
+	var shaft := BoxMesh.new()
+	shaft.size = Vector3(2.4, 22.0, 2.4)
+	mast.mesh = shaft
+	mast.material_override = mat
+	mast.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mast.visibility_range_end = 3200.0
+	mast.position = Vector3(0, 12.0, 0)
+	pad_root.add_child(mast)
+
+
+func _osd_pad_dir(i: int) -> Vector3:
+	## Stable from body seed + local dir. Channel offset is placement only.
+	var s: int = body_seed()
+	var yaw := (0.22 if i == 0 else -0.48) + float((s + i * 13) % 11) * 0.012
+	var pit := (0.14 if i == 0 else 0.20) + float((int(s / 5) + i) % 7) * 0.008
+	var dir := Vector3(sin(yaw), pit, cos(yaw)).normalized()
+	var prof: Dictionary = _Relief.profile_for_planet(str(planet_name))
+	var h: float = float(_Relief.height_at_dir(dir, s, prof))
+	if _Relief.is_sea(h, prof):
+		dir = Vector3(sin(yaw * 0.65), pit + 0.22, cos(yaw * 0.65)).normalized()
+	return dir
+
+
+func _pad_named(pad_name: String) -> Node3D:
+	for p in _pads:
+		if p != null and is_instance_valid(p) and str(p.name) == pad_name:
+			return p
+	return null
+
+
+func _spawn_worldfill_scatter() -> void:
+	if _pads_root == null:
+		return
+	if _pads_root.has_node("WorldFillScatter"):
+		return
+	var sc := Node3D.new()
+	sc.set_script(preload("res://scripts/world/WorldFillScatter.gd"))
+	sc.name = "WorldFillScatter"
+	_pads_root.add_child(sc)
+	if sc.has_method("setup"):
+		sc.call("setup", self, radius, body_seed())
+
+
+func unnamed_pad_count() -> int:
+	return _pads.size()
+
+
+func worldfill_scatter_count() -> int:
+	if _pads_root == null:
+		return 0
+	var sc: Node = _pads_root.get_node_or_null("WorldFillScatter")
+	if sc != null and sc.has_method("prop_count"):
+		return int(sc.call("prop_count"))
+	return 0
 
 func _load_glb_pads() -> void:
 	_glb_loaded = true
@@ -633,7 +739,8 @@ func _update_atmosphere(dist: float, lod: int, obs: Node3D) -> void:
 func _stream_bases() -> void:
 	if not has_base or _pads.is_empty():
 		return
-	var n := mini(2, _pads.size())
+	# OS-D extra plates stay unnamed logistics pads. ONE_PAD keeps one controller.
+	var n := 1 if _P0.ONE_PAD else mini(2, _pads.size())
 	for i in n:
 		_BaseBuilder.build_on_pad(_pads[i], faction_base)
 

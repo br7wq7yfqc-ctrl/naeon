@@ -504,6 +504,7 @@ func _go() -> void:
 	_osa_same_body(fails)
 	_osb_atmosphere_shell(fails)
 	_osc_scale_ladder(fails, osc_spawn_agl)
+	_osd_unnamed_fill(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
 
@@ -853,6 +854,114 @@ func _osc_scale_ladder(fails: PackedStringArray, spawn_agl: float) -> void:
 		print("[Playtest] OS-C EVA snap AGL=", snapped(after, 0.01))
 		if after > 40.0 or after < -6.0:
 			fails.append("OS-C EVA snap left walker off relief")
+
+
+func _osd_unnamed_fill(fails: PackedStringArray) -> void:
+	## OS-D: from ~2 km, 2+ unnamed plates + rare scatter. No SITE_* mint.
+	## No seven streamers. Chunk budget unchanged. Same body seed.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null:
+		fails.append("OS-D P0Slice missing")
+		return
+	if bool(P0.FILL_STREAMERS):
+		fails.append("OS-D turned on seven fill streamers")
+	if bool(P0.PAD_DENSITY):
+		fails.append("OS-D enabled PadDensity cluster")
+	if not bool(P0.OS_D_FILL):
+		fails.append("OS-D OS_D_FILL flag off")
+	var SD = load("res://scripts/world/SurfaceDetail.gd")
+	if SD == null:
+		fails.append("OS-D SurfaceDetail missing")
+	elif absf(float(SD.CELL_M) - 40.0) > 0.01:
+		fails.append("OS-D chunk cell size changed")
+	elif int(SD.LOAD_BUDGET) != 1:
+		fails.append("OS-D chunk LOAD_BUDGET changed")
+	var sd_src := FileAccess.get_file_as_string("res://scripts/world/SurfaceDetail.gd")
+	if sd_src.find("while _queue.size() > 12") < 0:
+		fails.append("OS-D chunk queue cap changed")
+	var os: Node = get_parent()
+	var nex: Node = null
+	var tree_d := get_tree()
+	if tree_d:
+		for n in tree_d.get_nodes_in_group("planets"):
+			if str(n.get("planet_name")) == "Nex-Prime":
+				nex = n
+				break
+	if nex == null:
+		fails.append("OS-D no Nex-Prime")
+		return
+	var rad: float = float(nex.get("radius"))
+	var stream: float = float(nex.get("pad_stream_dist"))
+	print("[Playtest] OS-D pad_stream_dist AGL=", snapped(stream - rad, 1.0))
+	if stream < rad + 2000.0:
+		fails.append("OS-D pad stream shorter than 2 km (%s)" % snapped(stream - rad, 1.0))
+	var seed_b := -1
+	if nex.has_method("body_seed"):
+		seed_b = int(nex.call("body_seed"))
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var look := Vector3(0, 0, 1)
+	if ship:
+		ship.global_position = nex.global_position + look * (rad + 2000.0)
+		if "velocity" in ship:
+			ship.velocity = Vector3.ZERO
+	if nex.has_method("set_observer") and ship:
+		nex.set_observer(ship)
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	if nex.has_method("refresh_approach_lod"):
+		nex.refresh_approach_lod()
+	var pads_root: Node3D = nex.get_node_or_null("Pads") as Node3D
+	if pads_root == null or not pads_root.visible:
+		fails.append("OS-D Pads hidden at 2 km")
+	var plates: Array = []
+	if nex.get("_pads") != null:
+		plates = nex.get("_pads")
+	print("[Playtest] OS-D pads=", plates.size(), " seed=", seed_b)
+	if plates.size() < 3:
+		fails.append("OS-D want 3 unnamed pads, got %s" % plates.size())
+	var approach_n := 0
+	for p in plates:
+		if p == null or not is_instance_valid(p):
+			continue
+		var pname := str(p.name)
+		if pname.begins_with("SITE_") or str(p.get_meta("site_pin", "")).begins_with("SITE_"):
+			fails.append("OS-D minted SITE_* on %s" % pname)
+		if not pname.begins_with("Pad_"):
+			fails.append("OS-D pad not Pad_North class (%s)" % pname)
+		var dir: Vector3 = ((p as Node3D).global_position - nex.global_position).normalized()
+		if dir.dot(look) > 0.72:
+			approach_n += 1
+	if approach_n < 2:
+		fails.append("OS-D fewer than 2 plates on the 2 km approach face (%s)" % approach_n)
+	var sc: Node = pads_root.get_node_or_null("WorldFillScatter") if pads_root else null
+	if sc == null:
+		fails.append("OS-D WorldFillScatter missing")
+	else:
+		if not (sc as Node3D).visible:
+			fails.append("OS-D scatter hidden at 2 km")
+		var nprop := 0
+		if sc.has_method("prop_count"):
+			nprop = int(sc.call("prop_count"))
+		var sc_seed := -2
+		if sc.has_method("body_seed"):
+			sc_seed = int(sc.call("body_seed"))
+		print("[Playtest] OS-D scatter n=", nprop, " seed=", sc_seed)
+		if nprop < 4:
+			fails.append("OS-D scatter too thin (%s)" % nprop)
+		if sc_seed != seed_b:
+			fails.append("OS-D scatter seed != body_seed (%s vs %s)" % [sc_seed, seed_b])
+		if str(sc.get_meta("site_pin", "")).begins_with("SITE_"):
+			fails.append("OS-D scatter minted SITE_*")
+	for nm in ["SurfaceFlora", "SurfaceFauna", "SurfaceWater", "CaveMouthField", "CaveInterior", "LandscapeFeatures", "TerrainEdit"]:
+		if nex.get_node_or_null(nm) != null:
+			fails.append("OS-D live streamer %s" % nm)
+	if pads_root and pads_root.get_node_or_null("PadDensityCluster"):
+		fails.append("OS-D spawned PadDensity cluster")
+	if LayerContext and str(LayerContext.site_pin_id) != "" and str(LayerContext.site_pin_id) != "SITE_SPACE_TEST_PAD":
+		fails.append("OS-D site_pin left catalog (%s)" % LayerContext.site_pin_id)
+	var sd: Node = nex.get_node_or_null("SurfaceDetail")
+	if sd and sd.has_method("body_seed") and int(sd.call("body_seed")) != seed_b:
+		fails.append("OS-D SurfaceDetail seed != body_seed")
 
 
 func _finish(fails: PackedStringArray, code: int) -> void:

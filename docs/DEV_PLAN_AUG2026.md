@@ -16,7 +16,8 @@ Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (arena COD
 | **OS-A** шов сферы = Relief | **built** | WorldFill §5. Дальний фейк не подменяет грунт |
 | **OS-B** оболочка атмосферы | **built** | envelope + лимб/туман + drag/потолок; 770 м S-sink жив |
 | **OS-C** лестница 5–15 км | **built** | спавн 8 км AGL; far/лимб до 15 км; без G1 CRUISE |
-| **OS-D … OS-H** | after OS-C | fill → near read → atmo flight → силуэт → ритуал |
+| **OS-D** unnamed fill с 2 км | **built** | 3 unnamed пада + редкий rock/crate; без SITE_*; без семи стримеров |
+| **OS-E … OS-H** | after OS-D | near read → atmo flight → силуэт → ритуал |
 | **G1 CRUISE** | later | Не нужен для 5–15 км; mass lock только вместе с CRUISE |
 | **G2–G6** | **locked** | Пока петля OPEN SPACE не честна. В коде 404 |
 

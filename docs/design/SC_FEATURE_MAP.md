@@ -18,7 +18,7 @@ Likeness — **вся** фантазия SC (лететь, стыковатьс�
 | # | Роль SC | Эквивалент NAEON | Сейчас | Next | Отказ |
 |---|---------|------------------|--------|------|-------|
 | 1 | Flight / IFCS (SCM, NAV/quantum, decoupled, gear, VTOL/hover, boost, fuel) | `ShipController` SCM / NAV / HOVER / STALL / LAND; `ShipFlightModel`; afterburn W+Shift; `ShipLandingGear` visual | SCM/NAV/HOVER/STALL/LAND живы; gear visual; decoupled нет; топливо — проп пада, не расход | G1 CRUISE **закрыт** (OS-C без сверхсвета); quantum / interdiction ждать G1/G3 | клон IFCS; G3 сейчас; P2W-топливо |
-| 2 | Atmosphere / planet approach | бар OS-A…OS-H; шейдеры лимба/дымки | OS-A шов; OS-B оболочка; OS-C старт 8 км + far/лимб до 15 км | OS-D unnamed fill | Planet Tech V5; воксельная оболочка; OS-F аэродинамика |
+| 2 | Atmosphere / planet approach | бар OS-A…OS-H; шейдеры лимба/дымки | OS-A шов; OS-B оболочка; OS-C старт 8 км; OS-D unnamed fill с 2 км | OS-E near read | Planet Tech V5; воксельная оболочка; OS-F аэродинамика |
 | 3 | Ship as place (interior, seats, multi-crew) | `InteriorDirector` / `InteriorGenerator`; Seat; F seat→pilot | pocket + двери + Seat живы; multi-crew нет | после OS-A green; Phase 2 multi-crew | фейковые двери |
 | 4 | Ship engineering (power/cool/life, component HP) | модульный hull + `ShipModule` (engine/weapon/shield/cargo/extractor); hull-crit recover | модули + hull HP; шины power/cool/life нет | модули HP после OS-A; life-support уже в pocket | pay-to-repair |
 | 5 | Cargo / tractor / dock | `CargoHold` + `CargoRamp`; unnamed pads | hold + ramp scaffold; 3 пада/тело без каталога | OS-G; пады unnamed до pin каталога | трактор-клон; SITE_* mint |
@@ -52,8 +52,8 @@ CIG copy · воксели · SITE_* mint · G2–G6 сейчас · P2W · Trip
 
 | Класс | Факт репо |
 |-------|-----------|
-| Уже есть | SCM/HOVER/STALL/LAND, OpenSpace ARK, пады, EVA snap, Clash, Infection 5, Contribution, Alliance, pad pip, rover, local save, лимб + OS-B оболочка, OS-C подход 8 км |
-| Приближаем | unnamed fill (OS-D), near read (OS-E), atmo flight (OS-F), zero-G (после OS-H) |
+| Уже есть | SCM/HOVER/STALL/LAND, OpenSpace ARK, пады, EVA snap, Clash, Infection 5, Contribution, Alliance, pad pip, rover, local save, лимб + OS-B оболочка, OS-C подход 8 км, OS-D unnamed fill |
+| Приближаем | near read (OS-E), atmo flight (OS-F), zero-G (после OS-H) |
 | Отказ | quantum сейчас, карта галактики, гейты-прыжки, арена-из-мира (G5), города, каталожные SITE_*, воксели, P2W |
 
-Очередь кода: **OS-D** (после OS-A/OS-B/OS-C).
+Очередь кода: **OS-E** (после OS-A…OS-D).
