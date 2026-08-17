@@ -142,7 +142,7 @@ llvmpipe этого не подтверждает и **не** ставит FPS P
 
 Честные дыры — `docs/design/OPEN_SPACE_SC_BENCHMARK.md` §3. Не «unfit», не выдумывать лишнее:
 
-- Спавн ~770 м AGL, не десятки км.
+- Спавн OPEN SPACE 8 км AGL (OS-C). Петля 770 м — снизу, не единственный вид.
 - Дальний шейдер всё ещё дешёвый subset vs полный `PlanetRelief` (WorldFill §5 / OS-A).
 - Нет атмосферы / облаков / входа.
 - Почти нет unnamed scatter и силуэта с высоты. Один unnamed пад.

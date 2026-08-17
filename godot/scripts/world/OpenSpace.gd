@@ -28,6 +28,10 @@ var _eva_warn_t: float = 0.0
 var _eva_tether_t: float = 0.0
 var _spawn_ship_pos := Vector3(0, 0, 2800)
 var _interior_view: bool = false
+## OS-C: useful approach in the 5–15 km AGL band. Not the toy 770 m spawn.
+const APPROACH_START_AGL := 8000.0
+const APPROACH_AGL_MIN := 5000.0
+const APPROACH_AGL_MAX := 15000.0
 
 func _ready() -> void:
 	# Bolts freed with the previous scene never reached release().
@@ -101,7 +105,12 @@ func _apply_env_quality(gq) -> void:
 	if ship:
 		var cam: Camera3D = ship.get_node_or_null("CameraPivot/Camera3D")
 		if cam:
-			cam.far = gq.far_clip
+			var need := APPROACH_AGL_MAX + 5300.0
+			var pl0: Node3D = planets[0] as Node3D if not planets.is_empty() else null
+			if pl0:
+				var rad0: float = float(pl0.get("radius") if pl0.get("radius") != null else 1400.0)
+				need = APPROACH_AGL_MAX + rad0 * 2.0 + 2500.0
+			cam.far = maxf(float(gq.far_clip), need)
 			if "near_clip" in gq:
 				cam.near = float(gq.near_clip)
 
@@ -280,12 +289,13 @@ func _spawn_ship() -> void:
 		return
 	ship = ShipScene.instantiate()
 	world_root.add_child(ship)
-	# Start in free space above Nex-Prime atmosphere
+	# OS-C: start in the 5–15 km approach band. +Z so default nose (−Z) faces the body.
 	var p0: Node3D = planets[0]
 	var r: float = float(p0.get("radius") if p0.get("radius") != null else 1400.0)
-	var ah: float = float(p0.get("atmosphere_height") if p0.get("atmosphere_height") != null else 320.0)
-	ship.global_position = p0.global_position + Vector3(0, 0, r + ah + 450.0)
+	var agl: float = approach_start_agl()
+	ship.global_position = p0.global_position + Vector3(0, 0, r + agl)
 	_spawn_ship_pos = ship.global_position
+	_fit_camera_to_approach(ship, p0)
 	if ship.has_signal("landed"):
 		ship.landed.connect(_on_ship_landed)
 	if ship.has_signal("launched"):
@@ -295,6 +305,9 @@ func _spawn_ship() -> void:
 	_bind_soft_net_actor(ship)
 	_bind_planet_observers()
 	_sync_planet_sun()
+	if p0.has_method("refresh_approach_lod"):
+		p0.call("refresh_approach_lod")
+	print("[OpenSpace] approach AGL=%.0f over %s (r=%.0f)" % [agl, str(p0.get("planet_name")), r])
 
 
 func _bind_planet_observers() -> void:
@@ -420,6 +433,27 @@ func _apply_interior_env() -> void:
 	env.ambient_light_energy = 0.9
 	env.glow_intensity = 0.18
 	env.glow_enabled = true
+
+
+func approach_start_agl() -> float:
+	return APPROACH_START_AGL
+
+
+func _fit_camera_to_approach(sh: Node3D, pl: Node3D) -> void:
+	## Scene default far=4000 clips a 5–15 km body. Match GraphicsQuality, then
+	## guarantee the far side of the approached planet stays in the frustum.
+	var cam: Camera3D = sh.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+	if cam == null:
+		return
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	var clip := 22000.0
+	if gq and "far_clip" in gq:
+		clip = float(gq.far_clip)
+	var rad: float = float(pl.get("radius") if pl.get("radius") != null else 1400.0)
+	var need := APPROACH_AGL_MAX + rad * 2.0 + 2500.0
+	cam.far = maxf(clip, need)
+	if gq and "near_clip" in gq:
+		cam.near = float(gq.near_clip)
 
 
 func gravity_at(global_pos: Vector3) -> Vector3:

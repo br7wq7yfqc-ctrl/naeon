@@ -26,6 +26,9 @@ func _go() -> void:
 	if os == null:
 		_finish(["no OpenSpace parent"], 1)
 		return
+	# Capture OS-C spawn before later tests land / park the ship at 770 m.
+	var osc_spawn_agl := _osc_read_spawn_agl(os)
+	print("[Playtest] OS-C boot AGL=", snapped(osc_spawn_agl, 0.1))
 
 	# --- stall math (no scene) ---
 	if _Flight.stall_amount(0.0, 4.0, 20.0) > 0.01:
@@ -500,6 +503,7 @@ func _go() -> void:
 
 	_osa_same_body(fails)
 	_osb_atmosphere_shell(fails)
+	_osc_scale_ladder(fails, osc_spawn_agl)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
 
@@ -680,6 +684,175 @@ func _osb_atmosphere_shell(fails: PackedStringArray) -> void:
 			fails.append("OS-B fog off at 770m envelope")
 		else:
 			print("[Playtest] OS-B fog@770 dens=", snapped(we.environment.fog_density, 0.0001), " scatter=", snapped(we.environment.fog_sun_scatter, 0.01))
+
+
+func _osc_read_spawn_agl(os: Node) -> float:
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	if ship == null or not os.has_method("nearest_planet"):
+		return -1.0
+	var pl: Node3D = os.nearest_planet(ship.global_position)
+	if pl == null or not pl.has_method("altitude_of"):
+		return -1.0
+	return float(pl.altitude_of(ship.global_position))
+
+
+func _osc_scale_ladder(fails: PackedStringArray, spawn_agl: float) -> void:
+	## OS-C: 5–15 km start is playable without G1 CRUISE. Gravity well stays
+	## height*1.8. Hold-S still drops AGL. 770 m EVA is covered by OS-A.
+	var os: Node = get_parent()
+	if os == null:
+		fails.append("OS-C no OpenSpace")
+		return
+	var start_const := 8000.0
+	if "APPROACH_START_AGL" in os:
+		start_const = float(os.APPROACH_START_AGL)
+	elif os.has_method("approach_start_agl"):
+		start_const = float(os.approach_start_agl())
+	print("[Playtest] OS-C start const=", snapped(start_const, 1.0), " boot AGL=", snapped(spawn_agl, 0.1))
+	if start_const < 5000.0 or start_const > 15000.0:
+		fails.append("OS-C APPROACH_START_AGL not in 5–15 km (%s)" % snapped(start_const, 1.0))
+	if spawn_agl < 5000.0 or spawn_agl > 15000.0:
+		fails.append("OS-C boot spawn AGL not in 5–15 km (%s)" % snapped(spawn_agl, 0.1))
+	if absf(spawn_agl - start_const) > 80.0 and spawn_agl > 0.0:
+		fails.append("OS-C boot AGL != start const (%s vs %s)" % [snapped(spawn_agl, 0.1), snapped(start_const, 1.0)])
+
+	var nex: Node = null
+	var tree_c := get_tree()
+	if tree_c:
+		for n in tree_c.get_nodes_in_group("planets"):
+			if str(n.get("planet_name")) == "Nex-Prime":
+				nex = n
+				break
+	if nex == null:
+		fails.append("OS-C no Nex-Prime")
+		return
+	var rad: float = float(nex.get("radius"))
+	var ah: float = float(nex.get("atmosphere_height"))
+	var well: float = ah * 1.8
+	var up: Vector3 = Vector3(0.18, 0.96, 0.12).normalized()
+	var high: Vector3 = nex.global_position + up * (rad + 8000.0)
+	var far15: Vector3 = nex.global_position + up * (rad + 15000.0)
+	var g_high := Vector3.ZERO
+	var g_well := Vector3.ZERO
+	if nex.has_method("gravity_at"):
+		g_high = nex.gravity_at(high)
+		g_well = nex.gravity_at(nex.global_position + up * (rad + well * 0.4))
+	print("[Playtest] OS-C well=", snapped(well, 1.0), " g@8km=", snapped(g_high.length(), 0.001), " g@0.4well=", snapped(g_well.length(), 0.01))
+	if g_high.length() > 0.05:
+		fails.append("OS-C gravity well stretched to 8 km")
+	if g_well.length() < 0.5:
+		fails.append("OS-C gravity missing inside well")
+	var d8 := 1.0
+	if nex.has_method("density_at"):
+		d8 = float(nex.density_at(high))
+	print("[Playtest] OS-C density@8km=", snapped(d8, 0.001))
+	if d8 > 0.001:
+		fails.append("OS-C 8 km not vacuum")
+
+	# Hold-S from 8 km: geometric inward + 28 m/s², vacuum, SCM cap. AGL must drop.
+	var inward: Vector3 = (nex.global_position - high).normalized()
+	var vel := Vector3.ZERO
+	var pos: Vector3 = high
+	for _i in 200:
+		vel = _Flight.integrate(vel, inward * 28.0, 0.016, 0.35, 1.0, 0.0, 55.0)
+		vel = _Flight.apply_ceiling(vel, inward, 0.0, 0.016)
+		pos += vel * 0.016
+	var alt_after: float = pos.distance_to(nex.global_position) - rad
+	print("[Playtest] OS-C hold-S 8km → ", snapped(alt_after, 0.1), " (v=", snapped(vel.length(), 0.1), ")")
+	if alt_after > 7950.0:
+		fails.append("OS-C hold-S did not sink from 8 km")
+	if alt_after < 600.0:
+		fails.append("OS-C hold-S overshot past the 770 m band")
+
+	# Far / impostor / limb readable at 8 km and 15 km (same Relief paint).
+	var ship: Node3D = os.get("ship") as Node3D
+	if ship:
+		ship.global_position = high
+		if "velocity" in ship:
+			ship.velocity = Vector3.ZERO
+	if nex.has_method("set_observer") and ship:
+		nex.set_observer(ship)
+	if nex.has_method("refresh_approach_lod"):
+		nex.refresh_approach_lod()
+	var lod8: int = int(nex.get("_current_lod"))
+	var atmo8: Node = nex.get_node_or_null("Atmosphere")
+	var mesh8: Node = nex.get_node_or_null("Surface")
+	var imp8: Node = nex.get_node_or_null("Impostor")
+	var vis_body8: bool = (mesh8 is Node3D and (mesh8 as Node3D).visible) \
+		or (imp8 is Node3D and (imp8 as Node3D).visible)
+	var atmo8_on: bool = atmo8 is Node3D and (atmo8 as Node3D).visible
+	print("[Playtest] OS-C @8km lod=", lod8, " atmo=", atmo8_on, " body=", vis_body8)
+	if lod8 > 2:
+		fails.append("OS-C 8 km fell to impostor (want far mesh)")
+	if not atmo8_on:
+		fails.append("OS-C limb hidden at 8 km")
+	if not vis_body8:
+		fails.append("OS-C body mesh hidden at 8 km")
+	var smat = nex.get("_surface_shader_mat")
+	var imat = nex.get("_impostor_mat")
+	if smat is ShaderMaterial and imat is ShaderMaterial:
+		var sseed: float = float((smat as ShaderMaterial).get_shader_parameter("seed"))
+		var iseed: float = float((imat as ShaderMaterial).get_shader_parameter("seed"))
+		if absf(sseed - iseed) > 0.51:
+			fails.append("OS-C impostor seed != far mesh")
+	else:
+		fails.append("OS-C far/impostor shader missing")
+	if nex.get("lod_far") != null and float(nex.lod_far) < rad + 15000.0:
+		fails.append("OS-C lod_far too short for 15 km (%s)" % snapped(float(nex.lod_far), 1.0))
+	if nex.get("atmo_max_dist") != null and float(nex.atmo_max_dist) < rad + 15000.0:
+		fails.append("OS-C atmo_max_dist too short for 15 km")
+
+	if ship:
+		ship.global_position = far15
+	if nex.has_method("refresh_approach_lod"):
+		nex.refresh_approach_lod()
+	var lod15: int = int(nex.get("_current_lod"))
+	var atmo15: Node = nex.get_node_or_null("Atmosphere")
+	var mesh15: Node = nex.get_node_or_null("Surface")
+	var imp15: Node = nex.get_node_or_null("Impostor")
+	var vis_body15: bool = (mesh15 is Node3D and (mesh15 as Node3D).visible) \
+		or (imp15 is Node3D and (imp15 as Node3D).visible)
+	var atmo15_on: bool = atmo15 is Node3D and (atmo15 as Node3D).visible
+	print("[Playtest] OS-C @15km lod=", lod15, " atmo=", atmo15_on, " body=", vis_body15)
+	if not vis_body15:
+		fails.append("OS-C body hidden at 15 km")
+	if not atmo15_on:
+		fails.append("OS-C limb hidden at 15 km")
+
+	if ship:
+		var cam: Camera3D = ship.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+		if cam == null:
+			fails.append("OS-C ship camera missing")
+		elif cam.far < 15000.0 + rad:
+			fails.append("OS-C camera far clips 15 km body (%s)" % snapped(cam.far, 1.0))
+		else:
+			print("[Playtest] OS-C cam.far=", snapped(cam.far, 1.0))
+
+	# No G1 CRUISE in this slice — flight enum stays SCM/NAV/HOVER.
+	if ship and "flight_mode" in ship and int(ship.flight_mode) > 2:
+		fails.append("OS-C unexpected flight mode %s" % int(ship.flight_mode))
+	var cruise_src := FileAccess.get_file_as_string("res://scripts/ship/ShipController.gd")
+	if cruise_src.find("FlightMode.CRUISE") >= 0 or cruise_src.find("mass_lock") >= 0:
+		fails.append("OS-C shipped G1 CRUISE / mass lock (not wanted)")
+
+	# 770 m land/EVA still reachable from the new start (place + snap).
+	if ship:
+		ship.global_position = nex.global_position + up * (rad + 770.0)
+	if os.has_method("_spawn_eva_near_ship"):
+		os.call("_spawn_eva_near_ship")
+	var walker: Node3D = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("OS-C EVA at 770 m failed")
+	else:
+		walker.global_position = nex.global_position + up * (rad + 12.0)
+		if walker.has_method("_relief_snap_fallback"):
+			walker.call("_relief_snap_fallback")
+		elif walker.has_method("snap_to_surface"):
+			walker.call("snap_to_surface")
+		var after: float = walker.global_position.distance_to(nex.global_position) - rad
+		print("[Playtest] OS-C EVA snap AGL=", snapped(after, 0.01))
+		if after > 40.0 or after < -6.0:
+			fails.append("OS-C EVA snap left walker off relief")
 
 
 func _finish(fails: PackedStringArray, code: int) -> void:

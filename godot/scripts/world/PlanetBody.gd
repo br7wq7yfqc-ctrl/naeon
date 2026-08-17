@@ -85,13 +85,14 @@ func _configure_from_quality() -> void:
 		bias = float(gq.prop_lod_bias)
 	_segs_near = base_segs
 	_segs_mid = max(12, int(base_segs * 0.5 / bias))
-	_segs_far = max(8, int(base_segs * 0.25 / bias))
-	# Distance bands scale with planet size
+	_segs_far = max(12, int(base_segs * 0.25 / bias))
+	# Distance bands scale with planet size. OS-C: 5–15 km AGL stays on the
+	# far mesh + limb (not the 8-seg impostor). Near/mid unchanged for 770 m.
 	lod_near = radius * 2.2 * bias
 	lod_mid = radius * 5.0 * bias
-	lod_far = radius * 10.0 * bias
-	lod_impostor = radius * 18.0 * bias
-	atmo_max_dist = (radius + atmosphere_height) * 4.5 * bias
+	lod_far = (radius + 16000.0) * bias
+	lod_impostor = (radius + 28000.0) * bias
+	atmo_max_dist = (radius + 18000.0) * bias
 	pad_stream_dist = radius + 400.0 * bias
 
 func _on_quality_changed(_t: int) -> void:
@@ -142,16 +143,17 @@ func _build_shell() -> void:
 	_atmo_inner.visible = false
 	add_child(_atmo_inner)
 
-	# Far impostor — single low poly unshaded billboard-ish sphere (very cheap)
+	# Far impostor — same Relief paint as the far mesh, extra segs so a 15 km
+	# disc still reads land/sea instead of an 8-tri ball.
 	_impostor = MeshInstance3D.new()
 	_impostor.name = "Impostor"
 	_impostor.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_impostor.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-	_MeshSafe.assign(_impostor, _Cache.sphere(radius * 1.02, 8), Vector3(2.05, 2.05, 2.05))
+	_MeshSafe.assign(_impostor, _Cache.sphere(radius * 1.02, maxi(12, _segs_far)), Vector3(2.05, 2.05, 2.05))
 	_impostor_mat = ShaderMaterial.new()
 	_impostor_mat.shader = _SURFACE_SHADER
 	_apply_surface_uniforms(_impostor_mat)
-	_impostor_mat.set_shader_parameter("emission_strength", 0.18)
+	_impostor_mat.set_shader_parameter("emission_strength", 0.28)
 	_impostor.material_override = _impostor_mat
 	_impostor.visible = false
 	add_child(_impostor)
@@ -275,6 +277,21 @@ func _resolve_observer() -> Node3D:
 		return cam
 	return null
 
+func refresh_approach_lod() -> void:
+	## Immediate LOD/limb for the current observer — no 0.48 s hysteresis.
+	## Used at OPEN SPACE boot so the 5–15 km start is not a mid-mesh flash.
+	var obs := _resolve_observer()
+	if obs == null:
+		return
+	var dist: float = global_position.distance_to(obs.global_position)
+	var lod := _lod_for_distance(dist)
+	_apply_lod_visual(lod)
+	_pending_lod = -1
+	_lod_hold = 0.0
+	_update_atmosphere(dist, lod, obs)
+	_sync_surface_visibility(dist)
+
+
 func _lod_for_distance(dist: float) -> int:
 	if dist < lod_near:
 		return 0
@@ -289,8 +306,8 @@ func _apply_lod_visual(lod: int) -> void:
 	if lod >= 3:
 		_mesh.visible = false
 		_impostor.visible = true
-		if _atmo:
-			_atmo.visible = false
+		# Outer limb stays with _update_atmosphere so a 5–15 km approach
+		# still reads as a body, not a bare ball.
 		if _atmo_inner:
 			_atmo_inner.visible = false
 		return
@@ -306,6 +323,9 @@ func _apply_lod_visual(lod: int) -> void:
 			segs = _segs_far
 	_MeshSafe.assign(_mesh, _Cache.sphere(radius, segs), Vector3(2, 2, 2))
 	# Surface land/ocean via ShaderMaterial (R4) — no per-LOD mat swap
+	if _surface_shader_mat:
+		# Far disc needs a touch more emission so continents read at 5–15 km.
+		_surface_shader_mat.set_shader_parameter("emission_strength", 0.14 if lod == 2 else 0.06)
 
 func _apply_lod(lod: int) -> void:
 	_apply_lod_visual(lod)
@@ -580,7 +600,7 @@ func density_at(global_pos: Vector3) -> float:
 func _update_atmosphere(dist: float, lod: int, obs: Node3D) -> void:
 	if _atmo == null:
 		return
-	var show_outer := dist < atmo_max_dist and lod < 3
+	var show_outer := dist < atmo_max_dist
 	_atmo.visible = show_outer
 	var alt: float = dist - radius
 	var env_h: float = envelope_height()
@@ -599,7 +619,8 @@ func _update_atmosphere(dist: float, lod: int, obs: Node3D) -> void:
 				0: base_i = 1.1
 				2: base_i = 1.5
 				3: base_i = 1.65
-		_atmo_mat.set_shader_parameter("intensity", base_i * (0.45 + 0.55 * fade))
+		# Floor keeps the limb readable at 15 km (fade near 0 must not go black).
+		_atmo_mat.set_shader_parameter("intensity", base_i * (0.62 + 0.38 * fade))
 	# Inner haze when inside the envelope (readable on the 770 m approach)
 	if _atmo_inner:
 		var inside := alt < env_h * 0.98 and lod <= 1
@@ -946,11 +967,19 @@ func _sync_surface_visibility(dist: float) -> void:
 		# back the far-sphere garbage from P0.3 under live chunks.
 		var detail_on := _surface_detail.has_method("is_parked") and not bool(_surface_detail.is_parked())
 		var alt := dist - radius
-		if detail_on or alt < 300.0:
+		# OS-C: 5–15 km must show the far/impostor disc even if chunks are
+		# still unparked from a 770 m pass. Hide the shell only in the
+		# near band (P0.3 dark LOD quads under live chunks).
+		if alt > 500.0:
+			_far_shell_hidden = false
+		elif detail_on or alt < 300.0:
 			_far_shell_hidden = true
 		elif alt > 360.0:
 			_far_shell_hidden = false
 		if _mesh and _current_lod < 3:
 			_mesh.visible = not _far_shell_hidden
-		if _impostor and _far_shell_hidden:
-			_impostor.visible = false
+		if _impostor:
+			if _far_shell_hidden:
+				_impostor.visible = false
+			elif _current_lod >= 3:
+				_impostor.visible = true

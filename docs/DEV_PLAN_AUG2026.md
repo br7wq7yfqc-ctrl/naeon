@@ -15,8 +15,9 @@ Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (arena COD
 | **P0.6** land / EVA / takeoff | **built (3090)** | hold-S 770→0, HOVER+S, EVA на Relief, 6 мин / 60 FPS. Не FPS PASS на llvmpipe |
 | **OS-A** шов сферы = Relief | **built** | WorldFill §5. Дальний фейк не подменяет грунт |
 | **OS-B** оболочка атмосферы | **built** | envelope + лимб/туман + drag/потолок; 770 м S-sink жив |
-| **OS-C … OS-H** | after OS-B | масштаб → fill → near read → atmo flight → силуэт → ритуал |
-| **G1 CRUISE** | OS-C only | Только если нужен честный подход 5–15 км + mass lock |
+| **OS-C** лестница 5–15 км | **built** | спавн 8 км AGL; far/лимб до 15 км; без G1 CRUISE |
+| **OS-D … OS-H** | after OS-C | fill → near read → atmo flight → силуэт → ритуал |
+| **G1 CRUISE** | later | Не нужен для 5–15 км; mass lock только вместе с CRUISE |
 | **G2–G6** | **locked** | Пока петля OPEN SPACE не честна. В коде 404 |
 
 ## Старое «DONE» — не очередь
@@ -25,7 +26,7 @@ Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (arena COD
 |------|--------|
 | G0 system layout **DONE 2026-08-15** | **built** (данные орбит). Не playable galaxy |
 | Audit + hardening + `[Playtest] PASS` | **built** логика; **не** human gate |
-| Next = G1 / T1 hypergate | **cut from now** (G1 только OS-C) |
+| Next = G1 / T1 hypergate | **cut from now** (G1 не открыт OS-C) |
 | PR #7 HUMAN_UNFIT | **снято** прогоном 3090 / P0.6 |
 
 ## Asset

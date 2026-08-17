@@ -4,7 +4,7 @@
 
 | Regime | Behavior |
 |--------|----------|
-| Vacuum | low damp, full top speed, weak gravity |
+| Vacuum | low damp, full top speed, weak gravity; OS-C start 8 km AGL, hold-S still geometric inward |
 | Atmosphere | envelope `t²` density (OS-B); quadratic drag; climb ceiling; lower top speed |
 | SCM | balanced; partial gravity in atmo |
 | NAV | high thrust mult, low damp, reduced mouse sens |
