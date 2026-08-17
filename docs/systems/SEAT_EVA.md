@@ -5,6 +5,8 @@
 - `exit_for_pilot()` frees pocket without surface teleport
 - Walker disabled then `queue_free` (no SIGSEGV path)
 - Hatch door closed; pilot active
+- I from pilot leaves the seat **into the pocket** (no exterior hop)
+- I at airlock/hatch leaves to EVA (zero-G if not landed) or the pad. Doors lead to pocket or EVA — never a locked prop.
 
 ## EVA
 - Exit ship when not landed and spd ≤ 42

@@ -73,6 +73,9 @@ func life_support_line() -> String:
 
 func try_toggle(player: Node3D, ship: Node3D = null) -> void:
 	if _inside:
+		if _kind == "ship" and player != null and is_instance_valid(player) and not is_near_hatch(player):
+			_toast("AIRLOCK · walk to hatch [I] · F seat")
+			return
 		exit_interior()
 		return
 	if player == null or not is_instance_valid(player):
@@ -220,7 +223,7 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	_hatch_fx(true)
 	entered.emit(kind)
 	if kind == "ship":
-		_toast("Entered ship · I hatch · F seat · E console")
+		_toast("Ship pocket · F seat · walk to airlock [I]")
 	else:
 		_toast("Entered station · I exit · E ops console")
 	print("[Interior] entered ", kind, " at ", target, " atmo=", snapped(_atmo, 0.01))
@@ -322,6 +325,7 @@ func _make_player_camera_current() -> void:
 func exit_interior() -> void:
 	if not _inside:
 		return
+	var was_ship := _kind == "ship"
 	_hatch_fx(false)
 	if _player and is_instance_valid(_player):
 		if _player != null and is_instance_valid(_player) and _player.has_method("set_interior_mode"):
@@ -335,12 +339,14 @@ func exit_interior() -> void:
 			_player.set_spawn_basis(_return_up, 0.0)
 		# Must leave the pocket before queue_free, or the walker is freed with it.
 		_restore_player_parent()
-		_player.global_position = _return_pos
-		if _player is CharacterBody3D:
-			(_player as CharacterBody3D).velocity = Vector3.ZERO
-		# Snap only AFTER exterior gravity restored
-		if _player != null and is_instance_valid(_player) and _player.has_method("snap_to_surface"):
-			_player.call_deferred("snap_to_surface")
+		var via_hatch := was_ship and _open_space != null and _open_space.has_method("place_from_ship_pocket")
+		if not via_hatch:
+			_player.global_position = _return_pos
+			if _player is CharacterBody3D:
+				(_player as CharacterBody3D).velocity = Vector3.ZERO
+			# Snap only AFTER exterior gravity restored
+			if _player != null and is_instance_valid(_player) and _player.has_method("snap_to_surface"):
+				_player.call_deferred("snap_to_surface")
 	if _active and is_instance_valid(_active):
 		_active.queue_free()
 	_active = null
@@ -365,11 +371,13 @@ func exit_interior() -> void:
 					fo.set_target(tgt)
 
 	if LayerContext:
-		LayerContext.current_layer = "surface" if _kind != "ship" else "space"
+		LayerContext.current_layer = "surface" if not was_ship else "space"
 		if "seamless_stage" in LayerContext:
 			LayerContext.seamless_stage = "world"
+	if was_ship and _open_space != null and _open_space.has_method("place_from_ship_pocket") and _player != null and is_instance_valid(_player):
+		_open_space.place_from_ship_pocket(_player)
 	exited.emit(_kind)
-	_toast("Exited interior")
+	_toast("Hatch → EVA" if was_ship else "Exited interior")
 	print("[Interior] exited ", _kind)
 	_kind = ""
 	set_process(false)
@@ -416,6 +424,28 @@ func is_near_seat(player: Node3D, max_dist: float = 3.6) -> bool:
 		if n is Node3D:
 			if player.global_position.distance_to((n as Node3D).global_position) <= max_dist:
 				return true
+	return false
+
+
+func is_near_hatch(player: Node3D, max_dist: float = 3.6) -> bool:
+	if player == null or not is_instance_valid(player) or not _inside or _active == null:
+		return false
+	if not is_instance_valid(_active):
+		return false
+	for nm in ["ExitVolume", "HatchArch", "AirlockStub"]:
+		var n: Node = _active.get_node_or_null(nm)
+		if n is Node3D:
+			if player.global_position.distance_to((n as Node3D).global_position) <= max_dist:
+				return true
+	for n2 in _active.get_children():
+		if not (n2 is Node3D):
+			continue
+		if not str(n2.name).begins_with("DoorPortal"):
+			continue
+		if str(n2.get_meta("leads_to", "")) != "eva":
+			continue
+		if player.global_position.distance_to((n2 as Node3D).global_position) <= max_dist:
+			return true
 	return false
 
 
@@ -513,6 +543,12 @@ func _process(delta: float) -> void:
 		var near_c := is_near_console(_player)
 		(clab as Label3D).modulate.a = 1.0 if near_c else 0.5
 		(clab as Label3D).text = "OPS CONSOLE · E" if near_c else "OPS CONSOLE"
+	var hlab = _active.get_node_or_null("HatchLabel")
+	if hlab is Label3D:
+		var near_h := is_near_hatch(_player)
+		(hlab as Label3D).modulate.a = 1.0 if near_h else 0.55
+		(hlab as Label3D).text = "AIRLOCK · HATCH [I] EVA" if near_h else "AIRLOCK · HATCH [I]"
+		(hlab as Label3D).font_size = 48 if near_h else 36
 
 
 func _refresh_life_support() -> void:

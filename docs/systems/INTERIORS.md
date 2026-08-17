@@ -7,8 +7,9 @@ Hero station meshes are A-tier Tripo later. For playable vertical slice we gener
 
 ## Flow
 1. On foot near **landing pad** → **I** enter station interior pocket
-2. Near **ship** → **I** enter ship cockpit/mid/cargo
-3. **I** again at hatch/exit → return to pad/ship exterior
+2. Pilot **I** → leave seat into ship pocket (cockpit → airlock). No exterior hop.
+3. **F** at seat → pilot. **I** at airlock/hatch → EVA (zero-G if not landed) or pad.
+4. Doors open into the next room or the hatch. No locked props.
 
 ## Implementation
 - `InteriorGenerator` builds rooms + collision + exit marker

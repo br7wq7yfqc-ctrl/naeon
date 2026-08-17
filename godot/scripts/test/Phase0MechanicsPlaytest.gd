@@ -81,11 +81,17 @@ func _go() -> void:
 				fails.append("walker/camera hidden (black interior)")
 			if walker.global_position.y < 2000.0:
 				fails.append("walker y still inside Nex-Prime")
+			if bool(walker.get("eva_mode")):
+				fails.append("interior enter hopped through EVA")
 			if pocket:
 				var door: Node3D = pocket.get_node_or_null("DoorPortal_0") as Node3D
 				if door == null:
 					fails.append("no DoorPortal in ship pocket")
 				else:
+					var dest := str(door.get_meta("leads_to", ""))
+					print("[Playtest] door leads_to=", dest)
+					if dest != "pocket" and dest != "eva":
+						fails.append("DoorPortal_0 is a locked prop (leads_to=%s)" % dest)
 					var slab: Node3D = door.get_node_or_null("Slab") as Node3D
 					var x0: float = slab.position.x if slab else -1.0
 					walker.global_position = door.global_position + Vector3(0, 1.15, 0)
@@ -469,6 +475,8 @@ func _go() -> void:
 					else:
 						print("[Playtest] seat→pilot OK")
 
+	await _seat_pocket_seat(fails)
+
 	# --- ship hull critical recover (no permadeath) ---
 	var sh_c: Node = os.get("ship")
 	if sh_c == null or not sh_c.has_method("take_damage"):
@@ -538,6 +546,97 @@ func _go() -> void:
 	_osg_outpost_silhouette(fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
+
+
+func _seat_pocket_seat(fails: PackedStringArray) -> void:
+	## Pillar 3: leave the seat into the pocket, walk a real door/airlock, sit back.
+	var os: Node = get_parent()
+	var d: Node = os.get("_interior") if os else null
+	var ship: Node = os.get("ship") if os else null
+	if os == null or d == null or ship == null:
+		fails.append("seat→pocket: no OpenSpace/interior/ship")
+		return
+	if d.has_method("is_inside") and bool(d.is_inside()) and d.has_method("exit_interior"):
+		d.exit_interior()
+		await get_tree().create_timer(0.2).timeout
+	if not bool(os.get("_in_ship")):
+		fails.append("seat→pocket: not piloting")
+		return
+	if os.has_method("_leave_seat_to_pocket"):
+		os._leave_seat_to_pocket()
+	elif os.has_method("_toggle_interior"):
+		os._toggle_interior()
+	await get_tree().create_timer(0.55).timeout
+	if not (d.has_method("is_inside") and bool(d.is_inside())):
+		fails.append("seat→pocket did not enter pocket")
+		return
+	if bool(os.get("_in_ship")):
+		fails.append("seat→pocket still piloting")
+	if bool(os.get("_eva_mode")):
+		fails.append("seat→pocket hopped through EVA")
+	var walker: Node3D = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("seat→pocket no walker")
+		return
+	if bool(walker.get("eva_mode")):
+		fails.append("seat→pocket walker still EVA")
+	if walker.global_position.y < 2000.0:
+		fails.append("seat→pocket walker not in pocket")
+	var pocket: Node3D = d.get_active_interior() if d.has_method("get_active_interior") else null
+	if pocket == null:
+		fails.append("seat→pocket no active pocket")
+		return
+	if pocket.get_node_or_null("AirlockStub") == null:
+		fails.append("no AirlockStub volume")
+	var fake := 0
+	var real := 0
+	for n in pocket.get_children():
+		if not str(n.name).begins_with("DoorPortal"):
+			continue
+		var dest := str(n.get_meta("leads_to", ""))
+		if dest == "pocket" or dest == "eva":
+			real += 1
+		else:
+			fake += 1
+	print("[Playtest] seat→pocket doors real=", real, " fake=", fake)
+	if fake > 0:
+		fails.append("locked/fake door in ship pocket")
+	if real < 1:
+		fails.append("no real door in ship pocket")
+	var hatch: Node3D = pocket.get_node_or_null("ExitVolume") as Node3D
+	if hatch == null:
+		fails.append("no hatch ExitVolume")
+	elif str(hatch.get_meta("leads_to", "")) != "eva":
+		fails.append("hatch does not lead to EVA")
+	var seat: Node3D = pocket.get_node_or_null("Seat") as Node3D
+	if seat == null or hatch == null:
+		fails.append("seat→pocket missing Seat/hatch")
+		return
+	var mid: Vector3 = (seat.global_position + hatch.global_position) * 0.5
+	walker.global_position = Vector3(mid.x, pocket.global_position.y + 1.2, mid.z)
+	if walker is CharacterBody3D:
+		(walker as CharacterBody3D).velocity = Vector3.ZERO
+	await get_tree().create_timer(0.45).timeout
+	print("[Playtest] seat→hatch mid z=", snapped(mid.z, 0.01), " walker=", snapped(walker.global_position.z, 0.01), " y=", snapped(walker.global_position.y, 0.01))
+	if absf(walker.global_position.z - mid.z) > 2.5 or walker.global_position.y < pocket.global_position.y - 1.0:
+		fails.append("void between seat and hatch (fake door)")
+	walker.global_position = hatch.global_position + Vector3(0, 0.15, 0)
+	await get_tree().process_frame
+	if d.has_method("is_near_hatch") and not bool(d.is_near_hatch(walker)):
+		fails.append("walker not near hatch after walk")
+	walker.global_position = seat.global_position + Vector3(0, 1.05, 0)
+	await get_tree().process_frame
+	if d.has_method("is_near_seat") and not bool(d.is_near_seat(walker, 3.8)):
+		fails.append("walker not near seat for pocket→seat")
+	elif os.has_method("_try_seat_to_pilot"):
+		os._try_seat_to_pilot()
+		await get_tree().create_timer(0.25).timeout
+		if d.has_method("is_inside") and bool(d.is_inside()):
+			fails.append("still inside after pocket→seat")
+		if not bool(os.get("_in_ship")):
+			fails.append("not piloting after pocket→seat")
+		else:
+			print("[Playtest] seat→pocket→seat OK")
 
 
 func _zero_g_eva_near_ship(fails: PackedStringArray) -> void:

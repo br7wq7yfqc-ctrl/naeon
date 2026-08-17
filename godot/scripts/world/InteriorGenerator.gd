@@ -114,14 +114,16 @@ static func build_ship(faction: String = "Cybernex") -> Node3D:
 	_try_glb(root, "props/sci_fi_crate/sci_fi_crate_%s_lod2.glb" % fx2, Vector3(-1.4, 0, 13), 0.55)
 	_interior_point_lights(root, neon)
 
+	var hatch_pos := Vector3(0, 1.2, 16.4)
 	var exit := Area3D.new()
 	exit.name = "ExitVolume"
+	exit.set_meta("leads_to", "eva")
 	var cs := CollisionShape3D.new()
 	var box := BoxShape3D.new()
 	box.size = Vector3(2.5, 2.2, 1.5)
 	cs.shape = box
 	exit.add_child(cs)
-	exit.position = Vector3(0, 1.2, -4.2)
+	exit.position = hatch_pos
 	root.add_child(exit)
 	var spawn := Marker3D.new()
 	spawn.name = "Spawn"
@@ -129,17 +131,22 @@ static func build_ship(faction: String = "Cybernex") -> Node3D:
 	root.add_child(spawn)
 	if DisplayServer.get_name() != "headless":
 		var elabel := Label3D.new()
+		elabel.name = "HatchLabel"
 		elabel.text = "HATCH  [I]"
 		elabel.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		elabel.font_size = 36
-		elabel.position = Vector3(0, 2.0, -4.2)
+		elabel.position = hatch_pos + Vector3(0, 1.0, 0)
 		elabel.modulate = neon
 		root.add_child(elabel)
 	_add_neon_strips(root, faction)
 	_attach_ambient(root, "ship", neon)
 	_ensure_seat_markers(root)
-	_door_portal(root, Vector3(0, 0, 4.0), neon, 5.0)
-	_door_portal(root, Vector3(0, 0, 11.0), neon, 5.0)
+	_link_ship_rooms(root, [
+		{"pos": Vector3(0, 0, 0), "size": Vector3(5, 2.8, 8)},
+		{"pos": Vector3(0, 0, 8), "size": Vector3(4, 2.6, 6)},
+		{"pos": Vector3(0, 0, 14), "size": Vector3(5, 2.8, 5)},
+	], neon)
+	_airlock_stub(root, hatch_pos, neon)
 	_console_volume(root, Vector3(0, 0, 0.2), neon, "COCKPIT")
 	return root
 
@@ -342,6 +349,7 @@ static func build_from_profile(profile_id: String, faction: String = "Cybernex")
 	root.add_child(seat_area)
 	var exit := Area3D.new()
 	exit.name = "ExitVolume"
+	exit.set_meta("leads_to", "eva")
 	var cs := CollisionShape3D.new()
 	var box := BoxShape3D.new()
 	box.size = Vector3(2.5, 2.2, 1.5)
@@ -355,7 +363,8 @@ static func build_from_profile(profile_id: String, faction: String = "Cybernex")
 	root.add_child(spawn)
 	if DisplayServer.get_name() != "headless":
 		var elabel := Label3D.new()
-		elabel.text = "HATCH [I]  SEAT [F]"
+		elabel.name = "HatchLabel"
+		elabel.text = "AIRLOCK · HATCH [I]"
 		elabel.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		elabel.font_size = 36
 		elabel.position = hatch_pos + Vector3(0, 1.2, 0)
@@ -372,13 +381,8 @@ static func build_from_profile(profile_id: String, faction: String = "Cybernex")
 	_add_neon_strips(root, faction)
 	_attach_ambient(root, "ship", neon)
 	_console_volume(root, seat_pos + Vector3(1.4, 0, 0.2), neon, "COCKPIT")
-	var rooms: Array = prof.get("rooms", [])
-	if rooms.size() >= 2:
-		var a: Dictionary = rooms[0]
-		var b: Dictionary = rooms[1]
-		var az: float = float(a["pos"].z) + float(a["size"].z) * 0.5
-		var bz: float = float(b["pos"].z) - float(b["size"].z) * 0.5
-		_door_portal(root, Vector3(0, 0, (az + bz) * 0.5), neon, 5.0)
+	_link_ship_rooms(root, prof.get("rooms", []), neon)
+	_airlock_stub(root, hatch_pos, neon)
 	return root
 
 
@@ -504,13 +508,72 @@ static func _console_volume(root: Node3D, pos: Vector3, neon: Color, tag: String
 	_box_mesh(root, pos + Vector3(0, 1.05, 0.28), Vector3(1.1, 0.08, 0.08), neon, false, true)
 
 
-static func _door_portal(root: Node3D, pos: Vector3, neon: Color, hall_w: float = 6.0) -> void:
+static func _link_ship_rooms(root: Node3D, rooms: Array, neon: Color) -> void:
+	## Hall floor + a door that opens into the next room. No locked props.
+	if rooms.size() < 2:
+		return
+	for i in range(rooms.size() - 1):
+		var a: Dictionary = rooms[i]
+		var b: Dictionary = rooms[i + 1]
+		var az: float = float(a["pos"].z) + float(a["size"].z) * 0.5
+		var bz: float = float(b["pos"].z) - float(b["size"].z) * 0.5
+		var mid_z: float = (az + bz) * 0.5
+		var gap: float = maxf(absf(bz - az), 0.85)
+		var hw: float = minf(float(a["size"].x), float(b["size"].x))
+		hw = clampf(hw, 2.6, 4.2)
+		_hall_volume(root, Vector3(0, 0, mid_z), Vector3(hw, 2.4, gap + 0.55), neon, i)
+		_door_portal(root, Vector3(0, 0, mid_z), neon, hw, "pocket")
+
+
+static func _hall_volume(root: Node3D, pos: Vector3, size: Vector3, neon: Color, idx: int) -> void:
+	var hall := Node3D.new()
+	hall.name = "Hall_%d" % idx
+	hall.position = pos
+	hall.set_meta("leads_to", "pocket")
+	root.add_child(hall)
+	_box_mesh(hall, Vector3(0, 0, 0), Vector3(size.x, 0.55, size.z), Color(0.2, 0.24, 0.3), true)
+	_box_mesh(hall, Vector3(0, size.y, 0), Vector3(size.x, 0.12, size.z), Color(0.15, 0.17, 0.2), true)
+	_box_mesh(hall, Vector3(-size.x * 0.5, size.y * 0.5, 0), Vector3(0.16, size.y, size.z), Color(0.3, 0.34, 0.4), true)
+	_box_mesh(hall, Vector3(size.x * 0.5, size.y * 0.5, 0), Vector3(0.16, size.y, size.z), Color(0.3, 0.34, 0.4), true)
+	_box_mesh(hall, Vector3(0, 0.08, 0), Vector3(0.28, 0.04, size.z * 0.9), neon, false, true)
+
+
+static func _airlock_stub(root: Node3D, hatch_pos: Vector3, neon: Color) -> void:
+	## One readable volume: airlock deck + locker proxies + hull hatch. Code-first.
+	var air := Node3D.new()
+	air.name = "AirlockStub"
+	air.position = Vector3(hatch_pos.x, 0.0, hatch_pos.z)
+	air.set_meta("leads_to", "eva")
+	root.add_child(air)
+	_box_mesh(air, Vector3(0, 0.04, 0), Vector3(2.5, 0.08, 2.1), Color(0.16, 0.18, 0.22), true)
+	_box_mesh(air, Vector3(0, 0.09, 0), Vector3(2.2, 0.03, 0.14), Color(0.9, 0.55, 0.12), false, true)
+	_box_mesh(air, Vector3(-1.42, 0.85, -0.4), Vector3(0.28, 1.6, 0.45), Color(0.11, 0.13, 0.16), true)
+	_box_mesh(air, Vector3(1.42, 0.85, -0.4), Vector3(0.28, 1.6, 0.45), Color(0.11, 0.13, 0.16), true)
+	_box_mesh(air, Vector3(-1.42, 1.35, -0.16), Vector3(0.16, 0.08, 0.08), neon, false, true)
+	_box_mesh(air, Vector3(1.42, 1.35, -0.16), Vector3(0.16, 0.08, 0.08), neon, false, true)
+	# Outer hull skin beyond the hatch (+Z). Door opens; I is EVA. Not a void.
+	_box_mesh(air, Vector3(0, 1.15, 0.72), Vector3(2.2, 2.2, 0.1), Color(0.08, 0.09, 0.11), true)
+	_box_mesh(air, Vector3(0, 1.15, 0.66), Vector3(1.35, 1.7, 0.05), neon, false, true)
+	_door_portal(root, Vector3(hatch_pos.x, 0.0, hatch_pos.z), neon, 3.2, "eva")
+	if DisplayServer.get_name() != "headless" and root.get_node_or_null("HatchLabel") == null:
+		var lab := Label3D.new()
+		lab.name = "HatchLabel"
+		lab.text = "AIRLOCK · HATCH [I]"
+		lab.font_size = 40
+		lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		lab.modulate = neon
+		lab.position = hatch_pos + Vector3(0, 1.15, 0)
+		root.add_child(lab)
+
+
+static func _door_portal(root: Node3D, pos: Vector3, neon: Color, hall_w: float = 6.0, leads_to: String = "pocket") -> void:
 	## Sliding slab + side fills so the opening is the only walk path.
 	var door := Node3D.new()
 	var idx := 0
 	while root.get_node_or_null("DoorPortal_%d" % idx) != null:
 		idx += 1
 	door.name = "DoorPortal_%d" % idx
+	door.set_meta("leads_to", leads_to)
 	door.position = pos
 	root.add_child(door)
 	var half := hall_w * 0.5

@@ -1124,22 +1124,100 @@ func _try_store_rover() -> void:
 
 func _toggle_interior() -> void:
 	var actor: Node3D = player if player and is_instance_valid(player) else null
-	# From pilot: soft-exit to hatch then open ship interior pocket
+	# From pilot: leave the seat into the pocket. No hatch hop, no fake doors.
 	if actor == null and ship and _in_ship and is_instance_valid(ship):
-		_in_ship = false
-		_eva_mode = false
-		if ship != null and is_instance_valid(ship) and ship.has_method("set_pilot_active"):
-			ship.set_pilot_active(false)
-		_spawn_player_near_ship() if bool(ship.get("is_landed")) else _spawn_eva_near_ship()
-		actor = player
-		if actor and is_instance_valid(actor) and _interior and _interior.has_method("enter_ship"):
-			_interior.enter_ship(actor, ship)
-			_toast_hud("Ship interior")
-			return
+		_leave_seat_to_pocket()
+		return
 	if actor == null:
 		return
 	if _interior and _interior.has_method("try_toggle"):
 		_interior.try_toggle(actor, ship)
+
+
+func _leave_seat_to_pocket() -> void:
+	if _seat_transition:
+		return
+	if not _in_ship or ship == null or not is_instance_valid(ship):
+		return
+	if _interior != null and is_instance_valid(_interior) and _interior.has_method("is_inside") and bool(_interior.is_inside()):
+		return
+	_in_ship = false
+	_eva_mode = false
+	if ship.has_method("set_pilot_active"):
+		ship.set_pilot_active(false)
+	player = _make_fallback_player()
+	player.set("interior_mode", true)
+	add_child(player)
+	if _interior != null and is_instance_valid(_interior) and _interior.has_method("enter_ship"):
+		_interior.enter_ship(player, ship)
+	_toast_hud("Left seat — pocket · F seat · I airlock")
+	print("[OpenSpace] seat→pocket")
+
+
+func place_from_ship_pocket(walker: Node3D) -> void:
+	## Hatch is a real exit: EVA (zero-G) in flight, pad walk when landed.
+	if walker == null or not is_instance_valid(walker) or ship == null or not is_instance_valid(ship):
+		return
+	player = walker
+	_in_ship = false
+	var landed := bool(ship.get("is_landed"))
+	_eva_mode = not landed
+	if LayerContext:
+		LayerContext.set_layer("TPS")
+	if walker.has_method("set_planet_gravity_provider"):
+		walker.set_planet_gravity_provider(self)
+	if landed:
+		var pad_up := Vector3.UP
+		var pad: Node3D = nearest_pad(ship.global_position)
+		if pad and is_instance_valid(pad) and pad.has_meta("pad_up"):
+			pad_up = pad.get_meta("pad_up")
+		else:
+			var pl = nearest_planet(ship.global_position)
+			if pl and is_instance_valid(pl):
+				pad_up = (ship.global_position - pl.global_position).normalized()
+		var side: Vector3 = ship.global_transform.basis.x
+		side = (side - pad_up * side.dot(pad_up))
+		if side.length_squared() < 0.01:
+			side = pad_up.cross(Vector3.RIGHT)
+		if side.length_squared() > 0.01:
+			side = side.normalized()
+		walker.global_position = ship.global_position + pad_up * 3.2 + side * 5.5
+		if walker.has_method("set_eva_profile"):
+			walker.set_eva_profile(false)
+		if walker.has_method("set_spawn_basis"):
+			walker.set_spawn_basis(pad_up, 0.0)
+		if walker.has_method("snap_to_surface"):
+			walker.call_deferred("snap_to_surface")
+		_toast_hud("Hatch → pad")
+	else:
+		var hatch: Node3D = ship.get_node_or_null("HatchPoint") as Node3D
+		var side_e: Vector3 = ship.global_transform.basis.x
+		var up_e: Vector3 = ship.global_transform.basis.y
+		var aft_e: Vector3 = ship.global_transform.basis.z
+		if hatch:
+			walker.global_position = hatch.global_position + side_e * 2.2 + up_e * 0.4 + aft_e * 0.5
+		else:
+			walker.global_position = ship.global_position + side_e * 4.5 + up_e * 1.4
+		walker.set("eva_mode", true)
+		walker.set("zero_g", true)
+		if walker.has_method("set_eva_profile"):
+			walker.set_eva_profile(true)
+		if walker.has_method("set_spawn_basis"):
+			var nose: Vector3 = -ship.global_transform.basis.z
+			walker.set_spawn_basis(up_e, atan2(-nose.x, -nose.z))
+		if walker is CharacterBody3D and "velocity" in ship and ship.velocity is Vector3:
+			(walker as CharacterBody3D).velocity = (ship.velocity as Vector3) * 0.9
+		if ship.has_method("set_hatch_open"):
+			ship.set_hatch_open(true)
+		_toast_hud("Hatch → EVA zero-G")
+	if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
+		floating.set_target(walker)
+	for pl2 in planets:
+		if pl2 and is_instance_valid(pl2) and pl2.has_method("set_observer"):
+			pl2.set_observer(walker)
+	_set_planet_observers(walker)
+	_bind_soft_net_actor(walker)
+	print("[OpenSpace] pocket→", "EVA 0G" if not landed else "pad")
 
 
 func _cycle_faction_demo() -> void:
