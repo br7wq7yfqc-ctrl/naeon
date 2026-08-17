@@ -30,7 +30,7 @@ OpenSpace → **M** or **Tab** → TestArena Clash · kill dummies to 5 · soft 
 - Lane structures (AR-B): OUTER / MID / INHIB / CORE as live `Turret` HP on the same 60×60; one INHIB per side (core gate); no P2W repair
 - OUTER still fires (160 HP, +28 soft pressure); MID/INHIB/CORE take damage; enemy CORE down = soft match win
 - ClashRadar Control HUD
-- Dummies spawn from `lane_spawn_table()`
+- Lane waves (AR-C): `ClashWaves` timed `CombatDummy` proxies march TOP/MID/BOT toward enemy OUTER; hit/be-hit via existing Turret hooks; no shop / P2W / new GLB
 
 ## Soft lane objectives
 | Action | Pressure | Soft WS |

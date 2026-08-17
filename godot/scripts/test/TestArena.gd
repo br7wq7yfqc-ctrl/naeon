@@ -19,6 +19,7 @@ var _lanes: Node3D = null
 var _radar: Control = null
 var _lane_hud: Label = null
 var dummy_scene: PackedScene = preload("res://scenes/combat/CombatDummy.tscn")
+var _waves: Node = null
 
 func _ready() -> void:
 	var _PoolReset = load("res://scripts/combat/ProjectilePool.gd")
@@ -43,7 +44,7 @@ func _ready() -> void:
 		GameManager.contribution_changed.connect(_on_contrib)
 	_on_contrib(GameManager.contribution if GameManager else 0.0)
 	_upgrade_environment_materials()
-	_spawn_dummies()
+	# AR-C: timed ClashWaves replace the one-shot dummy table.
 	_spawn_props()
 	_spawn_cover()
 	_soft_neon_ambient()
@@ -200,7 +201,7 @@ func _spawn_cover() -> void:
 	var spots: Array = [
 		[Vector3(4, 0, -4), Vector3(3.2, 1.1, 0.45)],
 		[Vector3(-5, 0, -5), Vector3(2.8, 1.0, 0.4)],
-		[Vector3(0, 0, -11), Vector3(4.0, 1.25, 0.5)],
+		[Vector3(4.4, 0, -11), Vector3(3.2, 1.25, 0.5)],
 		[Vector3(10, 0, -2), Vector3(0.45, 1.3, 2.5)],
 		[Vector3(-10, 0, -1), Vector3(0.45, 1.2, 2.8)],
 		[Vector3(7, 0, 6), Vector3(2.0, 0.9, 0.4)],
@@ -470,8 +471,10 @@ func _finish_clash_layout() -> void:
 		_clash.match_ended.connect(_on_match_ended)
 	if SoftNetSession and player:
 		SoftNetSession.bind_player(player)
+	_setup_clash_waves()
 	_evidence_ar_a()
 	_evidence_ar_b()
+	_evidence_ar_c()
 	_setup_arena_playtest()
 
 
@@ -570,10 +573,13 @@ func _update_clash_radar() -> void:
 			var press := ""
 			if _clash and _clash.has_method("lane_hud_line"):
 				press = str(_clash.lane_hud_line())
+			var wave := ""
+			if _waves and "wave_index" in _waves and int(_waves.wave_index) > 0:
+				wave = "  ·  WAVE %d" % int(_waves.wave_index)
 			if press == "":
-				_lane_hud.text = "LANE %s" % _lanes.player_lane
+				_lane_hud.text = "LANE %s%s" % [_lanes.player_lane, wave]
 			else:
-				_lane_hud.text = "LANE %s  ·  %s" % [_lanes.player_lane, press]
+				_lane_hud.text = "LANE %s  ·  %s%s" % [_lanes.player_lane, press, wave]
 	if _radar == null or not _radar.has_method("set_snapshot"):
 		return
 	# One entry per node: the old second pass compared a Node against an Array
@@ -598,10 +604,23 @@ func _update_clash_radar() -> void:
 		[Vector3(0, 0, 24), Color(0.15, 0.85, 1.0)],
 		[Vector3(0, 0, -24), Color(0.95, 0.12, 0.42)],
 	]
+	if get_tree():
+		for n in get_tree().get_nodes_in_group("clash_minion"):
+			if n == null or not is_instance_valid(n) or not (n is Node3D):
+				continue
+			if n.get("_alive") == false:
+				continue
+			var mf := str(n.faction) if "faction" in n else ""
+			if mf == "gROT":
+				ene.append((n as Node3D).global_position)
+			elif mf == "Cybernex":
+				all.append((n as Node3D).global_position)
 	_radar.set_snapshot(player.global_position, ene, all, nex)
 
 
 func _maybe_refill_lane() -> void:
+	if _waves != null:
+		return
 	var alive := 0
 	for c in get_children():
 		if not (c is Node3D and is_instance_valid(c) and c.has_meta("lane")):
@@ -811,6 +830,26 @@ func _evidence_ar_b() -> void:
 	if _lanes and _lanes.has_method("structure_table"):
 		n = _lanes.structure_table().size()
 	print("[AR-B] structures n=", n, " roles=", ",".join(roles), " pin=", LayerContext.site_pin_id if LayerContext else "")
+
+
+func _setup_clash_waves() -> void:
+	if get_node_or_null("ClashWaves"):
+		_waves = get_node_or_null("ClashWaves")
+		return
+	_waves = Node.new()
+	_waves.set_script(preload("res://scripts/arena/ClashWaves.gd"))
+	_waves.name = "ClashWaves"
+	add_child(_waves)
+	if _waves.has_method("bind"):
+		_waves.bind(self, _lanes, dummy_scene)
+
+
+func _evidence_ar_c() -> void:
+	var live := 0
+	if _waves and _waves.has_method("living_minions"):
+		live = _waves.living_minions().size()
+	var w := int(_waves.wave_index) if _waves and "wave_index" in _waves else 0
+	print("[AR-C] waves=", w, " living=", live, " pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
 func _setup_arena_playtest() -> void:

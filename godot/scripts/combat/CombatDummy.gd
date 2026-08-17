@@ -19,6 +19,12 @@ signal damaged(amount: float, health_left: float)
 @export var faction: String = "gROT"
 @export var respawn_time: float = 4.0
 @export var can_move: bool = true
+@export var lane_march: bool = false
+@export var one_shot: bool = false
+@export var grant_economy: bool = true
+var lane_waypoints: Array = []
+var _wp_i: int = 0
+var _hostile_cache: Node3D = null
 
 @onready var mesh: MeshInstance3D = $Mesh
 @onready var label: Label3D = $Label
@@ -44,6 +50,8 @@ func _ready() -> void:
 	collision_mask = 3   # World + Player
 	add_to_group("enemy")
 	add_to_group("hackable")
+	if lane_march:
+		add_to_group("clash_minion")
 	_mat = StandardMaterial3D.new()
 	_mat.albedo_color = Color(0.35, 0.08, 0.14)
 	_mat.metallic = 0.45
@@ -86,6 +94,10 @@ func _physics_process(delta: float) -> void:
 	var do_ai := _ai_accum >= ai_need
 	if do_ai:
 		_ai_accum = 0.0
+	if lane_march:
+		_lane_ai(delta, do_ai)
+		move_and_slide()
+		return
 	var player := _find_player() if do_ai or _player_cache == null else _player_cache
 	# Far culling: no move/look when far from player (still take damage)
 	if player and global_position.distance_squared_to(player.global_position) > 55.0 * 55.0:
@@ -125,6 +137,107 @@ func _physics_process(delta: float) -> void:
 		_windup_t = 0.22
 		_begin_windup_fx()
 	move_and_slide()
+
+
+func set_lane_path(path: Array) -> void:
+	lane_waypoints = path.duplicate()
+	_wp_i = 0
+	lane_march = true
+	can_move = true
+
+
+func _lane_ai(_delta: float, do_ai: bool) -> void:
+	if do_ai or _hostile_cache == null or not is_instance_valid(_hostile_cache):
+		_hostile_cache = _find_lane_hostile()
+	var hostile: Node3D = _hostile_cache
+	var dist := 999.0
+	var to_h := Vector3.ZERO
+	if hostile:
+		var aim: Vector3 = hostile.global_position
+		if hostile.has_method("hurtbox_center"):
+			aim = hostile.hurtbox_center()
+		to_h = aim - global_position
+		to_h.y = 0.0
+		dist = to_h.length()
+	var downed := _target_downed(hostile)
+	if hostile and dist <= attack_range and not downed:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		if to_h.length_squared() > 0.0001:
+			look_at(global_position + to_h.normalized(), Vector3.UP)
+		if _windup_t > 0.0:
+			_windup_t -= _delta
+			if _windup_t <= 0.0 and dist <= attack_range * 1.15:
+				_fire_at(hostile)
+				_cd = attack_cooldown
+		elif _cd <= 0.0:
+			_windup_t = 0.22
+			_begin_windup_fx()
+		return
+	_windup_t = 0.0
+	_march_waypoints()
+
+
+func _march_waypoints() -> void:
+	if _wp_i >= lane_waypoints.size():
+		velocity.x = 0.0
+		velocity.z = 0.0
+		return
+	var dest: Vector3 = lane_waypoints[_wp_i]
+	var to: Vector3 = dest - global_position
+	to.y = 0.0
+	if to.length() < 1.15:
+		_wp_i += 1
+		if _wp_i >= lane_waypoints.size():
+			velocity.x = 0.0
+			velocity.z = 0.0
+			return
+		dest = lane_waypoints[_wp_i]
+		to = dest - global_position
+		to.y = 0.0
+	if to.length_squared() < 0.0001:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		return
+	var dir := to.normalized()
+	velocity.x = dir.x * move_speed
+	velocity.z = dir.z * move_speed
+	look_at(global_position + dir, Vector3.UP)
+
+
+func _find_lane_hostile() -> Node3D:
+	var tree := get_tree()
+	if tree == null:
+		return null
+	var best: Node3D = null
+	var best_d := aggro_range
+	var candidates: Array = []
+	for n in tree.get_nodes_in_group("clash_minion"):
+		candidates.append(n)
+	for n in tree.get_nodes_in_group("clash_structure"):
+		if n is Node3D:
+			var gun: Node = n.get_node_or_null("Gun")
+			if gun:
+				candidates.append(gun)
+	var p: Node = SoftScanCache.get_player() if SoftScanCache else tree.get_first_node_in_group("player")
+	if p:
+		candidates.append(p)
+	for n in candidates:
+		if n == self or n == null or not is_instance_valid(n) or not (n is Node3D):
+			continue
+		if _same_faction(n):
+			continue
+		if n.has_method("is_alive") and not bool(n.is_alive()):
+			continue
+		if n.get("_alive") == false:
+			continue
+		if _target_downed(n):
+			continue
+		var d: float = global_position.distance_to((n as Node3D).global_position)
+		if d < best_d:
+			best = n as Node3D
+			best_d = d
+	return best
 
 func _target_downed(player: Node) -> bool:
 	if player == null or not is_instance_valid(player):
@@ -202,7 +315,7 @@ func _die() -> void:
 		CombatJuice.kill_pop(global_position)
 	collision_layer = 0
 	velocity = Vector3.ZERO
-	if GameManager:
+	if grant_economy and GameManager:
 		GameManager.add_contribution(2.5)
 		GameManager.add_mastery("combat", 1.5)
 	print("[CombatDummy] Downed")
@@ -213,6 +326,12 @@ func _die() -> void:
 		tw.tween_callback(_hide_corpse)
 	else:
 		visible = false
+	if one_shot:
+		if get_tree():
+			get_tree().create_timer(0.35).timeout.connect(queue_free)
+		else:
+			queue_free()
+		return
 	get_tree().create_timer(respawn_time).timeout.connect(_respawn)
 
 
@@ -308,7 +427,7 @@ func _flash() -> void:
 
 func _update_labels() -> void:
 	if label:
-		label.text = str(faction)
+		label.text = ("%s WAVE" % faction) if lane_march else str(faction)
 		label.modulate = Color(0.95, 0.25, 0.5) if faction == "gROT" else Color(0.3, 0.9, 1.0)
 	if health_bar:
 		health_bar.text = "%d" % int(health)

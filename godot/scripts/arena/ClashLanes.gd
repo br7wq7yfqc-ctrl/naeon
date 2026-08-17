@@ -376,6 +376,42 @@ func update_player(pos: Vector3) -> void:
 	if _lane_label:
 		_lane_label.text = "YOU · %s LANE" % player_lane
 
+func lane_x(lane: String) -> float:
+	if lane == LANE_TOP:
+		return 14.0
+	if lane == LANE_BOT:
+		return -14.0
+	return 0.0
+
+
+func lane_spawn_origin(lane: String, faction: String) -> Vector3:
+	var x := lane_x(lane)
+	# In front of own OUTER, walking toward the opposite core. Stay off the
+	# AR-A spawn camera (player z=6, boom ~z=8.6).
+	if faction == "Cybernex":
+		return Vector3(x, 0.1, 12.4)
+	return Vector3(x, 0.1, -5.4)
+
+
+func lane_march_path(lane: String, faction: String) -> Array:
+	var x := lane_x(lane)
+	if faction == "Cybernex":
+		return [
+			Vector3(x, 0.1, 8.0),
+			Vector3(x, 0.1, 0.0),
+			Vector3(x, 0.1, -8.0),
+			Vector3(x, 0.1, -16.0),
+			Vector3(x, 0.1, -23.0),
+		]
+	return [
+		Vector3(x, 0.1, -2.0),
+		Vector3(x, 0.1, 6.0),
+		Vector3(x, 0.1, 16.0),
+		Vector3(x, 0.1, 20.5),
+		Vector3(x, 0.1, 23.5),
+	]
+
+
 ## Spawn points for wave dummies: [pos, lane, faction]
 func lane_spawn_table() -> Array:
 	return [

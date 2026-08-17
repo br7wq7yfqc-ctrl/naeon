@@ -57,6 +57,13 @@ func register_kill(lane: String = "MID") -> void:
 		_end_match("player")
 
 
+func register_minion_down(lane: String = "MID") -> void:
+	if _ended or not active:
+		return
+	# Soft lane pressure only — never a kill-to-5 / P2W farm.
+	_add_pressure(lane, 3.0)
+
+
 func register_tower_down(lane: String = "MID") -> void:
 	register_structure_down("OUTER", lane)
 
