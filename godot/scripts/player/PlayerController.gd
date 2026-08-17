@@ -12,10 +12,10 @@ const _ProcSil = preload("res://scripts/player/ProceduralHeroSilhouette.gd")
 ## Clash (TestArena) uses an over-the-shoulder boom — AR-A, not RTS / Dota cam.
 
 const FORMS := ["Canine", "Feline", "Avian", "Human"]
-const OTS_PIVOT_Y := 1.52
-const OTS_SHOULDER := Vector3(0.68, 0.22, 3.55)
-const OTS_FOV := 78.0
-const OTS_PITCH_DEFAULT := deg_to_rad(-14.0)
+const OTS_PIVOT_Y := 1.42
+const OTS_SHOULDER := Vector3(1.05, 0.38, 2.55)
+const OTS_FOV := 70.0
+const OTS_PITCH_DEFAULT := deg_to_rad(-8.0)
 const OTS_PITCH_MIN := deg_to_rad(-36.0)
 const OTS_PITCH_MAX := deg_to_rad(18.0)
 
@@ -123,9 +123,10 @@ func apply_clash_ots() -> void:
 		camera_pivot.rotation.x = OTS_PITCH_DEFAULT
 	if camera:
 		camera.position = OTS_SHOULDER
+		camera.rotation = Vector3.ZERO
 		camera.fov = OTS_FOV
 		camera.current = true
-	print("[Player] AR-A OTS shoulder=", OTS_SHOULDER, " fov=", OTS_FOV, " pitch=", rad_to_deg(OTS_PITCH_DEFAULT))
+	print("[Player] AR-A OTS shoulder=", OTS_SHOULDER, " fov=", OTS_FOV, " pitch=", rad_to_deg(OTS_PITCH_DEFAULT), " cam_y=", camera.global_position.y if camera else 0.0)
 
 
 func ots_evidence() -> Dictionary:
@@ -136,6 +137,7 @@ func ots_evidence() -> Dictionary:
 		"shoulder_x": cam_pos.x,
 		"cam_y": cam_pos.y,
 		"boom_z": cam_pos.z,
+		"world_y": camera.global_position.y if camera else 0.0,
 		"fov": camera.fov if camera else 0.0,
 		"pitch_deg": pitch,
 		"pitch_min": rad_to_deg(OTS_PITCH_MIN),

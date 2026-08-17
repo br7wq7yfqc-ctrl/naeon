@@ -19,7 +19,7 @@ Clash — **нативный** слой NAEON. Бар подхода космо�
 
 | # | Роль Predecessor / Paragon | Эквивалент NAEON | Сейчас (репо) | Next | Отказ |
 |---|----------------------------|------------------|---------------|------|-------|
-| 1 | Камера / feel: OTS 3rd person, не top-down | `PlayerController` + `CameraPivot` в `TestArena`; спринт Shift | **AR-A:** OTS правое плечо, FOV 78, pitch −14° (clamp не RTS); спринт = Shift; **travel-mode нет** | feel lock; не named travel / герой | Dota-камера; клон travel-mode IP |
+| 1 | Камера / feel: OTS 3rd person, не top-down | `PlayerController` + `CameraPivot` в `TestArena`; спринт Shift | **AR-A:** OTS правое плечо, FOV 70, pitch −8° (clamp не RTS); спринт = Shift; **travel-mode нет** | feel lock; не named travel / герой | Dota-камера; клон travel-mode IP |
 | 2 | Топология: 3 линии, jungle, river, вертикаль / jump pads | `ClashLanes` TOP/MID/BOT на полу ~60×60 | **3 линии** (не 2): +X cyan / 0 gold / −X magenta; jungle/river/pads **нет**; плоско | AR-D на том же футпринте TestArena | новая city-map; SITE_* mint |
 | 3 | Структуры: towers / inhibitors / core | башни = live `Turret` 160 HP; nexus = prop | 6 башен (по 1 на сторону × 3 линии); NEXUS_CX / NEXUS_GR — коллизия, **без HP**; inhibitors нет | AR-B: честный core HP; inhibitor = второй ряд или wait | P2W-ремонт башен |
 | 4 | Objectives: camps / fangtooth / prime | claim beacons + lane pressure + tower-down | 3 Neutral beacon (occupy C/Hack); pressure 0..100; tower death +28 soft; WS cap 60/день | AR-C/D: лагеря wait; **не** story-power drop | unique DPS с босса; Knowledge→урон |

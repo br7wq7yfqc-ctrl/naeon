@@ -21,7 +21,7 @@ OpenSpace → **M** or **Tab** → TestArena Clash · kill dummies to 5 · soft 
 
 ## Camera (AR-A)
 - TestArena / Clash hero: over-the-shoulder 3rd person (`PlayerController.apply_clash_ots`)
-- Right-shoulder boom, FOV 78, default pitch −14°, clamp blocks top-down RTS
+- Right-shoulder boom, FOV 70, default pitch −8°, clamp blocks top-down RTS
 - Same 3 strips; no new map, no travel-mode name, no G5
 
 ## Lane readability (0.3.3+)

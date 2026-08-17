@@ -38,17 +38,20 @@ func _go() -> void:
 		if float(ev.get("shoulder_x", 0.0)) < 0.45:
 			fails.append("camera not over right shoulder")
 		var boom := float(ev.get("boom_z", 0.0))
-		if boom < 2.8 or boom > 5.2:
+		if boom < 2.2 or boom > 4.2:
 			fails.append("boom not 3rd-person behind hero")
 		var fov := float(ev.get("fov", 0.0))
-		if fov < 72.0 or fov > 86.0:
+		if fov < 66.0 or fov > 80.0:
 			fails.append("fov not OTS MOBA")
 		var pitch := float(ev.get("pitch_deg", 0.0))
-		if pitch < -36.5 or pitch > -6.0:
+		if pitch < -20.0 or pitch > -4.0:
 			fails.append("default pitch is RTS/top-down or flat chase")
 		var pmin := float(ev.get("pitch_min", -80.0))
 		if pmin < -40.0:
 			fails.append("pitch clamp still allows top-down RTS")
+		var world_y := float(ev.get("world_y", 0.0))
+		if world_y > 4.2 or world_y < 1.6:
+			fails.append("camera height not OTS")
 		var cam: Camera3D = player.get_node_or_null("CameraPivot/Camera3D") as Camera3D
 		if cam == null:
 			fails.append("CameraPivot/Camera3D missing")
