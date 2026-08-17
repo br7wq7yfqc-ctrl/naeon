@@ -13,8 +13,9 @@ Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (arena COD
 | Шаг | State | Gist |
 |-----|-------|------|
 | **P0.6** land / EVA / takeoff | **built (3090)** | hold-S 770→0, HOVER+S, EVA на Relief, 6 мин / 60 FPS. Не FPS PASS на llvmpipe |
-| **OS-A** шов сферы = Relief | **next** | WorldFill §5. Дальний фейк не подменяет грунт |
-| **OS-B … OS-H** | after OS-A | атмосфера → масштаб → fill → near read → atmo flight → силуэт → ритуал |
+| **OS-A** шов сферы = Relief | **built** | WorldFill §5. Дальний фейк не подменяет грунт |
+| **OS-B** оболочка атмосферы | **built** | envelope + лимб/туман + drag/потолок; 770 м S-sink жив |
+| **OS-C … OS-H** | after OS-B | масштаб → fill → near read → atmo flight → силуэт → ритуал |
 | **G1 CRUISE** | OS-C only | Только если нужен честный подход 5–15 км + mass lock |
 | **G2–G6** | **locked** | Пока петля OPEN SPACE не честна. В коде 404 |
 

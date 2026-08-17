@@ -17,6 +17,7 @@ uniform float sun_influence : hint_range(0.0, 1.0) = 0.85;
 /* Horizon boost when camera closer (set from script by altitude) */
 uniform float horizon_boost : hint_range(0.0, 2.0) = 0.0;
 uniform float alpha_max : hint_range(0.0, 1.0) = 0.85;
+uniform float scatter_strength : hint_range(0.0, 2.0) = 0.85;
 
 varying vec3 v_world_normal;
 
@@ -31,16 +32,22 @@ void fragment() {
 
 	vec3 n_world = normalize(v_world_normal);
 	vec3 l = normalize(sun_direction);
-	float day = mix(night_floor, 1.0, clamp(dot(n_world, l) * 0.5 + 0.5, 0.0, 1.0));
+	float ndl = clamp(dot(n_world, l), -1.0, 1.0);
+	float day = mix(night_floor, 1.0, clamp(ndl * 0.5 + 0.5, 0.0, 1.0));
 	day = mix(1.0, day, sun_influence);
+
+	// Cheap Rayleigh / Mie tint — not Bruneton, readable limb on approach.
+	vec3 rayleigh = mix(atmosphere_color.rgb, vec3(0.32, 0.55, 1.0), 0.42 * scatter_strength);
+	float mie = pow(max(ndl, 0.0), 7.0) * scatter_strength;
+	vec3 col = mix(rayleigh, vec3(1.0, 0.68, 0.38), mie * (1.0 - ndv) * 0.7);
 
 	// Thin limb + slight fill so disk is not a hard ring only
 	float limb = fresnel * density;
 	float fill = pow(fresnel, max(rim_power * 0.45, 1.0)) * 0.25;
-	float a = (limb + fill + horizon_boost * fresnel * 0.5) * intensity * day * atmosphere_color.a;
+	float a = (limb + fill + horizon_boost * fresnel * 0.55) * intensity * day * max(atmosphere_color.a, 0.22);
 	a = clamp(a, 0.0, alpha_max);
 
-	ALBEDO = atmosphere_color.rgb;
-	EMISSION = atmosphere_color.rgb * (limb * 0.65 + horizon_boost * 0.2);
+	ALBEDO = col;
+	EMISSION = col * (limb * 0.7 + horizon_boost * 0.28 + mie * 0.18);
 	ALPHA = a;
 }

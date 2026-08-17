@@ -11,6 +11,7 @@ static func profiles() -> Dictionary:
 		"Nex-Prime": {
 			"radius": 1400.0,
 			"atmosphere_height": 320.0,
+			"atmosphere_envelope": 1100.0,
 			"gravity": 9.0,
 			"atmosphere_color": Color(0.25, 0.55, 0.95, 0.1),
 			"surface_color": Color(0.12, 0.22, 0.18),
@@ -21,6 +22,7 @@ static func profiles() -> Dictionary:
 		"ROT-Hive": {
 			"radius": 1100.0,
 			"atmosphere_height": 260.0,
+			"atmosphere_envelope": 880.0,
 			"gravity": 8.4,
 			"atmosphere_color": Color(0.7, 0.15, 0.25, 0.1),
 			"surface_color": Color(0.22, 0.08, 0.1),
@@ -31,6 +33,7 @@ static func profiles() -> Dictionary:
 		"Shard-Moon": {
 			"radius": 420.0,
 			"atmosphere_height": 40.0,
+			"atmosphere_envelope": 140.0,
 			"gravity": 2.2,
 			"atmosphere_color": Color(0.4, 0.4, 0.45, 0.04),
 			"surface_color": Color(0.35, 0.35, 0.38),
@@ -41,12 +44,19 @@ static func profiles() -> Dictionary:
 	}
 
 
+static func envelope_of(profile_id: String) -> float:
+	var p: Dictionary = profiles().get(profile_id, {})
+	if p.has("atmosphere_envelope"):
+		return float(p["atmosphere_envelope"])
+	return float(p.get("atmosphere_height", 280.0)) * 1.6
+
+
 static func apply_to(node: Node, profile_id: String) -> void:
 	var p: Dictionary = profiles().get(profile_id, {})
 	if p.is_empty() or node == null:
 		return
 	node.set("planet_name", profile_id)
-	for k in ["radius", "atmosphere_height", "gravity", "atmosphere_color", "surface_color", "faction_base", "has_base"]:
+	for k in ["radius", "atmosphere_height", "atmosphere_envelope", "gravity", "atmosphere_color", "surface_color", "faction_base", "has_base"]:
 		if p.has(k):
 			node.set(k, p[k])
 	if p.has("pos") and node is Node3D:

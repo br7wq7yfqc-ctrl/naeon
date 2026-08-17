@@ -561,6 +561,8 @@ func _physics_process(delta: float) -> void:
 			velocity = _Flight.approach_assist(velocity, pad.global_position - global_position, dpad, land_pad_snap_distance, delta)
 
 	velocity = _Flight.integrate(velocity, accel, delta, linear_damp_custom, _damp_mult(), atmo, _max_speed())
+	if inward.length() > 0.5:
+		velocity = _Flight.apply_ceiling(velocity, inward, atmo, delta)
 
 	# CharacterBody free-flight — do not stick to floors mid-air
 	floor_stop_on_slope = false
