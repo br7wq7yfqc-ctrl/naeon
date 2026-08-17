@@ -357,6 +357,22 @@ func spend_energy(amount: float) -> void:
 	energy = maxf(0.0, energy - amount)
 
 
+func needs_energy() -> bool:
+	return energy < max_energy - 0.05
+
+
+func restock_energy(amount: float) -> bool:
+	## Occupy locker fill. Knowledge may label the locker; it never skips this.
+	return bool(EnergyEconomy.restock(self, amount))
+
+
+func restock_pulse(amount: float) -> bool:
+	var ab = get_node_or_null("AbilitySystem")
+	if ab == null or not ab.has_method("restock_cooldowns"):
+		return false
+	return bool(ab.restock_cooldowns(amount))
+
+
 func heal(amount: float) -> void:
 	health = minf(max_health, health + amount)
 

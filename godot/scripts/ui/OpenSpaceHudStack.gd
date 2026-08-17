@@ -9,6 +9,7 @@ const FIELDS := [
 	"fuel", "fuel_max", "cargo", "module_tag", "module_pct",
 	"landed", "occupy", "eva_mode",
 	"econ", "econ_rate", "econ_grot",
+	"energy", "energy_max",
 ]
 
 
@@ -25,6 +26,8 @@ static func snapshot(ship: Node = null, player: Node = null, pad: Node = null) -
 		"econ": 0.0,
 		"econ_rate": 0.0,
 		"econ_grot": false,
+		"energy": -1.0,
+		"energy_max": -1.0,
 	}
 	if ship != null and is_instance_valid(ship):
 		if "fuel" in ship:
@@ -56,6 +59,9 @@ static func snapshot(ship: Node = null, player: Node = null, pad: Node = null) -
 		else:
 			snap["econ"] = float(GameManager.contribution) if "contribution" in GameManager else 0.0
 	if player != null and is_instance_valid(player):
+		if "energy" in player:
+			snap["energy"] = float(player.get("energy"))
+			snap["energy_max"] = float(player.get("max_energy")) if "max_energy" in player else 100.0
 		if "eva_mode" in player and bool(player.get("eva_mode")):
 			if player.has_method("is_zero_g") and bool(player.is_zero_g()):
 				snap["eva_mode"] = "EVA 0G"
@@ -99,7 +105,12 @@ static func stack_text(snap: Dictionary) -> String:
 	var rate := float(snap.get("econ_rate", 0.0))
 	if rate > 0.001:
 		econ_s += "  +%.1f/s" % rate
-	return "%s\n%s\n%s\n%s\n%s\n%s" % [econ_s, fuel_s, cargo_s, mod_s, land_s, eva]
+	var en_s := "EN —"
+	var en_now := float(snap.get("energy", -1.0))
+	var en_max := float(snap.get("energy_max", -1.0))
+	if en_now >= 0.0 and en_max > 0.0:
+		en_s = "EN %.0f/%.0f" % [en_now, en_max]
+	return "%s\n%s\n%s\n%s\n%s\n%s\n%s" % [econ_s, fuel_s, cargo_s, mod_s, land_s, eva, en_s]
 
 
 static func _worst_module(ship: Node) -> Dictionary:

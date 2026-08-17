@@ -8,6 +8,10 @@ const REGEN_PLAYER := 8.0
 const REGEN_WALKER := 8.0
 const REGEN_SHIP := 8.0
 const MAX_DEFAULT := 100.0
+# Occupy locker on an unnamed pad. Faster than passive regen so the wait is
+# visible; Knowledge may label the locker and never changes these numbers.
+const PAD_RESTOCK := 22.0
+const PAD_PULSE_RESTOCK := 1.6
 
 # --- Ability kit (rules/04 placeholder sheet) ---
 const PULSE_BOLT := 18.0
@@ -79,3 +83,25 @@ static func refund(caster: Node, cost: float) -> void:
 		caster.energy = minf(float(caster.max_energy), float(caster.energy) + cost)
 	elif "energy" in caster:
 		caster.energy = float(caster.energy) + cost
+
+
+static func needs_energy(caster: Node) -> bool:
+	if caster == null:
+		return false
+	if caster.has_method("get_energy") and "max_energy" in caster:
+		return float(caster.get_energy()) < float(caster.max_energy) - 0.05
+	if "energy" in caster and "max_energy" in caster:
+		return float(caster.energy) < float(caster.max_energy) - 0.05
+	return false
+
+
+static func restock(caster: Node, amount: float) -> bool:
+	## Occupy-to-hold locker fill. Knowledge never skips this wait.
+	if amount <= 0.0 or caster == null:
+		return false
+	if not needs_energy(caster):
+		return false
+	if "energy" in caster and "max_energy" in caster:
+		caster.energy = minf(float(caster.max_energy), float(caster.energy) + amount)
+		return true
+	return false
