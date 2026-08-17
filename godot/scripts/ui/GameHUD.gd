@@ -729,10 +729,18 @@ func _refresh() -> void:
 					elif st == "extracting" and n.has_method("harvest_hud_line"):
 						var hl := str(n.harvest_hud_line())
 						best_txt = "PAD %s  %s  (%.0fm)" % [n.get_faction(), hl, d] if hl != "" else "PAD %s  extracting  (%.0fm)" % [n.get_faction(), d]
-					elif n.has_method("pad_repair_hud_line"):
-						var rl := str(n.pad_repair_hud_line())
-						if rl != "":
-							best_txt = "PAD %s  %s  (%.0fm)" % [n.get_faction(), rl, d]
+					elif n.has_method("pad_repair_hud_line") or n.has_method("pad_refuel_hud_line"):
+						var svc: PackedStringArray = PackedStringArray()
+						if n.has_method("pad_repair_hud_line"):
+							var rl := str(n.pad_repair_hud_line())
+							if rl != "":
+								svc.append(rl)
+						if n.has_method("pad_refuel_hud_line"):
+							var fl := str(n.pad_refuel_hud_line())
+							if fl != "":
+								svc.append(fl)
+						if svc.size() > 0:
+							best_txt = "PAD %s  %s  (%.0fm)" % [n.get_faction(), "  ·  ".join(svc), d]
 						else:
 							best_txt = "PAD %s  %s  claim %.0f%%  (%.0fm)" % [n.get_faction(), st, claim_ratio * 100.0, d]
 					else:
