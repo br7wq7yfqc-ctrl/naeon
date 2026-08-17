@@ -22,6 +22,7 @@ signal damaged(amount: float, health_left: float)
 @export var lane_march: bool = false
 @export var one_shot: bool = false
 @export var grant_economy: bool = true
+@export var intel_name: String = ""
 var lane_waypoints: Array = []
 var _wp_i: int = 0
 var _hostile_cache: Node3D = null
@@ -427,7 +428,10 @@ func _flash() -> void:
 
 func _update_labels() -> void:
 	if label:
-		label.text = ("%s WAVE" % faction) if lane_march else str(faction)
+		if intel_name != "":
+			label.text = intel_name
+		else:
+			label.text = ("%s WAVE" % faction) if lane_march else str(faction)
 		label.modulate = Color(0.95, 0.25, 0.5) if faction == "gROT" else Color(0.3, 0.9, 1.0)
 	if health_bar:
 		health_bar.text = "%d" % int(health)
