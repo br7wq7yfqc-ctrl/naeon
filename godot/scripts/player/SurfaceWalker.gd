@@ -213,10 +213,15 @@ func _ensure_rig() -> void:
 	if _body_mesh == null:
 		_body_mesh = MeshInstance3D.new()
 		_body_mesh.name = "BodyMesh"
-		var cm := CapsuleMesh.new()
-		cm.radius = 0.38
-		cm.height = 1.4
-		_body_mesh.mesh = cm
+		if DisplayServer.get_name() == "headless":
+			var body_box := BoxMesh.new()
+			body_box.size = Vector3(0.76, 1.4, 0.76)
+			_body_mesh.mesh = body_box
+		else:
+			var cm := CapsuleMesh.new()
+			cm.radius = 0.38
+			cm.height = 1.4
+			_body_mesh.mesh = cm
 		_body_mesh.position = Vector3(0, 0.95, 0)
 		var mat := StandardMaterial3D.new()
 		mat.albedo_color = Color(0.08, 0.14, 0.2)
@@ -1029,6 +1034,8 @@ var _wade_cd: float = 0.0
 
 func _wade_splash(delta: float) -> void:
 	_wade_cd = maxf(0.0, _wade_cd - delta)
+	if DisplayServer.get_name() == "headless":
+		return
 	if eva_mode or _provider == null or not ("radius" in _provider):
 		return
 	if _wade_cd > 0.0:
@@ -1239,6 +1246,8 @@ func _apply_mag_basis() -> void:
 func _ensure_eva_fx() -> void:
 	if _eva_jet and is_instance_valid(_eva_jet):
 		return
+	if DisplayServer.get_name() == "headless":
+		return
 	_eva_jet = GPUParticles3D.new()
 	_eva_jet.name = "EvaJet"
 	_eva_jet.amount = 12
@@ -1319,6 +1328,8 @@ func _mag_release(reason: String) -> void:
 
 
 func _mag_latch_fx() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	_ensure_eva_fx()
 	if _mag_light:
 		_mag_light.light_energy = 4.0

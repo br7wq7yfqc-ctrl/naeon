@@ -56,6 +56,11 @@ func _ready() -> void:
 			var box := BoxMesh.new()
 			box.size = Vector3(0.9, 1.7, 0.9)
 			mesh.mesh = box
+		else:
+			var cap := CapsuleMesh.new()
+			cap.radius = 0.45
+			cap.height = 1.7
+			mesh.mesh = cap
 		mesh.material_override = _mat
 	_update_labels()
 	call_deferred("try_load_drone")

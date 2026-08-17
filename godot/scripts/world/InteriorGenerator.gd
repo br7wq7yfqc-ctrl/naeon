@@ -266,11 +266,16 @@ static func _ensure_seat_markers(root: Node3D) -> void:
 	if root.get_node_or_null("SeatGlow") == null:
 		var g := MeshInstance3D.new()
 		g.name = "SeatGlow"
-		var cm := CylinderMesh.new()
-		cm.top_radius = 0.35
-		cm.bottom_radius = 0.35
-		cm.height = 0.08
-		g.mesh = cm
+		if DisplayServer.get_name() == "headless":
+			var glow_box := BoxMesh.new()
+			glow_box.size = Vector3(0.7, 0.08, 0.7)
+			g.mesh = glow_box
+		else:
+			var cm := CylinderMesh.new()
+			cm.top_radius = 0.35
+			cm.bottom_radius = 0.35
+			cm.height = 0.08
+			g.mesh = cm
 		var mat := StandardMaterial3D.new()
 		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		mat.albedo_color = Color(0.2, 0.85, 1.0, 0.7)
@@ -401,11 +406,16 @@ static func _seat_glow(root: Node3D, seat_pos: Vector3, neon: Color) -> void:
 	# Pillar + ring + label — high readability for F pilot
 	var pillar := MeshInstance3D.new()
 	pillar.name = "SeatPillar"
-	var cyl := CylinderMesh.new()
-	cyl.top_radius = 0.08
-	cyl.bottom_radius = 0.12
-	cyl.height = 1.8
-	pillar.mesh = cyl
+	if DisplayServer.get_name() == "headless":
+		var pillar_box := BoxMesh.new()
+		pillar_box.size = Vector3(0.2, 1.8, 0.2)
+		pillar.mesh = pillar_box
+	else:
+		var cyl := CylinderMesh.new()
+		cyl.top_radius = 0.08
+		cyl.bottom_radius = 0.12
+		cyl.height = 1.8
+		pillar.mesh = cyl
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.albedo_color = neon
@@ -418,12 +428,17 @@ static func _seat_glow(root: Node3D, seat_pos: Vector3, neon: Color) -> void:
 	root.add_child(pillar)
 	var ring := MeshInstance3D.new()
 	ring.name = "SeatRing"
-	var tm := TorusMesh.new()
-	tm.inner_radius = 0.55
-	tm.outer_radius = 0.72
-	tm.rings = 6
-	tm.ring_segments = 16
-	ring.mesh = tm
+	if DisplayServer.get_name() == "headless":
+		var ring_box := BoxMesh.new()
+		ring_box.size = Vector3(1.44, 0.12, 1.44)
+		ring.mesh = ring_box
+	else:
+		var tm := TorusMesh.new()
+		tm.inner_radius = 0.55
+		tm.outer_radius = 0.72
+		tm.rings = 6
+		tm.ring_segments = 16
+		ring.mesh = tm
 	var rm := StandardMaterial3D.new()
 	rm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	rm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA

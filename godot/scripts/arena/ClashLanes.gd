@@ -111,29 +111,29 @@ func _nexus(pos: Vector3, col: Color, nname: String, fac: String) -> void:
 	root.position = pos
 	# core
 	var mi := MeshInstance3D.new()
-	var sp := SphereMesh.new()
-	sp.radius = 1.4
-	sp.height = 2.8
 	if DisplayServer.get_name() == "headless":
 		var core := BoxMesh.new()
 		core.size = Vector3(2.4, 2.4, 2.4)
 		mi.mesh = core
 	else:
+		var sp := SphereMesh.new()
+		sp.radius = 1.4
+		sp.height = 2.8
 		mi.mesh = sp
 	mi.material_override = _mat(col, 2.0)
 	root.add_child(mi)
 	# halo ring
 	var halo := MeshInstance3D.new()
-	var torus := TorusMesh.new()
-	torus.inner_radius = 1.55
-	torus.outer_radius = 1.85
-	torus.rings = 10
-	torus.ring_segments = 20
 	if DisplayServer.get_name() == "headless":
 		var halo_box := BoxMesh.new()
 		halo_box.size = Vector3(3.4, 0.15, 3.4)
 		halo.mesh = halo_box
 	else:
+		var torus := TorusMesh.new()
+		torus.inner_radius = 1.55
+		torus.outer_radius = 1.85
+		torus.rings = 10
+		torus.ring_segments = 20
 		halo.mesh = torus
 	halo.material_override = _mat(col, 2.4)
 	halo.position.y = 1.5
@@ -178,15 +178,15 @@ func _build_towers() -> void:
 		root.position = t[0]
 		root.set_meta("clash_lane", str(t[4]))
 		var mi := MeshInstance3D.new()
-		var cyl := CylinderMesh.new()
-		cyl.top_radius = 0.45
-		cyl.bottom_radius = 0.7
-		cyl.height = 3.2
 		if DisplayServer.get_name() == "headless":
 			var spire := BoxMesh.new()
 			spire.size = Vector3(1.2, 3.2, 1.2)
 			mi.mesh = spire
 		else:
+			var cyl := CylinderMesh.new()
+			cyl.top_radius = 0.45
+			cyl.bottom_radius = 0.7
+			cyl.height = 3.2
 			mi.mesh = cyl
 		mi.material_override = _mat(t[1], 1.6)
 		mi.position.y = 1.6

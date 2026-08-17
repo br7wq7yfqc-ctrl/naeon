@@ -60,6 +60,11 @@ func _ready() -> void:
 	_body_mat.roughness = 0.3
 	_body_mat.emission_enabled = true
 	if body_mesh:
+		if DisplayServer.get_name() != "headless":
+			var cap := CapsuleMesh.new()
+			cap.radius = 0.4
+			cap.height = 1.6
+			body_mesh.mesh = cap
 		body_mesh.material_override = _body_mat
 	if ability_system:
 		ability_system.setup_default_loadout(faction)
