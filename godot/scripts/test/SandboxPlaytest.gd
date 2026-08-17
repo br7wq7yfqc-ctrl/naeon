@@ -260,7 +260,5 @@ func _finish(_fails: PackedStringArray, lines: PackedStringArray, t0: int) -> vo
 	print("[Sandbox] HUMAN_UNFIT")
 	if AutoUpdater and AutoUpdater.has_method("abort_pending"):
 		AutoUpdater.abort_pending()
-	var tree := get_tree()
-	if tree:
-		tree.quit(2)
+	# Do not SceneTree.quit() on dummy — teardown is the m-is-null flood.
 	OS.kill(OS.get_process_id())

@@ -88,16 +88,16 @@ func _build_lanes() -> void:
 		# centerline ticks
 		for z in range(-24, 25, 8):
 			_box(Vector3(LANE_HALF_W * 2.2, 0.12, 0.35), Vector3(x, Y_STRIP + 0.02, float(z)), col * 1.2, root)
-		# Label3D at mid
-		var lab := Label3D.new()
-		lab.text = id
-		lab.font_size = 28
-		lab.modulate = col
-		lab.outline_modulate = Color(0, 0, 0, 0.9)
-		lab.outline_size = 12
-		lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		lab.position = Vector3(x, 2.5, 0.0)
-		root.add_child(lab)
+		if DisplayServer.get_name() != "headless":
+			var lab := Label3D.new()
+			lab.text = id
+			lab.font_size = 28
+			lab.modulate = col
+			lab.outline_modulate = Color(0, 0, 0, 0.9)
+			lab.outline_size = 12
+			lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+			lab.position = Vector3(x, 2.5, 0.0)
+			root.add_child(lab)
 
 func _build_nexuses() -> void:
 	# Cybernex base (south +Z) blue, gROT (north -Z) magenta
@@ -141,15 +141,16 @@ func _nexus(pos: Vector3, col: Color, nname: String, fac: String) -> void:
 	root.add_child(halo)
 	# ring
 	_box(Vector3(5.5, 0.15, 5.5), Vector3(0, 0.1, 0), col * 0.8, root)
-	var lab := Label3D.new()
-	lab.text = "NEXUS\n%s" % fac
-	lab.font_size = 28
-	lab.modulate = col
-	lab.outline_size = 10
-	lab.outline_modulate = Color(0, 0, 0, 0.9)
-	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lab.position = Vector3(0, 3.2, 0)
-	root.add_child(lab)
+	if DisplayServer.get_name() != "headless":
+		var lab := Label3D.new()
+		lab.text = "NEXUS\n%s" % fac
+		lab.font_size = 28
+		lab.modulate = col
+		lab.outline_size = 10
+		lab.outline_modulate = Color(0, 0, 0, 0.9)
+		lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		lab.position = Vector3(0, 3.2, 0)
+		root.add_child(lab)
 	# soft body for presence (no damage — readability prop)
 	var body := StaticBody3D.new()
 	var cs := CollisionShape3D.new()
@@ -252,6 +253,8 @@ func _on_tower_died(spire: Node3D, lane: String, fac: String) -> void:
 	print("[ClashLanes] tower down ", fac, " ", lane)
 
 func _build_lane_markers() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	_lane_label = Label3D.new()
 	_lane_label.name = "PlayerLaneHint"
 	_lane_label.font_size = 22

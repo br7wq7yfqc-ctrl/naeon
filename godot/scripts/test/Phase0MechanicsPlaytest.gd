@@ -510,8 +510,6 @@ func _finish(fails: PackedStringArray, code: int) -> void:
 			print("[Playtest]  - ", f)
 	if AutoUpdater and AutoUpdater.has_method("abort_pending"):
 		AutoUpdater.abort_pending()
-	var tree := get_tree()
-	if tree:
-		tree.quit(code)
-	# Godot 4.3 dummy renderer keeps iterating after quit() (mesh_get_surface_count).
+	# Dummy mesh_storage walks null RIDs inside SceneTree.quit() / --quit-after.
+	# Kill after the verdict so the counter is live-only, not teardown spam.
 	OS.kill(OS.get_process_id())

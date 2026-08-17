@@ -25,6 +25,11 @@ var _meter_mat: StandardMaterial3D
 
 
 func _ready() -> void:
+	add_to_group("contested_ring")
+	set_process(true)
+	visible = false
+	if DisplayServer.get_name() == "headless":
+		return
 	_mesh = MeshInstance3D.new()
 	if DisplayServer.get_name() == "headless":
 		var ring := BoxMesh.new()
@@ -142,9 +147,6 @@ func _ready() -> void:
 	_light.position = Vector3(0, 4, 0)
 	_light.shadow_enabled = false
 	add_child(_light)
-	add_to_group("contested_ring")
-	set_process(true)
-	visible = false
 
 
 func _build_spokes() -> void:

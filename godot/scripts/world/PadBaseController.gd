@@ -46,7 +46,8 @@ const ARENA_INFLUENCE_DECAY := 0.0005  # ~10 min back to zero
 func _ready() -> void:
 	add_to_group("pad_base")
 	add_to_group("hackable")
-	call_deferred("_ensure_claim_beacon")
+	if DisplayServer.get_name() != "headless":
+		call_deferred("_ensure_claim_beacon")
 	ownership = OwnershipData.new()
 	# Unique per pad: every cluster is named "BaseCluster", so parent+self
 	# collided across all planets and soft influence landed on a random pad.
@@ -103,6 +104,8 @@ func _unique_object_id() -> String:
 
 
 func _ensure_label() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	_label = Label3D.new()
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.font_size = 28
@@ -600,6 +603,8 @@ func _tick_reserve_regen(delta: float) -> void:
 		_refresh_label()
 
 func _apply_faction_visual() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	var fac := ownership.faction_name() if ownership else "Neutral"
 	var col := Color(0.55, 0.55, 0.6)
 	match fac:

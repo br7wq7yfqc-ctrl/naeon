@@ -1,8 +1,11 @@
 extends RefCounted
 class_name MeshSafe
-## Dummy / headless mesh_storage cannot RID some PrimitiveMeshes
-## (Sphere/Torus/Prism/fat Cylinder). BoxMesh is the safe stand-in.
-## Real GPU keeps the authored mesh. Never a reason to put GLB in git.
+## Godot 4.3 dummy mesh_storage:
+## - Sphere/Torus/Prism/fat Cylinder/ArrayMesh often have a null RID.
+## - SceneTree.quit() / --quit-after walks those RIDs → Parameter m is null.
+## - Label3D glyph rebuild and material_override tint do the same while live.
+## BoxMesh stand-in on GPU-less runs. Never a reason to put GLB in git.
+## Do not SceneTree.quit() on headless — OS.kill after the probe prints.
 
 static func dummy() -> bool:
 	return DisplayServer.get_name() == "headless"

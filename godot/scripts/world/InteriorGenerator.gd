@@ -78,13 +78,14 @@ static func build_station(faction: String = "Cybernex") -> Node3D:
 	exit.add_child(cs)
 	exit.position = Vector3(0, 1.5, -6)
 	root.add_child(exit)
-	var elabel := Label3D.new()
-	elabel.text = "EXIT  [I]"
-	elabel.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	elabel.font_size = 48
-	elabel.position = Vector3(0, 2.5, -6)
-	elabel.modulate = neon
-	root.add_child(elabel)
+	if DisplayServer.get_name() != "headless":
+		var elabel := Label3D.new()
+		elabel.text = "EXIT  [I]"
+		elabel.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		elabel.font_size = 48
+		elabel.position = Vector3(0, 2.5, -6)
+		elabel.modulate = neon
+		root.add_child(elabel)
 	# Spawn point
 	var spawn := Marker3D.new()
 	spawn.name = "Spawn"
@@ -126,13 +127,14 @@ static func build_ship(faction: String = "Cybernex") -> Node3D:
 	spawn.name = "Spawn"
 	spawn.position = Vector3(0, 1.25, 1)
 	root.add_child(spawn)
-	var elabel := Label3D.new()
-	elabel.text = "HATCH  [I]"
-	elabel.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	elabel.font_size = 36
-	elabel.position = Vector3(0, 2.0, -4.2)
-	elabel.modulate = neon
-	root.add_child(elabel)
+	if DisplayServer.get_name() != "headless":
+		var elabel := Label3D.new()
+		elabel.text = "HATCH  [I]"
+		elabel.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		elabel.font_size = 36
+		elabel.position = Vector3(0, 2.0, -4.2)
+		elabel.modulate = neon
+		root.add_child(elabel)
 	_add_neon_strips(root, faction)
 	_attach_ambient(root, "ship", neon)
 	_ensure_seat_markers(root)
@@ -254,7 +256,7 @@ static func _ensure_seat_markers(root: Node3D) -> void:
 		sv.name = "SeatVolume"
 		sv.position = Vector3(0, 0.2, -1.2)
 		root.add_child(sv)
-	if root.get_node_or_null("SeatLabel") == null:
+	if root.get_node_or_null("SeatLabel") == null and DisplayServer.get_name() != "headless":
 		var lab := Label3D.new()
 		lab.name = "SeatLabel"
 		lab.text = "PILOT SEAT"
@@ -333,13 +335,14 @@ static func build_from_profile(profile_id: String, faction: String = "Cybernex")
 	spawn.name = "Spawn"
 	spawn.position = seat_pos + Vector3(0, 0.4, 1.2)
 	root.add_child(spawn)
-	var elabel := Label3D.new()
-	elabel.text = "HATCH [I]  SEAT [F]"
-	elabel.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	elabel.font_size = 36
-	elabel.position = hatch_pos + Vector3(0, 1.2, 0)
-	elabel.modulate = neon
-	root.add_child(elabel)
+	if DisplayServer.get_name() != "headless":
+		var elabel := Label3D.new()
+		elabel.text = "HATCH [I]  SEAT [F]"
+		elabel.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		elabel.font_size = 36
+		elabel.position = hatch_pos + Vector3(0, 1.2, 0)
+		elabel.modulate = neon
+		root.add_child(elabel)
 	_add_neon_strips(root, faction)
 	_interior_point_lights(root, neon)
 	
@@ -450,15 +453,16 @@ static func _seat_glow(root: Node3D, seat_pos: Vector3, neon: Color) -> void:
 	ring.position = seat_pos + Vector3(0, 0.05, 0)
 	ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(ring)
-	var lab := Label3D.new()
-	lab.name = "SeatLabel"
-	lab.text = "PILOT SEAT  [F]"
-	lab.font_size = 48
-	lab.modulate = neon
-	lab.position = seat_pos + Vector3(0, 2.1, 0)
-	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lab.no_depth_test = true
-	root.add_child(lab)
+	if DisplayServer.get_name() != "headless":
+		var lab := Label3D.new()
+		lab.name = "SeatLabel"
+		lab.text = "PILOT SEAT  [F]"
+		lab.font_size = 48
+		lab.modulate = neon
+		lab.position = seat_pos + Vector3(0, 2.1, 0)
+		lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		lab.no_depth_test = true
+		root.add_child(lab)
 	if seat_v is Node3D:
 		pass
 
@@ -467,14 +471,15 @@ static func _console_volume(root: Node3D, pos: Vector3, neon: Color, tag: String
 	vol.name = "ConsoleVolume"
 	vol.position = pos + Vector3(0, 1.0, 0)
 	root.add_child(vol)
-	var lab := Label3D.new()
-	lab.name = "ConsoleLabel"
-	lab.text = "%s CONSOLE  [E]" % tag
-	lab.font_size = 36
-	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lab.modulate = neon
-	lab.position = pos + Vector3(0, 2.15, 0)
-	root.add_child(lab)
+	if DisplayServer.get_name() != "headless":
+		var lab := Label3D.new()
+		lab.name = "ConsoleLabel"
+		lab.text = "%s CONSOLE  [E]" % tag
+		lab.font_size = 36
+		lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		lab.modulate = neon
+		lab.position = pos + Vector3(0, 2.15, 0)
+		root.add_child(lab)
 	_box_mesh(root, pos + Vector3(0, 0.55, 0), Vector3(1.4, 1.1, 0.7), Color(0.08, 0.09, 0.11), true)
 	_box_mesh(root, pos + Vector3(0, 1.05, 0.28), Vector3(1.1, 0.08, 0.08), neon, false, true)
 

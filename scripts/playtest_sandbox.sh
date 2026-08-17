@@ -18,12 +18,14 @@ echo "[sandbox] display=${DISPLAY:-none} renderer=llvmpipe-or-dummy"
 
 "$GODOT" --headless --editor --quit-after 20 --path "$ROOT/godot" > /tmp/sb_import.log 2>&1 || true
 
+# --quit-after / SceneTree.quit() on dummy walks null mesh RIDs (OS 29 / TA 42 /
+# mech 220 teardown). SIGKILL after a live settle measures only in-session spam.
 set +e
-timeout 25 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/ui/MainMenu.tscn --quit-after 6 > /tmp/sb_mm.log 2>&1
+timeout -s KILL 6 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/ui/MainMenu.tscn > /tmp/sb_mm.log 2>&1
 MM_CODE=$?
-timeout 30 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/world/OpenSpace.tscn --quit-after 14 > /tmp/sb_os.log 2>&1
+timeout -s KILL 8 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/world/OpenSpace.tscn > /tmp/sb_os.log 2>&1
 OS_CODE=$?
-timeout 25 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/test/TestArena.tscn --quit-after 8 > /tmp/sb_ta.log 2>&1
+timeout -s KILL 6 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/test/TestArena.tscn > /tmp/sb_ta.log 2>&1
 TA_CODE=$?
 timeout 90 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/world/OpenSpace.tscn -- --sandbox-playtest > /tmp/sb_os_probe.log 2>&1
 PROBE_CODE=$?
