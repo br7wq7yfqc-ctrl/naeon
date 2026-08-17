@@ -97,6 +97,15 @@ static func traffic_label(kind: String = "guard") -> String:
 	return "PAD GUARD" if named else "GUARD"
 
 
+## History/combat: surface dummy name only — never Pulse DPS.
+static func surface_dummy_label() -> String:
+	var hist := mastery("history")
+	var combat := mastery("combat")
+	if hist >= 10.0 or combat >= 10.0 or rank() >= 5:
+		return "DRILL DUMMY"
+	return "DUMMY"
+
+
 ## History/Lore: structure weakness tip (info only)
 static func structure_tip(faction: String) -> String:
 	var lore := mastery("history")

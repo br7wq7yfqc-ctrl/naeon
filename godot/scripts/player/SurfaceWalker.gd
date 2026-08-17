@@ -460,6 +460,40 @@ func set_spawn_basis(up: Vector3, yaw: float) -> void:
 	up_direction = _up
 	_apply_body_basis()
 
+
+func face_world_point(target: Vector3) -> void:
+	## Point CamPivot / body −Z at a world point so Pulse aim_from hits it.
+	_update_up()
+	var origin: Vector3 = global_position + _up * 1.35
+	var to: Vector3 = target - origin
+	if to.length_squared() < 0.0001:
+		return
+	var planar: Vector3 = to - _up * to.dot(_up)
+	if planar.length_squared() < 1e-8:
+		_pitch = clampf(atan2(to.dot(_up), 0.01), deg_to_rad(-70), deg_to_rad(70))
+		_apply_body_basis()
+		return
+	planar = planar.normalized()
+	_ref_fwd = _Facing.transport_ref(_up, _ref_fwd)
+	var b0: Basis = _Facing.basis_from_up_ref(_up, 0.0, _ref_fwd)
+	var fwd0: Vector3 = -b0.z
+	fwd0 = fwd0 - _up * fwd0.dot(_up)
+	if fwd0.length_squared() < 1e-8:
+		fwd0 = _ref_fwd
+	fwd0 = fwd0.normalized()
+	var right0: Vector3 = fwd0.cross(_up).normalized()
+	_yaw = atan2(planar.dot(right0), planar.dot(fwd0))
+	var horiz: float = (to - _up * to.dot(_up)).length()
+	_pitch = clampf(atan2(to.dot(_up), maxf(horiz, 0.01)), deg_to_rad(-70), deg_to_rad(70))
+	_apply_body_basis()
+
+
+func try_pulse() -> bool:
+	var ab = get_node_or_null("AbilitySystem")
+	if ab == null or not ab.has_method("try_activate"):
+		return false
+	return bool(ab.try_activate(0))
+
 func _update_up() -> void:
 	if _provider and _provider.has_method("gravity_at"):
 		var g: Vector3 = _provider.gravity_at(global_position)

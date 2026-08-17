@@ -116,3 +116,4 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 90. Pad traffic: one CombatDummy guard + one visiting hull hold on an occupied unnamed pad. Knowledge labels only. `--playtest-mechanics` asserts pad traffic present.
 91. OpenSpace play HUD: one left stack (fuel, cargo count, worst module, landed/occupy, EVA/0G). GFX/FPS/OBJECTIVE stay right/center; Clash HUD unchanged. Helper asserted in `--playtest-mechanics` / `--playtest-ritual`.
 92. Occupied unnamed pad: live Contribution/Biomass on the OpenSpace HUD stack (ticks with harvest). Knowledge labels yield only. `--playtest-mechanics` asserts occupy→Contribution increased. Not ST-A.
+93. Surface Pulse after EVA snap: grounded walker on Relief fires existing Pulse Bolt at a gROT CombatDummy near the pad. Knowledge labels only — Pulse DPS stays 11. `--playtest-mechanics` asserts EVA-snap→Pulse-hit.
