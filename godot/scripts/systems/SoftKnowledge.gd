@@ -78,6 +78,15 @@ static func module_bench_label() -> String:
 	return "MODULE BENCH"
 
 
+## Logistics/Ecology: rover name only — never speed / HP.
+static func rover_label() -> String:
+	var logi := mastery("logistics")
+	var eco := mastery("ecology")
+	if logi >= 10.0 or eco >= 15.0 or rank() >= 5:
+		return "SURFACE ROVER"
+	return "ROVER"
+
+
 ## History/Lore: structure weakness tip (info only)
 static func structure_tip(faction: String) -> String:
 	var lore := mastery("history")
