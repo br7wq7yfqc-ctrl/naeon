@@ -643,8 +643,8 @@ func _spawn_eva_near_ship() -> void:
 	if player != null and is_instance_valid(player) and player.has_method("set") and "eva_mode" in player:
 		pass
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	_toast_hud("EVA — thrusters WASD · Space/Shift · F reboard hatch")
-	print("[OpenSpace] EVA deployed from hatch")
+	_toast_hud("EVA zero-G — thrusters WASD · Space/Shift · F reboard hatch")
+	print("[OpenSpace] EVA zero-G deployed from hatch")
 
 
 func _spawn_player_near_ship() -> void:
@@ -797,7 +797,9 @@ func _update_hud() -> void:
 	elif _interior != null and is_instance_valid(_interior) and _interior.has_method("is_inside") and bool(_interior.is_inside()):
 		mode = "INTERIOR"
 	elif _eva_mode:
-		mode = "EVA"
+		mode = "EVA 0G"
+		if player != null and is_instance_valid(player) and player.has_method("is_zero_g") and not bool(player.is_zero_g()):
+			mode = "EVA"
 	elif not _in_ship:
 		mode = "ON FOOT"
 	var gq := get_node_or_null("/root/GraphicsQuality")

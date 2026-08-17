@@ -35,6 +35,8 @@ var _spawn_grace_t: float = 0.0
 var _face_arrow: MeshInstance3D = null
 var _move_amount: float = 0.0
 var eva_mode: bool = false
+## Near-ship OpenSpace EVA: no planet gravity. Dirt / landed walker stays grounded.
+var zero_g: bool = false
 var interior_mode: bool = false
 var firewall_timer: float = 0.0
 var _dying: bool = false
@@ -137,8 +139,13 @@ func set_interior_mode(on: bool) -> void:
 	print("[SurfaceWalker] interior_mode=", on)
 
 
+func is_zero_g() -> bool:
+	return eva_mode and zero_g
+
+
 func set_eva_profile(enabled: bool) -> void:
 	eva_mode = enabled
+	zero_g = enabled
 	mag_boot = false
 	_mag_latched = false
 	_thrust_smooth = Vector3.ZERO
@@ -150,7 +157,7 @@ func set_eva_profile(enabled: bool) -> void:
 		thruster_accel = 16.0
 		motion_mode = CharacterBody3D.MOTION_MODE_FLOATING
 		floor_snap_length = 0.0
-		print("[SurfaceWalker] EVA thruster suit")
+		print("[SurfaceWalker] EVA zero-G thruster suit")
 		_apply_surface_camera()
 		if _body_mesh and _body_mesh.material_override is StandardMaterial3D:
 			var m: StandardMaterial3D = _body_mesh.material_override
@@ -505,14 +512,14 @@ func _physics_process(delta: float) -> void:
 		# Flat Y-up pocket — never radial planet gravity / surface snap
 		_up = Vector3.UP
 		up_direction = Vector3.UP
-	else:
+	elif not is_zero_g():
 		_update_up()
 	_terrain_hint_tick(delta)
 	firewall_timer = maxf(0.0, firewall_timer - delta)
 	if _down_t > 0.0:
 		_down_t = maxf(0.0, _down_t - delta)
 		var vd := velocity.dot(_up)
-		if not is_on_floor():
+		if not is_on_floor() and not is_zero_g():
 			vd += _gravity_vec().dot(_up) * delta
 		var planar_d := velocity - _up * velocity.dot(_up)
 		velocity = planar_d.move_toward(Vector3.ZERO, 40.0 * delta) + _up * vd
@@ -1142,9 +1149,9 @@ func _process_eva(delta: float, wish: Vector3, forward: Vector3, right: Vector3)
 		wish_raw = wish_raw - _mag_normal * wish_raw.dot(_mag_normal)
 		wish_raw *= 0.45
 	_thrust_smooth = _thrust_smooth.move_toward(wish_raw, THRUST_RAMP * delta)
-	# Real gravity still applies in EVA (zero in vacuum) — otherwise stepping off
-	# a hovering ship inside an atmosphere hands the player free flight.
-	if not _mag_latched:
+	# Pillar 7: near-ship EVA is zero-G (fuel + tether still apply). Dirt walker
+	# never enters this path — landed F uses set_eva_profile(false).
+	if not _mag_latched and not is_zero_g():
 		velocity += _real_gravity() * delta
 	var thruster_on := _thrust_smooth.length_squared() > 0.01
 	var thruster_accel_eff: float = thruster_accel

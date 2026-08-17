@@ -565,7 +565,10 @@ func _refresh() -> void:
 				var td: float = float(osp.eva_tether_distance())
 				if td >= 0.0:
 					tether_s = "  tether %.0fm" % td
-		eva_line = "  |  EVA%s%s" % [mag_s, tether_s]
+		var zg_s := ""
+		if _player.has_method("is_zero_g") and bool(_player.is_zero_g()):
+			zg_s = " 0G"
+		eva_line = "  |  EVA%s%s%s" % [zg_s, mag_s, tether_s]
 	var sys_line := ""
 	if not pocket and LayerContext and str(LayerContext.current_layer) in ["Space", "space"]:
 		var tree_s := get_tree()

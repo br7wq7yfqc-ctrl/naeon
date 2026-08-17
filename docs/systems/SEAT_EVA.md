@@ -10,6 +10,7 @@
 - Exit ship when not landed and spd ≤ 42
 - Spawn at HatchPoint + side offset; door ajar
 - Velocity match 0.9× ship
+- Near-ship OpenSpace EVA is **zero-G** (no planet gravity). Landed F stays grounded SurfaceWalker
 - Thrusters cost energy (~4.5/s when thrusting)
 - Soft tether toast if >80m from ship
 - Soft suit warn after 90s EVA time

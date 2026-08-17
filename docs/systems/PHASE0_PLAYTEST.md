@@ -109,3 +109,4 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 83. Per-tier camera far clip sized to contain a system (LOW 22000 -> ULTRA 48000) with near 0.05 -> 0.25: at 8000 the two far bodies (10383 / 15960 from spawn) and every gate anchor were clipped away entirely
 84. Star corona shell removed — a constant-alpha additive sphere rendered as a flat grey ring, not a glow; real corona needs rim falloff (manifest polish)
 85. Ship module HP: engine/weapon/shield/cargo/extractor integrity scales function; hull stays; pad occupy repair (no cash). `--playtest-mechanics` asserts damaged engine reduces thrust. No power/cool/life buses.
+86. Zero-G EVA near ship (not on dirt): no planet gravity, fuel+tether stay, F reboard. Surface walker / OS-H ritual unchanged.

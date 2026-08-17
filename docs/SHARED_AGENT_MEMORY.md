@@ -141,6 +141,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-17 | OPEN SPACE SC benchmark plan (OS-A…OS-H). Port unique #7 canon docs; drop #7 code. HUMAN_UNFIT superseded by 3090 fact. G2–G6 stay closed. | open-space-sc |
 | 2026-08-17 | OS-H ritual harness: space→atmo→land→EVA→takeoff→space, same scene. Headless steps; F5 documented. Not 3090 FPS / 5 min soak. | os-h-ritual |
 | 2026-08-17 | SC pillar 4 module HP: integrity scales thrust/weapon/shield; hull stays; occupy-to-hold pad repair (no cash). No power/cool/life buses. | ship-module-hp |
+| 2026-08-17 | SC pillar 7 zero-G EVA near ship (not dirt): no planet gravity, fuel+tether stay, F reboard. OS-H ritual intact. Still ARK. | zero-g-eva |
 
 ## Full code audit + hardening — 2026-08-15
 

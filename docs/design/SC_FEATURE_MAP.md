@@ -24,7 +24,7 @@ Likeness — **вся** фантазия SC (лететь, стыковатьс�
 | 4 | Ship engineering (power/cool/life, component HP) | модульный hull + `ShipModule` (engine/weapon/shield/cargo/extractor); hull-crit recover | модули HP (integrity→thrust/weapon/shield); hull HP; шины power/cool/life нет | шины power/cool later; life-support уже в pocket | pay-to-repair |
 | 5 | Cargo / tractor / dock | `CargoHold` + `CargoRamp`; unnamed pads | hold + ramp scaffold; 3 пада/тело + один unnamed силуэт | пады unnamed до pin каталога | трактор-клон; SITE_* mint |
 | 6 | On-foot FPS | `SurfaceWalker` EVA + Pulse | TPS на сфере, snap, combat | расширять **после OS-E** | SC armor-meta |
-| 7 | Zero-G EVA | `eva_mode` + fuel + tether; всё в ARK | EVA у корабля/планеты; не zero-G | **после OS-H**, всё ещё ARK | вторая система |
+| 7 | Zero-G EVA | `eva_mode` + fuel + tether; всё в ARK | zero-G у корпуса (не грунт); fuel+tether; грунт SurfaceWalker | полировка; всё ещё ARK | вторая система |
 | 8 | Scanning / radar / ping | `soft_scan`; `SoftKnowledge`; `SoftScanCache`; HUD radar | метки / intel; V на паде | Knowledge может подписать (soft) | rarer fill; +DPS от скана |
 | 9 | Contracts / loops | SessionObjectives; Phase 3 Contract Board | boot-loop тексты; квестов нет | Phase 3; **миссии в этом PR не делать** | story=power |
 | 10 | Industry | RBE / biomass / Contribution / `Extractor` / `ResourceNode` / pad harvest | добыча на occupied паде; Contribution | Phase 1.3 полировка | P2W richer nodes |
@@ -54,7 +54,7 @@ CIG copy · воксели · SITE_* mint · G2–G6 сейчас · P2W · Trip
 | Класс | Факт репо |
 |-------|-----------|
 | Уже есть | SCM/HOVER/STALL/LAND, OpenSpace ARK, пады, EVA snap, Clash, Infection 5, Contribution, Alliance, pad pip, rover петля на Relief, local save, лимб + OS-B оболочка, OS-C подход 8 км, OS-D unnamed fill, OS-E near read, OS-F lift/glide, OS-G силуэт, OS-H harness ритуала |
-| Приближаем | 3090 FPS / 5 мин soak (human gate); zero-G (после честного OS-H на GPU) |
+| Приближаем | 3090 FPS / 5 мин soak (human gate) |
 | Отказ | quantum сейчас, карта галактики, гейты-прыжки, арена-из-мира (G5), города, каталожные SITE_*, воксели, P2W |
 
-Очередь кода: **OS-H built (harness)**. Headless PASS ≠ FPS PASS. Не G2.
+Очередь кода: **OS-H built**. Pillar 7 zero-G у корпуса. Headless PASS ≠ FPS PASS. Не G2.
