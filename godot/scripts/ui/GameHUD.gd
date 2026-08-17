@@ -1114,10 +1114,12 @@ func _apply_debug_vis() -> void:
 		_infection_label.visible = dbg
 	if _econ_label:
 		_econ_label.visible = true
-		_econ_label.position = Vector2(14, 52) if not dbg else Vector2(14, 128)
+		# Own row above OpenSpace Hint (y=80). y=52 sat on the flight line
+		# and read as "(no P2W)HOVER · Nex-Prime…".
+		_econ_label.position = Vector2(14, 40) if not dbg else Vector2(14, 128)
 	if _econ_bar:
 		_econ_bar.visible = true
-		_econ_bar.position = Vector2(14, 72) if not dbg else Vector2(14, 148)
+		_econ_bar.position = Vector2(14, 58) if not dbg else Vector2(14, 148)
 	if _slot_row:
 		_slot_row.visible = not dbg
 	if _radar:

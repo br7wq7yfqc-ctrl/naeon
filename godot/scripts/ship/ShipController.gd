@@ -427,11 +427,6 @@ func _physics_process(delta: float) -> void:
 	var forward: Vector3 = -global_transform.basis.z
 	var right: Vector3 = global_transform.basis.x
 	var up: Vector3 = global_transform.basis.y
-	# Strafe weaker than main; lift medium — readable flight envelope
-	var lift_cmd: Vector3 = up * axes.y * thrust * 0.55
-	var accel: Vector3 = forward * axes.z * thrust \
-		+ right * axes.x * thrust * 0.5 \
-		+ lift_cmd
 
 	var atmo := 0.0
 	var g := Vector3.ZERO
@@ -440,6 +435,18 @@ func _physics_process(delta: float) -> void:
 			atmo = float(_open_space.atmosphere_density_at(global_position))
 		if _open_space.has_method("gravity_at"):
 			g = _open_space.gravity_at(global_position)
+
+	# S = planet-radial sink a human can hold. Nose reverse is not descent
+	# unless the mouse already aims at the planet (P0.4 3090: stalled at 438 m).
+	var sink_held := axes.z < -0.15 and g.length() > 0.05
+	if sink_held:
+		axes.z = 0.0
+
+	# Strafe weaker than main; lift medium — readable flight envelope
+	var lift_cmd: Vector3 = up * axes.y * thrust * 0.55
+	var accel: Vector3 = forward * axes.z * thrust \
+		+ right * axes.x * thrust * 0.5 \
+		+ lift_cmd
 
 	# Gravity by mode (g toward planet)
 	if g.length() > 0.01:
@@ -452,7 +459,9 @@ func _physics_process(delta: float) -> void:
 			# Vertical stick trims hold altitude; PD holds it
 			if _hover_hold_alt < 0.0:
 				_hover_hold_alt = _altitude_now()
-			if absf(axes.y) > 0.12:
+			if sink_held:
+				_hover_hold_alt = maxf(8.0, _hover_hold_alt - 55.0 * delta)
+			elif absf(axes.y) > 0.12:
 				_hover_hold_alt = maxf(4.0, _hover_hold_alt + axes.y * 22.0 * delta)
 			# Strip only the commanded lift so HOVER is an altitude hold, not a
 			# second SCM. Projecting the whole vector also ate the gravity
@@ -478,6 +487,13 @@ func _physics_process(delta: float) -> void:
 		else:
 			# NAV: light gravity bias only near surface
 			accel += g * lerpf(0.02, 0.2, atmo)
+		if sink_held:
+			var sink_acc := 16.0
+			if flight_mode == FlightMode.SCM:
+				sink_acc = 22.0
+			elif flight_mode == FlightMode.NAV:
+				sink_acc = 18.0
+			accel += g.normalized() * sink_acc
 
 	_stall = _Flight.stall_amount(atmo, velocity.length(), _Flight.stall_speed(flight_mode))
 	if _stall > 0.01 and g.length() > 0.01:

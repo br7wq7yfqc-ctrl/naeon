@@ -780,8 +780,13 @@ func _update_hud() -> void:
 				var lr := str(ship.land_readiness_line())
 				if lr != "" and lr != "LANDED":
 					extra += "  ·  " + lr
-	var brief := "%s  ·  %s  ·  %s  ·  %d m/s  ·  HP %d  SHD %d%s  ·  occupy/C  E land  F EVA" % [
-		mode, loc, alt_s, int(spd), int(ship.health), int(ship.shields), extra
+	var tail := "  ·  occupy/C  E land  F EVA"
+	if _in_ship and not bool(ship.get("is_landed")):
+		tail = "  ·  S descend  occupy/C  E land  F EVA"
+	elif bool(ship.get("is_landed")):
+		tail = ""
+	var brief := "%s  ·  %s  ·  %s  ·  %d m/s  ·  HP %d  SHD %d%s%s" % [
+		mode, loc, alt_s, int(spd), int(ship.health), int(ship.shields), extra, tail
 	]
 	if not dbg:
 		hud_label.text = brief

@@ -17,8 +17,8 @@ const LOAD_BUDGET := 1          ## new meshes per stream tick (global park share
 const STREAM_HZ := 0.28         ## ~3.5 Hz default; LOW slower
 const MESH_CACHE_MAX := 48
 const POOL_MAX := 8
-const ACTIVATE_ALT := 140.0
-const PARK_ALT := 220.0         ## hysteresis: do not thrash the ring at 140 m
+const ACTIVATE_ALT := 300.0
+const PARK_ALT := 380.0         ## hysteresis: probe retreat is 400 m — still parks
 
 var _planet: Node3D
 var _radius: float = 1200.0
@@ -87,11 +87,11 @@ func _apply_quality() -> void:
 		1:
 			_load_ring = 2
 			_unload_ring = 3
-			_res = 12
+			_res = 16
 		2:
 			_load_ring = 2
 			_unload_ring = 3
-			_res = 12
+			_res = 16
 		3:
 			_load_ring = 2
 			_unload_ring = 3
@@ -234,7 +234,7 @@ func _desired_ring() -> int:
 
 
 func _cache_key(cell: Vector2i) -> String:
-	return "%d:%d:r%d:v4" % [cell.x, cell.y, _res]
+	return "%d:%d:r%d:v5" % [cell.x, cell.y, _res]
 
 
 func _restore_ring(center: Vector2i, ring: int) -> void:
@@ -256,6 +256,9 @@ func _park_all() -> void:
 	var keys: Array = _live.keys()
 	for k in keys:
 		_recycle(k)
+	for n in _pool:
+		if n != null and is_instance_valid(n):
+			n.visible = false
 	_trim_pool()
 
 

@@ -56,6 +56,7 @@ var _segs_mid: int = 32
 var _segs_far: int = 16
 var _collision_enabled: bool = true
 var _surface_detail: Node3D = null
+var _far_shell_hidden: bool = false
 var _pad_build_stage: int = 0
 var _pad_build_pending: bool = false
 var _bases_built: bool = false
@@ -918,9 +919,17 @@ func _sync_surface_visibility(dist: float) -> void:
 		_surface_detail.visible = true
 		_surface_detail.set_process(true)
 		# Far sphere under live chunks reads as dark floating LOD quads.
+		# Also hide in the mid-alt band (190–250 m) before chunks stream in.
 		# Collision stays on the body; only the visual shell hides.
+		# Show again only when parked AND high (hysteresis) — do not bring
+		# back the far-sphere garbage from P0.3 under live chunks.
 		var detail_on := _surface_detail.has_method("is_parked") and not bool(_surface_detail.is_parked())
+		var alt := dist - radius
+		if detail_on or alt < 300.0:
+			_far_shell_hidden = true
+		elif alt > 360.0:
+			_far_shell_hidden = false
 		if _mesh and _current_lod < 3:
-			_mesh.visible = not detail_on
-		if _impostor and detail_on:
+			_mesh.visible = not _far_shell_hidden
+		if _impostor and _far_shell_hidden:
 			_impostor.visible = false
