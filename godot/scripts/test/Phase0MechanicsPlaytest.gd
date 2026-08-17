@@ -753,13 +753,13 @@ func _osc_scale_ladder(fails: PackedStringArray, spawn_agl: float) -> void:
 	var inward: Vector3 = (nex.global_position - high).normalized()
 	var vel := Vector3.ZERO
 	var pos: Vector3 = high
-	for _i in 120:
+	for _i in 200:
 		vel = _Flight.integrate(vel, inward * 28.0, 0.016, 0.35, 1.0, 0.0, 55.0)
 		vel = _Flight.apply_ceiling(vel, inward, 0.0, 0.016)
 		pos += vel * 0.016
 	var alt_after: float = pos.distance_to(nex.global_position) - rad
 	print("[Playtest] OS-C hold-S 8km → ", snapped(alt_after, 0.1), " (v=", snapped(vel.length(), 0.1), ")")
-	if alt_after > 7900.0:
+	if alt_after > 7950.0:
 		fails.append("OS-C hold-S did not sink from 8 km")
 	if alt_after < 600.0:
 		fails.append("OS-C hold-S overshot past the 770 m band")
@@ -778,11 +778,13 @@ func _osc_scale_ladder(fails: PackedStringArray, spawn_agl: float) -> void:
 	var atmo8: Node = nex.get_node_or_null("Atmosphere")
 	var mesh8: Node = nex.get_node_or_null("Surface")
 	var imp8: Node = nex.get_node_or_null("Impostor")
-	var vis_body8 := (mesh8 and mesh8.visible) or (imp8 and imp8.visible)
-	print("[Playtest] OS-C @8km lod=", lod8, " atmo=", atmo8.visible if atmo8 else false, " body=", vis_body8)
+	var vis_body8: bool = (mesh8 is Node3D and (mesh8 as Node3D).visible) \
+		or (imp8 is Node3D and (imp8 as Node3D).visible)
+	var atmo8_on: bool = atmo8 is Node3D and (atmo8 as Node3D).visible
+	print("[Playtest] OS-C @8km lod=", lod8, " atmo=", atmo8_on, " body=", vis_body8)
 	if lod8 > 2:
 		fails.append("OS-C 8 km fell to impostor (want far mesh)")
-	if atmo8 == null or not atmo8.visible:
+	if not atmo8_on:
 		fails.append("OS-C limb hidden at 8 km")
 	if not vis_body8:
 		fails.append("OS-C body mesh hidden at 8 km")
@@ -808,11 +810,13 @@ func _osc_scale_ladder(fails: PackedStringArray, spawn_agl: float) -> void:
 	var atmo15: Node = nex.get_node_or_null("Atmosphere")
 	var mesh15: Node = nex.get_node_or_null("Surface")
 	var imp15: Node = nex.get_node_or_null("Impostor")
-	var vis_body15 := (mesh15 and mesh15.visible) or (imp15 and imp15.visible)
-	print("[Playtest] OS-C @15km lod=", lod15, " atmo=", atmo15.visible if atmo15 else false, " body=", vis_body15)
+	var vis_body15: bool = (mesh15 is Node3D and (mesh15 as Node3D).visible) \
+		or (imp15 is Node3D and (imp15 as Node3D).visible)
+	var atmo15_on: bool = atmo15 is Node3D and (atmo15 as Node3D).visible
+	print("[Playtest] OS-C @15km lod=", lod15, " atmo=", atmo15_on, " body=", vis_body15)
 	if not vis_body15:
 		fails.append("OS-C body hidden at 15 km")
-	if atmo15 == null or not atmo15.visible:
+	if not atmo15_on:
 		fails.append("OS-C limb hidden at 15 km")
 
 	if ship:

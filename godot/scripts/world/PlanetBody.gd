@@ -967,11 +967,19 @@ func _sync_surface_visibility(dist: float) -> void:
 		# back the far-sphere garbage from P0.3 under live chunks.
 		var detail_on := _surface_detail.has_method("is_parked") and not bool(_surface_detail.is_parked())
 		var alt := dist - radius
-		if detail_on or alt < 300.0:
+		# OS-C: 5–15 km must show the far/impostor disc even if chunks are
+		# still unparked from a 770 m pass. Hide the shell only in the
+		# near band (P0.3 dark LOD quads under live chunks).
+		if alt > 500.0:
+			_far_shell_hidden = false
+		elif detail_on or alt < 300.0:
 			_far_shell_hidden = true
 		elif alt > 360.0:
 			_far_shell_hidden = false
 		if _mesh and _current_lod < 3:
 			_mesh.visible = not _far_shell_hidden
-		if _impostor and _far_shell_hidden:
-			_impostor.visible = false
+		if _impostor:
+			if _far_shell_hidden:
+				_impostor.visible = false
+			elif _current_lod >= 3:
+				_impostor.visible = true
