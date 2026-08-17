@@ -5,14 +5,14 @@
 **Основа:** CONCEPT.md v1.3  
 **Движок:** Godot 4.3 (не 4.4+ как цель)  
 **Принцип:** Local-first → Vertical Slices → Iterative Multiplayer → Platform + AI + Educational Systems  
-**SC → NAEON (роли, не клон):** `docs/design/SC_FEATURE_MAP.md` · бар подхода OS-A…OS-H: `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (CODE очередь = OS-C; OS-A/OS-B built).  
+**SC → NAEON (роли, не клон):** `docs/design/SC_FEATURE_MAP.md` · бар подхода OS-A…OS-H: `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (CODE очередь = OS-D; OS-A/OS-B/OS-C built).  
 **Clash нативен; бар арены — Predecessor/Paragon, не Arena Commander:** `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (AR-A…AR-F; код арены не вытесняет OS-A).  
-**Каталог — дыры (очередь, не новый catalog):** `docs/design/WORLD_FILL.md` §6. Ready-made fill → locked plates без GLB → пластины только на титульную дыру. Не mint SITE_*. Не capital-ship wave. OS-C следующий код.
+**Каталог — дыры (очередь, не новый catalog):** `docs/design/WORLD_FILL.md` §6. Ready-made fill → locked plates без GLB → пластины только на титульную дыру. Не mint SITE_*. Не capital-ship wave. OS-D следующий код.
 
 **2026-08-17 — текущий бар OPEN SPACE (не галактика):**  
 `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (срезы OS-A … OS-H).  
 Петля P0.6 на RTX 3090 жива (посадка / EVA / взлёт, hold-S 770→0, 6 мин / 60 FPS) — не ломать.  
-G1 CRUISE — только если нужен честный подход 5–15 км (OS-C). G2–G6 закрыты, пока петля честна.  
+G1 CRUISE не открыт: OS-C = старт 8 км AGL + far/лимб, без сверхсвета. G2–G6 закрыты, пока петля честна.  
 Канон ассетов: `docs/design/ASSET_SOURCE_CANON.md`. WorldFill: `docs/design/WORLD_FILL.md`.  
 Плейтест: `docs/PLAYTEST_SANDBOX.md`. llvmpipe ≠ FPS PASS.
 

@@ -10,6 +10,8 @@
 
 `atmosphere_height` — визуальный лимб. `atmosphere_envelope` — OS-B плотность / туман / потолок. Gravity well остаётся `height*1.8` (P0.6).
 
+OPEN SPACE старт (OS-C): 8 км AGL над первым телом. Far-сфера + лимб держатся до 15 км AGL. Колодец не растягивать.
+
 ShipFlightModel: `atmosphere_density(alt, height, envelope)`.
 
 Updated: 2026-08-17
