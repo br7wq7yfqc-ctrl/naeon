@@ -136,7 +136,7 @@ MECHANICS_IS_NOT_HUMAN_GATE=true
 
 Повтор P0.6: F5 → OPEN SPACE → hold S → E land → F EVA → F board → Space takeoff.
 
-**OS-H ритуал (F5, Godot 4.3):** открыть `godot/scenes/world/OpenSpace.tscn` → F5 (или MainMenu → Open Space). Спавн 8 км. Лимб виден. **Hold S без mouse pitch** → `3` HOVER → **E** land → **F** EVA (snap на Relief) → **F** board → **Space** takeoff → набор выше оболочки (HUD ATMO 0%). Сцена не меняется. Headless шаги: `godot --headless --path godot --scene res://scenes/world/OpenSpace.tscn -- --playtest-ritual`. `[Playtest] PASS` ≠ 60 FPS / 5 мин soak.
+**OS-H ритуал (F5, Godot 4.3):** открыть `godot/scenes/world/OpenSpace.tscn` → F5 (или MainMenu → Open Space). Спавн 8 км. Лимб виден. **Hold S без mouse pitch** → `3` HOVER (шасси авто вниз у пада/грунта; **G** — ручной toggle, SCM default up) → **E** land → **F** EVA (snap на Relief) → **F** board → **Space** takeoff → набор выше оболочки (HUD ATMO 0%). Сцена не меняется. Headless шаги: `godot --headless --path godot --scene res://scenes/world/OpenSpace.tscn -- --playtest-ritual`. `[Playtest] PASS` ≠ 60 FPS / 5 мин soak.
 
 llvmpipe этого не подтверждает и **не** ставит FPS PASS.
 

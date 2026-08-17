@@ -121,7 +121,7 @@ SHIP_INTERIOR seat + F --> PILOT (fast path, no exterior hop)
 
 | Layer | What | Cost | Phase |
 |-------|------|------|-------|
-| L0 Landing gear | legs + VFX | done | 0 |
+| L0 Landing gear | legs + VFX; G / pad LAND gate | done | 0 |
 | L1 Hardpoint pose | Node3D tweens (barrel, radiators, doors) | code | 0–1 |
 | L2 LOD morph set | cruise vs siege mesh swap | 1 mesh + Blender free | 1 |
 | L3 Skinned morph | blend shapes | Tripo A | later |

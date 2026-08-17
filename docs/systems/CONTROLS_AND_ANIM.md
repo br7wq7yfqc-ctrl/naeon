@@ -15,6 +15,7 @@ Form/hull meshes rotated  so visual nose/face aligns with −Z thrust/walk.
 | Space/Shift | Lift / sink |
 | Z / X | Roll |
 | 1/2/3 | SCM / NAV / HOVER |
+| G | Landing gear (default up in SCM; down required for a clean pad LAND) |
 | E | Land / launch |
 | F | Exit / enter |
 

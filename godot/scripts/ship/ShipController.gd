@@ -61,6 +61,7 @@ var _hover_hold_alt: float = -1.0
 var _stall: float = 0.0
 var _stall_toast_t: float = 0.0
 var _landing_gear: Node3D = null
+var _gear_down: bool = false  # SCM default: retracted. G toggles.
 var _thruster_fx: GPUParticles3D = null
 var _cargo_hold: Node = null
 var _cargo_ramp: Node3D = null
@@ -220,6 +221,8 @@ func _input(event: InputEvent) -> void:
 			try_dock_cargo_transfer(false)
 		elif k == KEY_8:
 			_toggle_scan()
+		elif k == KEY_G:
+			_toggle_gear()
 	if is_landed:
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
@@ -256,6 +259,8 @@ func _set_mode(m: int) -> void:
 		if _open_space and _open_space.has_method("gravity_at"):
 			in_well = _open_space.gravity_at(global_position).length() > 0.01
 		_hover_hold_alt = _altitude_now() if in_well else -1.0
+		# OS-H / F5 ritual never toggles G — drop gear when HOVER starts on the pad.
+		_maybe_auto_drop_gear()
 	elif prev == FlightMode.HOVER:
 		_hover_hold_alt = -1.0
 	flight_mode_changed.emit(m)
@@ -644,6 +649,13 @@ func _do_land() -> void:
 		_toast_ship("Land denied — spd %d sink %d  (3 HOVER, slow)" % [int(spd), int(v_rad)])
 		print("[Ship] Land denied spd=", int(spd), " sink=", int(v_rad), " mode=", flight_mode_name())
 		return
+	if not _gear_down:
+		if flight_mode == FlightMode.HOVER and _near_land_zone():
+			_maybe_auto_drop_gear()
+		if not _gear_down:
+			_toast_ship("Land denied — G gear")
+			print("[Ship] Land denied — gear up mode=", flight_mode_name())
+			return
 	var pad: Node3D = null
 	if _open_space and _open_space.has_method("nearest_pad"):
 		pad = _open_space.nearest_pad(global_position)
@@ -680,6 +692,7 @@ func _commit_land(pad: Node3D) -> void:
 		AudioDirector.play_land()
 	if SessionObjectives:
 		SessionObjectives.on_landed_or_lane()
+	_gear_down = true
 	_sync_landing_gear()
 	_spawn_land_fx()
 	_set_mode(FlightMode.HOVER)
@@ -714,6 +727,7 @@ func _do_launch() -> void:
 	var nose: Vector3 = -global_transform.basis.z
 	is_landed = false
 	_landed_pad = null
+	_gear_down = false
 	_sync_landing_gear()
 	# Stay in HOVER (no stall speed): SCM stalls at 16 m/s and launch starts at ~4.
 	_hover_hold_alt = _altitude_now() + 12.0
@@ -1212,14 +1226,55 @@ func _ensure_landing_gear() -> void:
 	_landing_gear.set_script(preload("res://scripts/ship/ShipLandingGear.gd"))
 	add_child(_landing_gear)
 	if _landing_gear.has_method("set_deployed"):
-		_landing_gear.call("set_deployed", is_landed)
+		_landing_gear.call("set_deployed", _gear_down)
 
 
 func _sync_landing_gear() -> void:
 	if _landing_gear == null or not is_instance_valid(_landing_gear):
 		_ensure_landing_gear()
 	if _landing_gear and _landing_gear.has_method("set_deployed"):
-		_landing_gear.call("set_deployed", is_landed)
+		_landing_gear.call("set_deployed", _gear_down)
+
+
+func is_gear_down() -> bool:
+	return _gear_down
+
+
+func set_gear_down(want: bool) -> void:
+	if is_landed and not want:
+		_gear_down = true
+		_sync_landing_gear()
+		_toast_ship("Gear locked — landed")
+		return
+	_gear_down = want
+	_sync_landing_gear()
+	_toast_ship("Gear down" if want else "Gear up")
+
+
+func _toggle_gear() -> void:
+	set_gear_down(not _gear_down)
+
+
+func _near_land_zone() -> bool:
+	if _open_space and _open_space.has_method("nearest_pad"):
+		var pad: Node3D = _open_space.nearest_pad(global_position)
+		if pad and is_instance_valid(pad) and pad.global_position.distance_to(global_position) <= land_pad_snap_distance:
+			return true
+	if _open_space and _open_space.has_method("nearest_planet"):
+		var pl: Node3D = _open_space.nearest_planet(global_position)
+		if pl and pl.has_method("altitude_of"):
+			return float(pl.altitude_of(global_position)) < surface_land_alt
+	return false
+
+
+func _maybe_auto_drop_gear() -> void:
+	if _gear_down or is_landed:
+		return
+	if not _near_land_zone():
+		return
+	_gear_down = true
+	_sync_landing_gear()
+	print("[Ship] Gear auto-down (HOVER/LAND near pad)")
 
 
 func _ensure_thruster_fx() -> void:
@@ -1844,6 +1899,8 @@ func land_readiness_line() -> String:
 			need.append("pad %dm→%dm" % [int(pad_d), int(land_pad_snap_distance)])
 		else:
 			need.append("alt %d→%d" % [int(alt), int(surface_land_alt)])
+	if not _gear_down:
+		need.append("G gear")
 	if need.is_empty():
 		return "LAND READY — E"
 	if flight_mode != FlightMode.HOVER:
@@ -1971,9 +2028,9 @@ func _auto_land_assist(delta: float) -> void:
 	var d: float = pad.global_position.distance_to(global_position)
 	if d > 28.0:
 		return
-	_sync_landing_gear()
 	if _land_hint_cd <= 0.0:
 		_land_hint_cd = 3.5
-		_toast_ship("Pad %.0fm — E land (then C claim)" % d)
+		var gear_hint := "" if _gear_down else " · G gear"
+		_toast_ship("Pad %.0fm — E land%s (then C claim)" % [d, gear_hint])
 
 
