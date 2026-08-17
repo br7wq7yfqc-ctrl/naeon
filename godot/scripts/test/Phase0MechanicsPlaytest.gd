@@ -507,6 +507,7 @@ func _go() -> void:
 	_osd_unnamed_fill(fails)
 	_ose_near_read(fails)
 	_osf_atmo_flight(fails)
+	_osg_outpost_silhouette(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
 
@@ -1178,6 +1179,155 @@ func _osf_atmo_flight(fails: PackedStringArray) -> void:
 		fails.append("OS-F shipped G1 CRUISE / mass lock")
 	if LayerContext and str(LayerContext.site_pin_id) != "" and str(LayerContext.site_pin_id) != "SITE_SPACE_TEST_PAD":
 		fails.append("OS-F site_pin left catalog (%s)" % LayerContext.site_pin_id)
+
+
+func _osg_outpost_silhouette(fails: PackedStringArray) -> void:
+	## OS-G: one unnamed mast+habitat cluster on an existing pad. Readable
+	## from 8 km and 2 km; on dirt it is the same node. No SITE_* mint.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null:
+		fails.append("OS-G P0Slice missing")
+		return
+	if not bool(P0.OS_G_OUTPOST):
+		fails.append("OS-G OS_G_OUTPOST flag off")
+	if bool(P0.FILL_STREAMERS):
+		fails.append("OS-G turned on seven fill streamers")
+	if bool(P0.PAD_DENSITY):
+		fails.append("OS-G enabled PadDensity cluster")
+	if bool(P0.ORBITAL_STATIONS):
+		fails.append("OS-G spawned orbital stations")
+	var SD = load("res://scripts/world/SurfaceDetail.gd")
+	if SD == null:
+		fails.append("OS-G SurfaceDetail missing")
+	elif absf(float(SD.CELL_M) - 40.0) > 0.01:
+		fails.append("OS-G chunk cell size changed")
+	elif int(SD.LOAD_BUDGET) != 1:
+		fails.append("OS-G chunk LOAD_BUDGET changed")
+	var os: Node = get_parent()
+	if os == null:
+		fails.append("OS-G no OpenSpace")
+		return
+	var planets: Array = os.get("planets") if os.get("planets") != null else []
+	print("[Playtest] OS-G bodies=", planets.size())
+	if planets.size() != 1:
+		fails.append("OS-G loaded a second system/body (%s)" % planets.size())
+	var sys = load("res://scripts/world/StarSystemCatalog.gd")
+	if sys and str(sys.HOME) != "ARK":
+		fails.append("OS-G left ARK (%s)" % str(sys.HOME))
+	var nex: Node = null
+	var tree_g := get_tree()
+	if tree_g:
+		for n in tree_g.get_nodes_in_group("planets"):
+			if str(n.get("planet_name")) == "Nex-Prime":
+				nex = n
+				break
+	if nex == null:
+		fails.append("OS-G no Nex-Prime")
+		return
+	var rad: float = float(nex.get("radius"))
+	var stream: float = float(nex.get("pad_stream_dist"))
+	print("[Playtest] OS-G pad_stream_dist AGL=", snapped(stream - rad, 1.0))
+	if stream < rad + 8000.0:
+		fails.append("OS-G pad stream shorter than 8 km (%s)" % snapped(stream - rad, 1.0))
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var look := Vector3(0, 0, 1)
+	if ship:
+		ship.global_position = nex.global_position + look * (rad + 8000.0)
+		if "velocity" in ship:
+			ship.velocity = Vector3.ZERO
+	if nex.has_method("set_observer") and ship:
+		nex.set_observer(ship)
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	if nex.has_method("refresh_approach_lod"):
+		nex.refresh_approach_lod()
+	var pads_root: Node3D = nex.get_node_or_null("Pads") as Node3D
+	if pads_root == null or not pads_root.visible:
+		fails.append("OS-G Pads hidden at 8 km")
+	var sil: Node3D = null
+	if nex.has_method("outpost_silhouette"):
+		sil = nex.call("outpost_silhouette") as Node3D
+	if sil == null and pads_root:
+		sil = pads_root.find_child("OutpostSilhouette", true, false) as Node3D
+	if sil == null or not is_instance_valid(sil):
+		fails.append("OS-G OutpostSilhouette missing at 8 km")
+		return
+	if not sil.visible or not sil.is_visible_in_tree():
+		fails.append("OS-G silhouette hidden at 8 km")
+	var host: Node3D = sil.get_parent() as Node3D
+	if host == null or not bool(host.get_meta("landing_pad", false)):
+		fails.append("OS-G silhouette not parented to an existing pad")
+	var hname := str(host.name) if host else ""
+	if hname.begins_with("SITE_") or str(sil.get_meta("site_pin", "")).begins_with("SITE_"):
+		fails.append("OS-G minted SITE_* on %s" % hname)
+	if not hname.begins_with("Pad_"):
+		fails.append("OS-G host not Pad_North class (%s)" % hname)
+	var nstruct := 0
+	if sil.has_method("structure_count"):
+		nstruct = int(sil.call("structure_count"))
+	var mast: Node = sil.get_node_or_null("Mast")
+	var hab: Node = sil.get_node_or_null("Habitat")
+	if mast == null or hab == null:
+		fails.append("OS-G need mast + habitat proxies")
+	if nstruct < 2:
+		fails.append("OS-G cluster too thin (%s)" % nstruct)
+	var extras := 0
+	if pads_root:
+		extras = pads_root.find_children("OutpostSilhouette", "", true, false).size()
+	if extras != 1:
+		fails.append("OS-G want exactly one silhouette, got %s" % extras)
+	var orbit_pos: Vector3 = sil.global_position
+	var orbit_read := 0.0
+	if sil.has_method("orbit_read_m"):
+		orbit_read = float(sil.call("orbit_read_m"))
+	print("[Playtest] OS-G 8km host=", hname, " n=", nstruct, " read=", snapped(orbit_read, 1.0), " pos=", orbit_pos)
+	if orbit_read < 8000.0:
+		fails.append("OS-G orbit read shorter than 8 km (%s)" % snapped(orbit_read, 1.0))
+
+	if ship:
+		ship.global_position = nex.global_position + look * (rad + 2000.0)
+	if nex.has_method("set_observer") and ship:
+		nex.set_observer(ship)
+	if nex.has_method("refresh_approach_lod"):
+		nex.refresh_approach_lod()
+	var sil2: Node3D = nex.call("outpost_silhouette") as Node3D if nex.has_method("outpost_silhouette") else sil
+	if sil2 != sil:
+		fails.append("OS-G 2 km silhouette is a different node")
+	if sil2 == null or not sil2.is_visible_in_tree():
+		fails.append("OS-G silhouette hidden at 2 km")
+	elif sil2.global_position.distance_to(orbit_pos) > 0.75:
+		fails.append("OS-G 2 km moved the outpost")
+
+	if host:
+		var pad_up: Vector3 = host.get_meta("pad_up") if host.has_meta("pad_up") else look
+		if ship:
+			ship.global_position = host.global_position + pad_up * 18.0
+		if os.has_method("_spawn_eva_near_ship"):
+			os.call("_spawn_eva_near_ship")
+		var walker: Node3D = os.get("player") as Node3D
+		if walker == null or not is_instance_valid(walker):
+			fails.append("OS-G EVA at outpost failed")
+		else:
+			walker.global_position = host.global_position + pad_up * 4.0
+			if walker.has_method("_relief_snap_fallback"):
+				walker.call("_relief_snap_fallback")
+			elif walker.has_method("snap_to_surface"):
+				walker.call("snap_to_surface")
+			var dirt_d: float = walker.global_position.distance_to(sil.global_position)
+			print("[Playtest] OS-G dirt walker→outpost=", snapped(dirt_d, 0.1))
+			if dirt_d > 90.0:
+				fails.append("OS-G dirt walker is not at the same outpost (%s)" % snapped(dirt_d, 0.1))
+			if sil.global_position.distance_to(orbit_pos) > 0.75:
+				fails.append("OS-G dirt moved the outpost")
+	if LayerContext and str(LayerContext.site_pin_id) != "" and str(LayerContext.site_pin_id) != "SITE_SPACE_TEST_PAD":
+		fails.append("OS-G site_pin left catalog (%s)" % LayerContext.site_pin_id)
+	var godot_root := ProjectSettings.globalize_path("res://").rstrip("/")
+	var man_path := godot_root.get_base_dir().path_join("docs/design/p0_filler_manifest.json")
+	var man := FileAccess.get_file_as_string(man_path)
+	if man.find("outpost_mast_cc0") < 0 or man.find("outpost_habitat_cc0") < 0:
+		fails.append("OS-G mast/habitat sources not documented")
+	if man.find("\"git_binary\": true") >= 0:
+		fails.append("OS-G manifest marks a git binary")
 
 
 func _finish(fails: PackedStringArray, code: int) -> void:

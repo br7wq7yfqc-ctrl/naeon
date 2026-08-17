@@ -94,8 +94,12 @@ func _configure_from_quality() -> void:
 	lod_impostor = (radius + 28000.0) * bias
 	atmo_max_dist = (radius + 18000.0) * bias
 	# OS-D: unnamed plates + sparse scatter must stream from ~2 km AGL.
-	# Quality only delays GLB / bases, not the plate silhouette.
-	pad_stream_dist = radius + 2400.0
+	# OS-G: the one outpost cluster must already be up at the 8 km spawn.
+	# Quality only delays GLB / bases, not the plate / mast silhouette.
+	if _P0.OS_G_OUTPOST:
+		pad_stream_dist = radius + 9200.0
+	else:
+		pad_stream_dist = radius + 2400.0
 
 func _on_quality_changed(_t: int) -> void:
 	_configure_from_quality()
@@ -426,6 +430,7 @@ func _step_pad_build() -> void:
 			if _P0.OS_D_FILL:
 				_spawn_filler_on_first_pad()
 				_spawn_worldfill_scatter()
+				_spawn_outpost_silhouette()
 				print("[PlanetBody] OS-D unnamed pads n=", _pads.size())
 			else:
 				_spawn_pad_density()
@@ -460,6 +465,7 @@ func _build_pads() -> void:
 			_spawn_pad("Pad_Flank", _osd_pad_dir(1))
 		_spawn_filler_on_first_pad()
 		_spawn_worldfill_scatter()
+		_spawn_outpost_silhouette()
 		print("[PlanetBody] OS-D unnamed pads n=", _pads.size())
 		return
 	_spawn_pad("Pad_Eq", Vector3(1, 0.15, 0).normalized())
@@ -610,6 +616,46 @@ func worldfill_scatter_count() -> int:
 	var sc: Node = _pads_root.get_node_or_null("WorldFillScatter")
 	if sc != null and sc.has_method("prop_count"):
 		return int(sc.call("prop_count"))
+	return 0
+
+
+func _outpost_host_pad() -> Node3D:
+	## Approach-face plate (OS-D) so 8 km / 2 km +Z spawn sees the same spot.
+	var approach: Node3D = _pad_named("Pad_Approach")
+	if approach != null:
+		return approach
+	if not _pads.is_empty() and _pads[0] is Node3D:
+		return _pads[0]
+	return null
+
+
+func _spawn_outpost_silhouette() -> void:
+	if not _P0.OS_G_OUTPOST:
+		return
+	var host: Node3D = _outpost_host_pad()
+	if host == null or not is_instance_valid(host):
+		return
+	if host.has_node("OutpostSilhouette"):
+		return
+	var sil := Node3D.new()
+	sil.set_script(preload("res://scripts/world/OutpostSilhouette.gd"))
+	sil.name = "OutpostSilhouette"
+	host.add_child(sil)
+	if sil.has_method("setup"):
+		sil.call("setup", host)
+
+
+func outpost_silhouette() -> Node3D:
+	var host: Node3D = _outpost_host_pad()
+	if host == null:
+		return null
+	return host.get_node_or_null("OutpostSilhouette") as Node3D
+
+
+func outpost_structure_count() -> int:
+	var sil: Node3D = outpost_silhouette()
+	if sil != null and sil.has_method("structure_count"):
+		return int(sil.call("structure_count"))
 	return 0
 
 func _load_glb_pads() -> void:

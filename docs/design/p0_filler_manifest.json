@@ -1,7 +1,7 @@
 {
-  "version": 3,
+  "version": 4,
   "updated": "2026-08-17",
-  "note": "Unnamed WorldFill props + OS-E near-ground CC0 stand-ins. Git holds source/license/url only. Binaries stay on s3://neon. Code-first shader until ingest. Not SITE_*. Not Tripo.",
+  "note": "Unnamed WorldFill props + OS-E near-ground + OS-G outpost stand-ins. Git holds source/license/url only. Binaries stay on s3://neon. Code-first until ingest. Not SITE_*. Not Tripo.",
   "props": [
     {
       "id": "pad_crate_cc0",
@@ -104,6 +104,36 @@
       "git_binary": false,
       "site_pin": "",
       "note": "OS-E pebble/rock micro. Shader stand-in until the map is on neon."
+    },
+    {
+      "id": "outpost_mast_cc0",
+      "kind": "mast",
+      "role": "unnamed_outpost",
+      "title": "Outpost mast (code-first)",
+      "source": "code-first",
+      "license": "CC0-1.0",
+      "url": "",
+      "license_url": "",
+      "bucket": "s3://neon/filler/outpost_mast/",
+      "local_rel": "filler/outpost_mast/outpost_mast.glb",
+      "git_binary": false,
+      "site_pin": "",
+      "note": "OS-G orbit-readable mast. BoxMesh until a CC0 GLB is on neon. Not Tripo. Not SITE_*."
+    },
+    {
+      "id": "outpost_habitat_cc0",
+      "kind": "habitat",
+      "role": "unnamed_outpost",
+      "title": "Outpost habitat (code-first)",
+      "source": "code-first",
+      "license": "CC0-1.0",
+      "url": "",
+      "license_url": "",
+      "bucket": "s3://neon/filler/outpost_habitat/",
+      "local_rel": "filler/outpost_habitat/outpost_habitat.glb",
+      "git_binary": false,
+      "site_pin": "",
+      "note": "OS-G habitat proxy on an existing unnamed pad. BoxMesh until a CC0 GLB is on neon. Not Tripo. Not SITE_*."
     }
   ]
 }

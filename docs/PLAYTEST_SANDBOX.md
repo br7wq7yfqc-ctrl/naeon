@@ -145,9 +145,10 @@ llvmpipe этого не подтверждает и **не** ставит FPS P
 - Спавн OPEN SPACE 8 км AGL (OS-C). Петля 770 м — снизу, не единственный вид.
 - Дальний шейдер всё ещё дешёвый subset vs полный `PlanetRelief` (WorldFill §5 / OS-A).
 - Нет атмосферы / облаков / входа.
-- OS-D: с ~2 км видны 3 unnamed пада + редкий scatter. Силуэт аванпоста — OS-G.
+- OS-D: с ~2 км видны 3 unnamed пада + редкий scatter.
 - OS-E: near shader на чанках (albedo / декали / near LOD). Relief тот же.
 - OS-F: подъём/планирование в плотном слое. S-sink геометрический. 770 м без крыла.
+- OS-G: с 8 км / 2 км читается мачта+пад на `Pad_Approach`; на грунте то же место.
 - G2–G6 закрыты. `M` = тост locked. `Tab` = Clash sandbox.
 - Dummy MNULL=0 ≠ допуск. rules/25 на llvmpipe не подписывать.
 
