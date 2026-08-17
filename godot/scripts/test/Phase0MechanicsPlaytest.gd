@@ -1675,8 +1675,13 @@ func _rover_drive_slice(os: Node, fails: PackedStringArray) -> void:
 				ow.advance_transition(8.0, 5.0)
 			await get_tree().process_frame
 	var st := str(ctrl.get_claim_status()) if ctrl != null and ctrl.has_method("get_claim_status") else ""
-	print("[Playtest] rover pad=", deck.name, " occupy=", st, " pin=", pin)
-	if st != "owned" and st != "claiming":
+	var held := false
+	var ow2 = ctrl.get("ownership") if ctrl != null else null
+	if ow2 != null and ow2.has_method("is_fully_owned"):
+		held = bool(ow2.is_fully_owned())
+	print("[Playtest] rover pad=", deck.name, " occupy=", st, " held=", held, " pin=", pin)
+	# extracting = owned + harvest running. Both count as occupied.
+	if not held and st != "owned" and st != "extracting" and st != "claiming":
 		fails.append("rover pad not occupied (status=%s)" % st)
 		return
 
