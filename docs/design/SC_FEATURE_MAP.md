@@ -5,6 +5,7 @@
 **Бенчмарк подхода:** [`OPEN_SPACE_SC_BENCHMARK.md`](OPEN_SPACE_SC_BENCHMARK.md)  
 **Сшивка тела:** [`WORLD_FILL.md`](WORLD_FILL.md) §5  
 **Clash нативен; бар арены — Predecessor/Paragon, не Arena Commander:** [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md).  
+**Каталог — дыры / очередь fill:** [`WORLD_FILL.md`](WORLD_FILL.md) §6 (не mint SITE_*).  
 
 Likeness — **вся** фантазия SC (лететь, стыковаться, ходить, работать, драться, жить) в системах NAEON. Это не CIG и не Planet Tech V5. Новых именованных систем, городов и SITE_* пинов нет. Резидентная система одна: **ARK**.
 

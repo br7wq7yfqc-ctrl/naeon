@@ -259,7 +259,53 @@ bodies already in memory (ARK) and does not wait on G2.
 
 ---
 
-## 6. Layers and G0–G6
+## 6. Каталог — дыры (факты 2026-08-15, не новый catalog)
+
+Источник: `docs/design/ASSET_CATALOG.md` v1.25 + `docs/asset_positions.json` v2.1. Цифры **не сводить**. SITE_* / UUID не чеканить.
+
+| Документ | Что пишет |
+|----------|-----------|
+| `ASSET_CATALOG.md` | ~134 позиции, 213 листов; **67 UUID + 58 dump**; 13 index-only; 11 unfactioned templates; 1 chat-lock без file |
+| `asset_positions.json` (перечитан) | **137** `items` / `positions`, `bound_sheets` **213**, `updated` 2026-08-15 |
+| `approved_sketches.json` | `positions_unbound`: **1** (CX interceptor) |
+| `SESSION_STATUS.md` | 134 / 213 / 67+58 — та же сессия каталога |
+
+### Толсто / тонко (ledger `items` по category)
+
+| Толсто | Тонко (только то, что есть) |
+|--------|-----------------------------|
+| `ships` 47, `props` 47 (оружие пехоты/техники + модули), `vehicles` 24 (дроны, APC, hover, walker) | `environments` **4**: `landing_pad`, `debris_cluster`, `moba_arena`, `hexarena_moba_map_schematic` |
+| броня / шлемы в `characters` | `colony` **1**: `t1_resource_extractor` |
+| | interiors в ledger **0**; architecture / outpost kit **нет slug** |
+| | формы в ledger: `cybernex_avian_pathfinder`, `cybernex_feline_scout`, `grot_graft_hound` — других имён форм не добавлять |
+
+Дыры с названием в каталоге (не выдумка):
+
+- CX interceptor: `cybernex_interceptor` — unbound (`QdM8V` ушёл на `grot_medium_drone`).
+- Heavy tank hull: нет; есть только `cx-tank-gun` / `gr-tank-gun`.
+- Unfactioned class plates = templates, не фракционный корпус.
+- Арена-структура в ledger: `tower_iouter_mid_inhibi` («TOWER IOUTER I MID I INHIBI»). Отдельных inhib/core slug нет.
+
+### Правило плотности
+
+Tripo — только unique / faction / dual-theme. Unnamed грунт, камень, tileable, ящики, кабели, HDRI = CC0/scans → `s3://neon`, не git, не Tripo.
+
+### Очередь (не catalog)
+
+OS-A остаётся первым кодом. Это очередь ассетов, не новый lock-лист.
+
+| # | Что | Зачем | Не делать |
+|---|-----|-------|-----------|
+| 1 | Ready-made fill | OS-D/E: unnamed dirt/rock/tile/crate/cable/HDRI в `s3://neon` | Tripo на грязь; commit в git |
+| 2 | Tripo с **уже locked** пластин без честного GLB | Beacons: `cybernex_claim_beacon` / `grot_claim_beacon` (dump `phjM0` / `nFxgT`). Pad / extractor / debris — **slug в ledger, lock-строки в `approved_sketches` нет** — сначала lock существующей пластины, не mint ID. Outpost-kit: slug нет → skip | выдумать UUID; вторая волна капиталок |
+| 3 | Новые пластины только на **титульную дыру** ledger | CX interceptor; interiors (0 locked); арена tower/inhib/core **если** кроме `tower_iouter_mid_inhibi` структуры нет | SITE_*; новая city-map |
+| 4 | Капиталы | уже толсто | ещё одна capital-ship wave |
+
+Код арены / G2–G6 этой очередью не открывать.
+
+---
+
+## 7. Layers and G0–G6
 
 WorldFill is a **local** layer. Travel, maps, and the system list stay
 `GALAXY_LAYER_PLAN.md`.
@@ -288,7 +334,7 @@ filler, or anything that looks like a generated system list.
 
 ---
 
-## 7. Performance
+## 8. Performance
 
 rules/25 still wins: ~60 FPS on the minimum preset, no monotonic memory
 climb. One system in memory. Far clip stays LOW 22000 · MED 28000 ·
@@ -315,7 +361,7 @@ layer is the far read of Relief, not a wider stream ring.
 
 ---
 
-## 8. Definition of done
+## 9. Definition of done
 
 How to know the contract holds. These checks are for the **code** PRs that
 implement WorldFill, not for this document PR.
@@ -334,7 +380,7 @@ implement WorldFill, not for this document PR.
 
 ---
 
-## 9. What this file is not
+## 10. What this file is not
 
 - Not a runtime generator and not a Godot class named `WorldFill`.
 - Not a patch to S3 Index, `MANUAL_CATALOG.md`, or `generations/`.
