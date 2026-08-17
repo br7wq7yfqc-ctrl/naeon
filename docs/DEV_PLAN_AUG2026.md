@@ -19,7 +19,8 @@ Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (arena COD
 | **OS-D** unnamed fill с 2 км | **built** | 3 unnamed пада + редкий rock/crate; без SITE_*; без семи стримеров |
 | **OS-E** чтение у ног | **built** | near shader на чанках: albedo / декали / near LOD; Relief тот же; без GLB в git |
 | **OS-F** полёт в атмосфере | **built** | lift/glide в плотном слое; STALL/HOVER/LAND/hold-S живы |
-| **OS-G … OS-H** | after OS-F | силуэт → ритуал |
+| **OS-G** силуэт аванпоста | **built** | мачта+habitat на одном unnamed паде; 8 км = 2 км = грунт |
+| **OS-H** ритуал | after OS-G | космос → посадка → EVA → взлёт без load |
 | **G1 CRUISE** | later | Не нужен для 5–15 км; mass lock только вместе с CRUISE |
 | **G2–G6** | **locked** | Пока петля OPEN SPACE не честна. В коде 404 |
 

@@ -18,10 +18,10 @@ Likeness — **вся** фантазия SC (лететь, стыковатьс�
 | # | Роль SC | Эквивалент NAEON | Сейчас | Next | Отказ |
 |---|---------|------------------|--------|------|-------|
 | 1 | Flight / IFCS (SCM, NAV/quantum, decoupled, gear, VTOL/hover, boost, fuel) | `ShipController` SCM / NAV / HOVER / STALL / LAND; `ShipFlightModel`; afterburn W+Shift; `ShipLandingGear` visual | SCM/NAV/HOVER/STALL/LAND живы; gear visual; decoupled нет; топливо — проп пада, не расход | G1 CRUISE **закрыт** (OS-C без сверхсвета); quantum / interdiction ждать G1/G3 | клон IFCS; G3 сейчас; P2W-топливо |
-| 2 | Atmosphere / planet approach | бар OS-A…OS-H; шейдеры лимба/дымки | OS-A шов; OS-B оболочка; OS-C старт 8 км; OS-D unnamed fill; OS-E near read; OS-F lift/glide | OS-G силуэт | Planet Tech V5; воксельная оболочка |
+| 2 | Atmosphere / planet approach | бар OS-A…OS-H; шейдеры лимба/дымки | OS-A шов; OS-B оболочка; OS-C старт 8 км; OS-D unnamed fill; OS-E near read; OS-F lift/glide; OS-G силуэт | OS-H ритуал | Planet Tech V5; воксельная оболочка |
 | 3 | Ship as place (interior, seats, multi-crew) | `InteriorDirector` / `InteriorGenerator`; Seat; F seat→pilot | pocket + двери + Seat живы; multi-crew нет | после OS-A green; Phase 2 multi-crew | фейковые двери |
 | 4 | Ship engineering (power/cool/life, component HP) | модульный hull + `ShipModule` (engine/weapon/shield/cargo/extractor); hull-crit recover | модули + hull HP; шины power/cool/life нет | модули HP после OS-A; life-support уже в pocket | pay-to-repair |
-| 5 | Cargo / tractor / dock | `CargoHold` + `CargoRamp`; unnamed pads | hold + ramp scaffold; 3 пада/тело без каталога | OS-G; пады unnamed до pin каталога | трактор-клон; SITE_* mint |
+| 5 | Cargo / tractor / dock | `CargoHold` + `CargoRamp`; unnamed pads | hold + ramp scaffold; 3 пада/тело + один unnamed силуэт | пады unnamed до pin каталога | трактор-клон; SITE_* mint |
 | 6 | On-foot FPS | `SurfaceWalker` EVA + Pulse | TPS на сфере, snap, combat | расширять **после OS-E** | SC armor-meta |
 | 7 | Zero-G EVA | `eva_mode` + fuel + tether; всё в ARK | EVA у корабля/планеты; не zero-G | **после OS-H**, всё ещё ARK | вторая система |
 | 8 | Scanning / radar / ping | `soft_scan`; `SoftKnowledge`; `SoftScanCache`; HUD radar | метки / intel; V на паде | Knowledge может подписать (soft) | rarer fill; +DPS от скана |
@@ -52,8 +52,8 @@ CIG copy · воксели · SITE_* mint · G2–G6 сейчас · P2W · Trip
 
 | Класс | Факт репо |
 |-------|-----------|
-| Уже есть | SCM/HOVER/STALL/LAND, OpenSpace ARK, пады, EVA snap, Clash, Infection 5, Contribution, Alliance, pad pip, rover, local save, лимб + OS-B оболочка, OS-C подход 8 км, OS-D unnamed fill, OS-E near read, OS-F lift/glide |
-| Приближаем | силуэт аванпоста (OS-G), zero-G (после OS-H) |
+| Уже есть | SCM/HOVER/STALL/LAND, OpenSpace ARK, пады, EVA snap, Clash, Infection 5, Contribution, Alliance, pad pip, rover, local save, лимб + OS-B оболочка, OS-C подход 8 км, OS-D unnamed fill, OS-E near read, OS-F lift/glide, OS-G силуэт |
+| Приближаем | ритуал OS-H, zero-G (после OS-H) |
 | Отказ | quantum сейчас, карта галактики, гейты-прыжки, арена-из-мира (G5), города, каталожные SITE_*, воксели, P2W |
 
-Очередь кода: **OS-G** (после OS-A…OS-F).
+Очередь кода: **OS-H** (после OS-A…OS-G).

@@ -10,9 +10,12 @@ const ONLY_BODY := "Nex-Prime"
 ## live waves. Off until one heightfield ring restores without a rebuild.
 const FILL_STREAMERS := false
 ## P0.2: no density cluster. OS-D still adds extra unnamed pads + sparse scatter.
+## OS-G clusters a mast/habitat on one of those pads.
 const ONE_PAD := true
 ## OS-D: Pad_North + two extra unnamed plates + rare rock/crate proxies.
 const OS_D_FILL := true
+## OS-G: one unnamed mast+habitat cluster on an existing pad. Not SITE_*.
+const OS_G_OUTPOST := true
 const FILLER_PROP_ID := "pad_crate_cc0"
 const ORBITAL_STATIONS := false
 const PAD_DENSITY := false
