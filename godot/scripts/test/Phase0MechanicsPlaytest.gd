@@ -1949,10 +1949,17 @@ func _eva_snap_pulse(fails: PackedStringArray) -> void:
 	if traffic == null or not is_instance_valid(traffic):
 		fails.append("EVA-snap→Pulse: pad traffic missing")
 		return
-	var dummy: Node3D = traffic.pulse_target() if traffic.has_method("pulse_target") else null
+	var dummy: Node3D = traffic.get_surface_dummy() if traffic.has_method("get_surface_dummy") else null
+	if dummy == null and traffic.has_method("pulse_target"):
+		dummy = traffic.pulse_target()
 	if dummy == null or not is_instance_valid(dummy):
 		fails.append("EVA-snap→Pulse: no surface dummy")
 		return
+	if dummy.has_method("set"):
+		dummy.set("faction", "gROT")
+		dummy.set("_alive", true)
+		if float(dummy.get("health")) < 20.0:
+			dummy.set("health", float(dummy.get("max_health")))
 	var host: Node3D = traffic.get_parent() as Node3D
 	if host == null or not host.has_meta("pad_up"):
 		fails.append("EVA-snap→Pulse: dummy not on a pad")
@@ -2013,11 +2020,25 @@ func _eva_snap_pulse(fails: PackedStringArray) -> void:
 		return
 	if walker.has_method("face_world_point"):
 		walker.face_world_point(aim)
+	var cam: Camera3D = walker.get_node_or_null("CamPivot/Camera3D") as Camera3D
+	if cam:
+		var cup: Vector3 = pad_up
+		var look: Vector3 = aim - cam.global_position
+		if look.length_squared() > 0.0001 and absf(look.normalized().dot(cup)) > 0.98:
+			cup = walker.global_transform.basis.x
+		cam.look_at(aim, cup)
 	await get_tree().process_frame
 	await get_tree().process_frame
 	if SoftScanCache:
 		SoftScanCache.invalidate_enemies()
 		SoftScanCache.invalidate_player()
+	var aim_dbg: Array = _Hits.aim_from(walker)
+	var a0: Vector3 = aim_dbg[0]
+	var ad: Vector3 = aim_dbg[1]
+	var to_d: Vector3 = aim - a0
+	var t: float = to_d.dot(ad)
+	var closest: Vector3 = a0 + ad * t
+	print("[Playtest] EVA-snap→Pulse dummy=", dummy.name, " fac=", dummy.get("faction"), " hp=", dummy.get("health"), " miss=", snapped(closest.distance_to(aim), 0.01), " t=", snapped(t, 0.1))
 	var pulse_dmg := 11.0
 	var ab: Node = walker.get_node_or_null("AbilitySystem")
 	if ab == null:

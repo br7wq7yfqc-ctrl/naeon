@@ -486,6 +486,13 @@ func face_world_point(target: Vector3) -> void:
 	var horiz: float = (to - _up * to.dot(_up)).length()
 	_pitch = clampf(atan2(to.dot(_up), maxf(horiz, 0.01)), deg_to_rad(-70), deg_to_rad(70))
 	_apply_body_basis()
+	if camera != null and is_instance_valid(camera):
+		var look: Vector3 = target - camera.global_position
+		if look.length_squared() > 0.0001:
+			var cup: Vector3 = _up
+			if absf(look.normalized().dot(cup)) > 0.98:
+				cup = _ref_fwd
+			camera.look_at(target, cup)
 
 
 func try_pulse() -> bool:
