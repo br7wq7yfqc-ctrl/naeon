@@ -549,6 +549,7 @@ func _go() -> void:
 	_ose_near_read(fails)
 	_osf_atmo_flight(fails)
 	_osg_outpost_silhouette(fails)
+	_assert_gear_before_land(fails)
 	_pad_traffic_present(fails)
 	await _eva_snap_pulse(fails)
 	_osh_invariants(fails)
@@ -1685,7 +1686,8 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 	if ship.has_method("_do_land"):
 		ship._do_land()
 	var landed := bool(ship.get("is_landed"))
-	print("[Playtest] OS-H STEP land landed=", landed, " AGL=", snapped(_osh_agl(nex, ship.global_position), 0.1))
+	var gear_down := bool(ship.is_gear_down()) if ship.has_method("is_gear_down") else bool(ship.get("_gear_down"))
+	print("[Playtest] OS-H STEP land landed=", landed, " gear=", gear_down, " AGL=", snapped(_osh_agl(nex, ship.global_position), 0.1))
 	if not landed:
 		fails.append("OS-H LAND skipped — _do_land refused")
 		fails.append("OS-H skipped eva (no land)")
@@ -1697,6 +1699,8 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 		fails.append("OS-H load screen on land")
 		_osh_report_skips(fails, done, required)
 		return
+	if not gear_down:
+		fails.append("OS-H LAND without gear down")
 	done["land"] = true
 
 	# --- EVA snap on Relief ---
@@ -1881,6 +1885,72 @@ func _osh_invariants(fails: PackedStringArray) -> void:
 	var src := FileAccess.get_file_as_string("res://scripts/ship/ShipController.gd")
 	if src.find("FlightMode.CRUISE") >= 0 or src.find("mass_lock") >= 0:
 		fails.append("OS-H shipped G1 CRUISE / mass lock")
+
+
+func _assert_gear_before_land(fails: PackedStringArray) -> void:
+	## Pillar 1 leftover: SCM + gear up denies pad land. HOVER near pad auto-drops.
+	var os: Node = get_parent()
+	var ship: Node = os.get("ship") if os else null
+	var nex: Node = _osh_nex()
+	if ship == null or nex == null:
+		fails.append("gear-down-before-land: no ship/Nex-Prime")
+		return
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	var pads: Array = get_tree().get_nodes_in_group("pad_bases")
+	var deck: Node3D = null
+	for p in pads:
+		if p is Node3D and bool((p as Node3D).get_meta("landing_pad", false)):
+			deck = p as Node3D
+			break
+		var host: Node = p
+		while host:
+			if host is Node3D and host.has_meta("pad_up"):
+				deck = host as Node3D
+				break
+			host = host.get_parent()
+		if deck:
+			break
+	if deck == null:
+		fails.append("gear-down-before-land: no unnamed pad")
+		return
+	var up: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+	if bool(ship.get("is_landed")) and ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	ship.global_position = deck.global_position + up * 6.0
+	if ship.has_method("set_gear_down"):
+		# Force retracted without the landed lock.
+		ship.set("_gear_down", false)
+		if ship.has_method("_sync_landing_gear"):
+			ship._sync_landing_gear()
+	if ship.has_method("_set_mode"):
+		ship._set_mode(0)  # SCM
+	if ship.has_method("_do_land"):
+		ship._do_land()
+	var landed_up := bool(ship.get("is_landed"))
+	print("[Playtest] gear-down-before-land SCM+up landed=", landed_up)
+	if landed_up:
+		fails.append("SCM gear-up landed on pad")
+		return
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)  # HOVER near pad auto-drops
+	var auto := bool(ship.is_gear_down()) if ship.has_method("is_gear_down") else bool(ship.get("_gear_down"))
+	print("[Playtest] gear-down-before-land HOVER auto=", auto)
+	if not auto:
+		fails.append("HOVER near pad did not auto-drop gear")
+		return
+	if ship.has_method("_do_land"):
+		ship._do_land()
+	var landed_dn := bool(ship.get("is_landed"))
+	print("[Playtest] gear-down-before-land HOVER+down landed=", landed_dn, " pad=", deck.name)
+	if not landed_dn:
+		fails.append("gear-down land refused")
+	elif ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
 
 
 func _pad_traffic_present(fails: PackedStringArray) -> void:

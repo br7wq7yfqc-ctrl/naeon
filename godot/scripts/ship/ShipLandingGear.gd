@@ -1,6 +1,6 @@
 extends Node3D
 class_name ShipLandingGear
-## Procedural landing gear (code-first, 0 Tripo). Soft visual only.
+## Procedural landing gear (code-first, 0 Tripo). Commanded down/up is the land gate.
 
 var deployed: float = 0.0
 var _legs: Array[Node3D] = []
@@ -83,6 +83,10 @@ func _build() -> void:
 
 func set_deployed(want: bool) -> void:
 	_target = 1.0 if want else 0.0
+
+
+func is_down() -> bool:
+	return _target >= 0.5
 
 func _process(delta: float) -> void:
 	deployed = move_toward(deployed, _target, delta * 2.2)

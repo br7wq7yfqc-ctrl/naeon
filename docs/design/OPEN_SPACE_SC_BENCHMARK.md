@@ -141,7 +141,7 @@ WorldFill: scatter + дополнительные unnamed пады, читаем
 1. Открыть `godot/scenes/world/OpenSpace.tscn` и нажать F5 (или F5 с MainMenu → Open Space).
 2. Спавн 8 км AGL. Тело и лимб атмосферы должны читаться. HUD: `S descend · E land · F EVA`.
 3. **Hold S** — геометрический спуск, **без mouse pitch**.
-4. У грунта: `3` HOVER, погасить скорость, **E** — посадка (`LAND READY`).
+4. У грунта: `3` HOVER (шасси авто вниз у пада; **G** — ручной toggle, SCM default up), погасить скорость, **E** — посадка (`LAND READY`).
 5. **F** — EVA, встать на Relief.
 6. **F** — сесть в корабль, **Space** — взлёт.
 7. Набрать выше оболочки (HUD `ATMO 0%`). Сцена не меняется.
