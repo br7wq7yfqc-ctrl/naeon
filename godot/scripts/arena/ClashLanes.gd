@@ -368,6 +368,18 @@ func lane_at(pos: Vector3) -> String:
 		return LANE_BOT
 	return LANE_MID
 
+
+func is_off_lane(pos: Vector3) -> bool:
+	# Strips are ±LANE_HALF_W around 0 / ±14. Jungle pocket sits between them.
+	var x := pos.x
+	if absf(x) <= LANE_HALF_W + 0.4:
+		return false
+	if absf(x - 14.0) <= LANE_HALF_W + 0.4:
+		return false
+	if absf(x + 14.0) <= LANE_HALF_W + 0.4:
+		return false
+	return true
+
 func update_player(pos: Vector3) -> void:
 	var lane := lane_at(pos)
 	if lane != player_lane:

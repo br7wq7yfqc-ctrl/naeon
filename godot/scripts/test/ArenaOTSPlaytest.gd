@@ -1,5 +1,5 @@
 extends Node
-## Headless AR-A + AR-B + AR-C: OTS, structures, timed lane waves.
+## Headless AR-A + AR-B + AR-C + AR-D: OTS, structures, waves, one jungle camp.
 ## godot --path godot --scene res://scenes/test/TestArena.tscn -- --playtest-arena
 
 func _ready() -> void:
@@ -11,7 +11,7 @@ func _ready() -> void:
 	if not wanted:
 		queue_free()
 		return
-	print("[Playtest] arena AR-A/AR-B/AR-C driver on")
+	print("[Playtest] arena AR-A/AR-B/AR-C/AR-D driver on")
 	call_deferred("_go")
 
 
@@ -20,7 +20,7 @@ func _go() -> void:
 	var fails: PackedStringArray = PackedStringArray()
 	var arena: Node = get_parent()
 	if arena == null or str(arena.name) != "TestArena":
-		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), 1)
+		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
 		return
 
 	var player: Node = arena.get("player")
@@ -87,10 +87,12 @@ func _go() -> void:
 	var ar_a_fails: PackedStringArray = fails.duplicate()
 	var ar_c_fails: PackedStringArray = await _check_ar_c(arena, lanes, player)
 	var ar_b_fails: PackedStringArray = _check_ar_b(arena, lanes, player)
+	var ar_d_fails: PackedStringArray = _check_ar_d(arena, lanes, player)
 	fails.append_array(ar_c_fails)
 	fails.append_array(ar_b_fails)
+	fails.append_array(ar_d_fails)
 
-	_finish(ar_a_fails, ar_b_fails, ar_c_fails, 0 if fails.is_empty() else 1)
+	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, 0 if fails.is_empty() else 1)
 
 
 func _check_ar_b(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
@@ -252,7 +254,72 @@ func _check_ar_c(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	return fails
 
 
-func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, code: int) -> void:
+func _check_ar_d(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
+	var fails: PackedStringArray = PackedStringArray()
+	var camp: Node = arena.get_node_or_null("ClashCamp") if arena else null
+	if camp == null and arena:
+		camp = arena.get("_camp")
+	if camp == null or not is_instance_valid(camp):
+		fails.append("ClashCamp missing")
+		return fails
+	if not camp.has_method("take_damage") or not camp.has_method("is_contested"):
+		fails.append("ClashCamp API missing")
+		return fails
+	if camp.has_method("is_off_lane") and not bool(camp.is_off_lane()):
+		fails.append("camp sits on a lane strip")
+	elif lanes and lanes.has_method("is_off_lane") and camp is Node3D \
+		and not bool(lanes.is_off_lane((camp as Node3D).global_position)):
+		fails.append("camp not off-lane on ClashLanes")
+	var hp0 := float(camp.get("health"))
+	var max0 := float(camp.get("max_health"))
+	camp.take_damage(18.0, "Cybernex")
+	var hp1 := float(camp.get("health"))
+	print("[Playtest] camp hp ", hp0, " -> ", hp1, " state=", camp.call("get_contest_state") if camp.has_method("get_contest_state") else "?")
+	if hp1 >= hp0:
+		fails.append("camp did not take damage")
+	if camp.has_method("is_alive") and not bool(camp.is_alive()):
+		fails.append("18 dmg should not kill camp")
+	if not bool(camp.is_contested()):
+		fails.append("camp did not announce contest")
+	var announced := ""
+	if camp.has_method("last_announce"):
+		announced = str(camp.last_announce())
+	if announced == "":
+		fails.append("contest announce empty")
+	elif announced.to_lower().find("weapon") < 0 and announced.to_lower().find("contest") < 0:
+		fails.append("contest announce missing")
+	if camp.has_method("camp_drop_kind") and str(camp.camp_drop_kind()) != "soft_ws":
+		fails.append("camp drop is not soft WS")
+	# Knowledge may relabel; must not change HP / unique DPS.
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("ecology", 20.0)
+	if absf(float(camp.get("max_health")) - max0) > 0.01:
+		fails.append("Knowledge changed camp HP")
+	if camp.has_method("label_text") and str(camp.label_text()) == "":
+		fails.append("Knowledge camp label empty")
+	# AR-C waves and AR-B structures still live after the pit probe.
+	var waves: Node = arena.get_node_or_null("ClashWaves") if arena else null
+	if waves == null and arena:
+		waves = arena.get("_waves")
+	if waves == null or not waves.has_method("living_minions") or waves.living_minions().is_empty():
+		fails.append("waves gone after camp")
+	if lanes and lanes.has_method("living_roles"):
+		var living: PackedStringArray = lanes.living_roles()
+		for need in ["OUTER", "MID", "INHIB", "CORE"]:
+			if not living.has(need):
+				fails.append("structure role gone after camp: " + need)
+	if player and player.has_method("ots_evidence"):
+		var ev: Dictionary = player.ots_evidence()
+		if not bool(ev.get("active", false)):
+			fails.append("OTS dropped after camp")
+	if LayerContext and str(LayerContext.site_pin_id) != "SITE_TEST_ARENA_PILLAR":
+		fails.append("SITE pin changed during AR-D")
+	if arena and str(arena.name) != "TestArena":
+		fails.append("left TestArena")
+	return fails
+
+
+func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, code: int) -> void:
 	if ar_a.is_empty():
 		print("[Playtest] PASS arena AR-A")
 	else:
@@ -270,6 +337,12 @@ func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStrin
 	else:
 		print("[Playtest] FAIL arena AR-C")
 		for f in ar_c:
+			print("[Playtest]  - ", f)
+	if ar_d.is_empty():
+		print("[Playtest] PASS arena AR-D")
+	else:
+		print("[Playtest] FAIL arena AR-D")
+		for f in ar_d:
 			print("[Playtest]  - ", f)
 	if AutoUpdater and AutoUpdater.has_method("abort_pending"):
 		AutoUpdater.abort_pending()

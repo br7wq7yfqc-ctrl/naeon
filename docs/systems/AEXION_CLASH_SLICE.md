@@ -31,6 +31,7 @@ OpenSpace → **M** or **Tab** → TestArena Clash · kill dummies to 5 · soft 
 - OUTER still fires (160 HP, +28 soft pressure); MID/INHIB/CORE take damage; enemy CORE down = soft match win
 - ClashRadar Control HUD
 - Lane waves (AR-C): `ClashWaves` timed `CombatDummy` proxies march TOP/MID/BOT toward enemy OUTER; hit/be-hit via existing Turret hooks; no shop / P2W / new GLB
+- Jungle camp (AR-D): one off-lane `ClashCamp` (fangtooth-class role, not IP); damageable code-first proxy; soft contest announce; drop = soft WS, not a unique weapon; Knowledge may label only
 
 ## Soft lane objectives
 | Action | Pressure | Soft WS |
@@ -40,5 +41,6 @@ OpenSpace → **M** or **Tab** → TestArena Clash · kill dummies to 5 · soft 
 | Forward of z=-10 | +0.8 /0.25s | — |
 | Lane hits 100 | claim once | **+2** |
 | All 3 lanes | match win | win WS |
+| Off-lane camp down | +18 MID | **+2** (not a unique weapon) |
 
 Never permanent map control. Daily WS still capped at 60.
