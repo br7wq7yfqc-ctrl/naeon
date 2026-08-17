@@ -315,11 +315,19 @@ func _refresh_xform(cell: Vector2i) -> void:
 	mi.global_transform = _Math.cell_transform(_planet.global_position, _radius, cell, CELL_M, 0.35)
 
 
-func _mesh_for_cell(cell: Vector2i) -> ArrayMesh:
+func _mesh_for_cell(cell: Vector2i) -> Mesh:
 	var key := _cache_key(cell)
 	if _mesh_cache.has(key):
 		return _mesh_cache[key]
-	var mesh := _build_height_mesh(cell)
+	var mesh: Mesh
+	if DisplayServer.get_name() == "headless":
+		## Dummy cannot RID SurfaceTool ArrayMesh. Cache a box so restore
+		## still hits; heightfield stays on GPU / visible.
+		var b := BoxMesh.new()
+		b.size = Vector3(PATCH_SIZE, 0.35, PATCH_SIZE)
+		mesh = b
+	else:
+		mesh = _build_height_mesh(cell)
 	_mesh_cache[key] = mesh
 	_mesh_cache_order.append(key)
 	while _mesh_cache_order.size() > MESH_CACHE_MAX:

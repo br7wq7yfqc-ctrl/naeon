@@ -12,12 +12,17 @@ func setup(ship: Node) -> void:
 	_ship = ship
 	name = "SoftShieldBubble"
 	_mesh = MeshInstance3D.new()
-	var sm := SphereMesh.new()
-	sm.radius = 2.4
-	sm.height = 4.8
-	sm.radial_segments = 16
-	sm.rings = 8
-	_mesh.mesh = sm
+	if DisplayServer.get_name() == "headless":
+		var b := BoxMesh.new()
+		b.size = Vector3(4.8, 4.8, 4.8)
+		_mesh.mesh = b
+	else:
+		var sm := SphereMesh.new()
+		sm.radius = 2.4
+		sm.height = 4.8
+		sm.radial_segments = 16
+		sm.rings = 8
+		_mesh.mesh = sm
 	_mat = StandardMaterial3D.new()
 	_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA

@@ -311,7 +311,12 @@ func _spawn_claim_nodes() -> void:
 		cyl.top_radius = 0.25
 		cyl.bottom_radius = 0.35
 		cyl.height = 1.6
-		mesh.mesh = cyl
+		if DisplayServer.get_name() == "headless":
+			var beacon := BoxMesh.new()
+			beacon.size = Vector3(0.7, 1.6, 0.7)
+			mesh.mesh = beacon
+		else:
+			mesh.mesh = cyl
 		own.add_child(mesh)
 		add_child(n)
 		n.global_position = s[0]

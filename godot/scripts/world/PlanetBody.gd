@@ -12,6 +12,8 @@ const _SurfaceDetail = preload("res://scripts/world/SurfaceDetail.gd")
 const _TerrainEdit = preload("res://scripts/world/PlanetTerrainEdit.gd")
 const _Relief = preload("res://scripts/world/PlanetRelief.gd")
 const _P0 = preload("res://scripts/world/P0Slice.gd")
+const _MeshSafe = preload("res://scripts/world/MeshSafe.gd")
+const _Filler = preload("res://scripts/world/FillerProp.gd")
 
 @export var planet_name: String = "Aexion-III"
 @export var radius: float = 1200.0
@@ -106,8 +108,9 @@ func _build_shell() -> void:
 	_apply_surface_uniforms(smat)
 	_mesh.material_override = smat
 	_surface_shader_mat = smat
-	# Always have a mesh RID (avoid Parameter m is null before first LOD)
-	_mesh.mesh = _Cache.sphere(radius, maxi(8, _segs_far))
+	# Dummy renderer cannot RID a 1400 m SphereMesh — BoxMesh keeps the
+	# ShaderMaterial (seed uniforms) without mesh_get_surface_count spam.
+	_MeshSafe.assign(_mesh, _Cache.sphere(radius, maxi(8, _segs_far)), Vector3(2, 2, 2))
 	add_child(_mesh)
 
 	# Atmosphere outer shell — fresnel limb shader (space view)
@@ -115,7 +118,7 @@ func _build_shell() -> void:
 	_atmo.name = "Atmosphere"
 	_atmo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_atmo.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-	_atmo.mesh = _Cache.sphere(radius + atmosphere_height, max(12, _segs_far + 4))
+	_MeshSafe.assign(_atmo, _Cache.sphere(radius + atmosphere_height, max(12, _segs_far + 4)), Vector3(2.2, 2.2, 2.2))
 	_atmo_mat = ShaderMaterial.new()
 	_atmo_mat.shader = _ATMO_SHADER
 	_apply_atmo_uniforms()
@@ -126,7 +129,7 @@ func _build_shell() -> void:
 	_atmo_inner.name = "AtmosphereInner"
 	_atmo_inner.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_atmo_inner.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-	_atmo_inner.mesh = _Cache.sphere(radius + atmosphere_height * 0.92, max(10, _segs_far))
+	_MeshSafe.assign(_atmo_inner, _Cache.sphere(radius + atmosphere_height * 0.92, max(10, _segs_far)), Vector3(2.1, 2.1, 2.1))
 	_atmo_inner_mat = ShaderMaterial.new()
 	_atmo_inner_mat.shader = _ATMO_INNER_SHADER
 	_atmo_inner_mat.set_shader_parameter("haze_color", atmosphere_color)
@@ -140,7 +143,7 @@ func _build_shell() -> void:
 	_impostor.name = "Impostor"
 	_impostor.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_impostor.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-	_impostor.mesh = _Cache.sphere(radius * 1.02, 8)
+	_MeshSafe.assign(_impostor, _Cache.sphere(radius * 1.02, 8), Vector3(2.05, 2.05, 2.05))
 	_impostor_mat = ShaderMaterial.new()
 	_impostor_mat.shader = _SURFACE_SHADER
 	_apply_surface_uniforms(_impostor_mat)
@@ -297,7 +300,7 @@ func _apply_lod_visual(lod: int) -> void:
 			segs = _segs_mid
 		2:
 			segs = _segs_far
-	_mesh.mesh = _Cache.sphere(radius, segs)
+	_MeshSafe.assign(_mesh, _Cache.sphere(radius, segs), Vector3(2, 2, 2))
 	# Surface land/ocean via ShaderMaterial (R4) — no per-LOD mat swap
 
 func _apply_lod(lod: int) -> void:
@@ -374,8 +377,15 @@ func _step_pad_build() -> void:
 			_spawn_pad("Pad_North", Vector3.UP)
 			_pad_build_stage = 1
 		1:
-			_spawn_pad("Pad_Eq", Vector3(1, 0.15, 0).normalized())
-			_pad_build_stage = 2
+			if _P0.ONE_PAD:
+				_spawn_filler_on_first_pad()
+				_pad_build_stage = 4
+				_pads_built = true
+				_pad_build_pending = false
+				print("[PlanetBody] P0 one pad + filler")
+			else:
+				_spawn_pad("Pad_Eq", Vector3(1, 0.15, 0).normalized())
+				_pad_build_stage = 2
 		2:
 			_spawn_pad("Pad_Far", Vector3(-0.7, 0.2, 0.7).normalized())
 			_pad_build_stage = 3
@@ -397,8 +407,14 @@ func _build_pads() -> void:
 		add_child(_pads_root)
 	if _pads_built and not _pads.is_empty():
 		return
+	if _pads.is_empty():
+		_spawn_pad("Pad_North", Vector3.UP)
 	_pads_built = true
-	_spawn_pad("Pad_North", Vector3.UP)
+	_pad_build_stage = 4
+	_pad_build_pending = false
+	if _P0.ONE_PAD:
+		_spawn_filler_on_first_pad()
+		return
 	_spawn_pad("Pad_Eq", Vector3(1, 0.15, 0).normalized())
 	_spawn_pad("Pad_Far", Vector3(-0.7, 0.2, 0.7).normalized())
 	_spawn_pad_density()
@@ -622,7 +638,27 @@ func current_lod_name() -> String:
 	return "?"
 	
 
+func _spawn_filler_on_first_pad() -> void:
+	if _pads.is_empty():
+		return
+	var host: Node3D = _pads[0]
+	if host == null or not is_instance_valid(host):
+		return
+	if host.has_node("FillerProp"):
+		return
+	var fp := Node3D.new()
+	fp.set_script(_Filler)
+	fp.name = "FillerProp"
+	host.add_child(fp)
+	if fp.has_method("setup"):
+		fp.call("setup", _P0.FILLER_PROP_ID)
+	fp.position = Vector3(8.0, 1.1, 6.0)
+
+
 func _spawn_pad_density() -> void:
+	if _P0.ONE_PAD or not _P0.PAD_DENSITY:
+		_spawn_filler_on_first_pad()
+		return
 	if _P0.FILL_STREAMERS:
 		_ensure_surface_flora()
 		_ensure_surface_fauna()

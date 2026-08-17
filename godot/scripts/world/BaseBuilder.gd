@@ -13,6 +13,18 @@ static func build_on_pad(pad: Node3D, faction: String) -> void:
 		return
 	pad.set_meta("base_built", true)
 	pad.set_meta("base_faction", faction)
+	var p0 := load("res://scripts/world/P0Slice.gd")
+	if p0 and bool(p0.ACTIVE) and bool(p0.ONE_PAD):
+		var ctrl0 := Node3D.new()
+		ctrl0.set_script(_PadCtrl)
+		ctrl0.set("default_faction", faction)
+		ctrl0.name = "PadBaseController"
+		var root0 := Node3D.new()
+		root0.name = "BaseCluster"
+		pad.add_child(root0)
+		root0.add_child(ctrl0)
+		print("[BaseBuilder] P0 controller only on ", pad.name)
+		return
 	var fx := "cybernex" if faction != "gROT" else "grot"
 	var layout: Array = [
 		{"rel": "colony/colony_habitat/colony_habitat_%s_lod1.glb" % fx, "pos": Vector3(0, 1.2, -14), "s": 2.2, "id": "habitat"},

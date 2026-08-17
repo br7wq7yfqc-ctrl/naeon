@@ -114,7 +114,12 @@ func _nexus(pos: Vector3, col: Color, nname: String, fac: String) -> void:
 	var sp := SphereMesh.new()
 	sp.radius = 1.4
 	sp.height = 2.8
-	mi.mesh = sp
+	if DisplayServer.get_name() == "headless":
+		var core := BoxMesh.new()
+		core.size = Vector3(2.4, 2.4, 2.4)
+		mi.mesh = core
+	else:
+		mi.mesh = sp
 	mi.material_override = _mat(col, 2.0)
 	root.add_child(mi)
 	# halo ring
@@ -124,7 +129,12 @@ func _nexus(pos: Vector3, col: Color, nname: String, fac: String) -> void:
 	torus.outer_radius = 1.85
 	torus.rings = 10
 	torus.ring_segments = 20
-	halo.mesh = torus
+	if DisplayServer.get_name() == "headless":
+		var halo_box := BoxMesh.new()
+		halo_box.size = Vector3(3.4, 0.15, 3.4)
+		halo.mesh = halo_box
+	else:
+		halo.mesh = torus
 	halo.material_override = _mat(col, 2.4)
 	halo.position.y = 1.5
 	halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -172,7 +182,12 @@ func _build_towers() -> void:
 		cyl.top_radius = 0.45
 		cyl.bottom_radius = 0.7
 		cyl.height = 3.2
-		mi.mesh = cyl
+		if DisplayServer.get_name() == "headless":
+			var spire := BoxMesh.new()
+			spire.size = Vector3(1.2, 3.2, 1.2)
+			mi.mesh = spire
+		else:
+			mi.mesh = cyl
 		mi.material_override = _mat(t[1], 1.6)
 		mi.position.y = 1.6
 		mi.name = "Spire"

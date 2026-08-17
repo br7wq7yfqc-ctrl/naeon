@@ -775,35 +775,36 @@ func _ensure_claim_beacon() -> void:
 	root.name = "ClaimBeaconVis"
 	add_child(root)
 	var loaded := false
-	var fac := "cybernex"
-	if ownership:
-		var fn := ownership.faction_name().to_lower()
-		if fn == "grot":
-			fac = "grot"
-	var rels := [
-		"props/ownership_claim_pylon/ownership_claim_pylon_%s_lod1.glb" % fac,
-		"props/ownership_claim_pylon/ownership_claim_pylon_%s_lod2.glb" % fac,
-		"props/faction_claim_totem/faction_claim_totem_%s_lod1.glb" % fac,
-		"props/claim_beacon/claim_beacon_%s_lod1.glb" % fac,
-	]
-	var AP = load("res://scripts/assets/AssetPaths.gd")
-	for rel in rels:
-		var path := ""
-		if AP and AP.has_method("resolve"):
-			path = AP.resolve(rel)
-		if path == "" or not FileAccess.file_exists(path):
-			continue
-		var doc := GLTFDocument.new()
-		var st := GLTFState.new()
-		if doc.append_from_file(path, st) != OK:
-			continue
-		var scn := doc.generate_scene(st)
-		if scn:
-			root.add_child(scn)
-			scn.scale = Vector3.ONE * 1.4
-			scn.position = Vector3(0, 0.2, 0)
-			loaded = true
-			break
+	if DisplayServer.get_name() != "headless":
+		var fac := "cybernex"
+		if ownership:
+			var fn := ownership.faction_name().to_lower()
+			if fn == "grot":
+				fac = "grot"
+		var rels := [
+			"props/ownership_claim_pylon/ownership_claim_pylon_%s_lod1.glb" % fac,
+			"props/ownership_claim_pylon/ownership_claim_pylon_%s_lod2.glb" % fac,
+			"props/faction_claim_totem/faction_claim_totem_%s_lod1.glb" % fac,
+			"props/claim_beacon/claim_beacon_%s_lod1.glb" % fac,
+		]
+		var AP = load("res://scripts/assets/AssetPaths.gd")
+		for rel in rels:
+			var path := ""
+			if AP and AP.has_method("resolve"):
+				path = AP.resolve(rel)
+			if path == "" or not FileAccess.file_exists(path):
+				continue
+			var doc := GLTFDocument.new()
+			var st := GLTFState.new()
+			if doc.append_from_file(path, st) != OK:
+				continue
+			var scn := doc.generate_scene(st)
+			if scn:
+				root.add_child(scn)
+				scn.scale = Vector3.ONE * 1.4
+				scn.position = Vector3(0, 0.2, 0)
+				loaded = true
+				break
 	if not loaded:
 		_build_proc_pylon(root)
 
@@ -838,7 +839,12 @@ func _build_proc_pylon(root: Node3D) -> void:
 	disc.height = 0.14
 	disc.radial_segments = 12
 	var base := MeshInstance3D.new()
-	base.mesh = disc
+	if DisplayServer.get_name() == "headless":
+		var disc_box := BoxMesh.new()
+		disc_box.size = Vector3(1.9, 0.14, 1.9)
+		base.mesh = disc_box
+	else:
+		base.mesh = disc
 	base.material_override = armor
 	base.position.y = 0.07
 	base.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -849,7 +855,12 @@ func _build_proc_pylon(root: Node3D) -> void:
 	cyl.height = 4.2
 	cyl.radial_segments = 8
 	var shaft := MeshInstance3D.new()
-	shaft.mesh = cyl
+	if DisplayServer.get_name() == "headless":
+		var shaft_box := BoxMesh.new()
+		shaft_box.size = Vector3(0.4, 4.2, 0.4)
+		shaft.mesh = shaft_box
+	else:
+		shaft.mesh = cyl
 	shaft.material_override = armor
 	shaft.position.y = 2.2
 	shaft.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -859,7 +870,12 @@ func _build_proc_pylon(root: Node3D) -> void:
 	rod.bottom_radius = 0.05
 	rod.height = 4.4
 	var core := MeshInstance3D.new()
-	core.mesh = rod
+	if DisplayServer.get_name() == "headless":
+		var rod_box := BoxMesh.new()
+		rod_box.size = Vector3(0.1, 4.4, 0.1)
+		core.mesh = rod_box
+	else:
+		core.mesh = rod
 	core.material_override = emit
 	core.position.y = 2.25
 	core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -870,7 +886,12 @@ func _build_proc_pylon(root: Node3D) -> void:
 	torus.rings = 10
 	torus.ring_segments = 16
 	var crown := MeshInstance3D.new()
-	crown.mesh = torus
+	if DisplayServer.get_name() == "headless":
+		var crown_box := BoxMesh.new()
+		crown_box.size = Vector3(0.96, 0.16, 0.96)
+		crown.mesh = crown_box
+	else:
+		crown.mesh = torus
 	crown.material_override = emit
 	crown.position.y = 4.35
 	crown.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -897,6 +918,8 @@ func _build_proc_pylon(root: Node3D) -> void:
 
 
 func _spawn_claim_fx(col: Color) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	var NP = load("res://scripts/fx/NeonParticles.gd")
 	if NP:
 		NP.claim_radial(global_position, col, get_tree())

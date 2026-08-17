@@ -87,6 +87,16 @@ const _HULL_CRIT_HP := 0.35
 func _ready() -> void:
 	_gq = get_node_or_null("/root/GraphicsQuality")
 	add_to_group("ship")
+	var hull := get_node_or_null("HullMesh") as MeshInstance3D
+	if hull:
+		if DisplayServer.get_name() == "headless":
+			var b := BoxMesh.new()
+			b.size = Vector3(2.0, 0.9, 3.2)
+			hull.mesh = b
+		else:
+			var prism := PrismMesh.new()
+			prism.size = Vector3(2.0, 0.9, 3.2)
+			hull.mesh = prism
 	_ensure_living_fx()
 	_ensure_nose_marker()
 	_ensure_shield_bubble()

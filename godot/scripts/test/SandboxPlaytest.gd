@@ -91,7 +91,14 @@ func _go() -> void:
 		pl.ensure_pad_bases()
 		await get_tree().create_timer(0.6).timeout
 	var pads: Array = get_tree().get_nodes_in_group("pad_bases")
+	var fillers: Array = get_tree().get_nodes_in_group("filler_props")
+	var null_mesh := _null_mesh_count(os)
 	lines.append("pads=%d" % pads.size())
+	lines.append("filler_props=%d" % fillers.size())
+	if fillers.size() > 0 and fillers[0].has_method("source_line"):
+		lines.append("filler_source=%s" % str(fillers[0].source_line()))
+	lines.append("null_mesh_instances=%d" % null_mesh)
+	lines.append("MECHANICS_IS_NOT_HUMAN_GATE=true")
 
 	lines.append("input_M=toast G2 locked (not a map)")
 	lines.append("input_TAB=Clash sandbox (not a galaxy map)")
@@ -108,9 +115,15 @@ func _go() -> void:
 		unfit.append("fill streamers still processing")
 	if planets.size() != 1:
 		unfit.append("P0 slice still spawned extra bodies")
+	var p02_ok := pads.size() == 1 and fillers.size() >= 1
+	if not p02_ok:
+		unfit.append("P0.2 pad+filler missing (pads=%d filler=%d)" % [pads.size(), fillers.size()])
+	if null_mesh > 0:
+		unfit.append("MeshInstance with mesh==null: %d" % null_mesh)
 	unfit.append("no 5min human soak on owner GPU")
 	unfit.append("rules/25 FPS not scored on llvmpipe")
-	lines.append("P0_1_RUNTIME=%s" % str(unfit.size() <= 2))
+	lines.append("P0_1_RUNTIME=%s" % str(_seed_one(os) and ring_ok and planets.size() == 1 and not _fill_live(pl)))
+	lines.append("P0_2_SLICE=%s" % str(p02_ok))
 	lines.append("VERDICT=HUMAN_UNFIT")
 	lines.append("REASON=" + "; ".join(unfit))
 
@@ -208,6 +221,20 @@ func _detail(pl: Node, lines: PackedStringArray, tag: String) -> void:
 		var n: Node = pl.get_node_or_null(nm)
 		if n:
 			lines.append("stream[%s] %s proc=%s vis=%s" % [tag, nm, str(n.is_processing()), str(n.visible)])
+
+
+func _null_mesh_count(root: Node) -> int:
+	var n := 0
+	var stack: Array = [root]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		if node is MeshInstance3D:
+			var mi := node as MeshInstance3D
+			if mi.mesh == null:
+				n += 1
+		for c in node.get_children():
+			stack.append(c)
+	return n
 
 
 func _snap(tag: String, _os: Node, lines: PackedStringArray) -> void:

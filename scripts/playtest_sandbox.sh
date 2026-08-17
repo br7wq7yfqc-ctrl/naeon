@@ -32,12 +32,14 @@ MECH_CODE=$?
 set -e
 
 count_se() { grep -c 'SCRIPT ERROR' "$1" 2>/dev/null || true; }
+count_mnull() { grep -c 'Parameter "m" is null' "$1" 2>/dev/null || true; }
 
-echo "MM_CODE=$MM_CODE MM_ERR=$(count_se /tmp/sb_mm.log)"
-echo "OS_CODE=$OS_CODE OS_ERR=$(count_se /tmp/sb_os.log)"
-echo "TA_CODE=$TA_CODE TA_ERR=$(count_se /tmp/sb_ta.log)"
-echo "PROBE_CODE=$PROBE_CODE PROBE_ERR=$(count_se /tmp/sb_os_probe.log)"
-echo "MECH_CODE=$MECH_CODE MECH_ERR=$(count_se /tmp/sb_mech.log)"
+echo "MM_CODE=$MM_CODE MM_ERR=$(count_se /tmp/sb_mm.log) MM_MNULL=$(count_mnull /tmp/sb_mm.log)"
+echo "OS_CODE=$OS_CODE OS_ERR=$(count_se /tmp/sb_os.log) OS_MNULL=$(count_mnull /tmp/sb_os.log)"
+echo "TA_CODE=$TA_CODE TA_ERR=$(count_se /tmp/sb_ta.log) TA_MNULL=$(count_mnull /tmp/sb_ta.log)"
+echo "PROBE_CODE=$PROBE_CODE PROBE_ERR=$(count_se /tmp/sb_os_probe.log) PROBE_MNULL=$(count_mnull /tmp/sb_os_probe.log)"
+echo "MECH_CODE=$MECH_CODE MECH_ERR=$(count_se /tmp/sb_mech.log) MECH_MNULL=$(count_mnull /tmp/sb_mech.log)"
+echo "MECHANICS_IS_NOT_HUMAN_GATE=true"
 echo "--- MainMenu ---"
 grep -E 'SCRIPT ERROR|ERROR|MainMenu|\[Sandbox\]' /tmp/sb_mm.log | head -30 || true
 echo "--- OpenSpace boot ---"

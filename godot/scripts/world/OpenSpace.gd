@@ -46,7 +46,8 @@ func _ready() -> void:
 	_spawn_star()
 	_spawn_planets()
 	_spawn_asteroid_belt()
-	_spawn_orbital_stations()
+	if _P0.ORBITAL_STATIONS:
+		_spawn_orbital_stations()
 	_spawn_ship()
 	# HUD must exist before any walker does, or every claim / contest / harvest
 	# toast of the opening flight is dropped on the floor.
@@ -56,6 +57,8 @@ func _ready() -> void:
 	_setup_sandbox_playtest()
 	if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
 		floating.set_target(ship)
+	if floating != null and is_instance_valid(floating) and floating.has_method("rebase_now"):
+		floating.rebase_now()
 	if floating != null and is_instance_valid(floating) and floating.has_signal("rebased"):
 		if not floating.rebased.is_connected(_on_origin_rebased):
 			floating.rebased.connect(_on_origin_rebased)
@@ -104,6 +107,8 @@ func _apply_env_quality(gq) -> void:
 func _spawn_starfield() -> void:
 	var root := $WorldRoot/Starfield as Node3D
 	if root == null:
+		return
+	if DisplayServer.get_name() == "headless":
 		return
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 42

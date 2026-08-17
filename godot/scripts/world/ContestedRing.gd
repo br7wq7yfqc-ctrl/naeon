@@ -31,7 +31,12 @@ func _ready() -> void:
 	tm.outer_radius = 12.5
 	tm.rings = 10
 	tm.ring_segments = 28
-	_mesh.mesh = tm
+	if DisplayServer.get_name() == "headless":
+		var ring := BoxMesh.new()
+		ring.size = Vector3(24.0, 0.2, 24.0)
+		_mesh.mesh = ring
+	else:
+		_mesh.mesh = tm
 	_mat = StandardMaterial3D.new()
 	_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -70,7 +75,12 @@ func _ready() -> void:
 	cm.bottom_radius = 10.5
 	cm.height = 0.08
 	cm.radial_segments = 28
-	_fill.mesh = cm
+	if DisplayServer.get_name() == "headless":
+		var fill_box := BoxMesh.new()
+		fill_box.size = Vector3(21.0, 0.08, 21.0)
+		_fill.mesh = fill_box
+	else:
+		_fill.mesh = cm
 	_fill_mat = StandardMaterial3D.new()
 	_fill_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_fill_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -105,7 +115,12 @@ func _ready() -> void:
 	var sm := SphereMesh.new()
 	sm.radius = 0.55
 	sm.height = 1.1
-	_beacon.mesh = sm
+	if DisplayServer.get_name() == "headless":
+		var beacon_box := BoxMesh.new()
+		beacon_box.size = Vector3(1.1, 1.1, 1.1)
+		_beacon.mesh = beacon_box
+	else:
+		_beacon.mesh = sm
 	_beacon_mat = StandardMaterial3D.new()
 	_beacon_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_beacon_mat.albedo_color = Color(1.0, 0.6, 0.15)

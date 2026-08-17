@@ -9,6 +9,11 @@ const ONLY_BODY := "Nex-Prime"
 ## Flora / fauna / water / caves / landscape / terrain-edit: seven independent
 ## live waves. Off until one heightfield ring restores without a rebuild.
 const FILL_STREAMERS := false
+## P0.2: one pad plate + one CC0 filler. No density cluster, no extra pads.
+const ONE_PAD := true
+const FILLER_PROP_ID := "pad_crate_cc0"
+const ORBITAL_STATIONS := false
+const PAD_DENSITY := false
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6
