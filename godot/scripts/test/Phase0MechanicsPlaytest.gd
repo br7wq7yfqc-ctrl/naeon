@@ -505,6 +505,7 @@ func _go() -> void:
 	_osb_atmosphere_shell(fails)
 	_osc_scale_ladder(fails, osc_spawn_agl)
 	_osd_unnamed_fill(fails)
+	_ose_near_read(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
 
@@ -962,6 +963,112 @@ func _osd_unnamed_fill(fails: PackedStringArray) -> void:
 	var sd: Node = nex.get_node_or_null("SurfaceDetail")
 	if sd and sd.has_method("body_seed") and int(sd.call("body_seed")) != seed_b:
 		fails.append("OS-D SurfaceDetail seed != body_seed")
+
+
+func _ose_near_read(fails: PackedStringArray) -> void:
+	## OS-E: EVA near-ground is not one plastic shader. Same Relief. Same
+	## chunk budget. No second height field. No SITE_*. No binaries in git.
+	var SD = load("res://scripts/world/SurfaceDetail.gd")
+	if SD == null:
+		fails.append("OS-E SurfaceDetail missing")
+		return
+	if absf(float(SD.CELL_M) - 40.0) > 0.01:
+		fails.append("OS-E chunk cell size changed")
+	if int(SD.LOAD_BUDGET) != 1:
+		fails.append("OS-E chunk LOAD_BUDGET changed")
+	var sd_src := FileAccess.get_file_as_string("res://scripts/world/SurfaceDetail.gd")
+	if sd_src.find("while _queue.size() > 12") < 0:
+		fails.append("OS-E chunk queue cap changed")
+	if sd_src.find("height_at(") < 0:
+		fails.append("OS-E dropped Relief height_at")
+	if sd_src.find("VERTEX +=") >= 0 or sd_src.find("height_micro") >= 0:
+		fails.append("OS-E added a second height field")
+	if sd_src.find("planet_surface_near.gdshader") < 0:
+		fails.append("OS-E near shader not bound")
+	if sd_src.find(":v6") < 0:
+		fails.append("OS-E cache key not bumped for near UVs")
+	var sh_src := FileAccess.get_file_as_string("res://shaders/planet_surface_near.gdshader")
+	if sh_src == "" or sh_src.find("shader_type spatial") < 0:
+		fails.append("OS-E planet_surface_near.gdshader missing")
+	else:
+		if sh_src.find("VERTEX +=") >= 0:
+			fails.append("OS-E near shader displaces height")
+		if sh_src.find("decal_strength") < 0 or sh_src.find("micro_strength") < 0:
+			fails.append("OS-E near shader has no micro/decal terms")
+		if sh_src.find("near_fade") < 0:
+			fails.append("OS-E near LOD fade missing")
+	var godot_root := ProjectSettings.globalize_path("res://").rstrip("/")
+	var man_path := godot_root.get_base_dir().path_join("docs/design/p0_filler_manifest.json")
+	var man := FileAccess.get_file_as_string(man_path)
+	if man.find("near_ground_forest_cc0") < 0 or man.find("CC0-1.0") < 0:
+		fails.append("OS-E CC0 ground sources not documented")
+	if man.find("\"git_binary\": true") >= 0:
+		fails.append("OS-E manifest marks a git binary")
+	var os: Node = get_parent()
+	var nex: Node = null
+	var tree_e := get_tree()
+	if tree_e:
+		for n in tree_e.get_nodes_in_group("planets"):
+			if str(n.get("planet_name")) == "Nex-Prime":
+				nex = n
+				break
+	if nex == null:
+		fails.append("OS-E no Nex-Prime")
+		return
+	var relief = load("res://scripts/world/PlanetRelief.gd")
+	var seed_b: int = int(relief.body_seed("Nex-Prime"))
+	var prof: Dictionary = relief.profile_for_planet("Nex-Prime")
+	var rad: float = float(nex.get("radius"))
+	var sea: float = float(prof.get("sea_level", -0.35))
+	var sd: Node = nex.get_node_or_null("SurfaceDetail")
+	if sd == null:
+		fails.append("OS-E SurfaceDetail node missing")
+		return
+	if sd.has_method("body_seed") and int(sd.call("body_seed")) != seed_b:
+		fails.append("OS-E SurfaceDetail seed != body_seed")
+	if not sd.has_method("near_read_enabled") or not bool(sd.call("near_read_enabled")):
+		fails.append("OS-E near read disabled")
+	var nmat = null
+	if sd.has_method("near_material"):
+		nmat = sd.call("near_material")
+	if not (nmat is ShaderMaterial):
+		fails.append("OS-E near material missing")
+	else:
+		var us: float = float((nmat as ShaderMaterial).get_shader_parameter("seed"))
+		var um: float = float((nmat as ShaderMaterial).get_shader_parameter("micro_strength"))
+		var ud: float = float((nmat as ShaderMaterial).get_shader_parameter("decal_strength"))
+		print("[Playtest] OS-E near seed=", us, " micro=", snapped(um, 0.01), " decal=", snapped(ud, 0.01))
+		if absf(us - float(seed_b)) > 0.51:
+			fails.append("OS-E near shader seed != body_seed (%s vs %s)" % [us, seed_b])
+		if um < 0.05:
+			fails.append("OS-E micro_strength off")
+		if ud < 0.05:
+			fails.append("OS-E decal_strength off")
+	# Same Relief under the walker as OS-A snap. Paint must not move height.
+	var up: Vector3 = Vector3(0.18, 0.96, 0.12).normalized()
+	if os and os.has_method("_spawn_eva_near_ship"):
+		var ship: Node3D = os.get("ship") as Node3D
+		if ship:
+			ship.global_position = nex.global_position + up * (rad + 770.0)
+		os.call("_spawn_eva_near_ship")
+	var walker: Node3D = os.get("player") as Node3D if os else null
+	if walker == null or not is_instance_valid(walker):
+		fails.append("OS-E EVA spawn failed")
+		return
+	walker.global_position = nex.global_position + up * (rad + 12.0)
+	if walker.has_method("_relief_snap_fallback"):
+		walker.call("_relief_snap_fallback")
+	elif walker.has_method("snap_to_surface"):
+		walker.call("snap_to_surface")
+	var dir: Vector3 = (walker.global_position - nex.global_position).normalized()
+	var h: float = float(relief.height_on_sphere(dir, rad, seed_b, prof, false))
+	var want: float = rad + maxf(h, sea) + 2.15
+	var got: float = walker.global_position.distance_to(nex.global_position)
+	print("[Playtest] OS-E Relief h=", snapped(h, 0.01), " want=", snapped(want - rad, 0.01), " got=", snapped(got - rad, 0.01))
+	if absf(got - want) > 0.85:
+		fails.append("OS-E Relief under walker drifted")
+	if LayerContext and str(LayerContext.site_pin_id) != "" and str(LayerContext.site_pin_id) != "SITE_SPACE_TEST_PAD":
+		fails.append("OS-E site_pin left catalog (%s)" % LayerContext.site_pin_id)
 
 
 func _finish(fails: PackedStringArray, code: int) -> void:

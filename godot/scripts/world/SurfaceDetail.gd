@@ -5,10 +5,12 @@ class_name SurfaceDetail
 ## - Object pool + mesh cache
 ## - Per-tick load budget
 ## - Load ring + hysteresis unload ring
+## OS-E: near shader paints albedo / decals on these meshes. Height stays Relief.
 
 const _Math = preload("res://scripts/world/SurfaceChunkMath.gd")
 const _Relief = preload("res://scripts/world/PlanetRelief.gd")
 const _P0 = preload("res://scripts/world/P0Slice.gd")
+const _NEAR_SHADER = preload("res://shaders/planet_surface_near.gdshader")
 
 const CELL_M := 40.0
 const PATCH_SIZE := 40.8
@@ -48,6 +50,8 @@ var _active: bool = false
 var _warm_t: float = 0.0
 var _warm_cells: int = 0
 var _xform_accum: float = 0.0
+## Shared near-read material. One ShaderMaterial for the whole ring.
+var _near_mat: ShaderMaterial
 
 
 func setup(planet: Node3D, radius: float, color: Color, seed_i: int = 1) -> void:
@@ -59,6 +63,7 @@ func setup(planet: Node3D, radius: float, color: Color, seed_i: int = 1) -> void
 	_seed = _Relief.body_seed(_planet_id) if _planet_id != "" else seed_i
 	_relief_profile = _Relief.profile_for_planet(_planet_id)
 	_apply_quality()
+	_ensure_near_mat()
 
 
 func set_observer(n: Node3D) -> void:
@@ -104,6 +109,7 @@ func _apply_quality() -> void:
 	# their current mesh until recycled; next spawn rebuilds at new res.
 	_mesh_cache.clear()
 	_mesh_cache_order.clear()
+	_tune_near_quality(tier)
 
 
 func _process(delta: float) -> void:
@@ -154,6 +160,7 @@ func _process(delta: float) -> void:
 	var xneed := 1.6 if tier <= 1 else 1.1
 	if _xform_accum >= xneed:
 		_xform_accum = 0.0
+		_sync_near_origin()
 		var n := 0
 		for c in _live.keys():
 			_refresh_xform(c)
@@ -234,7 +241,7 @@ func _desired_ring() -> int:
 
 
 func _cache_key(cell: Vector2i) -> String:
-	return "%d:%d:r%d:v5" % [cell.x, cell.y, _res]
+	return "%d:%d:r%d:v6" % [cell.x, cell.y, _res]
 
 
 func _restore_ring(center: Vector2i, ring: int) -> void:
@@ -285,18 +292,8 @@ func _spawn_cell(cell: Vector2i) -> void:
 		mi = MeshInstance3D.new()
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-		var mat := StandardMaterial3D.new()
-		mat.vertex_color_use_as_albedo = true
-		mat.albedo_color = Color(1, 1, 1)
-		mat.roughness = 0.92
-		mat.metallic = 0.0
-		mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-		# Unshaded: PBR + wrong patch normals read as a black walk surface.
-		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		mat.emission_enabled = true
-		mat.emission = Color(0.08, 0.1, 0.12)
-		mat.emission_energy_multiplier = 0.35
-		mi.material_override = mat
+		_ensure_near_mat()
+		mi.material_override = _near_mat
 		# Placeholder mesh so RID never null when entering tree
 		var ph := BoxMesh.new()
 		ph.size = Vector3(0.01, 0.01, 0.01)
@@ -369,8 +366,12 @@ func _build_height_mesh(cell: Vector2i) -> ArrayMesh:
 	var origin: Vector3 = dir_c * (_radius + 0.02)
 	var verts: Array[Vector3] = []
 	var colors: PackedColorArray = PackedColorArray()
+	var uvs: PackedVector2Array = PackedVector2Array()
+	var uv2s: PackedVector2Array = PackedVector2Array()
 	verts.resize(_res * _res)
 	colors.resize(_res * _res)
+	uvs.resize(_res * _res)
+	uv2s.resize(_res * _res)
 	var sea: float = float(_relief_profile.get("sea_level", -0.35))
 	for z in _res:
 		for x in _res:
@@ -403,8 +404,11 @@ func _build_height_mesh(cell: Vector2i) -> ArrayMesh:
 			# Radial placement: tangent-plane (px,h,pz) left cliffs + floating quads.
 			var world: Vector3 = dir * (_radius + h)
 			var rel: Vector3 = world - origin
-			verts[z * _res + x] = Vector3(rel.dot(east), rel.dot(dir_c), -rel.dot(north))
-			colors[z * _res + x] = col
+			var i := z * _res + x
+			verts[i] = Vector3(rel.dot(east), rel.dot(dir_c), -rel.dot(north))
+			colors[i] = Color(col.r, col.g, col.b, _biome_pack(biome, h, sea))
+			uvs[i] = Vector2((px + half) / PATCH_SIZE, (pz + half) / PATCH_SIZE)
+			uv2s[i] = xz
 	for z in _res - 1:
 		for x in _res - 1:
 			var i00 := z * _res + x
@@ -413,6 +417,8 @@ func _build_height_mesh(cell: Vector2i) -> ArrayMesh:
 			var i11 := i01 + 1
 			for idx in [i00, i10, i11, i00, i11, i01]:
 				st.set_color(colors[idx])
+				st.set_uv(uvs[idx])
+				st.set_uv2(uv2s[idx])
 				st.add_vertex(verts[idx])
 	st.generate_normals()
 	return st.commit()
@@ -443,27 +449,82 @@ func refresh_all_xforms() -> void:
 		_refresh_xform(c)
 
 
+func _biome_pack(biome: String, h: float, sea: float) -> float:
+	## COLOR.a class for the near shader. Does not change height.
+	if h < sea or biome == "ocean":
+		return 0.06
+	if biome == "shore" or h < sea + 0.55:
+		return 0.18
+	if biome == "dunes":
+		return 0.30
+	if biome == "mesa":
+		return 0.42
+	if biome == "crater":
+		return 0.54
+	if biome == "alpine" or h > 5.0:
+		return 0.66
+	if biome == "canyon":
+		return 0.78
+	if biome == "river":
+		return 0.90
+	return 1.0
+
+
+func _ensure_near_mat() -> void:
+	if _near_mat != null and _near_mat.shader != null:
+		_near_mat.set_shader_parameter("seed", float(_seed))
+		_sync_near_origin()
+		return
+	_near_mat = ShaderMaterial.new()
+	_near_mat.shader = _NEAR_SHADER
+	_near_mat.set_shader_parameter("seed", float(_seed))
+	_near_mat.set_shader_parameter("chart_radius", float(_Relief.CHART_RADIUS))
+	_near_mat.set_shader_parameter("micro_strength", 0.22)
+	_near_mat.set_shader_parameter("decal_strength", 0.55)
+	_near_mat.set_shader_parameter("near_fade_start", 8.0)
+	_near_mat.set_shader_parameter("near_fade_end", 52.0)
+	_near_mat.set_shader_parameter("emission_strength", 0.10)
+	_near_mat.set_shader_parameter("roughness_var", 0.55)
+	_sync_near_origin()
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	_tune_near_quality(int(gq.tier) if gq else 1)
+
+
+func _tune_near_quality(tier: int) -> void:
+	if _near_mat == null:
+		return
+	match tier:
+		0:
+			_near_mat.set_shader_parameter("micro_strength", 0.12)
+			_near_mat.set_shader_parameter("decal_strength", 0.35)
+		1:
+			_near_mat.set_shader_parameter("micro_strength", 0.22)
+			_near_mat.set_shader_parameter("decal_strength", 0.55)
+		_:
+			_near_mat.set_shader_parameter("micro_strength", 0.26)
+			_near_mat.set_shader_parameter("decal_strength", 0.62)
+
+
+func _sync_near_origin() -> void:
+	if _near_mat == null or _planet == null:
+		return
+	_near_mat.set_shader_parameter("planet_origin", _planet.global_position)
+	if "_sun_dir" in _planet:
+		_near_mat.set_shader_parameter("sun_direction", _planet._sun_dir)
+
+
+func near_material() -> ShaderMaterial:
+	_ensure_near_mat()
+	return _near_mat
+
+
+func near_read_enabled() -> bool:
+	_ensure_near_mat()
+	return _near_mat != null and _near_mat.shader != null
+
+
 func _ensure_vertex_mat(mi: MeshInstance3D) -> void:
 	if mi == null:
 		return
-	if mi.material_override != null:
-		var ex = mi.material_override
-		if ex is StandardMaterial3D:
-			var sm := ex as StandardMaterial3D
-			sm.vertex_color_use_as_albedo = true
-			sm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-			sm.cull_mode = BaseMaterial3D.CULL_DISABLED
-		return
-	var mat := StandardMaterial3D.new()
-	mat.vertex_color_use_as_albedo = true
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.roughness = 0.92
-	mat.metallic = 0.02
-	mat.albedo_color = Color(1, 1, 1)
-	mat.emission_enabled = true
-	mat.emission = Color(0.08, 0.1, 0.12)
-	mat.emission_energy_multiplier = 0.35
-	# Walker eye can sit inside Relief while collision is the bare sphere.
-	# Backface cull read as a black void + horizon splinters on EVA.
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mi.material_override = mat
+	_ensure_near_mat()
+	mi.material_override = _near_mat

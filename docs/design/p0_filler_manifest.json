@@ -1,7 +1,7 @@
 {
-  "version": 2,
+  "version": 3,
   "updated": "2026-08-17",
-  "note": "Unnamed WorldFill props for the P0 / OS-D human slice. Git holds source/license/url only. Binaries stay on s3://neon. Not SITE_*. Not Tripo.",
+  "note": "Unnamed WorldFill props + OS-E near-ground CC0 stand-ins. Git holds source/license/url only. Binaries stay on s3://neon. Code-first shader until ingest. Not SITE_*. Not Tripo.",
   "props": [
     {
       "id": "pad_crate_cc0",
@@ -44,6 +44,66 @@
       "local_rel": "filler/boulder_01/boulder_01.glb",
       "git_binary": false,
       "site_pin": ""
+    },
+    {
+      "id": "near_ground_forest_cc0",
+      "kind": "ground",
+      "role": "near_tile_albedo",
+      "title": "Forest Ground 04",
+      "source": "Poly Haven",
+      "license": "CC0-1.0",
+      "url": "https://polyhaven.com/a/forest_ground_04",
+      "license_url": "https://polyhaven.com/license",
+      "bucket": "s3://neon/filler/forest_ground_04/",
+      "local_rel": "filler/forest_ground_04/forest_ground_04_diff_1k.png",
+      "git_binary": false,
+      "site_pin": "",
+      "note": "OS-E tileable dirt. Shader stand-in until the PNG is on neon."
+    },
+    {
+      "id": "near_rock_face_cc0",
+      "kind": "ground",
+      "role": "near_tile_rock",
+      "title": "Rock Face",
+      "source": "Poly Haven",
+      "license": "CC0-1.0",
+      "url": "https://polyhaven.com/a/rock_face",
+      "license_url": "https://polyhaven.com/license",
+      "bucket": "s3://neon/filler/rock_face/",
+      "local_rel": "filler/rock_face/rock_face_diff_1k.png",
+      "git_binary": false,
+      "site_pin": "",
+      "note": "OS-E stone decal/tile. Shader stand-in until the PNG is on neon."
+    },
+    {
+      "id": "near_ground037_cc0",
+      "kind": "ground",
+      "role": "near_tile_albedo",
+      "title": "Ground 037",
+      "source": "ambientCG",
+      "license": "CC0-1.0",
+      "url": "https://ambientcg.com/view?id=Ground037",
+      "license_url": "https://docs.ambientcg.com/license/",
+      "bucket": "s3://neon/filler/ground037/",
+      "local_rel": "filler/ground037/Ground037_1K-JPG_Color.jpg",
+      "git_binary": false,
+      "site_pin": "",
+      "note": "OS-E tileable soil. Shader stand-in until the map is on neon."
+    },
+    {
+      "id": "near_rock023_cc0",
+      "kind": "ground",
+      "role": "near_tile_rock",
+      "title": "Rock 023",
+      "source": "ambientCG",
+      "license": "CC0-1.0",
+      "url": "https://ambientcg.com/view?id=Rock023",
+      "license_url": "https://docs.ambientcg.com/license/",
+      "bucket": "s3://neon/filler/rock023/",
+      "local_rel": "filler/rock023/Rock023_1K-JPG_Color.jpg",
+      "git_binary": false,
+      "site_pin": "",
+      "note": "OS-E pebble/rock micro. Shader stand-in until the map is on neon."
     }
   ]
 }
