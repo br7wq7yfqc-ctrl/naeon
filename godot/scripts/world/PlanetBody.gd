@@ -859,26 +859,31 @@ func _ensure_surface_flora() -> void:
 func _apply_surface_uniforms(mat: ShaderMaterial) -> void:
 	if mat == null:
 		return
+	var pid := str(planet_name)
+	var prof: Dictionary = _Relief.profile_for_planet(pid)
 	mat.set_shader_parameter("land_color", surface_color)
 	var ocean := Color(0.05, 0.18, 0.38)
-	if str(planet_name) == "ROT-Hive":
+	if pid == "ROT-Hive":
 		ocean = Color(0.25, 0.05, 0.12)
-	elif str(planet_name) == "Shard-Moon":
+	elif pid == "Shard-Moon":
 		ocean = Color(0.12, 0.14, 0.18)
 		mat.set_shader_parameter("ice_lat", 0.55)
 	mat.set_shader_parameter("ocean_color", ocean)
 	mat.set_shader_parameter("shore_color", Color(0.42, 0.38, 0.22))
 	mat.set_shader_parameter("seed", float(body_seed()))
 	mat.set_shader_parameter("chart_radius", float(_Relief.CHART_RADIUS))
-	var prof: Dictionary = _Relief.profile_for_planet(str(planet_name))
+	mat.set_shader_parameter("planet_radius", radius)
 	mat.set_shader_parameter("sea_level", float(prof.get("sea_level", -0.35)))
+	mat.set_shader_parameter("sea_threshold", float(prof.get("sea_level", -0.35)))
+	mat.set_shader_parameter("hill_amp", float(prof.get("hill_amp", 1.8)))
+	mat.set_shader_parameter("mountain_amp", float(prof.get("mountain_amp", 6.5)))
 	mat.set_shader_parameter("sun_direction", _sun_dir)
 	mat.set_shader_parameter("emission_strength", 0.06)
 	mat.set_shader_parameter("city_intensity", 1.4)
 	mat.set_shader_parameter("city_density", 0.55)
-	if str(planet_name) == "Shard-Moon":
+	if pid == "Shard-Moon":
 		mat.set_shader_parameter("city_intensity", 0.35)
-	elif str(planet_name) == "ROT-Hive":
+	elif pid == "ROT-Hive":
 		mat.set_shader_parameter("city_light_color", Color(1.0, 0.35, 0.5))
 
 
@@ -897,7 +902,7 @@ func relief_height_at(world_pos: Vector3) -> float:
 	var dir: Vector3 = (world_pos - global_position)
 	if dir.length_squared() < 1e-8:
 		return 0.0
-	return float(_Relief.height_at_dir(dir.normalized(), body_seed(), prof))
+	return float(_Relief.height_on_sphere(dir.normalized(), radius, body_seed(), prof, false))
 
 
 

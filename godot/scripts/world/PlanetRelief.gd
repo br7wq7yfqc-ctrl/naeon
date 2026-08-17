@@ -1,8 +1,8 @@
 extends RefCounted
 class_name PlanetRelief
 ## Analytic multi-feature height: mountains, seas, rivers, canyons, cave openness.
-## One body seed. Height is sampled in a spherical lon/lat chart so the far
-## sphere and the chunk heightfield are the same planet.
+## OS-A: one body_seed + sphere_xz domain for orbit paint and dirt chunks.
+## P0.6 also keeps dir_to_chart / height_at_dir on CHART_RADIUS (Nex-Prime scale).
 
 ## Metres-per-radian of the shared chart. Matches Nex-Prime scale so existing
 ## Relief frequencies stay in the same ballpark.
@@ -12,14 +12,11 @@ const CHART_RADIUS := 1400.0
 static func body_seed(planet_id: String) -> int:
 	## Single stable integer per authored body id. Channel offsets are for
 	## placement RNG only — never a second height seed.
-	return int(absi(String(planet_id).hash()) % 10000)
+	return int(absi(str(planet_id).hash()) % 10000)
 
 
 static func dir_to_chart(dir: Vector3) -> Vector2:
-	var n: Vector3 = dir.normalized()
-	var lat: float = asin(clampf(n.y, -1.0, 1.0))
-	var lon: float = atan2(n.x, n.z)
-	return Vector2(lon * CHART_RADIUS, lat * CHART_RADIUS)
+	return sphere_xz(dir, CHART_RADIUS)
 
 
 static func height_at_dir(dir: Vector3, seed: int, profile: Dictionary = {}) -> float:
@@ -27,20 +24,61 @@ static func height_at_dir(dir: Vector3, seed: int, profile: Dictionary = {}) -> 
 	return height_at(c.x, c.y, seed, profile)
 
 
-static func height_at(x: float, z: float, seed: int, profile: Dictionary = {}) -> float:
+static func sphere_xz(dir: Vector3, radius: float) -> Vector2:
+	var n := dir.normalized()
+	var lat := asin(clampf(n.y, -1.0, 1.0))
+	var lon := atan2(n.x, n.z)
+	return Vector2(lon * radius, lat * radius)
+
+
+static func height_on_sphere(dir: Vector3, radius: float, seed: int, profile: Dictionary = {}, macro_only: bool = false) -> float:
+	var xz: Vector2 = sphere_xz(dir, radius)
+	if macro_only:
+		return height_macro_at(xz.x, xz.y, seed, profile)
+	return height_at(xz.x, xz.y, seed, profile)
+
+
+static func height_macro_at(x: float, z: float, seed: int, profile: Dictionary = {}) -> float:
+	## Continent / ridge / sea only — far & impostor. Same FBM as height_at.
+	var m: Dictionary = _macro_terms(x, z, seed, profile)
+	return float(m.get("h", 0.0))
+
+
+static func _domain(x: float, z: float, seed: int) -> Vector2:
+	return Vector2(x * 0.07 + float(seed) * 0.017, z * 0.07 + float(seed) * 0.013)
+
+
+static func _macro_terms(x: float, z: float, seed: int, profile: Dictionary) -> Dictionary:
 	var sea: float = float(profile.get("sea_level", -0.35))
 	var mtn_amp: float = float(profile.get("mountain_amp", 6.5))
 	var hill_amp: float = float(profile.get("hill_amp", 1.8))
-	var canyon_amp: float = float(profile.get("canyon_amp", 4.2))
-	var river_w: float = float(profile.get("river_width", 1.1))
-	var sx := x * 0.07 + float(seed) * 0.017
-	var sz := z * 0.07 + float(seed) * 0.013
+	var d: Vector2 = _domain(x, z, seed)
+	var sx := d.x
+	var sz := d.y
 	var hills := _fbm(sx * 0.9, sz * 0.9, 3) * hill_amp
 	var ridge := 1.0 - absf(_fbm(sx * 0.35 + 2.1, sz * 0.35 - 1.4, 4))
 	ridge = pow(clampf(ridge, 0.0, 1.0), 1.6)
 	var mountains := ridge * mtn_amp * _mask(sx * 0.15 + 0.3, sz * 0.15, 0.42)
 	var continent := _fbm(sx * 0.12, sz * 0.12, 2)
 	var basin := _smoothstep(-0.15, 0.25, continent)
+	var h_land := hills + mountains * basin
+	var h := h_land
+	if basin < 0.35:
+		var ocean_pull := (0.35 - basin) / 0.35
+		h = lerpf(h, sea - 0.8 - ocean_pull * 1.4, clampf(ocean_pull * 1.2, 0.0, 1.0))
+	return {"h": h, "h_land": h_land, "basin": basin, "ridge": ridge, "continent": continent, "sx": sx, "sz": sz, "sea": sea}
+
+
+static func height_at(x: float, z: float, seed: int, profile: Dictionary = {}) -> float:
+	var m: Dictionary = _macro_terms(x, z, seed, profile)
+	var h: float = float(m.get("h", 0.0))
+	var basin: float = float(m.get("basin", 0.0))
+	var ridge: float = float(m.get("ridge", 0.0))
+	var sx: float = float(m.get("sx", 0.0))
+	var sz: float = float(m.get("sz", 0.0))
+	var sea: float = float(m.get("sea", -0.35))
+	var canyon_amp: float = float(profile.get("canyon_amp", 4.2))
+	var river_w: float = float(profile.get("river_width", 1.1))
 	var canyon_line := absf(_warp_noise(sx * 0.55, sz * 0.55, seed))
 	var canyon := 0.0
 	if canyon_line < 0.085:
@@ -86,7 +124,7 @@ static func height_at(x: float, z: float, seed: int, profile: Dictionary = {}) -
 				crater = -crater_amp * bowl * bowl
 				if rd > 0.18:
 					crater += crater_amp * 0.35 * (1.0 - absf(rd - 0.22) / 0.06)  # rim
-	var h := hills + mountains * basin + canyon + river + dunes + mesa + crater
+	h = float(m.get("h_land", h)) + canyon + river + dunes + mesa + crater
 	if basin < 0.35:
 		var ocean_pull := (0.35 - basin) / 0.35
 		h = lerpf(h, sea - 0.8 - ocean_pull * 1.4, clampf(ocean_pull * 1.2, 0.0, 1.0))

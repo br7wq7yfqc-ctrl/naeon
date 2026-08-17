@@ -498,7 +498,102 @@ func _go() -> void:
 		if miss_self == sh_c:
 			fails.append("ship shot hit self")
 
+	_osa_same_body(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
+
+
+func _osa_same_body(fails: PackedStringArray) -> void:
+	var relief = load("res://scripts/world/PlanetRelief.gd")
+	if relief == null:
+		fails.append("OS-A PlanetRelief missing")
+		return
+	var nex: Node = null
+	var tree_p := get_tree()
+	if tree_p:
+		for n in tree_p.get_nodes_in_group("planets"):
+			if str(n.get("planet_name")) == "Nex-Prime":
+				nex = n
+				break
+	if nex == null:
+		fails.append("OS-A no Nex-Prime")
+		return
+	var seed_b: int = int(relief.body_seed("Nex-Prime"))
+	var prof: Dictionary = relief.profile_for_planet("Nex-Prime")
+	var rad: float = float(nex.get("radius"))
+	var smat = nex.get("_surface_shader_mat")
+	if smat is ShaderMaterial:
+		var us: float = float((smat as ShaderMaterial).get_shader_parameter("seed"))
+		var ur: float = float((smat as ShaderMaterial).get_shader_parameter("planet_radius"))
+		var usea: float = float((smat as ShaderMaterial).get_shader_parameter("sea_threshold"))
+		if absf(us - float(seed_b)) > 0.51:
+			fails.append("OS-A shader seed != body_seed (%s vs %s)" % [us, seed_b])
+		if absf(ur - rad) > 0.51:
+			fails.append("OS-A shader radius != body")
+		if absf(usea - float(prof.get("sea_level", -0.25))) > 0.02:
+			fails.append("OS-A shader sea != profile")
+	else:
+		fails.append("OS-A Nex-Prime has no surface shader")
+	var seas := 0
+	var lands := 0
+	for i in range(16):
+		var a := float(i) * TAU / 16.0
+		var d := Vector3(sin(a), 0.12, cos(a)).normalized()
+		var xz: Vector2 = relief.sphere_xz(d, rad)
+		var hm: float = float(relief.height_macro_at(xz.x, xz.y, seed_b, prof))
+		var hs: float = float(relief.height_on_sphere(d, rad, seed_b, prof, true))
+		if absf(hm - hs) > 0.0001:
+			fails.append("OS-A sphere_xz != height_on_sphere")
+			break
+		if bool(relief.is_sea(hm, prof)):
+			seas += 1
+		else:
+			lands += 1
+	print("[Playtest] OS-A Nex-Prime seed=", seed_b, " land=", lands, " sea=", seas)
+	if seas < 2 or lands < 2:
+		fails.append("OS-A Nex-Prime macro has no land/sea contrast")
+	var detail = nex.get_node_or_null("SurfaceDetail")
+	if detail:
+		var dseed: int = int(detail.get("_seed"))
+		if dseed != seed_b:
+			fails.append("OS-A SurfaceDetail seed != body_seed")
+	# DoD path: 770 m AGL over Nex-Prime, then EVA + relief snap (P0.6)
+	var os: Node = get_parent()
+	var ship: Node3D = null
+	if os:
+		ship = os.get("ship") as Node3D
+	var up: Vector3 = Vector3(0.18, 0.96, 0.12).normalized()
+	var hover: Vector3 = nex.global_position + up * (rad + 770.0)
+	if ship:
+		ship.global_position = hover
+	var agl: float = 770.0
+	if nex.has_method("altitude_of"):
+		agl = float(nex.call("altitude_of", hover))
+	print("[Playtest] OS-A approach AGL=", snapped(agl, 0.1))
+	if absf(agl - 770.0) > 8.0:
+		fails.append("OS-A 770m approach place failed")
+	if os and os.has_method("_spawn_eva_near_ship"):
+		os.call("_spawn_eva_near_ship")
+	var walker: Node3D = null
+	if os:
+		walker = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("OS-A EVA spawn failed at 770m")
+	else:
+		var eva_agl: float = walker.global_position.distance_to(nex.global_position) - rad
+		print("[Playtest] OS-A EVA AGL=", snapped(eva_agl, 0.1))
+		if eva_agl < 600.0:
+			fails.append("OS-A EVA not at approach altitude")
+		walker.global_position = nex.global_position + up * (rad + 12.0)
+		if walker.has_method("_relief_snap_fallback"):
+			var ok: bool = bool(walker.call("_relief_snap_fallback"))
+			if not ok:
+				fails.append("OS-A relief snap returned false")
+		elif walker.has_method("snap_to_surface"):
+			walker.call("snap_to_surface")
+		var after: float = walker.global_position.distance_to(nex.global_position) - rad
+		print("[Playtest] OS-A EVA snap AGL=", snapped(after, 0.01))
+		if after > 40.0 or after < -6.0:
+			fails.append("OS-A EVA snap left walker off relief")
 
 
 func _finish(fails: PackedStringArray, code: int) -> void:

@@ -10,6 +10,12 @@
 
 Канон: `docs/design/WORLD_FILL.md` · `docs/design/ASSET_SOURCE_CANON.md` · `docs/design/GALAXY_LAYER_PLAN.md` (G1 только как инструмент масштаба).
 
+Полная карта столпов SC → NAEON (роли, не клон): [`SC_FEATURE_MAP.md`](SC_FEATURE_MAP.md).  
+Сшивка орбита ≠ грунт: [`WORLD_FILL.md`](WORLD_FILL.md) §5.  
+Clash нативен; бар арены — Predecessor/Paragon, не Arena Commander: [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md).  
+Дыры каталога (очередь, не новый catalog): [`WORLD_FILL.md`](WORLD_FILL.md) §6.  
+Likeness — вся фантазия SC (лететь, стыковаться, ходить, работать, драться, жить) **ролями** в каноне NAEON, не копией IFCS / Planet Tech V5.
+
 ---
 
 ## 1. Канон (не размывать)
@@ -68,7 +74,11 @@ Headless `[Playtest] PASS` и зонд на dummy — не человеческ�
 
 Дальняя сфера = тот же Relief (континент, хребет, море). LOD режет микродеталь, не подменяет шум. Без вокселей.
 
-**DoD:** с подхода и с грунта одно тело. Нет «другой планеты» на 770 м. Петля P0.6 жива.
+**Дефект на старом main:** `planet_surface.gdshader` — другой FBM + `seed % 97`; грунт — `PlanetRelief` `seed % 10000` в другой области. LOD **может** снять реки/микро; LOD **не может** подменить FBM.
+
+**Сшивка:** far/impostor/mid = `PlanetRelief.height_macro_at` + `body_seed` + `sphere_xz`. `SurfaceDetail` на той же сферической области. EVA snap не трогать.
+
+**DoD:** с подхода и с грунта одно тело. Нет «другой планеты» на 770 м. Петля P0.6 жива. Headless playtest не снимать.
 
 ### OS-B — оболочка атмосферы
 
@@ -121,4 +131,4 @@ WorldFill: scatter + дополнительные unnamed пады, читаем
 - Tripo-горы, Tripo-грязь, меши в git, секреты, патч S3 Index.
 - Переписывать P0.6 «с нуля», пока OS-A не зелёный.
 
-Очередь кода: OS-A. Не G2.
+Очередь кода: OS-A. Не G2. Не открывать G2–G6 этим баром.
