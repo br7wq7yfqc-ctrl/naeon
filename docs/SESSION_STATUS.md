@@ -33,7 +33,7 @@ PR #7 писал HUMAN_UNFIT на llvmpipe — **снято** фактом 3090 
 | Track | Status |
 |-------|--------|
 | P0.6 runtime (HUD, descend, EVA, HOVER S) | **built** на 3090 — не регрессить |
-| OPEN SPACE SC bar | **open** — OS-A…OS-E built; следующий = OS-F |
+| OPEN SPACE SC bar | **open** — OS-A…OS-F built; следующий = OS-G |
 | Galaxy G2–G6 | **locked** |
 | G1 CRUISE | **in-scope only for OS-C scale** |
 | Asset ingest T1 hypergate | **locked** |

@@ -146,7 +146,8 @@ llvmpipe этого не подтверждает и **не** ставит FPS P
 - Дальний шейдер всё ещё дешёвый subset vs полный `PlanetRelief` (WorldFill §5 / OS-A).
 - Нет атмосферы / облаков / входа.
 - OS-D: с ~2 км видны 3 unnamed пада + редкий scatter. Силуэт аванпоста — OS-G.
-- OS-E: near shader на чанках (albedo / декали / near LOD). Relief тот же. Нет аэродинамики — только S-sink.
+- OS-E: near shader на чанках (albedo / декали / near LOD). Relief тот же.
+- OS-F: подъём/планирование в плотном слое. S-sink геометрический. 770 м без крыла.
 - G2–G6 закрыты. `M` = тост locked. `Tab` = Clash sandbox.
 - Dummy MNULL=0 ≠ допуск. rules/25 на llvmpipe не подписывать.
 

@@ -2,7 +2,7 @@ extends RefCounted
 class_name ShipFlightModel
 ## Semi-Newtonian continuum flight helpers.
 ## Vacuum: low linear damp, full thrust.
-## Atmosphere: density scales drag + gravity feel; HOVER holds altitude.
+## Atmosphere: density scales drag + gravity feel + OS-F lift/glide; HOVER holds altitude.
 
 enum Mode { SCM, NAV, HOVER }
 
@@ -187,3 +187,24 @@ static func stall_sink_accel(g: Vector3, stall: float) -> Vector3:
 	if stall <= 0.01 or g.length() < 0.01:
 		return Vector3.ZERO
 	return g * stall * 0.9
+
+
+static func aero_lift_accel(velocity: Vector3, wing_up: Vector3, atmo: float, stall: float = 0.0) -> Vector3:
+	## OS-F: dynamic-pressure lift in the dense OS-B shell. Vacuum / thin
+	## 770 m envelope = 0. Force is perpendicular to airflow toward the wing
+	## (glide), never along-velocity thrust. Cap stays under hold-S (28).
+	## HOVER / hold-S skip this in ShipController — VTOL and inward sink stay.
+	if atmo < 0.18 or stall >= 0.92 or wing_up.length_squared() < 0.25:
+		return Vector3.ZERO
+	var spd: float = velocity.length()
+	if spd < 6.0:
+		return Vector3.ZERO
+	var up: Vector3 = wing_up.normalized()
+	var v_dir: Vector3 = velocity / spd
+	var lift_dir: Vector3 = up - v_dir * v_dir.dot(up)
+	if lift_dir.length_squared() < 0.05:
+		return Vector3.ZERO
+	lift_dir = lift_dir.normalized()
+	var live: float = clampf(1.0 - stall, 0.0, 1.0)
+	var lift: float = atmo * spd * spd * 0.0085 * live
+	return lift_dir * minf(lift, 18.0)
