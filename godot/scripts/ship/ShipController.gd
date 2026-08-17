@@ -88,15 +88,10 @@ func _ready() -> void:
 	_gq = get_node_or_null("/root/GraphicsQuality")
 	add_to_group("ship")
 	var hull := get_node_or_null("HullMesh") as MeshInstance3D
-	if hull:
-		if DisplayServer.get_name() == "headless":
-			var b := BoxMesh.new()
-			b.size = Vector3(2.0, 0.9, 3.2)
-			hull.mesh = b
-		else:
-			var prism := PrismMesh.new()
-			prism.size = Vector3(2.0, 0.9, 3.2)
-			hull.mesh = prism
+	if hull and DisplayServer.get_name() != "headless":
+		var prism := PrismMesh.new()
+		prism.size = Vector3(2.0, 0.9, 3.2)
+		hull.mesh = prism
 	_ensure_living_fx()
 	_ensure_nose_marker()
 	_ensure_shield_bubble()
@@ -530,7 +525,7 @@ func _physics_process(delta: float) -> void:
 	_update_status()
 
 func _update_status() -> void:
-	if status_label == null:
+	if status_label == null or DisplayServer.get_name() == "headless":
 		return
 	var opn := "SIEGE" if op_mode == 1 else ("SCAN" if op_mode == 2 else "CRUISE")
 	var txt := "%s  OP:%s  SPD %d  SHD %d  E %d  %s%s%s%s" % [

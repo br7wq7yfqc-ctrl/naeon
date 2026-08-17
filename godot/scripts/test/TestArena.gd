@@ -242,23 +242,24 @@ func _spawn_cover() -> void:
 		box.size = e[1]
 		cs.shape = box
 		body.add_child(cs)
-		var mi := MeshInstance3D.new()
-		var bm := BoxMesh.new()
-		bm.size = e[1]
-		mi.mesh = bm
-		mi.material_override = mat_a if i % 2 == 0 else mat_b
-		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-		body.add_child(mi)
-		var edge := MeshInstance3D.new()
-		var eb := BoxMesh.new()
-		eb.size = Vector3(e[1].x * 0.95, 0.06, e[1].z * 0.95)
-		edge.mesh = eb
-		edge.material_override = edge_a if i % 2 == 0 else edge_b
-		edge.position = Vector3(0, e[1].y * 0.5 + 0.02, 0)
-		edge.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		edge.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-		body.add_child(edge)
+		if DisplayServer.get_name() != "headless":
+			var mi := MeshInstance3D.new()
+			var bm := BoxMesh.new()
+			bm.size = e[1]
+			mi.mesh = bm
+			mi.material_override = mat_a if i % 2 == 0 else mat_b
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+			body.add_child(mi)
+			var edge := MeshInstance3D.new()
+			var eb := BoxMesh.new()
+			eb.size = Vector3(e[1].x * 0.95, 0.06, e[1].z * 0.95)
+			edge.mesh = eb
+			edge.material_override = edge_a if i % 2 == 0 else edge_b
+			edge.position = Vector3(0, e[1].y * 0.5 + 0.02, 0)
+			edge.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			edge.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+			body.add_child(edge)
 		root_c.add_child(body)
 	print("[TestArena] cover blocks ", n_spots)
 
@@ -305,19 +306,15 @@ func _spawn_claim_nodes() -> void:
 		own.set("dual_mesh_base", "props/claim_beacon/claim_beacon")
 		own.set("claimable", true)
 		n.add_child(own)
-		var mesh := MeshInstance3D.new()
-		mesh.name = "Mesh"
-		if DisplayServer.get_name() == "headless":
-			var beacon := BoxMesh.new()
-			beacon.size = Vector3(0.7, 1.6, 0.7)
-			mesh.mesh = beacon
-		else:
+		if DisplayServer.get_name() != "headless":
+			var mesh := MeshInstance3D.new()
+			mesh.name = "Mesh"
 			var cyl := CylinderMesh.new()
 			cyl.top_radius = 0.25
 			cyl.bottom_radius = 0.35
 			cyl.height = 1.6
 			mesh.mesh = cyl
-		own.add_child(mesh)
+			own.add_child(mesh)
 		add_child(n)
 		n.global_position = s[0]
 		if own.has_signal("fully_claimed"):

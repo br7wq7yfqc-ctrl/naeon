@@ -40,6 +40,10 @@ func rebase_now() -> void:
 	_apply_shift(-p)
 
 func _physics_process(_delta: float) -> void:
+	# Dummy: one rebase_now at boot. Mid-session shift walks mesh RIDs
+	# (Parameter m is null) and hitches the same slice as pad/chunk free.
+	if DisplayServer.get_name() == "headless":
+		return
 	if _target == null or not is_instance_valid(_target):
 		return
 	var p: Vector3 = _target.global_position

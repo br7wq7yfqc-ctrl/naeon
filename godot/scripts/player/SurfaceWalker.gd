@@ -210,18 +210,13 @@ func _ensure_rig() -> void:
 		_visual.name = "Visual"
 		add_child(_visual)
 	_body_mesh = _visual.get_node_or_null("BodyMesh") as MeshInstance3D
-	if _body_mesh == null:
+	if _body_mesh == null and DisplayServer.get_name() != "headless":
 		_body_mesh = MeshInstance3D.new()
 		_body_mesh.name = "BodyMesh"
-		if DisplayServer.get_name() == "headless":
-			var body_box := BoxMesh.new()
-			body_box.size = Vector3(0.76, 1.4, 0.76)
-			_body_mesh.mesh = body_box
-		else:
-			var cm := CapsuleMesh.new()
-			cm.radius = 0.38
-			cm.height = 1.4
-			_body_mesh.mesh = cm
+		var cm := CapsuleMesh.new()
+		cm.radius = 0.38
+		cm.height = 1.4
+		_body_mesh.mesh = cm
 		_body_mesh.position = Vector3(0, 0.95, 0)
 		var mat := StandardMaterial3D.new()
 		mat.albedo_color = Color(0.08, 0.14, 0.2)

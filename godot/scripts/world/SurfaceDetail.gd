@@ -34,11 +34,11 @@ var _load_ring: int = 1         ## chebyshev radius to keep loaded
 var _unload_ring: int = 2       ## hysteresis: keep until outside this
 var _res: int = DEFAULT_RES
 
-## cell -> MeshInstance3D currently in world
+## cell -> Node3D currently in world (MeshInstance3D on GPU)
 var _live: Dictionary = {}
-## free MeshInstance3D pool
+## free Node3D pool
 var _pool: Array = []
-## cell key "x,y" -> ArrayMesh cache
+## cell key "x,y" -> Mesh on GPU, true on dummy (count only)
 var _mesh_cache: Dictionary = {}
 ## FIFO keys for cache eviction
 var _mesh_cache_order: Array = []
@@ -256,6 +256,21 @@ func _park_all() -> void:
 
 
 func _spawn_cell(cell: Vector2i) -> void:
+	## Dummy cannot RID a MeshInstance. Keep a Node3D marker so live/cache
+	## counts still restore the ring (P0.1) without mesh_get_surface_count.
+	if DisplayServer.get_name() == "headless":
+		var marker: Node3D
+		if not _pool.is_empty():
+			marker = _pool.pop_back()
+		else:
+			marker = Node3D.new()
+			marker.name = "Chunk"
+			add_child(marker)
+		_mesh_for_cell(cell)
+		marker.visible = true
+		_live[cell] = marker
+		_refresh_xform(cell)
+		return
 	var mi: MeshInstance3D
 	if not _pool.is_empty():
 		mi = _pool.pop_back()
@@ -289,16 +304,16 @@ func _spawn_cell(cell: Vector2i) -> void:
 func _recycle(cell: Vector2i) -> void:
 	if not _live.has(cell):
 		return
-	var mi: MeshInstance3D = _live[cell]
+	var n: Node3D = _live[cell]
 	_live.erase(cell)
-	if mi == null or not is_instance_valid(mi):
+	if n == null or not is_instance_valid(n):
 		return
-	mi.visible = false
+	n.visible = false
 	# Cap pool — excess MeshInstance3D + mats were a soft leak
 	if _pool.size() < POOL_MAX:
-		_pool.append(mi)
+		_pool.append(n)
 	else:
-		mi.queue_free()
+		n.queue_free()
 
 
 func _trim_pool() -> void:
@@ -311,21 +326,19 @@ func _trim_pool() -> void:
 func _refresh_xform(cell: Vector2i) -> void:
 	if not _live.has(cell) or _planet == null:
 		return
-	var mi: MeshInstance3D = _live[cell]
-	mi.global_transform = _Math.cell_transform(_planet.global_position, _radius, cell, CELL_M, 0.35)
+	var n: Node3D = _live[cell]
+	n.global_transform = _Math.cell_transform(_planet.global_position, _radius, cell, CELL_M, 0.35)
 
 
-func _mesh_for_cell(cell: Vector2i) -> Mesh:
+func _mesh_for_cell(cell: Vector2i) -> Variant:
 	var key := _cache_key(cell)
 	if _mesh_cache.has(key):
 		return _mesh_cache[key]
-	var mesh: Mesh
+	var mesh
 	if DisplayServer.get_name() == "headless":
-		## Dummy cannot RID SurfaceTool ArrayMesh. Cache a box so restore
-		## still hits; heightfield stays on GPU / visible.
-		var b := BoxMesh.new()
-		b.size = Vector3(PATCH_SIZE, 0.35, PATCH_SIZE)
-		mesh = b
+		## Dummy cannot RID SurfaceTool ArrayMesh. Cache a sentinel so
+		## restore still hits; heightfield stays on GPU / visible.
+		mesh = true
 	else:
 		mesh = _build_height_mesh(cell)
 	_mesh_cache[key] = mesh

@@ -345,7 +345,9 @@ func _update_pads(dist: float) -> void:
 		# contested rings and guards for the rest of the session (rules/25 §2).
 		# Unload well past the build radius so orbiting the edge cannot thrash.
 		if _pads_built and dist > stream_d * 1.35:
-			_unload_pads()
+			# P0 one-pad slice: free is dummy m-is-null + hitch. Hide only.
+			if not (_P0.ACTIVE and _P0.ONE_PAD):
+				_unload_pads()
 
 func _unload_pads() -> void:
 	## Free the whole pad subtree and reset every flag the builder reads, so a
@@ -443,25 +445,28 @@ func _spawn_pad(pad_name: String, dir: Vector3) -> void:
 	var z := x.cross(y).normalized()
 	pad_root.transform = Transform3D(Basis(x, y, z), dir * (radius + 2.0))
 
-	var plate := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = Vector3(28, 1.2, 28)
-	plate.mesh = box
-	plate.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var pmat := StandardMaterial3D.new()
-	pmat.metallic = 0.55
-	pmat.roughness = 0.4
-	pmat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-	pmat.emission_enabled = true
-	if faction_base == "gROT":
-		pmat.albedo_color = Color(0.2, 0.05, 0.08)
-		pmat.emission = Color(0.9, 0.15, 0.3)
-	else:
-		pmat.albedo_color = Color(0.06, 0.1, 0.14)
-		pmat.emission = Color(0.2, 0.8, 1.0)
-	pmat.emission_energy_multiplier = 1.2
-	plate.material_override = pmat
-	pad_root.add_child(plate)
+	# Dummy mesh_storage errors on MeshInstance add/free. P0.2 still
+	# counts the pad by group + collision, not the plate RID.
+	if DisplayServer.get_name() != "headless":
+		var plate := MeshInstance3D.new()
+		var box := BoxMesh.new()
+		box.size = Vector3(28, 1.2, 28)
+		plate.mesh = box
+		plate.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var pmat := StandardMaterial3D.new()
+		pmat.metallic = 0.55
+		pmat.roughness = 0.4
+		pmat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+		pmat.emission_enabled = true
+		if faction_base == "gROT":
+			pmat.albedo_color = Color(0.2, 0.05, 0.08)
+			pmat.emission = Color(0.9, 0.15, 0.3)
+		else:
+			pmat.albedo_color = Color(0.06, 0.1, 0.14)
+			pmat.emission = Color(0.2, 0.8, 1.0)
+		pmat.emission_energy_multiplier = 1.2
+		plate.material_override = pmat
+		pad_root.add_child(plate)
 
 	var sb := StaticBody3D.new()
 	sb.collision_layer = 1
