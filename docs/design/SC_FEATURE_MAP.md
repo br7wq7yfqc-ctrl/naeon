@@ -28,7 +28,7 @@ Likeness — **вся** фантазия SC (лететь, стыковатьс�
 | 8 | Scanning / radar / ping | `soft_scan`; `SoftKnowledge`; `SoftScanCache`; HUD radar | метки / intel; V на паде | Knowledge может подписать (soft) | rarer fill; +DPS от скана |
 | 9 | Contracts / loops | SessionObjectives; Phase 3 Contract Board | boot-loop тексты; квестов нет | Phase 3; **миссии в этом PR не делать** | story=power |
 | 10 | Industry | RBE / biomass / Contribution / `Extractor` / `ResourceNode` / pad harvest | добыча на occupied unnamed паде; live Contribution/Biomass в OpenSpace HUD stack | ST-C later; не ST-A | P2W richer nodes |
-| 11 | Refuel / repair / restock | пады; occupy-to-hold refill SCM/HOVER; GLB pump/tank как проп | заправка с occupy; Knowledge подписывает насос, не скипает wait; empty ≠ hard lock | G1/G3 hyperdrive fuel later | paid skip |
+| 11 | Refuel / repair / restock | пады; occupy-to-hold refill SCM/HOVER; GLB pump/tank как проп | заправка + медленный repair + locker restock (energy / Pulse) с occupy; Knowledge подписывает насос/локер, не скипает wait; empty ≠ hard lock | G1/G3 hyperdrive fuel later | paid skip |
 | 12 | World composition | ARK authored (`StarSystemCatalog`); Nex-Prime / ROT-Hive / Shard-Moon; пояс authored | G0 layout жив; outposts = unnamed pads; `CityNightLights` ≠ город | пады unnamed; SITE_* позже из каталога; города ждут; погода после OS-B | сгенерированная галактика; SITE_* mint |
 | 13 | Traffic / AI | dummy / pad guard / Clash bots | 1 pad-guard dummy + 1 visiting hold на unnamed pad | Clash density later | generated galaxy traffic |
 | 14 | Combat | dummy + Clash/MOBA (нативно); бар Predecessor | TestArena / Aexion Clash / Turret | AR-A…AR-E **built**; **G5 закрыт** | арена-магазин; Arena Commander |

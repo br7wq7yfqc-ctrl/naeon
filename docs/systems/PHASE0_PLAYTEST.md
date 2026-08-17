@@ -118,3 +118,4 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 92. Occupied unnamed pad: live Contribution/Biomass on the OpenSpace HUD stack (ticks with harvest). Knowledge labels yield only. `--playtest-mechanics` asserts occupy→Contribution increased. Not ST-A.
 93. Surface Pulse after EVA snap: grounded walker on Relief fires existing Pulse Bolt at a gROT CombatDummy near the pad. Knowledge labels only — Pulse DPS stays 11. `--playtest-mechanics` asserts EVA-snap→Pulse-hit.
 94. Landing gear is a pad LAND gate: G toggles (SCM default up). SCM + gear up denies unnamed-pad land. HOVER near pad/surface auto-drops so OS-H E land still PASS. `--playtest-mechanics` asserts gear-down-before-land.
+95. Occupied unnamed pad locker restocks player energy / Pulse CDs (occupy wait, no cash). Knowledge labels the locker only. Fuel + module repair stay. `--playtest-mechanics` asserts occupy→energy-up.

@@ -14,6 +14,8 @@ mirror in the same commit.
 | Surface walker (`REGEN_WALKER`) | 8.0 |
 | Ship (`REGEN_SHIP`) | 8.0 |
 | Max pool (`MAX_DEFAULT`) | 100.0 |
+| Pad locker (`PAD_RESTOCK`) | 22.0 extra energy/s while occupying |
+| Pad Pulse (`PAD_PULSE_RESTOCK`) | 1.6 CD-s recovered per occupy-s |
 
 Walker regen is scaled by `InfectionStatus.energy_regen_mult()` (1.0 → 0.50 at
 3+ stacks) and cut to 25% while EVA thrusters are burning, so EVA is a real fuel
@@ -51,5 +53,7 @@ denied while landed or hull-critical.
   (that is the risk).
 - Economy rank and Knowledge never modify any number here (rules/08). Knowledge
   used to multiply ability damage; that was removed in the 2026-08-15 audit.
+- Occupied unnamed pad locker restocks energy / Pulse CDs at `PAD_RESTOCK` /
+  `PAD_PULSE_RESTOCK`. Knowledge labels the locker only — never a paid skip.
 
-Updated: 2026-08-15 (audit pass — mirror re-synced to the constants).
+Updated: 2026-08-17 (pad occupy restock).

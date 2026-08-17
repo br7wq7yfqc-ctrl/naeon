@@ -1727,6 +1727,15 @@ func spend_energy(amount: float) -> void:
 	energy = maxf(0.0, energy - amount)
 
 
+func needs_energy() -> bool:
+	return energy < max_energy - 0.05
+
+
+func restock_energy(amount: float) -> bool:
+	## Occupy locker fill for bolt energy. Knowledge never skips the wait.
+	return bool(_EE.restock(self, amount))
+
+
 
 func _ensure_soft_systems() -> void:
 	if get_node_or_null("SoftShipSystems"):

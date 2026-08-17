@@ -260,6 +260,17 @@ func _go() -> void:
 			await get_tree().process_frame
 			if walker2 and is_instance_valid(walker2) and pad is Node3D:
 				walker2.global_position = (pad as Node3D).global_position + Vector3(0, 4.0, 0)
+			var e0: float = -1.0
+			var pulse0: float = -1.0
+			if walker2 and is_instance_valid(walker2):
+				if "energy" in walker2:
+					walker2.set("energy", 12.0)
+					e0 = float(walker2.get("energy"))
+				var ab0 = walker2.get_node_or_null("AbilitySystem")
+				if ab0 and "abilities" in ab0 and ab0.abilities.size() > 0:
+					ab0.current_cooldowns[ab0.abilities[0]] = 5.0
+					if ab0.has_method("get_cooldown_remaining"):
+						pulse0 = float(ab0.get_cooldown_remaining(0))
 			var c0: float = float(GameManager.contribution) if GameManager else 0.0
 			await get_tree().create_timer(0.7).timeout
 			var c1: float = float(GameManager.contribution) if GameManager else 0.0
@@ -267,6 +278,7 @@ func _go() -> void:
 			if c1 <= c0 + 0.001:
 				fails.append("no harvest while owner in ring")
 			_assert_occupy_contrib(os, pad, c0, c1, fails)
+			_assert_occupy_energy(os, pad, walker2, e0, pulse0, fails)
 			if pad.has_method("harvest_hud_line"):
 				var hl0 := str(pad.harvest_hud_line())
 				print("[Playtest] harvest hud=", hl0)
@@ -2470,7 +2482,49 @@ func _assert_hud_stack(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] HUD stack ok fuel=", snap.get("fuel"), " cargo=", snap.get("cargo"),
 		" mod=", snap.get("module_tag"), " landed=", snap.get("landed"),
 		" occupy=", snap.get("occupy"), " eva=", snap.get("eva_mode"),
-		" econ=", snap.get("econ"))
+		" econ=", snap.get("econ"), " energy=", snap.get("energy"))
+
+
+func _assert_occupy_energy(os: Node, pad: Node, walker: Node, before: float, pulse_before: float, fails: PackedStringArray) -> void:
+	## occupy unnamed pad → locker restock (energy / Pulse). Not instant cash.
+	if walker == null or not is_instance_valid(walker):
+		fails.append("occupy→energy-up: no walker")
+		return
+	if before < 0.0 or not walker.has_method("restock_energy"):
+		fails.append("walker has no occupy restock API")
+		return
+	var after: float = float(walker.get("energy")) if "energy" in walker else -1.0
+	var pulse_after := -1.0
+	var ab = walker.get_node_or_null("AbilitySystem")
+	if ab and ab.has_method("get_cooldown_remaining"):
+		pulse_after = float(ab.get_cooldown_remaining(0))
+	print("[Playtest] occupy energy ", snapped(before, 0.1), " -> ", snapped(after, 0.1),
+		" pulse CD ", snapped(pulse_before, 0.1), " -> ", snapped(pulse_after, 0.1))
+	# Passive regen is 8/s (~5.6 in 0.7s). Locker restock is extra occupy wait.
+	if after <= before + 8.0:
+		fails.append("occupy did not restock energy (%s → %s)" % [
+			str(snapped(before, 0.1)), str(snapped(after, 0.1))
+		])
+	elif after >= 99.0:
+		fails.append("pad energy filled instantly (no occupy wait / paid skip)")
+	if pulse_before >= 4.5 and pulse_after >= 0.0 and pulse_after > pulse_before - 1.05:
+		fails.append("occupy did not restock Pulse charges (%s → %s)" % [
+			str(snapped(pulse_before, 0.1)), str(snapped(pulse_after, 0.1))
+		])
+	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
+	if Hud == null:
+		fails.append("occupy→energy-up HUD helper missing")
+		return
+	var snap: Dictionary = Hud.snapshot(os.get("ship") if os else null, walker, pad)
+	var hud_e := float(snap.get("energy", -1.0))
+	var stxt := str(Hud.stack_text(snap)).to_upper()
+	if hud_e <= before + 8.0:
+		fails.append("occupy→energy-up failed (HUD stack)")
+	if stxt.find("EN ") < 0:
+		fails.append("HUD stack missing energy while occupying")
+	if pad != null and pad.has_method("pad_restock_hud_line"):
+		var line := str(pad.pad_restock_hud_line())
+		print("[Playtest] restock hud=", line)
 
 
 func _assert_occupy_contrib(os: Node, pad: Node, before: float, after: float, fails: PackedStringArray) -> void:

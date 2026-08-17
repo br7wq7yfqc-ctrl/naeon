@@ -125,6 +125,15 @@ static func pump_label() -> String:
 	return "PUMP"
 
 
+## Logistics/combat: name the pad locker. Never skips the energy / Pulse wait.
+static func locker_label() -> String:
+	var logi := mastery("logistics")
+	var combat := mastery("combat")
+	if logi >= 15.0 or combat >= 15.0 or rank() >= 5:
+		return "RESTOCK LOCKER"
+	return "LOCKER"
+
+
 ## Logistics: name the crate. Never changes mass or value.
 static func crate_label() -> String:
 	var logi := mastery("logistics")

@@ -119,6 +119,20 @@ func get_cooldown_remaining(index: int) -> float:
 	var ability: Ability = abilities[index]
 	return current_cooldowns.get(ability, 0.0)
 
+
+func restock_cooldowns(amount: float) -> bool:
+	## Occupy locker: shave Pulse / kit CDs. Knowledge never changes this rate.
+	if amount <= 0.0:
+		return false
+	var any := false
+	for ability in current_cooldowns.keys():
+		var left: float = float(current_cooldowns[ability])
+		if left <= 0.01:
+			continue
+		current_cooldowns[ability] = maxf(0.0, left - amount)
+		any = true
+	return any
+
 func get_cooldown_ratio(index: int) -> float:
 	if index < 0 or index >= abilities.size() or abilities[index] == null:
 		return 0.0

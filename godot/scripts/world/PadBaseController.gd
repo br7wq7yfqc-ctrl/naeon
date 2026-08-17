@@ -34,6 +34,7 @@ var _occupy_in_t: float = 0.0
 var _occupy_label_t: float = 0.0
 var _repair_toast_t: float = 0.0
 var _refuel_toast_t: float = 0.0
+var _restock_toast_t: float = 0.0
 var _seeding: bool = false
 var _guard_respawn_t: float = 0.0
 var _cargo_units: Array = []
@@ -48,6 +49,8 @@ const ARENA_INFLUENCE_MAX := 0.30
 const ARENA_INFLUENCE_DECAY := 0.0005  # ~10 min back to zero
 const PAD_REPAIR_RATE := 2.5  # module HP/s — occupy-to-hold time, not cash skip
 const PAD_REFUEL_RATE := 18.0  # tank/s — occupy wait; Knowledge never skips
+const PAD_RESTOCK_RATE := 22.0  # EnergyEconomy.PAD_RESTOCK — occupy wait; Knowledge never skips
+const PAD_PULSE_RESTOCK := 1.6  # EnergyEconomy.PAD_PULSE_RESTOCK — Pulse CD / occupy-s
 const PAD_YARD_SEED := 2
 const PAD_YARD_CAP := 6
 
@@ -143,6 +146,7 @@ func _process(delta: float) -> void:
 		_tick_harvest(delta)
 		_tick_pad_repair(delta)
 		_tick_pad_refuel(delta)
+		_tick_pad_restock(delta)
 	else:
 		if _status == "extracting":
 			_status = "owned"
@@ -711,6 +715,25 @@ func pad_refuel_hud_line() -> String:
 	return "%s %.0f/%.0f (occupy, no cash)" % [_SoftK.pump_label(), f, mx]
 
 
+func pad_restock_hud_line() -> String:
+	var actor := _restock_actor()
+	if actor == null:
+		return ""
+	var need_en := false
+	if actor.has_method("needs_energy"):
+		need_en = bool(actor.needs_energy())
+	elif EnergyEconomy.needs_energy(actor):
+		need_en = true
+	var pulse_cd := _pulse_cd_left(actor)
+	if not need_en and pulse_cd <= 0.05:
+		return ""
+	var e: float = float(actor.get("energy")) if "energy" in actor else 0.0
+	var mx: float = float(actor.get("max_energy")) if "max_energy" in actor else EnergyEconomy.MAX_DEFAULT
+	if pulse_cd > 0.05:
+		return "%s EN %.0f/%.0f  Pulse %.1fs (occupy, no cash)" % [_SoftK.locker_label(), e, mx, pulse_cd]
+	return "%s EN %.0f/%.0f (occupy, no cash)" % [_SoftK.locker_label(), e, mx]
+
+
 func pad_cargo_hud_line() -> String:
 	if _cargo_units.is_empty() and _landed_own_ship() == null:
 		return ""
@@ -833,6 +856,66 @@ func _tick_pad_refuel(delta: float) -> void:
 			_notify_hud("%s — occupy to fill, no cash skip" % _SoftK.pump_label())
 	else:
 		_refuel_toast_t = 0.0
+
+
+func _tick_pad_restock(delta: float) -> void:
+	## Occupy locker: player energy + Pulse CDs. Not instant cash. Knowledge labels only.
+	var did := false
+	var actor := _restock_actor()
+	if actor != null:
+		if actor.has_method("restock_energy"):
+			if bool(actor.restock_energy(PAD_RESTOCK_RATE * delta)):
+				did = true
+		elif EnergyEconomy.restock(actor, PAD_RESTOCK_RATE * delta):
+			did = true
+		if actor.has_method("restock_pulse"):
+			if bool(actor.restock_pulse(PAD_PULSE_RESTOCK * delta)):
+				did = true
+		else:
+			var ab = actor.get_node_or_null("AbilitySystem") if actor.has_method("get_node_or_null") else null
+			if ab != null and ab.has_method("restock_cooldowns"):
+				if bool(ab.restock_cooldowns(PAD_PULSE_RESTOCK * delta)):
+					did = true
+	var ship := _landed_own_ship()
+	if ship != null and ship != actor:
+		if ship.has_method("restock_energy"):
+			if bool(ship.restock_energy(PAD_RESTOCK_RATE * delta)):
+				did = true
+		elif EnergyEconomy.restock(ship, PAD_RESTOCK_RATE * delta):
+			did = true
+	if did:
+		_restock_toast_t += delta
+		if _restock_toast_t >= 2.4:
+			_restock_toast_t = 0.0
+			_notify_hud("%s — occupy to restock, no cash skip" % _SoftK.locker_label())
+	else:
+		_restock_toast_t = 0.0
+
+
+func _restock_actor() -> Node:
+	if ownership == null or not ownership.is_fully_owned():
+		return null
+	var own_fac := ownership.faction_name()
+	var actor := _find_actor()
+	if actor != null and is_instance_valid(actor) \
+		and actor.global_position.distance_to(global_position) <= claim_radius:
+		var pfac := "Cybernex"
+		if actor.has_method("get_faction"):
+			pfac = str(actor.get_faction())
+		elif GameManager:
+			pfac = GameManager.get_faction_name()
+		if pfac == own_fac:
+			return actor
+	return null
+
+
+func _pulse_cd_left(actor: Node) -> float:
+	if actor == null:
+		return 0.0
+	var ab = actor.get_node_or_null("AbilitySystem") if actor.has_method("get_node_or_null") else null
+	if ab == null or not ab.has_method("get_cooldown_remaining"):
+		return 0.0
+	return float(ab.get_cooldown_remaining(0))
 
 
 func get_occupy_strength() -> float:
@@ -1179,8 +1262,8 @@ func soft_scan() -> String:
 	## V intel: ownership + reserves. Soft Knowledge only (no combat power).
 	var fac := ownership.faction_name() if ownership else "Neutral"
 	var stren := ownership.claim_strength if ownership else 0.0
-	var line := "Pad scan: %s  claim=%.2f  reserves=%.0f  %s  %s×%d (soft intel)" % [
-		fac, stren, crystal_reserves, _SoftK.pump_label(),
+	var line := "Pad scan: %s  claim=%.2f  reserves=%.0f  %s  %s  %s×%d (soft intel)" % [
+		fac, stren, crystal_reserves, _SoftK.pump_label(), _SoftK.locker_label(),
 		_SoftK.crate_label(), _cargo_units.size(),
 	]
 	_notify_hud(line)
