@@ -835,7 +835,7 @@ func _update_hud() -> void:
 		extra = "  ·  " + str(_interior.life_support_line())
 	elif _in_ship:
 		if bool(ship.get("is_landed")):
-			extra = "  ·  LANDED — 6 rover · 7 store · 9/0 cargo · F EVA · C claim"
+			extra = "  ·  LANDED"
 		else:
 			if ship.has_method("get_stall") and float(ship.get_stall()) > 0.4:
 				extra = "  ·  STALL %.0f%%" % (float(ship.get_stall()) * 100.0)

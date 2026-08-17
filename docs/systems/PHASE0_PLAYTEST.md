@@ -114,3 +114,4 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 88. Ship as place: I from seat → pocket → walk a real door/airlock → F seat (or I hatch → EVA). No fake locked doors. `--playtest-mechanics` asserts seat→pocket→seat.
 89. Cargo dock on an occupied unnamed pad: land/occupy, transfer one crate pad↔`CargoHold` (ramp if present, no tractor). Knowledge labels the crate only — mass/value stay. `--playtest-mechanics` asserts occupy→one-unit.
 90. Pad traffic: one CombatDummy guard + one visiting hull hold on an occupied unnamed pad. Knowledge labels only. `--playtest-mechanics` asserts pad traffic present.
+91. OpenSpace play HUD: one left stack (fuel, cargo count, worst module, landed/occupy, EVA/0G). GFX/FPS/OBJECTIVE stay right/center; Clash HUD unchanged. Helper asserted in `--playtest-mechanics` / `--playtest-ritual`.

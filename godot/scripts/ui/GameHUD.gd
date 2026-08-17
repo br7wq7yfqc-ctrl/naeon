@@ -2,6 +2,7 @@ extends CanvasLayer
 class_name GameHUD
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 const _AllianceRanks = preload("res://scripts/systems/AllianceRanks.gd")
+const _OsStack = preload("res://scripts/ui/OpenSpaceHudStack.gd")
 ## Readable dark-neon HUD: abilities, infection, contested banner, mastery, toasts.
 ## Threat colours universal; faction skin does not hide red/green meaning.
 
@@ -56,6 +57,7 @@ var _pips: Array = []
 var _chrome_built: bool = false
 var _gfx_name: String = "?"
 var _gfx_mem_mb: int = 0
+var _os_stack: Label
 
 func _ready() -> void:
 	layer = 20
@@ -166,6 +168,18 @@ func _build() -> void:
 	_econ_bar.show_percentage = false
 	_econ_bar.modulate = Color(0.4, 0.95, 0.7)
 	_root.add_child(_econ_bar)
+
+	# OpenSpace play stack: below Hint (y=80–140), left of GFX/FPS/OBJECTIVE.
+	# P0.3/P0.4: do not sit on the no-P2W row (y=40) or the right GFX chip.
+	_os_stack = Label.new()
+	_os_stack.position = Vector2(14, 148)
+	_os_stack.add_theme_font_size_override("font_size", 13)
+	_os_stack.add_theme_color_override("font_color", Color(0.78, 0.94, 1.0, 0.95))
+	_os_stack.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	_os_stack.add_theme_constant_override("outline_size", 4)
+	_os_stack.text = ""
+	_os_stack.visible = false
+	_root.add_child(_os_stack)
 
 	_layer_label = Label.new()
 	_layer_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -453,6 +467,8 @@ func _apply_interior_chrome(pocket: bool) -> void:
 		_edu_label.visible = false
 	if _ctx_label:
 		_ctx_label.visible = false
+	if _os_stack:
+		_os_stack.visible = false
 
 
 func _in_clash_arena() -> bool:
@@ -497,6 +513,21 @@ func _apply_clash_chrome() -> void:
 		_econ_label.visible = false
 	if _econ_bar:
 		_econ_bar.visible = false
+	if _os_stack:
+		_os_stack.visible = false
+
+
+func _in_openspace() -> bool:
+	var tree := get_tree()
+	if tree == null:
+		return false
+	return tree.get_first_node_in_group("open_space") != null
+
+
+func _os_stack_should_show(pocket: bool) -> bool:
+	if pocket or _debug_overlay or _in_clash_arena():
+		return false
+	return _in_openspace()
 
 
 func _refresh() -> void:
@@ -702,6 +733,7 @@ func _refresh() -> void:
 	var nearest := ""
 	var contested_near := false
 	var claim_ratio := 0.0
+	var nearest_pad: Node = null
 	var tree := get_tree()
 	if not pocket and tree and _player and _player is Node3D:
 		var best_d := 80.0
@@ -711,6 +743,7 @@ func _refresh() -> void:
 				var d: float = (_player as Node3D).global_position.distance_to((n as Node3D).global_position)
 				if d < best_d:
 					best_d = d
+					nearest_pad = n
 					var need := 1.75
 					if n.has_method("get_claim_need"):
 						need = float(n.get_claim_need())
@@ -731,24 +764,6 @@ func _refresh() -> void:
 					elif st == "extracting" and n.has_method("harvest_hud_line"):
 						var hl := str(n.harvest_hud_line())
 						best_txt = "PAD %s  %s  (%.0fm)" % [n.get_faction(), hl, d] if hl != "" else "PAD %s  extracting  (%.0fm)" % [n.get_faction(), d]
-					elif n.has_method("pad_repair_hud_line") or n.has_method("pad_refuel_hud_line") or n.has_method("pad_cargo_hud_line"):
-						var svc: PackedStringArray = PackedStringArray()
-						if n.has_method("pad_repair_hud_line"):
-							var rl := str(n.pad_repair_hud_line())
-							if rl != "":
-								svc.append(rl)
-						if n.has_method("pad_refuel_hud_line"):
-							var fl := str(n.pad_refuel_hud_line())
-							if fl != "":
-								svc.append(fl)
-						if n.has_method("pad_cargo_hud_line"):
-							var cl := str(n.pad_cargo_hud_line())
-							if cl != "":
-								svc.append(cl)
-						if svc.size() > 0:
-							best_txt = "PAD %s  %s  (%.0fm)" % [n.get_faction(), "  ·  ".join(svc), d]
-						else:
-							best_txt = "PAD %s  %s  claim %.0f%%  (%.0fm)" % [n.get_faction(), st, claim_ratio * 100.0, d]
 					else:
 						best_txt = "PAD %s  %s  claim %.0f%%  (%.0fm)" % [n.get_faction(), st, claim_ratio * 100.0, d]
 					if st == "contested" or str(n.get_faction()) == "Contested":
@@ -861,8 +876,24 @@ func _refresh() -> void:
 				_:
 					dot.color = Color(0.7, 0.7, 0.75)
 			dot.visible = true
+	_refresh_os_stack(pocket, nearest_pad)
 	_apply_interior_chrome(pocket)
 	_apply_clash_chrome()
+
+func _refresh_os_stack(pocket: bool, pad: Node) -> void:
+	if _os_stack == null:
+		return
+	var show := _os_stack_should_show(pocket)
+	_os_stack.visible = show
+	if not show:
+		return
+	var ship_n: Node = null
+	var tree_s := get_tree()
+	if tree_s:
+		ship_n = tree_s.get_first_node_in_group("ship")
+	var snap: Dictionary = _OsStack.snapshot(ship_n, _player, pad)
+	_os_stack.text = _OsStack.stack_text(snap)
+
 
 func _on_gm_toast(msg: String) -> void:
 	push_toast(msg, 3.0)
@@ -1151,6 +1182,8 @@ func _apply_debug_vis() -> void:
 		if tree and tree.current_scene:
 			clash = str(tree.current_scene.name) == "TestArena"
 		_radar.visible = (not clash) or dbg
+	if _os_stack and dbg:
+		_os_stack.visible = false
 
 
 func _refresh_play_chrome() -> void:

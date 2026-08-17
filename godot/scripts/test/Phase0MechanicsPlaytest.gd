@@ -39,6 +39,7 @@ func _go() -> void:
 	print("[Playtest] OS-C boot AGL=", snapped(osc_spawn_agl, 0.1))
 	# OS-H uses the real boot altitude. Do not teleport past a step.
 	await _osh_ritual(fails)
+	_assert_hud_stack(os, fails)
 	if _ritual_only:
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
@@ -2216,6 +2217,35 @@ func _rover_pick_unnamed_pad(os: Node) -> Dictionary:
 			continue
 		return {"deck": deck, "ctrl": pad, "planet": pl if pl != null else nex}
 	return {"deck": null, "ctrl": null, "planet": nex}
+
+
+func _assert_hud_stack(os: Node, fails: PackedStringArray) -> void:
+	## Presentation helper only — no gameplay, no SITE_*, no number changes.
+	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
+	if Hud == null:
+		fails.append("HUD helper missing")
+		return
+	var pad: Node = null
+	var tree := get_tree()
+	if tree:
+		var pads: Array = tree.get_nodes_in_group("pad_bases")
+		if not pads.is_empty():
+			pad = pads[0]
+	var empty: Dictionary = Hud.snapshot(null, null, null)
+	if not bool(Hud.has_fields(empty)):
+		fails.append("HUD helper null snapshot missing fields")
+		return
+	var snap: Dictionary = Hud.snapshot(os.get("ship") if os else null, os.get("player") if os else null, pad)
+	if not bool(Hud.has_fields(snap)):
+		fails.append("HUD helper missing fields")
+		return
+	var txt := str(Hud.stack_text(snap))
+	if txt == "":
+		fails.append("HUD helper stack_text empty")
+		return
+	print("[Playtest] HUD stack ok fuel=", snap.get("fuel"), " cargo=", snap.get("cargo"),
+		" mod=", snap.get("module_tag"), " landed=", snap.get("landed"),
+		" occupy=", snap.get("occupy"), " eva=", snap.get("eva_mode"))
 
 
 func _osh_report_skips(fails: PackedStringArray, done: Dictionary, required: PackedStringArray) -> void:
