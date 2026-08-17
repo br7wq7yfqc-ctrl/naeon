@@ -303,12 +303,25 @@ func _go() -> void:
 					fails.append("ship did not land on pad")
 				else:
 					# Walker is still 420m out; landed owning ship should keep the extractor on.
+					if "fuel" in land_ship:
+						land_ship.set("fuel", 12.0)
+					var f0: float = float(land_ship.get("fuel")) if "fuel" in land_ship else -1.0
 					var c4: float = float(GameManager.contribution) if GameManager else 0.0
 					await get_tree().create_timer(0.7).timeout
 					var c5: float = float(GameManager.contribution) if GameManager else 0.0
 					print("[Playtest] harvest landed-ship ", snapped(c4, 0.01), " -> ", snapped(c5, 0.01), " status=", pad.get_claim_status() if pad.has_method("get_claim_status") else "?")
 					if c5 <= c4 + 0.001:
 						fails.append("no harvest while owning ship is landed")
+					var f1: float = float(land_ship.get("fuel")) if "fuel" in land_ship else -1.0
+					print("[Playtest] occupy fuel ", snapped(f0, 0.1), " -> ", snapped(f1, 0.1))
+					if f0 < 0.0 or not land_ship.has_method("refuel"):
+						fails.append("ship has no occupy refuel API")
+					elif f1 <= f0 + 0.5:
+						fails.append("occupy did not refuel the ship (%s → %s)" % [
+							str(snapped(f0, 0.1)), str(snapped(f1, 0.1))
+						])
+					elif f1 >= 99.0:
+						fails.append("pad fuel filled instantly (no occupy wait / paid skip)")
 					if land_ship.has_method("_do_launch"):
 						land_ship.set("_land_lock_t", 0.0)
 						land_ship._do_launch()
@@ -494,6 +507,25 @@ func _go() -> void:
 			fails.append("module damage cut hull HP")
 		if sh_m.has_method("repair_modules"):
 			sh_m.repair_modules(999.0)
+		# Empty fuel: no afterburn, limited thrust — not a hard lock (OS-H).
+		if "fuel" in sh_m:
+			sh_m.set("fuel", 0.0)
+			sh_m.set("_hull_crit_t", 0.0)
+			sh_m.set("op_mode", 0)
+			if sh_m.has_method("_set_mode"):
+				sh_m._set_mode(0)
+			if sh_m.has_method("_tick_afterburn"):
+				sh_m._tick_afterburn(0.05, true)
+				if bool(sh_m.get("_burn_on")):
+					fails.append("empty fuel still afterburned")
+			if sh_m.has_method("_thrust_mult"):
+				var tm: float = float(sh_m._thrust_mult())
+				print("[Playtest] empty-fuel thrust_mult=", snapped(tm, 0.01))
+				if tm <= 0.01:
+					fails.append("empty fuel hard-locked thrust")
+				elif tm > 0.95:
+					fails.append("empty fuel did not limit thrust")
+			sh_m.set("fuel", float(sh_m.get("max_fuel")) if "max_fuel" in sh_m else 100.0)
 
 	await _zero_g_eva_near_ship(fails)
 

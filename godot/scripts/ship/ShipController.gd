@@ -41,6 +41,8 @@ var shields: float = 40.0
 var max_shields: float = 40.0
 var energy: float = 100.0
 var max_energy: float = 100.0
+var fuel: float = 100.0
+var max_fuel: float = 100.0
 var cargo: float = 0.0
 var max_cargo: float = 20.0
 var _pitch: float = 0.0
@@ -83,6 +85,12 @@ const _HULL_CRIT_T := 1.8
 const _HULL_CRIT_THRUST := 0.45
 const _HULL_CRIT_ENERGY := 0.35
 const _HULL_CRIT_HP := 0.35
+# SCM/HOVER tank — not G1 CRUISE / G3 hyperdrive. Empty limits thrust; no hard lock.
+const _FUEL_BURN := 1.8
+const _FUEL_BURN_AFTER := 4.0
+const _FUEL_EMPTY_THRUST := 0.42
+const _FUEL_EMPTY_FLOOR := 0.05
+var _fuel_toast_t: float = 0.0
 
 func _ready() -> void:
 	_gq = get_node_or_null("/root/GraphicsQuality")
@@ -263,6 +271,8 @@ func _thrust_mult() -> float:
 		m *= 0.7
 	if _hull_crit_t > 0.0:
 		m *= _HULL_CRIT_THRUST
+	if fuel_starved():
+		m *= _FUEL_EMPTY_THRUST
 	if _burn_on:
 		m *= 1.55
 	return m
@@ -451,6 +461,7 @@ func _physics_process(delta: float) -> void:
 		or (InputMap.has_action("sprint") and Input.is_action_pressed("sprint"))
 	)
 	_tick_afterburn(delta, want_burn)
+	_tick_fuel(delta, axes)
 	var thrust: float = (base_thrust + _module_thrust()) * _thrust_mult()
 	var forward: Vector3 = -global_transform.basis.z
 	var right: Vector3 = global_transform.basis.x
@@ -594,8 +605,8 @@ func _update_status() -> void:
 	var mod := ""
 	if modules_need_repair():
 		mod = "  " + module_hp_line()
-	var txt := "%s  OP:%s  SPD %d  SHD %d  E %d  %s%s%s%s%s" % [
-		flight_mode_name(), opn, int(velocity.length()), int(shields), int(energy),
+	var txt := "%s  OP:%s  SPD %d  SHD %d  E %d  F %d  %s%s%s%s%s" % [
+		flight_mode_name(), opn, int(velocity.length()), int(shields), int(energy), int(fuel),
 		("LANDED" if is_landed else "FLIGHT"),
 		("  STALL" if _stall > 0.35 else ""),
 		("  HULL CRIT" if _hull_crit_t > 0.0 else ""),
@@ -756,17 +767,58 @@ func _recompute_stats() -> void:
 	shields = min(shields, max_shields)
 	cargo = min(cargo, max_cargo)
 
+func fuel_starved() -> bool:
+	return fuel <= _FUEL_EMPTY_FLOOR
+
+
+func needs_fuel() -> bool:
+	return fuel < max_fuel - 0.05
+
+
+func get_fuel() -> float:
+	return fuel
+
+
+func refuel(amount: float) -> bool:
+	## Occupy-to-hold pad fill. Knowledge may label the pump; it never skips this.
+	if amount <= 0.0 or fuel >= max_fuel - 0.01:
+		return false
+	fuel = minf(max_fuel, fuel + amount)
+	return true
+
+
+func _tick_fuel(delta: float, axes: Vector3) -> void:
+	## Modest SCM/HOVER spend. NAV is free in this slice (G1 CRUISE stays closed).
+	if is_landed or delta <= 0.0:
+		return
+	if flight_mode != FlightMode.SCM and flight_mode != FlightMode.HOVER:
+		return
+	var demand: float = absf(axes.z) + absf(axes.x) * 0.5 + absf(axes.y) * 0.4
+	if demand < 0.08:
+		return
+	fuel = maxf(0.0, fuel - _FUEL_BURN * demand * delta)
+	if fuel_starved():
+		_fuel_toast_t -= delta
+		if _fuel_toast_t <= 0.0:
+			_fuel_toast_t = 3.2
+			_toast_ship("FUEL EMPTY — limited thrust, no afterburn (occupy pad to fill)")
+
+
 func _tick_afterburn(delta: float, want: bool) -> void:
 	var was_on := _burn_on
 	_burn_on = false
-	if not want or is_landed or _hull_crit_t > 0.0:
+	if not want or is_landed or _hull_crit_t > 0.0 or fuel_starved():
 		return
 	var cost: float = 16.0 * delta
+	var fcost: float = _FUEL_BURN_AFTER * delta
 	# Hysteresis: without a floor the burn strobes every frame near empty,
 	# because regen refunds part of the spend.
 	if energy < cost or (not was_on and energy < 18.0):
 		return
+	if fuel < fcost:
+		return
 	energy -= cost
+	fuel = maxf(0.0, fuel - fcost)
 	_burn_on = true
 
 func _tick_ship_recovery(delta: float) -> void:
@@ -1692,8 +1744,13 @@ func get_op_mode_name() -> String:
 
 func get_flight_status_line() -> String:
 	if is_landed:
-		return "%s · SPD 0 · LANDED — Space/E takeoff · F EVA · C claim" % flight_mode_name()
-	var st := "%s · %s · SPD %d" % [flight_mode_name(), get_op_mode_name(), int(velocity.length())]
+		var land := "%s · SPD 0 · LANDED — Space/E takeoff · F EVA · C claim" % flight_mode_name()
+		if needs_fuel():
+			land += "  ·  F %.0f/%.0f occupy refill" % [fuel, max_fuel]
+		return land
+	var st := "%s · %s · SPD %d · F %.0f" % [flight_mode_name(), get_op_mode_name(), int(velocity.length()), fuel]
+	if fuel_starved():
+		st += " · FUEL LOW"
 	if _stall > 0.28:
 		st += " · STALL %.0f%%" % (_stall * 100.0)
 	elif _atmo_now() >= 0.18 and velocity.length() > 12.0 and flight_mode != FlightMode.HOVER:

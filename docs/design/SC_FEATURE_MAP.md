@@ -18,7 +18,7 @@ Likeness — **вся** фантазия SC (лететь, стыковатьс�
 
 | # | Роль SC | Эквивалент NAEON | Сейчас | Next | Отказ |
 |---|---------|------------------|--------|------|-------|
-| 1 | Flight / IFCS (SCM, NAV/quantum, decoupled, gear, VTOL/hover, boost, fuel) | `ShipController` SCM / NAV / HOVER / STALL / LAND; `ShipFlightModel`; afterburn W+Shift; `ShipLandingGear` visual | SCM/NAV/HOVER/STALL/LAND живы; gear visual; decoupled нет; топливо — проп пада, не расход | G1 CRUISE **закрыт** (OS-C без сверхсвета); quantum / interdiction ждать G1/G3 | клон IFCS; G3 сейчас; P2W-топливо |
+| 1 | Flight / IFCS (SCM, NAV/quantum, decoupled, gear, VTOL/hover, boost, fuel) | `ShipController` SCM / NAV / HOVER / STALL / LAND; `ShipFlightModel`; afterburn W+Shift; `ShipLandingGear` visual | SCM/NAV/HOVER/STALL/LAND живы; gear visual; decoupled нет; топливо SCM/HOVER расход; empty = limited thrust / no afterburn | G1 CRUISE **закрыт** (OS-C без сверхсвета); quantum / interdiction ждать G1/G3 | клон IFCS; G3 сейчас; P2W-топливо |
 | 2 | Atmosphere / planet approach | бар OS-A…OS-H; шейдеры лимба/дымки | OS-A шов; OS-B оболочка; OS-C старт 8 км; OS-D unnamed fill; OS-E near read; OS-F lift/glide; OS-G силуэт; OS-H harness ритуала | 60 FPS / 5 мин soak на 3090 (human gate) | Planet Tech V5; воксельная оболочка |
 | 3 | Ship as place (interior, seats, multi-crew) | `InteriorDirector` / `InteriorGenerator`; Seat; F seat→pilot | pocket + двери + Seat живы; multi-crew нет | после OS-A green; Phase 2 multi-crew | фейковые двери |
 | 4 | Ship engineering (power/cool/life, component HP) | модульный hull + `ShipModule` (engine/weapon/shield/cargo/extractor); hull-crit recover | модули HP (integrity→thrust/weapon/shield); hull HP; шины power/cool/life нет | шины power/cool later; life-support уже в pocket | pay-to-repair |
@@ -28,7 +28,7 @@ Likeness — **вся** фантазия SC (лететь, стыковатьс�
 | 8 | Scanning / radar / ping | `soft_scan`; `SoftKnowledge`; `SoftScanCache`; HUD radar | метки / intel; V на паде | Knowledge может подписать (soft) | rarer fill; +DPS от скана |
 | 9 | Contracts / loops | SessionObjectives; Phase 3 Contract Board | boot-loop тексты; квестов нет | Phase 3; **миссии в этом PR не делать** | story=power |
 | 10 | Industry | RBE / biomass / Contribution / `Extractor` / `ResourceNode` / pad harvest | добыча на occupied паде; Contribution | Phase 1.3 полировка | P2W richer nodes |
-| 11 | Refuel / repair / restock | пады; GLB pump/tank как проп | визуал; функциональной заправки нет | пады; G1 топливо после OS-C | paid skip |
+| 11 | Refuel / repair / restock | пады; occupy-to-hold refill SCM/HOVER; GLB pump/tank как проп | заправка с occupy; Knowledge подписывает насос, не скипает wait; empty ≠ hard lock | G1/G3 hyperdrive fuel later | paid skip |
 | 12 | World composition | ARK authored (`StarSystemCatalog`); Nex-Prime / ROT-Hive / Shard-Moon; пояс authored | G0 layout жив; outposts = unnamed pads; `CityNightLights` ≠ город | пады unnamed; SITE_* позже из каталога; города ждут; погода после OS-B | сгенерированная галактика; SITE_* mint |
 | 13 | Traffic / AI | dummy / pad guard / Clash bots | бой и охрана пада | после читаемой планеты (OS-A/E) | generated galaxy traffic |
 | 14 | Combat | dummy + Clash/MOBA (нативно); бар Predecessor | TestArena / Aexion Clash / Turret | AR-A…AR-E **built**; **G5 закрыт** | арена-магазин; Arena Commander |

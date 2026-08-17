@@ -98,6 +98,14 @@ static func structure_tip(faction: String) -> String:
 		return "Lore: Nex pads recover claim if Extraction uninterrupted"
 	return ""
 
+## Logistics: name the pad pump. Never changes refill rate or skips the wait.
+static func pump_label() -> String:
+	var logi := mastery("logistics")
+	if logi >= 15.0 or rank() >= 5:
+		return "REFUEL PUMP"
+	return "PUMP"
+
+
 ## Logistics: resource warning threshold earlier (QoL)
 static func low_energy_threshold() -> float:
 	var logi := mastery("logistics")

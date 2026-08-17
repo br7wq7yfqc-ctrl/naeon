@@ -32,6 +32,7 @@ var _guard: Node3D = null
 var _occupy_in_t: float = 0.0
 var _occupy_label_t: float = 0.0
 var _repair_toast_t: float = 0.0
+var _refuel_toast_t: float = 0.0
 var _seeding: bool = false
 var _guard_respawn_t: float = 0.0
 
@@ -44,6 +45,7 @@ const HACK_STR := 0.22
 const ARENA_INFLUENCE_MAX := 0.30
 const ARENA_INFLUENCE_DECAY := 0.0005  # ~10 min back to zero
 const PAD_REPAIR_RATE := 2.5  # module HP/s — occupy-to-hold time, not cash skip
+const PAD_REFUEL_RATE := 18.0  # tank/s — occupy wait; Knowledge never skips
 
 func _ready() -> void:
 	add_to_group("pad_base")
@@ -135,6 +137,7 @@ func _process(delta: float) -> void:
 	if running and ownership and ownership.is_fully_owned() and _status != "contested" and _owner_in_zone():
 		_tick_harvest(delta)
 		_tick_pad_repair(delta)
+		_tick_pad_refuel(delta)
 	else:
 		if _status == "extracting":
 			_status = "owned"
@@ -679,6 +682,9 @@ func harvest_hud_line() -> String:
 	var repair := pad_repair_hud_line()
 	if repair != "":
 		line += "  ·  " + repair
+	var refuel := pad_refuel_hud_line()
+	if refuel != "":
+		line += "  ·  " + refuel
 	return line
 
 
@@ -690,6 +696,21 @@ func pad_repair_hud_line() -> String:
 		return ""
 	var mods := str(ship.module_hp_line()) if ship.has_method("module_hp_line") else ""
 	return "REPAIR %s (occupy, no cash)" % mods if mods != "" else "REPAIR (occupy, no cash)"
+
+
+func pad_refuel_hud_line() -> String:
+	var ship := _landed_own_ship()
+	if ship == null:
+		return ""
+	if ship.has_method("needs_fuel") and not bool(ship.needs_fuel()):
+		return ""
+	if not ("fuel" in ship):
+		return ""
+	var f: float = float(ship.get("fuel"))
+	var mx: float = float(ship.get("max_fuel")) if "max_fuel" in ship else 100.0
+	if f >= mx - 0.05:
+		return ""
+	return "%s %.0f/%.0f (occupy, no cash)" % [_SoftK.pump_label(), f, mx]
 
 
 func _landed_own_ship() -> Node:
@@ -727,6 +748,22 @@ func _tick_pad_repair(delta: float) -> void:
 			_notify_hud("PAD REPAIR — occupy to hold, no cash skip")
 	else:
 		_repair_toast_t = 0.0
+
+
+func _tick_pad_refuel(delta: float) -> void:
+	## Occupy-to-hold fill. Knowledge labels the pump; it never changes this rate.
+	var ship := _landed_own_ship()
+	if ship == null or not ship.has_method("refuel"):
+		return
+	if ship.has_method("needs_fuel") and not bool(ship.needs_fuel()):
+		return
+	if bool(ship.refuel(PAD_REFUEL_RATE * delta)):
+		_refuel_toast_t += delta
+		if _refuel_toast_t >= 2.4:
+			_refuel_toast_t = 0.0
+			_notify_hud("%s — occupy to fill, no cash skip" % _SoftK.pump_label())
+	else:
+		_refuel_toast_t = 0.0
 
 
 func get_occupy_strength() -> float:
@@ -1073,7 +1110,9 @@ func soft_scan() -> String:
 	## V intel: ownership + reserves. Soft Knowledge only (no combat power).
 	var fac := ownership.faction_name() if ownership else "Neutral"
 	var stren := ownership.claim_strength if ownership else 0.0
-	var line := "Pad scan: %s  claim=%.2f  reserves=%.0f  (soft intel)" % [fac, stren, crystal_reserves]
+	var line := "Pad scan: %s  claim=%.2f  reserves=%.0f  %s (soft intel)" % [
+		fac, stren, crystal_reserves, _SoftK.pump_label(),
+	]
 	_notify_hud(line)
 	if AudioDirector and AudioDirector.has_method("play_ui"):
 		AudioDirector.play_ui()

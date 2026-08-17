@@ -163,7 +163,7 @@ drive them. Until then `ProceduralHeroSilhouette` is the honest stand-in.
 | `props/ownership_claim_pylon/` | **A** | kit | 1,2 | IN CODE — the ownership readability object |
 | `props/claim_beacon/` | B | kit | 1,2 | IN CODE |
 | `props/pad_control_obelisk/` | B | kit | 1,2 | IN CODE |
-| `props/pad_refuel_pump/` | B | kit | 2 | IN CODE — becomes functional with hyperdrive fuel (§5.3) |
+| `props/pad_refuel_pump/` | B | kit | 2 | IN CODE — SCM/HOVER occupy refill; hyperdrive fuel later (§5.3) |
 | `props/pad_floodlight/` | C | kit | 2 | IN CODE |
 | `props/control_console/` | B | kit | 1,2 | IN CODE |
 | `props/med_station/` | B | kit | 1,2 | IN CODE |
