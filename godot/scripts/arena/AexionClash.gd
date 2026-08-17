@@ -64,6 +64,20 @@ func register_minion_down(lane: String = "MID") -> void:
 	_add_pressure(lane, 3.0)
 
 
+func register_camp_down() -> void:
+	if _ended or not active:
+		return
+	# Fangtooth-class role: soft WS + pressure. Not a kill-to-5, not a weapon.
+	_add_pressure("MID", 18.0)
+	if war:
+		war.add_match_points(OBJECTIVE_WS)
+	if GameManager:
+		GameManager.add_mastery("ecology", 0.8)
+		GameManager.toast_requested.emit(
+			"Camp secured (+%.0f soft WS) — not a unique weapon" % OBJECTIVE_WS
+		)
+
+
 func register_tower_down(lane: String = "MID") -> void:
 	register_structure_down("OUTER", lane)
 

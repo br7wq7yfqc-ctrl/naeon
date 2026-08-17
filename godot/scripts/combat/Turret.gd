@@ -101,6 +101,8 @@ func _find_target() -> Node3D:
 	for n in candidates:
 		if n == self or not is_instance_valid(n) or not (n is Node3D):
 			continue
+		if n.is_in_group("clash_camp"):
+			continue
 		if n.has_method("get_faction") and str(n.get_faction()) == faction:
 			continue
 		if n.has_method("is_downed") and bool(n.is_downed()):

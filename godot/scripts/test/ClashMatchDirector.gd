@@ -99,6 +99,11 @@ func register_objective() -> void:
 		AudioDirector.play_claim()
 	_flash("OBJECTIVE secured")
 
+
+func register_camp_contest() -> void:
+	# Soft announce only — Knowledge may label the pit, never unique DPS.
+	_flash("CAMP CONTESTED — soft · no unique weapon")
+
 func _flash(msg: String) -> void:
 	_banner = msg
 	match_event.emit(msg)

@@ -60,6 +60,15 @@ static func intercept_claim_toast(enemy_faction: String) -> String:
 		return "Intercept: Nex-band handshake — rival claim active"
 	return "Intercept: unknown protocol"
 
+## Ecology/History: jungle camp name only — never HP / DPS.
+static func camp_label() -> String:
+	var eco := mastery("ecology")
+	var hist := mastery("history")
+	if eco >= 10.0 or hist >= 15.0 or rank() >= 5:
+		return "PIT OBJECTIVE"
+	return "CAMP"
+
+
 ## History/Lore: structure weakness tip (info only)
 static func structure_tip(faction: String) -> String:
 	var lore := mastery("history")

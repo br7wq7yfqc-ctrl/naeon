@@ -20,6 +20,7 @@ var _radar: Control = null
 var _lane_hud: Label = null
 var dummy_scene: PackedScene = preload("res://scenes/combat/CombatDummy.tscn")
 var _waves: Node = null
+var _camp: Node3D = null
 
 func _ready() -> void:
 	var _PoolReset = load("res://scripts/combat/ProjectilePool.gd")
@@ -472,9 +473,11 @@ func _finish_clash_layout() -> void:
 	if SoftNetSession and player:
 		SoftNetSession.bind_player(player)
 	_setup_clash_waves()
+	_setup_clash_camp()
 	_evidence_ar_a()
 	_evidence_ar_b()
 	_evidence_ar_c()
+	_evidence_ar_d()
 	_setup_arena_playtest()
 
 
@@ -576,10 +579,13 @@ func _update_clash_radar() -> void:
 			var wave := ""
 			if _waves and "wave_index" in _waves and int(_waves.wave_index) > 0:
 				wave = "  ·  WAVE %d" % int(_waves.wave_index)
+			var camp := ""
+			if _camp and _camp.has_method("is_contested") and bool(_camp.is_contested()):
+				camp = "  ·  CAMP CONTEST"
 			if press == "":
-				_lane_hud.text = "LANE %s%s" % [_lanes.player_lane, wave]
+				_lane_hud.text = "LANE %s%s%s" % [_lanes.player_lane, wave, camp]
 			else:
-				_lane_hud.text = "LANE %s  ·  %s%s" % [_lanes.player_lane, press, wave]
+				_lane_hud.text = "LANE %s  ·  %s%s%s" % [_lanes.player_lane, press, wave, camp]
 	if _radar == null or not _radar.has_method("set_snapshot"):
 		return
 	# One entry per node: the old second pass compared a Node against an Array
@@ -604,6 +610,8 @@ func _update_clash_radar() -> void:
 		[Vector3(0, 0, 24), Color(0.15, 0.85, 1.0)],
 		[Vector3(0, 0, -24), Color(0.95, 0.12, 0.42)],
 	]
+	if _camp and is_instance_valid(_camp) and _camp.get("_alive") != false:
+		nex.append([(_camp as Node3D).global_position, Color(0.55, 0.9, 0.3)])
 	if get_tree():
 		for n in get_tree().get_nodes_in_group("clash_minion"):
 			if n == null or not is_instance_valid(n) or not (n is Node3D):
@@ -850,6 +858,28 @@ func _evidence_ar_c() -> void:
 		live = _waves.living_minions().size()
 	var w := int(_waves.wave_index) if _waves and "wave_index" in _waves else 0
 	print("[AR-C] waves=", w, " living=", live, " pin=", LayerContext.site_pin_id if LayerContext else "")
+
+
+func _setup_clash_camp() -> void:
+	if get_node_or_null("ClashCamp"):
+		_camp = get_node_or_null("ClashCamp") as Node3D
+		return
+	_camp = Node3D.new()
+	_camp.set_script(preload("res://scripts/arena/ClashCamp.gd"))
+	_camp.name = "ClashCamp"
+	add_child(_camp)
+	if _camp.has_method("bind_player") and player:
+		_camp.bind_player(player)
+
+
+func _evidence_ar_d() -> void:
+	var off := false
+	var st := ""
+	if _camp and _camp.has_method("is_off_lane"):
+		off = bool(_camp.is_off_lane())
+	if _camp and _camp.has_method("get_contest_state"):
+		st = str(_camp.get_contest_state())
+	print("[AR-D] camp=", _camp != null, " off_lane=", off, " state=", st, " pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
 func _setup_arena_playtest() -> void:
