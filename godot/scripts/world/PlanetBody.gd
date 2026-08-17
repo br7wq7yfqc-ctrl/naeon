@@ -410,6 +410,7 @@ func _step_pad_build() -> void:
 		1:
 			if _P0.ONE_PAD and not _P0.OS_D_FILL:
 				_spawn_filler_on_first_pad()
+				_spawn_pad_traffic()
 				_pad_build_stage = 4
 				_pads_built = true
 				_pad_build_pending = false
@@ -431,9 +432,11 @@ func _step_pad_build() -> void:
 				_spawn_filler_on_first_pad()
 				_spawn_worldfill_scatter()
 				_spawn_outpost_silhouette()
+				_spawn_pad_traffic()
 				print("[PlanetBody] OS-D unnamed pads n=", _pads.size())
 			else:
 				_spawn_pad_density()
+				_spawn_pad_traffic()
 			_pad_build_stage = 4
 			_pads_built = true
 			_pad_build_pending = false
@@ -449,6 +452,7 @@ func _build_pads() -> void:
 		_pads_root.name = "Pads"
 		add_child(_pads_root)
 	if _pads_built and not _pads.is_empty():
+		_spawn_pad_traffic()
 		return
 	if _pads.is_empty():
 		_spawn_pad("Pad_North", Vector3.UP)
@@ -457,6 +461,7 @@ func _build_pads() -> void:
 	_pad_build_pending = false
 	if _P0.ONE_PAD and not _P0.OS_D_FILL:
 		_spawn_filler_on_first_pad()
+		_spawn_pad_traffic()
 		return
 	if _P0.OS_D_FILL:
 		if _pad_named("Pad_Approach") == null:
@@ -466,11 +471,13 @@ func _build_pads() -> void:
 		_spawn_filler_on_first_pad()
 		_spawn_worldfill_scatter()
 		_spawn_outpost_silhouette()
+		_spawn_pad_traffic()
 		print("[PlanetBody] OS-D unnamed pads n=", _pads.size())
 		return
 	_spawn_pad("Pad_Eq", Vector3(1, 0.15, 0).normalized())
 	_spawn_pad("Pad_Far", Vector3(-0.7, 0.2, 0.7).normalized())
 	_spawn_pad_density()
+	_spawn_pad_traffic()
 
 
 func ensure_pad_bases() -> void:
@@ -657,6 +664,37 @@ func outpost_structure_count() -> int:
 	if sil != null and sil.has_method("structure_count"):
 		return int(sil.call("structure_count"))
 	return 0
+
+
+func _traffic_host_pad() -> Node3D:
+	## Occupied north plate: world +Y so CombatDummy gravity stands.
+	var north: Node3D = _pad_named("Pad_North")
+	if north != null:
+		return north
+	if not _pads.is_empty() and _pads[0] is Node3D:
+		return _pads[0]
+	return null
+
+
+func _spawn_pad_traffic() -> void:
+	var host: Node3D = _traffic_host_pad()
+	if host == null or not is_instance_valid(host):
+		return
+	if host.has_node("PadTraffic"):
+		return
+	var traffic := Node3D.new()
+	traffic.set_script(preload("res://scripts/world/PadTraffic.gd"))
+	traffic.name = "PadTraffic"
+	host.add_child(traffic)
+	if traffic.has_method("setup"):
+		traffic.call("setup", host)
+
+
+func pad_traffic() -> Node3D:
+	var host: Node3D = _traffic_host_pad()
+	if host == null:
+		return null
+	return host.get_node_or_null("PadTraffic") as Node3D
 
 func _load_glb_pads() -> void:
 	_glb_loaded = true

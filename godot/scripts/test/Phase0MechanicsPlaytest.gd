@@ -547,6 +547,7 @@ func _go() -> void:
 	_ose_near_read(fails)
 	_osf_atmo_flight(fails)
 	_osg_outpost_silhouette(fails)
+	_pad_traffic_present(fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
@@ -1877,6 +1878,58 @@ func _osh_invariants(fails: PackedStringArray) -> void:
 	var src := FileAccess.get_file_as_string("res://scripts/ship/ShipController.gd")
 	if src.find("FlightMode.CRUISE") >= 0 or src.find("mass_lock") >= 0:
 		fails.append("OS-H shipped G1 CRUISE / mass lock")
+
+
+func _pad_traffic_present(fails: PackedStringArray) -> void:
+	## Pillar 13: one guard dummy + one visiting hold on a loaded unnamed pad.
+	var nex: Node = _osh_nex()
+	if nex != null and nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	var traffic: Node = null
+	if nex != null and nex.has_method("pad_traffic"):
+		traffic = nex.call("pad_traffic")
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("pad traffic present: missing")
+		return
+	var guard: Node3D = traffic.get_guard() if traffic.has_method("get_guard") else null
+	var visitor: Node3D = traffic.get_visitor() if traffic.has_method("get_visitor") else null
+	if guard == null or not is_instance_valid(guard):
+		fails.append("pad traffic present: no pad-guard dummy")
+		return
+	if visitor == null or not is_instance_valid(visitor):
+		fails.append("pad traffic present: no visiting hold")
+		return
+	var host: Node = traffic.get_parent()
+	if host == null or not (host is Node3D) or not host.has_meta("pad_up"):
+		fails.append("pad traffic present: not on a pad")
+		return
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("pad traffic present: minted SITE_* (%s)" % pin)
+	var extras := get_tree().get_nodes_in_group("pad_traffic").size() if get_tree() else 0
+	if extras != 1:
+		fails.append("pad traffic present: want one cluster, got %s" % extras)
+	var gd: float = guard.global_position.distance_to((host as Node3D).global_position)
+	var vd: float = visitor.global_position.distance_to((host as Node3D).global_position)
+	if gd > 40.0:
+		fails.append("pad traffic present: guard not near pad (%s)" % snapped(gd, 0.1))
+	if vd > 40.0:
+		fails.append("pad traffic present: visitor not near pad (%s)" % snapped(vd, 0.1))
+	var dmg0: float = float(guard.get("attack_damage"))
+	var hp0: float = float(guard.get("max_health"))
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("languages", 20.0)
+	if traffic.has_method("refresh_labels"):
+		traffic.refresh_labels()
+	if absf(float(guard.get("attack_damage")) - dmg0) > 0.01:
+		fails.append("Knowledge changed pad-guard DPS")
+	if absf(float(guard.get("max_health")) - hp0) > 0.01:
+		fails.append("Knowledge changed pad-guard HP")
+	var glabel := str(traffic.guard_label()) if traffic.has_method("guard_label") else ""
+	if glabel == "":
+		fails.append("Knowledge pad-guard label empty")
+	print("[Playtest] pad traffic present host=", host.name, " guard_d=", snapped(gd, 0.1), " visitor_d=", snapped(vd, 0.1), " label=", glabel)
 
 
 func _rover_drive_slice(os: Node, fails: PackedStringArray) -> void:

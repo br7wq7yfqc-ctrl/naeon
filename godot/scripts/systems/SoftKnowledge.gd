@@ -87,6 +87,16 @@ static func rover_label() -> String:
 	return "ROVER"
 
 
+## History/Languages: pad traffic name only — never DPS / density.
+static func traffic_label(kind: String = "guard") -> String:
+	var hist := mastery("history")
+	var lang := mastery("languages")
+	var named := hist >= 10.0 or lang >= 10.0 or rank() >= 5
+	if kind == "visitor":
+		return "VISITING HULL" if named else "VISITOR"
+	return "PAD GUARD" if named else "GUARD"
+
+
 ## History/Lore: structure weakness tip (info only)
 static func structure_tip(faction: String) -> String:
 	var lore := mastery("history")
