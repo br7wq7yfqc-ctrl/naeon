@@ -963,12 +963,40 @@ func _osd_unnamed_fill(fails: PackedStringArray) -> void:
 		if sc.has_method("body_seed"):
 			sc_seed = int(sc.call("body_seed"))
 		print("[Playtest] OS-D scatter n=", nprop, " seed=", sc_seed)
-		if nprop < 4:
+		if nprop < 12:
 			fails.append("OS-D scatter too thin (%s)" % nprop)
 		if sc_seed != seed_b:
 			fails.append("OS-D scatter seed != body_seed (%s vs %s)" % [sc_seed, seed_b])
 		if str(sc.get_meta("site_pin", "")).begins_with("SITE_"):
 			fails.append("OS-D scatter minted SITE_*")
+		var slugs: PackedStringArray = PackedStringArray()
+		if sc.has_method("ledger_slugs_used"):
+			slugs = sc.call("ledger_slugs_used")
+		print("[Playtest] OS-D ledger slugs=", ",".join(slugs))
+		if slugs.find("debris_cluster") < 0:
+			fails.append("OS-D missing debris_cluster shelf")
+		if slugs.find("t1_resource_extractor") < 0:
+			fails.append("OS-D missing t1_resource_extractor shelf")
+		if slugs.find("utility_bay") < 0:
+			fails.append("OS-D missing utility_bay shelf")
+		for slug in slugs:
+			if str(slug).begins_with("SITE_"):
+				fails.append("OS-D scatter minted SITE_* slug %s" % slug)
+		var pad_clutter := 0
+		for p in plates:
+			if p == null or not is_instance_valid(p):
+				continue
+			for child in (p as Node).get_children():
+				if child == null:
+					continue
+				var cname := str(child.name)
+				if cname.begins_with("PadCrate") or cname == "PadDebris" or cname == "PadMast" or cname == "PadExtractor" or cname == "PadUtility":
+					pad_clutter += 1
+					if str(child.get_meta("site_pin", "")).begins_with("SITE_"):
+						fails.append("OS-D pad clutter minted SITE_* on %s" % cname)
+		print("[Playtest] OS-D pad clutter n=", pad_clutter)
+		if pad_clutter < 8:
+			fails.append("OS-D pad clutter too thin (%s)" % pad_clutter)
 	for nm in ["SurfaceFlora", "SurfaceFauna", "SurfaceWater", "CaveMouthField", "CaveInterior", "LandscapeFeatures", "TerrainEdit"]:
 		if nex.get_node_or_null(nm) != null:
 			fails.append("OS-D live streamer %s" % nm)

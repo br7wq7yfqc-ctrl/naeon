@@ -1,7 +1,7 @@
 {
-  "version": 4,
+  "version": 5,
   "updated": "2026-08-17",
-  "note": "Unnamed WorldFill props + OS-E near-ground + OS-G outpost stand-ins. Git holds source/license/url only. Binaries stay on s3://neon. Code-first until ingest. Not SITE_*. Not Tripo.",
+  "note": "Unnamed WorldFill props + OS-E near-ground + OS-G outpost stand-ins. Extra pad clutter reuses ledger slugs already on the shelf. Git holds source/license/url only. Binaries stay on s3://neon. Code-first until ingest. Not SITE_*. Not Tripo.",
   "props": [
     {
       "id": "pad_crate_cc0",
@@ -134,6 +134,54 @@
       "git_binary": false,
       "site_pin": "",
       "note": "OS-G habitat proxy on an existing unnamed pad. BoxMesh until a CC0 GLB is on neon. Not Tripo. Not SITE_*."
+    },
+    {
+      "id": "pad_debris_cluster",
+      "kind": "debris",
+      "role": "unnamed_scatter",
+      "title": "Salvage crate & debris cluster (code-first)",
+      "source": "code-first",
+      "license": "CC0-1.0",
+      "url": "",
+      "license_url": "",
+      "ledger_slug": "debris_cluster",
+      "bucket": "s3://neon/filler/debris_cluster/",
+      "local_rel": "environments/debris_cluster/debris_cluster.glb",
+      "git_binary": false,
+      "site_pin": "",
+      "note": "Ledger slug debris_cluster already in asset_positions.json. BoxMesh until a ready-made GLB is on neon. Not a new SITE_*. Not Tripo. No invented CC0 URL."
+    },
+    {
+      "id": "pad_extractor_t1",
+      "kind": "extractor",
+      "role": "unnamed_pad_clutter",
+      "title": "T1 resource extractor (code-first)",
+      "source": "code-first",
+      "license": "CC0-1.0",
+      "url": "",
+      "license_url": "",
+      "ledger_slug": "t1_resource_extractor",
+      "bucket": "s3://neon/filler/t1_resource_extractor/",
+      "local_rel": "colony/t1_resource_extractor/t1_resource_extractor.glb",
+      "git_binary": false,
+      "site_pin": "",
+      "note": "Ledger slug t1_resource_extractor already in asset_positions.json. Visual proxy only — not Extractor.gd, not a pin, not power. BoxMesh until the locked plate has a GLB on neon. Not Tripo. No invented UUID."
+    },
+    {
+      "id": "pad_utility_bay",
+      "kind": "utility",
+      "role": "unnamed_pad_clutter",
+      "title": "Utility bay (code-first)",
+      "source": "code-first",
+      "license": "CC0-1.0",
+      "url": "",
+      "license_url": "",
+      "ledger_slug": "utility_bay",
+      "bucket": "s3://neon/filler/utility_bay/",
+      "local_rel": "props/utility_bay/utility_bay.glb",
+      "git_binary": false,
+      "site_pin": "",
+      "note": "Ledger slug utility_bay already in asset_positions.json. Pad clutter proxy. BoxMesh until a ready-made GLB is on neon. Not SITE_*. Not Tripo. No invented CC0 URL."
     }
   ]
 }

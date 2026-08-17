@@ -12,7 +12,8 @@ const FILL_STREAMERS := false
 ## P0.2: no density cluster. OS-D still adds extra unnamed pads + sparse scatter.
 ## OS-G clusters a mast/habitat on one of those pads.
 const ONE_PAD := true
-## OS-D: Pad_North + two extra unnamed plates + rare rock/crate proxies.
+## OS-D: Pad_North + two extra unnamed plates + denser unnamed scatter
+## from existing ledger slugs (crates, debris, pad props, extra masts).
 const OS_D_FILL := true
 ## OS-G: one unnamed mast+habitat cluster on an existing pad. Not SITE_*.
 const OS_G_OUTPOST := true

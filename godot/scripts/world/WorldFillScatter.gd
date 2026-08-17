@@ -1,19 +1,22 @@
 extends Node3D
 class_name WorldFillScatter
-## Sparse unnamed rock/crate proxies (OS-D). Same body seed as Relief.
-## Channel offset is placement RNG only. Code-first until CC0 GLB is on
-## s3://neon. Not SITE_*. Not a fill streamer. Not a chunk-ring grow.
+## Unnamed rock/crate/debris/pad-prop proxies. Same body seed as Relief.
+## Uses ledger slugs already on the shelf (debris_cluster, t1_resource_extractor,
+## utility_bay) plus existing filler IDs. Channel offset is placement RNG only.
+## Code-first until CC0 GLB is on s3://neon. Not SITE_*. Not a streamer.
 
 const _Relief = preload("res://scripts/world/PlanetRelief.gd")
 const _Filler = preload("res://scripts/world/FillerProp.gd")
 
 const CHANNEL := 41
-const ROCK_N := 6
-const CRATE_N := 2
+const ROCK_N := 8
+const CRATE_N := 4
+const DEBRIS_N := 3
 
 var _seed: int = 1
 var _planet_id: String = ""
 var _placed: int = 0
+var _slugs: PackedStringArray = PackedStringArray()
 
 
 func setup(planet: Node3D, radius: float, seed_i: int) -> void:
@@ -34,6 +37,10 @@ func prop_count() -> int:
 	return _placed
 
 
+func ledger_slugs_used() -> PackedStringArray:
+	return _slugs
+
+
 func _place(planet: Node3D, radius: float) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = _seed + CHANNEL
@@ -41,8 +48,10 @@ func _place(planet: Node3D, radius: float) -> void:
 	var dirs: Array[Vector3] = _host_dirs(planet)
 	var rock_dirs: Array[Vector3] = []
 	var crate_dirs: Array[Vector3] = []
+	var debris_dirs: Array[Vector3] = []
 	var guard := 0
-	while (rock_dirs.size() < ROCK_N or crate_dirs.size() < CRATE_N) and guard < 64:
+	var need := ROCK_N + CRATE_N + DEBRIS_N
+	while (rock_dirs.size() + crate_dirs.size() + debris_dirs.size()) < need and guard < 96:
 		guard += 1
 		var base: Vector3 = dirs[guard % dirs.size()]
 		var yaw := rng.randf_range(-0.22, 0.22)
@@ -61,14 +70,22 @@ func _place(planet: Node3D, radius: float) -> void:
 			rock_dirs.append(dir)
 		elif crate_dirs.size() < CRATE_N:
 			crate_dirs.append(dir)
+		elif debris_dirs.size() < DEBRIS_N:
+			debris_dirs.append(dir)
 	if rock_dirs.size() < 2:
 		rock_dirs.append(Vector3(0.18, 0.16, 0.97).normalized())
 		rock_dirs.append(Vector3(-0.40, 0.20, 0.89).normalized())
 	if crate_dirs.is_empty() and not dirs.is_empty():
 		crate_dirs.append(dirs[0])
+	if debris_dirs.is_empty() and dirs.size() > 1:
+		debris_dirs.append(dirs[1])
+	elif debris_dirs.is_empty() and not dirs.is_empty():
+		debris_dirs.append(dirs[0])
 	_spawn_rocks(radius, profile, rock_dirs, rng)
 	_spawn_crates(radius, profile, crate_dirs)
-	print("[WorldFillScatter] props=", _placed, " seed=", _seed, " body=", _planet_id)
+	_spawn_debris(radius, profile, debris_dirs)
+	_spawn_pad_clutter(planet)
+	print("[WorldFillScatter] props=", _placed, " seed=", _seed, " body=", _planet_id, " slugs=", ",".join(_slugs))
 
 
 func _host_dirs(planet: Node3D) -> Array[Vector3]:
@@ -135,17 +152,89 @@ func _spawn_rocks(radius: float, profile: Dictionary, dirs: Array[Vector3], rng:
 
 func _spawn_crates(radius: float, profile: Dictionary, dirs: Array[Vector3]) -> void:
 	for i in dirs.size():
-		var fp := Node3D.new()
-		fp.set_script(_Filler)
-		fp.name = "Crate_%d" % i
-		fp.set("prop_id", "scatter_crate_cc0")
-		fp.set("scale_factor", 5.5)
-		add_child(fp)
-		if fp.has_method("setup"):
-			fp.call("setup", "scatter_crate_cc0")
-		fp.position = _surface_pos(dirs[i], radius, profile)
-		fp.transform.basis = _align_up(dirs[i])
-		_placed += 1
+		_add_field_prop(
+			"Crate_%d" % i,
+			"scatter_crate_cc0",
+			"",
+			_surface_pos(dirs[i], radius, profile),
+			_align_up(dirs[i]),
+			8.0,
+			true
+		)
+
+
+func _spawn_debris(radius: float, profile: Dictionary, dirs: Array[Vector3]) -> void:
+	for i in dirs.size():
+		_add_field_prop(
+			"Debris_%d" % i,
+			"pad_debris_cluster",
+			"debris_cluster",
+			_surface_pos(dirs[i], radius, profile),
+			_align_up(dirs[i]),
+			6.5,
+			true
+		)
+
+
+func _spawn_pad_clutter(planet: Node3D) -> void:
+	if planet == null or not ("_pads" in planet):
+		return
+	var pads: Array = planet._pads
+	for p in pads:
+		if p == null or not (p is Node3D) or not is_instance_valid(p):
+			continue
+		var pad: Node3D = p
+		var pname := str(pad.name)
+		_add_pad_prop(pad, "PadCrate_0", "pad_crate_cc0", "", Vector3(10.0, 1.15, -8.0), 4.2)
+		_add_pad_prop(pad, "PadCrate_1", "pad_crate_cc0", "", Vector3(-9.0, 1.15, 7.0), 3.8)
+		_add_pad_prop(pad, "PadDebris", "pad_debris_cluster", "debris_cluster", Vector3(16.0, 1.4, 12.0), 3.2)
+		# Extra mast on the plates that are not the OS-G silhouette host.
+		if pname != "Pad_Approach":
+			_add_pad_prop(pad, "PadMast", "outpost_mast_cc0", "", Vector3(-14.0, 0.0, 10.0), 1.6)
+		if pname == "Pad_North":
+			_add_pad_prop(pad, "PadExtractor", "pad_extractor_t1", "t1_resource_extractor", Vector3(0.0, 0.0, -16.0), 1.8)
+		elif pname == "Pad_Flank":
+			_add_pad_prop(pad, "PadUtility", "pad_utility_bay", "utility_bay", Vector3(12.0, 0.0, 14.0), 1.7)
+
+
+func _add_field_prop(nm: String, filler_id: String, slug: String, pos: Vector3, basis: Basis, scale_f: float, far: bool) -> void:
+	var fp := Node3D.new()
+	fp.set_script(_Filler)
+	fp.name = nm
+	fp.set("prop_id", filler_id)
+	fp.set("scale_factor", scale_f)
+	fp.set("far_read", far)
+	add_child(fp)
+	if fp.has_method("setup"):
+		fp.call("setup", filler_id)
+	fp.position = pos
+	fp.transform.basis = basis
+	_note_prop(fp, slug)
+	_placed += 1
+
+
+func _add_pad_prop(pad: Node3D, nm: String, filler_id: String, slug: String, local_pos: Vector3, scale_f: float) -> void:
+	if pad.has_node(nm):
+		return
+	var fp := Node3D.new()
+	fp.set_script(_Filler)
+	fp.name = nm
+	fp.set("prop_id", filler_id)
+	fp.set("scale_factor", scale_f)
+	fp.set("far_read", true)
+	pad.add_child(fp)
+	if fp.has_method("setup"):
+		fp.call("setup", filler_id)
+	fp.position = local_pos
+	_note_prop(fp, slug)
+	_placed += 1
+
+
+func _note_prop(fp: Node, slug: String) -> void:
+	if slug != "":
+		fp.set_meta("ledger_slug", slug)
+		if not _slugs.has(slug):
+			_slugs.append(slug)
 
 
 func _surface_pos(dir: Vector3, radius: float, profile: Dictionary) -> Vector3:
