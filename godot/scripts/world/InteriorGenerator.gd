@@ -169,6 +169,22 @@ static func _strip_light(parent: Node3D, pos: Vector3, size: Vector3, neon: Colo
 	_box_mesh(parent, pos, size, neon, false, true)
 
 static func _box_mesh(parent: Node3D, pos: Vector3, size: Vector3, color: Color, collision: bool, emit: bool = false) -> void:
+	## Dummy mesh_storage errors on MeshInstance free (interior exit). Keep
+	## collision/markers so mechanics still run; skip visual RIDs on headless.
+	if DisplayServer.get_name() == "headless":
+		if collision:
+			var holder := Node3D.new()
+			holder.position = pos
+			parent.add_child(holder)
+			var sb0 := StaticBody3D.new()
+			sb0.collision_layer = 1
+			var cs0 := CollisionShape3D.new()
+			var sh0 := BoxShape3D.new()
+			sh0.size = size
+			cs0.shape = sh0
+			sb0.add_child(cs0)
+			holder.add_child(sb0)
+		return
 	var mi := MeshInstance3D.new()
 	var bm := BoxMesh.new()
 	bm.size = size
@@ -201,6 +217,8 @@ static func _box_mesh(parent: Node3D, pos: Vector3, size: Vector3, color: Color,
 		mi.add_child(sb)
 
 static func _add_neon_strips(root: Node3D, fac: String) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	var col := Color(0.2, 0.85, 1.0) if fac == "Cybernex" else Color(0.95, 0.2, 0.45)
 	for i in 4:
 		var mi := MeshInstance3D.new()
@@ -265,7 +283,7 @@ static func _ensure_seat_markers(root: Node3D) -> void:
 		lab.position = Vector3(0, 1.6, -1.2)
 		lab.modulate = Color(0.3, 0.9, 1.0)
 		root.add_child(lab)
-	if root.get_node_or_null("SeatGlow") == null:
+	if root.get_node_or_null("SeatGlow") == null and DisplayServer.get_name() != "headless":
 		var g := MeshInstance3D.new()
 		g.name = "SeatGlow"
 		if DisplayServer.get_name() == "headless":
@@ -405,6 +423,8 @@ static func _hatch_arch(root: Node3D, hatch_pos: Vector3, neon: Color) -> void:
 
 
 static func _seat_glow(root: Node3D, seat_pos: Vector3, neon: Color) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	var seat_v := root.get_node_or_null("SeatVolume")
 	# Pillar + ring + label — high readability for F pilot
 	var pillar := MeshInstance3D.new()
@@ -502,27 +522,35 @@ static func _door_portal(root: Node3D, pos: Vector3, neon: Color, hall_w: float 
 	_box_mesh(door, Vector3(fill_c, 1.2, 0), Vector3(fill_w, 2.4, 0.32), wall_c, true)
 	_box_mesh(door, Vector3(0, 2.4, 0), Vector3(hall_w * 0.92, 0.22, 0.32), wall_c, true)
 	_box_mesh(door, Vector3(0, 2.28, 0), Vector3(gap + 0.2, 0.05, 0.12), neon, false, true)
-	var slab := MeshInstance3D.new()
-	slab.name = "Slab"
-	var bm := BoxMesh.new()
-	bm.size = Vector3(gap, 2.15, 0.1)
-	slab.mesh = bm
-	slab.position = Vector3(0, 1.1, 0)
-	slab.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.07, 0.1, 0.13)
-	mat.metallic = 0.55
-	mat.roughness = 0.35
-	mat.emission_enabled = true
-	mat.emission = neon
-	mat.emission_energy_multiplier = 0.55
-	slab.material_override = mat
-	door.add_child(slab)
+	var slab: Node3D
+	if DisplayServer.get_name() == "headless":
+		slab = Node3D.new()
+		slab.name = "Slab"
+		slab.position = Vector3(0, 1.1, 0)
+		door.add_child(slab)
+	else:
+		var mi := MeshInstance3D.new()
+		mi.name = "Slab"
+		var bm := BoxMesh.new()
+		bm.size = Vector3(gap, 2.15, 0.1)
+		mi.mesh = bm
+		mi.position = Vector3(0, 1.1, 0)
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(0.07, 0.1, 0.13)
+		mat.metallic = 0.55
+		mat.roughness = 0.35
+		mat.emission_enabled = true
+		mat.emission = neon
+		mat.emission_energy_multiplier = 0.55
+		mi.material_override = mat
+		door.add_child(mi)
+		slab = mi
 	var sb := StaticBody3D.new()
 	sb.collision_layer = 1
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
-	sh.size = bm.size
+	sh.size = Vector3(gap, 2.15, 0.1)
 	cs.shape = sh
 	sb.add_child(cs)
 	slab.add_child(sb)

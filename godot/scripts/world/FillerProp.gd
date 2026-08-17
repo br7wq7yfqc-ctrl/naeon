@@ -89,6 +89,8 @@ func _build() -> void:
 
 
 func _spawn_proxy() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	var mi := MeshInstance3D.new()
 	mi.name = "Proxy"
 	var box := BoxMesh.new()
