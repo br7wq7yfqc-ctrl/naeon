@@ -833,64 +833,64 @@ func _build_proc_pylon(root: Node3D) -> void:
 	emit.emission_enabled = true
 	emit.emission = col
 	emit.emission_energy_multiplier = 2.2
-	var disc := CylinderMesh.new()
-	disc.top_radius = 0.85
-	disc.bottom_radius = 0.95
-	disc.height = 0.14
-	disc.radial_segments = 12
 	var base := MeshInstance3D.new()
 	if DisplayServer.get_name() == "headless":
 		var disc_box := BoxMesh.new()
 		disc_box.size = Vector3(1.9, 0.14, 1.9)
 		base.mesh = disc_box
 	else:
+		var disc := CylinderMesh.new()
+		disc.top_radius = 0.85
+		disc.bottom_radius = 0.95
+		disc.height = 0.14
+		disc.radial_segments = 12
 		base.mesh = disc
 	base.material_override = armor
 	base.position.y = 0.07
 	base.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(base)
-	var cyl := CylinderMesh.new()
-	cyl.top_radius = 0.12
-	cyl.bottom_radius = 0.28
-	cyl.height = 4.2
-	cyl.radial_segments = 8
 	var shaft := MeshInstance3D.new()
 	if DisplayServer.get_name() == "headless":
 		var shaft_box := BoxMesh.new()
 		shaft_box.size = Vector3(0.4, 4.2, 0.4)
 		shaft.mesh = shaft_box
 	else:
+		var cyl := CylinderMesh.new()
+		cyl.top_radius = 0.12
+		cyl.bottom_radius = 0.28
+		cyl.height = 4.2
+		cyl.radial_segments = 8
 		shaft.mesh = cyl
 	shaft.material_override = armor
 	shaft.position.y = 2.2
 	shaft.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(shaft)
-	var rod := CylinderMesh.new()
-	rod.top_radius = 0.05
-	rod.bottom_radius = 0.05
-	rod.height = 4.4
 	var core := MeshInstance3D.new()
 	if DisplayServer.get_name() == "headless":
 		var rod_box := BoxMesh.new()
 		rod_box.size = Vector3(0.1, 4.4, 0.1)
 		core.mesh = rod_box
 	else:
+		var rod := CylinderMesh.new()
+		rod.top_radius = 0.05
+		rod.bottom_radius = 0.05
+		rod.height = 4.4
 		core.mesh = rod
 	core.material_override = emit
 	core.position.y = 2.25
 	core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(core)
-	var torus := TorusMesh.new()
-	torus.inner_radius = 0.22
-	torus.outer_radius = 0.48
-	torus.rings = 10
-	torus.ring_segments = 16
 	var crown := MeshInstance3D.new()
 	if DisplayServer.get_name() == "headless":
 		var crown_box := BoxMesh.new()
 		crown_box.size = Vector3(0.96, 0.16, 0.96)
 		crown.mesh = crown_box
 	else:
+		var torus := TorusMesh.new()
+		torus.inner_radius = 0.22
+		torus.outer_radius = 0.48
+		torus.rings = 10
+		torus.ring_segments = 16
 		crown.mesh = torus
 	crown.material_override = emit
 	crown.position.y = 4.35
