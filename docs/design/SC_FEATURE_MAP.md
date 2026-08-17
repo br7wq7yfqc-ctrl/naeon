@@ -22,7 +22,7 @@ Likeness — **вся** фантазия SC (лететь, стыковатьс�
 | 2 | Atmosphere / planet approach | бар OS-A…OS-H; шейдеры лимба/дымки | OS-A шов; OS-B оболочка; OS-C старт 8 км; OS-D unnamed fill; OS-E near read; OS-F lift/glide; OS-G силуэт; OS-H harness ритуала | 60 FPS / 5 мин soak на 3090 (human gate) | Planet Tech V5; воксельная оболочка |
 | 3 | Ship as place (interior, seats, multi-crew) | `InteriorDirector` / `InteriorGenerator`; Seat; F seat→pilot | seat↔pocket↔hatch EVA; двери ведут в карман/EVA; multi-crew нет | Phase 2 multi-crew | фейковые двери |
 | 4 | Ship engineering (power/cool/life, component HP) | модульный hull + `ShipModule` (engine/weapon/shield/cargo/extractor); hull-crit recover | модули HP (integrity→thrust/weapon/shield); hull HP; шины power/cool/life нет | шины power/cool later; life-support уже в pocket | pay-to-repair |
-| 5 | Cargo / tractor / dock | `CargoHold` + `CargoRamp`; unnamed pads | hold + ramp scaffold; 3 пада/тело + один unnamed силуэт | пады unnamed до pin каталога | трактор-клон; SITE_* mint |
+| 5 | Cargo / tractor / dock | `CargoHold` + `CargoRamp`; unnamed pads | occupy dock: 1 unit pad↔hold; Knowledge подписывает crate; 3 пада/тело + один unnamed силуэт | hangar later; пады unnamed до pin каталога | трактор-клон; SITE_* mint |
 | 6 | On-foot FPS | `SurfaceWalker` EVA + Pulse | TPS на сфере, snap, combat | расширять **после OS-E** | SC armor-meta |
 | 7 | Zero-G EVA | `eva_mode` + fuel + tether; всё в ARK | zero-G у корпуса (не грунт); fuel+tether; грунт SurfaceWalker | полировка; всё ещё ARK | вторая система |
 | 8 | Scanning / radar / ping | `soft_scan`; `SoftKnowledge`; `SoftScanCache`; HUD radar | метки / intel; V на паде | Knowledge может подписать (soft) | rarer fill; +DPS от скана |
@@ -57,4 +57,4 @@ CIG copy · воксели · SITE_* mint · G2–G6 сейчас · P2W · Trip
 | Приближаем | 3090 FPS / 5 мин soak (human gate) |
 | Отказ | quantum сейчас, карта галактики, гейты-прыжки, арена-из-мира (G5), города, каталожные SITE_*, воксели, P2W |
 
-Очередь кода: **OS-H built**. Pillar 7 zero-G у корпуса. Pillar 11 pad fuel. Pillar 3 ship-as-place (seat↔pocket↔hatch). Headless PASS ≠ FPS PASS. Не G2.
+Очередь кода: **OS-H built**. Pillar 7 zero-G у корпуса. Pillar 11 pad fuel. Pillar 3 ship-as-place (seat↔pocket↔hatch). Pillar 5 occupy dock 1 unit. Headless PASS ≠ FPS PASS. Не G2.

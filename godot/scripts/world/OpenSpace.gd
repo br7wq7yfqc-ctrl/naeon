@@ -835,7 +835,7 @@ func _update_hud() -> void:
 		extra = "  ·  " + str(_interior.life_support_line())
 	elif _in_ship:
 		if bool(ship.get("is_landed")):
-			extra = "  ·  LANDED — 6 rover · 7 store · F EVA · C claim"
+			extra = "  ·  LANDED — 6 rover · 7 store · 9/0 cargo · F EVA · C claim"
 		else:
 			if ship.has_method("get_stall") and float(ship.get_stall()) > 0.4:
 				extra = "  ·  STALL %.0f%%" % (float(ship.get_stall()) * 100.0)
@@ -856,7 +856,7 @@ func _update_hud() -> void:
 	else:
 		hud_label.text = (
 			"NAEON OpenSpace  |  free flight · seamless land · surface walk\n"
-			+ "WASD thrust  Space/Shift lift  Mouse=flight plane  Z/X roll  |  1/2/3 flight  4 siege  5 ramp  6 rover  7 store  |  E land  F exit/EVA/board  C pulse  G/B terra  U undo  I interior  Q hack\n"
+			+ "WASD thrust  Space/Shift lift  Mouse=flight plane  Z/X roll  |  1/2/3 flight  4 siege  5 ramp  6 rover  7 store  9/0 cargo  |  E land  F exit/EVA/board  C pulse  G/B terra  U undo  I interior  Q hack\n"
 			+ "F1 cycle quality  F3 HUD debug  |  Tab Clash sandbox (not a map)  ·  M galaxy map locked\n"
 			+ "Mode: %s  Planet: %s  Alt: %dm  ATMO:%.0f%%  Spd: %d  HP:%d SHD:%d  PLOD:%s  CONTRIB:%.0f" % [
 				mode, pname, int(alt), atmo_now * 100.0, int(spd), int(ship.health), int(ship.shields), (pl.current_lod_name() if pl and is_instance_valid(pl) and pl.has_method("current_lod_name") else "-"), (GameManager.contribution if GameManager else 0.0)

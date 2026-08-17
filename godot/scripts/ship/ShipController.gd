@@ -214,6 +214,10 @@ func _input(event: InputEvent) -> void:
 			_toggle_cargo_ramp()
 		elif k == KEY_6:
 			_try_deploy_rover()
+		elif k == KEY_9:
+			try_dock_cargo_transfer(true)
+		elif k == KEY_0:
+			try_dock_cargo_transfer(false)
 		elif k == KEY_8:
 			_toggle_scan()
 	if is_landed:
@@ -1397,6 +1401,49 @@ func _toggle_siege() -> void:
 
 
 
+func try_dock_cargo_transfer(to_hold: bool) -> bool:
+	## Occupied unnamed pad, already landed. One crate via hold/ramp — no tractor.
+	if not is_landed:
+		_toast_ship("Land on an occupied pad to dock cargo")
+		return false
+	var pad: Node = _find_landed_pad_base()
+	if pad == null or not pad.has_method("try_dock_transfer"):
+		_toast_ship("No pad yard to dock")
+		return false
+	if _cargo_ramp != null and is_instance_valid(_cargo_ramp) and _cargo_ramp.has_method("deploy"):
+		_cargo_ramp.deploy()
+	var ok := bool(pad.try_dock_transfer(self, to_hold))
+	if ok:
+		var hold := get_node_or_null("CargoHold")
+		var n := int(hold.unit_count()) if hold != null and hold.has_method("unit_count") else 0
+		var yard := int(pad.pad_cargo_count()) if pad.has_method("pad_cargo_count") else 0
+		_toast_ship("Cargo dock %s  hold %d  pad %d" % ["pad→hold" if to_hold else "hold→pad", n, yard])
+	else:
+		_toast_ship("Cargo dock blocked — occupy the pad, one unit")
+	return ok
+
+
+func _find_landed_pad_base() -> Node:
+	var deck: Node = _landed_pad
+	if deck == null or not is_instance_valid(deck):
+		return null
+	if deck.is_in_group("pad_bases") and deck.has_method("try_dock_transfer"):
+		return deck
+	var named: Node = deck.get_node_or_null("BaseCluster/PadBaseController")
+	if named != null:
+		return named
+	var child: Node = deck.find_child("PadBaseController", true, false)
+	if child != null:
+		return child
+	if deck is Node3D:
+		var tree := get_tree()
+		if tree:
+			for n in tree.get_nodes_in_group("pad_bases"):
+				if n is Node3D and (deck == n or deck.is_ancestor_of(n) or n.is_ancestor_of(deck)):
+					return n
+	return null
+
+
 func _toggle_cargo_ramp() -> void:
 	if _cargo_ramp == null or not is_instance_valid(_cargo_ramp):
 		return
@@ -1747,6 +1794,9 @@ func get_flight_status_line() -> String:
 		var land := "%s · SPD 0 · LANDED — Space/E takeoff · F EVA · C claim" % flight_mode_name()
 		if needs_fuel():
 			land += "  ·  F %.0f/%.0f occupy refill" % [fuel, max_fuel]
+		var hold_n := get_node_or_null("CargoHold")
+		if hold_n != null and hold_n.has_method("unit_count"):
+			land += "  ·  9/0 cargo %d" % int(hold_n.unit_count())
 		return land
 	var st := "%s · %s · SPD %d · F %.0f" % [flight_mode_name(), get_op_mode_name(), int(velocity.length()), fuel]
 	if fuel_starved():

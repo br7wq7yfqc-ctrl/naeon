@@ -1,5 +1,6 @@
 extends Node3D
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
+const _Hold = preload("res://scripts/ship/CargoHold.gd")
 ## Pad base: Dynamic Ownership claim + extractor harvest → Contribution (soft economy, no P2W combat).
 
 signal claimed(faction: String)
@@ -35,6 +36,7 @@ var _repair_toast_t: float = 0.0
 var _refuel_toast_t: float = 0.0
 var _seeding: bool = false
 var _guard_respawn_t: float = 0.0
+var _cargo_units: Array = []
 
 const CLAIM_NEED := 1.75
 const OCCUPY_RATE := 0.32
@@ -46,6 +48,8 @@ const ARENA_INFLUENCE_MAX := 0.30
 const ARENA_INFLUENCE_DECAY := 0.0005  # ~10 min back to zero
 const PAD_REPAIR_RATE := 2.5  # module HP/s — occupy-to-hold time, not cash skip
 const PAD_REFUEL_RATE := 18.0  # tank/s — occupy wait; Knowledge never skips
+const PAD_YARD_SEED := 2
+const PAD_YARD_CAP := 6
 
 func _ready() -> void:
 	add_to_group("pad_base")
@@ -60,6 +64,7 @@ func _ready() -> void:
 	_ensure_label()
 	set_process(true)
 	add_to_group("pad_bases")
+	_seed_pad_cargo()
 	_contest_ring = Node3D.new()
 	_contest_ring.set_script(preload("res://scripts/world/ContestedRing.gd"))
 	_contest_ring.name = "ContestedRing"
@@ -685,6 +690,9 @@ func harvest_hud_line() -> String:
 	var refuel := pad_refuel_hud_line()
 	if refuel != "":
 		line += "  ·  " + refuel
+	var cargo := pad_cargo_hud_line()
+	if cargo != "":
+		line += "  ·  " + cargo
 	return line
 
 
@@ -711,6 +719,77 @@ func pad_refuel_hud_line() -> String:
 	if f >= mx - 0.05:
 		return ""
 	return "%s %.0f/%.0f (occupy, no cash)" % [_SoftK.pump_label(), f, mx]
+
+
+func pad_cargo_hud_line() -> String:
+	if _cargo_units.is_empty() and _landed_own_ship() == null:
+		return ""
+	return "%s ×%d (dock 9/0, no cash)" % [_SoftK.crate_label(), _cargo_units.size()]
+
+
+func pad_cargo_count() -> int:
+	return _cargo_units.size()
+
+
+func ensure_pad_cargo(n: int = PAD_YARD_SEED) -> void:
+	while _cargo_units.size() < n and _cargo_units.size() < PAD_YARD_CAP:
+		_cargo_units.append(_make_pad_crate(_cargo_units.size()))
+
+
+func try_dock_transfer(ship: Node, to_hold: bool) -> bool:
+	## One crate pad↔CargoHold. Dock = land + occupy. No tractor. No cash skip.
+	if ship == null or not is_instance_valid(ship):
+		return false
+	if not bool(ship.get("is_landed")):
+		return false
+	if not _ship_landed_on_this(ship):
+		return false
+	if not _owner_in_zone():
+		return false
+	var hold: Node = ship.get_node_or_null("CargoHold")
+	if hold == null:
+		return false
+	if to_hold:
+		if _cargo_units.is_empty():
+			return false
+		if not hold.has_method("store_unit"):
+			return false
+		var unit: Dictionary = _cargo_units[0]
+		if hold.has_method("can_store_unit"):
+			var vol := float(unit.get("volume", _Hold.UNIT_VOL_M3))
+			var mass := float(unit.get("mass", _Hold.UNIT_MASS_T))
+			if not bool(hold.can_store_unit(vol, mass)):
+				return false
+		if not bool(hold.store_unit(unit)):
+			return false
+		_cargo_units.pop_at(0)
+		_notify_hud("%s pad→hold · occupy dock, no cash" % _SoftK.crate_label())
+		return true
+	if not hold.has_method("retrieve_unit") or not hold.has_method("unit_count"):
+		return false
+	if int(hold.unit_count()) < 1:
+		return false
+	if _cargo_units.size() >= PAD_YARD_CAP:
+		return false
+	var back: Dictionary = hold.retrieve_unit(0)
+	if back.is_empty():
+		return false
+	_cargo_units.append(_Hold.normalize_unit(back))
+	_notify_hud("%s hold→pad · occupy dock, no cash" % _SoftK.crate_label())
+	return true
+
+
+func _seed_pad_cargo() -> void:
+	_cargo_units.clear()
+	ensure_pad_cargo(PAD_YARD_SEED)
+
+
+func _make_pad_crate(i: int) -> Dictionary:
+	var pin := str(get_meta("site_pin", ""))
+	var id := "crate_%s_%d" % [_pad_label(), i]
+	if pin.begins_with("SITE_"):
+		id = "crate_unnamed_%d" % i
+	return _Hold.make_crate(id)
 
 
 func _landed_own_ship() -> Node:
@@ -1110,8 +1189,9 @@ func soft_scan() -> String:
 	## V intel: ownership + reserves. Soft Knowledge only (no combat power).
 	var fac := ownership.faction_name() if ownership else "Neutral"
 	var stren := ownership.claim_strength if ownership else 0.0
-	var line := "Pad scan: %s  claim=%.2f  reserves=%.0f  %s (soft intel)" % [
+	var line := "Pad scan: %s  claim=%.2f  reserves=%.0f  %s  %s×%d (soft intel)" % [
 		fac, stren, crystal_reserves, _SoftK.pump_label(),
+		_SoftK.crate_label(), _cargo_units.size(),
 	]
 	_notify_hud(line)
 	if AudioDirector and AudioDirector.has_method("play_ui"):
