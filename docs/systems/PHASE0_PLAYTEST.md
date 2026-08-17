@@ -2,10 +2,12 @@
 
 Working testing gate for the current prototype (not a closed Phase 0).
 Smoke: `scripts/playtest_headless_smoke.sh` → OS_ERR=0 · TA_ERR=0 · MECH_CODE=0. No DMG.
+OS-H ritual (headless steps, not FPS): `--playtest-ritual` or the mechanics gate. F5 loop: `docs/design/OPEN_SPACE_SC_BENCHMARK.md` § OS-H.
 
 ## Play
 - Menu → Open Space or Aexion Clash
 - GUI: `scripts/run_godot_playtest.sh` (gl_compatibility on software GL)
+- OS-H F5: open `OpenSpace.tscn` → F5 → hold S (no pitch) → E land → F EVA → F board → Space takeoff → above atmo
 - 10-min loop: fly/fight → land/lane → occupy/claim → harvest Contribution/Biomass
 
 ## Canon plates

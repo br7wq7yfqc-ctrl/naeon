@@ -1,21 +1,29 @@
 extends Node
 ## Headless mechanics playtest: interior enter/exit, occupy contest, stall math.
+## OS-H ritual: space → atmo → land → EVA → takeoff → space (same scene).
 ## Enabled with: godot --path godot --scene res://scenes/world/OpenSpace.tscn -- --playtest-mechanics
+## Ritual only:  -- --playtest-ritual
+## Headless PASS is step-completeness. It is not a 3090 FPS / 5 min soak.
 
 const _Flight = preload("res://scripts/ship/ShipFlightModel.gd")
 const _Hits = preload("res://scripts/combat/CombatHits.gd")
 
+var _ritual_only := false
+
 
 func _ready() -> void:
-	var wanted := false
+	var mechanics := false
+	var ritual := false
 	for a in OS.get_cmdline_user_args():
 		if str(a) == "--playtest-mechanics":
-			wanted = true
-			break
-	if not wanted:
+			mechanics = true
+		elif str(a) == "--playtest-ritual":
+			ritual = true
+	if not mechanics and not ritual:
 		queue_free()
 		return
-	print("[Playtest] mechanics driver on")
+	_ritual_only = ritual and not mechanics
+	print("[Playtest] mechanics driver on" if not _ritual_only else "[Playtest] OS-H ritual driver on")
 	call_deferred("_go")
 
 
@@ -29,6 +37,11 @@ func _go() -> void:
 	# Capture OS-C spawn before later tests land / park the ship at 770 m.
 	var osc_spawn_agl := _osc_read_spawn_agl(os)
 	print("[Playtest] OS-C boot AGL=", snapped(osc_spawn_agl, 0.1))
+	# OS-H uses the real boot altitude. Do not teleport past a step.
+	await _osh_ritual(fails)
+	if _ritual_only:
+		_finish(fails, 0 if fails.is_empty() else 1)
+		return
 
 	# --- stall math (no scene) ---
 	if _Flight.stall_amount(0.0, 4.0, 20.0) > 0.01:
@@ -508,6 +521,7 @@ func _go() -> void:
 	_ose_near_read(fails)
 	_osf_atmo_flight(fails)
 	_osg_outpost_silhouette(fails)
+	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
 
@@ -1328,6 +1342,333 @@ func _osg_outpost_silhouette(fails: PackedStringArray) -> void:
 		fails.append("OS-G mast/habitat sources not documented")
 	if man.find("\"git_binary\": true") >= 0:
 		fails.append("OS-G manifest marks a git binary")
+
+
+func _osh_ritual(fails: PackedStringArray) -> void:
+	## OS-H harness: space → atmo → land → EVA → takeoff → space.
+	## Same OpenSpace scene. Hold-S is geometric inward (no mouse pitch).
+	## Headless PASS = every step ran. Not a 3090 FPS / 5 min soak.
+	var required: PackedStringArray = PackedStringArray([
+		"space", "atmo", "descend", "land", "eva", "takeoff", "space_out"
+	])
+	var done: Dictionary = {}
+	var os: Node = get_parent()
+	if os == null:
+		fails.append("OS-H no OpenSpace")
+		_osh_report_skips(fails, done, required)
+		return
+	var scene0 := _osh_scene_file()
+	print("[Playtest] OS-H scene=", scene0)
+	if scene0.find("OpenSpace.tscn") < 0:
+		fails.append("OS-H not in OpenSpace scene (%s)" % scene0)
+
+	var nex: Node = _osh_nex()
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	if nex == null or ship == null or not is_instance_valid(ship):
+		fails.append("OS-H no Nex-Prime/ship")
+		_osh_report_skips(fails, done, required)
+		return
+
+	# --- SPACE: real OS-C boot altitude, vacuum, limb readable ---
+	var start_agl := _osc_read_spawn_agl(os)
+	if start_agl < 5000.0 or start_agl > 15000.0:
+		fails.append("OS-H SPACE not at OS-C altitude (%s)" % snapped(start_agl, 0.1))
+	var d_space := 1.0
+	if nex.has_method("density_at"):
+		d_space = float(nex.density_at(ship.global_position))
+	if nex.has_method("set_observer"):
+		nex.set_observer(ship)
+	if nex.has_method("refresh_approach_lod"):
+		nex.refresh_approach_lod()
+	var atmo_n: Node = nex.get_node_or_null("Atmosphere")
+	var limb_on: bool = atmo_n is Node3D and (atmo_n as Node3D).visible
+	var wr: Node3D = os.get_node_or_null("WorldRoot") as Node3D
+	print("[Playtest] OS-H STEP space AGL=", snapped(start_agl, 0.1), " dens=", snapped(d_space, 0.001), " limb=", limb_on)
+	if d_space > 0.001:
+		fails.append("OS-H SPACE not vacuum (%s)" % snapped(d_space, 0.001))
+	if not limb_on:
+		fails.append("OS-H SPACE did not see atmo limb")
+	if wr and not wr.visible:
+		fails.append("OS-H SPACE WorldRoot hidden (load/interior)")
+	if "_pitch" in ship and absf(float(ship.get("_pitch"))) > 0.02:
+		fails.append("OS-H SPACE already pitched")
+	if start_agl >= 5000.0 and start_agl <= 15000.0 and limb_on and d_space <= 0.001:
+		done["space"] = true
+
+	if not done.get("space", false):
+		fails.append("OS-H skipped atmo (no space)")
+		fails.append("OS-H skipped descend (no space)")
+		fails.append("OS-H skipped land (no descend)")
+		fails.append("OS-H skipped eva (no land)")
+		fails.append("OS-H skipped takeoff (no eva)")
+		fails.append("OS-H skipped space_out (no takeoff)")
+		_osh_report_skips(fails, done, required)
+		return
+
+	# --- ATMO + DESCEND: hold-S inward, no pitch, must enter envelope ---
+	var env_h := 1100.0
+	if nex.has_method("envelope_height"):
+		env_h = float(nex.call("envelope_height"))
+	var pitch0: float = float(ship.get("_pitch")) if "_pitch" in ship else 0.0
+	var basis0: Basis = ship.global_transform.basis
+	var sink: Dictionary = _osh_hold_s(nex, ship, 90.0, 12000)
+	var end_agl: float = float(sink.get("agl", -1.0))
+	var saw_atmo: bool = bool(sink.get("saw_atmo", false))
+	var atmo_agl: float = float(sink.get("atmo_agl", -1.0))
+	var atmo_d: float = float(sink.get("atmo_dens", 0.0))
+	var pitch1: float = float(ship.get("_pitch")) if "_pitch" in ship else 0.0
+	print("[Playtest] OS-H STEP atmo entered AGL=", snapped(atmo_agl, 0.1), " dens=", snapped(atmo_d, 0.01))
+	print("[Playtest] OS-H STEP descend AGL=", snapped(start_agl, 0.1), "→", snapped(end_agl, 0.1), " pitch=", snapped(pitch1 - pitch0, 0.001), " steps=", int(sink.get("steps", 0)))
+	if not saw_atmo:
+		fails.append("OS-H ATMO skipped — hold-S never entered envelope")
+	elif atmo_agl > env_h + 20.0:
+		fails.append("OS-H ATMO mark above envelope (%s > %s)" % [snapped(atmo_agl, 0.1), snapped(env_h, 0.1)])
+	else:
+		done["atmo"] = true
+	if end_agl > start_agl - 1000.0:
+		fails.append("OS-H DESCEND skipped — AGL did not drop (%s → %s)" % [snapped(start_agl, 0.1), snapped(end_agl, 0.1)])
+	elif end_agl > 160.0:
+		fails.append("OS-H DESCEND stopped above land band (%s)" % snapped(end_agl, 0.1))
+	elif absf(pitch1 - pitch0) > 0.02:
+		fails.append("OS-H DESCEND used pitch (%s)" % snapped(pitch1 - pitch0, 0.001))
+	elif not basis0.z.normalized().is_equal_approx(ship.global_transform.basis.z.normalized()):
+		fails.append("OS-H DESCEND rotated the nose (pitch/turn)")
+	else:
+		done["descend"] = true
+	if not _osh_same_scene(scene0):
+		fails.append("OS-H load screen during descend (%s)" % _osh_scene_file())
+		done.erase("descend")
+		done.erase("atmo")
+
+	if not done.get("atmo", false) or not done.get("descend", false):
+		if not done.get("atmo", false):
+			fails.append("OS-H skipped land (no atmo)")
+		elif not done.get("descend", false):
+			fails.append("OS-H skipped land (no descend)")
+		fails.append("OS-H skipped eva (no land)")
+		fails.append("OS-H skipped takeoff (no eva)")
+		fails.append("OS-H skipped space_out (no takeoff)")
+		_osh_report_skips(fails, done, required)
+		return
+
+	# --- LAND: honest gate after hold-S, no pad teleport ---
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)  # HOVER
+	if ship.has_method("_do_land"):
+		ship._do_land()
+	var landed := bool(ship.get("is_landed"))
+	print("[Playtest] OS-H STEP land landed=", landed, " AGL=", snapped(_osh_agl(nex, ship.global_position), 0.1))
+	if not landed:
+		fails.append("OS-H LAND skipped — _do_land refused")
+		fails.append("OS-H skipped eva (no land)")
+		fails.append("OS-H skipped takeoff (no eva)")
+		fails.append("OS-H skipped space_out (no takeoff)")
+		_osh_report_skips(fails, done, required)
+		return
+	if not _osh_same_scene(scene0):
+		fails.append("OS-H load screen on land")
+		_osh_report_skips(fails, done, required)
+		return
+	done["land"] = true
+
+	# --- EVA snap on Relief ---
+	if os.has_method("try_exit_ship"):
+		os.try_exit_ship()
+	await get_tree().create_timer(0.35).timeout
+	var walker: Node3D = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("OS-H EVA skipped — no walker")
+		fails.append("OS-H skipped takeoff (no eva)")
+		fails.append("OS-H skipped space_out (no takeoff)")
+		_osh_report_skips(fails, done, required)
+		return
+	if walker.has_method("_relief_snap_fallback"):
+		walker.call("_relief_snap_fallback")
+	elif walker.has_method("snap_to_surface"):
+		walker.call("snap_to_surface")
+	var eva_agl: float = _osh_agl(nex, walker.global_position)
+	print("[Playtest] OS-H STEP eva snap AGL=", snapped(eva_agl, 0.01), " in_ship=", os.get("_in_ship"))
+	if eva_agl > 40.0 or eva_agl < -6.0:
+		fails.append("OS-H EVA snap left walker off relief (%s)" % snapped(eva_agl, 0.01))
+		fails.append("OS-H skipped takeoff (no eva)")
+		fails.append("OS-H skipped space_out (no takeoff)")
+		_osh_report_skips(fails, done, required)
+		return
+	if bool(os.get("_in_ship")):
+		fails.append("OS-H EVA skipped — still piloting")
+		fails.append("OS-H skipped takeoff (no eva)")
+		fails.append("OS-H skipped space_out (no takeoff)")
+		_osh_report_skips(fails, done, required)
+		return
+	done["eva"] = true
+
+	# --- TAKEOFF: board then launch (F board → Space) ---
+	var up_b: Vector3 = (ship.global_position - nex.global_position).normalized()
+	walker.global_position = ship.global_position + up_b * 2.0
+	if os.has_method("try_enter_ship"):
+		os.try_enter_ship()
+	await get_tree().create_timer(0.4).timeout
+	if not bool(os.get("_in_ship")):
+		fails.append("OS-H TAKEOFF skipped — did not board")
+		fails.append("OS-H skipped space_out (no takeoff)")
+		_osh_report_skips(fails, done, required)
+		return
+	if ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+	if bool(ship.get("is_landed")):
+		fails.append("OS-H TAKEOFF skipped — still landed")
+		fails.append("OS-H skipped space_out (no takeoff)")
+		_osh_report_skips(fails, done, required)
+		return
+	print("[Playtest] OS-H STEP takeoff landed=", ship.get("is_landed"))
+	done["takeoff"] = true
+
+	# --- SPACE OUT: climb above envelope, same scene ---
+	var climb: Dictionary = _osh_climb(nex, ship, env_h + 80.0, 8000)
+	var out_agl: float = float(climb.get("agl", -1.0))
+	var out_d := 1.0
+	if nex.has_method("density_at"):
+		out_d = float(nex.density_at(ship.global_position))
+	print("[Playtest] OS-H STEP space_out AGL=", snapped(out_agl, 0.1), " dens=", snapped(out_d, 0.001), " scene=", _osh_scene_file())
+	if out_agl < env_h:
+		fails.append("OS-H SPACE_OUT skipped — still in envelope (%s < %s)" % [snapped(out_agl, 0.1), snapped(env_h, 0.1)])
+	elif out_d > 0.001:
+		fails.append("OS-H SPACE_OUT still in atmo dens=%s" % snapped(out_d, 0.001))
+	elif not _osh_same_scene(scene0):
+		fails.append("OS-H load screen on return (%s)" % _osh_scene_file())
+	elif wr and not wr.visible:
+		fails.append("OS-H SPACE_OUT WorldRoot hidden")
+	else:
+		done["space_out"] = true
+
+	_osh_invariants(fails)
+	_osh_report_skips(fails, done, required)
+	if fails.is_empty():
+		print("[Playtest] OS-H ritual complete (headless steps; not FPS PASS)")
+
+
+func _osh_hold_s(nex: Node, ship: Node3D, target_agl: float, max_steps: int) -> Dictionary:
+	var pos: Vector3 = ship.global_position
+	var vel := Vector3.ZERO
+	if "velocity" in ship and ship.velocity is Vector3:
+		vel = ship.velocity as Vector3
+	var saw := false
+	var atmo_agl := -1.0
+	var atmo_d := 0.0
+	var steps := 0
+	var agl := _osh_agl(nex, pos)
+	for i in max_steps:
+		steps = i + 1
+		var inward: Vector3 = (nex.global_position - pos).normalized()
+		agl = _osh_agl(nex, pos)
+		var dens := 0.0
+		if nex.has_method("density_at"):
+			dens = float(nex.density_at(pos))
+		if dens > 0.02 and not saw:
+			saw = true
+			atmo_agl = agl
+			atmo_d = dens
+		if agl <= target_agl:
+			break
+		# Hold-S: geometric inward only. No lift (controller skips on S). No pitch.
+		vel = _Flight.integrate(vel, inward * 28.0, 0.016, 0.35, 1.0, dens, 55.0)
+		vel = _Flight.apply_ceiling(vel, inward, dens, 0.016)
+		pos += vel * 0.016
+	ship.global_position = pos
+	if "velocity" in ship:
+		ship.velocity = vel
+	if nex.has_method("set_observer"):
+		nex.set_observer(ship)
+	return {
+		"agl": agl,
+		"saw_atmo": saw,
+		"atmo_agl": atmo_agl,
+		"atmo_dens": atmo_d,
+		"steps": steps,
+	}
+
+
+func _osh_climb(nex: Node, ship: Node3D, target_agl: float, max_steps: int) -> Dictionary:
+	var pos: Vector3 = ship.global_position
+	var vel := Vector3.ZERO
+	if "velocity" in ship and ship.velocity is Vector3:
+		vel = ship.velocity as Vector3
+	var agl := _osh_agl(nex, pos)
+	for _i in max_steps:
+		var outward: Vector3 = (pos - nex.global_position).normalized()
+		agl = _osh_agl(nex, pos)
+		if agl >= target_agl:
+			break
+		var dens := 0.0
+		if nex.has_method("density_at"):
+			dens = float(nex.density_at(pos))
+		# Space lift: outward accel. Ceiling damps climb in dense air — keep pushing.
+		vel = _Flight.integrate(vel, outward * 28.0, 0.016, 0.35, 1.0, dens, 55.0)
+		pos += vel * 0.016
+	ship.global_position = pos
+	if "velocity" in ship:
+		ship.velocity = vel
+	return {"agl": agl}
+
+
+func _osh_agl(nex: Node, pos: Vector3) -> float:
+	if nex != null and nex.has_method("altitude_of"):
+		return float(nex.altitude_of(pos))
+	var rad: float = float(nex.get("radius")) if nex else 1400.0
+	return pos.distance_to((nex as Node3D).global_position) - rad
+
+
+func _osh_nex() -> Node:
+	var tree := get_tree()
+	if tree == null:
+		return null
+	for n in tree.get_nodes_in_group("planets"):
+		if str(n.get("planet_name")) == "Nex-Prime":
+			return n
+	return null
+
+
+func _osh_scene_file() -> String:
+	var tree := get_tree()
+	if tree == null or tree.current_scene == null:
+		return ""
+	return str(tree.current_scene.scene_file_path)
+
+
+func _osh_same_scene(scene0: String) -> bool:
+	return _osh_scene_file() == scene0 and scene0.find("OpenSpace.tscn") >= 0
+
+
+func _osh_invariants(fails: PackedStringArray) -> void:
+	var os: Node = get_parent()
+	var planets: Array = os.get("planets") if os and os.get("planets") != null else []
+	if planets.size() != 1:
+		fails.append("OS-H loaded a second system/body (%s)" % planets.size())
+	var sys = load("res://scripts/world/StarSystemCatalog.gd")
+	if sys and str(sys.HOME) != "ARK":
+		fails.append("OS-H left ARK (%s)" % str(sys.HOME))
+	if LayerContext and str(LayerContext.site_pin_id) != "" and str(LayerContext.site_pin_id) != "SITE_SPACE_TEST_PAD":
+		fails.append("OS-H site_pin left catalog (%s)" % LayerContext.site_pin_id)
+	var src := FileAccess.get_file_as_string("res://scripts/ship/ShipController.gd")
+	if src.find("FlightMode.CRUISE") >= 0 or src.find("mass_lock") >= 0:
+		fails.append("OS-H shipped G1 CRUISE / mass lock")
+
+
+func _osh_report_skips(fails: PackedStringArray, done: Dictionary, required: PackedStringArray) -> void:
+	for step in required:
+		if not bool(done.get(step, false)):
+			var msg := "OS-H skipped %s" % step
+			var already := false
+			for f in fails:
+				if str(f).find(msg) >= 0:
+					already = true
+					break
+			if not already:
+				fails.append(msg)
+			print("[Playtest] OS-H FAIL skipped ", step)
 
 
 func _finish(fails: PackedStringArray, code: int) -> void:

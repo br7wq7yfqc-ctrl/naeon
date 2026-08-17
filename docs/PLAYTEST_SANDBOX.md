@@ -134,7 +134,9 @@ MECHANICS_IS_NOT_HUMAN_GATE=true
 
 Ранние прогоны на той же линии (P0.3–P0.5): спуск 770 м, LAND READY→LANDED, кольцо без swim/дыр; HUD/окно/взлёт чинили без выдуманных багов.
 
-Повтор: F5 → OPEN SPACE → hold S → E land → F EVA → F board → Space takeoff.
+Повтор P0.6: F5 → OPEN SPACE → hold S → E land → F EVA → F board → Space takeoff.
+
+**OS-H ритуал (F5, Godot 4.3):** открыть `godot/scenes/world/OpenSpace.tscn` → F5 (или MainMenu → Open Space). Спавн 8 км. Лимб виден. **Hold S без mouse pitch** → `3` HOVER → **E** land → **F** EVA (snap на Relief) → **F** board → **Space** takeoff → набор выше оболочки (HUD ATMO 0%). Сцена не меняется. Headless шаги: `godot --headless --path godot --scene res://scenes/world/OpenSpace.tscn -- --playtest-ritual`. `[Playtest] PASS` ≠ 60 FPS / 5 мин soak.
 
 llvmpipe этого не подтверждает и **не** ставит FPS PASS.
 
@@ -149,6 +151,7 @@ llvmpipe этого не подтверждает и **не** ставит FPS P
 - OS-E: near shader на чанках (albedo / декали / near LOD). Relief тот же.
 - OS-F: подъём/планирование в плотном слое. S-sink геометрический. 770 м без крыла.
 - OS-G: с 8 км / 2 км читается мачта+пад на `Pad_Approach`; на грунте то же место.
+- OS-H: headless ритуал space→atmo→land→EVA→takeoff→space. Не FPS PASS.
 - G2–G6 закрыты. `M` = тост locked. `Tab` = Clash sandbox.
 - Dummy MNULL=0 ≠ допуск. rules/25 на llvmpipe не подписывать.
 
