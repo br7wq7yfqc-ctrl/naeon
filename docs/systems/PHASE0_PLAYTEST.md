@@ -111,3 +111,4 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 85. Ship module HP: engine/weapon/shield/cargo/extractor integrity scales function; hull stays; pad occupy repair (no cash). `--playtest-mechanics` asserts damaged engine reduces thrust. No power/cool/life buses.
 86. Zero-G EVA near ship (not on dirt): no planet gravity, fuel+tether stay, F reboard. Surface walker / OS-H ritual unchanged.
 87. Pad fuel is a real SCM/HOVER tank: occupy-to-hold refill (no cash skip); Knowledge labels the pump only. Empty = no afterburn / limited thrust, not an OS-H hard lock. `--playtest-mechanics` asserts occupy→fuel-up.
+88. Ship as place: I from seat → pocket → walk a real door/airlock → F seat (or I hatch → EVA). No fake locked doors. `--playtest-mechanics` asserts seat→pocket→seat.
