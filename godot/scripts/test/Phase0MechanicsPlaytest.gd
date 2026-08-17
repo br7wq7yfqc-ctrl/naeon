@@ -514,6 +514,26 @@ func _go() -> void:
 		if miss_self == sh_c:
 			fails.append("ship shot hit self")
 
+	# --- damaged engine module reduces thrust (hull stays) ---
+	var sh_m: Node = os.get("ship")
+	if sh_m == null or not sh_m.has_method("module_thrust") or not sh_m.has_method("damage_module"):
+		fails.append("no ship module HP API")
+	else:
+		var t0: float = float(sh_m.module_thrust())
+		var hull0: float = float(sh_m.health)
+		sh_m.damage_module(int(ShipModule.ModuleType.ENGINE), 999.0)
+		var t1: float = float(sh_m.module_thrust())
+		var hull1: float = float(sh_m.health)
+		print("[Playtest] engine module thrust ", snapped(t0, 0.1), " → ", snapped(t1, 0.1), " hull=", snapped(hull1, 0.1))
+		if t0 <= 0.05:
+			fails.append("engine module had no thrust to degrade")
+		elif t1 >= t0 - 0.05:
+			fails.append("damaged engine did not reduce thrust")
+		if hull1 < hull0 - 0.05:
+			fails.append("module damage cut hull HP")
+		if sh_m.has_method("repair_modules"):
+			sh_m.repair_modules(999.0)
+
 	_osa_same_body(fails)
 	_osb_atmosphere_shell(fails)
 	_osc_scale_ladder(fails, osc_spawn_agl)

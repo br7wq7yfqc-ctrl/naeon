@@ -726,6 +726,12 @@ func _refresh() -> void:
 					elif st == "extracting" and n.has_method("harvest_hud_line"):
 						var hl := str(n.harvest_hud_line())
 						best_txt = "PAD %s  %s  (%.0fm)" % [n.get_faction(), hl, d] if hl != "" else "PAD %s  extracting  (%.0fm)" % [n.get_faction(), d]
+					elif n.has_method("pad_repair_hud_line"):
+						var rl := str(n.pad_repair_hud_line())
+						if rl != "":
+							best_txt = "PAD %s  %s  (%.0fm)" % [n.get_faction(), rl, d]
+						else:
+							best_txt = "PAD %s  %s  claim %.0f%%  (%.0fm)" % [n.get_faction(), st, claim_ratio * 100.0, d]
 					else:
 						best_txt = "PAD %s  %s  claim %.0f%%  (%.0fm)" % [n.get_faction(), st, claim_ratio * 100.0, d]
 					if st == "contested" or str(n.get_faction()) == "Contested":

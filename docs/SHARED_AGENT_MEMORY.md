@@ -140,6 +140,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-17 | P0.6 squash on main: HUD, hold-S 770→0, EVA on Relief, HOVER S. RTX 3090: land/EVA/takeoff, 6 min / 60 FPS, 0 debugger errors. Not FPS PASS on llvmpipe. | P0 runtime |
 | 2026-08-17 | OPEN SPACE SC benchmark plan (OS-A…OS-H). Port unique #7 canon docs; drop #7 code. HUMAN_UNFIT superseded by 3090 fact. G2–G6 stay closed. | open-space-sc |
 | 2026-08-17 | OS-H ritual harness: space→atmo→land→EVA→takeoff→space, same scene. Headless steps; F5 documented. Not 3090 FPS / 5 min soak. | os-h-ritual |
+| 2026-08-17 | SC pillar 4 module HP: integrity scales thrust/weapon/shield; hull stays; occupy-to-hold pad repair (no cash). No power/cool/life buses. | ship-module-hp |
 
 ## Full code audit + hardening — 2026-08-15
 

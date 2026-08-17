@@ -31,6 +31,7 @@ var _contest_side: String = ""
 var _guard: Node3D = null
 var _occupy_in_t: float = 0.0
 var _occupy_label_t: float = 0.0
+var _repair_toast_t: float = 0.0
 var _seeding: bool = false
 var _guard_respawn_t: float = 0.0
 
@@ -42,6 +43,7 @@ const PULSE_STR := 0.38
 const HACK_STR := 0.22
 const ARENA_INFLUENCE_MAX := 0.30
 const ARENA_INFLUENCE_DECAY := 0.0005  # ~10 min back to zero
+const PAD_REPAIR_RATE := 2.5  # module HP/s — occupy-to-hold time, not cash skip
 
 func _ready() -> void:
 	add_to_group("pad_base")
@@ -132,6 +134,7 @@ func _process(delta: float) -> void:
 	_tick_arena_influence(delta)
 	if running and ownership and ownership.is_fully_owned() and _status != "contested" and _owner_in_zone():
 		_tick_harvest(delta)
+		_tick_pad_repair(delta)
 	else:
 		if _status == "extracting":
 			_status = "owned"
@@ -672,7 +675,58 @@ func harvest_hud_line() -> String:
 		unit = "BIOMASS"
 	elif ownership and ownership.faction_name() == "gROT":
 		unit = "BIOMASS"
-	return "EXTRACTING  %s +%.1f/s  R%.0f" % [unit, rate, crystal_reserves]
+	var line := "EXTRACTING  %s +%.1f/s  R%.0f" % [unit, rate, crystal_reserves]
+	var repair := pad_repair_hud_line()
+	if repair != "":
+		line += "  ·  " + repair
+	return line
+
+
+func pad_repair_hud_line() -> String:
+	var ship := _landed_own_ship()
+	if ship == null or not ship.has_method("modules_need_repair"):
+		return ""
+	if not bool(ship.modules_need_repair()):
+		return ""
+	var mods := str(ship.module_hp_line()) if ship.has_method("module_hp_line") else ""
+	return "REPAIR %s (occupy, no cash)" % mods if mods != "" else "REPAIR (occupy, no cash)"
+
+
+func _landed_own_ship() -> Node:
+	if ownership == null or not ownership.is_fully_owned():
+		return null
+	var own_fac := ownership.faction_name()
+	var tree := get_tree()
+	if tree == null:
+		return null
+	for s in SoftScanCache.get_ships() if SoftScanCache else tree.get_nodes_in_group("ship"):
+		if s == null or not is_instance_valid(s) or not s.is_inside_tree():
+			continue
+		if not bool(s.get("is_landed")):
+			continue
+		var sfac := "Cybernex"
+		if s.has_method("get_faction"):
+			sfac = str(s.get_faction())
+		if sfac != own_fac:
+			continue
+		if _ship_landed_on_this(s):
+			return s
+	return null
+
+
+func _tick_pad_repair(delta: float) -> void:
+	var ship := _landed_own_ship()
+	if ship == null or not ship.has_method("repair_modules"):
+		return
+	if not ship.has_method("modules_need_repair") or not bool(ship.modules_need_repair()):
+		return
+	if bool(ship.repair_modules(PAD_REPAIR_RATE * delta)):
+		_repair_toast_t += delta
+		if _repair_toast_t >= 2.4:
+			_repair_toast_t = 0.0
+			_notify_hud("PAD REPAIR — occupy to hold, no cash skip")
+	else:
+		_repair_toast_t = 0.0
 
 
 func get_occupy_strength() -> float:
