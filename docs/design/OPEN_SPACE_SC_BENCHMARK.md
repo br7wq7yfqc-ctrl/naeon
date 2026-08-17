@@ -13,6 +13,7 @@
 Полная карта столпов SC → NAEON (роли, не клон): [`SC_FEATURE_MAP.md`](SC_FEATURE_MAP.md).  
 Сшивка орбита ≠ грунт: [`WORLD_FILL.md`](WORLD_FILL.md) §5.  
 Clash нативен; бар арены — Predecessor/Paragon, не Arena Commander: [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md).  
+Стратегия — третий бар, не Clash и не полёт OPEN SPACE: [`BASE_STATION_STRATEGY.md`](BASE_STATION_STRATEGY.md).  
 Дыры каталога (очередь, не новый catalog): [`WORLD_FILL.md`](WORLD_FILL.md) §6.  
 Likeness — вся фантазия SC (лететь, стыковаться, ходить, работать, драться, жить) **ролями** в каноне NAEON, не копией IFCS / Planet Tech V5.
 

@@ -7,6 +7,7 @@
 **Likeness:** 3rd-person over-the-shoulder MOBA (Paragon / Predecessor) — **ролями** в Clash NAEON, не Arena Commander и не top-down Dota/LoL.
 
 Clash — **нативный** слой NAEON. Бар подхода космоса: [`OPEN_SPACE_SC_BENCHMARK.md`](OPEN_SPACE_SC_BENCHMARK.md). Карта SC: [`SC_FEATURE_MAP.md`](SC_FEATURE_MAP.md).  
+Стратегия — третий бар, не Clash и не полёт OPEN SPACE: [`BASE_STATION_STRATEGY.md`](BASE_STATION_STRATEGY.md).  
 Пластины арены в ledger: `moba_arena`, `hexarena_moba_map_schematic`, `tower_iouter_mid_inhibi` — очередь в [`WORLD_FILL.md`](WORLD_FILL.md) §6, не mint SITE_*.
 
 Это **не** клон карт Omeda/Epic, карточной колоды Paragon и не IP героев. Новых SITE_* и городов нет. G5 (Clash-из-мира) **закрыт**. G2–G6 не реализовывать. P2W запрещён. Knowledge — soft (подпись, не unique DPS). Infection — кап 5. story ≠ power.
