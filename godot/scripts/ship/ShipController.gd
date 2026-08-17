@@ -553,6 +553,11 @@ func _physics_process(delta: float) -> void:
 	else:
 		_stall_toast_t = maxf(0.0, _stall_toast_t - delta)
 
+	# OS-F lift/glide in the dense shell. HOVER is VTOL. Hold-S stays
+	# geometric inward — camera-forward S already failed on the 3090.
+	if flight_mode != FlightMode.HOVER and not sink_held:
+		accel += _Flight.aero_lift_accel(velocity, up, atmo, _stall)
+
 	# Soft pad approach brake (assist, not autopilot)
 	if _open_space and _open_space.has_method("nearest_pad"):
 		var pad: Node3D = _open_space.nearest_pad(global_position)
@@ -1584,6 +1589,8 @@ func get_flight_status_line() -> String:
 	var st := "%s · %s · SPD %d" % [flight_mode_name(), get_op_mode_name(), int(velocity.length())]
 	if _stall > 0.28:
 		st += " · STALL %.0f%%" % (_stall * 100.0)
+	elif _atmo_now() >= 0.18 and velocity.length() > 12.0 and flight_mode != FlightMode.HOVER:
+		st += " · GLIDE"
 	st += "  ·  " + land_readiness_line()
 	return st
 

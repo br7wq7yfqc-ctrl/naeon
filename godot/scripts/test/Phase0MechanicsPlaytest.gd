@@ -506,6 +506,7 @@ func _go() -> void:
 	_osc_scale_ladder(fails, osc_spawn_agl)
 	_osd_unnamed_fill(fails)
 	_ose_near_read(fails)
+	_osf_atmo_flight(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
 
@@ -1069,6 +1070,114 @@ func _ose_near_read(fails: PackedStringArray) -> void:
 		fails.append("OS-E Relief under walker drifted")
 	if LayerContext and str(LayerContext.site_pin_id) != "" and str(LayerContext.site_pin_id) != "SITE_SPACE_TEST_PAD":
 		fails.append("OS-E site_pin left catalog (%s)" % LayerContext.site_pin_id)
+
+
+func _osf_atmo_flight(fails: PackedStringArray) -> void:
+	## OS-F: dense-layer lift/glide changes path vs vacuum. STALL / HOVER /
+	## LAND / hold-S stay. S is geometric inward, not camera-forward thrust.
+	var cat = load("res://scripts/world/PlanetProfileCatalog.gd")
+	if cat == null:
+		fails.append("OS-F PlanetProfileCatalog missing")
+		return
+	var env_c: float = float(cat.envelope_of("Nex-Prime"))
+	var d770: float = float(_Flight.atmosphere_density(770.0, 320.0, env_c))
+	var d_dense: float = float(_Flight.atmosphere_density(200.0, 320.0, env_c))
+	var d_out: float = float(_Flight.atmosphere_density(env_c + 20.0, 320.0, env_c))
+	print("[Playtest] OS-F density 200/770/out=", snapped(d_dense, 0.01), "/", snapped(d770, 0.01), "/", snapped(d_out, 0.01))
+	if d_dense < 0.40:
+		fails.append("OS-F 200 m not in dense band (%s)" % snapped(d_dense, 0.01))
+	if d770 > 0.35:
+		fails.append("OS-F 770 m no longer thin (%s)" % snapped(d770, 0.01))
+
+	var wing := Vector3(0, 1, 0)
+	var horiz := Vector3(40, 0, 0)
+	var lift_vac: Vector3 = _Flight.aero_lift_accel(horiz, wing, 0.0, 0.0)
+	var lift_out: Vector3 = _Flight.aero_lift_accel(horiz, wing, d_out, 0.0)
+	var lift_thin: Vector3 = _Flight.aero_lift_accel(horiz, wing, d770, 0.0)
+	var lift_dense: Vector3 = _Flight.aero_lift_accel(horiz, wing, d_dense, 0.0)
+	var lift_stall: Vector3 = _Flight.aero_lift_accel(horiz, wing, 1.0, 1.0)
+	var lift_climb: Vector3 = _Flight.aero_lift_accel(Vector3(0, 40, 0), wing, 1.0, 0.0)
+	print("[Playtest] OS-F lift vac/thin/dense/stall=", snapped(lift_vac.length(), 0.01), "/", snapped(lift_thin.length(), 0.01), "/", snapped(lift_dense.length(), 0.01), "/", snapped(lift_stall.length(), 0.01))
+	if lift_vac.length() > 0.01 or lift_out.length() > 0.01:
+		fails.append("OS-F lift in vacuum")
+	if lift_thin.length() > 0.01:
+		fails.append("OS-F 770 m thin shell grew a wing")
+	if lift_dense.y < 2.0:
+		fails.append("OS-F dense layer has no lift (%s)" % snapped(lift_dense.y, 0.01))
+	if absf(lift_dense.x) > 0.05:
+		fails.append("OS-F lift is not perpendicular to airflow")
+	if lift_dense.y >= 28.0:
+		fails.append("OS-F lift would swamp hold-S")
+	if lift_stall.length() > 0.05:
+		fails.append("OS-F stalled wing still lifts")
+	if lift_climb.length() > 0.05:
+		fails.append("OS-F lift on a vertical climb")
+	if _Flight.stall_speed(_Flight.Mode.HOVER) > 0.01:
+		fails.append("OS-F HOVER gained a stall speed")
+	if _Flight.stall_amount(0.0, 4.0, 20.0) > 0.01:
+		fails.append("OS-F stall in vacuum")
+	if not _Flight.land_ok(10.0, 5.0, 18.0, 12.0):
+		fails.append("OS-F land_ok rejected an honest approach")
+	if _Flight.land_ok(30.0, 5.0, 18.0, 12.0) or _Flight.land_ok(10.0, 20.0, 18.0, 12.0):
+		fails.append("OS-F land_ok went dishonest")
+
+	# Same drag, with vs without lift: dense path must climb relative to no-lift.
+	var g_feel := Vector3(0, -4.05, 0)
+	var v_l: Vector3 = horiz
+	var v_n: Vector3 = horiz
+	var pos_l := Vector3.ZERO
+	var pos_n := Vector3.ZERO
+	for _i in 90:
+		var a_l: Vector3 = g_feel + _Flight.aero_lift_accel(v_l, wing, d_dense, 0.0)
+		v_l = _Flight.integrate(v_l, a_l, 0.016, 0.35, 1.0, d_dense, 55.0)
+		v_n = _Flight.integrate(v_n, g_feel, 0.016, 0.35, 1.0, d_dense, 55.0)
+		pos_l += v_l * 0.016
+		pos_n += v_n * 0.016
+	print("[Playtest] OS-F path y lift/nolift=", snapped(pos_l.y, 0.01), "/", snapped(pos_n.y, 0.01))
+	if pos_l.y <= pos_n.y + 0.35:
+		fails.append("OS-F dense path did not change vs no-lift")
+
+	# Hold-S: geometric inward 28, no lift (controller skips on S). AGL drops.
+	var os: Node = get_parent()
+	var nex: Node = null
+	var tree_f := get_tree()
+	if tree_f:
+		for n in tree_f.get_nodes_in_group("planets"):
+			if str(n.get("planet_name")) == "Nex-Prime":
+				nex = n
+				break
+	if nex == null:
+		fails.append("OS-F no Nex-Prime")
+		return
+	var rad: float = float(nex.get("radius"))
+	var up: Vector3 = Vector3(0.18, 0.96, 0.12).normalized()
+	var start: Vector3 = nex.global_position + up * (rad + 200.0)
+	var inward: Vector3 = (nex.global_position - start).normalized()
+	var vel := Vector3.ZERO
+	var pos: Vector3 = start
+	var d_start: float = float(nex.density_at(start)) if nex.has_method("density_at") else d_dense
+	for _j in 80:
+		vel = _Flight.integrate(vel, inward * 28.0, 0.016, 0.35, 1.0, d_start, 55.0)
+		vel = _Flight.apply_ceiling(vel, inward, d_start, 0.016)
+		pos += vel * 0.016
+	var alt_after: float = pos.distance_to(nex.global_position) - rad
+	print("[Playtest] OS-F hold-S 200m → ", snapped(alt_after, 0.1), " dens=", snapped(d_start, 0.01))
+	if alt_after > 185.0:
+		fails.append("OS-F hold-S did not sink in the dense layer")
+	if alt_after < 20.0:
+		fails.append("OS-F hold-S punched through the surface")
+
+	var src := FileAccess.get_file_as_string("res://scripts/ship/ShipController.gd")
+	if src.find("aero_lift_accel") < 0:
+		fails.append("OS-F ShipController never applies lift")
+	if src.find("accel += inward * sink_acc") < 0:
+		fails.append("OS-F dropped geometric S-sink")
+	if src.find("flight_mode != FlightMode.HOVER and not sink_held") < 0:
+		fails.append("OS-F lift not gated off HOVER / hold-S")
+	if src.find("FlightMode.CRUISE") >= 0 or src.find("mass_lock") >= 0:
+		fails.append("OS-F shipped G1 CRUISE / mass lock")
+	if LayerContext and str(LayerContext.site_pin_id) != "" and str(LayerContext.site_pin_id) != "SITE_SPACE_TEST_PAD":
+		fails.append("OS-F site_pin left catalog (%s)" % LayerContext.site_pin_id)
 
 
 func _finish(fails: PackedStringArray, code: int) -> void:

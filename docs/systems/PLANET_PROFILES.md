@@ -12,6 +12,6 @@
 
 OPEN SPACE старт (OS-C): 8 км AGL над первым телом. Far-сфера + лимб держатся до 15 км AGL. Колодец не растягивать.
 
-ShipFlightModel: `atmosphere_density(alt, height, envelope)`.
+ShipFlightModel: `atmosphere_density(alt, height, envelope)`. OS-F lift/glide читает ту же плотность.
 
 Updated: 2026-08-17
