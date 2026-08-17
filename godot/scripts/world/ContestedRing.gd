@@ -25,13 +25,23 @@ var _meter_mat: StandardMaterial3D
 
 
 func _ready() -> void:
+	add_to_group("contested_ring")
+	set_process(true)
+	visible = false
+	if DisplayServer.get_name() == "headless":
+		return
 	_mesh = MeshInstance3D.new()
-	var tm := TorusMesh.new()
-	tm.inner_radius = 11.0
-	tm.outer_radius = 12.5
-	tm.rings = 10
-	tm.ring_segments = 28
-	_mesh.mesh = tm
+	if DisplayServer.get_name() == "headless":
+		var ring := BoxMesh.new()
+		ring.size = Vector3(24.0, 0.2, 24.0)
+		_mesh.mesh = ring
+	else:
+		var tm := TorusMesh.new()
+		tm.inner_radius = 11.0
+		tm.outer_radius = 12.5
+		tm.rings = 10
+		tm.ring_segments = 28
+		_mesh.mesh = tm
 	_mat = StandardMaterial3D.new()
 	_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -65,12 +75,17 @@ func _ready() -> void:
 	add_child(_sub_label)
 
 	_fill = MeshInstance3D.new()
-	var cm := CylinderMesh.new()
-	cm.top_radius = 10.5
-	cm.bottom_radius = 10.5
-	cm.height = 0.08
-	cm.radial_segments = 28
-	_fill.mesh = cm
+	if DisplayServer.get_name() == "headless":
+		var fill_box := BoxMesh.new()
+		fill_box.size = Vector3(21.0, 0.08, 21.0)
+		_fill.mesh = fill_box
+	else:
+		var cm := CylinderMesh.new()
+		cm.top_radius = 10.5
+		cm.bottom_radius = 10.5
+		cm.height = 0.08
+		cm.radial_segments = 28
+		_fill.mesh = cm
 	_fill_mat = StandardMaterial3D.new()
 	_fill_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_fill_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -102,10 +117,15 @@ func _ready() -> void:
 
 	# Beacon sphere at apex
 	_beacon = MeshInstance3D.new()
-	var sm := SphereMesh.new()
-	sm.radius = 0.55
-	sm.height = 1.1
-	_beacon.mesh = sm
+	if DisplayServer.get_name() == "headless":
+		var beacon_box := BoxMesh.new()
+		beacon_box.size = Vector3(1.1, 1.1, 1.1)
+		_beacon.mesh = beacon_box
+	else:
+		var sm := SphereMesh.new()
+		sm.radius = 0.55
+		sm.height = 1.1
+		_beacon.mesh = sm
 	_beacon_mat = StandardMaterial3D.new()
 	_beacon_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_beacon_mat.albedo_color = Color(1.0, 0.6, 0.15)
@@ -127,9 +147,6 @@ func _ready() -> void:
 	_light.position = Vector3(0, 4, 0)
 	_light.shadow_enabled = false
 	add_child(_light)
-	add_to_group("contested_ring")
-	set_process(true)
-	visible = false
 
 
 func _build_spokes() -> void:

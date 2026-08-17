@@ -18,10 +18,13 @@
 
 ## Flow
 1. Observer → cell
-2. Enqueue missing cells in load ring (center first)
-3. Build ≤ LOAD_BUDGET per stream tick
-4. Recycle cells outside unload ring to pool
-5. Periodic xform refresh (FloatingOrigin)
+2. Enqueue missing cells in load ring every tick (standing still must still grow/restore)
+3. Cache hits restore immediately (shared restore tokens); new meshes take 1 global build token
+4. Recycle cells outside unload ring to pool; **park keeps the mesh cache**
+5. Activate <140 m AGL, park >220 m AGL (hysteresis). Retreat/reapproach restores the ring.
+6. Periodic xform refresh; FloatingOrigin rebase forces a refresh
+
+P0: flora/fauna/water/caves/landscape/terrain-edit are not spawned. One body (Nex-Prime).
 
 ## Shared
 `SurfaceChunkMath.gd` — cell_of, ring_cells, cell_transform, stable_tangent

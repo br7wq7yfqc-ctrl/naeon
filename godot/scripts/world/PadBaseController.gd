@@ -46,7 +46,8 @@ const ARENA_INFLUENCE_DECAY := 0.0005  # ~10 min back to zero
 func _ready() -> void:
 	add_to_group("pad_base")
 	add_to_group("hackable")
-	call_deferred("_ensure_claim_beacon")
+	if DisplayServer.get_name() != "headless":
+		call_deferred("_ensure_claim_beacon")
 	ownership = OwnershipData.new()
 	# Unique per pad: every cluster is named "BaseCluster", so parent+self
 	# collided across all planets and soft influence landed on a random pad.
@@ -103,6 +104,8 @@ func _unique_object_id() -> String:
 
 
 func _ensure_label() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	_label = Label3D.new()
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.font_size = 28
@@ -157,14 +160,20 @@ func claim_pulse_from(actor: Node3D) -> bool:
 	return true
 
 func _find_actor() -> Node3D:
+	## Prefer whoever is actually in the ring. A cached ship in orbit made
+	## occupy look "present" while the meter decayed — or ignored a walker
+	## standing on the plate.
+	var in_zone: Node3D = _nearest_in_zone()
+	if in_zone != null:
+		_actor_cache = in_zone
+		_actor_cache_t = 0.15
+		return in_zone
 	_actor_cache_t -= get_process_delta_time() if is_inside_tree() else 0.0
 	if _actor_cache != null and is_instance_valid(_actor_cache) and _actor_cache_t > 0.0:
 		return _actor_cache
 	_actor_cache_t = 0.4
 	if SoftScanCache:
 		var sp: Node3D = SoftScanCache.get_player()
-		# A de-parented walker still passes is_instance_valid but has no
-		# global_transform, so distance checks would read the identity origin.
 		_actor_cache = sp if sp != null and sp.is_inside_tree() else null
 		return _actor_cache
 	var tree := get_tree()
@@ -180,6 +189,45 @@ func _find_actor() -> Node3D:
 			return _actor_cache
 	_actor_cache = null
 	return null
+
+
+func _nearest_in_zone() -> Node3D:
+	## Walker on the plate, or a landed ship. A hovering hull after launch
+	## must not keep the extractor running just because it is still inside
+	## the 40 m bubble.
+	var tree := get_tree()
+	if tree == null or not is_inside_tree():
+		return null
+	var best: Node3D = null
+	var best_d := claim_radius
+	var cands: Array = []
+	if SoftScanCache:
+		var sp: Node3D = SoftScanCache.get_player()
+		if sp != null:
+			cands.append(sp)
+	for p in tree.get_nodes_in_group("player"):
+		cands.append(p)
+	for c in cands:
+		if c == null or not (c is Node3D) or not is_instance_valid(c) or not c.is_inside_tree():
+			continue
+		if c.is_in_group("ship"):
+			continue
+		var d: float = (c as Node3D).global_position.distance_to(global_position)
+		if d <= best_d:
+			best = c as Node3D
+			best_d = d
+	if best != null:
+		return best
+	for s in SoftScanCache.get_ships() if SoftScanCache else tree.get_nodes_in_group("ship"):
+		if s == null or not (s is Node3D) or not is_instance_valid(s) or not s.is_inside_tree():
+			continue
+		if not bool(s.get("is_landed")):
+			continue
+		var d: float = (s as Node3D).global_position.distance_to(global_position)
+		if d <= best_d:
+			best = s as Node3D
+			best_d = d
+	return best
 
 func claim(faction_name: String, strength: float = 1.0) -> void:
 	_nudge_claim(faction_name, strength, true)
@@ -555,6 +603,8 @@ func _tick_reserve_regen(delta: float) -> void:
 		_refresh_label()
 
 func _apply_faction_visual() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	var fac := ownership.faction_name() if ownership else "Neutral"
 	var col := Color(0.55, 0.55, 0.6)
 	match fac:
@@ -721,6 +771,9 @@ func _notify_hud(msg: String) -> void:
 
 
 func _ensure_claim_beacon() -> void:
+	# Dummy: building then freeing the pylon is 7× mesh_get_surface_count.
+	if DisplayServer.get_name() == "headless":
+		return
 	# Rebuild on every ownership flip — returning early left the pylon showing
 	# the previous owner's colours.
 	var old := get_node_or_null("ClaimBeaconVis")
@@ -730,40 +783,43 @@ func _ensure_claim_beacon() -> void:
 	root.name = "ClaimBeaconVis"
 	add_child(root)
 	var loaded := false
-	var fac := "cybernex"
-	if ownership:
-		var fn := ownership.faction_name().to_lower()
-		if fn == "grot":
-			fac = "grot"
-	var rels := [
-		"props/ownership_claim_pylon/ownership_claim_pylon_%s_lod1.glb" % fac,
-		"props/ownership_claim_pylon/ownership_claim_pylon_%s_lod2.glb" % fac,
-		"props/faction_claim_totem/faction_claim_totem_%s_lod1.glb" % fac,
-		"props/claim_beacon/claim_beacon_%s_lod1.glb" % fac,
-	]
-	var AP = load("res://scripts/assets/AssetPaths.gd")
-	for rel in rels:
-		var path := ""
-		if AP and AP.has_method("resolve"):
-			path = AP.resolve(rel)
-		if path == "" or not FileAccess.file_exists(path):
-			continue
-		var doc := GLTFDocument.new()
-		var st := GLTFState.new()
-		if doc.append_from_file(path, st) != OK:
-			continue
-		var scn := doc.generate_scene(st)
-		if scn:
-			root.add_child(scn)
-			scn.scale = Vector3.ONE * 1.4
-			scn.position = Vector3(0, 0.2, 0)
-			loaded = true
-			break
+	if DisplayServer.get_name() != "headless":
+		var fac := "cybernex"
+		if ownership:
+			var fn := ownership.faction_name().to_lower()
+			if fn == "grot":
+				fac = "grot"
+		var rels := [
+			"props/ownership_claim_pylon/ownership_claim_pylon_%s_lod1.glb" % fac,
+			"props/ownership_claim_pylon/ownership_claim_pylon_%s_lod2.glb" % fac,
+			"props/faction_claim_totem/faction_claim_totem_%s_lod1.glb" % fac,
+			"props/claim_beacon/claim_beacon_%s_lod1.glb" % fac,
+		]
+		var AP = load("res://scripts/assets/AssetPaths.gd")
+		for rel in rels:
+			var path := ""
+			if AP and AP.has_method("resolve"):
+				path = AP.resolve(rel)
+			if path == "" or not FileAccess.file_exists(path):
+				continue
+			var doc := GLTFDocument.new()
+			var st := GLTFState.new()
+			if doc.append_from_file(path, st) != OK:
+				continue
+			var scn := doc.generate_scene(st)
+			if scn:
+				root.add_child(scn)
+				scn.scale = Vector3.ONE * 1.4
+				scn.position = Vector3(0, 0.2, 0)
+				loaded = true
+				break
 	if not loaded:
 		_build_proc_pylon(root)
 
 
 func _build_proc_pylon(root: Node3D) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	var fac := "Cybernex"
 	if ownership:
 		fac = ownership.faction_name() if ownership.has_method("faction_name") else fac
@@ -787,45 +843,65 @@ func _build_proc_pylon(root: Node3D) -> void:
 	emit.emission_enabled = true
 	emit.emission = col
 	emit.emission_energy_multiplier = 2.2
-	var disc := CylinderMesh.new()
-	disc.top_radius = 0.85
-	disc.bottom_radius = 0.95
-	disc.height = 0.14
-	disc.radial_segments = 12
 	var base := MeshInstance3D.new()
-	base.mesh = disc
+	if DisplayServer.get_name() == "headless":
+		var disc_box := BoxMesh.new()
+		disc_box.size = Vector3(1.9, 0.14, 1.9)
+		base.mesh = disc_box
+	else:
+		var disc := CylinderMesh.new()
+		disc.top_radius = 0.85
+		disc.bottom_radius = 0.95
+		disc.height = 0.14
+		disc.radial_segments = 12
+		base.mesh = disc
 	base.material_override = armor
 	base.position.y = 0.07
 	base.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(base)
-	var cyl := CylinderMesh.new()
-	cyl.top_radius = 0.12
-	cyl.bottom_radius = 0.28
-	cyl.height = 4.2
-	cyl.radial_segments = 8
 	var shaft := MeshInstance3D.new()
-	shaft.mesh = cyl
+	if DisplayServer.get_name() == "headless":
+		var shaft_box := BoxMesh.new()
+		shaft_box.size = Vector3(0.4, 4.2, 0.4)
+		shaft.mesh = shaft_box
+	else:
+		var cyl := CylinderMesh.new()
+		cyl.top_radius = 0.12
+		cyl.bottom_radius = 0.28
+		cyl.height = 4.2
+		cyl.radial_segments = 8
+		shaft.mesh = cyl
 	shaft.material_override = armor
 	shaft.position.y = 2.2
 	shaft.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(shaft)
-	var rod := CylinderMesh.new()
-	rod.top_radius = 0.05
-	rod.bottom_radius = 0.05
-	rod.height = 4.4
 	var core := MeshInstance3D.new()
-	core.mesh = rod
+	if DisplayServer.get_name() == "headless":
+		var rod_box := BoxMesh.new()
+		rod_box.size = Vector3(0.1, 4.4, 0.1)
+		core.mesh = rod_box
+	else:
+		var rod := CylinderMesh.new()
+		rod.top_radius = 0.05
+		rod.bottom_radius = 0.05
+		rod.height = 4.4
+		core.mesh = rod
 	core.material_override = emit
 	core.position.y = 2.25
 	core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(core)
-	var torus := TorusMesh.new()
-	torus.inner_radius = 0.22
-	torus.outer_radius = 0.48
-	torus.rings = 10
-	torus.ring_segments = 16
 	var crown := MeshInstance3D.new()
-	crown.mesh = torus
+	if DisplayServer.get_name() == "headless":
+		var crown_box := BoxMesh.new()
+		crown_box.size = Vector3(0.96, 0.16, 0.96)
+		crown.mesh = crown_box
+	else:
+		var torus := TorusMesh.new()
+		torus.inner_radius = 0.22
+		torus.outer_radius = 0.48
+		torus.rings = 10
+		torus.ring_segments = 16
+		crown.mesh = torus
 	crown.material_override = emit
 	crown.position.y = 4.35
 	crown.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -852,6 +928,8 @@ func _build_proc_pylon(root: Node3D) -> void:
 
 
 func _spawn_claim_fx(col: Color) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	var NP = load("res://scripts/fx/NeonParticles.gd")
 	if NP:
 		NP.claim_radial(global_position, col, get_tree())

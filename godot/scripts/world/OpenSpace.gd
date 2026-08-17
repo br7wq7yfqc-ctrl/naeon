@@ -6,6 +6,7 @@ const _StarSystems = preload("res://scripts/world/StarSystemCatalog.gd")
 
 const ShipScene := preload("res://scenes/ship/Ship.tscn")
 const PlayerScene_PATH := "res://scenes/player/Player.tscn"
+const _P0 = preload("res://scripts/world/P0Slice.gd")
 
 @onready var world_root: Node3D = $WorldRoot
 @onready var floating: Node = $FloatingOrigin
@@ -45,15 +46,22 @@ func _ready() -> void:
 	_spawn_star()
 	_spawn_planets()
 	_spawn_asteroid_belt()
-	_spawn_orbital_stations()
+	if _P0.ORBITAL_STATIONS:
+		_spawn_orbital_stations()
 	_spawn_ship()
 	# HUD must exist before any walker does, or every claim / contest / harvest
 	# toast of the opening flight is dropped on the floor.
 	_ensure_game_hud()
 	_setup_interior()
 	_setup_mechanics_playtest()
+	_setup_sandbox_playtest()
 	if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
 		floating.set_target(ship)
+	if floating != null and is_instance_valid(floating) and floating.has_method("rebase_now"):
+		floating.rebase_now()
+	if floating != null and is_instance_valid(floating) and floating.has_signal("rebased"):
+		if not floating.rebased.is_connected(_on_origin_rebased):
+			floating.rebased.connect(_on_origin_rebased)
 	# Graphics
 	var gq := get_node_or_null("/root/GraphicsQuality")
 	if gq:
@@ -99,6 +107,8 @@ func _apply_env_quality(gq) -> void:
 func _spawn_starfield() -> void:
 	var root := $WorldRoot/Starfield as Node3D
 	if root == null:
+		return
+	if DisplayServer.get_name() == "headless":
 		return
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 42
@@ -183,6 +193,9 @@ func _spawn_planets() -> void:
 	if ids.is_empty():
 		ids = PackedStringArray(["Nex-Prime", "ROT-Hive", "Shard-Moon"])
 	for pid in ids:
+		if not _P0.body_allowed(str(pid)):
+			print("[OpenSpace] P0 skip body ", pid)
+			continue
 		var pl: Node3D = Node3D.new()
 		pl.set_script(script)
 		_PlanetProfiles.apply_to(pl, pid)
@@ -253,7 +266,17 @@ func _setup_mechanics_playtest() -> void:
 	add_child(n)
 
 
+func _setup_sandbox_playtest() -> void:
+	var n := Node.new()
+	n.set_script(preload("res://scripts/test/SandboxPlaytest.gd"))
+	n.name = "SandboxPlaytest"
+	add_child(n)
+
+
 func _spawn_ship() -> void:
+	if planets.is_empty():
+		push_error("[OpenSpace] no planets to spawn ship over")
+		return
 	ship = ShipScene.instantiate()
 	world_root.add_child(ship)
 	# Start in free space above Nex-Prime atmosphere
@@ -748,16 +771,22 @@ func _update_hud() -> void:
 	if mode == "INTERIOR" and _interior.has_method("life_support_line"):
 		extra = "  ·  " + str(_interior.life_support_line())
 	elif _in_ship:
-		if ship.has_method("get_flight_status_line") and "STALL" in str(ship.get_flight_status_line()):
-			extra = "  ·  STALL"
-		# The land gate is honest; without this the player cannot see which
-		# condition still fails and reads the refusal as a bug.
-		if ship.has_method("land_readiness_line"):
-			var lr := str(ship.land_readiness_line())
-			if lr != "":
-				extra += "  ·  " + lr
-	var brief := "%s  ·  %s  ·  %s  ·  %d m/s  ·  HP %d  SHD %d%s  ·  occupy/C  E land  F EVA" % [
-		mode, loc, alt_s, int(spd), int(ship.health), int(ship.shields), extra
+		if bool(ship.get("is_landed")):
+			extra = "  ·  LANDED — Space/E takeoff · F EVA · C claim"
+		else:
+			if ship.has_method("get_stall") and float(ship.get_stall()) > 0.4:
+				extra = "  ·  STALL %.0f%%" % (float(ship.get_stall()) * 100.0)
+			if ship.has_method("land_readiness_line"):
+				var lr := str(ship.land_readiness_line())
+				if lr != "" and lr != "LANDED":
+					extra += "  ·  " + lr
+	var tail := "  ·  occupy/C · E land · F EVA"
+	if _in_ship and not bool(ship.get("is_landed")):
+		tail = "  ·  S descend · occupy/C · E land · F EVA"
+	elif bool(ship.get("is_landed")):
+		tail = ""
+	var brief := "%s  ·  %s  ·  %s  ·  %d m/s  ·  HP %d  SHD %d%s%s" % [
+		mode, loc, alt_s, int(spd), int(ship.health), int(ship.shields), extra, tail
 	]
 	if not dbg:
 		hud_label.text = brief
@@ -765,7 +794,7 @@ func _update_hud() -> void:
 		hud_label.text = (
 			"NAEON OpenSpace  |  free flight · seamless land · surface walk\n"
 			+ "WASD thrust  Space/Shift lift  Mouse=flight plane  Z/X roll  |  1/2/3 flight  4 siege  5 ramp  6 rover  7 store  |  E land  F exit/EVA/board  C pulse  G/B terra  U undo  I interior  Q hack\n"
-			+ "F1 cycle quality  F3 HUD debug  |  Tab → TestArena\n"
+			+ "F1 cycle quality  F3 HUD debug  |  Tab Clash sandbox (not a map)  ·  M galaxy map locked\n"
 			+ "Mode: %s  Planet: %s  Alt: %dm  Spd: %d  HP:%d SHD:%d  PLOD:%s  CONTRIB:%.0f" % [
 				mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields), (pl.current_lod_name() if pl and is_instance_valid(pl) and pl.has_method("current_lod_name") else "-"), (GameManager.contribution if GameManager else 0.0)
 			]
@@ -792,12 +821,18 @@ func _update_hud() -> void:
 			pf = int(PP.free_count())
 		hud_label.text += "\nMEM obj:%d nodes:%d ram:%dMB  detail %d/%d  proj %d/%d" % [objs, nodes, oram, live, pool, pa, pf]
 	var oram2 := int(Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0)
+	# GameHUD owns the top-right GFX/FPS stack so Mode does not sit on LAYER.
 	if mode_label:
+		mode_label.visible = false
 		mode_label.text = "GFX: %s  MEM %dMB" % [gqn, oram2]
+	var gh_stack = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+	if gh_stack and gh_stack.has_method("set_gfx_line"):
+		gh_stack.set_gfx_line(gqn, oram2)
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and (event.keycode == KEY_ESCAPE or event.physical_keycode == KEY_ESCAPE):
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 		get_tree().change_scene_to_file("res://scenes/ui/MainMenu.tscn")
 		return
 	if not (event is InputEventKey and event.pressed and not event.echo):
@@ -826,7 +861,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_P:
 			if GameManager and GameManager.has_method("try_promote_alliance"):
 				GameManager.try_promote_alliance()
-		KEY_M, KEY_TAB:
+		KEY_M:
+			_toast_hud("Galaxy map locked (G2) — not implemented. M is not a map.")
+		KEY_TAB:
+			_toast_hud("Clash sandbox — not a galaxy map")
 			if ResourceLoader.exists("res://scenes/test/TestArena.tscn"):
 				get_tree().change_scene_to_file("res://scenes/test/TestArena.tscn")
 
@@ -1121,8 +1159,8 @@ func _phase0_space_feel() -> void:
 		e.background_mode = Environment.BG_COLOR
 		e.background_color = Color(0.01, 0.015, 0.04)
 		e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-		e.ambient_light_color = Color(0.08, 0.1, 0.16)
-		e.ambient_light_energy = 0.35
+		e.ambient_light_color = Color(0.12, 0.16, 0.22)
+		e.ambient_light_energy = 0.55
 	var sun := get_node_or_null("Sun") as DirectionalLight3D
 	if sun:
 		sun.light_energy = 1.35
@@ -1180,6 +1218,15 @@ func _walk_set_obs(n: Node, obs: Node3D) -> void:
 	for c in n.get_children():
 		_walk_set_obs(c, obs)
 
+
+
+func _on_origin_rebased(_offset: Vector3) -> void:
+	for pl in planets:
+		if pl == null or not is_instance_valid(pl):
+			continue
+		var sd: Node = pl.get_node_or_null("SurfaceDetail")
+		if sd != null and sd.has_method("refresh_all_xforms"):
+			sd.refresh_all_xforms()
 
 
 func _toast_hud(msg: String, ttl: float = 2.2) -> void:

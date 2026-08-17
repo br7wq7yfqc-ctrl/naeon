@@ -5,6 +5,8 @@ class_name FormSwitchFX
 static func play_at(parent: Node3D, faction: String, form: String) -> void:
 	if parent == null:
 		return
+	if DisplayServer.get_name() == "headless":
+		return
 	var fx := Node3D.new()
 	fx.name = "FormSwitchFX"
 	parent.add_child(fx)

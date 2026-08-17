@@ -133,8 +133,7 @@ func set_interior_mode(on: bool) -> void:
 		jump_velocity = 7.0
 		floor_snap_length = 0.25
 		if camera:
-			camera.position = Vector3(0, 0.35, 4.2)
-			camera.fov = 70.0
+			_apply_surface_camera()
 	print("[SurfaceWalker] interior_mode=", on)
 
 
@@ -152,6 +151,7 @@ func set_eva_profile(enabled: bool) -> void:
 		motion_mode = CharacterBody3D.MOTION_MODE_FLOATING
 		floor_snap_length = 0.0
 		print("[SurfaceWalker] EVA thruster suit")
+		_apply_surface_camera()
 		if _body_mesh and _body_mesh.material_override is StandardMaterial3D:
 			var m: StandardMaterial3D = _body_mesh.material_override
 			m.emission_enabled = true
@@ -167,6 +167,7 @@ func set_eva_profile(enabled: bool) -> void:
 		floor_snap_length = 0.25
 		print("[SurfaceWalker] surface profile")
 		_clear_eva_fx()
+		_apply_surface_camera()
 
 
 func _ready() -> void:
@@ -210,7 +211,7 @@ func _ensure_rig() -> void:
 		_visual.name = "Visual"
 		add_child(_visual)
 	_body_mesh = _visual.get_node_or_null("BodyMesh") as MeshInstance3D
-	if _body_mesh == null:
+	if _body_mesh == null and DisplayServer.get_name() != "headless":
 		_body_mesh = MeshInstance3D.new()
 		_body_mesh.name = "BodyMesh"
 		var cm := CapsuleMesh.new()
@@ -237,12 +238,11 @@ func _ensure_rig() -> void:
 	if camera == null:
 		camera = Camera3D.new()
 		camera.name = "Camera3D"
-		camera.position = Vector3(0, 0.35, 4.2)
 		camera.current = true
-		camera.fov = 70.0
 		cam_pivot.add_child(camera)
 	else:
 		camera.current = true
+	_apply_surface_camera()
 
 func _load_form_visual() -> void:
 	var path := ""
@@ -409,14 +409,17 @@ func snap_to_surface() -> void:
 			velocity = Vector3.ZERO
 			_spawn_grace_t = 0.35
 			safe_unground()
+			_lift_to_visual_relief()
 			print("[SurfaceWalker] snapped to ", hit.position, " from +", lift)
 			return
 	if _relief_snap_fallback():
 		_spawn_grace_t = 0.35
 		safe_unground()
+		_lift_to_visual_relief()
 		return
 	global_position += _up * 5.0
 	_spawn_grace_t = 0.35
+	_lift_to_visual_relief()
 	print("[SurfaceWalker] no hit — boost along up")
 
 
@@ -791,6 +794,8 @@ func _try_ability(idx: int) -> void:
 
 func _ensure_limb_rig() -> void:
 	# Lightweight procedural limbs when GLB has no skeleton (code-first).
+	if DisplayServer.get_name() == "headless":
+		return
 	if _visual == null:
 		return
 	if _limb_rig and is_instance_valid(_limb_rig):
@@ -953,10 +958,25 @@ func _surface_assists_tick(delta: float) -> void:
 	_wade_splash(delta)
 
 
-func _relief_snap_fallback() -> bool:
+func _apply_surface_camera() -> void:
+	## Ship cam sits ~6 m AGL and sees chunk tops. Walker boom was 4.2 m
+	## behind at ~4.5 m above the collision sphere — inside Relief (to 7 m),
+	## so EVA read as a black void + horizon splinters. Do not change look binds.
+	if camera == null:
+		return
+	if interior_mode:
+		return
+	camera.position = Vector3(0, 0.55, 2.15)
+	camera.fov = 70.0
+	camera.near = 0.08
+	var gq := get_node_or_null("/root/GraphicsQuality")
+	camera.far = float(gq.far_clip) if gq else 28000.0
+
+
+func _nearest_planet_body() -> Node3D:
 	var tree := get_tree()
 	if tree == null:
-		return false
+		return null
 	var best: Node3D = null
 	var best_d := 1.0e12
 	for n in tree.get_nodes_in_group("planets"):
@@ -965,63 +985,65 @@ func _relief_snap_fallback() -> bool:
 			if d < best_d:
 				best_d = d
 				best = n as Node3D
-	if best == null:
-		var root = tree.current_scene
-		if root:
-			for n in root.get_children():
-				if n is Node3D and n.has_method("altitude_of"):
-					var d2: float = global_position.distance_to((n as Node3D).global_position)
-					if d2 < best_d:
-						best_d = d2
-						best = n as Node3D
+	return best
+
+
+func _visual_relief_metres(pl: Node3D) -> float:
+	if pl == null:
+		return 0.0
+	var h := 0.0
+	if pl.has_method("relief_height_at"):
+		h = float(pl.relief_height_at(global_position))
+	var pid: String = str(pl.get("planet_name")) if "planet_name" in pl else "Nex-Prime"
+	var sea: float = float(_Relief.profile_for_planet(pid).get("sea_level", -0.35))
+	return maxf(h, sea)
+
+
+func _lift_to_visual_relief() -> void:
+	## Collision is the bare sphere. Chunks use Relief. Stand on the visual.
+	var pl: Node3D = _nearest_planet_body()
+	if pl == null or not ("radius" in pl):
+		return
+	var dir: Vector3 = (global_position - pl.global_position)
+	if dir.length_squared() < 1e-6:
+		return
+	dir = dir.normalized()
+	var want_r: float = float(pl.radius) + _visual_relief_metres(pl) + 2.15
+	var cur_r: float = global_position.distance_to(pl.global_position)
+	if want_r > cur_r + 0.05:
+		global_position = pl.global_position + dir * want_r
+		velocity = Vector3.ZERO
+
+
+func _relief_snap_fallback() -> bool:
+	var best: Node3D = _nearest_planet_body()
 	if best == null or not ("radius" in best):
 		return false
 	var rad: float = float(best.radius)
-	var pid: String = str(best.planet_name) if "planet_name" in best else "Nex-Prime"
-	var seed_i: int = int(absi(pid.hash()) % 10000)
-	var prof: Dictionary = _Relief.profile_for_planet(pid)
+	var h: float = _visual_relief_metres(best)
 	var dir: Vector3 = (global_position - best.global_position).normalized()
-	var east: Vector3 = dir.cross(Vector3.UP)
-	if east.length_squared() < 1e-6:
-		east = dir.cross(Vector3.RIGHT)
-	east = east.normalized()
-	var north: Vector3 = east.cross(dir).normalized()
-	var to: Vector3 = global_position - best.global_position
-	var h: float = float(_Relief.height_at(to.dot(east), to.dot(north), seed_i, prof))
-	var sea: float = float(prof.get("sea_level", -0.35))
-	if h < sea:
-		h = sea
-	var surf: Vector3 = best.global_position + dir * (rad + h)
-	global_position = surf + dir * 1.85
+	global_position = best.global_position + dir * (rad + h + 2.15)
 	velocity = Vector3.ZERO
-	print("[SurfaceWalker] relief snap h=", h, " planet=", pid)
+	print("[SurfaceWalker] relief snap h=", h, " planet=", best.get("planet_name"))
 	return true
 
 
 func _relief_floor_assist(delta: float) -> void:
-	if eva_mode or _provider == null:
+	if eva_mode or interior_mode:
 		return
-	if not ("radius" in _provider):
+	var pl: Node3D = _nearest_planet_body()
+	if pl == null or not ("radius" in pl):
 		return
-	var rad: float = float(_provider.radius)
-	var pid: String = str(_provider.planet_name) if "planet_name" in _provider else "Nex-Prime"
-	var seed_i: int = int(absi(pid.hash()) % 10000)
-	var prof: Dictionary = _Relief.profile_for_planet(pid)
-	var dir: Vector3 = (global_position - _provider.global_position).normalized()
-	var east: Vector3 = dir.cross(Vector3.UP)
-	if east.length_squared() < 1e-6:
-		east = dir.cross(Vector3.RIGHT)
-	east = east.normalized()
-	var north: Vector3 = east.cross(dir).normalized()
-	var to: Vector3 = global_position - _provider.global_position
-	var h: float = float(_Relief.height_at(to.dot(east), to.dot(north), seed_i, prof))
-	var sea: float = float(prof.get("sea_level", -0.35))
-	if h < sea:
-		h = sea
-	var target_r: float = rad + h + 1.0
-	var cur_r: float = to.length()
+	var dir: Vector3 = (global_position - pl.global_position)
+	if dir.length_squared() < 1e-6:
+		return
+	dir = dir.normalized()
+	var target_r: float = float(pl.radius) + _visual_relief_metres(pl) + 1.15
+	var cur_r: float = global_position.distance_to(pl.global_position)
 	var err: float = target_r - cur_r
-	if not is_on_floor() and err < -0.3 and err > -4.0:
+	if err > 0.25:
+		global_position += dir * err * clampf(delta * 8.0, 0.0, 1.0)
+	elif not is_on_floor() and err < -0.3 and err > -4.0:
 		global_position += dir * err * clampf(delta * 6.0, 0.0, 1.0)
 
 
@@ -1029,6 +1051,8 @@ var _wade_cd: float = 0.0
 
 func _wade_splash(delta: float) -> void:
 	_wade_cd = maxf(0.0, _wade_cd - delta)
+	if DisplayServer.get_name() == "headless":
+		return
 	if eva_mode or _provider == null or not ("radius" in _provider):
 		return
 	if _wade_cd > 0.0:
@@ -1239,6 +1263,8 @@ func _apply_mag_basis() -> void:
 func _ensure_eva_fx() -> void:
 	if _eva_jet and is_instance_valid(_eva_jet):
 		return
+	if DisplayServer.get_name() == "headless":
+		return
 	_eva_jet = GPUParticles3D.new()
 	_eva_jet.name = "EvaJet"
 	_eva_jet.amount = 12
@@ -1319,6 +1345,8 @@ func _mag_release(reason: String) -> void:
 
 
 func _mag_latch_fx() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	_ensure_eva_fx()
 	if _mag_light:
 		_mag_light.light_energy = 4.0

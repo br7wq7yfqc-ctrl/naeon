@@ -54,6 +54,8 @@ var _slots: Array = []
 var _pip_row: HBoxContainer
 var _pips: Array = []
 var _chrome_built: bool = false
+var _gfx_name: String = "?"
+var _gfx_mem_mb: int = 0
 
 func _ready() -> void:
 	layer = 20
@@ -110,10 +112,10 @@ func _build() -> void:
 	_cross.offset_bottom = 16
 	_cross.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_obj_label.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	_obj_label.offset_top = 8
+	_obj_label.offset_top = 6
 	_obj_label.offset_left = 16
 	_obj_label.offset_right = -16
-	_obj_label.offset_bottom = 48
+	_obj_label.offset_bottom = 36
 	_obj_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_obj_label.add_theme_font_size_override("font_size", 16)
 	_obj_label.modulate = Color(0.85, 0.95, 1.0, 0.95)
@@ -167,12 +169,12 @@ func _build() -> void:
 
 	_layer_label = Label.new()
 	_layer_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	_layer_label.offset_left = -220
+	_layer_label.offset_left = -280
 	_layer_label.offset_right = -12
-	_layer_label.offset_top = 10
-	_layer_label.offset_bottom = 36
+	_layer_label.offset_top = 8
+	_layer_label.offset_bottom = 78
 	_layer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_layer_label.add_theme_font_size_override("font_size", 16)
+	_layer_label.add_theme_font_size_override("font_size", 14)
 	_layer_label.add_theme_color_override("font_color", Color(0.55, 0.95, 1.0))
 	_layer_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
 	_layer_label.add_theme_constant_override("outline_size", 5)
@@ -207,8 +209,8 @@ func _build() -> void:
 	_ctx_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_ctx_label.offset_left = -280
 	_ctx_label.offset_right = -12
-	_ctx_label.offset_top = 36
-	_ctx_label.offset_bottom = 70
+	_ctx_label.offset_top = 80
+	_ctx_label.offset_bottom = 114
 	_ctx_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_ctx_label.add_theme_font_size_override("font_size", 11)
 	_ctx_label.add_theme_color_override("font_color", Color(0.75, 0.8, 0.85, 0.9))
@@ -249,8 +251,8 @@ func _build() -> void:
 	_owner_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_owner_label.offset_left = -280
 	_owner_label.offset_right = -14
-	_owner_label.offset_top = 12
-	_owner_label.offset_bottom = 120
+	_owner_label.offset_top = 118
+	_owner_label.offset_bottom = 220
 	_owner_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_owner_label.add_theme_font_size_override("font_size", 13)
 	_owner_label.add_theme_color_override("font_color", Color(0.95, 0.9, 0.55))
@@ -356,7 +358,8 @@ func _build() -> void:
 	_radar.add_child(rpanel)
 	var rtitle := Label.new()
 	rtitle.text = "PADS"
-	rtitle.position = Vector2(48, 4)
+	rtitle.name = "PadTitle"
+	rtitle.position = Vector2(40, 4)
 	rtitle.add_theme_font_size_override("font_size", 11)
 	rtitle.add_theme_color_override("font_color", Color(0.6, 0.9, 1.0, 0.85))
 	_radar.add_child(rtitle)
@@ -624,9 +627,21 @@ func _refresh() -> void:
 
 	# The contested banner is written once, from the pad_bases pass further down.
 
-	# Layer chip + context (S1 seamless)
-	if _layer_label and LayerContext:
-		_layer_label.text = "LAYER · %s  [%s]" % [LayerContext.current_layer.to_upper(), LayerContext.seamless_stage]
+	# Layer chip + GFX/FPS stacked (do not sit on OpenSpace Mode)
+	if _layer_label:
+		var ly := "SPACE"
+		var st := ""
+		if LayerContext:
+			ly = str(LayerContext.current_layer).to_upper()
+			st = str(LayerContext.seamless_stage)
+		var fps := Engine.get_frames_per_second()
+		_layer_label.text = "LAYER · %s%s\nGFX %s · %d FPS · %dMB" % [
+			ly,
+			("  [%s]" % st) if st != "" else "",
+			_gfx_name,
+			fps,
+			_gfx_mem_mb,
+		]
 	if _ctx_label and LayerContext:
 		var q := LayerContext.active_quest_id if LayerContext.active_quest_id != "" else "—"
 		var c := LayerContext.active_claim_id if LayerContext.active_claim_id != "" else "—"
@@ -771,6 +786,9 @@ func _refresh() -> void:
 		# distances per comparison, eight times a second.
 		pads.sort_custom(func(a, b): return a.global_position.distance_squared_to(origin) \
 			< b.global_position.distance_squared_to(origin))
+		var title_n := _radar.get_node_or_null("PadTitle") as Label
+		if title_n:
+			title_n.text = "PADS %d" % pads.size()
 		var range_m := 400.0
 		for i in _radar_dots.size():
 			var dot: ColorRect = _radar_dots[i]
@@ -783,18 +801,30 @@ func _refresh() -> void:
 			var up_val = _player.get("_up")
 			if up_val != null and typeof(up_val) == TYPE_VECTOR3:
 				up = up_val
+			elif p.has_meta("pad_up"):
+				up = p.get_meta("pad_up")
 			var flat: Vector3 = off - up * off.dot(up)
 			var dist := flat.length()
 			if dist > range_m:
 				dot.visible = false
 				continue
-			var nx := flat.x
-			var nz := flat.z
-			if absf(up.y) <= 0.7:
-				nx = flat.dot(Vector3.RIGHT)
-				nz = flat.dot(Vector3.FORWARD)
+			var east := up.cross(Vector3.FORWARD)
+			if east.length_squared() < 0.05:
+				east = up.cross(Vector3.RIGHT)
+			east = east.normalized()
+			var north := east.cross(up).normalized()
+			var nx := flat.dot(east)
+			var nz := flat.dot(north)
 			var sc := 60.0 / range_m
-			dot.position = Vector2(65.0 + nx * sc - 2.5, 65.0 + nz * sc - 2.5)
+			var pip := Vector2(nx * sc, nz * sc)
+			# One nearby pad sat on the center pip and looked like an empty radar.
+			if pip.length() < 16.0:
+				if pip.length_squared() < 0.01:
+					pip = Vector2(0, -18)
+				else:
+					pip = pip.normalized() * 18.0
+			dot.position = Vector2(65.0 + pip.x - 3.0, 65.0 + pip.y - 3.0)
+			dot.size = Vector2(7, 7)
 			var pad_fac := "Neutral"
 			if p.has_method("get_faction"):
 				pad_fac = str(p.get_faction())
@@ -915,6 +945,11 @@ func _update_channel_hud() -> void:
 		_channel_label.visible = ratio > 0.0
 		if ratio > 0.0:
 			_channel_label.text = "%s  %d%%" % [name, int(ratio * 100.0)]
+
+
+func set_gfx_line(tier_name: String, mem_mb: int) -> void:
+	_gfx_name = tier_name
+	_gfx_mem_mb = mem_mb
 
 
 func is_debug_overlay() -> bool:
@@ -1060,8 +1095,8 @@ func _build_play_chrome() -> void:
 		_slots.append({"panel": panel, "name": name_l, "cd": cd_l})
 	if _obj_label:
 		_obj_label.add_theme_font_size_override("font_size", 15)
-		_obj_label.offset_top = 10
-		_obj_label.offset_bottom = 40
+		_obj_label.offset_top = 6
+		_obj_label.offset_bottom = 36
 	_apply_debug_vis()
 
 
@@ -1079,10 +1114,12 @@ func _apply_debug_vis() -> void:
 		_infection_label.visible = dbg
 	if _econ_label:
 		_econ_label.visible = true
-		_econ_label.position = Vector2(14, 52) if not dbg else Vector2(14, 128)
+		# Own row above OpenSpace Hint (y=80). y=52 sat on the flight line
+		# and read as "(no P2W)HOVER · Nex-Prime…".
+		_econ_label.position = Vector2(14, 40) if not dbg else Vector2(14, 128)
 	if _econ_bar:
 		_econ_bar.visible = true
-		_econ_bar.position = Vector2(14, 72) if not dbg else Vector2(14, 148)
+		_econ_bar.position = Vector2(14, 58) if not dbg else Vector2(14, 148)
 	if _slot_row:
 		_slot_row.visible = not dbg
 	if _radar:

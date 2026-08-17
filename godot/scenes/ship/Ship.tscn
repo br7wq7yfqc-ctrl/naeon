@@ -5,7 +5,7 @@
 [sub_resource type="BoxShape3D" id="BoxShape_hull"]
 size = Vector3(2.2, 0.9, 3.4)
 
-[sub_resource type="PrismMesh" id="PrismMesh_hull"]
+[sub_resource type="BoxMesh" id="BoxMesh_hull"]
 size = Vector3(2, 0.9, 3.2)
 
 [sub_resource type="StandardMaterial3D" id="Mat_hull"]
@@ -26,7 +26,7 @@ script = ExtResource("1_ship")
 shape = SubResource("BoxShape_hull")
 
 [node name="HullMesh" type="MeshInstance3D" parent="."]
-mesh = SubResource("PrismMesh_hull")
+mesh = SubResource("BoxMesh_hull")
 surface_material_override/0 = SubResource("Mat_hull")
 
 [node name="CameraPivot" type="Node3D" parent="."]

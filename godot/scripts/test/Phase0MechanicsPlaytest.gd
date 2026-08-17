@@ -136,18 +136,34 @@ func _go() -> void:
 			fails.append("claim rival did not open contest (status=%s)" % st)
 		else:
 			var walker2: Node3D = os.get("player") as Node3D
-			var before := 0.0
-			if pad.has_method("get_occupy_strength"):
-				before = float(pad.get_occupy_strength())
-			if walker2 and is_instance_valid(walker2) and pad is Node3D:
-				walker2.global_position = (pad as Node3D).global_position + Vector3(0, 4.0, 0)
-				await get_tree().create_timer(1.15).timeout
-				var after := before
+			if (walker2 == null or not is_instance_valid(walker2)) and os.has_method("try_exit_ship"):
+				os.try_exit_ship()
+				await get_tree().create_timer(0.35).timeout
+				walker2 = os.get("player") as Node3D
+			if walker2 == null or not is_instance_valid(walker2):
+				fails.append("occupy presence: no walker to stand in the ring")
+			else:
+				# Occupy must raise the contest meter toward the occupant.
+				# A Cybernex walker on a gROT contest used to *lower* 0.55→0.08
+				# and the old test still printed PASS because the number moved.
+				if walker2.has_method("set") or "faction" in walker2:
+					walker2.set("faction", rival)
+				if SoftScanCache and SoftScanCache.has_method("invalidate_player"):
+					SoftScanCache.invalidate_player()
+				var before := 0.0
 				if pad.has_method("get_occupy_strength"):
-					after = float(pad.get_occupy_strength())
-				print("[Playtest] occupy presence meter ", snapped(before, 0.01), " -> ", snapped(after, 0.01))
-				if is_equal_approx(after, before):
-					fails.append("occupy presence did not move the contest meter")
+					before = float(pad.get_occupy_strength())
+				if pad is Node3D:
+					walker2.global_position = (pad as Node3D).global_position + Vector3(0, 2.0, 0)
+					await get_tree().create_timer(1.6).timeout
+					var after := before
+					if pad.has_method("get_occupy_strength"):
+						after = float(pad.get_occupy_strength())
+					print("[Playtest] occupy presence meter ", snapped(before, 0.01), " -> ", snapped(after, 0.01), " side=", rival)
+					if after <= before + 0.04:
+						fails.append("occupy presence did not raise the contest meter toward %s (%s -> %s)" % [
+							rival, str(snapped(before, 0.01)), str(snapped(after, 0.01))
+						])
 			# Pad-guard combat: walker as trespasser vs previous-owner turret
 			if walker2 and is_instance_valid(walker2):
 				walker2.set("faction", "gROT")
@@ -201,7 +217,19 @@ func _go() -> void:
 					if inf_st != 0:
 						fails.append("Firewall did not cleanse Infection")
 			if pad.has_method("claim"):
-				pad.claim("Cybernex", 2.0)
+				# Honest occupy can leave a high rival meter. claim(2.0) used
+				# to lock only because the old test accepted a decaying 0.08.
+				var cur_m := 0.0
+				if pad.has_method("get_occupy_strength"):
+					cur_m = float(pad.get_occupy_strength())
+				var side := ""
+				if pad.has_method("get_contest_side"):
+					side = str(pad.get_contest_side())
+				var need := 2.0
+				if side != "" and side != "Cybernex":
+					need = cur_m + 1.85
+				pad.claim("Cybernex", need)
+				print("[Playtest] lock claim Cybernex need=", snapped(need, 0.01), " was ", snapped(cur_m, 0.01), " side=", side)
 			var ow = pad.get("ownership")
 			if ow and ow.has_method("advance_transition"):
 				ow.advance_transition(8.0, 5.0)
@@ -482,8 +510,6 @@ func _finish(fails: PackedStringArray, code: int) -> void:
 			print("[Playtest]  - ", f)
 	if AutoUpdater and AutoUpdater.has_method("abort_pending"):
 		AutoUpdater.abort_pending()
-	var tree := get_tree()
-	if tree:
-		tree.quit(code)
-	# Godot 4.3 dummy renderer keeps iterating after quit() (mesh_get_surface_count).
+	# Dummy mesh_storage walks null RIDs inside SceneTree.quit() / --quit-after.
+	# Kill after the verdict so the counter is live-only, not teardown spam.
 	OS.kill(OS.get_process_id())

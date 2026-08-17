@@ -88,16 +88,16 @@ func _build_lanes() -> void:
 		# centerline ticks
 		for z in range(-24, 25, 8):
 			_box(Vector3(LANE_HALF_W * 2.2, 0.12, 0.35), Vector3(x, Y_STRIP + 0.02, float(z)), col * 1.2, root)
-		# Label3D at mid
-		var lab := Label3D.new()
-		lab.text = id
-		lab.font_size = 28
-		lab.modulate = col
-		lab.outline_modulate = Color(0, 0, 0, 0.9)
-		lab.outline_size = 12
-		lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		lab.position = Vector3(x, 2.5, 0.0)
-		root.add_child(lab)
+		if DisplayServer.get_name() != "headless":
+			var lab := Label3D.new()
+			lab.text = id
+			lab.font_size = 28
+			lab.modulate = col
+			lab.outline_modulate = Color(0, 0, 0, 0.9)
+			lab.outline_size = 12
+			lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+			lab.position = Vector3(x, 2.5, 0.0)
+			root.add_child(lab)
 
 func _build_nexuses() -> void:
 	# Cybernex base (south +Z) blue, gROT (north -Z) magenta
@@ -111,35 +111,46 @@ func _nexus(pos: Vector3, col: Color, nname: String, fac: String) -> void:
 	root.position = pos
 	# core
 	var mi := MeshInstance3D.new()
-	var sp := SphereMesh.new()
-	sp.radius = 1.4
-	sp.height = 2.8
-	mi.mesh = sp
+	if DisplayServer.get_name() == "headless":
+		var core := BoxMesh.new()
+		core.size = Vector3(2.4, 2.4, 2.4)
+		mi.mesh = core
+	else:
+		var sp := SphereMesh.new()
+		sp.radius = 1.4
+		sp.height = 2.8
+		mi.mesh = sp
 	mi.material_override = _mat(col, 2.0)
 	root.add_child(mi)
 	# halo ring
 	var halo := MeshInstance3D.new()
-	var torus := TorusMesh.new()
-	torus.inner_radius = 1.55
-	torus.outer_radius = 1.85
-	torus.rings = 10
-	torus.ring_segments = 20
-	halo.mesh = torus
+	if DisplayServer.get_name() == "headless":
+		var halo_box := BoxMesh.new()
+		halo_box.size = Vector3(3.4, 0.15, 3.4)
+		halo.mesh = halo_box
+	else:
+		var torus := TorusMesh.new()
+		torus.inner_radius = 1.55
+		torus.outer_radius = 1.85
+		torus.rings = 10
+		torus.ring_segments = 20
+		halo.mesh = torus
 	halo.material_override = _mat(col, 2.4)
 	halo.position.y = 1.5
 	halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(halo)
 	# ring
 	_box(Vector3(5.5, 0.15, 5.5), Vector3(0, 0.1, 0), col * 0.8, root)
-	var lab := Label3D.new()
-	lab.text = "NEXUS\n%s" % fac
-	lab.font_size = 28
-	lab.modulate = col
-	lab.outline_size = 10
-	lab.outline_modulate = Color(0, 0, 0, 0.9)
-	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lab.position = Vector3(0, 3.2, 0)
-	root.add_child(lab)
+	if DisplayServer.get_name() != "headless":
+		var lab := Label3D.new()
+		lab.text = "NEXUS\n%s" % fac
+		lab.font_size = 28
+		lab.modulate = col
+		lab.outline_size = 10
+		lab.outline_modulate = Color(0, 0, 0, 0.9)
+		lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		lab.position = Vector3(0, 3.2, 0)
+		root.add_child(lab)
 	# soft body for presence (no damage — readability prop)
 	var body := StaticBody3D.new()
 	var cs := CollisionShape3D.new()
@@ -168,11 +179,16 @@ func _build_towers() -> void:
 		root.position = t[0]
 		root.set_meta("clash_lane", str(t[4]))
 		var mi := MeshInstance3D.new()
-		var cyl := CylinderMesh.new()
-		cyl.top_radius = 0.45
-		cyl.bottom_radius = 0.7
-		cyl.height = 3.2
-		mi.mesh = cyl
+		if DisplayServer.get_name() == "headless":
+			var spire := BoxMesh.new()
+			spire.size = Vector3(1.2, 3.2, 1.2)
+			mi.mesh = spire
+		else:
+			var cyl := CylinderMesh.new()
+			cyl.top_radius = 0.45
+			cyl.bottom_radius = 0.7
+			cyl.height = 3.2
+			mi.mesh = cyl
 		mi.material_override = _mat(t[1], 1.6)
 		mi.position.y = 1.6
 		mi.name = "Spire"
@@ -237,6 +253,8 @@ func _on_tower_died(spire: Node3D, lane: String, fac: String) -> void:
 	print("[ClashLanes] tower down ", fac, " ", lane)
 
 func _build_lane_markers() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	_lane_label = Label3D.new()
 	_lane_label.name = "PlayerLaneHint"
 	_lane_label.font_size = 22

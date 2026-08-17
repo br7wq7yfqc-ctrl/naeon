@@ -52,6 +52,15 @@ func _ready() -> void:
 	_mat.emission = Color(0.9, 0.1, 0.35)
 	_mat.emission_energy_multiplier = 1.2
 	if mesh:
+		if DisplayServer.get_name() == "headless":
+			var box := BoxMesh.new()
+			box.size = Vector3(0.9, 1.7, 0.9)
+			mesh.mesh = box
+		else:
+			var cap := CapsuleMesh.new()
+			cap.radius = 0.45
+			cap.height = 1.7
+			mesh.mesh = cap
 		mesh.material_override = _mat
 	_update_labels()
 	call_deferred("try_load_drone")

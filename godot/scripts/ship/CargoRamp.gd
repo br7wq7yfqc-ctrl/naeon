@@ -22,30 +22,36 @@ func _ready() -> void:
 
 
 func _build() -> void:
-	_mesh = MeshInstance3D.new()
-	_mesh.name = "RampPlate"
-	var box := BoxMesh.new()
-	box.size = Vector3(ramp_width, 0.12, ramp_length)
-	_mesh.mesh = box
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.35, 0.38, 0.42)
-	mat.metallic = 0.55
-	mat.roughness = 0.45
-	_mesh.material_override = mat
-	add_child(_mesh)
-	_try_glb_skin()
+	var plate := Vector3(ramp_width, 0.12, ramp_length)
+	if DisplayServer.get_name() != "headless":
+		_mesh = MeshInstance3D.new()
+		_mesh.name = "RampPlate"
+		var box := BoxMesh.new()
+		box.size = plate
+		_mesh.mesh = box
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(0.35, 0.38, 0.42)
+		mat.metallic = 0.55
+		mat.roughness = 0.45
+		_mesh.material_override = mat
+		add_child(_mesh)
+		_try_glb_skin()
 	_body = StaticBody3D.new()
 	_body.collision_layer = 0
 	_body.collision_mask = 0
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
-	sh.size = box.size
+	sh.size = plate
 	cs.shape = sh
 	_body.add_child(cs)
-	_mesh.add_child(_body)
+	if _mesh:
+		_mesh.add_child(_body)
+		_mesh.position = Vector3(0, 0, ramp_length * 0.5)
+	else:
+		add_child(_body)
+		_body.position = Vector3(0, 0, ramp_length * 0.5)
 	# hinge at ship belly-aft, not hanging mid-hull
 	position = Vector3(0, -0.35, 1.2)
-	_mesh.position = Vector3(0, 0, ramp_length * 0.5)
 
 
 func toggle() -> void:

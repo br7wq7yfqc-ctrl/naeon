@@ -21,6 +21,8 @@ func setup(kind: String, neon: Color) -> void:
 	_kind = kind
 	_neon = neon
 	name = "InteriorAmbient"
+	if DisplayServer.get_name() == "headless":
+		return
 	_collect_lights()
 	_spawn_status_panels()
 	_spawn_floor_grid_decals()

@@ -60,11 +60,16 @@ func _build() -> void:
 			strut.position = Vector3(0, -0.2, 0)
 			leg.add_child(strut)
 			var pad := MeshInstance3D.new()
-			var cyl := CylinderMesh.new()
-			cyl.top_radius = 0.22
-			cyl.bottom_radius = 0.28
-			cyl.height = 0.08
-			pad.mesh = cyl
+			if DisplayServer.get_name() == "headless":
+				var pad_box := BoxMesh.new()
+				pad_box.size = Vector3(0.5, 0.08, 0.5)
+				pad.mesh = pad_box
+			else:
+				var cyl := CylinderMesh.new()
+				cyl.top_radius = 0.22
+				cyl.bottom_radius = 0.28
+				cyl.height = 0.08
+				pad.mesh = cyl
 			var pmat := StandardMaterial3D.new()
 			pmat.albedo_color = Color(0.15, 0.16, 0.18)
 			pmat.emission_enabled = true

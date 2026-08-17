@@ -27,6 +27,35 @@ func _ready() -> void:
 	print("[GameManager] NAEON initialized")
 	if not toast_requested.is_connected(_on_toast_audio):
 		toast_requested.connect(_on_toast_audio)
+	call_deferred("_bind_play_window")
+
+
+func _bind_play_window() -> void:
+	## F5 "NAEON DEBUG" must stay a normal window: editor/debugger reachable,
+	## title-bar close quits, no always-on-top, no exclusive grab.
+	var w := get_window()
+	if w == null:
+		return
+	w.always_on_top = false
+	w.borderless = false
+	w.unresizable = false
+	if w.mode == Window.MODE_EXCLUSIVE_FULLSCREEN or w.mode == Window.MODE_FULLSCREEN \
+			or w.mode == Window.MODE_MAXIMIZED:
+		w.mode = Window.MODE_WINDOWED
+	if not w.close_requested.is_connected(_on_window_close):
+		w.close_requested.connect(_on_window_close)
+
+
+func _on_window_close() -> void:
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	get_tree().quit()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		_on_window_close()
+	elif what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
 func get_faction_name() -> String:
 	match player_faction:

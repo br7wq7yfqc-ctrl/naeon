@@ -8,14 +8,17 @@ class_name SurfaceDetail
 
 const _Math = preload("res://scripts/world/SurfaceChunkMath.gd")
 const _Relief = preload("res://scripts/world/PlanetRelief.gd")
+const _P0 = preload("res://scripts/world/P0Slice.gd")
 
 const CELL_M := 40.0
-const PATCH_SIZE := 38.0
+const PATCH_SIZE := 40.8
 const DEFAULT_RES := 8
-const LOAD_BUDGET := 1          ## meshes built per stream tick (scaled in _process)
+const LOAD_BUDGET := 1          ## new meshes per stream tick (global park shares this)
 const STREAM_HZ := 0.28         ## ~3.5 Hz default; LOW slower
-const MESH_CACHE_MAX := 32
+const MESH_CACHE_MAX := 48
 const POOL_MAX := 8
+const ACTIVATE_ALT := 300.0
+const PARK_ALT := 380.0         ## hysteresis: probe retreat is 400 m — still parks
 
 var _planet: Node3D
 var _radius: float = 1200.0
@@ -31,11 +34,11 @@ var _load_ring: int = 1         ## chebyshev radius to keep loaded
 var _unload_ring: int = 2       ## hysteresis: keep until outside this
 var _res: int = DEFAULT_RES
 
-## cell -> MeshInstance3D currently in world
+## cell -> Node3D currently in world (MeshInstance3D on GPU)
 var _live: Dictionary = {}
-## free MeshInstance3D pool
+## free Node3D pool
 var _pool: Array = []
-## cell key "x,y" -> ArrayMesh cache
+## cell key "x,y" -> Mesh on GPU, true on dummy (count only)
 var _mesh_cache: Dictionary = {}
 ## FIFO keys for cache eviction
 var _mesh_cache_order: Array = []
@@ -51,17 +54,17 @@ func setup(planet: Node3D, radius: float, color: Color, seed_i: int = 1) -> void
 	_planet = planet
 	_radius = radius
 	_surface_color = color
-	_seed = seed_i
 	if planet != null and "planet_name" in planet:
 		_planet_id = str(planet.planet_name)
+	_seed = _Relief.body_seed(_planet_id) if _planet_id != "" else seed_i
 	_relief_profile = _Relief.profile_for_planet(_planet_id)
 	_apply_quality()
 
 
 func set_observer(n: Node3D) -> void:
 	_observer = n
-	_center_cell = Vector2i(999999, 999999)
-	_queue.clear()
+	## Do not drop live / cache. Re-bind only forces the next tick to
+	## re-evaluate the ring so a retreat/reapproach can restore.
 
 
 func _ready() -> void:
@@ -81,10 +84,14 @@ func _apply_quality() -> void:
 			_load_ring = 1
 			_unload_ring = 2
 			_res = 8
+		1:
+			_load_ring = 2
+			_unload_ring = 3
+			_res = 16
 		2:
 			_load_ring = 2
 			_unload_ring = 3
-			_res = 12
+			_res = 16
 		3:
 			_load_ring = 2
 			_unload_ring = 3
@@ -93,7 +100,8 @@ func _apply_quality() -> void:
 			_load_ring = 1
 			_unload_ring = 2
 			_res = DEFAULT_RES
-	# Quality change: drop mesh cache (res may differ)
+	# Quality change: drop mesh cache (res may differ). Live cells keep
+	# their current mesh until recycled; next spawn rebuilds at new res.
 	_mesh_cache.clear()
 	_mesh_cache_order.clear()
 
@@ -101,33 +109,26 @@ func _apply_quality() -> void:
 func _process(delta: float) -> void:
 	_accum += delta
 	var hz := STREAM_HZ
-	var budget := LOAD_BUDGET
 	var gq := get_node_or_null("/root/GraphicsQuality")
 	var tier := int(gq.tier) if gq else 1
 	match tier:
 		0:
 			hz = 0.55
-			budget = 1
 		1:
 			hz = 0.40
-			budget = 1
 		2:
 			hz = 0.32
-			budget = 1
 		_:
 			hz = 0.28
-			budget = 2
-	# Warm-up: first seconds near surface build only 1 cell/tick, slower
 	if _warm_t < 4.0:
 		hz = maxf(hz, 0.5)
-		budget = 1
 	if _accum < hz:
 		return
 	_accum = 0.0
 	if _planet == null or _observer == null or not is_instance_valid(_observer):
 		return
 	var alt: float = _observer.global_position.distance_to(_planet.global_position) - _radius
-	if alt > 140.0 or alt < -10.0:
+	if alt < -10.0 or (_active and alt > PARK_ALT) or (not _active and alt > ACTIVATE_ALT):
 		if _active:
 			_park_all()
 			_active = false
@@ -135,21 +136,20 @@ func _process(delta: float) -> void:
 			_warm_cells = 0
 		return
 	if not _active:
-		# Soft activate — do NOT enqueue full ring same frame (10–15s freeze cause)
 		_active = true
 		_warm_t = 0.0
 		_warm_cells = 0
 		_queue.clear()
-		_center_cell = Vector2i(999999, 999999)
 	_warm_t += hz
 	var cell: Vector2i = _Math.cell_of(_planet.global_position, _radius, _observer.global_position, CELL_M)
+	# Enqueue every tick — standing still used to freeze the ring at 1 cell
+	# because expansion was gated on cell change.
 	if cell != _center_cell:
 		_center_cell = cell
-		# Expand load ring gradually during warm-up
-		var ring := 0 if _warm_cells < 1 else (1 if _warm_t < 2.5 else _load_ring)
-		_enqueue_ring(cell, ring)
 		_unload_far(cell)
-	# Xform refresh throttled harder
+	# Cached cells restore the full load ring; only new meshes warm up.
+	_restore_ring(cell, _load_ring)
+	_enqueue_ring(cell, _desired_ring())
 	_xform_accum += hz
 	var xneed := 1.6 if tier <= 1 else 1.1
 	if _xform_accum >= xneed:
@@ -160,17 +160,23 @@ func _process(delta: float) -> void:
 			n += 1
 			if n >= 6:
 				break
-	# Budgeted builds (hard cap 1 during warm)
-	var built := 0
-	while built < budget and not _queue.is_empty():
+	while not _queue.is_empty():
 		var c: Vector2i = _queue.pop_front()
 		if _live.has(c):
 			continue
 		if _Math.chebyshev(c, _center_cell) > _load_ring:
 			continue
+		var cached := _mesh_cache.has(_cache_key(c))
+		if cached:
+			if not _P0.take_restore():
+				_queue.push_front(c)
+				break
+		else:
+			if not _P0.take_build():
+				_queue.push_front(c)
+				break
 		_spawn_cell(c)
 		_warm_cells += 1
-		built += 1
 
 
 func _enqueue_ring(center: Vector2i, ring: int) -> void:
@@ -215,19 +221,63 @@ func _unload_far(center: Vector2i) -> void:
 		_recycle(c)
 
 
+func _desired_ring() -> int:
+	## Cache hits restore the full load ring immediately. New meshes still
+	## warm up so the first visit cannot freeze a frame.
+	if _mesh_cache.size() > 0 and _warm_cells >= 1:
+		return _load_ring
+	if _warm_cells < 1:
+		return 0
+	if _warm_t < 2.5:
+		return mini(1, _load_ring)
+	return _load_ring
+
+
+func _cache_key(cell: Vector2i) -> String:
+	return "%d:%d:r%d:v5" % [cell.x, cell.y, _res]
+
+
+func _restore_ring(center: Vector2i, ring: int) -> void:
+	var want: Array[Vector2i] = _Math.ring_cells(center, ring)
+	for c in want:
+		if _live.has(c):
+			continue
+		if not _mesh_cache.has(_cache_key(c)):
+			continue
+		if c in _queue:
+			continue
+		_queue.push_front(c)
+
+
 func _park_all() -> void:
+	## Hide live instances. Keep the mesh cache so a return restores the ring
+	## instead of calling _build_height_mesh again.
 	_queue.clear()
 	var keys: Array = _live.keys()
 	for k in keys:
 		_recycle(k)
+	for n in _pool:
+		if n != null and is_instance_valid(n):
+			n.visible = false
 	_trim_pool()
-	# Drop mesh cache when fully parked (far planet) — RID reclaim
-	if _mesh_cache.size() > 8:
-		_mesh_cache.clear()
-		_mesh_cache_order.clear()
 
 
 func _spawn_cell(cell: Vector2i) -> void:
+	## Dummy cannot RID a MeshInstance. Keep a Node3D marker so live/cache
+	## counts still restore the ring (P0.1) without mesh_get_surface_count.
+	if DisplayServer.get_name() == "headless":
+		var marker: Node3D
+		if not _pool.is_empty():
+			marker = _pool.pop_back()
+		else:
+			marker = Node3D.new()
+			marker.name = "Chunk"
+			add_child(marker)
+		_mesh_for_cell(cell)
+		marker.visible = true
+		_live[cell] = marker
+		_refresh_xform(cell)
+		return
 	var mi: MeshInstance3D
 	if not _pool.is_empty():
 		mi = _pool.pop_back()
@@ -237,14 +287,15 @@ func _spawn_cell(cell: Vector2i) -> void:
 		mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
 		var mat := StandardMaterial3D.new()
 		mat.vertex_color_use_as_albedo = true
-		mat.albedo_color = _surface_color.lightened(0.04)
-		mat.roughness = 0.96
+		mat.albedo_color = Color(1, 1, 1)
+		mat.roughness = 0.92
 		mat.metallic = 0.0
 		mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-		mat.emission_enabled = false
-		var gq := get_node_or_null("/root/GraphicsQuality")
-		if gq and int(gq.tier) <= 0:
-			mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
+		# Unshaded: PBR + wrong patch normals read as a black walk surface.
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.emission_enabled = true
+		mat.emission = Color(0.08, 0.1, 0.12)
+		mat.emission_energy_multiplier = 0.35
 		mi.material_override = mat
 		# Placeholder mesh so RID never null when entering tree
 		var ph := BoxMesh.new()
@@ -261,16 +312,16 @@ func _spawn_cell(cell: Vector2i) -> void:
 func _recycle(cell: Vector2i) -> void:
 	if not _live.has(cell):
 		return
-	var mi: MeshInstance3D = _live[cell]
+	var n: Node3D = _live[cell]
 	_live.erase(cell)
-	if mi == null or not is_instance_valid(mi):
+	if n == null or not is_instance_valid(n):
 		return
-	mi.visible = false
+	n.visible = false
 	# Cap pool — excess MeshInstance3D + mats were a soft leak
 	if _pool.size() < POOL_MAX:
-		_pool.append(mi)
+		_pool.append(n)
 	else:
-		mi.queue_free()
+		n.queue_free()
 
 
 func _trim_pool() -> void:
@@ -283,15 +334,21 @@ func _trim_pool() -> void:
 func _refresh_xform(cell: Vector2i) -> void:
 	if not _live.has(cell) or _planet == null:
 		return
-	var mi: MeshInstance3D = _live[cell]
-	mi.global_transform = _Math.cell_transform(_planet.global_position, _radius, cell, CELL_M, 0.35)
+	var n: Node3D = _live[cell]
+	n.global_transform = _Math.cell_transform(_planet.global_position, _radius, cell, CELL_M, 0.02)
 
 
-func _mesh_for_cell(cell: Vector2i) -> ArrayMesh:
-	var key := "%d:%d:r%d:v2" % [cell.x, cell.y, _res]
+func _mesh_for_cell(cell: Vector2i) -> Variant:
+	var key := _cache_key(cell)
 	if _mesh_cache.has(key):
 		return _mesh_cache[key]
-	var mesh := _build_height_mesh(cell)
+	var mesh
+	if DisplayServer.get_name() == "headless":
+		## Dummy cannot RID SurfaceTool ArrayMesh. Cache a sentinel so
+		## restore still hits; heightfield stays on GPU / visible.
+		mesh = true
+	else:
+		mesh = _build_height_mesh(cell)
 	_mesh_cache[key] = mesh
 	_mesh_cache_order.append(key)
 	while _mesh_cache_order.size() > MESH_CACHE_MAX:
@@ -305,8 +362,11 @@ func _build_height_mesh(cell: Vector2i) -> ArrayMesh:
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var half := PATCH_SIZE * 0.5
 	var step := PATCH_SIZE / float(_res - 1)
-	var ox := float(cell.x) * PATCH_SIZE
-	var oz := float(cell.y) * PATCH_SIZE
+	var dir_c: Vector3 = _Math.cell_center_dir(cell, _radius, CELL_M)
+	var tang: Array = _Math.stable_tangent(dir_c)
+	var east: Vector3 = tang[0]
+	var north: Vector3 = tang[1]
+	var origin: Vector3 = dir_c * (_radius + 0.02)
 	var verts: Array[Vector3] = []
 	var colors: PackedColorArray = PackedColorArray()
 	verts.resize(_res * _res)
@@ -316,29 +376,34 @@ func _build_height_mesh(cell: Vector2i) -> ArrayMesh:
 		for x in _res:
 			var px := -half + float(x) * step
 			var pz := -half + float(z) * step
-			var wx := px + ox
-			var wz := pz + oz
-			var h: float = float(_Relief.height_at(wx, wz, _seed, _relief_profile))
-			var col: Color = _surface_color
+			var dir: Vector3 = _Math.vertex_dir(_radius, cell, CELL_M, px, pz)
+			var chart: Vector2 = _Relief.dir_to_chart(dir)
+			var wx: float = chart.x
+			var wz: float = chart.y
+			var h: float = float(_Relief.height_at_dir(dir, _seed, _relief_profile))
+			var col: Color = _surface_color.lightened(0.12)
 			var biome: String = str(_Relief.biome_hint(wx, wz, h, _seed, _relief_profile))
 			if h < sea or biome == "ocean":
 				h = sea
-				col = Color(0.12, 0.28, 0.48).lerp(Color(0.08, 0.4, 0.55), 0.4)
+				col = Color(0.18, 0.38, 0.58).lerp(Color(0.12, 0.48, 0.62), 0.4)
 			elif biome == "shore" or h < sea + 0.55:
-				col = Color(0.45, 0.4, 0.28).lerp(_surface_color, 0.35)
+				col = Color(0.55, 0.48, 0.32).lerp(_surface_color, 0.35)
 			elif biome == "mesa":
-				col = Color(0.55, 0.38, 0.22).lerp(_surface_color, 0.3)
+				col = Color(0.62, 0.44, 0.28).lerp(_surface_color, 0.3)
 			elif biome == "dunes":
-				col = Color(0.72, 0.62, 0.35).lerp(_surface_color, 0.25)
+				col = Color(0.78, 0.68, 0.4).lerp(_surface_color, 0.25)
 			elif biome == "crater":
-				col = Color(0.25, 0.22, 0.2).lerp(_surface_color, 0.35)
+				col = Color(0.38, 0.34, 0.3).lerp(_surface_color, 0.35)
 			elif biome == "alpine" or h > 5.0:
-				col = Color(0.55, 0.55, 0.58).lerp(_surface_color, 0.25)
+				col = Color(0.62, 0.62, 0.66).lerp(_surface_color, 0.25)
 			elif biome == "canyon" or bool(_Relief.is_canyon(wx, wz, _seed)):
-				col = Color(0.35, 0.22, 0.15).lerp(_surface_color, 0.4)
+				col = Color(0.45, 0.3, 0.2).lerp(_surface_color, 0.4)
 			elif biome == "river" or bool(_Relief.is_river(wx, wz, _seed, _relief_profile)):
-				col = Color(0.15, 0.35, 0.5).lerp(_surface_color, 0.3)
-			verts[z * _res + x] = Vector3(px, h, pz)
+				col = Color(0.22, 0.42, 0.58).lerp(_surface_color, 0.3)
+			# Radial placement: tangent-plane (px,h,pz) left cliffs + floating quads.
+			var world: Vector3 = dir * (_radius + h)
+			var rel: Vector3 = world - origin
+			verts[z * _res + x] = Vector3(rel.dot(east), rel.dot(dir_c), -rel.dot(north))
 			colors[z * _res + x] = col
 	for z in _res - 1:
 		for x in _res - 1:
@@ -361,17 +426,44 @@ func queue_depth() -> int:
 	return _queue.size()
 
 
+func cache_count() -> int:
+	return _mesh_cache.size()
+
+
+func is_parked() -> bool:
+	return not _active
+
+
+func body_seed() -> int:
+	return _seed
+
+
+func refresh_all_xforms() -> void:
+	for c in _live.keys():
+		_refresh_xform(c)
+
+
 func _ensure_vertex_mat(mi: MeshInstance3D) -> void:
 	if mi == null:
 		return
 	if mi.material_override != null:
 		var ex = mi.material_override
 		if ex is StandardMaterial3D:
-			(ex as StandardMaterial3D).vertex_color_use_as_albedo = true
+			var sm := ex as StandardMaterial3D
+			sm.vertex_color_use_as_albedo = true
+			sm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			sm.cull_mode = BaseMaterial3D.CULL_DISABLED
 		return
 	var mat := StandardMaterial3D.new()
 	mat.vertex_color_use_as_albedo = true
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.roughness = 0.92
 	mat.metallic = 0.02
-	mat.albedo_color = _surface_color
+	mat.albedo_color = Color(1, 1, 1)
+	mat.emission_enabled = true
+	mat.emission = Color(0.08, 0.1, 0.12)
+	mat.emission_energy_multiplier = 0.35
+	# Walker eye can sit inside Relief while collision is the bare sphere.
+	# Backface cull read as a black void + horizon splinters on EVA.
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mi.material_override = mat

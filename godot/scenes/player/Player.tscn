@@ -7,9 +7,8 @@
 radius = 0.4
 height = 1.6
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
-radius = 0.4
-height = 1.6
+[sub_resource type="BoxMesh" id="BoxMesh_body"]
+size = Vector3(0.8, 1.6, 0.8)
 
 [sub_resource type="StandardMaterial3D" id="Mat_body"]
 albedo_color = Color(0.08, 0.12, 0.18, 1)
@@ -31,7 +30,7 @@ shape = SubResource("CapsuleShape3D_body")
 
 [node name="BodyMesh" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
-mesh = SubResource("CapsuleMesh_body")
+mesh = SubResource("BoxMesh_body")
 surface_material_override/0 = SubResource("Mat_body")
 
 [node name="CameraPivot" type="Node3D" parent="."]

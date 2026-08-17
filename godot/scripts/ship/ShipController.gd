@@ -87,6 +87,11 @@ const _HULL_CRIT_HP := 0.35
 func _ready() -> void:
 	_gq = get_node_or_null("/root/GraphicsQuality")
 	add_to_group("ship")
+	var hull := get_node_or_null("HullMesh") as MeshInstance3D
+	if hull and DisplayServer.get_name() != "headless":
+		var prism := PrismMesh.new()
+		prism.size = Vector3(2.0, 0.9, 3.2)
+		hull.mesh = prism
 	_ensure_living_fx()
 	_ensure_nose_marker()
 	_ensure_shield_bubble()
@@ -317,6 +322,34 @@ func _ship_axis() -> Vector3:
 	return Vector3(strafe, lift, thrust)
 
 
+func _sink_key_held() -> bool:
+	if is_landed:
+		return false
+	if InputMap.has_action("move_back") and Input.is_action_pressed("move_back"):
+		return true
+	if Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_S):
+		return true
+	if Input.is_physical_key_pressed(KEY_DOWN) or Input.is_key_pressed(KEY_DOWN):
+		return true
+	return false
+
+
+func _planet_inward() -> Vector3:
+	## Geometric toward-planet. gravity_at is ZERO above atmo*1.8 (~504 m),
+	## which is why P0.4 sink never fired at the 770 m OPEN SPACE spawn.
+	if _open_space and _open_space.has_method("nearest_planet"):
+		var pl: Node3D = _open_space.nearest_planet(global_position)
+		if pl != null and is_instance_valid(pl):
+			var to_c: Vector3 = pl.global_position - global_position
+			if to_c.length_squared() > 1.0:
+				return to_c.normalized()
+	if _open_space and _open_space.has_method("gravity_at"):
+		var gg: Vector3 = _open_space.gravity_at(global_position)
+		if gg.length() > 0.05:
+			return gg.normalized()
+	return Vector3.ZERO
+
+
 func _apply_attitude() -> void:
 	# Right-handed free-flight attitude: yaw around ref-up, pitch around local right, roll around nose.
 	# Must keep det(+1). Old up.cross(f0) flipped the X axis → ship flew "sideways" + inverted mouse.
@@ -402,8 +435,8 @@ func _physics_process(delta: float) -> void:
 		_stick_to_pad()
 		if _thruster_fx and is_instance_valid(_thruster_fx):
 			_thruster_fx.emitting = false
-		# Ignore accidental launch for lock window (prevents "lift on land")
-		if _land_lock_t <= 0.0 and Input.is_action_just_pressed("ability_2"):
+		# W / Space / Shift+W / E — E-only left the ship glued after LANDED.
+		if _wants_takeoff():
 			_do_launch()
 		_tick_combat(delta)
 		_update_status()
@@ -422,11 +455,6 @@ func _physics_process(delta: float) -> void:
 	var forward: Vector3 = -global_transform.basis.z
 	var right: Vector3 = global_transform.basis.x
 	var up: Vector3 = global_transform.basis.y
-	# Strafe weaker than main; lift medium — readable flight envelope
-	var lift_cmd: Vector3 = up * axes.y * thrust * 0.55
-	var accel: Vector3 = forward * axes.z * thrust \
-		+ right * axes.x * thrust * 0.5 \
-		+ lift_cmd
 
 	var atmo := 0.0
 	var g := Vector3.ZERO
@@ -436,43 +464,76 @@ func _physics_process(delta: float) -> void:
 		if _open_space.has_method("gravity_at"):
 			g = _open_space.gravity_at(global_position)
 
+	# S = toward planet, not nose/camera thrust. At spawn the nose faces the
+	# planet; treating S as reverse climbs. gravity_at is 0 above ~504 m.
+	var inward := _planet_inward()
+	var sink_held := _sink_key_held() and inward.length() > 0.5
+	if sink_held:
+		axes.z = 0.0
+
+	# Strafe weaker than main; lift medium — readable flight envelope
+	var lift_cmd: Vector3 = up * axes.y * thrust * 0.55
+	var accel: Vector3 = forward * axes.z * thrust \
+		+ right * axes.x * thrust * 0.5 \
+		+ lift_cmd
+
 	# Gravity by mode (g toward planet)
 	if g.length() > 0.01:
 		if flight_mode == FlightMode.NAV and atmo > 0.5:
 			_set_mode(FlightMode.SCM)
 		if flight_mode == FlightMode.HOVER:
-			var hh: Array = _Flight.hover_hold(velocity, g, accel, delta, 1.0)
-			accel = hh[0]
-			velocity = hh[1]
-			# Vertical stick trims hold altitude; PD holds it
-			if _hover_hold_alt < 0.0:
-				_hover_hold_alt = _altitude_now()
-			if absf(axes.y) > 0.12:
-				_hover_hold_alt = maxf(4.0, _hover_hold_alt + axes.y * 22.0 * delta)
-			# Strip only the commanded lift so HOVER is an altitude hold, not a
-			# second SCM. Projecting the whole vector also ate the gravity
-			# cancellation and slid the ship sideways when pitched.
-			accel -= lift_cmd
-			var v_up: float = velocity.dot((-g).normalized())
-			accel += _Flight.hover_alt_accel(g, _altitude_now(), _hover_hold_alt, v_up)
-			var pad_d := 999.0
-			if _open_space and _open_space.has_method("nearest_pad"):
-				var hpad: Node3D = _open_space.nearest_pad(global_position)
-				if hpad and is_instance_valid(hpad):
-					pad_d = hpad.global_position.distance_to(global_position)
-					if pad_d < 52.0 and _open_space.has_method("nearest_planet"):
-						var plp: Node3D = _open_space.nearest_planet(hpad.global_position)
-						if plp and plp.has_method("altitude_of"):
-							var deck: float = float(plp.altitude_of(hpad.global_position)) + 8.0
-							if _hover_hold_alt < deck:
-								_hover_hold_alt = move_toward(_hover_hold_alt, deck, delta * 10.0)
-			accel += _Flight.ground_effect_accel(g, _altitude_now(), pad_d, v_up)
+			if sink_held:
+				# hover_hold damps radial vel and PD holds last Space climb
+				# (P0.5 3090: 3 HOVER + S kept climbing until SCM).
+				accel -= g
+				accel -= lift_cmd
+				_hover_hold_alt = maxf(8.0, _altitude_now() - 80.0)
+				var climb_v: float = velocity.dot(-inward)
+				if climb_v > 0.0:
+					velocity += inward * climb_v
+			else:
+				var hh: Array = _Flight.hover_hold(velocity, g, accel, delta, 1.0)
+				accel = hh[0]
+				velocity = hh[1]
+				if _hover_hold_alt < 0.0:
+					_hover_hold_alt = _altitude_now()
+				if absf(axes.y) > 0.12:
+					_hover_hold_alt = maxf(4.0, _hover_hold_alt + axes.y * 22.0 * delta)
+				accel -= lift_cmd
+				var v_up: float = velocity.dot((-g).normalized())
+				accel += _Flight.hover_alt_accel(g, _altitude_now(), _hover_hold_alt, v_up)
+				var pad_d := 999.0
+				if _open_space and _open_space.has_method("nearest_pad"):
+					var hpad: Node3D = _open_space.nearest_pad(global_position)
+					if hpad and is_instance_valid(hpad):
+						pad_d = hpad.global_position.distance_to(global_position)
+						if pad_d < 52.0 and _open_space.has_method("nearest_planet"):
+							var plp: Node3D = _open_space.nearest_planet(hpad.global_position)
+							if plp and plp.has_method("altitude_of"):
+								var deck: float = float(plp.altitude_of(hpad.global_position)) + 8.0
+								if _hover_hold_alt < deck:
+									_hover_hold_alt = move_toward(_hover_hold_alt, deck, delta * 10.0)
+				accel += _Flight.ground_effect_accel(g, _altitude_now(), pad_d, v_up)
 		elif flight_mode == FlightMode.SCM:
 			# Partial gravity in atmo; almost free in vacuum
 			accel += g * lerpf(0.08, 0.45, atmo)
 		else:
 			# NAV: light gravity bias only near surface
 			accel += g * lerpf(0.02, 0.2, atmo)
+
+	if sink_held:
+		var sink_acc := 28.0
+		if flight_mode == FlightMode.HOVER:
+			sink_acc = 32.0
+		elif flight_mode == FlightMode.NAV:
+			sink_acc = 24.0
+		var alt_now := _altitude_now()
+		if alt_now < 100.0:
+			sink_acc *= clampf(alt_now / 100.0, 0.2, 1.0)
+		accel += inward * sink_acc
+		var outward := velocity.dot(-inward)
+		if outward > 0.2:
+			velocity += inward * outward * clampf(8.0 * delta, 0.0, 1.0)
 
 	_stall = _Flight.stall_amount(atmo, velocity.length(), _Flight.stall_speed(flight_mode))
 	if _stall > 0.01 and g.length() > 0.01:
@@ -520,7 +581,7 @@ func _physics_process(delta: float) -> void:
 	_update_status()
 
 func _update_status() -> void:
-	if status_label == null:
+	if status_label == null or DisplayServer.get_name() == "headless":
 		return
 	var opn := "SIEGE" if op_mode == 1 else ("SCAN" if op_mode == 2 else "CRUISE")
 	var txt := "%s  OP:%s  SPD %d  SHD %d  E %d  %s%s%s%s" % [
@@ -579,6 +640,7 @@ func _do_land() -> void:
 func _commit_land(pad: Node3D) -> void:
 	velocity = Vector3.ZERO
 	is_landed = true
+	_stall = 0.0
 	_land_lock_t = 1.25
 	_landed_pad = pad
 	if pad:
@@ -601,16 +663,26 @@ func _commit_land(pad: Node3D) -> void:
 	landed.emit()
 	if pad:
 		print("[Ship] Landed on pad ", pad.name)
-		_toast_ship("Landed — C to claim (soft ownership, no combat power)")
+		_toast_ship("Landed — Space/E takeoff · F EVA · C claim")
 	else:
-		_toast_ship("Surface land — C near a pad to claim")
+		_toast_ship("Surface land — Space/E takeoff · C near a pad to claim")
+
+func _wants_takeoff() -> bool:
+	if Input.is_action_just_pressed("jump"):
+		return true
+	if Input.is_action_just_pressed("move_forward"):
+		return true
+	if Input.is_action_just_pressed("ability_2"):
+		return true
+	return false
+
 
 func _do_launch() -> void:
 	if not is_landed:
 		return
 	if _land_lock_t > 0.0:
 		print("[Ship] Launch lock ", "%.2f" % _land_lock_t, "s")
-		_toast_ship("Launch lock %.1fs" % _land_lock_t)
+		_toast_ship("Takeoff in %.1fs — Space / E" % _land_lock_t)
 		return
 	var up_boost: Vector3 = _reference_up()
 	var nose: Vector3 = -global_transform.basis.z
@@ -623,7 +695,7 @@ func _do_launch() -> void:
 	velocity = up_boost * 3.5 + nose * 1.5
 	launched.emit()
 	print("[Ship] Launched")
-	_toast_ship("Launched")
+	_toast_ship("Takeoff — WASD fly · Space lift · 3 HOVER")
 
 func detach_module(index: int) -> void:
 	if index < 0 or index >= modules.size():
@@ -1505,13 +1577,12 @@ func get_op_mode_name() -> String:
 
 
 func get_flight_status_line() -> String:
+	if is_landed:
+		return "%s · SPD 0 · LANDED — Space/E takeoff · F EVA · C claim" % flight_mode_name()
 	var st := "%s · %s · SPD %d" % [flight_mode_name(), get_op_mode_name(), int(velocity.length())]
 	if _stall > 0.28:
 		st += " · STALL %.0f%%" % (_stall * 100.0)
-	if is_landed:
-		st += " · LANDED · 2 launch · C claim"
-	else:
-		st += "  ·  " + land_readiness_line()
+	st += "  ·  " + land_readiness_line()
 	return st
 
 

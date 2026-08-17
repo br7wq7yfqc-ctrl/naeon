@@ -78,13 +78,14 @@ static func build_station(faction: String = "Cybernex") -> Node3D:
 	exit.add_child(cs)
 	exit.position = Vector3(0, 1.5, -6)
 	root.add_child(exit)
-	var elabel := Label3D.new()
-	elabel.text = "EXIT  [I]"
-	elabel.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	elabel.font_size = 48
-	elabel.position = Vector3(0, 2.5, -6)
-	elabel.modulate = neon
-	root.add_child(elabel)
+	if DisplayServer.get_name() != "headless":
+		var elabel := Label3D.new()
+		elabel.text = "EXIT  [I]"
+		elabel.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		elabel.font_size = 48
+		elabel.position = Vector3(0, 2.5, -6)
+		elabel.modulate = neon
+		root.add_child(elabel)
 	# Spawn point
 	var spawn := Marker3D.new()
 	spawn.name = "Spawn"
@@ -126,13 +127,14 @@ static func build_ship(faction: String = "Cybernex") -> Node3D:
 	spawn.name = "Spawn"
 	spawn.position = Vector3(0, 1.25, 1)
 	root.add_child(spawn)
-	var elabel := Label3D.new()
-	elabel.text = "HATCH  [I]"
-	elabel.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	elabel.font_size = 36
-	elabel.position = Vector3(0, 2.0, -4.2)
-	elabel.modulate = neon
-	root.add_child(elabel)
+	if DisplayServer.get_name() != "headless":
+		var elabel := Label3D.new()
+		elabel.text = "HATCH  [I]"
+		elabel.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		elabel.font_size = 36
+		elabel.position = Vector3(0, 2.0, -4.2)
+		elabel.modulate = neon
+		root.add_child(elabel)
 	_add_neon_strips(root, faction)
 	_attach_ambient(root, "ship", neon)
 	_ensure_seat_markers(root)
@@ -167,6 +169,22 @@ static func _strip_light(parent: Node3D, pos: Vector3, size: Vector3, neon: Colo
 	_box_mesh(parent, pos, size, neon, false, true)
 
 static func _box_mesh(parent: Node3D, pos: Vector3, size: Vector3, color: Color, collision: bool, emit: bool = false) -> void:
+	## Dummy mesh_storage errors on MeshInstance free (interior exit). Keep
+	## collision/markers so mechanics still run; skip visual RIDs on headless.
+	if DisplayServer.get_name() == "headless":
+		if collision:
+			var holder := Node3D.new()
+			holder.position = pos
+			parent.add_child(holder)
+			var sb0 := StaticBody3D.new()
+			sb0.collision_layer = 1
+			var cs0 := CollisionShape3D.new()
+			var sh0 := BoxShape3D.new()
+			sh0.size = size
+			cs0.shape = sh0
+			sb0.add_child(cs0)
+			holder.add_child(sb0)
+		return
 	var mi := MeshInstance3D.new()
 	var bm := BoxMesh.new()
 	bm.size = size
@@ -199,6 +217,8 @@ static func _box_mesh(parent: Node3D, pos: Vector3, size: Vector3, color: Color,
 		mi.add_child(sb)
 
 static func _add_neon_strips(root: Node3D, fac: String) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	var col := Color(0.2, 0.85, 1.0) if fac == "Cybernex" else Color(0.95, 0.2, 0.45)
 	for i in 4:
 		var mi := MeshInstance3D.new()
@@ -254,7 +274,7 @@ static func _ensure_seat_markers(root: Node3D) -> void:
 		sv.name = "SeatVolume"
 		sv.position = Vector3(0, 0.2, -1.2)
 		root.add_child(sv)
-	if root.get_node_or_null("SeatLabel") == null:
+	if root.get_node_or_null("SeatLabel") == null and DisplayServer.get_name() != "headless":
 		var lab := Label3D.new()
 		lab.name = "SeatLabel"
 		lab.text = "PILOT SEAT"
@@ -263,14 +283,19 @@ static func _ensure_seat_markers(root: Node3D) -> void:
 		lab.position = Vector3(0, 1.6, -1.2)
 		lab.modulate = Color(0.3, 0.9, 1.0)
 		root.add_child(lab)
-	if root.get_node_or_null("SeatGlow") == null:
+	if root.get_node_or_null("SeatGlow") == null and DisplayServer.get_name() != "headless":
 		var g := MeshInstance3D.new()
 		g.name = "SeatGlow"
-		var cm := CylinderMesh.new()
-		cm.top_radius = 0.35
-		cm.bottom_radius = 0.35
-		cm.height = 0.08
-		g.mesh = cm
+		if DisplayServer.get_name() == "headless":
+			var glow_box := BoxMesh.new()
+			glow_box.size = Vector3(0.7, 0.08, 0.7)
+			g.mesh = glow_box
+		else:
+			var cm := CylinderMesh.new()
+			cm.top_radius = 0.35
+			cm.bottom_radius = 0.35
+			cm.height = 0.08
+			g.mesh = cm
 		var mat := StandardMaterial3D.new()
 		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		mat.albedo_color = Color(0.2, 0.85, 1.0, 0.7)
@@ -328,13 +353,14 @@ static func build_from_profile(profile_id: String, faction: String = "Cybernex")
 	spawn.name = "Spawn"
 	spawn.position = seat_pos + Vector3(0, 0.4, 1.2)
 	root.add_child(spawn)
-	var elabel := Label3D.new()
-	elabel.text = "HATCH [I]  SEAT [F]"
-	elabel.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	elabel.font_size = 36
-	elabel.position = hatch_pos + Vector3(0, 1.2, 0)
-	elabel.modulate = neon
-	root.add_child(elabel)
+	if DisplayServer.get_name() != "headless":
+		var elabel := Label3D.new()
+		elabel.text = "HATCH [I]  SEAT [F]"
+		elabel.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		elabel.font_size = 36
+		elabel.position = hatch_pos + Vector3(0, 1.2, 0)
+		elabel.modulate = neon
+		root.add_child(elabel)
 	_add_neon_strips(root, faction)
 	_interior_point_lights(root, neon)
 	
@@ -397,15 +423,22 @@ static func _hatch_arch(root: Node3D, hatch_pos: Vector3, neon: Color) -> void:
 
 
 static func _seat_glow(root: Node3D, seat_pos: Vector3, neon: Color) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
 	var seat_v := root.get_node_or_null("SeatVolume")
 	# Pillar + ring + label — high readability for F pilot
 	var pillar := MeshInstance3D.new()
 	pillar.name = "SeatPillar"
-	var cyl := CylinderMesh.new()
-	cyl.top_radius = 0.08
-	cyl.bottom_radius = 0.12
-	cyl.height = 1.8
-	pillar.mesh = cyl
+	if DisplayServer.get_name() == "headless":
+		var pillar_box := BoxMesh.new()
+		pillar_box.size = Vector3(0.2, 1.8, 0.2)
+		pillar.mesh = pillar_box
+	else:
+		var cyl := CylinderMesh.new()
+		cyl.top_radius = 0.08
+		cyl.bottom_radius = 0.12
+		cyl.height = 1.8
+		pillar.mesh = cyl
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.albedo_color = neon
@@ -418,12 +451,17 @@ static func _seat_glow(root: Node3D, seat_pos: Vector3, neon: Color) -> void:
 	root.add_child(pillar)
 	var ring := MeshInstance3D.new()
 	ring.name = "SeatRing"
-	var tm := TorusMesh.new()
-	tm.inner_radius = 0.55
-	tm.outer_radius = 0.72
-	tm.rings = 6
-	tm.ring_segments = 16
-	ring.mesh = tm
+	if DisplayServer.get_name() == "headless":
+		var ring_box := BoxMesh.new()
+		ring_box.size = Vector3(1.44, 0.12, 1.44)
+		ring.mesh = ring_box
+	else:
+		var tm := TorusMesh.new()
+		tm.inner_radius = 0.55
+		tm.outer_radius = 0.72
+		tm.rings = 6
+		tm.ring_segments = 16
+		ring.mesh = tm
 	var rm := StandardMaterial3D.new()
 	rm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	rm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -435,15 +473,16 @@ static func _seat_glow(root: Node3D, seat_pos: Vector3, neon: Color) -> void:
 	ring.position = seat_pos + Vector3(0, 0.05, 0)
 	ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(ring)
-	var lab := Label3D.new()
-	lab.name = "SeatLabel"
-	lab.text = "PILOT SEAT  [F]"
-	lab.font_size = 48
-	lab.modulate = neon
-	lab.position = seat_pos + Vector3(0, 2.1, 0)
-	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lab.no_depth_test = true
-	root.add_child(lab)
+	if DisplayServer.get_name() != "headless":
+		var lab := Label3D.new()
+		lab.name = "SeatLabel"
+		lab.text = "PILOT SEAT  [F]"
+		lab.font_size = 48
+		lab.modulate = neon
+		lab.position = seat_pos + Vector3(0, 2.1, 0)
+		lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		lab.no_depth_test = true
+		root.add_child(lab)
 	if seat_v is Node3D:
 		pass
 
@@ -452,14 +491,15 @@ static func _console_volume(root: Node3D, pos: Vector3, neon: Color, tag: String
 	vol.name = "ConsoleVolume"
 	vol.position = pos + Vector3(0, 1.0, 0)
 	root.add_child(vol)
-	var lab := Label3D.new()
-	lab.name = "ConsoleLabel"
-	lab.text = "%s CONSOLE  [E]" % tag
-	lab.font_size = 36
-	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lab.modulate = neon
-	lab.position = pos + Vector3(0, 2.15, 0)
-	root.add_child(lab)
+	if DisplayServer.get_name() != "headless":
+		var lab := Label3D.new()
+		lab.name = "ConsoleLabel"
+		lab.text = "%s CONSOLE  [E]" % tag
+		lab.font_size = 36
+		lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		lab.modulate = neon
+		lab.position = pos + Vector3(0, 2.15, 0)
+		root.add_child(lab)
 	_box_mesh(root, pos + Vector3(0, 0.55, 0), Vector3(1.4, 1.1, 0.7), Color(0.08, 0.09, 0.11), true)
 	_box_mesh(root, pos + Vector3(0, 1.05, 0.28), Vector3(1.1, 0.08, 0.08), neon, false, true)
 
@@ -482,27 +522,35 @@ static func _door_portal(root: Node3D, pos: Vector3, neon: Color, hall_w: float 
 	_box_mesh(door, Vector3(fill_c, 1.2, 0), Vector3(fill_w, 2.4, 0.32), wall_c, true)
 	_box_mesh(door, Vector3(0, 2.4, 0), Vector3(hall_w * 0.92, 0.22, 0.32), wall_c, true)
 	_box_mesh(door, Vector3(0, 2.28, 0), Vector3(gap + 0.2, 0.05, 0.12), neon, false, true)
-	var slab := MeshInstance3D.new()
-	slab.name = "Slab"
-	var bm := BoxMesh.new()
-	bm.size = Vector3(gap, 2.15, 0.1)
-	slab.mesh = bm
-	slab.position = Vector3(0, 1.1, 0)
-	slab.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.07, 0.1, 0.13)
-	mat.metallic = 0.55
-	mat.roughness = 0.35
-	mat.emission_enabled = true
-	mat.emission = neon
-	mat.emission_energy_multiplier = 0.55
-	slab.material_override = mat
-	door.add_child(slab)
+	var slab: Node3D
+	if DisplayServer.get_name() == "headless":
+		slab = Node3D.new()
+		slab.name = "Slab"
+		slab.position = Vector3(0, 1.1, 0)
+		door.add_child(slab)
+	else:
+		var mi := MeshInstance3D.new()
+		mi.name = "Slab"
+		var bm := BoxMesh.new()
+		bm.size = Vector3(gap, 2.15, 0.1)
+		mi.mesh = bm
+		mi.position = Vector3(0, 1.1, 0)
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(0.07, 0.1, 0.13)
+		mat.metallic = 0.55
+		mat.roughness = 0.35
+		mat.emission_enabled = true
+		mat.emission = neon
+		mat.emission_energy_multiplier = 0.55
+		mi.material_override = mat
+		door.add_child(mi)
+		slab = mi
 	var sb := StaticBody3D.new()
 	sb.collision_layer = 1
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
-	sh.size = bm.size
+	sh.size = Vector3(gap, 2.15, 0.1)
 	cs.shape = sh
 	sb.add_child(cs)
 	slab.add_child(sb)

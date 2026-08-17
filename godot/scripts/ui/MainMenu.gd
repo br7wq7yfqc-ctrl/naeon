@@ -54,8 +54,14 @@ func _build() -> void:
 	center.add_child(HSeparator.new())
 
 	_btn(center, "OPEN SPACE  —  free flight · land · claim", _goto_space, Color(0.15, 0.55, 0.85))
-	_btn(center, "AEXION CLASH  —  3-lane TPS stub", _goto_clash, Color(0.75, 0.2, 0.35))
-	_btn(center, "Quit", func(): get_tree().quit(), Color(0.25, 0.25, 0.3))
+	_btn(center, "CLASH SANDBOX  —  3-lane stub, not a galaxy map", _goto_clash, Color(0.75, 0.2, 0.35))
+	_btn(center, "Quit", func():
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		if DisplayServer.get_name() == "headless":
+			OS.kill(OS.get_process_id())
+		else:
+			get_tree().quit()
+	, Color(0.25, 0.25, 0.3))
 
 	var plates := HBoxContainer.new()
 	plates.alignment = BoxContainer.ALIGNMENT_CENTER

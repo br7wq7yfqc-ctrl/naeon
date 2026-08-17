@@ -10,6 +10,10 @@ const _ATMO_INNER_SHADER = preload("res://shaders/planet_atmosphere_inner.gdshad
 const _BaseBuilder = preload("res://scripts/world/BaseBuilder.gd")
 const _SurfaceDetail = preload("res://scripts/world/SurfaceDetail.gd")
 const _TerrainEdit = preload("res://scripts/world/PlanetTerrainEdit.gd")
+const _Relief = preload("res://scripts/world/PlanetRelief.gd")
+const _P0 = preload("res://scripts/world/P0Slice.gd")
+const _MeshSafe = preload("res://scripts/world/MeshSafe.gd")
+const _Filler = preload("res://scripts/world/FillerProp.gd")
 
 @export var planet_name: String = "Aexion-III"
 @export var radius: float = 1200.0
@@ -52,6 +56,7 @@ var _segs_mid: int = 32
 var _segs_far: int = 16
 var _collision_enabled: bool = true
 var _surface_detail: Node3D = null
+var _far_shell_hidden: bool = false
 var _pad_build_stage: int = 0
 var _pad_build_pending: bool = false
 var _bases_built: bool = false
@@ -104,8 +109,9 @@ func _build_shell() -> void:
 	_apply_surface_uniforms(smat)
 	_mesh.material_override = smat
 	_surface_shader_mat = smat
-	# Always have a mesh RID (avoid Parameter m is null before first LOD)
-	_mesh.mesh = _Cache.sphere(radius, maxi(8, _segs_far))
+	# Dummy renderer cannot RID a 1400 m SphereMesh — BoxMesh keeps the
+	# ShaderMaterial (seed uniforms) without mesh_get_surface_count spam.
+	_MeshSafe.assign(_mesh, _Cache.sphere(radius, maxi(8, _segs_far)), Vector3(2, 2, 2))
 	add_child(_mesh)
 
 	# Atmosphere outer shell — fresnel limb shader (space view)
@@ -113,7 +119,7 @@ func _build_shell() -> void:
 	_atmo.name = "Atmosphere"
 	_atmo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_atmo.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-	_atmo.mesh = _Cache.sphere(radius + atmosphere_height, max(12, _segs_far + 4))
+	_MeshSafe.assign(_atmo, _Cache.sphere(radius + atmosphere_height, max(12, _segs_far + 4)), Vector3(2.2, 2.2, 2.2))
 	_atmo_mat = ShaderMaterial.new()
 	_atmo_mat.shader = _ATMO_SHADER
 	_apply_atmo_uniforms()
@@ -124,7 +130,7 @@ func _build_shell() -> void:
 	_atmo_inner.name = "AtmosphereInner"
 	_atmo_inner.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_atmo_inner.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-	_atmo_inner.mesh = _Cache.sphere(radius + atmosphere_height * 0.92, max(10, _segs_far))
+	_MeshSafe.assign(_atmo_inner, _Cache.sphere(radius + atmosphere_height * 0.92, max(10, _segs_far)), Vector3(2.1, 2.1, 2.1))
 	_atmo_inner_mat = ShaderMaterial.new()
 	_atmo_inner_mat.shader = _ATMO_INNER_SHADER
 	_atmo_inner_mat.set_shader_parameter("haze_color", atmosphere_color)
@@ -138,7 +144,7 @@ func _build_shell() -> void:
 	_impostor.name = "Impostor"
 	_impostor.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_impostor.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-	_impostor.mesh = _Cache.sphere(radius * 1.02, 8)
+	_MeshSafe.assign(_impostor, _Cache.sphere(radius * 1.02, 8), Vector3(2.05, 2.05, 2.05))
 	_impostor_mat = ShaderMaterial.new()
 	_impostor_mat.shader = _SURFACE_SHADER
 	_apply_surface_uniforms(_impostor_mat)
@@ -167,20 +173,22 @@ func _build_shell() -> void:
 	_surface_detail.name = "SurfaceDetail"
 	add_child(_surface_detail)
 	if _surface_detail.has_method("setup"):
-		_surface_detail.setup(self, radius, surface_color, planet_name.hash() % 10000)
-	call_deferred("_ensure_surface_fauna")
-	call_deferred("_ensure_surface_flora")
-	call_deferred("_ensure_surface_water")
-	call_deferred("_ensure_cave_mouths")
-	call_deferred("_ensure_cave_interior")
-	call_deferred("_ensure_landscape_features")
-
-	_terrain_edit = Node3D.new()
-	_terrain_edit.set_script(_TerrainEdit)
-	_terrain_edit.name = "TerrainEdit"
-	add_child(_terrain_edit)
-	if _terrain_edit.has_method("setup"):
-		_terrain_edit.setup(self, radius, surface_color, planet_name.hash() % 10000, planet_name)
+		_surface_detail.setup(self, radius, surface_color, body_seed())
+	if _P0.FILL_STREAMERS:
+		call_deferred("_ensure_surface_fauna")
+		call_deferred("_ensure_surface_flora")
+		call_deferred("_ensure_surface_water")
+		call_deferred("_ensure_cave_mouths")
+		call_deferred("_ensure_cave_interior")
+		call_deferred("_ensure_landscape_features")
+		_terrain_edit = Node3D.new()
+		_terrain_edit.set_script(_TerrainEdit)
+		_terrain_edit.name = "TerrainEdit"
+		add_child(_terrain_edit)
+		if _terrain_edit.has_method("setup"):
+			_terrain_edit.setup(self, radius, surface_color, body_seed(), planet_name)
+	else:
+		print("[PlanetBody] P0 fill streamers cut on ", planet_name)
 
 
 	_apply_lod_visual(1)  # start mid until first observer update
@@ -293,7 +301,7 @@ func _apply_lod_visual(lod: int) -> void:
 			segs = _segs_mid
 		2:
 			segs = _segs_far
-	_mesh.mesh = _Cache.sphere(radius, segs)
+	_MeshSafe.assign(_mesh, _Cache.sphere(radius, segs), Vector3(2, 2, 2))
 	# Surface land/ocean via ShaderMaterial (R4) — no per-LOD mat swap
 
 func _apply_lod(lod: int) -> void:
@@ -338,7 +346,9 @@ func _update_pads(dist: float) -> void:
 		# contested rings and guards for the rest of the session (rules/25 §2).
 		# Unload well past the build radius so orbiting the edge cannot thrash.
 		if _pads_built and dist > stream_d * 1.35:
-			_unload_pads()
+			# P0 one-pad slice: free is dummy m-is-null + hitch. Hide only.
+			if not (_P0.ACTIVE and _P0.ONE_PAD):
+				_unload_pads()
 
 func _unload_pads() -> void:
 	## Free the whole pad subtree and reset every flag the builder reads, so a
@@ -370,8 +380,15 @@ func _step_pad_build() -> void:
 			_spawn_pad("Pad_North", Vector3.UP)
 			_pad_build_stage = 1
 		1:
-			_spawn_pad("Pad_Eq", Vector3(1, 0.15, 0).normalized())
-			_pad_build_stage = 2
+			if _P0.ONE_PAD:
+				_spawn_filler_on_first_pad()
+				_pad_build_stage = 4
+				_pads_built = true
+				_pad_build_pending = false
+				print("[PlanetBody] P0 one pad + filler")
+			else:
+				_spawn_pad("Pad_Eq", Vector3(1, 0.15, 0).normalized())
+				_pad_build_stage = 2
 		2:
 			_spawn_pad("Pad_Far", Vector3(-0.7, 0.2, 0.7).normalized())
 			_pad_build_stage = 3
@@ -393,8 +410,14 @@ func _build_pads() -> void:
 		add_child(_pads_root)
 	if _pads_built and not _pads.is_empty():
 		return
+	if _pads.is_empty():
+		_spawn_pad("Pad_North", Vector3.UP)
 	_pads_built = true
-	_spawn_pad("Pad_North", Vector3.UP)
+	_pad_build_stage = 4
+	_pad_build_pending = false
+	if _P0.ONE_PAD:
+		_spawn_filler_on_first_pad()
+		return
 	_spawn_pad("Pad_Eq", Vector3(1, 0.15, 0).normalized())
 	_spawn_pad("Pad_Far", Vector3(-0.7, 0.2, 0.7).normalized())
 	_spawn_pad_density()
@@ -423,25 +446,28 @@ func _spawn_pad(pad_name: String, dir: Vector3) -> void:
 	var z := x.cross(y).normalized()
 	pad_root.transform = Transform3D(Basis(x, y, z), dir * (radius + 2.0))
 
-	var plate := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = Vector3(28, 1.2, 28)
-	plate.mesh = box
-	plate.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var pmat := StandardMaterial3D.new()
-	pmat.metallic = 0.55
-	pmat.roughness = 0.4
-	pmat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-	pmat.emission_enabled = true
-	if faction_base == "gROT":
-		pmat.albedo_color = Color(0.2, 0.05, 0.08)
-		pmat.emission = Color(0.9, 0.15, 0.3)
-	else:
-		pmat.albedo_color = Color(0.06, 0.1, 0.14)
-		pmat.emission = Color(0.2, 0.8, 1.0)
-	pmat.emission_energy_multiplier = 1.2
-	plate.material_override = pmat
-	pad_root.add_child(plate)
+	# Dummy mesh_storage errors on MeshInstance add/free. P0.2 still
+	# counts the pad by group + collision, not the plate RID.
+	if DisplayServer.get_name() != "headless":
+		var plate := MeshInstance3D.new()
+		var box := BoxMesh.new()
+		box.size = Vector3(28, 1.2, 28)
+		plate.mesh = box
+		plate.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var pmat := StandardMaterial3D.new()
+		pmat.metallic = 0.55
+		pmat.roughness = 0.4
+		pmat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+		pmat.emission_enabled = true
+		if faction_base == "gROT":
+			pmat.albedo_color = Color(0.2, 0.05, 0.08)
+			pmat.emission = Color(0.9, 0.15, 0.3)
+		else:
+			pmat.albedo_color = Color(0.06, 0.1, 0.14)
+			pmat.emission = Color(0.2, 0.8, 1.0)
+		pmat.emission_energy_multiplier = 1.2
+		plate.material_override = pmat
+		pad_root.add_child(plate)
 
 	var sb := StaticBody3D.new()
 	sb.collision_layer = 1
@@ -618,9 +644,30 @@ func current_lod_name() -> String:
 	return "?"
 	
 
+func _spawn_filler_on_first_pad() -> void:
+	if _pads.is_empty():
+		return
+	var host: Node3D = _pads[0]
+	if host == null or not is_instance_valid(host):
+		return
+	if host.has_node("FillerProp"):
+		return
+	var fp := Node3D.new()
+	fp.set_script(_Filler)
+	fp.name = "FillerProp"
+	host.add_child(fp)
+	if fp.has_method("setup"):
+		fp.call("setup", _P0.FILLER_PROP_ID)
+	fp.position = Vector3(8.0, 1.1, 6.0)
+
+
 func _spawn_pad_density() -> void:
-	_ensure_surface_flora()
-	_ensure_surface_fauna()
+	if _P0.ONE_PAD or not _P0.PAD_DENSITY:
+		_spawn_filler_on_first_pad()
+		return
+	if _P0.FILL_STREAMERS:
+		_ensure_surface_flora()
+		_ensure_surface_fauna()
 	if _pads_root == null:
 		return
 	# Parent to a real pad, not the pads root: the root sits at the planet
@@ -687,7 +734,7 @@ func _ensure_surface_fauna() -> void:
 	add_child(f)
 	var pid: String = str(planet_name)
 	var atm: float = float(atmosphere_height)
-	var seed_i: int = int(absi(pid.hash()) % 10000)
+	var seed_i: int = body_seed()
 	if f.has_method("setup"):
 		f.call("setup", self, radius, atm, pid, seed_i)
 	var obs: Node3D = null
@@ -717,7 +764,7 @@ func _ensure_surface_water() -> void:
 	add_child(w)
 	var pid: String = str(planet_name)
 	if w.has_method("setup"):
-		w.call("setup", self, radius, pid, int(absi(pid.hash()) % 10000))
+		w.call("setup", self, radius, pid, body_seed())
 	var obs: Node3D = null
 	if has_method("_resolve_observer"):
 		obs = _resolve_observer()
@@ -740,7 +787,7 @@ func _ensure_landscape_features() -> void:
 	add_child(n)
 	var pid: String = str(planet_name)
 	if n.has_method("setup"):
-		n.call("setup", self, radius, pid, int(absi(pid.hash()) % 10000) + 3)
+		n.call("setup", self, radius, pid, body_seed() + 3)
 	var obs: Node3D = null
 	if has_method("_resolve_observer"):
 		obs = _resolve_observer()
@@ -759,7 +806,7 @@ func _ensure_cave_interior() -> void:
 	add_child(c)
 	var pid: String = str(planet_name)
 	if c.has_method("setup"):
-		c.call("setup", self, radius, pid, int(absi(pid.hash()) % 10000) + 9)
+		c.call("setup", self, radius, pid, body_seed() + 9)
 	var obs: Node3D = null
 	if has_method("_resolve_observer"):
 		obs = _resolve_observer()
@@ -777,7 +824,7 @@ func _ensure_cave_mouths() -> void:
 	add_child(c)
 	var pid: String = str(planet_name)
 	if c.has_method("setup"):
-		c.call("setup", self, radius, pid, int(absi(pid.hash()) % 10000) + 3)
+		c.call("setup", self, radius, pid, body_seed() + 3)
 	var obs: Node3D = null
 	if has_method("_resolve_observer"):
 		obs = _resolve_observer()
@@ -796,7 +843,7 @@ func _ensure_surface_flora() -> void:
 	if "radius" in self:
 		rad = float(radius)
 	if fl.has_method("setup"):
-		fl.setup(self, rad, int(abs(hash(name)) % 10000))
+		fl.setup(self, rad, body_seed() + 1)
 	if fl.has_method("set_observer"):
 		var obs = null
 		if has_method("_resolve_observer"):
@@ -818,11 +865,13 @@ func _apply_surface_uniforms(mat: ShaderMaterial) -> void:
 		ocean = Color(0.25, 0.05, 0.12)
 	elif str(planet_name) == "Shard-Moon":
 		ocean = Color(0.12, 0.14, 0.18)
-		mat.set_shader_parameter("sea_threshold", -0.15)
 		mat.set_shader_parameter("ice_lat", 0.55)
 	mat.set_shader_parameter("ocean_color", ocean)
 	mat.set_shader_parameter("shore_color", Color(0.42, 0.38, 0.22))
-	mat.set_shader_parameter("seed", float(absi(str(planet_name).hash()) % 97))
+	mat.set_shader_parameter("seed", float(body_seed()))
+	mat.set_shader_parameter("chart_radius", float(_Relief.CHART_RADIUS))
+	var prof: Dictionary = _Relief.profile_for_planet(str(planet_name))
+	mat.set_shader_parameter("sea_level", float(prof.get("sea_level", -0.35)))
 	mat.set_shader_parameter("sun_direction", _sun_dir)
 	mat.set_shader_parameter("emission_strength", 0.06)
 	mat.set_shader_parameter("city_intensity", 1.4)
@@ -833,36 +882,54 @@ func _apply_surface_uniforms(mat: ShaderMaterial) -> void:
 		mat.set_shader_parameter("city_light_color", Color(1.0, 0.35, 0.5))
 
 
+func body_seed() -> int:
+	return int(_Relief.body_seed(str(planet_name)))
+
+
+func shader_seed() -> int:
+	if _surface_shader_mat:
+		return int(_surface_shader_mat.get_shader_parameter("seed"))
+	return -1
+
+
 func relief_height_at(world_pos: Vector3) -> float:
-	var _R = load("res://scripts/world/PlanetRelief.gd")
-	if _R == null:
+	var prof: Dictionary = _Relief.profile_for_planet(str(planet_name))
+	var dir: Vector3 = (world_pos - global_position)
+	if dir.length_squared() < 1e-8:
 		return 0.0
-	var prof: Dictionary = _R.profile_for_planet(str(planet_name))
-	var dir: Vector3 = (world_pos - global_position).normalized()
-	var east: Vector3 = dir.cross(Vector3.UP)
-	if east.length_squared() < 1e-6:
-		east = dir.cross(Vector3.RIGHT)
-	east = east.normalized()
-	var north: Vector3 = east.cross(dir).normalized()
-	var to: Vector3 = world_pos - global_position
-	return float(_R.height_at(to.dot(east), to.dot(north), int(absi(str(planet_name).hash()) % 10000), prof))
+	return float(_Relief.height_at_dir(dir.normalized(), body_seed(), prof))
 
 
 
 func _sync_surface_visibility(dist: float) -> void:
-	## Park expensive surface streams when not near planet.
+	## Shared park: fill streamers stay off in P0. SurfaceDetail owns its
+	## own hysteresis and must keep processing so a return can restore cache.
 	var near_surf := dist < radius + 160.0
 	var mid_surf := dist < radius + 280.0
-	for nm in ["SurfaceDetail", "SurfaceFlora", "SurfaceFauna", "SurfaceWater", "CaveMouthField", "LandscapeFeatures", "CaveInterior"]:
+	for nm in ["SurfaceFlora", "SurfaceFauna", "SurfaceWater", "CaveMouthField", "LandscapeFeatures", "CaveInterior", "TerrainEdit"]:
 		var n := get_node_or_null(nm)
 		if n == null:
 			continue
-		var want := near_surf
-		if nm in ["SurfaceFlora", "SurfaceFauna", "CaveMouthField", "LandscapeFeatures"]:
-			want = near_surf
-		elif nm == "SurfaceWater":
-			want = mid_surf
-		elif nm == "SurfaceDetail":
-			want = mid_surf
+		var want := near_surf and _P0.FILL_STREAMERS
+		if nm == "SurfaceWater":
+			want = mid_surf and _P0.FILL_STREAMERS
 		n.visible = want
 		n.set_process(want)
+	if _surface_detail:
+		_surface_detail.visible = true
+		_surface_detail.set_process(true)
+		# Far sphere under live chunks reads as dark floating LOD quads.
+		# Also hide in the mid-alt band (190–250 m) before chunks stream in.
+		# Collision stays on the body; only the visual shell hides.
+		# Show again only when parked AND high (hysteresis) — do not bring
+		# back the far-sphere garbage from P0.3 under live chunks.
+		var detail_on := _surface_detail.has_method("is_parked") and not bool(_surface_detail.is_parked())
+		var alt := dist - radius
+		if detail_on or alt < 300.0:
+			_far_shell_hidden = true
+		elif alt > 360.0:
+			_far_shell_hidden = false
+		if _mesh and _current_lod < 3:
+			_mesh.visible = not _far_shell_hidden
+		if _impostor and _far_shell_hidden:
+			_impostor.visible = false
