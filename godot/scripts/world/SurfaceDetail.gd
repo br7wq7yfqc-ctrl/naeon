@@ -452,6 +452,7 @@ func _ensure_vertex_mat(mi: MeshInstance3D) -> void:
 			var sm := ex as StandardMaterial3D
 			sm.vertex_color_use_as_albedo = true
 			sm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			sm.cull_mode = BaseMaterial3D.CULL_DISABLED
 		return
 	var mat := StandardMaterial3D.new()
 	mat.vertex_color_use_as_albedo = true
@@ -462,4 +463,7 @@ func _ensure_vertex_mat(mi: MeshInstance3D) -> void:
 	mat.emission_enabled = true
 	mat.emission = Color(0.08, 0.1, 0.12)
 	mat.emission_energy_multiplier = 0.35
+	# Walker eye can sit inside Relief while collision is the bare sphere.
+	# Backface cull read as a black void + horizon splinters on EVA.
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mi.material_override = mat

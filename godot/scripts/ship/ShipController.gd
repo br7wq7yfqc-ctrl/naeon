@@ -482,34 +482,38 @@ func _physics_process(delta: float) -> void:
 		if flight_mode == FlightMode.NAV and atmo > 0.5:
 			_set_mode(FlightMode.SCM)
 		if flight_mode == FlightMode.HOVER:
-			var hh: Array = _Flight.hover_hold(velocity, g, accel, delta, 1.0)
-			accel = hh[0]
-			velocity = hh[1]
-			# Vertical stick trims hold altitude; PD holds it
-			if _hover_hold_alt < 0.0:
-				_hover_hold_alt = _altitude_now()
 			if sink_held:
-				_hover_hold_alt = maxf(8.0, _hover_hold_alt - 55.0 * delta)
-			elif absf(axes.y) > 0.12:
-				_hover_hold_alt = maxf(4.0, _hover_hold_alt + axes.y * 22.0 * delta)
-			# Strip only the commanded lift so HOVER is an altitude hold, not a
-			# second SCM. Projecting the whole vector also ate the gravity
-			# cancellation and slid the ship sideways when pitched.
-			accel -= lift_cmd
-			var v_up: float = velocity.dot((-g).normalized())
-			accel += _Flight.hover_alt_accel(g, _altitude_now(), _hover_hold_alt, v_up)
-			var pad_d := 999.0
-			if _open_space and _open_space.has_method("nearest_pad"):
-				var hpad: Node3D = _open_space.nearest_pad(global_position)
-				if hpad and is_instance_valid(hpad):
-					pad_d = hpad.global_position.distance_to(global_position)
-					if pad_d < 52.0 and _open_space.has_method("nearest_planet"):
-						var plp: Node3D = _open_space.nearest_planet(hpad.global_position)
-						if plp and plp.has_method("altitude_of"):
-							var deck: float = float(plp.altitude_of(hpad.global_position)) + 8.0
-							if _hover_hold_alt < deck:
-								_hover_hold_alt = move_toward(_hover_hold_alt, deck, delta * 10.0)
-			accel += _Flight.ground_effect_accel(g, _altitude_now(), pad_d, v_up)
+				# hover_hold damps radial vel and PD holds last Space climb
+				# (P0.5 3090: 3 HOVER + S kept climbing until SCM).
+				accel -= g
+				accel -= lift_cmd
+				_hover_hold_alt = maxf(8.0, _altitude_now() - 80.0)
+				var climb_v: float = velocity.dot(-inward)
+				if climb_v > 0.0:
+					velocity += inward * climb_v
+			else:
+				var hh: Array = _Flight.hover_hold(velocity, g, accel, delta, 1.0)
+				accel = hh[0]
+				velocity = hh[1]
+				if _hover_hold_alt < 0.0:
+					_hover_hold_alt = _altitude_now()
+				if absf(axes.y) > 0.12:
+					_hover_hold_alt = maxf(4.0, _hover_hold_alt + axes.y * 22.0 * delta)
+				accel -= lift_cmd
+				var v_up: float = velocity.dot((-g).normalized())
+				accel += _Flight.hover_alt_accel(g, _altitude_now(), _hover_hold_alt, v_up)
+				var pad_d := 999.0
+				if _open_space and _open_space.has_method("nearest_pad"):
+					var hpad: Node3D = _open_space.nearest_pad(global_position)
+					if hpad and is_instance_valid(hpad):
+						pad_d = hpad.global_position.distance_to(global_position)
+						if pad_d < 52.0 and _open_space.has_method("nearest_planet"):
+							var plp: Node3D = _open_space.nearest_planet(hpad.global_position)
+							if plp and plp.has_method("altitude_of"):
+								var deck: float = float(plp.altitude_of(hpad.global_position)) + 8.0
+								if _hover_hold_alt < deck:
+									_hover_hold_alt = move_toward(_hover_hold_alt, deck, delta * 10.0)
+				accel += _Flight.ground_effect_accel(g, _altitude_now(), pad_d, v_up)
 		elif flight_mode == FlightMode.SCM:
 			# Partial gravity in atmo; almost free in vacuum
 			accel += g * lerpf(0.08, 0.45, atmo)
