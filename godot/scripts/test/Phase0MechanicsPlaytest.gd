@@ -266,6 +266,7 @@ func _go() -> void:
 			print("[Playtest] harvest in-zone ", snapped(c0, 0.01), " -> ", snapped(c1, 0.01), " status=", pad.get_claim_status() if pad.has_method("get_claim_status") else "?")
 			if c1 <= c0 + 0.001:
 				fails.append("no harvest while owner in ring")
+			_assert_occupy_contrib(os, pad, c0, c1, fails)
 			if pad.has_method("harvest_hud_line"):
 				var hl0 := str(pad.harvest_hud_line())
 				print("[Playtest] harvest hud=", hl0)
@@ -2243,9 +2244,35 @@ func _assert_hud_stack(os: Node, fails: PackedStringArray) -> void:
 	if txt == "":
 		fails.append("HUD helper stack_text empty")
 		return
+	var txt_l := txt.to_upper()
+	if txt_l.find("CONTRIB") < 0 and txt_l.find("BIOMASS") < 0:
+		fails.append("HUD helper stack_text missing Contribution")
+		return
 	print("[Playtest] HUD stack ok fuel=", snap.get("fuel"), " cargo=", snap.get("cargo"),
 		" mod=", snap.get("module_tag"), " landed=", snap.get("landed"),
-		" occupy=", snap.get("occupy"), " eva=", snap.get("eva_mode"))
+		" occupy=", snap.get("occupy"), " eva=", snap.get("eva_mode"),
+		" econ=", snap.get("econ"))
+
+
+func _assert_occupy_contrib(os: Node, pad: Node, before: float, after: float, fails: PackedStringArray) -> void:
+	## occupy unnamed pad → harvest deposit → live Contribution on the OpenSpace stack.
+	if after <= before + 0.001:
+		fails.append("occupy→Contribution increased failed (wallet)")
+		return
+	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
+	if Hud == null:
+		fails.append("occupy→Contribution HUD helper missing")
+		return
+	var snap: Dictionary = Hud.snapshot(os.get("ship") if os else null, os.get("player") if os else null, pad)
+	var hud_c := float(snap.get("econ", -1.0))
+	var stxt := str(Hud.stack_text(snap))
+	print("[Playtest] occupy→Contribution ", snapped(before, 0.01), " -> ", snapped(after, 0.01),
+		" hud=", snapped(hud_c, 0.01), " rate=", snap.get("econ_rate"))
+	if hud_c <= before + 0.001:
+		fails.append("occupy→Contribution increased failed (HUD stack)")
+	var up := stxt.to_upper()
+	if up.find("CONTRIB") < 0 and up.find("BIOMASS") < 0:
+		fails.append("HUD stack missing live Contribution while occupying")
 
 
 func _osh_report_skips(fails: PackedStringArray, done: Dictionary, required: PackedStringArray) -> void:
