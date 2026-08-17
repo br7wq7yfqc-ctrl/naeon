@@ -1,12 +1,13 @@
 # NAEON — Подробный план разработки по фазам (для build-сессий)
 
-**Версия:** 2.2  
+**Версия:** 2.3  
 **Дата:** 2026-08-17  
 **Основа:** CONCEPT.md v1.3  
 **Движок:** Godot 4.3 (не 4.4+ как цель)  
 **Принцип:** Local-first → Vertical Slices → Iterative Multiplayer → Platform + AI + Educational Systems  
 **SC → NAEON (роли, не клон):** `docs/design/SC_FEATURE_MAP.md` · бар подхода OS-A…OS-H: `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (OS-A…OS-H built; harness ритуала. 60 FPS / 5 мин = 3090 human gate).  
 **Clash нативен; бар арены — Predecessor/Paragon, не Arena Commander:** `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (AR-A…AR-F; код арены не вытесняет OS-A).  
+**Стратегия — третий бар, не Clash и не полёт OPEN SPACE:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-F; docs now, код после честного OS-H на GPU).  
 **Каталог — дыры (очередь, не новый catalog):** `docs/design/WORLD_FILL.md` §6. Ready-made fill → locked plates без GLB → пластины только на титульную дыру. Не mint SITE_*. Не capital-ship wave. OS-H harness built; не G2.
 
 **2026-08-17 — текущий бар OPEN SPACE (не галактика):**  
@@ -71,10 +72,14 @@ G1 CRUISE не открыт: OS-C = старт 8 км AGL + far/лимб, без
 - **DoD**: экипировать, летать, стрелять, save/load
 
 ### 1.3 Colony / Strategy Core
-- Поверхность + размещение зданий (habitat, extractor, turret)
-- Ресурсные ноды + extraction + локальный Contribution
-- Простейший RBE allocator
-- **DoD**: построить outpost, добыть ресурс, увидеть Contribution
+**Бар:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-F). Набросок ниже — не playable слой. Код после честного OS-H на GPU (harness уже в `2b344c6`).
+
+- Режим стратегии: top-down / overlay на уже загруженном теле или станции ARK (не вторая галактика, не замена TPS/корабля)
+- Свои базы из модулей на unnamed pads / claimed dirt (occupy-to-hold): habitat, extractor, turret, pad, storage, hangar stub
+- Свои орбитальные станции из той же грамматики (dock, habitat, factory, defense, hangar) — орбита authored-тела, не `SITE_*`
+- Печать модулей на трёх верстаках: (a) NPC/authored пад или станция, (b) hangar carrier/mothership, (c) своя factory
+- Ресурсные ноды + extraction + локальный Contribution / RBE / Biomass
+- **DoD старого наброска** (ещё не слой): построить outpost, добыть ресурс, увидеть Contribution
 
 ### Cross
 - Asset pipeline (GLTF + LOD), dark-neon materials, local save
@@ -116,7 +121,7 @@ G1 CRUISE не открыт: OS-C = старт 8 км AGL + far/лимб, без
 - Одна система (звезда + 3 тела на разных орбитах + пояс + якоря гейтов) — ARK. Планировка сделана в **Phase G0**; jump points включаются в G3–G4
 - Persistent colonies / ships
 - Fleet system (до 10–15 кораблей, flagship overlay)
-- Carriers seed (hangar + drones/fighters)
+- Carriers seed (hangar + drones/fighters) — очередь печати модуля: `docs/design/BASE_STATION_STRATEGY.md` ST-D
 - **Dynamic Ownership Transformation** (prototype): visual + mechanical swap Cybernex (Venus Project) ↔ gROT (biomass industrial) на 1–2 объектах
 - Advanced AI-bots + NPC quest givers skeleton
 - **Quest system foundation**: Contract Board, generated quests (templates), basic Alliance Quest Constructor
@@ -270,7 +275,7 @@ G1 CRUISE не открыт: OS-C = старт 8 км AGL + far/лимб, без
 |--------|-------|------------------|
 | 1 | Phase 0 + TPS controller + Ability System | Playable form + 1–2 abilities |
 | 2 | Ship physics + modules | Fly & shoot |
-| 3 | Colony + resources + Contribution | Build outpost |
+| 3 | Colony + resources + Contribution | Build outpost — бар `docs/design/BASE_STATION_STRATEGY.md` |
 | 4 | Multi-crew + basic net | 2 players on one ship |
 | 5 | AI-bots + TPS combat + Hacking/Firewall seed | Fight with/against AI + asymmetric abilities |
 | 6 | Landing + PvP arena + Knowledge Rank foundation | Full local loop + soft knowledge |
