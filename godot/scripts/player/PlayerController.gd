@@ -51,6 +51,8 @@ var _jumped: bool = false
 var _down_t: float = 0.0
 var _spawn_pos: Vector3 = Vector3(0, 1.2, 6)
 var _ots_active: bool = false
+var clash_module_id: String = ""
+var clash_module_name: String = ""
 
 func _ready() -> void:
 	health = max_health
@@ -356,6 +358,18 @@ func spend_biomass(amount: float) -> void:
 
 func get_faction() -> String:
 	return faction
+
+
+func equip_clash_module(module: Resource) -> void:
+	## Session blueprint tag only — never HP / DPS / ability damage.
+	if module == null:
+		return
+	if "module_id" in module:
+		clash_module_id = str(module.module_id)
+	if "display_name" in module:
+		clash_module_name = str(module.display_name)
+	set_meta("clash_module_id", clash_module_id)
+	set_meta("clash_module_name", clash_module_name)
 
 func heal(amount: float) -> void:
 	health = min(max_health, health + amount)

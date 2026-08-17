@@ -1,16 +1,29 @@
 # Ability Kits (data-driven)
 
-`AbilityKitCatalog.gd` → `AbilitySystem.setup_default_loadout`
+`AbilityKitCatalog.gd` → `AbilitySystem.setup_default_loadout` / `setup_kit`
 
 Costs/CDs from `EnergyEconomy.gd` (single source). Docs below match that sheet.
 
-| Slot | Cybernex | gROT | Cost / CD |
-|------|----------|------|-----------|
+Default kits (`kit_for_faction`):
+
+| Slot | Cybernex Nex | gROT Rot | Cost / CD |
+|------|--------------|----------|-----------|
 | 0 Q | Pulse Bolt | Pulse Bolt | 18e / 5s |
 | 1 E | Nex-Firewall | Hack (channel) | 25e/12s · 35e/16s |
 | 2 R | System Probe (channel) | Rot Surge (close AOE 4.5m + knock) | 22e/11s · 30e/14s |
 | 3 F | Form Cycle | Form Cycle | 0e / 2s |
 
+AR-E extra kits (same cost sheet, identity only):
+
+| Slot | Cybernex Grid | gROT Spore |
+|------|---------------|------------|
+| 0 Q | Pulse Bolt | Pulse Bolt |
+| 1 E | Nex Latch | Spore Claim |
+| 2 R | Grid Probe | Rot Bloom |
+| 3 F | Form Cycle | Form Cycle |
+
+TestArena: `1` / `2` cycle faction kits. Forms = identity, never a hidden stat.
+
 No P2W: costs/cooldowns fixed; economy never raises damage. Knowledge insight is a soft damage scalar only.
 
-Updated: 2026-08-15
+Updated: 2026-08-17

@@ -31,7 +31,7 @@ Likeness — **вся** фантазия SC (лететь, стыковатьс�
 | 11 | Refuel / repair / restock | пады; GLB pump/tank как проп | визуал; функциональной заправки нет | пады; G1 топливо после OS-C | paid skip |
 | 12 | World composition | ARK authored (`StarSystemCatalog`); Nex-Prime / ROT-Hive / Shard-Moon; пояс authored | G0 layout жив; outposts = unnamed pads; `CityNightLights` ≠ город | пады unnamed; SITE_* позже из каталога; города ждут; погода после OS-B | сгенерированная галактика; SITE_* mint |
 | 13 | Traffic / AI | dummy / pad guard / Clash bots | бой и охрана пада | после читаемой планеты (OS-A/E) | generated galaxy traffic |
-| 14 | Combat | dummy + Clash/MOBA (нативно); бар Predecessor | TestArena / Aexion Clash / Turret | AR-A…AR-D **built**; **G5 закрыт** | арена-магазин; Arena Commander |
+| 14 | Combat | dummy + Clash/MOBA (нативно); бар Predecessor | TestArena / Aexion Clash / Turret | AR-A…AR-E **built**; **G5 закрыт** | арена-магазин; Arena Commander |
 | 15 | Medical / death | Infection/Firewall кап 5 + health; downed; hull-crit recover | кап 5 enforced; нет перманентной смерти | кап держать | cash-shop spawn |
 | 16 | Inventory / persistence | `SoftSession` local-first; `CargoHold` | form/faction/layer в `user://` | hangar later | insurance P2W |
 | 17 | Social | `AllianceRanks` | ранги + soft permissions | Voice later | pay-to-rank |

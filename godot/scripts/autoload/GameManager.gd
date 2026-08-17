@@ -81,6 +81,17 @@ func add_contribution(amount: float) -> void:
 	contribution += amount
 	contribution_changed.emit(contribution)
 
+
+func try_spend_contribution(amount: float) -> bool:
+	## Soft economy spend — never cash, never combat unlock.
+	if amount <= 0.0:
+		return true
+	if contribution < amount:
+		return false
+	contribution -= amount
+	contribution_changed.emit(contribution)
+	return true
+
 func add_biomass(amount: float) -> void:
 	biomass += amount
 	biomass_changed.emit(biomass)

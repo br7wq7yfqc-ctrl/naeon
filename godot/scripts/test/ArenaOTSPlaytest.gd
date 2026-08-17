@@ -1,5 +1,5 @@
 extends Node
-## Headless AR-A + AR-B + AR-C + AR-D: OTS, structures, waves, one jungle camp.
+## Headless AR-A + AR-B + AR-C + AR-D + AR-E: OTS, structures, waves, camp, kits/module.
 ## godot --path godot --scene res://scenes/test/TestArena.tscn -- --playtest-arena
 
 func _ready() -> void:
@@ -11,7 +11,7 @@ func _ready() -> void:
 	if not wanted:
 		queue_free()
 		return
-	print("[Playtest] arena AR-A/AR-B/AR-C/AR-D driver on")
+	print("[Playtest] arena AR-A/AR-B/AR-C/AR-D/AR-E driver on")
 	call_deferred("_go")
 
 
@@ -20,7 +20,7 @@ func _go() -> void:
 	var fails: PackedStringArray = PackedStringArray()
 	var arena: Node = get_parent()
 	if arena == null or str(arena.name) != "TestArena":
-		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
+		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
 		return
 
 	var player: Node = arena.get("player")
@@ -88,11 +88,13 @@ func _go() -> void:
 	var ar_c_fails: PackedStringArray = await _check_ar_c(arena, lanes, player)
 	var ar_b_fails: PackedStringArray = _check_ar_b(arena, lanes, player)
 	var ar_d_fails: PackedStringArray = _check_ar_d(arena, lanes, player)
+	var ar_e_fails: PackedStringArray = _check_ar_e(arena, lanes, player)
 	fails.append_array(ar_c_fails)
 	fails.append_array(ar_b_fails)
 	fails.append_array(ar_d_fails)
+	fails.append_array(ar_e_fails)
 
-	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, 0 if fails.is_empty() else 1)
+	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, ar_e_fails, 0 if fails.is_empty() else 1)
 
 
 func _check_ar_b(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
@@ -319,7 +321,135 @@ func _check_ar_d(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	return fails
 
 
-func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, code: int) -> void:
+func _check_ar_e(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
+	var fails: PackedStringArray = PackedStringArray()
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	if Kit == null or not Kit.has_method("kit_ids") or not Kit.has_method("kit_by_id"):
+		fails.append("AbilityKitCatalog missing")
+		return fails
+	var ids: PackedStringArray = Kit.kit_ids()
+	print("[Playtest] kits=", ",".join(ids), " n=", ids.size())
+	if ids.size() < 4 or ids.size() > 8:
+		fails.append("kit count not 4–8")
+	var seen_fac: Dictionary = {}
+	for kit_id in ids:
+		var kit: Array = Kit.kit_by_id(str(kit_id))
+		if kit.size() != 4:
+			fails.append("%s is not 4 slots" % kit_id)
+			continue
+		var n0: String = str(kit[0].ability_name) if kit[0] else ""
+		var n3: String = str(kit[3].ability_name) if kit[3] else ""
+		if n0 != "Pulse Bolt":
+			fails.append("%s slot0 is not Pulse" % kit_id)
+		if n3 != "Form Cycle":
+			fails.append("%s slot3 is not Form Cycle" % kit_id)
+		var slot1 = kit[1]
+		var slot2 = kit[2]
+		if slot1 == null or (not bool(slot1.is_firewall) and not bool(slot1.is_hacking)):
+			fails.append("%s slot1 is not utility" % kit_id)
+		var probe_or_surge := false
+		if slot2:
+			probe_or_surge = bool(slot2.is_hacking) or float(slot2.aoe_radius) > 0.05
+		if not probe_or_surge:
+			fails.append("%s slot2 is not probe-or-surge" % kit_id)
+		if float(kit[0].damage) != 11.0:
+			fails.append("%s Pulse damage drifted" % kit_id)
+		var meta: Dictionary = Kit.kit_meta(str(kit_id)) if Kit.has_method("kit_meta") else {}
+		seen_fac[str(meta.get("faction", ""))] = true
+	if not seen_fac.has("Cybernex") or not seen_fac.has("gROT"):
+		fails.append("missing a faction kit")
+	if Kit.has_method("kit_for_faction"):
+		var cx0: Array = Kit.kit_for_faction("Cybernex")
+		var gr0: Array = Kit.kit_for_faction("gROT")
+		if cx0.size() != 4 or str(cx0[1].ability_name) != "Nex-Firewall":
+			fails.append("default CX kit changed")
+		if gr0.size() != 4 or str(gr0[1].ability_name) != "Hack":
+			fails.append("default GR kit changed")
+	if player == null or not player.ability_system:
+		fails.append("player AbilitySystem missing")
+		return fails
+	var absys = player.ability_system
+	var hp0 := float(player.max_health)
+	var hp_now := float(player.health)
+	var pulse0 := 0.0
+	if absys.abilities.size() > 0 and absys.abilities[0]:
+		pulse0 = float(absys.abilities[0].damage)
+	var form0 := str(player.current_form) if "current_form" in player else ""
+	if absys.has_method("setup_kit"):
+		absys.setup_kit("cx_grid", "Cybernex")
+		if str(absys.current_kit_id) != "cx_grid":
+			fails.append("could not apply CX Grid kit")
+		if absys.abilities.size() != 4:
+			fails.append("Grid kit not 4 slots")
+		elif str(absys.abilities[1].ability_name) != "Nex Latch":
+			fails.append("Grid utility missing")
+		absys.setup_kit("gr_spore", "gROT")
+		if absys.abilities.size() != 4 or str(absys.abilities[2].ability_name) != "Rot Bloom":
+			fails.append("Spore surge missing")
+		absys.setup_kit("cx_nex", "Cybernex")
+	if absf(float(player.max_health) - hp0) > 0.01 or absf(float(player.health) - hp_now) > 0.01:
+		fails.append("kit swap changed HP")
+	if absys.abilities.size() > 0 and absys.abilities[0] and absf(float(absys.abilities[0].damage) - pulse0) > 0.01:
+		fails.append("kit swap changed Pulse DPS")
+	if player.has_method("cycle_form"):
+		player.cycle_form()
+	var form1 := str(player.current_form) if "current_form" in player else ""
+	if form1 == "" or form1 == form0:
+		fails.append("Form Cycle did not change identity")
+	if absf(float(player.max_health) - hp0) > 0.01:
+		fails.append("form changed HP")
+	if absys.abilities.size() > 0 and absys.abilities[0] and absf(float(absys.abilities[0].damage) - pulse0) > 0.01:
+		fails.append("form changed Pulse DPS")
+	var bench: Node = arena.get_node_or_null("ClashModuleBench") if arena else null
+	if bench == null and arena:
+		bench = arena.get("_bench")
+	if bench == null or not is_instance_valid(bench):
+		fails.append("ClashModuleBench missing")
+		return fails
+	if bench.has_method("is_on_footprint") and not bool(bench.is_on_footprint()):
+		fails.append("bench left the TestArena footprint")
+	if bench.has_method("is_off_lane") and not bool(bench.is_off_lane()):
+		fails.append("bench sits on a lane strip")
+	elif lanes and lanes.has_method("is_off_lane") and bench is Node3D \
+		and not bool(lanes.is_off_lane((bench as Node3D).global_position)):
+		fails.append("bench not off-lane on ClashLanes")
+	if bench.has_method("offer_kind") and str(bench.offer_kind()) != "ship_module":
+		fails.append("bench offer is not a ShipModule")
+	if bench.has_method("cost_kind") and str(bench.cost_kind()) != "session":
+		fails.append("bench is a cash-shop")
+	if bench.has_method("modifies_combat") and bool(bench.modifies_combat()):
+		fails.append("bench claims combat power")
+	if not bench.has_method("try_equip"):
+		fails.append("bench try_equip missing")
+		return fails
+	if not bool(bench.try_equip(player)):
+		fails.append("could not equip session module")
+	if bench.has_method("has_equipped") and not bool(bench.has_equipped()):
+		fails.append("module not equipped")
+	if "clash_module_id" in player and str(player.clash_module_id) == "":
+		fails.append("player has no module tag")
+	if absf(float(player.max_health) - hp0) > 0.01:
+		fails.append("module changed HP")
+	if absys.abilities.size() > 0 and absys.abilities[0] and absf(float(absys.abilities[0].damage) - pulse0) > 0.01:
+		fails.append("module changed Pulse DPS")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("cybernetics", 20.0)
+	if absf(float(player.max_health) - hp0) > 0.01:
+		fails.append("Knowledge changed HP")
+	if bench.has_method("label_text") and str(bench.label_text()) == "":
+		fails.append("Knowledge bench label empty")
+	if player and player.has_method("ots_evidence"):
+		var ev: Dictionary = player.ots_evidence()
+		if not bool(ev.get("active", false)):
+			fails.append("OTS dropped after AR-E")
+	if LayerContext and str(LayerContext.site_pin_id) != "SITE_TEST_ARENA_PILLAR":
+		fails.append("SITE pin changed during AR-E")
+	if arena and str(arena.name) != "TestArena":
+		fails.append("left TestArena")
+	return fails
+
+
+func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, ar_e: PackedStringArray, code: int) -> void:
 	if ar_a.is_empty():
 		print("[Playtest] PASS arena AR-A")
 	else:
@@ -343,6 +473,12 @@ func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStrin
 	else:
 		print("[Playtest] FAIL arena AR-D")
 		for f in ar_d:
+			print("[Playtest]  - ", f)
+	if ar_e.is_empty():
+		print("[Playtest] PASS arena AR-E")
+	else:
+		print("[Playtest] FAIL arena AR-E")
+		for f in ar_e:
 			print("[Playtest]  - ", f)
 	if AutoUpdater and AutoUpdater.has_method("abort_pending"):
 		AutoUpdater.abort_pending()

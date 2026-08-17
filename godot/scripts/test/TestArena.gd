@@ -21,6 +21,7 @@ var _lane_hud: Label = null
 var dummy_scene: PackedScene = preload("res://scenes/combat/CombatDummy.tscn")
 var _waves: Node = null
 var _camp: Node3D = null
+var _bench: Node3D = null
 
 func _ready() -> void:
 	var _PoolReset = load("res://scripts/combat/ProjectilePool.gd")
@@ -452,6 +453,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.keycode == KEY_O:
 		_goto_openspace()
 		return
+	if event is InputEventKey and event.pressed and not event.echo \
+		and (event.keycode == KEY_1 or event.keycode == KEY_2 \
+		or event.physical_keycode == KEY_1 or event.physical_keycode == KEY_2):
+		var idx := 0 if event.keycode == KEY_1 or event.physical_keycode == KEY_1 else 1
+		_apply_arena_kit(idx)
+		return
 	if event.is_action_pressed("ui_home") or (event is InputEventKey and event.pressed and event.keycode == KEY_TAB):
 		if ResourceLoader.exists("res://scenes/test/SpaceTest.tscn"):
 			get_tree().change_scene_to_file("res://scenes/test/SpaceTest.tscn")
@@ -474,10 +481,12 @@ func _finish_clash_layout() -> void:
 		SoftNetSession.bind_player(player)
 	_setup_clash_waves()
 	_setup_clash_camp()
+	_setup_module_bench()
 	_evidence_ar_a()
 	_evidence_ar_b()
 	_evidence_ar_c()
 	_evidence_ar_d()
+	_evidence_ar_e()
 	_setup_arena_playtest()
 
 
@@ -582,10 +591,16 @@ func _update_clash_radar() -> void:
 			var camp := ""
 			if _camp and _camp.has_method("is_contested") and bool(_camp.is_contested()):
 				camp = "  ·  CAMP CONTEST"
+			var kit := ""
+			if player and player.ability_system and player.ability_system.has_method("kit_label"):
+				kit = "  ·  KIT %s" % str(player.ability_system.kit_label())
+			var mod := ""
+			if _bench and _bench.has_method("has_equipped") and bool(_bench.has_equipped()):
+				mod = "  ·  MOD %s" % str(_bench.equipped_name())
 			if press == "":
-				_lane_hud.text = "LANE %s%s%s" % [_lanes.player_lane, wave, camp]
+				_lane_hud.text = "LANE %s%s%s%s%s" % [_lanes.player_lane, wave, camp, kit, mod]
 			else:
-				_lane_hud.text = "LANE %s  ·  %s%s%s" % [_lanes.player_lane, press, wave, camp]
+				_lane_hud.text = "LANE %s  ·  %s%s%s%s%s" % [_lanes.player_lane, press, wave, camp, kit, mod]
 	if _radar == null or not _radar.has_method("set_snapshot"):
 		return
 	# One entry per node: the old second pass compared a Node against an Array
@@ -880,6 +895,51 @@ func _evidence_ar_d() -> void:
 	if _camp and _camp.has_method("get_contest_state"):
 		st = str(_camp.get_contest_state())
 	print("[AR-D] camp=", _camp != null, " off_lane=", off, " state=", st, " pin=", LayerContext.site_pin_id if LayerContext else "")
+
+
+func _setup_module_bench() -> void:
+	if get_node_or_null("ClashModuleBench"):
+		_bench = get_node_or_null("ClashModuleBench") as Node3D
+		return
+	_bench = Node3D.new()
+	_bench.set_script(preload("res://scripts/arena/ClashModuleBench.gd"))
+	_bench.name = "ClashModuleBench"
+	add_child(_bench)
+	if _bench.has_method("bind_player") and player:
+		_bench.bind_player(player)
+
+
+func _apply_arena_kit(index: int) -> void:
+	if player == null or player.ability_system == null:
+		return
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	if Kit == null or not Kit.has_method("kits_for_faction"):
+		return
+	var ids: PackedStringArray = Kit.kits_for_faction(str(player.faction))
+	if ids.is_empty():
+		return
+	var kit_id := str(ids[clampi(index, 0, ids.size() - 1)])
+	if player.ability_system.has_method("setup_kit"):
+		player.ability_system.setup_kit(kit_id, str(player.faction))
+	if GameManager:
+		var lab := kit_id
+		if player.ability_system.has_method("kit_label"):
+			lab = str(player.ability_system.kit_label())
+		GameManager.toast_requested.emit("Kit %s — identity, not a rank stat" % lab)
+
+
+func _evidence_ar_e() -> void:
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var n := 0
+	if Kit and Kit.has_method("kit_ids"):
+		n = Kit.kit_ids().size()
+	var kit_id := ""
+	if player and player.ability_system and "current_kit_id" in player.ability_system:
+		kit_id = str(player.ability_system.current_kit_id)
+	var equipped := ""
+	if _bench and _bench.has_method("equipped_id"):
+		equipped = str(_bench.equipped_id())
+	print("[AR-E] kits=", n, " kit=", kit_id, " bench=", _bench != null, " equipped=", equipped, " pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
 func _setup_arena_playtest() -> void:
