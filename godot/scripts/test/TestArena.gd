@@ -22,6 +22,7 @@ var dummy_scene: PackedScene = preload("res://scenes/combat/CombatDummy.tscn")
 var _waves: Node = null
 var _camp: Node3D = null
 var _bench: Node3D = null
+var _river: Node3D = null
 
 func _ready() -> void:
 	var _PoolReset = load("res://scripts/combat/ProjectilePool.gd")
@@ -482,11 +483,13 @@ func _finish_clash_layout() -> void:
 	_setup_clash_waves()
 	_setup_clash_camp()
 	_setup_module_bench()
+	_setup_clash_river()
 	_evidence_ar_a()
 	_evidence_ar_b()
 	_evidence_ar_c()
 	_evidence_ar_d()
 	_evidence_ar_e()
+	_evidence_river()
 	_setup_arena_playtest()
 
 
@@ -597,10 +600,13 @@ func _update_clash_radar() -> void:
 			var mod := ""
 			if _bench and _bench.has_method("has_equipped") and bool(_bench.has_equipped()):
 				mod = "  ·  MOD %s" % str(_bench.equipped_name())
+			var river := ""
+			if _river and _river.has_method("contains") and bool(_river.contains(player.global_position)):
+				river = "  ·  RIVER"
 			if press == "":
-				_lane_hud.text = "LANE %s%s%s%s%s" % [_lanes.player_lane, wave, camp, kit, mod]
+				_lane_hud.text = "LANE %s%s%s%s%s%s" % [_lanes.player_lane, wave, camp, kit, mod, river]
 			else:
-				_lane_hud.text = "LANE %s  ·  %s%s%s%s%s" % [_lanes.player_lane, press, wave, camp, kit, mod]
+				_lane_hud.text = "LANE %s  ·  %s%s%s%s%s%s" % [_lanes.player_lane, press, wave, camp, kit, mod, river]
 	if _radar == null or not _radar.has_method("set_snapshot"):
 		return
 	# One entry per node: the old second pass compared a Node against an Array
@@ -907,6 +913,26 @@ func _setup_module_bench() -> void:
 	add_child(_bench)
 	if _bench.has_method("bind_player") and player:
 		_bench.bind_player(player)
+
+
+func _setup_clash_river() -> void:
+	if get_node_or_null("ClashRiver"):
+		_river = get_node_or_null("ClashRiver") as Node3D
+		return
+	_river = Node3D.new()
+	_river.set_script(preload("res://scripts/arena/ClashRiver.gd"))
+	_river.name = "ClashRiver"
+	add_child(_river)
+
+
+func _evidence_river() -> void:
+	var on := false
+	var between := false
+	if _river and _river.has_method("is_on_footprint"):
+		on = bool(_river.is_on_footprint())
+	if _river and _river.has_method("is_between_lanes"):
+		between = bool(_river.is_between_lanes())
+	print("[ClashRiver] present=", _river != null, " footprint=", on, " between_lanes=", between, " pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
 func _apply_arena_kit(index: int) -> void:

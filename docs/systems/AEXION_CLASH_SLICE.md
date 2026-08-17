@@ -32,6 +32,7 @@ OpenSpace → **M** or **Tab** → TestArena Clash · kill dummies to 5 · soft 
 - ClashRadar Control HUD
 - Lane waves (AR-C): `ClashWaves` timed `CombatDummy` proxies march TOP/MID/BOT toward enemy OUTER; hit/be-hit via existing Turret hooks; no shop / P2W / new GLB
 - Jungle camp (AR-D): one off-lane `ClashCamp` (fangtooth-class role, not IP); damageable code-first proxy; soft contest announce; drop = soft WS, not a unique weapon; Knowledge may label only
+- River (same footprint): `ClashRiver` mid-crossing + inter-lane channels on the existing 60×60 floor; terrain/read, not an objective; no jump pads (OTS camera)
 - Kits / module (AR-E): 4 kits × 4 slots (CX Nex/Grid, GR Rot/Spore); one `ClashModuleBench` session `ShipModule` (not a Paragon deck, not cash-shop); Knowledge may label only; forms stay identity
 
 ## Soft lane objectives

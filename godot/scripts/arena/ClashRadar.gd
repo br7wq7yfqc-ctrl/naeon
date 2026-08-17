@@ -24,6 +24,15 @@ func _draw() -> void:
 	var bot_x := r.position.x + r.size.x * 0.25
 	for x in [top_x, mid_x, bot_x]:
 		draw_line(Vector2(x, r.position.y + 4), Vector2(x, r.end.y - 4), Color(1, 1, 1, 0.12), 2.0)
+	# River read on the same 60×60: mid crossing + inter-lane channels.
+	var river_y := r.position.y + clampf((1.4 / arena_half) * 0.5 + 0.5, 0.0, 1.0) * r.size.y
+	draw_line(Vector2(r.position.x + 8, river_y), Vector2(r.end.x - 8, river_y), Color(0.2, 0.65, 0.85, 0.4), 3.0)
+	var ch_top := r.position.x + r.size.x * 0.625
+	var ch_bot := r.position.x + r.size.x * 0.375
+	var ch_y0 := r.position.y + clampf((-9.5 / arena_half) * 0.5 + 0.5, 0.0, 1.0) * r.size.y
+	var ch_y1 := r.position.y + clampf((11.5 / arena_half) * 0.5 + 0.5, 0.0, 1.0) * r.size.y
+	draw_line(Vector2(ch_top, ch_y0), Vector2(ch_top, ch_y1), Color(0.2, 0.65, 0.85, 0.28), 2.0)
+	draw_line(Vector2(ch_bot, ch_y0), Vector2(ch_bot, ch_y1), Color(0.2, 0.65, 0.85, 0.28), 2.0)
 	# map Z to Y (north -Z = top of radar)
 	for n in nexuses:
 		var p: Vector3 = n[0]

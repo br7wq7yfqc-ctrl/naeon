@@ -1,5 +1,5 @@
 extends Node
-## Headless AR-A + AR-B + AR-C + AR-D + AR-E: OTS, structures, waves, camp, kits/module.
+## Headless AR-A + AR-B + AR-C + AR-D + AR-E + river: OTS, structures, waves, camp, kits/module, river strip.
 ## godot --path godot --scene res://scenes/test/TestArena.tscn -- --playtest-arena
 
 func _ready() -> void:
@@ -11,7 +11,7 @@ func _ready() -> void:
 	if not wanted:
 		queue_free()
 		return
-	print("[Playtest] arena AR-A/AR-B/AR-C/AR-D/AR-E driver on")
+	print("[Playtest] arena AR-A/AR-B/AR-C/AR-D/AR-E + river driver on")
 	call_deferred("_go")
 
 
@@ -20,7 +20,7 @@ func _go() -> void:
 	var fails: PackedStringArray = PackedStringArray()
 	var arena: Node = get_parent()
 	if arena == null or str(arena.name) != "TestArena":
-		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
+		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
 		return
 
 	var player: Node = arena.get("player")
@@ -89,12 +89,14 @@ func _go() -> void:
 	var ar_b_fails: PackedStringArray = _check_ar_b(arena, lanes, player)
 	var ar_d_fails: PackedStringArray = _check_ar_d(arena, lanes, player)
 	var ar_e_fails: PackedStringArray = _check_ar_e(arena, lanes, player)
+	var river_fails: PackedStringArray = _check_river(arena)
 	fails.append_array(ar_c_fails)
 	fails.append_array(ar_b_fails)
 	fails.append_array(ar_d_fails)
 	fails.append_array(ar_e_fails)
+	fails.append_array(river_fails)
 
-	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, ar_e_fails, 0 if fails.is_empty() else 1)
+	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, ar_e_fails, river_fails, 0 if fails.is_empty() else 1)
 
 
 func _check_ar_b(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
@@ -449,7 +451,31 @@ func _check_ar_e(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	return fails
 
 
-func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, ar_e: PackedStringArray, code: int) -> void:
+func _check_river(arena: Node) -> PackedStringArray:
+	var fails: PackedStringArray = PackedStringArray()
+	var river: Node = arena.get_node_or_null("ClashRiver") if arena else null
+	if river == null and arena:
+		river = arena.get("_river")
+	if river == null or not is_instance_valid(river):
+		fails.append("ClashRiver missing")
+		return fails
+	if river.has_method("is_present") and not bool(river.is_present()):
+		fails.append("river not present")
+	if river.has_method("is_on_footprint") and not bool(river.is_on_footprint()):
+		fails.append("river left the TestArena footprint")
+	if river.has_method("is_between_lanes") and not bool(river.is_between_lanes()):
+		fails.append("river not between lanes")
+	if river.has_method("is_objective") and bool(river.is_objective()):
+		fails.append("river became an objective")
+	if LayerContext and str(LayerContext.site_pin_id) != "SITE_TEST_ARENA_PILLAR":
+		fails.append("SITE pin changed during river")
+	if arena and str(arena.name) != "TestArena":
+		fails.append("left TestArena")
+	print("[Playtest] river present=", river.has_method("is_present") and bool(river.is_present()), " footprint=", river.has_method("is_on_footprint") and bool(river.is_on_footprint()))
+	return fails
+
+
+func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, ar_e: PackedStringArray, river: PackedStringArray, code: int) -> void:
 	if ar_a.is_empty():
 		print("[Playtest] PASS arena AR-A")
 	else:
@@ -479,6 +505,12 @@ func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStrin
 	else:
 		print("[Playtest] FAIL arena AR-E")
 		for f in ar_e:
+			print("[Playtest]  - ", f)
+	if river.is_empty():
+		print("[Playtest] river present on footprint")
+	else:
+		print("[Playtest] FAIL river")
+		for f in river:
 			print("[Playtest]  - ", f)
 	if AutoUpdater and AutoUpdater.has_method("abort_pending"):
 		AutoUpdater.abort_pending()
