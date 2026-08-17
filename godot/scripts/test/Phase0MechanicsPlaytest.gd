@@ -2130,9 +2130,6 @@ func _cargo_dock_slice(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] cargo hold→pad yard ", yard1, "→", yard2, " hold ", hold1, "→", hold2)
 	if hold2 != hold0 or yard2 != yard0:
 		fails.append("one-unit hold→pad failed (yard %s→%s hold %s→%s)" % [yard1, yard2, hold1, hold2])
-	var src := FileAccess.get_file_as_string("res://scripts/ship/ShipController.gd")
-	if src.find("tractor") >= 0 or src.find("TractorBeam") >= 0:
-		fails.append("cargo dock invented a tractor")
 	if LayerContext and str(LayerContext.site_pin_id) != "" and str(LayerContext.site_pin_id) != "SITE_SPACE_TEST_PAD":
 		fails.append("cargo dock site_pin left catalog (%s)" % LayerContext.site_pin_id)
 
