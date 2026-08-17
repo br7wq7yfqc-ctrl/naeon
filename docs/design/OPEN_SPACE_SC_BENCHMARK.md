@@ -1,6 +1,6 @@
 # OPEN SPACE — бар подхода (не копия Star Citizen)
 
-**Статус:** OS-A…OS-F built · OS-G в этом срезе. Версия 1.6, 2026-08-17.  
+**Статус:** OS-A…OS-H built. Версия 1.7, 2026-08-17.  
 **Движок:** Godot 4.3.  
 **Не открывать:** G2–G6. Код P0.6 (`OpenSpace`, `ShipController`, `SurfaceWalker`, `SurfaceDetail`, `GameHUD`) не ломать.
 
@@ -128,9 +128,32 @@ WorldFill: scatter + дополнительные unnamed пады, читаем
 
 ### OS-H — ритуал
 
-Космос → атмосфера → посадка → EVA → взлёт → космос. Без load. 5 мин. 60 FPS MED на 3090.
+Космос → атмосфера → посадка → EVA → взлёт → космос. Без load screen (тот же `OpenSpace.tscn`).
 
-**DoD:** один прогон, ноль debugger errors, память не лезет монотонно. Галактика по-прежнему закрыта.
+**В этом срезе — harness, не новый мир.** Скриптованный ритуал в `Phase0MechanicsPlaytest`: старт на высоте OS-C (8 км), лимб виден, hold-S без mouse pitch, вход в оболочку, посадка честным gate, EVA snap, взлёт, снова выше оболочки. Если шаг пропущен — FAIL громко. Не чеканит `SITE_*`. Не открывает G2–G6. TestArena / Clash не трогали.
+
+**Headless PASS ≠ FPS PASS.** Этот срез не закрывает 60 FPS MED и не закрывает 5 мин soak — это human gate на RTX 3090. llvmpipe / dummy не ставят FPS.
+
+**DoD (этот PR):** все шаги ритуала проходят в headless; существующий `--playtest-mechanics` всё ещё PASS; в доке есть как прогнать петлю с F5. Галактика закрыта.
+
+**F5 (человек, Godot 4.3):**
+1. Открыть `godot/scenes/world/OpenSpace.tscn` и нажать F5 (или F5 с MainMenu → Open Space).
+2. Спавн 8 км AGL. Тело и лимб атмосферы должны читаться. HUD: `S descend · E land · F EVA`.
+3. **Hold S** — геометрический спуск, **без mouse pitch**.
+4. У грунта: `3` HOVER, погасить скорость, **E** — посадка (`LAND READY`).
+5. **F** — EVA, встать на Relief.
+6. **F** — сесть в корабль, **Space** — взлёт.
+7. Набрать выше оболочки (HUD `ATMO 0%`). Сцена не меняется.
+
+Headless (шаги, не FPS):
+
+```bash
+godot --headless --path godot --scene res://scenes/world/OpenSpace.tscn -- --playtest-ritual
+# или полный gate, включая OS-A…OS-G + OS-H:
+./scripts/playtest_headless_smoke.sh
+```
+
+Искать `[Playtest] OS-H STEP` и `[Playtest] PASS`. Строка `OS-H ritual complete (headless steps; not FPS PASS)` — не 3090.
 
 ---
 
@@ -141,4 +164,4 @@ WorldFill: scatter + дополнительные unnamed пады, читаем
 - Tripo-горы, Tripo-грязь, меши в git, секреты, патч S3 Index.
 - Переписывать P0.6 «с нуля».
 
-Очередь кода: OS-H. Не G2. Не открывать G2–G6 этим баром.
+Очередь кода: OS-H harness built. 60 FPS / 5 мин soak — human gate на 3090, не этот PR. Не G2. Не открывать G2–G6 этим баром.

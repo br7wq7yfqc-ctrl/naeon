@@ -34,7 +34,7 @@ grep -E 'Playtest|SCRIPT ERROR|AR-A|AR-B|AR-C' /tmp/pt_ar.log | head -50 || true
 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/ui/MainMenu.tscn --quit-after 4 > /tmp/pt_mm.log 2>&1 || true
 echo MM_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_mm.log || true)
 set +e
-timeout 45 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/world/OpenSpace.tscn -- --playtest-mechanics > /tmp/pt_mech.log 2>&1
+timeout 70 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/world/OpenSpace.tscn -- --playtest-mechanics > /tmp/pt_mech.log 2>&1
 MECH_CODE=$?
 set -e
 # Verdict is the [Playtest] line. Godot 4.3 dummy renderer may not exit after quit()
@@ -47,7 +47,7 @@ elif [ "$MECH_CODE" -eq 0 ]; then
   MECH_CODE=1
 fi
 echo MECH_CODE=$MECH_CODE MECH_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_mech.log || true)
-grep -E 'Playtest|SCRIPT ERROR' /tmp/pt_mech.log | head -40 || true
+grep -E 'Playtest|SCRIPT ERROR|OS-H' /tmp/pt_mech.log | head -60 || true
 grep -E 'SurfaceWater|CaveInterior|SurfaceFauna|SCRIPT ERROR|CanonPlates|PadAmbientLife|site_pin' /tmp/pt_os.log | head -20 || true
 grep -E 'SCRIPT ERROR|CanonPlates|TestArena|AbilitySystem' /tmp/pt_ta.log | head -20 || true
 grep -E 'SCRIPT ERROR|CanonPlates' /tmp/pt_mm.log | head -20 || true

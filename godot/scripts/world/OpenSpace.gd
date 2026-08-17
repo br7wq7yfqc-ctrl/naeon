@@ -308,6 +308,7 @@ func _spawn_ship() -> void:
 	if p0.has_method("refresh_approach_lod"):
 		p0.call("refresh_approach_lod")
 	print("[OpenSpace] approach AGL=%.0f over %s (r=%.0f)" % [agl, str(p0.get("planet_name")), r])
+	print("[OpenSpace] OS-H F5: hold S (no pitch) → E land → F EVA → F board → Space takeoff → above atmo")
 
 
 func _bind_planet_observers() -> void:

@@ -4,7 +4,7 @@
 
 Не «unfit». Петля OPEN SPACE на GPU владельца: land / EVA / takeoff, hold-S 770→0, HOVER+S тонет, EVA на Relief, 6 мин / 60 FPS, 0 debugger errors (`ca904ec` / squash `987cd34`). Галактику не открывали. llvmpipe ≠ FPS PASS.
 
-Следующий код — шов сферы (OS-A), не G2. План: `docs/design/OPEN_SPACE_SC_BENCHMARK.md`.  
+OS-H harness на main-очереди: ритуал space→atmo→land→EVA→takeoff→space. 60 FPS / 5 мин — human gate на 3090, не headless. Не G2. План: `docs/design/OPEN_SPACE_SC_BENCHMARK.md`.  
 Канон ассетов (уникальное из PR #7): `docs/design/ASSET_SOURCE_CANON.md`.  
 WorldFill (PR #6, на main): `docs/design/WORLD_FILL.md`.
 
@@ -33,7 +33,7 @@ PR #7 писал HUMAN_UNFIT на llvmpipe — **снято** фактом 3090 
 | Track | Status |
 |-------|--------|
 | P0.6 runtime (HUD, descend, EVA, HOVER S) | **built** на 3090 — не регрессить |
-| OPEN SPACE SC bar | **open** — OS-A…OS-G built; следующий = OS-H |
+| OPEN SPACE SC bar | **OS-A…OS-H built** — harness ритуала; 60 FPS / 5 мин = 3090 human gate |
 | Galaxy G2–G6 | **locked** |
 | G1 CRUISE | **in-scope only for OS-C scale** |
 | Asset ingest T1 hypergate | **locked** |
