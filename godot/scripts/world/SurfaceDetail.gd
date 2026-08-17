@@ -377,10 +377,10 @@ func _build_height_mesh(cell: Vector2i) -> ArrayMesh:
 			var px := -half + float(x) * step
 			var pz := -half + float(z) * step
 			var dir: Vector3 = _Math.vertex_dir(_radius, cell, CELL_M, px, pz)
-			var chart: Vector2 = _Relief.dir_to_chart(dir)
-			var wx: float = chart.x
-			var wz: float = chart.y
-			var h: float = float(_Relief.height_at_dir(dir, _seed, _relief_profile))
+			var xz: Vector2 = _Relief.sphere_xz(dir, _radius)
+			var wx: float = xz.x
+			var wz: float = xz.y
+			var h: float = float(_Relief.height_at(wx, wz, _seed, _relief_profile))
 			var col: Color = _surface_color.lightened(0.12)
 			var biome: String = str(_Relief.biome_hint(wx, wz, h, _seed, _relief_profile))
 			if h < sea or biome == "ocean":
