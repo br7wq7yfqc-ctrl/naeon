@@ -1,17 +1,20 @@
-# NAEON — Sandbox playtest (P0.1 + P0.2 runtime)
+# NAEON — Sandbox playtest (P0.6 + headless история)
 
-**Дата прогона:** 2026-08-17  
-**Стенд:** Cursor Cloud VM, Godot **4.3.stable.official.77dcf97d8**  
-**GPU:** нет. Headless = dummy. Visible был бы **llvmpipe**.  
-**Ветка:** `cursor/p0-runtime-stabilize-3ba8`  
-**Команда:** `scripts/playtest_sandbox.sh`  
-**Зонд:** `godot/scripts/test/SandboxPlaytest.gd` (`--sandbox-playtest`)
+**Текущий человеческий факт:** 2026-08-17, **RTX 3090**, коммит `ca904ec` / P0.6 (squash `987cd34`).  
+Петля land / EVA / takeoff работает. Hold-S: 770→0. HOVER+S тонет. EVA стоит на Relief.  
+Soak **6 мин без краша, 60 FPS, 0 debugger errors.** Галактику не открывали.
 
-Это отчёт «что стало лучше / что ещё HUMAN_UNFIT», не QA-stamp. **FPS / rules/25 не закрываем.** Mechanics PASS ≠ human gate.
+**Не ставить FPS PASS на llvmpipe.** Headless mechanics PASS ≠ человеческий gate.
 
-Канон: DEVELOPMENT_PLAN v3 (PR #7) · WORLD_FILL (PR #6). G1–G6 не открыты.
+Дальше по бару подхода: `docs/design/OPEN_SPACE_SC_BENCHMARK.md`.  
+Канон: `docs/design/ASSET_SOURCE_CANON.md` · `docs/design/WORLD_FILL.md`. G2–G6 закрыты.
 
-Сырьё: `/opt/cursor/artifacts/sandbox_*.log` и `user://sandbox_playtest.txt`.
+Ниже — исторический прогон VM (dummy / llvmpipe) и P0.1–P0.2 зонд. Это не отмена 3090.
+
+**Стенд VM:** Cursor Cloud, Godot **4.3.stable.official.77dcf97d8**, GPU нет.  
+**Ветка зонда:** `cursor/p0-runtime-stabilize-3ba8` · `scripts/playtest_sandbox.sh`
+
+Сырьё зонда: `/opt/cursor/artifacts/sandbox_*.log` и `user://sandbox_playtest.txt`.
 
 ---
 
@@ -19,12 +22,13 @@
 
 | Вопрос | Ответ |
 |--------|-------|
-| Пригоден ли прототип для человека? | **Ещё нет** — нет 5 мин soak на GPU владельца. |
-| Можно ли ставить PASS / FPS PASS? | **Нет.** llvmpipe / dummy не закрывают rules/25. |
-| P0.1 runtime (seed / ring / park)? | **Да, на этом зонде.** `P0_1_RUNTIME=true` `RING_RESTORE=true` `SAME=true` |
-| P0.2 срез (1 пад + 1 CC0 проп)? | **Да, на этом зонде.** `P0_2_SLICE=true` pads=1 filler=1. Манифест, не GLB в git. Tripo-герой **не** открыт. |
+| Петля на RTX 3090 (P0.6)? | **Да.** Посадка / EVA / взлёт, hold-S 770→0, HOVER+S, 6 мин / 60 FPS, 0 debugger errors. |
+| FPS PASS на llvmpipe / dummy? | **Нет.** Не закрывать rules/25 с этого стенда. |
+| P0.1 runtime (seed / ring / park)? | **Да, на зонде.** `P0_1_RUNTIME=true` `RING_RESTORE=true` `SAME=true` |
+| P0.2 срез (1 пад + 1 CC0 проп)? | **Да, на зонде.** `P0_2_SLICE=true` pads=1 filler=1. Манифест, не GLB в git. |
 | Mechanics? | Печатает PASS. Occupy 0.55→0.66 к gROT. **Не human gate.** |
-| Dummy `m is null`? | **0 на этом прогоне** (счётчик не маскировали). Это не «человек может играть». |
+| Dummy `m is null`? | **0 на зонде** (счётчик не маскировали). |
+| Бар SC-подхода закрыт? | **Нет.** Игрушечный масштаб, шов сферы, нет атмосферы — см. OPEN_SPACE_SC_BENCHMARK. |
 
 ---
 
@@ -37,12 +41,14 @@
 | MainMenu | 137 | **0** | **0** | Clash кнопка = sandbox, не карта |
 | OpenSpace boot | 137 | **0** | **0** | 1 тело. Fill cut. Было 29 (teardown) |
 | TestArena | 137 | **0** | **0** | Clash greybox. Было 42 (teardown) |
-| Sandbox probe | 137 (`OS.kill`) | **0** | **0** | `HUMAN_UNFIT`. P0.1+P0.2 green. Было 9 |
+| Sandbox probe | 137 (`OS.kill`) | **0** | **0** | зонд dummy. P0.1+P0.2 green. Было 9. Не FPS PASS |
 | Mechanics | 137 | **0** | **0** | PASS. Было 220 (interior/pylon/limbs/rover free) |
 
 ---
 
 ## 3. Что стало лучше (этот прогон)
+
+Сырой дамп dummy-зонда. Строка `VERDICT=HUMAN_UNFIT` — вердикт llvmpipe/dummy, **снят** прогоном RTX 3090 / P0.6 (§6).
 
 ```
 seed Nex-Prime body=2778 shader=2778 detail=2778 SAME=true
@@ -116,26 +122,33 @@ MECHANICS_IS_NOT_HUMAN_GATE=true
 
 ---
 
-## 6. P0.3 GPU (RTX 3090) — прогон живой, HUMAN_UNFIT остаётся
+## 6. GPU RTX 3090 — P0.6 (17 Aug 2026)
 
-Владелец: OPEN SPACE ~10 мин, без crash/hang, спуск 770 м, LAND READY→LANDED, EVA и обратно. Кольцо перестраивается без swim/дыр.
+Владелец, `ca904ec` / P0.6:
 
-Что чинили на той же ветке (не выдумывали):
+- OPEN SPACE: land / EVA / takeoff живы.
+- Hold-S спускает 770→0. HOVER+S тонет (не держит PD).
+- EVA стоит на Relief, не в пустоте под чанком.
+- Soak **6 мин**, без краша, **60 FPS**, **0 debugger errors**.
+- Галактику не открывали.
 
-- HUD: OBJECTIVE сверху, hint под ним; LAYER + GFX/FPS одним стеком справа. После LANDED нет STALL. PADS показывает 1 точку со сдвигом (P0.2 = один пад).
-- Окно: windowed, не always-on-top; close/Esc снимают capture и выходят. Alt-tab отпускает мышь.
-- Взлёт: Space / W / E после lock. Хинт «Space/E takeoff».
-- Чанки: радиальные вершины, overlap 40.8 м, lift 0.02, far-sphere прячется под live detail, unshaded + MED res=12. Rebuild/park не резали.
+Ранние прогоны на той же линии (P0.3–P0.5): спуск 770 м, LAND READY→LANDED, кольцо без swim/дыр; HUD/окно/взлёт чинили без выдуманных багов.
 
-Повтор на 3090: F5 → OPEN SPACE → спуск → E land → F EVA → F board → Space takeoff.
+Повтор: F5 → OPEN SPACE → hold S → E land → F EVA → F board → Space takeoff.
 
-## 7. Что ещё HUMAN_UNFIT
+llvmpipe этого не подтверждает и **не** ставит FPS PASS.
 
-- 5 мин soak и freeze >100 мс — подтверждать снова на GPU владельца после этого патча.
-- rules/25 FPS на llvmpipe **не** измеряем и **не** подписываем.
-- Dummy MNULL=0 на этом стенде ≠ «можно давать человеку».
-- P0.2 полный DoD (Tripo-герой) **не** открыт. P0.4–P0.5 не открыты.
-- G1–G6 locked. `M` = тост locked. `Tab` = Clash sandbox.
+## 7. Что ещё не бар подхода
+
+Честные дыры — `docs/design/OPEN_SPACE_SC_BENCHMARK.md` §3. Не «unfit», не выдумывать лишнее:
+
+- Спавн ~770 м AGL, не десятки км.
+- Дальний шейдер всё ещё дешёвый subset vs полный `PlanetRelief` (WorldFill §5 / OS-A).
+- Нет атмосферы / облаков / входа.
+- Почти нет unnamed scatter и силуэта с высоты. Один unnamed пад.
+- Грунт стоит, деталь низкая. Нет аэродинамики — только S-sink.
+- G2–G6 закрыты. `M` = тост locked. `Tab` = Clash sandbox.
+- Dummy MNULL=0 ≠ допуск. rules/25 на llvmpipe не подписывать.
 
 ---
 

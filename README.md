@@ -5,6 +5,7 @@
 **Репозиторий:** https://github.com/br7wq7yfqc-ctrl/naeon  
 **Концепция:** [CONCEPT.md](CONCEPT.md)  
 **План разработки:** [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)  
+**Бар OPEN SPACE:** [docs/design/OPEN_SPACE_SC_BENCHMARK.md](docs/design/OPEN_SPACE_SC_BENCHMARK.md)  
 **Локальный сетап:** [docs/LOCAL_SETUP.md](docs/LOCAL_SETUP.md)  
 **Handoff:** [docs/HANDOFF.md](docs/HANDOFF.md)
 
@@ -19,9 +20,12 @@ cd naeon
 
 ### Что уже playable
 
+P0.6 на RTX 3090 (17 Aug 2026): OPEN SPACE — посадка / EVA / взлёт, hold-S 770→0, 6 мин / 60 FPS. Не FPS PASS на llvmpipe. Галактику не открывали.
+
 | Сцена | Содержание |
 |-------|------------|
-| `TestArena` | TPS, abilities (Pulse / Firewall / Probe), form cycle, Ownership pillars, extractor → Contribution |
+| `OpenSpace` | ARK, один пад, петля land / EVA / takeoff (игрушечный масштаб ~770 м) |
+| `TestArena` | Clash sandbox (`Tab`). Не карта галактики |
 | `SpaceTest` | Semi-Newtonian ship, modules, fire, land → TestArena |
 
 **Управление (TestArena):** WASD, мышь, Space, Shift, Q/E/R/F, Tab → космос  

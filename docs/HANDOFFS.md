@@ -1,5 +1,7 @@
 # NAEON — Build-Session Briefs (Design-Aware)
 
+> **2026-08-17:** очередь — `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (OS-A). Эти брифы исторические. Не стартовать G2–G6 отсюда. G1 только если OS-C упрётся в масштаб. llvmpipe ≠ FPS PASS.
+
 **Date:** 2026-08-07  
 **Companion:** `docs/HANDOFF.md`  
 **Skill:** `naeon-holistic-economical` **v2.0**  

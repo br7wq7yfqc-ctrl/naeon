@@ -8,6 +8,8 @@ This document is the contract. It does **not** replace
 `docs/lore/SITE_PIN_CATALOG.md` (named site IDs). It does **not** ship a
 runtime universe generator. Schedule, playtest, and terrain-code work live
 in `DEVELOPMENT_PLAN.md` — not here.
+Mesh-source anchor: `docs/design/ASSET_SOURCE_CANON.md`.
+OPEN SPACE approach bar: `docs/design/OPEN_SPACE_SC_BENCHMARK.md`.
 
 WorldFill answers one question: once a system and a body are already loaded
 from authored data, what may the engine grow around the player — and what

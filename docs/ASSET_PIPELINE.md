@@ -5,6 +5,7 @@
 Fully automated (as much as possible) generation and processing of 3D assets with **minimal external spend**.
 
 **Maximum ready-made from the net. Generate (Tripo) only unique objects.**
+Short anchor: `docs/design/ASSET_SOURCE_CANON.md`.  
 Authority for the unique / generic split, source order, and licence table:
 `docs/design/WORLD_FILL.md` §3.1. Do not spend Tripo on dirt or unnamed rocks.
 Git holds `source` / `license` / `url` on the position — never GLB or textures.

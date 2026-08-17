@@ -3,8 +3,15 @@
 **Версия:** 2.1  
 **Дата:** 2026-08-15  
 **Основа:** CONCEPT.md v1.3  
-**Движок:** Godot 4.3+ / 4.4+  
+**Движок:** Godot 4.3 (не 4.4+ как цель)  
 **Принцип:** Local-first → Vertical Slices → Iterative Multiplayer → Platform + AI + Educational Systems
+
+**2026-08-17 — текущий бар OPEN SPACE (не галактика):**  
+`docs/design/OPEN_SPACE_SC_BENCHMARK.md` (срезы OS-A … OS-H).  
+Петля P0.6 на RTX 3090 жива (посадка / EVA / взлёт, hold-S 770→0, 6 мин / 60 FPS) — не ломать.  
+G1 CRUISE — только если нужен честный подход 5–15 км (OS-C). G2–G6 закрыты, пока петля честна.  
+Канон ассетов: `docs/design/ASSET_SOURCE_CANON.md`. WorldFill: `docs/design/WORLD_FILL.md`.  
+Плейтест: `docs/PLAYTEST_SANDBOX.md`. llvmpipe ≠ FPS PASS.
 
 ---
 

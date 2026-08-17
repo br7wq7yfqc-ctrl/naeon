@@ -1,5 +1,7 @@
 # NAEON — From prototype to playable
 
+> **2026-08-15 historical audit.** Current GPU fact (17 Aug 2026, RTX 3090 / P0.6): land / EVA / takeoff, hold-S 770→0, 6 min / 60 FPS, 0 debugger errors. Not FPS PASS on llvmpipe. Next bar: `docs/design/OPEN_SPACE_SC_BENCHMARK.md`.
+
 **Single record of the 2026-08-15 hardening work.** Owner brief: audit the whole
 codebase, fix what is broken, and move the build away from "raw prototype".
 A follow-up brief then added the galaxy layer — see §7, with the design in
