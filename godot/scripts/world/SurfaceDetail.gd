@@ -8,14 +8,17 @@ class_name SurfaceDetail
 
 const _Math = preload("res://scripts/world/SurfaceChunkMath.gd")
 const _Relief = preload("res://scripts/world/PlanetRelief.gd")
+const _P0 = preload("res://scripts/world/P0Slice.gd")
 
 const CELL_M := 40.0
 const PATCH_SIZE := 38.0
 const DEFAULT_RES := 8
-const LOAD_BUDGET := 1          ## meshes built per stream tick (scaled in _process)
+const LOAD_BUDGET := 1          ## new meshes per stream tick (global park shares this)
 const STREAM_HZ := 0.28         ## ~3.5 Hz default; LOW slower
-const MESH_CACHE_MAX := 32
+const MESH_CACHE_MAX := 48
 const POOL_MAX := 8
+const ACTIVATE_ALT := 140.0
+const PARK_ALT := 220.0         ## hysteresis: do not thrash the ring at 140 m
 
 var _planet: Node3D
 var _radius: float = 1200.0
@@ -51,17 +54,17 @@ func setup(planet: Node3D, radius: float, color: Color, seed_i: int = 1) -> void
 	_planet = planet
 	_radius = radius
 	_surface_color = color
-	_seed = seed_i
 	if planet != null and "planet_name" in planet:
 		_planet_id = str(planet.planet_name)
+	_seed = _Relief.body_seed(_planet_id) if _planet_id != "" else seed_i
 	_relief_profile = _Relief.profile_for_planet(_planet_id)
 	_apply_quality()
 
 
 func set_observer(n: Node3D) -> void:
 	_observer = n
-	_center_cell = Vector2i(999999, 999999)
-	_queue.clear()
+	## Do not drop live / cache. Re-bind only forces the next tick to
+	## re-evaluate the ring so a retreat/reapproach can restore.
 
 
 func _ready() -> void:
@@ -93,7 +96,8 @@ func _apply_quality() -> void:
 			_load_ring = 1
 			_unload_ring = 2
 			_res = DEFAULT_RES
-	# Quality change: drop mesh cache (res may differ)
+	# Quality change: drop mesh cache (res may differ). Live cells keep
+	# their current mesh until recycled; next spawn rebuilds at new res.
 	_mesh_cache.clear()
 	_mesh_cache_order.clear()
 
@@ -101,33 +105,26 @@ func _apply_quality() -> void:
 func _process(delta: float) -> void:
 	_accum += delta
 	var hz := STREAM_HZ
-	var budget := LOAD_BUDGET
 	var gq := get_node_or_null("/root/GraphicsQuality")
 	var tier := int(gq.tier) if gq else 1
 	match tier:
 		0:
 			hz = 0.55
-			budget = 1
 		1:
 			hz = 0.40
-			budget = 1
 		2:
 			hz = 0.32
-			budget = 1
 		_:
 			hz = 0.28
-			budget = 2
-	# Warm-up: first seconds near surface build only 1 cell/tick, slower
 	if _warm_t < 4.0:
 		hz = maxf(hz, 0.5)
-		budget = 1
 	if _accum < hz:
 		return
 	_accum = 0.0
 	if _planet == null or _observer == null or not is_instance_valid(_observer):
 		return
 	var alt: float = _observer.global_position.distance_to(_planet.global_position) - _radius
-	if alt > 140.0 or alt < -10.0:
+	if alt < -10.0 or (_active and alt > PARK_ALT) or (not _active and alt > ACTIVATE_ALT):
 		if _active:
 			_park_all()
 			_active = false
@@ -135,21 +132,20 @@ func _process(delta: float) -> void:
 			_warm_cells = 0
 		return
 	if not _active:
-		# Soft activate — do NOT enqueue full ring same frame (10–15s freeze cause)
 		_active = true
 		_warm_t = 0.0
 		_warm_cells = 0
 		_queue.clear()
-		_center_cell = Vector2i(999999, 999999)
 	_warm_t += hz
 	var cell: Vector2i = _Math.cell_of(_planet.global_position, _radius, _observer.global_position, CELL_M)
+	# Enqueue every tick — standing still used to freeze the ring at 1 cell
+	# because expansion was gated on cell change.
 	if cell != _center_cell:
 		_center_cell = cell
-		# Expand load ring gradually during warm-up
-		var ring := 0 if _warm_cells < 1 else (1 if _warm_t < 2.5 else _load_ring)
-		_enqueue_ring(cell, ring)
 		_unload_far(cell)
-	# Xform refresh throttled harder
+	# Cached cells restore the full load ring; only new meshes warm up.
+	_restore_ring(cell, _load_ring)
+	_enqueue_ring(cell, _desired_ring())
 	_xform_accum += hz
 	var xneed := 1.6 if tier <= 1 else 1.1
 	if _xform_accum >= xneed:
@@ -160,17 +156,23 @@ func _process(delta: float) -> void:
 			n += 1
 			if n >= 6:
 				break
-	# Budgeted builds (hard cap 1 during warm)
-	var built := 0
-	while built < budget and not _queue.is_empty():
+	while not _queue.is_empty():
 		var c: Vector2i = _queue.pop_front()
 		if _live.has(c):
 			continue
 		if _Math.chebyshev(c, _center_cell) > _load_ring:
 			continue
+		var cached := _mesh_cache.has(_cache_key(c))
+		if cached:
+			if not _P0.take_restore():
+				_queue.push_front(c)
+				break
+		else:
+			if not _P0.take_build():
+				_queue.push_front(c)
+				break
 		_spawn_cell(c)
 		_warm_cells += 1
-		built += 1
 
 
 func _enqueue_ring(center: Vector2i, ring: int) -> void:
@@ -215,16 +217,42 @@ func _unload_far(center: Vector2i) -> void:
 		_recycle(c)
 
 
+func _desired_ring() -> int:
+	## Cache hits restore the full load ring immediately. New meshes still
+	## warm up so the first visit cannot freeze a frame.
+	if _mesh_cache.size() > 0 and _warm_cells >= 1:
+		return _load_ring
+	if _warm_cells < 1:
+		return 0
+	if _warm_t < 2.5:
+		return mini(1, _load_ring)
+	return _load_ring
+
+
+func _cache_key(cell: Vector2i) -> String:
+	return "%d:%d:r%d:v3" % [cell.x, cell.y, _res]
+
+
+func _restore_ring(center: Vector2i, ring: int) -> void:
+	var want: Array[Vector2i] = _Math.ring_cells(center, ring)
+	for c in want:
+		if _live.has(c):
+			continue
+		if not _mesh_cache.has(_cache_key(c)):
+			continue
+		if c in _queue:
+			continue
+		_queue.push_front(c)
+
+
 func _park_all() -> void:
+	## Hide live instances. Keep the mesh cache so a return restores the ring
+	## instead of calling _build_height_mesh again.
 	_queue.clear()
 	var keys: Array = _live.keys()
 	for k in keys:
 		_recycle(k)
 	_trim_pool()
-	# Drop mesh cache when fully parked (far planet) — RID reclaim
-	if _mesh_cache.size() > 8:
-		_mesh_cache.clear()
-		_mesh_cache_order.clear()
 
 
 func _spawn_cell(cell: Vector2i) -> void:
@@ -288,7 +316,7 @@ func _refresh_xform(cell: Vector2i) -> void:
 
 
 func _mesh_for_cell(cell: Vector2i) -> ArrayMesh:
-	var key := "%d:%d:r%d:v2" % [cell.x, cell.y, _res]
+	var key := _cache_key(cell)
 	if _mesh_cache.has(key):
 		return _mesh_cache[key]
 	var mesh := _build_height_mesh(cell)
@@ -305,8 +333,6 @@ func _build_height_mesh(cell: Vector2i) -> ArrayMesh:
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var half := PATCH_SIZE * 0.5
 	var step := PATCH_SIZE / float(_res - 1)
-	var ox := float(cell.x) * PATCH_SIZE
-	var oz := float(cell.y) * PATCH_SIZE
 	var verts: Array[Vector3] = []
 	var colors: PackedColorArray = PackedColorArray()
 	verts.resize(_res * _res)
@@ -316,9 +342,11 @@ func _build_height_mesh(cell: Vector2i) -> ArrayMesh:
 		for x in _res:
 			var px := -half + float(x) * step
 			var pz := -half + float(z) * step
-			var wx := px + ox
-			var wz := pz + oz
-			var h: float = float(_Relief.height_at(wx, wz, _seed, _relief_profile))
+			var dir: Vector3 = _Math.vertex_dir(_radius, cell, CELL_M, px, pz)
+			var chart: Vector2 = _Relief.dir_to_chart(dir)
+			var wx: float = chart.x
+			var wz: float = chart.y
+			var h: float = float(_Relief.height_at_dir(dir, _seed, _relief_profile))
 			var col: Color = _surface_color
 			var biome: String = str(_Relief.biome_hint(wx, wz, h, _seed, _relief_profile))
 			if h < sea or biome == "ocean":
@@ -359,6 +387,23 @@ func live_count() -> int:
 
 func queue_depth() -> int:
 	return _queue.size()
+
+
+func cache_count() -> int:
+	return _mesh_cache.size()
+
+
+func is_parked() -> bool:
+	return not _active
+
+
+func body_seed() -> int:
+	return _seed
+
+
+func refresh_all_xforms() -> void:
+	for c in _live.keys():
+		_refresh_xform(c)
 
 
 func _ensure_vertex_mat(mi: MeshInstance3D) -> void:

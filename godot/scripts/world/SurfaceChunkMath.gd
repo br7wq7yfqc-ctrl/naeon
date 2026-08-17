@@ -28,6 +28,19 @@ static func stable_tangent(up: Vector3) -> Array:
 	return [east, north]
 
 
+static func vertex_dir(radius: float, cell: Vector2i, cell_m: float, px: float, pz: float) -> Vector3:
+	## Direction of a patch vertex before height is applied. Matches
+	## cell_transform basis (east, radial, -north) so Relief and the mesh agree.
+	var dir: Vector3 = cell_center_dir(cell, radius, cell_m)
+	var t: Array = stable_tangent(dir)
+	var east: Vector3 = t[0]
+	var north: Vector3 = t[1]
+	var raw: Vector3 = dir * maxf(radius, 1.0) + east * px - north * pz
+	if raw.length_squared() < 1e-8:
+		return dir
+	return raw.normalized()
+
+
 static func cell_transform(planet_pos: Vector3, radius: float, cell: Vector2i, cell_m: float, lift: float = 0.35) -> Transform3D:
 	var dir := cell_center_dir(cell, radius, cell_m)
 	var t := stable_tangent(dir)

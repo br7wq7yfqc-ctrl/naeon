@@ -1,6 +1,31 @@
 extends RefCounted
 class_name PlanetRelief
 ## Analytic multi-feature height: mountains, seas, rivers, canyons, cave openness.
+## One body seed. Height is sampled in a spherical lon/lat chart so the far
+## sphere and the chunk heightfield are the same planet.
+
+## Metres-per-radian of the shared chart. Matches Nex-Prime scale so existing
+## Relief frequencies stay in the same ballpark.
+const CHART_RADIUS := 1400.0
+
+
+static func body_seed(planet_id: String) -> int:
+	## Single stable integer per authored body id. Channel offsets are for
+	## placement RNG only — never a second height seed.
+	return int(absi(String(planet_id).hash()) % 10000)
+
+
+static func dir_to_chart(dir: Vector3) -> Vector2:
+	var n: Vector3 = dir.normalized()
+	var lat: float = asin(clampf(n.y, -1.0, 1.0))
+	var lon: float = atan2(n.x, n.z)
+	return Vector2(lon * CHART_RADIUS, lat * CHART_RADIUS)
+
+
+static func height_at_dir(dir: Vector3, seed: int, profile: Dictionary = {}) -> float:
+	var c: Vector2 = dir_to_chart(dir)
+	return height_at(c.x, c.y, seed, profile)
+
 
 static func height_at(x: float, z: float, seed: int, profile: Dictionary = {}) -> float:
 	var sea: float = float(profile.get("sea_level", -0.35))

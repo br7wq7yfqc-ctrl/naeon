@@ -1,7 +1,7 @@
 shader_type spatial;
-/* NAEON planet surface — land/ocean + micro-detail + night city.
- * Still 2-octave base FBM; one extra micro layer for texture read.
- * Min-spec safe (RTX 1060 3GB).
+/* NAEON planet surface — cheap Relief subset (continent / ridge / sea).
+ * Same seed and lon/lat chart as PlanetRelief. Far pass drops rivers/caves.
+ * Not a second value-noise planet.
  */
 render_mode unshaded, ambient_light_disabled, shadows_disabled, fog_disabled;
 
@@ -12,15 +12,15 @@ uniform vec4 ice_color : source_color = vec4(0.72, 0.78, 0.85, 1.0);
 uniform vec4 mountain_tint : source_color = vec4(0.35, 0.35, 0.38, 1.0);
 uniform vec4 dune_color : source_color = vec4(0.55, 0.45, 0.28, 1.0);
 uniform vec4 city_light_color : source_color = vec4(1.0, 0.82, 0.45, 1.0);
-uniform float sea_threshold : hint_range(-0.5, 0.8) = 0.08;
+uniform float sea_level : hint_range(-2.0, 1.0) = -0.25;
 uniform float shore_width : hint_range(0.01, 0.25) = 0.07;
-uniform float mountain_threshold : hint_range(0.0, 1.0) = 0.62;
 uniform float ice_lat : hint_range(0.5, 1.0) = 0.78;
-uniform float seed : hint_range(0.0, 100.0) = 1.0;
+uniform float seed : hint_range(0.0, 10000.0) = 1.0;
+uniform float chart_radius : hint_range(200.0, 4000.0) = 1400.0;
 uniform float emission_strength : hint_range(0.0, 1.0) = 0.06;
 uniform float city_intensity : hint_range(0.0, 3.0) = 1.35;
 uniform float city_density : hint_range(0.0, 1.0) = 0.55;
-uniform float micro_detail : hint_range(0.0, 0.35) = 0.14;
+uniform float micro_detail : hint_range(0.0, 0.35) = 0.08;
 uniform vec3 sun_direction = vec3(0.55, 0.75, 0.35);
 
 varying vec3 v_world_n;
@@ -31,27 +31,18 @@ float hash13(vec3 p) {
 	return fract((p.x + p.y) * p.z);
 }
 
-float vnoise(vec3 p) {
-	vec3 i = floor(p);
-	vec3 f = fract(p);
-	f *= f * (3.0 - 2.0 * f);
-	float n000 = hash13(i);
-	float n100 = hash13(i + vec3(1.0, 0.0, 0.0));
-	float n010 = hash13(i + vec3(0.0, 1.0, 0.0));
-	float n110 = hash13(i + vec3(1.0, 1.0, 0.0));
-	float n001 = hash13(i + vec3(0.0, 0.0, 1.0));
-	float n101 = hash13(i + vec3(1.0, 0.0, 1.0));
-	float n011 = hash13(i + vec3(0.0, 1.0, 1.0));
-	float n111 = hash13(i + vec3(1.0, 1.0, 1.0));
-	float x00 = mix(n000, n100, f.x);
-	float x10 = mix(n010, n110, f.x);
-	float x01 = mix(n001, n101, f.x);
-	float x11 = mix(n011, n111, f.x);
-	return mix(mix(x00, x10, f.y), mix(x01, x11, f.y), f.z);
-}
-
-float fbm2(vec3 p) {
-	return vnoise(p) * 0.65 + vnoise(p * 2.05) * 0.35;
+float relief_fbm(float x, float z, int octaves) {
+	float v = 0.0;
+	float amp = 1.0;
+	float freq = 1.0;
+	float norm = 0.0;
+	for (int o = 0; o < octaves; o++) {
+		v += amp * sin(x * freq * 1.7 + z * freq * 1.3) * cos(z * freq * 0.9 - x * freq * 0.6);
+		norm += amp;
+		amp *= 0.5;
+		freq *= 2.05;
+	}
+	return v / max(norm, 0.001);
 }
 
 void vertex() {
@@ -60,38 +51,40 @@ void vertex() {
 
 void fragment() {
 	vec3 n = normalize(v_world_n);
-	float continent = fbm2(n * 2.15 + seed * 0.07) * 2.0 - 0.85;
-	float ridge = 1.0 - abs(fbm2(n * 4.8 + 1.3) * 2.0 - 1.0);
-	float elev = continent + ridge * 0.32;
-	float lat = abs(n.y);
-	/* Micro texture grain (land only later) */
-	float grain = vnoise(n * 28.0 + seed) * 2.0 - 1.0;
-	float dune_wave = sin(n.x * 40.0 + n.z * 22.0 + seed) * 0.5 + 0.5;
+	float lat = asin(clamp(n.y, -1.0, 1.0));
+	float lon = atan(n.x, n.z);
+	float x = lon * chart_radius;
+	float z = lat * chart_radius;
+	float sx = x * 0.07 + seed * 0.017;
+	float sz = z * 0.07 + seed * 0.013;
+	float continent = relief_fbm(sx * 0.12, sz * 0.12, 2);
+	float t = clamp((continent + 0.15) / 0.40, 0.0, 1.0);
+	float basin = t * t * (3.0 - 2.0 * t);
+	float ridge = 1.0 - abs(relief_fbm(sx * 0.35 + 2.1, sz * 0.35 - 1.4, 4));
+	ridge = pow(clamp(ridge, 0.0, 1.0), 1.6);
+	/* Cheap height sign: ocean when basin < 0.35 (same pull as PlanetRelief). */
+	float elev = mix(sea_level - 1.2, ridge * 6.0 * basin, step(0.35, basin));
+	float grain = sin(sx * 9.0 + sz * 7.0) * 0.5 + 0.5;
 
 	vec3 col = ocean_color.rgb;
 	float is_land = 0.0;
-	if (elev > sea_threshold + shore_width) {
-		float mt = smoothstep(mountain_threshold, mountain_threshold + 0.25, elev);
-		float arid = smoothstep(0.15, 0.55, elev) * (1.0 - mt) * (1.0 - lat);
+	if (elev > sea_level + 0.55) {
+		float mt = smoothstep(4.0, 6.0, elev);
 		col = mix(land_color.rgb, mountain_tint.rgb, mt);
-		col = mix(col, dune_color.rgb, arid * 0.45 * dune_wave);
-		col += grain * micro_detail * (0.5 + 0.5 * is_land);
+		col += vec3(grain * micro_detail);
 		is_land = 1.0 - mt * 0.35;
-		col += grain * micro_detail * is_land;
-	} else if (elev > sea_threshold) {
-		float t = (elev - sea_threshold) / max(shore_width, 0.001);
-		col = mix(ocean_color.rgb, mix(shore_color.rgb, land_color.rgb, 0.35), t);
-		col += grain * micro_detail * 0.35 * t;
-		is_land = t * 0.5;
+	} else if (elev > sea_level) {
+		float s = (elev - sea_level) / max(0.55, 0.001);
+		col = mix(ocean_color.rgb, mix(shore_color.rgb, land_color.rgb, 0.35), s);
+		is_land = s * 0.5;
 	} else {
-		float depth = clamp((sea_threshold - elev) * 2.0, 0.0, 1.0);
+		float depth = clamp((sea_level - elev) * 0.7, 0.0, 1.0);
 		col = mix(ocean_color.rgb * 1.12, ocean_color.rgb * 0.5, depth);
-		/* Soft specular sparkle on ocean (unshaded fake) */
 		float spark = step(0.97, hash13(floor(n * 90.0 + seed)));
 		col += vec3(0.15, 0.2, 0.25) * spark * (1.0 - depth);
 	}
-	if (lat > ice_lat) {
-		col = mix(col, ice_color.rgb, smoothstep(ice_lat, 0.98, lat));
+	if (abs(n.y) > ice_lat) {
+		col = mix(col, ice_color.rgb, smoothstep(ice_lat, 0.98, abs(n.y)));
 		is_land *= 0.3;
 	}
 

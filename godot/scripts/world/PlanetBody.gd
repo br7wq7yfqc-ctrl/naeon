@@ -10,6 +10,8 @@ const _ATMO_INNER_SHADER = preload("res://shaders/planet_atmosphere_inner.gdshad
 const _BaseBuilder = preload("res://scripts/world/BaseBuilder.gd")
 const _SurfaceDetail = preload("res://scripts/world/SurfaceDetail.gd")
 const _TerrainEdit = preload("res://scripts/world/PlanetTerrainEdit.gd")
+const _Relief = preload("res://scripts/world/PlanetRelief.gd")
+const _P0 = preload("res://scripts/world/P0Slice.gd")
 
 @export var planet_name: String = "Aexion-III"
 @export var radius: float = 1200.0
@@ -167,20 +169,22 @@ func _build_shell() -> void:
 	_surface_detail.name = "SurfaceDetail"
 	add_child(_surface_detail)
 	if _surface_detail.has_method("setup"):
-		_surface_detail.setup(self, radius, surface_color, planet_name.hash() % 10000)
-	call_deferred("_ensure_surface_fauna")
-	call_deferred("_ensure_surface_flora")
-	call_deferred("_ensure_surface_water")
-	call_deferred("_ensure_cave_mouths")
-	call_deferred("_ensure_cave_interior")
-	call_deferred("_ensure_landscape_features")
-
-	_terrain_edit = Node3D.new()
-	_terrain_edit.set_script(_TerrainEdit)
-	_terrain_edit.name = "TerrainEdit"
-	add_child(_terrain_edit)
-	if _terrain_edit.has_method("setup"):
-		_terrain_edit.setup(self, radius, surface_color, planet_name.hash() % 10000, planet_name)
+		_surface_detail.setup(self, radius, surface_color, body_seed())
+	if _P0.FILL_STREAMERS:
+		call_deferred("_ensure_surface_fauna")
+		call_deferred("_ensure_surface_flora")
+		call_deferred("_ensure_surface_water")
+		call_deferred("_ensure_cave_mouths")
+		call_deferred("_ensure_cave_interior")
+		call_deferred("_ensure_landscape_features")
+		_terrain_edit = Node3D.new()
+		_terrain_edit.set_script(_TerrainEdit)
+		_terrain_edit.name = "TerrainEdit"
+		add_child(_terrain_edit)
+		if _terrain_edit.has_method("setup"):
+			_terrain_edit.setup(self, radius, surface_color, body_seed(), planet_name)
+	else:
+		print("[PlanetBody] P0 fill streamers cut on ", planet_name)
 
 
 	_apply_lod_visual(1)  # start mid until first observer update
@@ -619,8 +623,9 @@ func current_lod_name() -> String:
 	
 
 func _spawn_pad_density() -> void:
-	_ensure_surface_flora()
-	_ensure_surface_fauna()
+	if _P0.FILL_STREAMERS:
+		_ensure_surface_flora()
+		_ensure_surface_fauna()
 	if _pads_root == null:
 		return
 	# Parent to a real pad, not the pads root: the root sits at the planet
@@ -687,7 +692,7 @@ func _ensure_surface_fauna() -> void:
 	add_child(f)
 	var pid: String = str(planet_name)
 	var atm: float = float(atmosphere_height)
-	var seed_i: int = int(absi(pid.hash()) % 10000)
+	var seed_i: int = body_seed()
 	if f.has_method("setup"):
 		f.call("setup", self, radius, atm, pid, seed_i)
 	var obs: Node3D = null
@@ -717,7 +722,7 @@ func _ensure_surface_water() -> void:
 	add_child(w)
 	var pid: String = str(planet_name)
 	if w.has_method("setup"):
-		w.call("setup", self, radius, pid, int(absi(pid.hash()) % 10000))
+		w.call("setup", self, radius, pid, body_seed())
 	var obs: Node3D = null
 	if has_method("_resolve_observer"):
 		obs = _resolve_observer()
@@ -740,7 +745,7 @@ func _ensure_landscape_features() -> void:
 	add_child(n)
 	var pid: String = str(planet_name)
 	if n.has_method("setup"):
-		n.call("setup", self, radius, pid, int(absi(pid.hash()) % 10000) + 3)
+		n.call("setup", self, radius, pid, body_seed() + 3)
 	var obs: Node3D = null
 	if has_method("_resolve_observer"):
 		obs = _resolve_observer()
@@ -759,7 +764,7 @@ func _ensure_cave_interior() -> void:
 	add_child(c)
 	var pid: String = str(planet_name)
 	if c.has_method("setup"):
-		c.call("setup", self, radius, pid, int(absi(pid.hash()) % 10000) + 9)
+		c.call("setup", self, radius, pid, body_seed() + 9)
 	var obs: Node3D = null
 	if has_method("_resolve_observer"):
 		obs = _resolve_observer()
@@ -777,7 +782,7 @@ func _ensure_cave_mouths() -> void:
 	add_child(c)
 	var pid: String = str(planet_name)
 	if c.has_method("setup"):
-		c.call("setup", self, radius, pid, int(absi(pid.hash()) % 10000) + 3)
+		c.call("setup", self, radius, pid, body_seed() + 3)
 	var obs: Node3D = null
 	if has_method("_resolve_observer"):
 		obs = _resolve_observer()
@@ -796,7 +801,7 @@ func _ensure_surface_flora() -> void:
 	if "radius" in self:
 		rad = float(radius)
 	if fl.has_method("setup"):
-		fl.setup(self, rad, int(abs(hash(name)) % 10000))
+		fl.setup(self, rad, body_seed() + 1)
 	if fl.has_method("set_observer"):
 		var obs = null
 		if has_method("_resolve_observer"):
@@ -818,11 +823,13 @@ func _apply_surface_uniforms(mat: ShaderMaterial) -> void:
 		ocean = Color(0.25, 0.05, 0.12)
 	elif str(planet_name) == "Shard-Moon":
 		ocean = Color(0.12, 0.14, 0.18)
-		mat.set_shader_parameter("sea_threshold", -0.15)
 		mat.set_shader_parameter("ice_lat", 0.55)
 	mat.set_shader_parameter("ocean_color", ocean)
 	mat.set_shader_parameter("shore_color", Color(0.42, 0.38, 0.22))
-	mat.set_shader_parameter("seed", float(absi(str(planet_name).hash()) % 97))
+	mat.set_shader_parameter("seed", float(body_seed()))
+	mat.set_shader_parameter("chart_radius", float(_Relief.CHART_RADIUS))
+	var prof: Dictionary = _Relief.profile_for_planet(str(planet_name))
+	mat.set_shader_parameter("sea_level", float(prof.get("sea_level", -0.35)))
 	mat.set_shader_parameter("sun_direction", _sun_dir)
 	mat.set_shader_parameter("emission_strength", 0.06)
 	mat.set_shader_parameter("city_intensity", 1.4)
@@ -833,36 +840,39 @@ func _apply_surface_uniforms(mat: ShaderMaterial) -> void:
 		mat.set_shader_parameter("city_light_color", Color(1.0, 0.35, 0.5))
 
 
+func body_seed() -> int:
+	return int(_Relief.body_seed(str(planet_name)))
+
+
+func shader_seed() -> int:
+	if _surface_shader_mat:
+		return int(_surface_shader_mat.get_shader_parameter("seed"))
+	return -1
+
+
 func relief_height_at(world_pos: Vector3) -> float:
-	var _R = load("res://scripts/world/PlanetRelief.gd")
-	if _R == null:
+	var prof: Dictionary = _Relief.profile_for_planet(str(planet_name))
+	var dir: Vector3 = (world_pos - global_position)
+	if dir.length_squared() < 1e-8:
 		return 0.0
-	var prof: Dictionary = _R.profile_for_planet(str(planet_name))
-	var dir: Vector3 = (world_pos - global_position).normalized()
-	var east: Vector3 = dir.cross(Vector3.UP)
-	if east.length_squared() < 1e-6:
-		east = dir.cross(Vector3.RIGHT)
-	east = east.normalized()
-	var north: Vector3 = east.cross(dir).normalized()
-	var to: Vector3 = world_pos - global_position
-	return float(_R.height_at(to.dot(east), to.dot(north), int(absi(str(planet_name).hash()) % 10000), prof))
+	return float(_Relief.height_at_dir(dir.normalized(), body_seed(), prof))
 
 
 
 func _sync_surface_visibility(dist: float) -> void:
-	## Park expensive surface streams when not near planet.
+	## Shared park: fill streamers stay off in P0. SurfaceDetail owns its
+	## own hysteresis and must keep processing so a return can restore cache.
 	var near_surf := dist < radius + 160.0
 	var mid_surf := dist < radius + 280.0
-	for nm in ["SurfaceDetail", "SurfaceFlora", "SurfaceFauna", "SurfaceWater", "CaveMouthField", "LandscapeFeatures", "CaveInterior"]:
+	for nm in ["SurfaceFlora", "SurfaceFauna", "SurfaceWater", "CaveMouthField", "LandscapeFeatures", "CaveInterior", "TerrainEdit"]:
 		var n := get_node_or_null(nm)
 		if n == null:
 			continue
-		var want := near_surf
-		if nm in ["SurfaceFlora", "SurfaceFauna", "CaveMouthField", "LandscapeFeatures"]:
-			want = near_surf
-		elif nm == "SurfaceWater":
-			want = mid_surf
-		elif nm == "SurfaceDetail":
-			want = mid_surf
+		var want := near_surf and _P0.FILL_STREAMERS
+		if nm == "SurfaceWater":
+			want = mid_surf and _P0.FILL_STREAMERS
 		n.visible = want
 		n.set_process(want)
+	if _surface_detail:
+		_surface_detail.visible = true
+		_surface_detail.set_process(true)

@@ -6,6 +6,7 @@ const _StarSystems = preload("res://scripts/world/StarSystemCatalog.gd")
 
 const ShipScene := preload("res://scenes/ship/Ship.tscn")
 const PlayerScene_PATH := "res://scenes/player/Player.tscn"
+const _P0 = preload("res://scripts/world/P0Slice.gd")
 
 @onready var world_root: Node3D = $WorldRoot
 @onready var floating: Node = $FloatingOrigin
@@ -52,8 +53,12 @@ func _ready() -> void:
 	_ensure_game_hud()
 	_setup_interior()
 	_setup_mechanics_playtest()
+	_setup_sandbox_playtest()
 	if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
 		floating.set_target(ship)
+	if floating != null and is_instance_valid(floating) and floating.has_signal("rebased"):
+		if not floating.rebased.is_connected(_on_origin_rebased):
+			floating.rebased.connect(_on_origin_rebased)
 	# Graphics
 	var gq := get_node_or_null("/root/GraphicsQuality")
 	if gq:
@@ -183,6 +188,9 @@ func _spawn_planets() -> void:
 	if ids.is_empty():
 		ids = PackedStringArray(["Nex-Prime", "ROT-Hive", "Shard-Moon"])
 	for pid in ids:
+		if not _P0.body_allowed(str(pid)):
+			print("[OpenSpace] P0 skip body ", pid)
+			continue
 		var pl: Node3D = Node3D.new()
 		pl.set_script(script)
 		_PlanetProfiles.apply_to(pl, pid)
@@ -253,7 +261,17 @@ func _setup_mechanics_playtest() -> void:
 	add_child(n)
 
 
+func _setup_sandbox_playtest() -> void:
+	var n := Node.new()
+	n.set_script(preload("res://scripts/test/SandboxPlaytest.gd"))
+	n.name = "SandboxPlaytest"
+	add_child(n)
+
+
 func _spawn_ship() -> void:
+	if planets.is_empty():
+		push_error("[OpenSpace] no planets to spawn ship over")
+		return
 	ship = ShipScene.instantiate()
 	world_root.add_child(ship)
 	# Start in free space above Nex-Prime atmosphere
@@ -765,7 +783,7 @@ func _update_hud() -> void:
 		hud_label.text = (
 			"NAEON OpenSpace  |  free flight · seamless land · surface walk\n"
 			+ "WASD thrust  Space/Shift lift  Mouse=flight plane  Z/X roll  |  1/2/3 flight  4 siege  5 ramp  6 rover  7 store  |  E land  F exit/EVA/board  C pulse  G/B terra  U undo  I interior  Q hack\n"
-			+ "F1 cycle quality  F3 HUD debug  |  Tab → TestArena\n"
+			+ "F1 cycle quality  F3 HUD debug  |  Tab Clash sandbox (not a map)  ·  M galaxy map locked\n"
 			+ "Mode: %s  Planet: %s  Alt: %dm  Spd: %d  HP:%d SHD:%d  PLOD:%s  CONTRIB:%.0f" % [
 				mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields), (pl.current_lod_name() if pl and is_instance_valid(pl) and pl.has_method("current_lod_name") else "-"), (GameManager.contribution if GameManager else 0.0)
 			]
@@ -826,7 +844,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_P:
 			if GameManager and GameManager.has_method("try_promote_alliance"):
 				GameManager.try_promote_alliance()
-		KEY_M, KEY_TAB:
+		KEY_M:
+			_toast_hud("Galaxy map locked (G2) — not implemented. M is not a map.")
+		KEY_TAB:
+			_toast_hud("Clash sandbox — not a galaxy map")
 			if ResourceLoader.exists("res://scenes/test/TestArena.tscn"):
 				get_tree().change_scene_to_file("res://scenes/test/TestArena.tscn")
 
@@ -1180,6 +1201,15 @@ func _walk_set_obs(n: Node, obs: Node3D) -> void:
 	for c in n.get_children():
 		_walk_set_obs(c, obs)
 
+
+
+func _on_origin_rebased(_offset: Vector3) -> void:
+	for pl in planets:
+		if pl == null or not is_instance_valid(pl):
+			continue
+		var sd: Node = pl.get_node_or_null("SurfaceDetail")
+		if sd != null and sd.has_method("refresh_all_xforms"):
+			sd.refresh_all_xforms()
 
 
 func _toast_hud(msg: String, ttl: float = 2.2) -> void:

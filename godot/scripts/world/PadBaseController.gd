@@ -157,14 +157,20 @@ func claim_pulse_from(actor: Node3D) -> bool:
 	return true
 
 func _find_actor() -> Node3D:
+	## Prefer whoever is actually in the ring. A cached ship in orbit made
+	## occupy look "present" while the meter decayed — or ignored a walker
+	## standing on the plate.
+	var in_zone: Node3D = _nearest_in_zone()
+	if in_zone != null:
+		_actor_cache = in_zone
+		_actor_cache_t = 0.15
+		return in_zone
 	_actor_cache_t -= get_process_delta_time() if is_inside_tree() else 0.0
 	if _actor_cache != null and is_instance_valid(_actor_cache) and _actor_cache_t > 0.0:
 		return _actor_cache
 	_actor_cache_t = 0.4
 	if SoftScanCache:
 		var sp: Node3D = SoftScanCache.get_player()
-		# A de-parented walker still passes is_instance_valid but has no
-		# global_transform, so distance checks would read the identity origin.
 		_actor_cache = sp if sp != null and sp.is_inside_tree() else null
 		return _actor_cache
 	var tree := get_tree()
@@ -180,6 +186,33 @@ func _find_actor() -> Node3D:
 			return _actor_cache
 	_actor_cache = null
 	return null
+
+
+func _nearest_in_zone() -> Node3D:
+	var tree := get_tree()
+	if tree == null or not is_inside_tree():
+		return null
+	var best: Node3D = null
+	var best_d := claim_radius
+	var cands: Array = []
+	if SoftScanCache:
+		var sp: Node3D = SoftScanCache.get_player()
+		if sp != null:
+			cands.append(sp)
+		for s in SoftScanCache.get_ships():
+			cands.append(s)
+	for p in tree.get_nodes_in_group("player"):
+		cands.append(p)
+	for s in tree.get_nodes_in_group("ship"):
+		cands.append(s)
+	for c in cands:
+		if c == null or not (c is Node3D) or not is_instance_valid(c) or not c.is_inside_tree():
+			continue
+		var d: float = (c as Node3D).global_position.distance_to(global_position)
+		if d <= best_d:
+			best = c as Node3D
+			best_d = d
+	return best
 
 func claim(faction_name: String, strength: float = 1.0) -> void:
 	_nudge_claim(faction_name, strength, true)
