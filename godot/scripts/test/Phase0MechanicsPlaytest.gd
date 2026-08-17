@@ -217,7 +217,19 @@ func _go() -> void:
 					if inf_st != 0:
 						fails.append("Firewall did not cleanse Infection")
 			if pad.has_method("claim"):
-				pad.claim("Cybernex", 2.0)
+				# Honest occupy can leave a high rival meter. claim(2.0) used
+				# to lock only because the old test accepted a decaying 0.08.
+				var cur_m := 0.0
+				if pad.has_method("get_occupy_strength"):
+					cur_m = float(pad.get_occupy_strength())
+				var side := ""
+				if pad.has_method("get_contest_side"):
+					side = str(pad.get_contest_side())
+				var need := 2.0
+				if side != "" and side != "Cybernex":
+					need = cur_m + 1.85
+				pad.claim("Cybernex", need)
+				print("[Playtest] lock claim Cybernex need=", snapped(need, 0.01), " was ", snapped(cur_m, 0.01), " side=", side)
 			var ow = pad.get("ownership")
 			if ow and ow.has_method("advance_transition"):
 				ow.advance_transition(8.0, 5.0)

@@ -189,6 +189,9 @@ func _find_actor() -> Node3D:
 
 
 func _nearest_in_zone() -> Node3D:
+	## Walker on the plate, or a landed ship. A hovering hull after launch
+	## must not keep the extractor running just because it is still inside
+	## the 40 m bubble.
 	var tree := get_tree()
 	if tree == null or not is_inside_tree():
 		return null
@@ -199,18 +202,27 @@ func _nearest_in_zone() -> Node3D:
 		var sp: Node3D = SoftScanCache.get_player()
 		if sp != null:
 			cands.append(sp)
-		for s in SoftScanCache.get_ships():
-			cands.append(s)
 	for p in tree.get_nodes_in_group("player"):
 		cands.append(p)
-	for s in tree.get_nodes_in_group("ship"):
-		cands.append(s)
 	for c in cands:
 		if c == null or not (c is Node3D) or not is_instance_valid(c) or not c.is_inside_tree():
+			continue
+		if c.is_in_group("ship"):
 			continue
 		var d: float = (c as Node3D).global_position.distance_to(global_position)
 		if d <= best_d:
 			best = c as Node3D
+			best_d = d
+	if best != null:
+		return best
+	for s in SoftScanCache.get_ships() if SoftScanCache else tree.get_nodes_in_group("ship"):
+		if s == null or not (s is Node3D) or not is_instance_valid(s) or not s.is_inside_tree():
+			continue
+		if not bool(s.get("is_landed")):
+			continue
+		var d: float = (s as Node3D).global_position.distance_to(global_position)
+		if d <= best_d:
+			best = s as Node3D
 			best_d = d
 	return best
 
