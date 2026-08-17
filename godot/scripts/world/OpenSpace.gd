@@ -611,6 +611,9 @@ func _spawn_eva_near_ship() -> void:
 	if ship == null or not is_instance_valid(ship):
 		return
 	player = _make_fallback_player()
+	# Set before add_child so _ready does not defer snap_to_surface onto dirt.
+	player.set("eva_mode", true)
+	player.set("zero_g", true)
 	world_root.add_child(player)
 	var hatch: Node3D = ship.get_node_or_null("HatchPoint") as Node3D
 	var side: Vector3 = ship.global_transform.basis.x

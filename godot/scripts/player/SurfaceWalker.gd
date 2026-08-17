@@ -393,7 +393,7 @@ func _firewall_break_nearby_channels() -> void:
 			n.cancel()
 
 func snap_to_surface() -> void:
-	if interior_mode:
+	if interior_mode or is_zero_g():
 		return
 	_update_up()
 	var space := get_world_3d().direct_space_state if get_world_3d() else null
