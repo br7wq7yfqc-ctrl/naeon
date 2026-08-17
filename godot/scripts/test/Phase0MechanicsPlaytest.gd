@@ -406,47 +406,8 @@ func _go() -> void:
 				d_st.exit_interior()
 			await get_tree().create_timer(0.25).timeout
 
-	# --- rover deploy / store on a landed pad ---
-	var sh_r: Node = os.get("ship")
-	if sh_r == null or pad_deck == null or not bool(sh_r.has_method("_try_deploy_rover")):
-		fails.append("no ship/pad for rover deploy")
-	else:
-		var up_r: Vector3 = pad_deck.get_meta("pad_up") if pad_deck.has_meta("pad_up") else Vector3.UP
-		if "velocity" in sh_r:
-			sh_r.velocity = Vector3.ZERO
-		sh_r.global_position = pad_deck.global_position + up_r * 6.0
-		if sh_r.has_method("_set_mode"):
-			sh_r._set_mode(2)
-		if sh_r.has_method("_do_land"):
-			sh_r._do_land()
-		if not bool(sh_r.get("is_landed")):
-			fails.append("ship not landed for rover deploy")
-		else:
-			sh_r._try_deploy_rover()
-			await get_tree().process_frame
-			var rov: Node3D = sh_r.get_deployed_rover() if sh_r.has_method("get_deployed_rover") else null
-			print("[Playtest] rover deployed=", rov != null)
-			if rov == null or not is_instance_valid(rov):
-				fails.append("rover did not deploy on landed pad")
-			elif not rov.has_method("board"):
-				fails.append("rover script missing board (parse)")
-			else:
-				if os.has_method("_try_store_rover"):
-					os._try_store_rover()
-				await get_tree().process_frame
-				var rov2: Node3D = sh_r.get_deployed_rover() if sh_r.has_method("get_deployed_rover") else null
-				print("[Playtest] rover stored=", rov2 == null)
-				if rov2 != null and is_instance_valid(rov2):
-					fails.append("rover still deployed after store")
-				var hold: Node = sh_r.get_node_or_null("CargoHold")
-				var nveh: int = 0
-				if hold != null:
-					var vehs: Variant = hold.get("vehicles")
-					if vehs is Array:
-						nveh = (vehs as Array).size()
-				print("[Playtest] cargo vehicles=", nveh)
-				if nveh < 1:
-					fails.append("rover store did not land in CargoHold")
+	# --- rover deploy → drive on Relief → stow (occupied unnamed pad) ---
+	await _rover_drive_slice(os, fails)
 
 	# --- HOVER mode + vacuum stall ---
 	var ship: Node = os.get("ship")
@@ -1683,6 +1644,187 @@ func _osh_invariants(fails: PackedStringArray) -> void:
 	var src := FileAccess.get_file_as_string("res://scripts/ship/ShipController.gd")
 	if src.find("FlightMode.CRUISE") >= 0 or src.find("mass_lock") >= 0:
 		fails.append("OS-H shipped G1 CRUISE / mass lock")
+
+
+func _rover_drive_slice(os: Node, fails: PackedStringArray) -> void:
+	## Occupied unnamed pad on the loaded Nex-Prime body. Same GroundVehicle.
+	## Knowledge may relabel. Speed / HP stay put.
+	var picked: Dictionary = _rover_pick_unnamed_pad(os)
+	var deck: Node3D = picked.get("deck") as Node3D
+	var ctrl: Node = picked.get("ctrl")
+	var nex: Node = picked.get("planet")
+	var sh_r: Node = os.get("ship")
+	if sh_r == null or deck == null or nex == null or not bool(sh_r.has_method("_try_deploy_rover")):
+		fails.append("no ship/unnamed pad for rover deploy")
+		return
+	if str(nex.get("planet_name")) != "Nex-Prime":
+		fails.append("rover pad not on Nex-Prime (%s)" % str(nex.get("planet_name")))
+		return
+	var pin := ""
+	if deck.has_meta("site_pin"):
+		pin = str(deck.get_meta("site_pin"))
+	if pin != "":
+		fails.append("rover pad minted SITE_* (%s)" % pin)
+		return
+	if ctrl != null and ctrl.has_method("claim"):
+		var st0 := str(ctrl.get_claim_status()) if ctrl.has_method("get_claim_status") else ""
+		if st0 != "owned":
+			ctrl.claim("Cybernex", 2.0)
+			var ow = ctrl.get("ownership")
+			if ow and ow.has_method("advance_transition"):
+				ow.advance_transition(8.0, 5.0)
+			await get_tree().process_frame
+	var st := str(ctrl.get_claim_status()) if ctrl != null and ctrl.has_method("get_claim_status") else ""
+	print("[Playtest] rover pad=", deck.name, " occupy=", st, " pin=", pin)
+	if st != "owned" and st != "claiming":
+		fails.append("rover pad not occupied (status=%s)" % st)
+		return
+
+	var up_r: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+	if "velocity" in sh_r:
+		sh_r.velocity = Vector3.ZERO
+	sh_r.global_position = deck.global_position + up_r * 6.0
+	if sh_r.has_method("_set_mode"):
+		sh_r._set_mode(2)
+	if sh_r.has_method("_do_land"):
+		sh_r._do_land()
+	if not bool(sh_r.get("is_landed")):
+		fails.append("ship not landed for rover deploy")
+		return
+
+	if bool(os.get("_in_rover")) and os.has_method("_unboard_rover"):
+		os._unboard_rover()
+	var already: Node3D = sh_r.get_deployed_rover() if sh_r.has_method("get_deployed_rover") else null
+	if already != null and is_instance_valid(already):
+		if os.has_method("_try_store_rover"):
+			os._try_store_rover()
+		await get_tree().process_frame
+
+	sh_r._try_deploy_rover()
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	var rov: Node3D = sh_r.get_deployed_rover() if sh_r.has_method("get_deployed_rover") else null
+	print("[Playtest] rover deployed=", rov != null)
+	if rov == null or not is_instance_valid(rov):
+		fails.append("rover did not deploy on occupied unnamed pad")
+		return
+	if not rov.has_method("board"):
+		fails.append("rover script missing board (parse)")
+		return
+	if str(rov.get("class_id")) != "rover":
+		fails.append("deployed a new vehicle class (%s)" % str(rov.get("class_id")))
+		return
+
+	var spd0: float = float(rov.get("speed"))
+	var hp0: float = float(rov.get("health"))
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("logistics", 20.0)
+	if rov.has_method("refresh_label"):
+		rov.refresh_label()
+	if absf(float(rov.get("speed")) - spd0) > 0.01:
+		fails.append("Knowledge changed rover speed")
+	if absf(float(rov.get("health")) - hp0) > 0.01:
+		fails.append("Knowledge changed rover HP")
+	var rlab := str(rov.label_text()) if rov.has_method("label_text") else ""
+	print("[Playtest] rover Knowledge label=", rlab, " speed=", rov.get("speed"), " hp=", rov.get("health"))
+	if rlab == "":
+		fails.append("Knowledge rover label empty")
+
+	if rov.has_method("snap_to_relief"):
+		rov.snap_to_relief()
+	var walker: Node3D = os.get("player") as Node3D
+	if (walker == null or not is_instance_valid(walker)) and os.has_method("try_exit_ship"):
+		if bool(os.get("_in_ship")):
+			os.try_exit_ship()
+			await get_tree().create_timer(0.25).timeout
+			walker = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("no walker to board rover")
+		return
+	walker.global_position = rov.global_position + up_r * 1.6
+	await get_tree().process_frame
+	if os.has_method("_try_board_nearby_rover"):
+		os._try_board_nearby_rover()
+	if not bool(os.get("_in_rover")):
+		fails.append("could not board rover")
+		return
+
+	var p0: Vector3 = rov.global_position
+	if rov.has_method("set_drive_command"):
+		rov.set_drive_command(1.0, 0.35)
+	await get_tree().create_timer(0.55).timeout
+	if rov.has_method("set_drive_command"):
+		rov.set_drive_command(1.0, -0.55)
+	await get_tree().create_timer(0.55).timeout
+	if rov.has_method("clear_drive_command"):
+		rov.clear_drive_command()
+	var p1: Vector3 = rov.global_position
+	var driven: float = p0.distance_to(p1)
+	var agl: float = float(nex.altitude_of(p1)) if nex.has_method("altitude_of") else -99.0
+	var rel_h: float = float(nex.relief_height_at(p1)) if nex.has_method("relief_height_at") else 0.0
+	print("[Playtest] rover drive ", snapped(driven, 0.01), "m AGL=", snapped(agl, 0.01), " relief=", snapped(rel_h, 0.01))
+	if driven < 1.2:
+		fails.append("rover did not drive on PlanetRelief (%s m)" % snapped(driven, 0.01))
+	if agl > 40.0 or agl < -6.0:
+		fails.append("rover left PlanetRelief (AGL %s)" % snapped(agl, 0.01))
+
+	if os.has_method("_unboard_rover"):
+		os._unboard_rover()
+	await get_tree().process_frame
+	# Stow needs the chassis near the landed hull after the loop.
+	if rov != null and is_instance_valid(rov) and sh_r is Node3D:
+		var back: Vector3 = (sh_r as Node3D).global_position + up_r * 1.2
+		if rov.global_position.distance_to((sh_r as Node3D).global_position) > 16.0:
+			rov.global_position = back
+			if rov.has_method("snap_to_relief"):
+				rov.snap_to_relief()
+	if os.has_method("_try_store_rover"):
+		os._try_store_rover()
+	await get_tree().process_frame
+	var rov2: Node3D = sh_r.get_deployed_rover() if sh_r.has_method("get_deployed_rover") else null
+	print("[Playtest] rover stored=", rov2 == null)
+	if rov2 != null and is_instance_valid(rov2):
+		fails.append("rover still deployed after store")
+	var hold: Node = sh_r.get_node_or_null("CargoHold")
+	var nveh: int = 0
+	if hold != null:
+		var vehs: Variant = hold.get("vehicles")
+		if vehs is Array:
+			nveh = (vehs as Array).size()
+	print("[Playtest] cargo vehicles=", nveh)
+	if nveh < 1:
+		fails.append("rover store did not land in CargoHold")
+
+
+func _rover_pick_unnamed_pad(os: Node) -> Dictionary:
+	var nex: Node = _osh_nex()
+	if nex != null and nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	var tree := get_tree()
+	if tree == null:
+		return {}
+	for pad in tree.get_nodes_in_group("pad_bases"):
+		if pad == null or not is_instance_valid(pad):
+			continue
+		var host: Node = pad
+		var deck: Node3D = null
+		while host:
+			if host.has_meta("pad_up") and host is Node3D:
+				deck = host as Node3D
+				break
+			host = host.get_parent()
+		if deck == null:
+			continue
+		var pin := str(deck.get_meta("site_pin")) if deck.has_meta("site_pin") else ""
+		if pin != "":
+			continue
+		var pl: Node = deck.get_meta("planet") if deck.has_meta("planet") else null
+		if pl == null:
+			pl = nex
+		if pl != null and str(pl.get("planet_name")) != "Nex-Prime":
+			continue
+		return {"deck": deck, "ctrl": pad, "planet": pl if pl != null else nex}
+	return {"deck": null, "ctrl": null, "planet": nex}
 
 
 func _osh_report_skips(fails: PackedStringArray, done: Dictionary, required: PackedStringArray) -> void:

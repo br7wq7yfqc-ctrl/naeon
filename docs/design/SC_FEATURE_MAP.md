@@ -36,7 +36,7 @@ Likeness — **вся** фантазия SC (лететь, стыковатьс�
 | 16 | Inventory / persistence | `SoftSession` local-first; `CargoHold` | form/faction/layer в `user://` | hangar later | insurance P2W |
 | 17 | Social | `AllianceRanks` | ранги + soft permissions | Voice later | pay-to-rank |
 | 18 | Map / nav | in-system pad pip (`GameHUD` radar) | пип пада жив | **G2 закрыт** | галактическая карта сейчас |
-| 19 | Ground vehicles | `GroundVehicle.gd` rover | деплой с пада, в CargoHold | **после OS-E** | отдельный планетарный гараж-клон |
+| 19 | Ground vehicles | `GroundVehicle.gd` rover | деплой с occupied unnamed пада, петля на Relief, обратно в CargoHold | hangar later | отдельный планетарный гараж-клон |
 | 20 | Character / forms | формы NAEON = идентичность | Canine/Feline/Avian/Human; dual-theme | косметика only | форма = статы |
 | 21 | Hacking / Infection | NAEON-native; `InfectionStatus` / Firewall / `ChannelController` | кап 5; Knowledge не множит урон | кап держать | Infection > 5; P2W hack |
 | 22 | Tech budget | `FloatingOrigin`; chunk budget; одна система; 60 FPS MED | origin rebase 2.5 км; LOD/park far planets; MED target | OS-A дешёвый macro FBM; без второй noise-планеты | вторая система; voxel shell; 2-й шум-мир |
@@ -53,7 +53,7 @@ CIG copy · воксели · SITE_* mint · G2–G6 сейчас · P2W · Trip
 
 | Класс | Факт репо |
 |-------|-----------|
-| Уже есть | SCM/HOVER/STALL/LAND, OpenSpace ARK, пады, EVA snap, Clash, Infection 5, Contribution, Alliance, pad pip, rover, local save, лимб + OS-B оболочка, OS-C подход 8 км, OS-D unnamed fill, OS-E near read, OS-F lift/glide, OS-G силуэт, OS-H harness ритуала |
+| Уже есть | SCM/HOVER/STALL/LAND, OpenSpace ARK, пады, EVA snap, Clash, Infection 5, Contribution, Alliance, pad pip, rover петля на Relief, local save, лимб + OS-B оболочка, OS-C подход 8 км, OS-D unnamed fill, OS-E near read, OS-F lift/glide, OS-G силуэт, OS-H harness ритуала |
 | Приближаем | 3090 FPS / 5 мин soak (human gate); zero-G (после честного OS-H на GPU) |
 | Отказ | quantum сейчас, карта галактики, гейты-прыжки, арена-из-мира (G5), города, каталожные SITE_*, воксели, P2W |
 

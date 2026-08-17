@@ -1,7 +1,9 @@
 extends CharacterBody3D
 class_name GroundVehicle
 const _Facing = preload("res://scripts/player/SurfaceFacing.gd")
+const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 ## Surface rover — radial gravity drive, nose = −Z, board/exit F.
+## Knowledge may relabel. It never writes speed / HP.
 
 @export var class_id: String = "rover"
 @export var display_name: String = "Rover"
@@ -12,6 +14,7 @@ const _Facing = preload("res://scripts/player/SurfaceFacing.gd")
 @export var brake: float = 28.0
 @export var volume_m3: float = 8.0
 @export var mass_t: float = 2.0
+@export var health: float = 100.0
 
 var pilot: Node3D = null
 var _provider: Node = null
@@ -21,6 +24,10 @@ var _yaw: float = 0.0
 var _cam: Camera3D
 var _speed_along: float = 0.0
 var _cam_pitch: float = -0.18
+var _label: Label3D = null
+var _cmd_throttle: float = 0.0
+var _cmd_turn: float = 0.0
+var _use_cmd: bool = false
 
 
 func _ready() -> void:
@@ -75,10 +82,61 @@ func _build_proxy() -> void:
 	_cam.look_at_from_position(_cam.position, Vector3(0, 1.0, 0), Vector3.UP)
 	add_child(_cam)
 	_cam.current = false
+	_ensure_label()
 
 
 func set_planet_provider(p: Node) -> void:
 	_provider = p
+	align_to_surface()
+
+
+func label_text() -> String:
+	return _SoftK.rover_label()
+
+
+func refresh_label() -> void:
+	if _label == null:
+		return
+	_label.text = label_text()
+
+
+func set_drive_command(throttle: float, turn: float) -> void:
+	## Headless / playtest steer. Keyboard still wins when a pilot is aboard.
+	_use_cmd = true
+	_cmd_throttle = clampf(throttle, -1.0, 1.0)
+	_cmd_turn = clampf(turn, -1.0, 1.0)
+
+
+func clear_drive_command() -> void:
+	_use_cmd = false
+	_cmd_throttle = 0.0
+	_cmd_turn = 0.0
+
+
+func align_to_surface() -> void:
+	if _provider and _provider.has_method("gravity_at"):
+		var g: Vector3 = _provider.gravity_at(global_position)
+		if g.length() > 0.2:
+			_up = (-g).normalized()
+	up_direction = _up
+	_apply_basis()
+
+
+func snap_to_relief() -> bool:
+	var pl: Node3D = _nearest_planet()
+	if pl == null or not ("radius" in pl):
+		return false
+	var dir: Vector3 = (global_position - pl.global_position)
+	if dir.length_squared() < 1e-6:
+		return false
+	dir = dir.normalized()
+	var h: float = _visual_relief_metres(pl)
+	global_position = pl.global_position + dir * (float(pl.radius) + h + 0.55)
+	velocity = Vector3.ZERO
+	_up = dir
+	up_direction = _up
+	_apply_basis()
+	return true
 
 
 func board(actor: Node3D) -> void:
@@ -134,7 +192,7 @@ func as_storage_entry() -> Dictionary:
 		"class_id": class_id,
 		"volume": volume_m3,
 		"mass": mass_t,
-		"health": 100.0,
+		"health": health,
 	}
 
 
@@ -157,17 +215,21 @@ func _physics_process(delta: float) -> void:
 			_up = (-g).normalized()
 	up_direction = _up
 
-	if pilot == null or not is_instance_valid(pilot):
+	if (pilot == null or not is_instance_valid(pilot)) and not _use_cmd:
 		_speed_along = move_toward(_speed_along, 0.0, brake * delta)
 		_apply_velocity(delta)
+		_relief_floor_assist(delta)
 		return
 
 	# Turn only when moving a bit (tank-ish)
 	var turn := 0.0
-	if Input.is_physical_key_pressed(KEY_A):
-		turn += 1.0
-	if Input.is_physical_key_pressed(KEY_D):
-		turn -= 1.0
+	if _use_cmd:
+		turn = _cmd_turn
+	else:
+		if Input.is_physical_key_pressed(KEY_A):
+			turn += 1.0
+		if Input.is_physical_key_pressed(KEY_D):
+			turn -= 1.0
 	var turn_scale := clampf(absf(_speed_along) / maxf(speed * 0.35, 0.01), 0.25, 1.0)
 	_yaw += turn * turn_speed * turn_scale * delta
 
@@ -178,14 +240,20 @@ func _physics_process(delta: float) -> void:
 	var max_spd := speed * grip
 
 	# Space = brake (rover envelope)
-	if Input.is_physical_key_pressed(KEY_SPACE):
+	var braking := (not _use_cmd) and Input.is_physical_key_pressed(KEY_SPACE)
+	if braking:
 		_speed_along = move_toward(_speed_along, 0.0, brake * 1.85 * delta)
 	else:
 		var throttle := 0.0
-		if Input.is_physical_key_pressed(KEY_W):
-			throttle += 1.0
-		if Input.is_physical_key_pressed(KEY_S):
-			throttle -= reverse_mult
+		if _use_cmd:
+			throttle = _cmd_throttle
+			if throttle < 0.0:
+				throttle *= reverse_mult
+		else:
+			if Input.is_physical_key_pressed(KEY_W):
+				throttle += 1.0
+			if Input.is_physical_key_pressed(KEY_S):
+				throttle -= reverse_mult
 		var target := throttle * max_spd
 		if absf(throttle) > 0.01:
 			_speed_along = move_toward(_speed_along, target, accel * grip * delta)
@@ -194,6 +262,7 @@ func _physics_process(delta: float) -> void:
 
 	_apply_basis()
 	_apply_velocity(delta)
+	_relief_floor_assist(delta)
 
 
 func _apply_basis() -> void:
@@ -223,6 +292,69 @@ func _apply_velocity(delta: float) -> void:
 	velocity = planar + _up * v_up
 	move_and_slide()
 
+
+func _nearest_planet() -> Node3D:
+	if _provider != null and is_instance_valid(_provider) and _provider.has_method("nearest_planet"):
+		var n: Node3D = _provider.nearest_planet(global_position)
+		if n != null:
+			return n
+	var tree := get_tree()
+	if tree == null:
+		return null
+	var best: Node3D = null
+	var best_d := 1.0e12
+	for node in tree.get_nodes_in_group("planets"):
+		if node is Node3D:
+			var d: float = global_position.distance_to((node as Node3D).global_position)
+			if d < best_d:
+				best_d = d
+				best = node as Node3D
+	return best
+
+
+func _visual_relief_metres(pl: Node3D) -> float:
+	if pl == null:
+		return 0.0
+	var h := 0.0
+	if pl.has_method("relief_height_at"):
+		h = float(pl.relief_height_at(global_position))
+	return h
+
+
+func _relief_floor_assist(delta: float) -> void:
+	## Collision is the bare sphere + pad plate. Drive on PlanetRelief like the walker.
+	var pl: Node3D = _nearest_planet()
+	if pl == null or not ("radius" in pl):
+		return
+	var dir: Vector3 = (global_position - pl.global_position)
+	if dir.length_squared() < 1e-6:
+		return
+	dir = dir.normalized()
+	var target_r: float = float(pl.radius) + _visual_relief_metres(pl) + 0.55
+	var cur_r: float = global_position.distance_to(pl.global_position)
+	var err: float = target_r - cur_r
+	if err > 0.25:
+		global_position += dir * err * clampf(delta * 8.0, 0.0, 1.0)
+	elif not is_on_floor() and err < -0.3 and err > -4.0:
+		global_position += dir * err * clampf(delta * 6.0, 0.0, 1.0)
+
+
+func _ensure_label() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	if _label != null and is_instance_valid(_label):
+		refresh_label()
+		return
+	_label = Label3D.new()
+	_label.name = "RoverLabel"
+	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_label.font_size = 22
+	_label.outline_size = 10
+	_label.outline_modulate = Color(0, 0, 0, 0.9)
+	_label.position = Vector3(0, 2.4, 0)
+	_label.modulate = Color(0.55, 0.9, 0.75)
+	add_child(_label)
+	refresh_label()
 
 
 func _try_load_chassis() -> bool:

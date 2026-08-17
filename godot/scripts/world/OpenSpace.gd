@@ -790,6 +790,10 @@ func _update_hud() -> void:
 		mode = str(ship.call("flight_mode_name")) if is_instance_valid(ship) and ship.has_method("flight_mode_name") else mode
 	if _in_rover:
 		mode = "ROVER"
+		if _rover != null and is_instance_valid(_rover) and _rover.has_method("label_text"):
+			var rlab := str(_rover.label_text())
+			if rlab != "":
+				mode = rlab
 	elif _interior != null and is_instance_valid(_interior) and _interior.has_method("is_inside") and bool(_interior.is_inside()):
 		mode = "INTERIOR"
 	elif _eva_mode:
@@ -799,7 +803,9 @@ func _update_hud() -> void:
 	var gq := get_node_or_null("/root/GraphicsQuality")
 	var gqn: String = gq.tier_name() if gq else "?"
 	var spd: float = 0.0
-	if _in_ship and is_instance_valid(ship):
+	if _in_rover and _rover != null and is_instance_valid(_rover) and "velocity" in _rover:
+		spd = float(_rover.velocity.length())
+	elif _in_ship and is_instance_valid(ship):
 		spd = ship.velocity.length()
 	elif player != null and is_instance_valid(player):
 		spd = player.velocity.length()
@@ -824,7 +830,7 @@ func _update_hud() -> void:
 		extra = "  ·  " + str(_interior.life_support_line())
 	elif _in_ship:
 		if bool(ship.get("is_landed")):
-			extra = "  ·  LANDED — Space/E takeoff · F EVA · C claim"
+			extra = "  ·  LANDED — 6 rover · 7 store · F EVA · C claim"
 		else:
 			if ship.has_method("get_stall") and float(ship.get_stall()) > 0.4:
 				extra = "  ·  STALL %.0f%%" % (float(ship.get_stall()) * 100.0)

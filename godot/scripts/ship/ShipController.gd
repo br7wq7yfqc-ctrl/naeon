@@ -1283,6 +1283,8 @@ func _try_deploy_rover() -> void:
 	rover.global_position = global_position + aft * 6.0 + up * 1.0
 	if rover.has_method("set_planet_provider") and _open_space:
 		rover.set_planet_provider(_open_space)
+	if rover.has_method("snap_to_relief"):
+		rover.snap_to_relief()
 	_deployed_rover = rover
 	print("[Ship] Rover deployed")
 
