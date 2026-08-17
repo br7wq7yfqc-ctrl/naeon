@@ -41,7 +41,7 @@ static func vertex_dir(radius: float, cell: Vector2i, cell_m: float, px: float, 
 	return raw.normalized()
 
 
-static func cell_transform(planet_pos: Vector3, radius: float, cell: Vector2i, cell_m: float, lift: float = 0.35) -> Transform3D:
+static func cell_transform(planet_pos: Vector3, radius: float, cell: Vector2i, cell_m: float, lift: float = 0.02) -> Transform3D:
 	var dir := cell_center_dir(cell, radius, cell_m)
 	var t := stable_tangent(dir)
 	var east: Vector3 = t[0]

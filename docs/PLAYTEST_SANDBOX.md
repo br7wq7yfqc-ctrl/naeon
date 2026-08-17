@@ -116,17 +116,30 @@ MECHANICS_IS_NOT_HUMAN_GATE=true
 
 ---
 
-## 6. Что ещё HUMAN_UNFIT
+## 6. P0.3 GPU (RTX 3090) — прогон живой, HUMAN_UNFIT остаётся
 
-- 5 мин soak и freeze >100 мс — только на GPU владельца.
+Владелец: OPEN SPACE ~10 мин, без crash/hang, спуск 770 м, LAND READY→LANDED, EVA и обратно. Кольцо перестраивается без swim/дыр.
+
+Что чинили на той же ветке (не выдумывали):
+
+- HUD: OBJECTIVE сверху, hint под ним; LAYER + GFX/FPS одним стеком справа. После LANDED нет STALL. PADS показывает 1 точку со сдвигом (P0.2 = один пад).
+- Окно: windowed, не always-on-top; close/Esc снимают capture и выходят. Alt-tab отпускает мышь.
+- Взлёт: Space / W / E после lock. Хинт «Space/E takeoff».
+- Чанки: радиальные вершины, overlap 40.8 м, lift 0.02, far-sphere прячется под live detail, unshaded + MED res=12. Rebuild/park не резали.
+
+Повтор на 3090: F5 → OPEN SPACE → спуск → E land → F EVA → F board → Space takeoff.
+
+## 7. Что ещё HUMAN_UNFIT
+
+- 5 мин soak и freeze >100 мс — подтверждать снова на GPU владельца после этого патча.
 - rules/25 FPS на llvmpipe **не** измеряем и **не** подписываем.
-- Dummy MNULL=0 на этом стенде ≠ «можно давать человеку». На GPU те же free деревьев (интерьер, пад, ровер) всё ещё hitch-риск, просто без dummy spam.
-- P0.2 полный DoD из плана (Tripo-герой) **не** открыт — нет GPU/ключей. P0.3–P0.5 не открыты.
+- Dummy MNULL=0 на этом стенде ≠ «можно давать человеку».
+- P0.2 полный DoD (Tripo-герой) **не** открыт. P0.4–P0.5 не открыты.
 - G1–G6 locked. `M` = тост locked. `Tab` = Clash sandbox.
 
 ---
 
-## 7. Как повторить
+## 8. Как повторить
 
 ```bash
 ./scripts/playtest_sandbox.sh

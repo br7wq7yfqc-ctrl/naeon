@@ -917,3 +917,10 @@ func _sync_surface_visibility(dist: float) -> void:
 	if _surface_detail:
 		_surface_detail.visible = true
 		_surface_detail.set_process(true)
+		# Far sphere under live chunks reads as dark floating LOD quads.
+		# Collision stays on the body; only the visual shell hides.
+		var detail_on := _surface_detail.has_method("is_parked") and not bool(_surface_detail.is_parked())
+		if _mesh and _current_lod < 3:
+			_mesh.visible = not detail_on
+		if _impostor and detail_on:
+			_impostor.visible = false

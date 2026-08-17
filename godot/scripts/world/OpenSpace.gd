@@ -771,14 +771,15 @@ func _update_hud() -> void:
 	if mode == "INTERIOR" and _interior.has_method("life_support_line"):
 		extra = "  ·  " + str(_interior.life_support_line())
 	elif _in_ship:
-		if ship.has_method("get_flight_status_line") and "STALL" in str(ship.get_flight_status_line()):
-			extra = "  ·  STALL"
-		# The land gate is honest; without this the player cannot see which
-		# condition still fails and reads the refusal as a bug.
-		if ship.has_method("land_readiness_line"):
-			var lr := str(ship.land_readiness_line())
-			if lr != "":
-				extra += "  ·  " + lr
+		if bool(ship.get("is_landed")):
+			extra = "  ·  LANDED — Space/E takeoff · F EVA · C claim"
+		else:
+			if ship.has_method("get_stall") and float(ship.get_stall()) > 0.4:
+				extra = "  ·  STALL %.0f%%" % (float(ship.get_stall()) * 100.0)
+			if ship.has_method("land_readiness_line"):
+				var lr := str(ship.land_readiness_line())
+				if lr != "" and lr != "LANDED":
+					extra += "  ·  " + lr
 	var brief := "%s  ·  %s  ·  %s  ·  %d m/s  ·  HP %d  SHD %d%s  ·  occupy/C  E land  F EVA" % [
 		mode, loc, alt_s, int(spd), int(ship.health), int(ship.shields), extra
 	]
@@ -815,12 +816,18 @@ func _update_hud() -> void:
 			pf = int(PP.free_count())
 		hud_label.text += "\nMEM obj:%d nodes:%d ram:%dMB  detail %d/%d  proj %d/%d" % [objs, nodes, oram, live, pool, pa, pf]
 	var oram2 := int(Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0)
+	# GameHUD owns the top-right GFX/FPS stack so Mode does not sit on LAYER.
 	if mode_label:
+		mode_label.visible = false
 		mode_label.text = "GFX: %s  MEM %dMB" % [gqn, oram2]
+	var gh_stack = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+	if gh_stack and gh_stack.has_method("set_gfx_line"):
+		gh_stack.set_gfx_line(gqn, oram2)
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and (event.keycode == KEY_ESCAPE or event.physical_keycode == KEY_ESCAPE):
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 		get_tree().change_scene_to_file("res://scenes/ui/MainMenu.tscn")
 		return
 	if not (event is InputEventKey and event.pressed and not event.echo):
@@ -1147,8 +1154,8 @@ func _phase0_space_feel() -> void:
 		e.background_mode = Environment.BG_COLOR
 		e.background_color = Color(0.01, 0.015, 0.04)
 		e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-		e.ambient_light_color = Color(0.08, 0.1, 0.16)
-		e.ambient_light_energy = 0.35
+		e.ambient_light_color = Color(0.12, 0.16, 0.22)
+		e.ambient_light_energy = 0.55
 	var sun := get_node_or_null("Sun") as DirectionalLight3D
 	if sun:
 		sun.light_energy = 1.35

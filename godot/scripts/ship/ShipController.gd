@@ -407,8 +407,8 @@ func _physics_process(delta: float) -> void:
 		_stick_to_pad()
 		if _thruster_fx and is_instance_valid(_thruster_fx):
 			_thruster_fx.emitting = false
-		# Ignore accidental launch for lock window (prevents "lift on land")
-		if _land_lock_t <= 0.0 and Input.is_action_just_pressed("ability_2"):
+		# W / Space / Shift+W / E — E-only left the ship glued after LANDED.
+		if _wants_takeoff():
 			_do_launch()
 		_tick_combat(delta)
 		_update_status()
@@ -584,6 +584,7 @@ func _do_land() -> void:
 func _commit_land(pad: Node3D) -> void:
 	velocity = Vector3.ZERO
 	is_landed = true
+	_stall = 0.0
 	_land_lock_t = 1.25
 	_landed_pad = pad
 	if pad:
@@ -606,16 +607,26 @@ func _commit_land(pad: Node3D) -> void:
 	landed.emit()
 	if pad:
 		print("[Ship] Landed on pad ", pad.name)
-		_toast_ship("Landed — C to claim (soft ownership, no combat power)")
+		_toast_ship("Landed — Space/E takeoff · F EVA · C claim")
 	else:
-		_toast_ship("Surface land — C near a pad to claim")
+		_toast_ship("Surface land — Space/E takeoff · C near a pad to claim")
+
+func _wants_takeoff() -> bool:
+	if Input.is_action_just_pressed("jump"):
+		return true
+	if Input.is_action_just_pressed("move_forward"):
+		return true
+	if Input.is_action_just_pressed("ability_2"):
+		return true
+	return false
+
 
 func _do_launch() -> void:
 	if not is_landed:
 		return
 	if _land_lock_t > 0.0:
 		print("[Ship] Launch lock ", "%.2f" % _land_lock_t, "s")
-		_toast_ship("Launch lock %.1fs" % _land_lock_t)
+		_toast_ship("Takeoff in %.1fs — Space / E" % _land_lock_t)
 		return
 	var up_boost: Vector3 = _reference_up()
 	var nose: Vector3 = -global_transform.basis.z
@@ -628,7 +639,7 @@ func _do_launch() -> void:
 	velocity = up_boost * 3.5 + nose * 1.5
 	launched.emit()
 	print("[Ship] Launched")
-	_toast_ship("Launched")
+	_toast_ship("Takeoff — WASD fly · Space lift · 3 HOVER")
 
 func detach_module(index: int) -> void:
 	if index < 0 or index >= modules.size():
@@ -1510,13 +1521,12 @@ func get_op_mode_name() -> String:
 
 
 func get_flight_status_line() -> String:
+	if is_landed:
+		return "%s · SPD 0 · LANDED — Space/E takeoff · F EVA · C claim" % flight_mode_name()
 	var st := "%s · %s · SPD %d" % [flight_mode_name(), get_op_mode_name(), int(velocity.length())]
 	if _stall > 0.28:
 		st += " · STALL %.0f%%" % (_stall * 100.0)
-	if is_landed:
-		st += " · LANDED · 2 launch · C claim"
-	else:
-		st += "  ·  " + land_readiness_line()
+	st += "  ·  " + land_readiness_line()
 	return st
 
 

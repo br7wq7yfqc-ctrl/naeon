@@ -11,7 +11,7 @@ const _Relief = preload("res://scripts/world/PlanetRelief.gd")
 const _P0 = preload("res://scripts/world/P0Slice.gd")
 
 const CELL_M := 40.0
-const PATCH_SIZE := 38.0
+const PATCH_SIZE := 40.8
 const DEFAULT_RES := 8
 const LOAD_BUDGET := 1          ## new meshes per stream tick (global park shares this)
 const STREAM_HZ := 0.28         ## ~3.5 Hz default; LOW slower
@@ -84,6 +84,10 @@ func _apply_quality() -> void:
 			_load_ring = 1
 			_unload_ring = 2
 			_res = 8
+		1:
+			_load_ring = 2
+			_unload_ring = 3
+			_res = 12
 		2:
 			_load_ring = 2
 			_unload_ring = 3
@@ -230,7 +234,7 @@ func _desired_ring() -> int:
 
 
 func _cache_key(cell: Vector2i) -> String:
-	return "%d:%d:r%d:v3" % [cell.x, cell.y, _res]
+	return "%d:%d:r%d:v4" % [cell.x, cell.y, _res]
 
 
 func _restore_ring(center: Vector2i, ring: int) -> void:
@@ -280,14 +284,15 @@ func _spawn_cell(cell: Vector2i) -> void:
 		mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
 		var mat := StandardMaterial3D.new()
 		mat.vertex_color_use_as_albedo = true
-		mat.albedo_color = _surface_color.lightened(0.04)
-		mat.roughness = 0.96
+		mat.albedo_color = Color(1, 1, 1)
+		mat.roughness = 0.92
 		mat.metallic = 0.0
 		mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-		mat.emission_enabled = false
-		var gq := get_node_or_null("/root/GraphicsQuality")
-		if gq and int(gq.tier) <= 0:
-			mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
+		# Unshaded: PBR + wrong patch normals read as a black walk surface.
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.emission_enabled = true
+		mat.emission = Color(0.08, 0.1, 0.12)
+		mat.emission_energy_multiplier = 0.35
 		mi.material_override = mat
 		# Placeholder mesh so RID never null when entering tree
 		var ph := BoxMesh.new()
@@ -327,7 +332,7 @@ func _refresh_xform(cell: Vector2i) -> void:
 	if not _live.has(cell) or _planet == null:
 		return
 	var n: Node3D = _live[cell]
-	n.global_transform = _Math.cell_transform(_planet.global_position, _radius, cell, CELL_M, 0.35)
+	n.global_transform = _Math.cell_transform(_planet.global_position, _radius, cell, CELL_M, 0.02)
 
 
 func _mesh_for_cell(cell: Vector2i) -> Variant:
@@ -354,6 +359,11 @@ func _build_height_mesh(cell: Vector2i) -> ArrayMesh:
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var half := PATCH_SIZE * 0.5
 	var step := PATCH_SIZE / float(_res - 1)
+	var dir_c: Vector3 = _Math.cell_center_dir(cell, _radius, CELL_M)
+	var tang: Array = _Math.stable_tangent(dir_c)
+	var east: Vector3 = tang[0]
+	var north: Vector3 = tang[1]
+	var origin: Vector3 = dir_c * (_radius + 0.02)
 	var verts: Array[Vector3] = []
 	var colors: PackedColorArray = PackedColorArray()
 	verts.resize(_res * _res)
@@ -368,26 +378,29 @@ func _build_height_mesh(cell: Vector2i) -> ArrayMesh:
 			var wx: float = chart.x
 			var wz: float = chart.y
 			var h: float = float(_Relief.height_at_dir(dir, _seed, _relief_profile))
-			var col: Color = _surface_color
+			var col: Color = _surface_color.lightened(0.12)
 			var biome: String = str(_Relief.biome_hint(wx, wz, h, _seed, _relief_profile))
 			if h < sea or biome == "ocean":
 				h = sea
-				col = Color(0.12, 0.28, 0.48).lerp(Color(0.08, 0.4, 0.55), 0.4)
+				col = Color(0.18, 0.38, 0.58).lerp(Color(0.12, 0.48, 0.62), 0.4)
 			elif biome == "shore" or h < sea + 0.55:
-				col = Color(0.45, 0.4, 0.28).lerp(_surface_color, 0.35)
+				col = Color(0.55, 0.48, 0.32).lerp(_surface_color, 0.35)
 			elif biome == "mesa":
-				col = Color(0.55, 0.38, 0.22).lerp(_surface_color, 0.3)
+				col = Color(0.62, 0.44, 0.28).lerp(_surface_color, 0.3)
 			elif biome == "dunes":
-				col = Color(0.72, 0.62, 0.35).lerp(_surface_color, 0.25)
+				col = Color(0.78, 0.68, 0.4).lerp(_surface_color, 0.25)
 			elif biome == "crater":
-				col = Color(0.25, 0.22, 0.2).lerp(_surface_color, 0.35)
+				col = Color(0.38, 0.34, 0.3).lerp(_surface_color, 0.35)
 			elif biome == "alpine" or h > 5.0:
-				col = Color(0.55, 0.55, 0.58).lerp(_surface_color, 0.25)
+				col = Color(0.62, 0.62, 0.66).lerp(_surface_color, 0.25)
 			elif biome == "canyon" or bool(_Relief.is_canyon(wx, wz, _seed)):
-				col = Color(0.35, 0.22, 0.15).lerp(_surface_color, 0.4)
+				col = Color(0.45, 0.3, 0.2).lerp(_surface_color, 0.4)
 			elif biome == "river" or bool(_Relief.is_river(wx, wz, _seed, _relief_profile)):
-				col = Color(0.15, 0.35, 0.5).lerp(_surface_color, 0.3)
-			verts[z * _res + x] = Vector3(px, h, pz)
+				col = Color(0.22, 0.42, 0.58).lerp(_surface_color, 0.3)
+			# Radial placement: tangent-plane (px,h,pz) left cliffs + floating quads.
+			var world: Vector3 = dir * (_radius + h)
+			var rel: Vector3 = world - origin
+			verts[z * _res + x] = Vector3(rel.dot(east), rel.dot(dir_c), -rel.dot(north))
 			colors[z * _res + x] = col
 	for z in _res - 1:
 		for x in _res - 1:
@@ -433,11 +446,17 @@ func _ensure_vertex_mat(mi: MeshInstance3D) -> void:
 	if mi.material_override != null:
 		var ex = mi.material_override
 		if ex is StandardMaterial3D:
-			(ex as StandardMaterial3D).vertex_color_use_as_albedo = true
+			var sm := ex as StandardMaterial3D
+			sm.vertex_color_use_as_albedo = true
+			sm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		return
 	var mat := StandardMaterial3D.new()
 	mat.vertex_color_use_as_albedo = true
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.roughness = 0.92
 	mat.metallic = 0.02
-	mat.albedo_color = _surface_color
+	mat.albedo_color = Color(1, 1, 1)
+	mat.emission_enabled = true
+	mat.emission = Color(0.08, 0.1, 0.12)
+	mat.emission_energy_multiplier = 0.35
 	mi.material_override = mat
