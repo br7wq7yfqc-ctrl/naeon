@@ -60,7 +60,7 @@ Headless `[Playtest] PASS` и зонд на dummy — не человеческ�
 - Спавн OPEN SPACE — 8 км AGL (OS-C). Петля 770 м жива снизу.
 - Два сэмплера высоты: дальний шейдер (дешёвый FBM-subset) vs `PlanetRelief`. Шов WorldFill §5 — первый визуальный must. Seed/chart на P0.6 уже общие; континенты с орбиты всё ещё не равны полному Relief.
 - Облаков нет (не OS-B). Вход: лимб + туман + тонкая плотность на 770 м.
-- Почти нет unnamed scatter и силуэта аванпоста с высоты. OS-D: 3 unnamed пада + редкий rock/crate с ~2 км. OS-G: мачта+habitat на одном паде, читается с 8 км.
+- Почти нет unnamed scatter и силуэта аванпоста с высоты. OS-D: 3 unnamed пада + denser unnamed scatter (ящики / `debris_cluster` / pad-пропсы / лишние мачты) с ~2 км и у грунта. OS-G: мачта+habitat на одном паде, читается с 8 км.
 - Грунт достаточно читаем, чтобы стоять. OS-E: near shader (albedo / декали / near LOD) на тех же чанках; бинарников в git нет.
 - S-sink есть. Drag/потолок оболочки — OS-B. OS-F: подъём/планирование в плотном слое; 770 м тонкая оболочка без крыла.
 - Три unnamed пада (`Pad_North` class). OS-G: один силуэт на `Pad_Approach`.
@@ -99,9 +99,9 @@ Scatter + туман + плотность, которая уже трогает 
 
 WorldFill: scatter + дополнительные unnamed пады, читаемые с ~2 км. CC0/сканы первыми. Не `SITE_*`.
 
-**В этом срезе:** `Pad_North` + `Pad_Approach` + `Pad_Flank` (локальные имена). Редкий rock/crate — code-first proxy, CC0 строки в `p0_filler_manifest.json`. Стримеры и `PadDensity` выключены. Чанк-бюджет не трогали.
+**В этом срезе:** `Pad_North` + `Pad_Approach` + `Pad_Flank` (локальные имена). Denser unnamed scatter с полок ledger: crate filler IDs, `debris_cluster`, `t1_resource_extractor`, `utility_bay`, extra mast (`outpost_mast_cc0`) на пластинах без OS-G. Code-first proxy, если GLB нет в git. CC0 строки только те, что уже были в `p0_filler_manifest.json`. Стримеры и `PadDensity` выключены. Чанк-бюджет не трогали. Не новый `SITE_*`.
 
-**DoD:** с 2 км видны 2+ пластины и редкий грунт/скала. Нет live-хаоса семи стримеров. Git без GLB.
+**DoD:** с 2 км видны 2+ пластины и unnamed clutter (ящики / обломки / мачта / pad-проп). У грунта те же узлы. Нет live-хаоса семи стримеров. Git без GLB.
 
 ### OS-E — чтение у ног
 

@@ -1,7 +1,7 @@
 # NAEON — WorldFill
 
 **Status:** design authority for unnamed fill inside an already-loaded body or
-system. **Version 1.3, 2026-08-16.**
+system. **Version 1.4, 2026-08-17.**
 
 This document is the contract. It does **not** replace
 `docs/design/GALAXY_LAYER_PLAN.md` (authored galaxy, travel, maps, gates) or
@@ -96,6 +96,7 @@ not a second modulo for the shader, not a default `seed_i = 11` per subsystem.
 | Water / cave mouths / cave interior | Near-field only, Relief SDF | Same body seed for height; channel offset for prop RNG |
 | Belt rocks | Unnamed rocks **inside the authored band** | System-or-body seed; count by quality tier |
 | Unnamed pads | Land / claim / harvest plates (`Pad_North` class) | Stable from body seed + local dir. **No `SITE_*`** |
+| Unnamed pad clutter / field scatter | Crates, debris, extra masts, extractor / utility **proxies** tagged with **existing** ledger slugs (`debris_cluster`, `t1_resource_extractor`, `utility_bay`) or existing filler IDs (`pad_crate_cc0`, `scatter_crate_cc0`, `outpost_mast_cc0`) | Body seed + channel offset. Code-first if GLB is not in git. **No new slug. No `SITE_*`.** |
 
 Unnamed pads may be occupy-to-hold and may carry Dynamic Ownership visuals.
 That is logistics, not story. They are not quest targets, not legendary, not
@@ -259,14 +260,14 @@ bodies already in memory (ARK) and does not wait on G2.
 
 ---
 
-## 6. Каталог — дыры (факты 2026-08-15, не новый catalog)
+## 6. Каталог — дыры (факты 2026-08-15, перечитаны 2026-08-17, не новый catalog)
 
-Источник: `docs/design/ASSET_CATALOG.md` v1.25 + `docs/asset_positions.json` v2.1. Цифры **не сводить**. SITE_* / UUID не чеканить.
+Источник: `docs/design/ASSET_CATALOG.md` v1.25 + `docs/asset_positions.json` v2.1. Цифры **не сводить**. SITE_* / UUID не чеканить. Пересчёт `items` 2026-08-17: **137** позиций, `bound_sheets` **213** — без изменения.
 
 | Документ | Что пишет |
 |----------|-----------|
 | `ASSET_CATALOG.md` | ~134 позиции, 213 листов; **67 UUID + 58 dump**; 13 index-only; 11 unfactioned templates; 1 chat-lock без file |
-| `asset_positions.json` (перечитан) | **137** `items` / `positions`, `bound_sheets` **213**, `updated` 2026-08-15 |
+| `asset_positions.json` (перечитан 2026-08-17) | **137** `items` / `positions`, `bound_sheets` **213**, `updated` 2026-08-15 |
 | `approved_sketches.json` | `positions_unbound`: **1** (CX interceptor) |
 | `SESSION_STATUS.md` | 134 / 213 / 67+58 — та же сессия каталога |
 
@@ -296,7 +297,7 @@ OS-A остаётся первым кодом. Это очередь ассет�
 
 | # | Что | Зачем | Не делать |
 |---|-----|-------|-----------|
-| 1 | Ready-made fill | OS-D/E: unnamed dirt/rock/tile/crate/cable/HDRI в `s3://neon`. OS-G: code-first мачта/habitat на уже существующем паде | Tripo на грязь; commit в git; mint SITE_* |
+| 1 | Ready-made fill | OS-D/E: unnamed dirt/rock/tile/crate/cable/HDRI в `s3://neon`. OS-D denser: code-first scatter + pad clutter с **уже существующих** slug (`debris_cluster`, `t1_resource_extractor`, `utility_bay`) и filler ID (`pad_crate_cc0`, `outpost_mast_cc0`). OS-G: одна мачта/habitat на уже существующем паде | Tripo на грязь; commit в git; mint SITE_*; новый slug / UUID |
 | 2 | Tripo с **уже locked** пластин без честного GLB | Beacons: `cybernex_claim_beacon` / `grot_claim_beacon` (dump `phjM0` / `nFxgT`). Pad / extractor / debris — **slug в ledger, lock-строки в `approved_sketches` нет** — сначала lock существующей пластины, не mint ID. Outpost-kit: slug нет → skip | выдумать UUID; вторая волна капиталок |
 | 3 | Новые пластины только на **титульную дыру** ledger | CX interceptor; interiors (0 locked); арена tower/inhib/core **если** кроме `tower_iouter_mid_inhibi` структуры нет | SITE_*; новая city-map |
 | 4 | Капиталы | уже толсто | ещё одна capital-ship wave |

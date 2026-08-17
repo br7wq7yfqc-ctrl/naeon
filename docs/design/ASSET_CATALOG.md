@@ -2,7 +2,8 @@
 
 **Version:** 1.25 · **Updated:** 2026-08-15  
 **Rule:** this file lists **locked only**. In-review / draft / dump do not belong here.  
-Locked plates are **unique** (Tripo). Unnamed ground / scatter is not this catalog — `docs/design/WORLD_FILL.md` §3.1.
+Locked plates are **unique** (Tripo). Unnamed ground / scatter is not this catalog — `docs/design/WORLD_FILL.md` §3.1.  
+World density on Nex-Prime uses **existing** env/colony/prop slugs as code-first proxies. This revision does **not** add locked plates; hole counts below are unchanged.
 
 Git ledger: [`docs/asset_positions.json`](../asset_positions.json) — **134 positions, 213 sheets**.  
 Locks: [`docs/design/approved_sketches.json`](approved_sketches.json) — **67 UUID + 58 dump IDs**, none invented.
