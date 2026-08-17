@@ -550,6 +550,7 @@ func _go() -> void:
 	_osf_atmo_flight(fails)
 	_osg_outpost_silhouette(fails)
 	_pad_traffic_present(fails)
+	await _eva_snap_pulse(fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
@@ -1932,6 +1933,154 @@ func _pad_traffic_present(fails: PackedStringArray) -> void:
 	if glabel == "":
 		fails.append("Knowledge pad-guard label empty")
 	print("[Playtest] pad traffic present host=", host.name, " guard_d=", snapped(gd, 0.1), " visitor_d=", snapped(vd, 0.1), " label=", glabel)
+
+
+func _eva_snap_pulse(fails: PackedStringArray) -> void:
+	## Pillar 6: after EVA snap on Relief, existing Pulse hits the surface dummy.
+	## Knowledge may relabel. Pulse DPS stays 11. Grounded walk, not zero-G.
+	var os: Node = get_parent()
+	var nex: Node = _osh_nex()
+	if os == null or nex == null:
+		fails.append("EVA-snap→Pulse: no OpenSpace/Nex-Prime")
+		return
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	var traffic: Node = nex.call("pad_traffic") if nex.has_method("pad_traffic") else null
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("EVA-snap→Pulse: pad traffic missing")
+		return
+	var dummy: Node3D = traffic.get_surface_dummy() if traffic.has_method("get_surface_dummy") else null
+	if dummy == null and traffic.has_method("pulse_target"):
+		dummy = traffic.pulse_target()
+	if dummy == null or not is_instance_valid(dummy):
+		fails.append("EVA-snap→Pulse: no surface dummy")
+		return
+	if dummy.has_method("set"):
+		dummy.set("faction", "gROT")
+		dummy.set("_alive", true)
+		if float(dummy.get("health")) < 20.0:
+			dummy.set("health", float(dummy.get("max_health")))
+	var host: Node3D = traffic.get_parent() as Node3D
+	if host == null or not host.has_meta("pad_up"):
+		fails.append("EVA-snap→Pulse: dummy not on a pad")
+		return
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("EVA-snap→Pulse: minted SITE_* (%s)" % pin)
+		return
+	var pad_up: Vector3 = host.get_meta("pad_up")
+	var ship: Node3D = os.get("ship") as Node3D
+	if ship == null or not is_instance_valid(ship):
+		fails.append("EVA-snap→Pulse: no ship")
+		return
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	ship.global_position = host.global_position + pad_up * 8.0
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	if ship.has_method("_do_land"):
+		ship._do_land()
+	if not bool(ship.get("is_landed")):
+		fails.append("EVA-snap→Pulse: ship did not land")
+		return
+	if os.has_method("try_exit_ship"):
+		os.try_exit_ship()
+	await get_tree().create_timer(0.4).timeout
+	var walker: Node3D = os.get("player") as Node3D
+	if (walker == null or not is_instance_valid(walker)) and os.has_method("_spawn_player_near_ship"):
+		os.call("_spawn_player_near_ship")
+		await get_tree().create_timer(0.25).timeout
+		walker = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("EVA-snap→Pulse: no walker after EVA")
+		return
+	if walker.has_method("set_eva_profile"):
+		walker.set_eva_profile(false)
+	os.set("_eva_mode", false)
+	if walker.has_method("set"):
+		walker.set("faction", "Cybernex")
+	if walker.has_method("is_zero_g") and bool(walker.is_zero_g()):
+		fails.append("EVA-snap→Pulse: walker still zero-G")
+		return
+	var aim: Vector3 = dummy.hurtbox_center() if dummy.has_method("hurtbox_center") else dummy.global_position
+	var away: Vector3 = dummy.global_position - host.global_position
+	away = away - pad_up * away.dot(pad_up)
+	if away.length_squared() < 0.01:
+		away = host.global_transform.basis.x
+	away = away.normalized()
+	walker.global_position = dummy.global_position - away * 8.0 + pad_up * 2.0
+	if walker.has_method("_relief_snap_fallback"):
+		walker.call("_relief_snap_fallback")
+	elif walker.has_method("snap_to_surface"):
+		walker.call("snap_to_surface")
+	var snap_agl: float = _osh_agl(nex, walker.global_position)
+	print("[Playtest] EVA-snap→Pulse snap AGL=", snapped(snap_agl, 0.01), " dummy_d=", snapped(walker.global_position.distance_to(dummy.global_position), 0.1))
+	if snap_agl > 40.0 or snap_agl < -6.0:
+		fails.append("EVA-snap→Pulse walker off Relief (%s)" % snapped(snap_agl, 0.01))
+		return
+	if walker.has_method("face_world_point"):
+		walker.face_world_point(aim)
+	var cam: Camera3D = walker.get_node_or_null("CamPivot/Camera3D") as Camera3D
+	if cam:
+		var cup: Vector3 = pad_up
+		var look: Vector3 = aim - cam.global_position
+		if look.length_squared() > 0.0001 and absf(look.normalized().dot(cup)) > 0.98:
+			cup = walker.global_transform.basis.x
+		cam.look_at(aim, cup)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if SoftScanCache:
+		SoftScanCache.invalidate_enemies()
+		SoftScanCache.invalidate_player()
+	var aim_dbg: Array = _Hits.aim_from(walker)
+	var a0: Vector3 = aim_dbg[0]
+	var ad: Vector3 = aim_dbg[1]
+	var to_d: Vector3 = aim - a0
+	var t: float = to_d.dot(ad)
+	var closest: Vector3 = a0 + ad * t
+	print("[Playtest] EVA-snap→Pulse dummy=", dummy.name, " fac=", dummy.get("faction"), " hp=", dummy.get("health"), " miss=", snapped(closest.distance_to(aim), 0.01), " t=", snapped(t, 0.1))
+	var pulse_dmg := 11.0
+	var ab: Node = walker.get_node_or_null("AbilitySystem")
+	if ab == null:
+		fails.append("EVA-snap→Pulse: no AbilitySystem")
+		return
+	if "energy" in walker:
+		walker.set("energy", 100.0)
+	if ab.get("abilities") != null and (ab.abilities as Array).size() > 0 and ab.abilities[0]:
+		pulse_dmg = float(ab.abilities[0].damage)
+		if absf(pulse_dmg - 11.0) > 0.01:
+			fails.append("EVA-snap→Pulse: Pulse damage drifted (%s)" % pulse_dmg)
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("combat", 20.0)
+	if traffic.has_method("refresh_labels"):
+		traffic.refresh_labels()
+	if ab.get("abilities") != null and (ab.abilities as Array).size() > 0 and ab.abilities[0]:
+		if absf(float(ab.abilities[0].damage) - pulse_dmg) > 0.01:
+			fails.append("Knowledge changed Pulse DPS")
+	var dlabel := str(traffic.surface_dummy_label()) if traffic.has_method("surface_dummy_label") else ""
+	if dlabel == "":
+		fails.append("Knowledge surface dummy label empty")
+	var hp0: float = float(dummy.get("health"))
+	var fired := false
+	if walker.has_method("try_pulse"):
+		fired = bool(walker.try_pulse())
+	elif ab.has_method("try_activate"):
+		fired = bool(ab.try_activate(0))
+	var hp1: float = float(dummy.get("health"))
+	var drop: float = hp0 - hp1
+	print("[Playtest] EVA-snap→Pulse hit=", fired, " hp ", snapped(hp0, 0.1), " → ", snapped(hp1, 0.1), " drop=", snapped(drop, 0.1), " label=", dlabel)
+	if not fired:
+		fails.append("EVA-snap→Pulse: Pulse did not fire")
+	elif drop < 10.0:
+		fails.append("EVA-snap→Pulse: Pulse did not hit dummy (%s → %s)" % [snapped(hp0, 0.1), snapped(hp1, 0.1)])
+	elif drop > 12.5:
+		fails.append("Knowledge changed Pulse DPS (drop=%s)" % snapped(drop, 0.1))
+	var after_agl: float = _osh_agl(nex, walker.global_position)
+	if after_agl > 40.0 or after_agl < -6.0:
+		fails.append("EVA-snap→Pulse walker left Relief after Pulse (%s)" % snapped(after_agl, 0.01))
+	if walker.has_method("is_zero_g") and bool(walker.is_zero_g()):
+		fails.append("EVA-snap→Pulse zero-G after Pulse")
 
 
 func _rover_drive_slice(os: Node, fails: PackedStringArray) -> void:

@@ -1,5 +1,6 @@
 extends Node3D
 ## SC pillar 13: one pad-guard dummy + one visiting hull hold on a loaded pad.
+## Pillar 6: one gROT CombatDummy near the plate for surface Pulse (no new weapon).
 ## Code-first proxy. Not galaxy traffic. Knowledge labels only — never DPS.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
@@ -7,6 +8,7 @@ const _DUMMY := preload("res://scenes/combat/CombatDummy.tscn")
 
 var _host_name: String = ""
 var _guard: Node3D = null
+var _surface_dummy: Node3D = null
 var _visitor: Node3D = null
 var _visitor_base: Vector3 = Vector3(16.0, 6.5, -12.0)
 var _life_accum: float = 0.0
@@ -19,10 +21,11 @@ func setup(host_pad: Node3D) -> void:
 	set_meta("pad_traffic", true)
 	add_to_group("pad_traffic")
 	_spawn_guard()
+	_spawn_surface_dummy()
 	_spawn_visitor()
 	refresh_labels()
 	set_process(true)
-	print("[PadTraffic] host=", _host_name, " guard=1 visitor=1")
+	print("[PadTraffic] host=", _host_name, " guard=1 visitor=1 surface=1")
 
 
 func host_pad_name() -> String:
@@ -39,6 +42,20 @@ func get_visitor() -> Node3D:
 	if _visitor != null and is_instance_valid(_visitor):
 		return _visitor
 	return null
+
+
+func get_surface_dummy() -> Node3D:
+	if _surface_dummy != null and is_instance_valid(_surface_dummy):
+		return _surface_dummy
+	return null
+
+
+func pulse_target() -> Node3D:
+	## Hostile dummy for surface Pulse. Pad-guard stays host-faction traffic.
+	var d := get_surface_dummy()
+	if d != null:
+		return d
+	return get_guard()
 
 
 func actor_count() -> int:
@@ -58,12 +75,21 @@ func visitor_label() -> String:
 	return _SoftK.traffic_label("visitor")
 
 
+func surface_dummy_label() -> String:
+	return _SoftK.surface_dummy_label()
+
+
 func refresh_labels() -> void:
 	var gname := guard_label()
 	if _guard != null and is_instance_valid(_guard):
 		_guard.set("intel_name", gname)
 		if _guard.has_method("_update_labels"):
 			_guard._update_labels()
+	var dname := surface_dummy_label()
+	if _surface_dummy != null and is_instance_valid(_surface_dummy):
+		_surface_dummy.set("intel_name", dname)
+		if _surface_dummy.has_method("_update_labels"):
+			_surface_dummy._update_labels()
 	var vname := visitor_label()
 	if _visitor != null and is_instance_valid(_visitor):
 		var lab: Label3D = _visitor.get_node_or_null("Label") as Label3D
@@ -89,6 +115,27 @@ func _spawn_guard() -> void:
 		(d as Node3D).position = Vector3(-8.0, 1.2, 8.0)
 		d.set("_spawn_pos", (d as Node3D).global_position)
 		_guard = d as Node3D
+
+
+func _spawn_surface_dummy() -> void:
+	## Pillar 6: existing CombatDummy, gROT so Cybernex Pulse can hit. No new weapon.
+	if _DUMMY == null:
+		return
+	var d: Node = _DUMMY.instantiate()
+	d.name = "SurfaceCombatDummy"
+	d.set("faction", "gROT")
+	d.set("can_move", false)
+	d.set("aggro_range", 0.0)
+	d.set("attack_range", 0.0)
+	d.set("grant_economy", false)
+	d.set("intel_name", surface_dummy_label())
+	d.set_meta("pad_traffic_role", "surface_dummy")
+	d.set_meta("site_pin", "")
+	add_child(d)
+	if d is Node3D:
+		(d as Node3D).position = Vector3(8.0, 1.2, 4.0)
+		d.set("_spawn_pos", (d as Node3D).global_position)
+		_surface_dummy = d as Node3D
 
 
 func _spawn_visitor() -> void:
