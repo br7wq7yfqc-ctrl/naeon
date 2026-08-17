@@ -11,6 +11,7 @@ signal ability_failed(ability: Ability, reason: String)
 
 var current_cooldowns: Dictionary = {}  # Ability -> remaining time
 var owner_character: Node = null
+var current_kit_id: String = ""
 var _pending_channel_ability: Ability = null
 var _pending_channel_target = null
 
@@ -132,18 +133,30 @@ func add_ability(ability: Ability) -> void:
 		current_cooldowns[ability] = 0.0
 
 func setup_default_loadout(faction: String = "Cybernex") -> void:
+	setup_kit(_Kit.default_kit_id(faction), faction)
+
+
+func setup_kit(kit_id: String, faction: String = "") -> void:
 	abilities.clear()
 	current_cooldowns.clear()
-	var kit: Array = _Kit.kit_for_faction(faction)
+	current_kit_id = kit_id
+	var kit: Array = _Kit.kit_by_id(kit_id)
 	for a in kit:
 		if a:
 			add_ability(a)
-	print("[AbilitySystem] kit ", faction, " n=", abilities.size())
-	# Rebind feedback if _ready already ran
+	var tag := faction if faction != "" else kit_id
+	print("[AbilitySystem] kit ", tag, " id=", current_kit_id, " n=", abilities.size())
 	if not ability_failed.is_connected(_on_ability_failed):
 		ability_failed.connect(_on_ability_failed)
 	if not ability_activated.is_connected(_on_ability_activated):
 		ability_activated.connect(_on_ability_activated)
+
+
+func kit_label() -> String:
+	var meta: Dictionary = _Kit.kit_meta(current_kit_id)
+	if meta.is_empty():
+		return current_kit_id if current_kit_id != "" else "—"
+	return str(meta.get("label", current_kit_id))
 
 
 

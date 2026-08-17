@@ -25,8 +25,8 @@ Clash — **нативный** слой NAEON. Бар подхода космо�
 | 3 | Структуры: towers / inhibitors / core | башни = live `Turret` 160 HP; nexus = prop | **AR-B:** OUTER×6 + MID×6 + INHIB×2 + CORE×2, все с HP (`Turret`); inhib = gate у ядра (не 3-й полный ряд); нет P2W-ремонта | AR-C волны; не city-map | P2W-ремонт башен |
 | 4 | Objectives: camps / fangtooth / prime | claim beacons + lane pressure + tower-down | **AR-D:** один jungle camp (fangtooth-роль, не IP); damageable; soft contest; drop = soft WS, не unique weapon; Knowledge только подпись | prime later; **не** story-power drop | unique DPS с босса; Knowledge→урон |
 | 5 | Waves / minions | `CombatDummy` с `lane_spawn_table()` | **AR-C:** `ClashWaves` — периодические волны `CombatDummy` по линии; march к OUTER; без магазина | feel lock | магазин-миньоны |
-| 6 | Heroes / kits | `AbilityKitCatalog` + `AbilitySystem`; формы = идентичность | 2 фракционных кита × 4 слота (Pulse / Firewall\|Hack / Probe\|Surge / Form Cycle) | Phase 3: 4–8 китов; формы не rank-стат | P2W kits; форма = скрытый MMR |
-| 7 | Items / cards | модули / blueprints NAEON, не колода Paragon | item shop **нет**; `CanonPlates` = identity sketches, не карты силы | AR-E: blueprint/module, не deck | cash-shop power; клон карт Epic |
+| 6 | Heroes / kits | `AbilityKitCatalog` + `AbilitySystem`; формы = идентичность | **AR-E:** 4 кита × 4 слота (CX Nex/Grid, GR Rot/Spore; Pulse / utility / probe\|surge / Form Cycle) | feel lock; формы не rank-стат | P2W kits; форма = скрытый MMR |
+| 7 | Items / cards | модули / blueprints NAEON, не колода Paragon | **AR-E:** один `ClashModuleBench` (session `ShipModule.SENSOR`); Knowledge только подпись; не колода | не shop of power | cash-shop power; клон карт Epic |
 | 8 | Vision / wards | `ClashRadar`; soft scan | радар всегда рисует форму; вард-предметов нет | wait или soft label; Knowledge не покупает вард | pay-to-ward |
 | 9 | Draft / match | `ClashMatchDirector` + kill-to-5 / 3 lane objectives | матч в редакторе; драфта нет; вход из мира = **G5 закрыт** | драфт later; дверь = TestArena | Arena Commander; G5 сейчас |
 | 10 | Net | SoftNet сейчас visual; Phase 2 server authority | puppets без combat authority; local-first | AR-F: 3v3 local, потом 5v5 | pay-rank matchmaking |
@@ -42,8 +42,8 @@ Clash — **нативный** слой NAEON. Бар подхода космо�
 | `AexionClash.gd` | kills→5, pressure TOP/MID/BOT, soft WS, `SITE_TEST_ARENA_PILLAR` уже в LayerContext (не чеканить новый) |
 | `ClashMatchDirector.gd` | K/D, banner, lane HUD; no P2W |
 | `ClashCamp.gd` | один off-lane pit; HP; soft contest announce; drop = soft WS (не оружие) |
-| `TestArena.gd` | дверь слоя; beacons Neutral; `ClashWaves` на полосах; один `ClashCamp` |
-| `AbilityKitCatalog.gd` | data-driven, costs из `EnergyEconomy` |
+| `TestArena.gd` | дверь слоя; beacons Neutral; `ClashWaves` на полосах; один `ClashCamp`; один `ClashModuleBench` |
+| `AbilityKitCatalog.gd` | 4 кита; costs из `EnergyEconomy`; `kit_for_faction` = прежний default |
 | `HeroFormCatalog.gd` | Canine/Feline/Avian/Human + лёгкие loco-числа — **не** rank; не усиливать |
 | `docs/systems/AEXION_CLASH_SLICE.md` | бар уже назван Predecessor; non-goal: full lanes/items P2W |
 | `docs/rules/13_MOBA_ARENA_INFLUENCE.md` | арена не флипает планету; daily WS 60 |
@@ -61,7 +61,7 @@ Clash — **нативный** слой NAEON. Бар подхода космо�
 | **AR-B** | Структуры честные: tower → (inhibitor) → core | **сделано:** OUTER→MID→INHIB→CORE с HP | этот срез | pay-to-repair |
 | **AR-C** | Волны миньонов по линиям | **сделано:** timed `ClashWaves` + lane march | этот срез | P2W waves |
 | **AR-D** | Jungle / river / вертикаль на **том же** футпринте | **сделано:** один off-lane camp (fangtooth-роль) | этот срез | SITE_* city-map |
-| **AR-E** | 4–8 китов; предметы = modules/blueprints | 2 кита | Phase 3; после AR-A минимум | Paragon deck; форма=стат |
+| **AR-E** | 4–8 китов; предметы = modules/blueprints | **сделано:** 4 кита + один session-bench | этот срез | Paragon deck; форма=стат |
 | **AR-F** | 3v3 local authority, затем 5v5 | SoftNet visual | Phase 2/3; G5 всё ещё закрыт | вход из мира сейчас |
 
 ---
@@ -74,4 +74,4 @@ Clash — **нативный** слой NAEON. Бар подхода космо�
 
 ## Этот PR
 
-AR-D only: один jungle/objective camp на существующем футпринте TestArena. AR-A OTS, AR-B структуры и AR-C волны не откатывать. OS-* / OpenSpace / Planet* не трогать. G5 закрыт. Не mint SITE_*. Не hero IP. Дверь: меню → AEXION CLASH → TestArena. AR-E…F не начинать.
+AR-E only: 4 кита (2 существующих + CX Grid + GR Spore) и один module/blueprint bench на футпринте TestArena. AR-A…AR-D не откатывать. OS-* / OpenSpace / Planet* не трогать. G5 закрыт. Не mint SITE_*. Не hero IP. Не колода Paragon. Дверь: меню → AEXION CLASH → TestArena. AR-F не начинать.

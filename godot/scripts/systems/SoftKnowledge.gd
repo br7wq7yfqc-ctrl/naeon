@@ -69,6 +69,15 @@ static func camp_label() -> String:
 	return "CAMP"
 
 
+## Cybernetics/Logic: module bench name only — never DPS / HP.
+static func module_bench_label() -> String:
+	var cyber := mastery("cybernetics")
+	var logic := mastery("logic")
+	if cyber >= 10.0 or logic >= 15.0 or rank() >= 5:
+		return "BLUEPRINT BENCH"
+	return "MODULE BENCH"
+
+
 ## History/Lore: structure weakness tip (info only)
 static func structure_tip(faction: String) -> String:
 	var lore := mastery("history")

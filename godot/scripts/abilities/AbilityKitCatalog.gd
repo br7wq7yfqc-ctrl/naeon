@@ -1,20 +1,68 @@
 extends RefCounted
 class_name AbilityKitCatalog
 ## Balanced cross-mode ability kits — costs from EnergyEconomy (single source).
+## AR-E: 4 faction kits × 4 slots. Forms = identity, never a hidden stat.
 
 const EE = preload("res://scripts/systems/EnergyEconomy.gd")
 
-static func kit_for_faction(faction: String) -> Array:
-	var out: Array = []
-	out.append(_pulse())
-	if faction == "gROT":
-		out.append(_hack_grot())
-		out.append(_surge())
-	else:
-		out.append(_firewall())
-		out.append(_probe())
-	out.append(_form_cycle())
+const KIT_CX_NEX := "cx_nex"
+const KIT_CX_GRID := "cx_grid"
+const KIT_GR_ROT := "gr_rot"
+const KIT_GR_SPORE := "gr_spore"
+
+const KIT_TABLE := [
+	{"id": KIT_CX_NEX, "faction": "Cybernex", "label": "Nex"},
+	{"id": KIT_CX_GRID, "faction": "Cybernex", "label": "Grid"},
+	{"id": KIT_GR_ROT, "faction": "gROT", "label": "Rot"},
+	{"id": KIT_GR_SPORE, "faction": "gROT", "label": "Spore"},
+]
+
+
+static func kit_ids() -> PackedStringArray:
+	var out := PackedStringArray()
+	for row in KIT_TABLE:
+		out.append(str(row["id"]))
 	return out
+
+
+static func kit_table() -> Array:
+	return KIT_TABLE.duplicate(true)
+
+
+static func kit_meta(kit_id: String) -> Dictionary:
+	for row in KIT_TABLE:
+		if str(row["id"]) == kit_id:
+			return row.duplicate(true)
+	return {}
+
+
+static func default_kit_id(faction: String) -> String:
+	return KIT_GR_ROT if faction == "gROT" else KIT_CX_NEX
+
+
+static func kits_for_faction(faction: String) -> PackedStringArray:
+	var out := PackedStringArray()
+	var want := "gROT" if faction == "gROT" else "Cybernex"
+	for row in KIT_TABLE:
+		if str(row["faction"]) == want:
+			out.append(str(row["id"]))
+	return out
+
+
+static func kit_for_faction(faction: String) -> Array:
+	return kit_by_id(default_kit_id(faction))
+
+
+static func kit_by_id(kit_id: String) -> Array:
+	match kit_id:
+		KIT_CX_GRID:
+			return [_pulse(), _nex_latch(), _grid_probe(), _form_cycle()]
+		KIT_GR_SPORE:
+			return [_pulse(), _spore_claim(), _rot_bloom(), _form_cycle()]
+		KIT_GR_ROT:
+			return [_pulse(), _hack_grot(), _surge(), _form_cycle()]
+		_:
+			return [_pulse(), _firewall(), _probe(), _form_cycle()]
 
 
 static func _pulse() -> Ability:
@@ -44,6 +92,20 @@ static func _firewall() -> Ability:
 	return a
 
 
+static func _nex_latch() -> Ability:
+	var a := Ability.new()
+	a.ability_name = "Nex Latch"
+	a.description = "Short seal window (identity, same cost sheet)"
+	a.cooldown = EE.CD_FIREWALL
+	a.energy_cost = EE.NEX_FIREWALL
+	a.duration = 2.5
+	a.heal = 12.0
+	a.is_firewall = true
+	a.faction_restriction = Ability.FactionRestriction.CYBERNEX_ONLY
+	a.effect_color = Color(0.35, 0.95, 0.85)
+	return a
+
+
 static func _probe() -> Ability:
 	var a := Ability.new()
 	a.ability_name = "System Probe"
@@ -56,6 +118,21 @@ static func _probe() -> Ability:
 	a.is_channeled = true
 	a.channel_time = 1.5
 	a.effect_color = Color(0.4, 0.85, 1.0)
+	return a
+
+
+static func _grid_probe() -> Ability:
+	var a := Ability.new()
+	a.ability_name = "Grid Probe"
+	a.description = "Channeled lattice recon (identity, same cost sheet)"
+	a.cooldown = EE.CD_PROBE
+	a.energy_cost = EE.SYSTEM_PROBE
+	a.damage = 7.0
+	a.range = 18.0
+	a.is_hacking = true
+	a.is_channeled = true
+	a.channel_time = 1.5
+	a.effect_color = Color(0.55, 0.75, 1.0)
 	return a
 
 
@@ -75,6 +152,22 @@ static func _hack_grot() -> Ability:
 	return a
 
 
+static func _spore_claim() -> Ability:
+	var a := Ability.new()
+	a.ability_name = "Spore Claim"
+	a.description = "Channeled spore claim (identity, same cost sheet)"
+	a.cooldown = EE.CD_HACK
+	a.energy_cost = EE.HACK
+	a.damage = 12.0
+	a.range = 18.0
+	a.is_hacking = true
+	a.is_channeled = true
+	a.channel_time = 1.5
+	a.faction_restriction = Ability.FactionRestriction.GROT_ONLY
+	a.effect_color = Color(0.95, 0.35, 0.2)
+	return a
+
+
 static func _surge() -> Ability:
 	var a := Ability.new()
 	a.ability_name = "Rot Surge"
@@ -87,6 +180,21 @@ static func _surge() -> Ability:
 	a.force = 8.0
 	a.targeting = Ability.TargetingType.AOE
 	a.effect_color = Color(0.9, 0.12, 0.4)
+	return a
+
+
+static func _rot_bloom() -> Ability:
+	var a := Ability.new()
+	a.ability_name = "Rot Bloom"
+	a.description = "Close spore burst (identity, same cost sheet)"
+	a.cooldown = EE.CD_SURGE
+	a.energy_cost = EE.ROT_SURGE
+	a.damage = 16.0
+	a.range = 5.0
+	a.aoe_radius = 4.5
+	a.force = 8.0
+	a.targeting = Ability.TargetingType.AOE
+	a.effect_color = Color(0.85, 0.28, 0.12)
 	return a
 
 

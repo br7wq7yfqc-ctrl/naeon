@@ -66,3 +66,13 @@ static func make_cargo(name: String = "Cargo Pod", capacity: float = 15.0) -> Sh
 	m.power_draw = 0.5
 	m.mass = 3.0
 	return m
+
+
+static func make_sensor(name: String = "Nex Sensor") -> ShipModule:
+	var m := ShipModule.new()
+	m.module_id = "sensor_%s" % name.to_lower().replace(" ", "_")
+	m.display_name = name
+	m.module_type = ModuleType.SENSOR
+	m.power_draw = 1.0
+	m.mass = 0.8
+	return m
