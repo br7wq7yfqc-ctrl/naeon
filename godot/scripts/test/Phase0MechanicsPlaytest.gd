@@ -499,6 +499,7 @@ func _go() -> void:
 			fails.append("ship shot hit self")
 
 	_osa_same_body(fails)
+	_osb_atmosphere_shell(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
 
@@ -594,6 +595,91 @@ func _osa_same_body(fails: PackedStringArray) -> void:
 		print("[Playtest] OS-A EVA snap AGL=", snapped(after, 0.01))
 		if after > 40.0 or after < -6.0:
 			fails.append("OS-A EVA snap left walker off relief")
+
+
+func _osb_atmosphere_shell(fails: PackedStringArray) -> void:
+	var cat = load("res://scripts/world/PlanetProfileCatalog.gd")
+	if cat == null:
+		fails.append("OS-B PlanetProfileCatalog missing")
+		return
+	var env_c: float = float(cat.envelope_of("Nex-Prime"))
+	if env_c < 800.0:
+		fails.append("OS-B Nex-Prime envelope too short for 770m (%s)" % env_c)
+	var d770: float = float(_Flight.atmosphere_density(770.0, 320.0, env_c))
+	var d0: float = float(_Flight.atmosphere_density(0.0, 320.0, env_c))
+	var d_out: float = float(_Flight.atmosphere_density(env_c + 20.0, 320.0, env_c))
+	print("[Playtest] OS-B density 0/770/out=", snapped(d0, 0.01), "/", snapped(d770, 0.01), "/", snapped(d_out, 0.01), " env=", env_c)
+	if d0 < 0.99:
+		fails.append("OS-B surface density not 1")
+	if d770 < 0.02 or d770 > 0.35:
+		fails.append("OS-B 770m density out of thin-envelope band (%s)" % snapped(d770, 0.01))
+	if d_out > 0.001:
+		fails.append("OS-B density above envelope not vacuum")
+	# Drag at 770 m is felt, but far below hold-S inward (28 m/s²).
+	var v_vac: Vector3 = _Flight.integrate(Vector3(0, 0, 40), Vector3.ZERO, 0.016, 0.4, 1.0, 0.0, 120.0)
+	var v_atmo: Vector3 = _Flight.integrate(Vector3(0, 0, 40), Vector3.ZERO, 0.016, 0.4, 1.0, d770, 120.0)
+	if v_atmo.length() >= v_vac.length() - 0.00005:
+		fails.append("OS-B 770m drag did not exceed vacuum")
+	var qdrag: float = d770 * 0.012 * 40.0 * 40.0
+	if qdrag >= 8.0:
+		fails.append("OS-B 770m drag would swamp S-sink")
+	var inward := Vector3(0, -1, 0)
+	var climb := Vector3(0, 20, 0)
+	var after_ceil: Vector3 = _Flight.apply_ceiling(climb, inward, 0.85, 0.016)
+	var after_thin: Vector3 = _Flight.apply_ceiling(climb, inward, d770, 0.016)
+	if after_ceil.y >= climb.y - 0.01:
+		fails.append("OS-B dense ceiling did not damp climb")
+	if climb.y - after_thin.y > 0.15:
+		fails.append("OS-B 770m ceiling too strong for S-sink band")
+	var sink_v: Vector3 = _Flight.apply_ceiling(Vector3(0, -18, 0), inward, 0.85, 0.016)
+	if sink_v.y > -17.9:
+		fails.append("OS-B ceiling opposed S-sink")
+	var os: Node = get_parent()
+	var nex: Node = null
+	var tree_b := get_tree()
+	if tree_b:
+		for n in tree_b.get_nodes_in_group("planets"):
+			if str(n.get("planet_name")) == "Nex-Prime":
+				nex = n
+				break
+	if nex == null:
+		fails.append("OS-B no Nex-Prime")
+		return
+	if nex.has_method("envelope_height") and absf(float(nex.call("envelope_height")) - env_c) > 1.0:
+		fails.append("OS-B body envelope != catalog")
+	var up: Vector3 = Vector3(0.18, 0.96, 0.12).normalized()
+	var rad: float = float(nex.get("radius"))
+	var hover: Vector3 = nex.global_position + up * (rad + 770.0)
+	var d_body := 0.0
+	if nex.has_method("density_at"):
+		d_body = float(nex.call("density_at", hover))
+	elif os and os.has_method("atmosphere_density_at"):
+		d_body = float(os.call("atmosphere_density_at", hover))
+	print("[Playtest] OS-B body density@770=", snapped(d_body, 0.01))
+	if d_body < 0.02 or d_body > 0.35:
+		fails.append("OS-B body density at 770m out of band")
+	var atmo_n: Node = nex.get_node_or_null("Atmosphere")
+	if atmo_n == null:
+		fails.append("OS-B Atmosphere mesh missing")
+	var amat = nex.get("_atmo_mat")
+	if amat is ShaderMaterial:
+		var sc: float = float((amat as ShaderMaterial).get_shader_parameter("scatter_strength"))
+		if sc < 0.2:
+			fails.append("OS-B limb scatter_strength unset")
+	else:
+		fails.append("OS-B no atmosphere shader")
+	if os and os.has_method("_update_altitude_fog") and os.get("ship"):
+		var ship: Node3D = os.get("ship") as Node3D
+		if ship:
+			ship.global_position = hover
+		os.call("_update_altitude_fog")
+		var we: WorldEnvironment = os.get_node_or_null("WorldEnvironment") as WorldEnvironment
+		if we == null or we.environment == null:
+			fails.append("OS-B no WorldEnvironment")
+		elif not we.environment.fog_enabled:
+			fails.append("OS-B fog off at 770m envelope")
+		else:
+			print("[Playtest] OS-B fog@770 dens=", snapped(we.environment.fog_density, 0.0001), " scatter=", snapped(we.environment.fog_sun_scatter, 0.01))
 
 
 func _finish(fails: PackedStringArray, code: int) -> void:

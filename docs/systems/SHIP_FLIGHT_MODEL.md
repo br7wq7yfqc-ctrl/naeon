@@ -5,7 +5,7 @@
 | Regime | Behavior |
 |--------|----------|
 | Vacuum | low damp, full top speed, weak gravity |
-| Atmosphere | density² falloff; quadratic drag; lower top speed |
+| Atmosphere | envelope `t²` density (OS-B); quadratic drag; climb ceiling; lower top speed |
 | SCM | balanced; partial gravity in atmo |
 | NAV | high thrust mult, low damp, reduced mouse sens |
 | HOVER | cancel g + radial damp; pad approach assist |

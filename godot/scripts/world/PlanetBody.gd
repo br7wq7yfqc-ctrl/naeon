@@ -14,10 +14,13 @@ const _Relief = preload("res://scripts/world/PlanetRelief.gd")
 const _P0 = preload("res://scripts/world/P0Slice.gd")
 const _MeshSafe = preload("res://scripts/world/MeshSafe.gd")
 const _Filler = preload("res://scripts/world/FillerProp.gd")
+const _FlightModel = preload("res://scripts/ship/ShipFlightModel.gd")
 
 @export var planet_name: String = "Aexion-III"
 @export var radius: float = 1200.0
 @export var atmosphere_height: float = 280.0
+## Thin OS-B shell for density / fog / ceiling. 0 = derive from height*1.6.
+@export var atmosphere_envelope: float = 0.0
 @export var gravity: float = 9.2
 @export var surface_color: Color = Color(0.12, 0.22, 0.16)
 @export var atmosphere_color: Color = Color(0.35, 0.55, 0.95, 0.12)
@@ -550,9 +553,11 @@ func _apply_atmo_uniforms() -> void:
 	_atmo_mat.set_shader_parameter("density", dens)
 	_atmo_mat.set_shader_parameter("intensity", intens)
 	_atmo_mat.set_shader_parameter("sun_direction", _sun_dir)
+	_atmo_mat.set_shader_parameter("scatter_strength", 0.85 if gq == null or int(gq.tier) > 0 else 0.55)
 	if _atmo_inner_mat:
 		_atmo_inner_mat.set_shader_parameter("haze_color", atmosphere_color)
 		_atmo_inner_mat.set_shader_parameter("sun_direction", _sun_dir)
+		_atmo_inner_mat.set_shader_parameter("scatter_strength", 0.7)
 
 func set_sun_direction(dir: Vector3) -> void:
 	if _surface_shader_mat:
@@ -562,18 +567,29 @@ func set_sun_direction(dir: Vector3) -> void:
 	_sun_dir = dir.normalized()
 	_apply_atmo_uniforms()
 
+func envelope_height() -> float:
+	if atmosphere_envelope > 1.0:
+		return atmosphere_envelope
+	return maxf(atmosphere_height * 1.6, atmosphere_height)
+
+
+func density_at(global_pos: Vector3) -> float:
+	return float(_FlightModel.atmosphere_density(altitude_of(global_pos), atmosphere_height, envelope_height()))
+
+
 func _update_atmosphere(dist: float, lod: int, obs: Node3D) -> void:
 	if _atmo == null:
 		return
 	var show_outer := dist < atmo_max_dist and lod < 3
 	_atmo.visible = show_outer
 	var alt: float = dist - radius
-	# Horizon boost as we approach (limb brightens)
+	var env_h: float = envelope_height()
+	# Horizon boost as we approach (limb brightens across the envelope)
 	if show_outer and _atmo_mat:
 		var approach := 0.0
-		if alt < atmosphere_height * 3.0:
-			approach = clamp(1.0 - alt / (atmosphere_height * 3.0), 0.0, 1.0)
-		_atmo_mat.set_shader_parameter("horizon_boost", approach * 0.9)
+		if alt < env_h:
+			approach = clamp(1.0 - alt / maxf(env_h, 1.0), 0.0, 1.0)
+		_atmo_mat.set_shader_parameter("horizon_boost", approach * 1.05)
 		# Soft distance fade of overall intensity
 		var fade: float = clamp(1.0 - dist / atmo_max_dist, 0.0, 1.0)
 		var base_i := 1.35
@@ -583,15 +599,15 @@ func _update_atmosphere(dist: float, lod: int, obs: Node3D) -> void:
 				0: base_i = 1.1
 				2: base_i = 1.5
 				3: base_i = 1.65
-		_atmo_mat.set_shader_parameter("intensity", base_i * (0.4 + 0.6 * fade))
-	# Inner haze when inside / skimming atmosphere
+		_atmo_mat.set_shader_parameter("intensity", base_i * (0.45 + 0.55 * fade))
+	# Inner haze when inside the envelope (readable on the 770 m approach)
 	if _atmo_inner:
-		var inside := alt < atmosphere_height * 1.05 and lod <= 1
+		var inside := alt < env_h * 0.98 and lod <= 1
 		_atmo_inner.visible = inside
 		if inside and _atmo_inner_mat:
-			var depth: float = clamp(1.0 - max(alt, 0.0) / max(atmosphere_height, 1.0), 0.0, 1.0)
-			_atmo_inner_mat.set_shader_parameter("intensity", 0.5 + depth * 0.9)
-			_atmo_inner_mat.set_shader_parameter("density", 0.45 + depth * 0.5)
+			var depth: float = clamp(1.0 - max(alt, 0.0) / max(env_h, 1.0), 0.0, 1.0)
+			_atmo_inner_mat.set_shader_parameter("intensity", 0.35 + depth * 0.95)
+			_atmo_inner_mat.set_shader_parameter("density", 0.32 + depth * 0.55)
 
 func _stream_bases() -> void:
 	if not has_base or _pads.is_empty():

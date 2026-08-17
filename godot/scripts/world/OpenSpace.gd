@@ -1,6 +1,7 @@
 extends Node3D
 const _PlanetProfiles = preload("res://scripts/world/PlanetProfileCatalog.gd")
 const _StarSystems = preload("res://scripts/world/StarSystemCatalog.gd")
+const _Flight = preload("res://scripts/ship/ShipFlightModel.gd")
 ## Seamless open space: free flight, planets, bases, surface walk, origin rebase.
 ## Entry scene for SC-like continuum (no change_scene landing).
 
@@ -328,7 +329,7 @@ func _sync_planet_sun() -> void:
 
 
 func _update_altitude_fog() -> void:
-	## Height fog + ambient tint near planets (SC-lite continuum, min-spec safe).
+	## Height fog + scatter tint across the catalog envelope (OS-B).
 	if _interior_view:
 		_apply_interior_env()
 		return
@@ -345,22 +346,25 @@ func _update_altitude_fog() -> void:
 		env.ambient_light_energy = 0.32
 		return
 	var alt: float = float(pl.altitude_of(ship.global_position))
-	var h_val = pl.get("atmosphere_height")
-	var h: float = float(h_val) if h_val != null else 300.0
+	var h: float = _envelope_of(pl)
 	var col = pl.get("atmosphere_color")
 	var fog_col := Color(0.18, 0.32, 0.55)
 	if col is Color:
-		fog_col = Color(col.r, col.g, col.b).lerp(Color(0.55, 0.7, 0.95), 0.25)
-	var depth: float = clampf(1.0 - maxf(alt, 0.0) / maxf(h * 1.65, 1.0), 0.0, 1.0)
-	if alt > h * 1.65:
+		fog_col = Color(col.r, col.g, col.b).lerp(Color(0.55, 0.72, 0.98), 0.32)
+	var depth: float = clampf(1.0 - maxf(alt, 0.0) / maxf(h, 1.0), 0.0, 1.0)
+	if alt > h:
 		env.fog_enabled = false
+		env.fog_sun_scatter = 0.0
 		env.ambient_light_energy = 0.28
 		env.glow_intensity = 0.55
 		return
 	env.fog_enabled = true
 	env.fog_light_color = fog_col
-	env.fog_aerial_perspective = depth * 0.45
-	var dens: float = 0.00018 + depth * depth * 0.0028
+	env.fog_light_energy = 0.85 + depth * 0.45
+	env.fog_sun_scatter = 0.18 + depth * 0.42
+	env.fog_aerial_perspective = depth * 0.55
+	env.fog_sky_affect = 0.35 + depth * 0.4
+	var dens: float = 0.00022 + depth * depth * 0.0034
 	# Surface haze denser when walking
 	if not _in_ship:
 		dens *= 1.25
@@ -372,6 +376,7 @@ func _update_altitude_fog() -> void:
 		match int(gq.tier):
 			0:
 				dens *= 0.5
+				env.fog_sun_scatter *= 0.65
 			2:
 				dens *= 1.2
 			3:
@@ -408,6 +413,7 @@ func _apply_interior_env() -> void:
 	env.fog_enabled = false
 	env.volumetric_fog_enabled = false
 	env.fog_density = 0.0
+	env.fog_sun_scatter = 0.0
 	env.background_color = Color(0.04, 0.05, 0.08)
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.88, 0.92, 0.98)
@@ -425,23 +431,29 @@ func gravity_at(global_pos: Vector3) -> Vector3:
 
 
 
+func _envelope_of(pl: Node) -> float:
+	if pl != null and pl.has_method("envelope_height"):
+		return float(pl.call("envelope_height"))
+	var pid := str(pl.get("planet_name")) if pl else ""
+	if pid != "" and pid != "<null>":
+		return float(_PlanetProfiles.envelope_of(pid))
+	var h_val = pl.get("atmosphere_height") if pl else null
+	return float(h_val) * 1.6 if h_val != null else 448.0
+
+
 func atmosphere_density_at(global_pos: Vector3) -> float:
 	var pl: Node3D = nearest_planet(global_pos)
 	if pl == null or not is_instance_valid(pl):
 		return 0.0
+	if pl.has_method("density_at"):
+		return float(pl.call("density_at", global_pos))
 	var alt := 99999.0
 	if pl.has_method("altitude_of"):
 		alt = float(pl.altitude_of(global_pos))
 	var ah := 280.0
 	if "atmosphere_height" in pl:
 		ah = float(pl.atmosphere_height)
-	# Same curve as ShipFlightModel
-	if ah <= 1.0 or alt >= ah * 1.6:
-		return 0.0
-	if alt <= 0.0:
-		return 1.0
-	var t := 1.0 - alt / (ah * 1.6)
-	return clampf(t * t, 0.0, 1.0)
+	return float(_Flight.atmosphere_density(alt, ah, _envelope_of(pl)))
 
 
 func radial_up_at(global_pos: Vector3) -> Vector3:
@@ -761,7 +773,12 @@ func _update_hud() -> void:
 	if gh and gh.has_method("is_debug_overlay"):
 		dbg = bool(gh.is_debug_overlay())
 	var loc := pname
+	var atmo_now := 0.0
+	if has_method("atmosphere_density_at") and ship:
+		atmo_now = float(atmosphere_density_at(ship.global_position))
 	var alt_s := "%dm" % int(alt)
+	if atmo_now > 0.01 and mode != "INTERIOR":
+		alt_s = "%dm ATMO %d%%" % [int(alt), int(atmo_now * 100.0)]
 	if mode == "INTERIOR":
 		loc = str(_interior.get_kind()) if _interior.has_method("get_kind") else "pocket"
 		alt_s = "POCKET"
@@ -795,8 +812,8 @@ func _update_hud() -> void:
 			"NAEON OpenSpace  |  free flight · seamless land · surface walk\n"
 			+ "WASD thrust  Space/Shift lift  Mouse=flight plane  Z/X roll  |  1/2/3 flight  4 siege  5 ramp  6 rover  7 store  |  E land  F exit/EVA/board  C pulse  G/B terra  U undo  I interior  Q hack\n"
 			+ "F1 cycle quality  F3 HUD debug  |  Tab Clash sandbox (not a map)  ·  M galaxy map locked\n"
-			+ "Mode: %s  Planet: %s  Alt: %dm  Spd: %d  HP:%d SHD:%d  PLOD:%s  CONTRIB:%.0f" % [
-				mode, pname, int(alt), int(spd), int(ship.health), int(ship.shields), (pl.current_lod_name() if pl and is_instance_valid(pl) and pl.has_method("current_lod_name") else "-"), (GameManager.contribution if GameManager else 0.0)
+			+ "Mode: %s  Planet: %s  Alt: %dm  ATMO:%.0f%%  Spd: %d  HP:%d SHD:%d  PLOD:%s  CONTRIB:%.0f" % [
+				mode, pname, int(alt), atmo_now * 100.0, int(spd), int(ship.health), int(ship.shields), (pl.current_lod_name() if pl and is_instance_valid(pl) and pl.has_method("current_lod_name") else "-"), (GameManager.contribution if GameManager else 0.0)
 			]
 		)
 	if dbg:

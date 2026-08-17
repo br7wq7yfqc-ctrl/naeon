@@ -7,16 +7,28 @@ class_name ShipFlightModel
 enum Mode { SCM, NAV, HOVER }
 
 
-static func atmosphere_density(alt: float, atmo_height: float) -> float:
-	## 0 vacuum … 1 dense near surface. Smooth falloff.
-	if atmo_height <= 1.0:
+static func atmosphere_density(alt: float, atmo_height: float, envelope: float = -1.0) -> float:
+	## 0 vacuum … 1 dense near surface. Envelope is the thin OS-B shell
+	## (drag / fog / ceiling). Falls back to height*1.6 when omitted.
+	var h: float = envelope if envelope > 1.0 else atmo_height * 1.6
+	if h <= 1.0:
 		return 0.0
-	if alt >= atmo_height * 1.6:
+	if alt >= h:
 		return 0.0
 	if alt <= 0.0:
 		return 1.0
-	var t := 1.0 - alt / (atmo_height * 1.6)
+	var t := 1.0 - alt / h
 	return clampf(t * t, 0.0, 1.0)
+
+
+static func apply_ceiling(velocity: Vector3, inward: Vector3, atmo: float, delta: float) -> Vector3:
+	## Extra damp on climb in dense air. Does not oppose S-sink (inward).
+	if atmo < 0.02 or inward.length_squared() < 0.25 or delta <= 0.0:
+		return velocity
+	var climb: float = velocity.dot(-inward)
+	if climb <= 0.4:
+		return velocity
+	return velocity - (-inward) * climb * atmo * 0.38 * delta
 
 
 static func max_speed(mode: int, scm: float, nav: float, hover: float) -> float:
