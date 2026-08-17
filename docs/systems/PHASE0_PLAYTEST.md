@@ -112,3 +112,4 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 86. Zero-G EVA near ship (not on dirt): no planet gravity, fuel+tether stay, F reboard. Surface walker / OS-H ritual unchanged.
 87. Pad fuel is a real SCM/HOVER tank: occupy-to-hold refill (no cash skip); Knowledge labels the pump only. Empty = no afterburn / limited thrust, not an OS-H hard lock. `--playtest-mechanics` asserts occupy→fuel-up.
 88. Ship as place: I from seat → pocket → walk a real door/airlock → F seat (or I hatch → EVA). No fake locked doors. `--playtest-mechanics` asserts seat→pocket→seat.
+89. Cargo dock on an occupied unnamed pad: land/occupy, transfer one crate pad↔`CargoHold` (ramp if present, no tractor). Knowledge labels the crate only — mass/value stay. `--playtest-mechanics` asserts occupy→one-unit.

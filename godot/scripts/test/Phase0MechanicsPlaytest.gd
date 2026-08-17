@@ -428,6 +428,9 @@ func _go() -> void:
 	# --- rover deploy → drive on Relief → stow (occupied unnamed pad) ---
 	await _rover_drive_slice(os, fails)
 
+	# --- occupy unnamed pad → transfer one cargo unit (no tractor) ---
+	await _cargo_dock_slice(os, fails)
+
 	# --- HOVER mode + vacuum stall ---
 	var ship: Node = os.get("ship")
 	if ship and ship.has_method("get_stall"):
@@ -2029,6 +2032,106 @@ func _rover_drive_slice(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] cargo vehicles=", nveh)
 	if nveh < 1:
 		fails.append("rover store did not land in CargoHold")
+
+
+func _cargo_dock_slice(os: Node, fails: PackedStringArray) -> void:
+	## Occupied unnamed pad: land/dock, move one crate pad↔CargoHold. No tractor.
+	## Knowledge may relabel. Mass / value stay put.
+	var picked: Dictionary = _rover_pick_unnamed_pad(os)
+	var deck: Node3D = picked.get("deck") as Node3D
+	var ctrl: Node = picked.get("ctrl")
+	var nex: Node = picked.get("planet")
+	var sh: Node = os.get("ship")
+	if sh == null or deck == null or ctrl == null or nex == null:
+		fails.append("no ship/unnamed pad for cargo dock")
+		return
+	if str(nex.get("planet_name")) != "Nex-Prime":
+		fails.append("cargo pad not on Nex-Prime (%s)" % str(nex.get("planet_name")))
+		return
+	var pin := str(deck.get_meta("site_pin")) if deck.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("cargo pad minted SITE_* (%s)" % pin)
+		return
+	if ctrl.has_method("claim"):
+		var st0 := str(ctrl.get_claim_status()) if ctrl.has_method("get_claim_status") else ""
+		if st0 != "owned" and st0 != "extracting":
+			ctrl.claim("Cybernex", 2.0)
+			var ow = ctrl.get("ownership")
+			if ow and ow.has_method("advance_transition"):
+				ow.advance_transition(8.0, 5.0)
+			await get_tree().process_frame
+	var held := false
+	var ow2 = ctrl.get("ownership")
+	if ow2 != null and ow2.has_method("is_fully_owned"):
+		held = bool(ow2.is_fully_owned())
+	var st := str(ctrl.get_claim_status()) if ctrl.has_method("get_claim_status") else ""
+	print("[Playtest] cargo pad=", deck.name, " occupy=", st, " held=", held, " pin=", pin)
+	if not held and st != "owned" and st != "extracting" and st != "claiming":
+		fails.append("cargo pad not occupied (status=%s)" % st)
+		return
+	if ctrl.has_method("ensure_pad_cargo"):
+		ctrl.ensure_pad_cargo(2)
+	var yard0 := int(ctrl.pad_cargo_count()) if ctrl.has_method("pad_cargo_count") else 0
+	if yard0 < 1:
+		fails.append("unnamed pad has no cargo yard")
+		return
+
+	var up_c: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+	if "velocity" in sh:
+		sh.velocity = Vector3.ZERO
+	sh.global_position = deck.global_position + up_c * 6.0
+	if sh.has_method("_set_mode"):
+		sh._set_mode(2)
+	if sh.has_method("_do_land"):
+		sh._do_land()
+	if not bool(sh.get("is_landed")):
+		fails.append("ship not landed for cargo dock")
+		return
+
+	var hold: Node = sh.get_node_or_null("CargoHold")
+	if hold == null or not hold.has_method("unit_count"):
+		fails.append("CargoHold missing unit API")
+		return
+	var hold0 := int(hold.unit_count())
+	var mass0 := CargoHold.UNIT_MASS_T
+	var val0 := CargoHold.UNIT_VALUE
+	if not bool(sh.try_dock_cargo_transfer(true)) if sh.has_method("try_dock_cargo_transfer") else false:
+		fails.append("occupy dock did not transfer one unit pad→hold")
+		return
+	var hold1 := int(hold.unit_count())
+	var yard1 := int(ctrl.pad_cargo_count()) if ctrl.has_method("pad_cargo_count") else -1
+	print("[Playtest] cargo pad→hold yard ", yard0, "→", yard1, " hold ", hold0, "→", hold1)
+	if hold1 != hold0 + 1 or yard1 != yard0 - 1:
+		fails.append("one-unit pad→hold failed (yard %s→%s hold %s→%s)" % [yard0, yard1, hold0, hold1])
+		return
+	var moved: Dictionary = {}
+	var units_v: Variant = hold.get("units")
+	if units_v is Array and (units_v as Array).size() > 0:
+		moved = (units_v as Array)[(units_v as Array).size() - 1]
+	var mass1 := float(moved.get("mass", -1.0))
+	var val1 := float(moved.get("value", -1.0))
+	if absf(mass1 - mass0) > 0.001 or absf(val1 - val0) > 0.001:
+		fails.append("cargo transfer changed mass/value")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("logistics", 20.0)
+	var lab := SoftKnowledge.crate_label()
+	print("[Playtest] cargo Knowledge label=", lab, " mass=", mass1, " value=", val1)
+	if lab == "":
+		fails.append("Knowledge crate label empty")
+	if absf(float(moved.get("mass", -1.0)) - mass0) > 0.001:
+		fails.append("Knowledge changed crate mass")
+	if absf(float(moved.get("value", -1.0)) - val0) > 0.001:
+		fails.append("Knowledge changed crate value")
+	if not bool(sh.try_dock_cargo_transfer(false)):
+		fails.append("occupy dock did not transfer one unit hold→pad")
+		return
+	var hold2 := int(hold.unit_count())
+	var yard2 := int(ctrl.pad_cargo_count()) if ctrl.has_method("pad_cargo_count") else -1
+	print("[Playtest] cargo hold→pad yard ", yard1, "→", yard2, " hold ", hold1, "→", hold2)
+	if hold2 != hold0 or yard2 != yard0:
+		fails.append("one-unit hold→pad failed (yard %s→%s hold %s→%s)" % [yard1, yard2, hold1, hold2])
+	if LayerContext and str(LayerContext.site_pin_id) != "" and str(LayerContext.site_pin_id) != "SITE_SPACE_TEST_PAD":
+		fails.append("cargo dock site_pin left catalog (%s)" % LayerContext.site_pin_id)
 
 
 func _rover_pick_unnamed_pad(os: Node) -> Dictionary:

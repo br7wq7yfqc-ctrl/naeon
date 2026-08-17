@@ -106,6 +106,14 @@ static func pump_label() -> String:
 	return "PUMP"
 
 
+## Logistics: name the crate. Never changes mass or value.
+static func crate_label() -> String:
+	var logi := mastery("logistics")
+	if logi >= 15.0 or rank() >= 5:
+		return "SCU CRATE"
+	return "CRATE"
+
+
 ## Logistics: resource warning threshold earlier (QoL)
 static func low_energy_threshold() -> float:
 	var logi := mastery("logistics")
