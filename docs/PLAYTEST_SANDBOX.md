@@ -20,27 +20,29 @@
 | Вопрос | Ответ |
 |--------|-------|
 | Пригоден ли прототип для человека? | **Ещё нет** — нет 5 мин soak на GPU владельца. |
-| Можно ли ставить PASS / FPS PASS? | **Нет.** |
+| Можно ли ставить PASS / FPS PASS? | **Нет.** llvmpipe / dummy не закрывают rules/25. |
 | P0.1 runtime (seed / ring / park)? | **Да, на этом зонде.** `P0_1_RUNTIME=true` `RING_RESTORE=true` `SAME=true` |
 | P0.2 срез (1 пад + 1 CC0 проп)? | **Да, на этом зонде.** `P0_2_SLICE=true` pads=1 filler=1. Манифест, не GLB в git. Tripo-герой **не** открыт. |
 | Mechanics? | Печатает PASS. Occupy 0.55→0.66 к gROT. **Не human gate.** |
-| Dummy `m is null`? | **Не ноль.** SCRIPT ERROR=0. Счётчик стабилен на dummy (см. §5). |
+| Dummy `m is null`? | **0 на этом прогоне** (счётчик не маскировали). Это не «человек может играть». |
 
 ---
 
 ## 2. Что запускали
 
+Коды 137 = `timeout -s KILL` / `OS.kill` после settle. Ожидаемо: `SceneTree.quit()` / `--quit-after` на dummy сами кормят `mesh_get_surface_count`.
+
 | Сцена | Код | SCRIPT ERROR | MNULL | Примечание |
 |-------|-----|--------------|-------|------------|
-| MainMenu | 0 | **0** | **0** | Clash кнопка = sandbox, не карта |
-| OpenSpace boot | 0 | **0** | 29 | 1 тело. Fill cut. Dummy mesh_storage |
-| TestArena | 0 | **0** | 42 | Clash greybox |
-| Sandbox probe | 137 (`OS.kill`) | **0** | 9 | `HUMAN_UNFIT`. P0.1+P0.2 green |
-| Mechanics | 137 | **0** | 220 | PASS (occupy/harvest честные). Не допуск |
+| MainMenu | 137 | **0** | **0** | Clash кнопка = sandbox, не карта |
+| OpenSpace boot | 137 | **0** | **0** | 1 тело. Fill cut. Было 29 (teardown) |
+| TestArena | 137 | **0** | **0** | Clash greybox. Было 42 (teardown) |
+| Sandbox probe | 137 (`OS.kill`) | **0** | **0** | `HUMAN_UNFIT`. P0.1+P0.2 green. Было 9 |
+| Mechanics | 137 | **0** | **0** | PASS. Было 220 (interior/pylon/limbs/rover free) |
 
 ---
 
-## 3. Что стало лучше (этот прогон vs PR #7 / P0.1-only)
+## 3. Что стало лучше (этот прогон)
 
 ```
 seed Nex-Prime body=2778 shader=2778 detail=2778 SAME=true
@@ -57,21 +59,21 @@ filler_source=Poly Haven · CC0-1.0 · https://polyhaven.com/a/wooden_crate_01
 null_mesh_instances=0
 P0_2_SLICE=true
 MECHANICS_IS_NOT_HUMAN_GATE=true
+VERDICT=HUMAN_UNFIT
 ```
 
-| Факт | Было (PR #7 / main) | P0.1 зонд | Стало (этот срез) |
-|------|---------------------|-----------|-------------------|
-| Seed | 61 vs 2778 | SAME=true | **SAME=true** (не сломали) |
-| Тела | 3 + 7 стримеров | 1, fill cut | **1, fill cut** |
-| Кольцо после отлёта | live=1 | live=9 cache=14 | **live=9 cache=14** |
-| Пады на срезе | 3 + density | 3 (не резали) | **1 plate (Pad_North)** |
-| Filler | нет / SITE_* риск | нет | **1 unnamed CC0, манифест only** |
-| Nodes boot → approach | 413 → 551 | 194 → 308 | **183 → 229** |
-| RAM approach | 42 MB | 36 MB | **35 MB** |
-| Occupy | 0.55→0.08 + PASS | 0.55→0.66 | **0.55→0.66** (не gate) |
-| Probe MNULL | ArrayMesh flood на подходе | ~27 boot | **probe 9** (чанки = BoxMesh на dummy) |
+| Факт | Было (OS 29 / TA 42 / probe 9 / mech 220) | Стало |
+|------|------------------------------------------|-------|
+| Seed | SAME=true | **SAME=true** (не сломали) |
+| Тела | 1, fill cut | **1, fill cut** |
+| Кольцо | live=9 cache=14 | **live=9 cache=14** |
+| Пады | 1 + CC0 filler | **1 + CC0 filler** |
+| Nodes boot → approach | 183 → 229 | **183 → 196** |
+| RAM approach | 35 MB | **33 MB** |
+| Occupy | 0.55→0.66 | **0.55→0.66** (не gate) |
+| MNULL | 29 / 42 / 9 / 220 | **0 / 0 / 0 / 0** |
 
-Человек на этом срезе должен увидеть: одну пластину пада + один ящик (proxy, пока GLB не на `s3://neon`). Не галактику. Не героя.
+Человек на GPU должен увидеть: одну пластину пада + один ящик (proxy, пока GLB не на `s3://neon`). Не галактику. Не героя.
 
 ---
 
@@ -90,21 +92,27 @@ MECHANICS_IS_NOT_HUMAN_GATE=true
 
 ---
 
-## 5. Dummy `m is null` — честно
+## 5. Dummy `m is null` — что срезали
 
-`ERROR Parameter "m" is null` @ `dummy/storage/mesh_storage.h:120`. Не SCRIPT ERROR. Не вылет сцены.
+`ERROR Parameter "m" is null` @ `dummy/storage/mesh_storage.h:120` = `mesh_get_surface_count` внутри dummy. Не SCRIPT ERROR. Не `mesh==null` в дереве (`null_mesh_instances=0`). Счётчик **не** фильтровали.
 
-Счётчик **не сдвинулся** после stand-in'ов (OS 29 / TA 42 / probe 9 / mech 220 на трёх подряд прогонах). Значит это не те PrimitiveMesh, которые мы перестали создавать в игре: dummy всё равно зовёт `mesh_get_surface_count` (Sky / ShaderMaterial / shutdown `--quit-after` / внутренние RID).
+Источники, которые давали 29 / 42 / 9 / 220:
 
-Что сделали, чтобы не кормить его сферами:
+1. **Teardown** — `SceneTree.quit()` / `--quit-after` обходит null RID. Playtest теперь `timeout -s KILL` / `OS.kill`.
+2. **Interior exit** — `queue_free` кармана с MeshInstance. На dummy карман = collision/markers only.
+3. **Плита пада / чанки** — add MeshInstance mid-session. На dummy: коллизия пада + Node3D-маркеры кольца (live/cache те же).
+4. **Lock-claim pylon** — `_ensure_claim_beacon` строил 7 мешей и на следующем claim их free. Skip на dummy.
+5. **seat→pilot** — free волкера с 4 limb RID. Skip limb rig на dummy.
+6. **Rover store** — free корпуса. Skip visual на dummy.
 
-- `MeshSafe` + `PlanetMeshCache` на headless не конструирует SphereMesh
-- SurfaceDetail cache = BoxMesh (кольцо всё равно restore)
-- starfield / star / belt / orbital / hull GLB / scan / shield — skip
-- hull / player / dummy сцены — BoxMesh в tscn
-- ContestedRing / pylon / Clash / interior / walker — box, без `TorusMesh.new()` на dummy
+Соседи того же среза:
 
-`null_mesh_instances=0` в дереве зонда. Ошибка — внутри dummy renderer, не «mesh == null» у наших инстансов.
+- Меню Quit на dummy = `OS.kill`, не `quit()`.
+- FloatingOrigin: один `rebase_now` на boot; mid-session rebase на dummy выключен (hitch + RID walk).
+- P0 one-pad: hide, не `_unload_pads()` (free + hitch + память-треш).
+- Память: approach 33 MB, nodes 196. Не разгружаем единственный пад.
+
+`null_mesh_instances=0`. Ошибка была внутри dummy renderer.
 
 ---
 
@@ -112,8 +120,8 @@ MECHANICS_IS_NOT_HUMAN_GATE=true
 
 - 5 мин soak и freeze >100 мс — только на GPU владельца.
 - rules/25 FPS на llvmpipe **не** измеряем и **не** подписываем.
-- Dummy `m is null` ≠ 0.
-- P0.2 полный DoD из плана (Tripo-герой) **не** открыт. P0.3–P0.5 не открыты.
+- Dummy MNULL=0 на этом стенде ≠ «можно давать человеку». На GPU те же free деревьев (интерьер, пад, ровер) всё ещё hitch-риск, просто без dummy spam.
+- P0.2 полный DoD из плана (Tripo-герой) **не** открыт — нет GPU/ключей. P0.3–P0.5 не открыты.
 - G1–G6 locked. `M` = тост locked. `Tab` = Clash sandbox.
 
 ---
