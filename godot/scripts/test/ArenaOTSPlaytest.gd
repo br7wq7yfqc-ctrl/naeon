@@ -1,5 +1,5 @@
 extends Node
-## Headless AR-A + AR-B: OTS camera, 3 lanes, damageable OUTER/MID/INHIB/CORE.
+## Headless AR-A + AR-B + AR-C: OTS, structures, timed lane waves.
 ## godot --path godot --scene res://scenes/test/TestArena.tscn -- --playtest-arena
 
 func _ready() -> void:
@@ -11,7 +11,7 @@ func _ready() -> void:
 	if not wanted:
 		queue_free()
 		return
-	print("[Playtest] arena AR-A/AR-B driver on")
+	print("[Playtest] arena AR-A/AR-B/AR-C driver on")
 	call_deferred("_go")
 
 
@@ -20,7 +20,7 @@ func _go() -> void:
 	var fails: PackedStringArray = PackedStringArray()
 	var arena: Node = get_parent()
 	if arena == null or str(arena.name) != "TestArena":
-		_finish(["no TestArena parent"], PackedStringArray(), 1)
+		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), 1)
 		return
 
 	var player: Node = arena.get("player")
@@ -85,10 +85,12 @@ func _go() -> void:
 		fails.append("MainMenu door missing")
 
 	var ar_a_fails: PackedStringArray = fails.duplicate()
+	var ar_c_fails: PackedStringArray = await _check_ar_c(arena, lanes, player)
 	var ar_b_fails: PackedStringArray = _check_ar_b(arena, lanes, player)
+	fails.append_array(ar_c_fails)
 	fails.append_array(ar_b_fails)
 
-	_finish(ar_a_fails, ar_b_fails, 0 if fails.is_empty() else 1)
+	_finish(ar_a_fails, ar_b_fails, ar_c_fails, 0 if fails.is_empty() else 1)
 
 
 func _check_ar_b(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
@@ -163,7 +165,94 @@ func _check_ar_b(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	return fails
 
 
-func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, code: int) -> void:
+func _check_ar_c(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
+	var fails: PackedStringArray = PackedStringArray()
+	var waves: Node = arena.get_node_or_null("ClashWaves") if arena else null
+	if waves == null and arena:
+		waves = arena.get("_waves")
+	if waves == null or not is_instance_valid(waves):
+		fails.append("ClashWaves missing")
+		return fails
+	if not waves.has_method("living_minions"):
+		fails.append("ClashWaves API missing")
+		return fails
+	var live: Array = waves.living_minions()
+	if live.is_empty():
+		await get_tree().create_timer(0.45).timeout
+		live = waves.living_minions()
+	print("[Playtest] wave_index=", waves.get("wave_index"), " living=", live.size())
+	if live.is_empty():
+		fails.append("no wave minions on a lane")
+		return fails
+	var walker: Node3D = null
+	for n in live:
+		if n is Node3D and str(n.get("faction")) == "Cybernex":
+			walker = n as Node3D
+			break
+	if walker == null:
+		walker = live[0] as Node3D
+	var lane_id := str(walker.get_meta("lane")) if walker.has_meta("lane") else ""
+	if lane_id == "" and lanes and lanes.has_method("lane_at"):
+		lane_id = str(lanes.lane_at(walker.global_position))
+	if lane_id != "TOP" and lane_id != "MID" and lane_id != "BOT":
+		fails.append("minion not on a Clash lane")
+	var z0 := walker.global_position.z
+	await get_tree().create_timer(0.45).timeout
+	if walker == null or not is_instance_valid(walker):
+		fails.append("wave minion freed before march")
+		return fails
+	var z1 := walker.global_position.z
+	var fac := str(walker.get("faction")) if "faction" in walker else ""
+	var marched := (fac == "Cybernex" and z1 < z0 - 0.35) or (fac == "gROT" and z1 > z0 + 0.35)
+	print("[Playtest] march ", fac, " ", lane_id, " z ", z0, " -> ", z1)
+	if not marched:
+		fails.append("minion did not walk the lane")
+	if not walker.has_method("take_damage"):
+		fails.append("minion is not a CombatDummy")
+	else:
+		var mhp0 := float(walker.get("health"))
+		walker.take_damage(8.0, "Cybernex" if fac != "Cybernex" else "gROT")
+		var mhp1 := float(walker.get("health"))
+		print("[Playtest] minion hp ", mhp0, " -> ", mhp1)
+		if mhp1 >= mhp0:
+			fails.append("minion did not take damage")
+	# OUTER hook: opposite-faction dummy can hit a living turret.
+	if lanes and lanes.has_method("find_structure"):
+		var shooter: Node3D = walker
+		for n in waves.living_minions():
+			if n is Node3D and str(n.get("faction")) == "gROT":
+				shooter = n as Node3D
+				break
+		var outer_fac := "Cybernex" if str(shooter.get("faction")) == "gROT" else "gROT"
+		var root: Node3D = lanes.find_structure("OUTER", outer_fac, "MID") as Node3D
+		if root == null:
+			fails.append("%s MID OUTER missing for wave hook" % outer_fac)
+		else:
+			var gun: Node = root.get_node_or_null("Gun")
+			if gun == null or not gun.has_method("take_damage"):
+				fails.append("OUTER gun missing for wave hook")
+			else:
+				var ohp0 := float(gun.get("health"))
+				if shooter.has_method("_fire_at"):
+					shooter._fire_at(gun)
+				var ohp1 := float(gun.get("health"))
+				print("[Playtest] OUTER from minion hp ", ohp0, " -> ", ohp1)
+				if ohp1 >= ohp0:
+					fails.append("minion could not damage OUTER")
+				if gun.has_method("is_alive") and not bool(gun.is_alive()):
+					fails.append("OUTER died from wave probe")
+	if player and player.has_method("ots_evidence"):
+		var ev: Dictionary = player.ots_evidence()
+		if not bool(ev.get("active", false)):
+			fails.append("OTS dropped after wave")
+	if LayerContext and str(LayerContext.site_pin_id) != "SITE_TEST_ARENA_PILLAR":
+		fails.append("SITE pin changed during AR-C")
+	if arena and str(arena.name) != "TestArena":
+		fails.append("left TestArena")
+	return fails
+
+
+func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, code: int) -> void:
 	if ar_a.is_empty():
 		print("[Playtest] PASS arena AR-A")
 	else:
@@ -175,6 +264,12 @@ func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, code: int) -> voi
 	else:
 		print("[Playtest] FAIL arena AR-B")
 		for f in ar_b:
+			print("[Playtest]  - ", f)
+	if ar_c.is_empty():
+		print("[Playtest] PASS arena AR-C")
+	else:
+		print("[Playtest] FAIL arena AR-C")
+		for f in ar_c:
 			print("[Playtest]  - ", f)
 	if AutoUpdater and AutoUpdater.has_method("abort_pending"):
 		AutoUpdater.abort_pending()
