@@ -591,12 +591,16 @@ func _update_status() -> void:
 	if status_label == null or DisplayServer.get_name() == "headless":
 		return
 	var opn := "SIEGE" if op_mode == 1 else ("SCAN" if op_mode == 2 else "CRUISE")
-	var txt := "%s  OP:%s  SPD %d  SHD %d  E %d  %s%s%s%s" % [
+	var mod := ""
+	if modules_need_repair():
+		mod = "  " + module_hp_line()
+	var txt := "%s  OP:%s  SPD %d  SHD %d  E %d  %s%s%s%s%s" % [
 		flight_mode_name(), opn, int(velocity.length()), int(shields), int(energy),
 		("LANDED" if is_landed else "FLIGHT"),
 		("  STALL" if _stall > 0.35 else ""),
 		("  HULL CRIT" if _hull_crit_t > 0.0 else ""),
 		("  BURN" if _burn_on else ""),
+		mod,
 	]
 	# Assigning Label3D.text regenerates its glyph mesh, so only write on change.
 	if txt != _status_cache:
@@ -730,19 +734,27 @@ func attach_module(module: ShipModule) -> void:
 	_recompute_stats()
 	print("[Ship] Attached ", module.display_name)
 
+func module_thrust() -> float:
+	return _module_thrust()
+
+
 func _module_thrust() -> float:
 	var t: float = 0.0
 	for m in modules:
-		t += m.thrust
+		if m:
+			t += m.effective_thrust()
 	return t
 
 func _recompute_stats() -> void:
 	max_shields = 40.0
 	max_cargo = 20.0
 	for m in modules:
-		max_shields += m.shield_bonus
-		max_cargo += m.cargo_bonus
+		if m == null:
+			continue
+		max_shields += m.effective_shield_bonus()
+		max_cargo += m.effective_cargo_bonus()
 	shields = min(shields, max_shields)
+	cargo = min(cargo, max_cargo)
 
 func _tick_afterburn(delta: float, want: bool) -> void:
 	var was_on := _burn_on
@@ -789,7 +801,8 @@ func _fire_weapon() -> void:
 	_fire_cd = 0.22 if op_mode == 1 else (0.14 if flight_mode == FlightMode.NAV else 0.18)
 	var dps: float = 8.0
 	for m in modules:
-		dps += m.weapon_dps
+		if m:
+			dps += m.effective_weapon_dps()
 	if op_mode == 1 and _role:
 		dps *= float(_role.siege_main_dps_mult) if "siege_main_dps_mult" in _role else 1.35
 	var aim: Array = _Hits.aim_from(self)
@@ -945,9 +958,97 @@ func take_damage(amount: float, _source_faction: String = "") -> void:
 		var absorbed: float = min(shields, rest)
 		shields -= absorbed
 		rest -= absorbed
-	health = max(0.0, health - rest)
+		if absorbed > 0.0:
+			_damage_module_type(ShipModule.ModuleType.SHIELD, absorbed * 0.25)
+	if rest > 0.0:
+		health = max(0.0, health - rest)
+		_bleed_to_module(rest * 0.5)
 	if health <= 0.0:
 		_hull_critical()
+
+
+func damage_module(module_type: int, amount: float) -> float:
+	return _damage_module_type(module_type, amount)
+
+
+func _damage_module_type(module_type: int, amount: float) -> float:
+	if amount <= 0.0:
+		return -1.0
+	for m in modules:
+		if m and int(m.module_type) == module_type:
+			var before: float = m.hp
+			m.apply_damage(amount)
+			_recompute_stats()
+			_maybe_toast_module(m, before)
+			return m.hp
+	return -1.0
+
+
+func _bleed_to_module(amount: float) -> void:
+	## Hull stays; a share hits a fitted module so the function degrades.
+	if amount <= 0.0:
+		return
+	var pick: ShipModule = null
+	for m in modules:
+		if m == null or m.hp <= 0.0:
+			continue
+		if m.module_type == ShipModule.ModuleType.ENGINE \
+			or m.module_type == ShipModule.ModuleType.WEAPON \
+			or m.module_type == ShipModule.ModuleType.SHIELD:
+			pick = m
+			break
+	if pick == null:
+		for m in modules:
+			if m and m.hp > 0.0:
+				pick = m
+				break
+	if pick == null:
+		return
+	var before: float = pick.hp
+	pick.apply_damage(amount)
+	_recompute_stats()
+	_maybe_toast_module(pick, before)
+
+
+func repair_modules(amount: float) -> bool:
+	## Slow field repair. Caller is the occupied pad — not a cash skip.
+	if amount <= 0.0:
+		return false
+	var changed := false
+	for m in modules:
+		if m == null or not m.is_damaged():
+			continue
+		m.repair(amount)
+		changed = true
+	if changed:
+		_recompute_stats()
+	return changed
+
+
+func modules_need_repair() -> bool:
+	for m in modules:
+		if m and m.is_damaged():
+			return true
+	return false
+
+
+func module_hp_line() -> String:
+	var bits: PackedStringArray = PackedStringArray()
+	for m in modules:
+		if m == null:
+			continue
+		bits.append("%s %.0f" % [m.short_tag(), m.integrity() * 100.0])
+	return " ".join(bits)
+
+
+func _maybe_toast_module(m: ShipModule, before: float) -> void:
+	if m == null:
+		return
+	var mid: float = m.max_hp * 0.5
+	if before > mid and m.hp <= mid:
+		_toast_ship("%s damaged — %s %.0f%% (hull stays)" % [m.display_name, m.short_tag(), m.integrity() * 100.0])
+	elif before > 0.05 and m.hp <= 0.05:
+		_toast_ship("%s offline — function lost, hull stays" % m.display_name)
 
 
 func _hull_critical() -> void:
@@ -1482,10 +1583,14 @@ func _ensure_soft_systems() -> void:
 
 
 func get_soft_systems_line() -> String:
+	var sl := ""
 	var n = get_node_or_null("SoftShipSystems")
 	if n and n.has_method("status_line"):
-		return str(n.status_line())
-	return ""
+		sl = str(n.status_line())
+	var mods := module_hp_line()
+	if mods != "":
+		sl = (sl + "  ·  " + mods) if sl != "" else mods
+	return sl
 
 
 var _living: Node = null
