@@ -22,15 +22,15 @@ set +e
 timeout 20 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/test/TestArena.tscn -- --playtest-arena > /tmp/pt_ar.log 2>&1
 AR_CODE=$?
 set -e
-if grep -q '\[Playtest\] PASS arena AR-A' /tmp/pt_ar.log; then
+if grep -q '\[Playtest\] PASS arena AR-A' /tmp/pt_ar.log && grep -q '\[Playtest\] PASS arena AR-B' /tmp/pt_ar.log; then
   AR_CODE=0
-elif grep -q '\[Playtest\] FAIL arena AR-A' /tmp/pt_ar.log; then
+elif grep -q '\[Playtest\] FAIL arena AR-A' /tmp/pt_ar.log || grep -q '\[Playtest\] FAIL arena AR-B' /tmp/pt_ar.log; then
   AR_CODE=1
 elif [ "$AR_CODE" -eq 0 ]; then
   AR_CODE=1
 fi
 echo AR_CODE=$AR_CODE AR_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_ar.log || true)
-grep -E 'Playtest|SCRIPT ERROR|AR-A' /tmp/pt_ar.log | head -30 || true
+grep -E 'Playtest|SCRIPT ERROR|AR-A|AR-B' /tmp/pt_ar.log | head -40 || true
 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/ui/MainMenu.tscn --quit-after 4 > /tmp/pt_mm.log 2>&1 || true
 echo MM_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_mm.log || true)
 set +e

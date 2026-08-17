@@ -58,11 +58,28 @@ func register_kill(lane: String = "MID") -> void:
 
 
 func register_tower_down(lane: String = "MID") -> void:
+	register_structure_down("OUTER", lane)
+
+
+func register_structure_down(role: String = "OUTER", lane: String = "MID") -> void:
 	if _ended or not active:
 		return
-	_add_pressure(lane, 28.0)
+	var press := 28.0
+	match role:
+		"MID":
+			press = 36.0
+		"INHIB":
+			press = 48.0
+		"CORE":
+			press = 60.0
+		_:
+			press = 28.0
+	_add_pressure(lane, press)
 	if GameManager:
 		GameManager.add_mastery("combat", 0.6)
+	# Soft win — core HP is honest; no P2W repair / planet flip.
+	if role == "CORE":
+		_end_match("player_core")
 
 func _process(delta: float) -> void:
 	if _ended or not active or _player_ref == null or not is_instance_valid(_player_ref):

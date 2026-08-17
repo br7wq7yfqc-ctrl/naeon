@@ -27,7 +27,8 @@ OpenSpace → **M** or **Tab** → TestArena Clash · kill dummies to 5 · soft 
 ## Lane readability (0.3.3+)
 - TOP +X cyan · MID gold · BOT -X magenta strips + Label3D
 - NEXUS Cybernex south (+Z) / gROT north (-Z)
-- Towers mid each lane: live Turrets (faction fire, 160 HP, +28 soft pressure on death)
+- Lane structures (AR-B): OUTER / MID / INHIB / CORE as live `Turret` HP on the same 60×60; one INHIB per side (core gate); no P2W repair
+- OUTER still fires (160 HP, +28 soft pressure); MID/INHIB/CORE take damage; enemy CORE down = soft match win
 - ClashRadar Control HUD
 - Dummies spawn from `lane_spawn_table()`
 
