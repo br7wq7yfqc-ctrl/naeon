@@ -124,6 +124,14 @@ static func crate_label() -> String:
 	return "CRATE"
 
 
+## Colony/biomass ops: name the soft wallet. Never changes harvest yield.
+static func yield_label(grot: bool = false) -> String:
+	var ops := mastery("biomass_ops") if grot else mastery("colony_ops")
+	if grot:
+		return "BIOMASS RANK" if ops >= 15.0 or rank() >= 5 else "BIOMASS"
+	return "CONTRIBUTION" if ops >= 15.0 or rank() >= 5 else "CONTRIB"
+
+
 ## Logistics: resource warning threshold earlier (QoL)
 static func low_energy_threshold() -> float:
 	var logi := mastery("logistics")

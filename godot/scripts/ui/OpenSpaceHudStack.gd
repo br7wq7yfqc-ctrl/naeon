@@ -8,6 +8,7 @@ const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 const FIELDS := [
 	"fuel", "fuel_max", "cargo", "module_tag", "module_pct",
 	"landed", "occupy", "eva_mode",
+	"econ", "econ_rate", "econ_grot",
 ]
 
 
@@ -21,6 +22,9 @@ static func snapshot(ship: Node = null, player: Node = null, pad: Node = null) -
 		"landed": false,
 		"occupy": "",
 		"eva_mode": "",
+		"econ": 0.0,
+		"econ_rate": 0.0,
+		"econ_grot": false,
 	}
 	if ship != null and is_instance_valid(ship):
 		if "fuel" in ship:
@@ -36,6 +40,21 @@ static func snapshot(ship: Node = null, player: Node = null, pad: Node = null) -
 		snap["module_pct"] = float(worst.get("pct", 100.0))
 	if pad != null and is_instance_valid(pad) and pad.has_method("get_claim_status"):
 		snap["occupy"] = str(pad.get_claim_status())
+		# Rate is display-only. Knowledge may label it; harvest yield stays.
+		if str(snap["occupy"]) == "extracting":
+			var rate := 0.0
+			if "extract_rate" in pad and "contribution_per_unit" in pad:
+				rate = float(pad.get("extract_rate")) * float(pad.get("contribution_per_unit"))
+			snap["econ_rate"] = rate
+	if GameManager:
+		var grot := false
+		if GameManager.has_method("get_faction_name"):
+			grot = str(GameManager.get_faction_name()) == "gROT"
+		snap["econ_grot"] = grot
+		if grot:
+			snap["econ"] = float(GameManager.biomass) if "biomass" in GameManager else 0.0
+		else:
+			snap["econ"] = float(GameManager.contribution) if "contribution" in GameManager else 0.0
 	if player != null and is_instance_valid(player):
 		if "eva_mode" in player and bool(player.get("eva_mode")):
 			if player.has_method("is_zero_g") and bool(player.is_zero_g()):
@@ -74,7 +93,13 @@ static func stack_text(snap: Dictionary) -> String:
 	var eva := str(snap.get("eva_mode", ""))
 	if eva == "":
 		eva = "—"
-	return "%s\n%s\n%s\n%s\n%s" % [fuel_s, cargo_s, mod_s, land_s, eva]
+	var grot := bool(snap.get("econ_grot", false))
+	var unit := _SoftK.yield_label(grot)
+	var econ_s := "%s %.1f" % [unit, float(snap.get("econ", 0.0))]
+	var rate := float(snap.get("econ_rate", 0.0))
+	if rate > 0.001:
+		econ_s += "  +%.1f/s" % rate
+	return "%s\n%s\n%s\n%s\n%s\n%s" % [econ_s, fuel_s, cargo_s, mod_s, land_s, eva]
 
 
 static func _worst_module(ship: Node) -> Dictionary:
