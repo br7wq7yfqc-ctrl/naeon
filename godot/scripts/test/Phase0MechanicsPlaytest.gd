@@ -498,62 +498,64 @@ func _go() -> void:
 		if miss_self == sh_c:
 			fails.append("ship shot hit self")
 
-	# --- OS-A: Nex-Prime orbit paint and dirt share body seed + sphere domain ---
-	var _R = load("res://scripts/world/PlanetRelief.gd")
-	if _R == null:
-		fails.append("OS-A PlanetRelief missing")
-	else:
-		var nex: Node3D = null
-		var tree_p := get_tree()
-		if tree_p:
-			for n in tree_p.get_nodes_in_group("planets"):
-				if n is Node3D and "planet_name" in n and str(n.planet_name) == "Nex-Prime":
-					nex = n as Node3D
-					break
-		if nex == null:
-			fails.append("OS-A no Nex-Prime")
-		else:
-			var seed_b: int = int(_R.body_seed("Nex-Prime"))
-			var prof: Dictionary = _R.profile_for_planet("Nex-Prime")
-			var rad: float = float(nex.radius)
-			var smat = nex.get("_surface_shader_mat")
-			if smat is ShaderMaterial:
-				var us: float = float((smat as ShaderMaterial).get_shader_parameter("seed"))
-				var ur: float = float((smat as ShaderMaterial).get_shader_parameter("planet_radius"))
-				var usea: float = float((smat as ShaderMaterial).get_shader_parameter("sea_threshold"))
-				if absf(us - float(seed_b)) > 0.51:
-					fails.append("OS-A shader seed != body_seed (%s vs %s)" % [us, seed_b])
-				if absf(ur - rad) > 0.51:
-					fails.append("OS-A shader radius != body")
-				if absf(usea - float(prof.get("sea_level", -0.25))) > 0.02:
-					fails.append("OS-A shader sea != profile")
-			else:
-				fails.append("OS-A Nex-Prime has no surface shader")
-			var seas := 0
-			var lands := 0
-			for i in 16:
-				var a := float(i) * TAU / 16.0
-				var d := Vector3(sin(a), 0.12, cos(a)).normalized()
-				var xz: Vector2 = _R.sphere_xz(d, rad)
-				var hm: float = float(_R.height_macro_at(xz.x, xz.y, seed_b, prof))
-				var hs: float = float(_R.height_on_sphere(d, rad, seed_b, prof, true))
-				if absf(hm - hs) > 0.0001:
-					fails.append("OS-A sphere_xz != height_on_sphere")
-					break
-				if bool(_R.is_sea(hm, prof)):
-					seas += 1
-				else:
-					lands += 1
-			print("[Playtest] OS-A Nex-Prime seed=", seed_b, " land=", lands, " sea=", seas)
-			if seas < 2 or lands < 2:
-				fails.append("OS-A Nex-Prime macro has no land/sea contrast")
-			var detail = nex.get_node_or_null("SurfaceDetail")
-			if detail:
-				var dseed: int = int(detail.get("_seed"))
-				if dseed != seed_b:
-					fails.append("OS-A SurfaceDetail seed != body_seed")
-
+	_osa_same_body(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
+
+
+func _osa_same_body(fails: PackedStringArray) -> void:
+	var relief = load("res://scripts/world/PlanetRelief.gd")
+	if relief == null:
+		fails.append("OS-A PlanetRelief missing")
+		return
+	var nex: Node = null
+	var tree_p := get_tree()
+	if tree_p:
+		for n in tree_p.get_nodes_in_group("planets"):
+			if str(n.get("planet_name")) == "Nex-Prime":
+				nex = n
+				break
+	if nex == null:
+		fails.append("OS-A no Nex-Prime")
+		return
+	var seed_b: int = int(relief.body_seed("Nex-Prime"))
+	var prof: Dictionary = relief.profile_for_planet("Nex-Prime")
+	var rad: float = float(nex.get("radius"))
+	var smat = nex.get("_surface_shader_mat")
+	if smat is ShaderMaterial:
+		var us: float = float((smat as ShaderMaterial).get_shader_parameter("seed"))
+		var ur: float = float((smat as ShaderMaterial).get_shader_parameter("planet_radius"))
+		var usea: float = float((smat as ShaderMaterial).get_shader_parameter("sea_threshold"))
+		if absf(us - float(seed_b)) > 0.51:
+			fails.append("OS-A shader seed != body_seed (%s vs %s)" % [us, seed_b])
+		if absf(ur - rad) > 0.51:
+			fails.append("OS-A shader radius != body")
+		if absf(usea - float(prof.get("sea_level", -0.25))) > 0.02:
+			fails.append("OS-A shader sea != profile")
+	else:
+		fails.append("OS-A Nex-Prime has no surface shader")
+	var seas := 0
+	var lands := 0
+	for i in range(16):
+		var a := float(i) * TAU / 16.0
+		var d := Vector3(sin(a), 0.12, cos(a)).normalized()
+		var xz: Vector2 = relief.sphere_xz(d, rad)
+		var hm: float = float(relief.height_macro_at(xz.x, xz.y, seed_b, prof))
+		var hs: float = float(relief.height_on_sphere(d, rad, seed_b, prof, true))
+		if absf(hm - hs) > 0.0001:
+			fails.append("OS-A sphere_xz != height_on_sphere")
+			break
+		if bool(relief.is_sea(hm, prof)):
+			seas += 1
+		else:
+			lands += 1
+	print("[Playtest] OS-A Nex-Prime seed=", seed_b, " land=", lands, " sea=", seas)
+	if seas < 2 or lands < 2:
+		fails.append("OS-A Nex-Prime macro has no land/sea contrast")
+	var detail = nex.get_node_or_null("SurfaceDetail")
+	if detail:
+		var dseed: int = int(detail.get("_seed"))
+		if dseed != seed_b:
+			fails.append("OS-A SurfaceDetail seed != body_seed")
 
 
 func _finish(fails: PackedStringArray, code: int) -> void:
