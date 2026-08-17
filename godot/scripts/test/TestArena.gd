@@ -471,6 +471,7 @@ func _finish_clash_layout() -> void:
 	if SoftNetSession and player:
 		SoftNetSession.bind_player(player)
 	_evidence_ar_a()
+	_evidence_ar_b()
 	_setup_arena_playtest()
 
 
@@ -800,6 +801,16 @@ func _evidence_ar_a() -> void:
 		if not ids.has(lane_id):
 			ids.append(lane_id)
 	print("[AR-A] ots=", ev, " lanes=", ",".join(ids), " pin=", LayerContext.site_pin_id if LayerContext else "")
+
+
+func _evidence_ar_b() -> void:
+	var roles: PackedStringArray = PackedStringArray()
+	var n := 0
+	if _lanes and _lanes.has_method("living_roles"):
+		roles = _lanes.living_roles()
+	if _lanes and _lanes.has_method("structure_table"):
+		n = _lanes.structure_table().size()
+	print("[AR-B] structures n=", n, " roles=", ",".join(roles), " pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
 func _setup_arena_playtest() -> void:
