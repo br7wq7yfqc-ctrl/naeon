@@ -3,8 +3,8 @@
 **Версия:** 1.0  
 **Дата:** 2026-08-18  
 **Движок:** Godot 4.3  
-**Статус:** план only. Этим PR runtime Godot не менять.  
-**Код срезов:** NP-A…NP-F later. Не G2–G6. Не 10k CCU.
+**Статус:** NP-A flight + NP-B occupy/harvest в коде. NP-C…F later.  
+**Код срезов:** NP-A…NP-B built. NP-C…F later. Не G2–G6. Не 10k CCU.
 
 Запрос владельца (в план): NPC должны **полностью закрывать петлю живого игрока**, пока MMO-кластер не запущен — летать, делать все playable-действия, прогрессировать, ставить базы, собирать альянсы и рейды. Живые: отвечают игроку, меняются под его влияние, работают offline и в coop с друзьями. Игрок берёт NPC в отряд и сообщество. **ИИ NPC — подписка AI Agency:** платят за инициативу и диалог, **никогда** за HP / DPS / yield / уникальное оружие (это P2W, отказ). Кластер: [`MMO_SERVERS.md`](MMO_SERVERS.md) — HOLD до Phase 3.
 
@@ -33,7 +33,7 @@ Clash: [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md).
 
 | Узел | Факт репо | Это не |
 |------|-----------|--------|
-| `PadTraffic.gd` | 1 pad-guard `CombatDummy` (`can_move=false`, aggro 0) + visitor hull hold + surface dummy под Pulse | пилот, occupy, harvest |
+| `PadTraffic.gd` | 1 pad-guard `CombatDummy` + visitor `ShipController`/`NpcPilot` (NP-A flight, NP-B occupy/harvest) + surface dummy под Pulse | NP-C модуль; NP-D отряд |
 | `PadAmbientLife.gd` | GLB-пропы, bob/wander, **0 боя** | агент, квест, альянс |
 | `ClashWaves.gd` | timed `CombatDummy` march по `ClashLanes` | герой Clash, драфт, agency |
 | `CombatDummy.gd` | HP, optional aggro/lane; цель и миньон | корабль, база, Contribution |
@@ -45,7 +45,7 @@ Clash: [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md).
 | `rules/11`, `rules/23` | иерархия, war/truce | два NPC с raid intent |
 | `SoftSession.gd` | `user://` form / faction / layer | offline-петля NPC |
 | `BaseBuilder.gd` | P0 = `PadBaseController` only; игрок модуль не ставит | ST-A; NP-C ждёт ST-A |
-| `PadBaseController.gd` | occupy-to-hold, harvest → Contribution / Biomass | NPC-harvest |
+| `PadBaseController.gd` | occupy-to-hold, harvest → Contribution / Biomass; NP-B visitor uses the same path | свой yield; NP-C |
 | `ShipController` / `ShipFlightModel` / `ShipLandingGear` | SCM/NAV/HOVER/STALL/LAND; G = LAND на unnamed pad | NPC-пилот |
 | `Contribution.gd` | `add` / `spend` | кошелёк NPC |
 | Каталог носителей | slug `cybernex_capital_carrier`, `grot_capital_carrier`, `grot_drone_carrier`, `cybernex_mothership`, `grot_mothership` | hangar + очередь (ST-D) |
@@ -148,7 +148,7 @@ OS-G силуэт и ambient life — WorldFill / плотность, не жи�
 
 | Сейчас | Дальше |
 |--------|--------|
-| Этот документ + ссылки из плана и баров | Код NP-A на загруженном теле ARK; не ломать P0.6 |
+| NP-A flight + NP-B occupy/harvest on unnamed pad | NP-D отряд; NP-C после ST-A |
 | Стратегия — docs; ST-A после честного OS-H на GPU | NP-C только после ST-A |
 | SoftNet — visual | authority later; не 10k |
 | G2–G6 | закрыты |

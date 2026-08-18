@@ -145,6 +145,10 @@ func is_npc_pilot() -> bool:
 	return _npc_driven
 
 
+func is_npc_harvesting() -> bool:
+	return _npc_driven and has_meta("npc_harvest") and bool(get_meta("npc_harvest"))
+
+
 func set_npc_driven(on: bool) -> void:
 	## Visitor hull: same SCM/HOVER/LAND, no mouse, no current camera.
 	_npc_driven = on
