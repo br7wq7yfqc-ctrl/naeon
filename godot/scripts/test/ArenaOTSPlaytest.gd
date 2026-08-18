@@ -1,5 +1,5 @@
 extends Node
-## Headless AR-A + AR-B + AR-C + AR-D + AR-E + river: OTS, structures, waves, camp, kits/module, river strip.
+## Headless AR-A + AR-B + AR-C + AR-D + AR-E + river + jump pads: OTS, structures, waves, camp, kits/module, river, short hop.
 ## godot --path godot --scene res://scenes/test/TestArena.tscn -- --playtest-arena
 
 func _ready() -> void:
@@ -11,7 +11,7 @@ func _ready() -> void:
 	if not wanted:
 		queue_free()
 		return
-	print("[Playtest] arena AR-A/AR-B/AR-C/AR-D/AR-E + river driver on")
+	print("[Playtest] arena AR-A/AR-B/AR-C/AR-D/AR-E + river + jump pads driver on")
 	call_deferred("_go")
 
 
@@ -20,7 +20,7 @@ func _go() -> void:
 	var fails: PackedStringArray = PackedStringArray()
 	var arena: Node = get_parent()
 	if arena == null or str(arena.name) != "TestArena":
-		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
+		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
 		return
 
 	var player: Node = arena.get("player")
@@ -90,13 +90,15 @@ func _go() -> void:
 	var ar_d_fails: PackedStringArray = _check_ar_d(arena, lanes, player)
 	var ar_e_fails: PackedStringArray = _check_ar_e(arena, lanes, player)
 	var river_fails: PackedStringArray = _check_river(arena)
+	var pad_fails: PackedStringArray = await _check_jump_pads(arena, player)
 	fails.append_array(ar_c_fails)
 	fails.append_array(ar_b_fails)
 	fails.append_array(ar_d_fails)
 	fails.append_array(ar_e_fails)
 	fails.append_array(river_fails)
+	fails.append_array(pad_fails)
 
-	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, ar_e_fails, river_fails, 0 if fails.is_empty() else 1)
+	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, ar_e_fails, river_fails, pad_fails, 0 if fails.is_empty() else 1)
 
 
 func _check_ar_b(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
@@ -475,7 +477,95 @@ func _check_river(arena: Node) -> PackedStringArray:
 	return fails
 
 
-func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, ar_e: PackedStringArray, river: PackedStringArray, code: int) -> void:
+func _check_jump_pads(arena: Node, player: Node) -> PackedStringArray:
+	var fails: PackedStringArray = PackedStringArray()
+	var pads: Node = arena.get_node_or_null("ClashJumpPads") if arena else null
+	if pads == null and arena:
+		pads = arena.get("_jump_pads")
+	if pads == null or not is_instance_valid(pads):
+		fails.append("ClashJumpPads missing")
+		return fails
+	if pads.has_method("is_present") and not bool(pads.is_present()):
+		fails.append("jump pads not present")
+	if pads.has_method("is_on_footprint") and not bool(pads.is_on_footprint()):
+		fails.append("jump pads left the TestArena footprint")
+	var n := int(pads.pad_count()) if pads.has_method("pad_count") else 0
+	if n < 2 or n > 4:
+		fails.append("jump pad count not 2–4")
+	if pads.has_method("is_flight") and bool(pads.is_flight()):
+		fails.append("pads claim flight")
+	if pads.has_method("is_objective") and bool(pads.is_objective()):
+		fails.append("pads became an objective")
+	var table: Array = pads.pad_table() if pads.has_method("pad_table") else []
+	if table.is_empty():
+		fails.append("pad table empty")
+		return fails
+	var pad0: Dictionary = table[0]
+	var pad_pos: Vector3 = pad0.get("pos", Vector3.ZERO)
+	var dummy_scene: PackedScene = load("res://scenes/combat/CombatDummy.tscn")
+	if dummy_scene == null:
+		fails.append("CombatDummy missing for hop")
+		return fails
+	var walker: CharacterBody3D = dummy_scene.instantiate() as CharacterBody3D
+	walker.set("faction", "Cybernex")
+	walker.set("can_move", false)
+	walker.set("lane_march", false)
+	arena.add_child(walker)
+	walker.global_position = pad_pos + Vector3(0.0, 1.15, 0.0)
+	await get_tree().create_timer(0.28).timeout
+	if walker == null or not is_instance_valid(walker):
+		fails.append("hop walker freed")
+		return fails
+	var y0 := walker.global_position.y
+	var launched := false
+	if walker.is_on_floor() or walker.velocity.y <= 0.4:
+		if pads.has_method("try_launch"):
+			launched = bool(pads.try_launch(walker, true))
+	else:
+		launched = true
+	if not launched and pads.has_method("last_hop_ok"):
+		launched = bool(pads.last_hop_ok())
+	print("[Playtest] pad hop launch=", launched, " y0=", y0, " floor=", walker.is_on_floor())
+	if not launched:
+		fails.append("jump pad did not launch")
+		walker.queue_free()
+		return fails
+	await get_tree().create_timer(0.22).timeout
+	if walker == null or not is_instance_valid(walker):
+		fails.append("hop walker freed mid-air")
+		return fails
+	var y1 := walker.global_position.y
+	print("[Playtest] pad hop peak-ish y ", y0, " -> ", y1, " vy=", walker.velocity.y)
+	if y1 <= y0 + 0.35:
+		fails.append("walker did not hop")
+	var peak_cap := 4.5
+	if pads.has_method("max_hop_peak"):
+		peak_cap = float(pads.max_hop_peak())
+	if y1 - y0 > peak_cap:
+		fails.append("hop was flight not a short hop")
+	await get_tree().create_timer(1.35).timeout
+	if walker == null or not is_instance_valid(walker):
+		fails.append("hop walker freed before land")
+		return fails
+	var y2 := walker.global_position.y
+	print("[Playtest] pad land y=", y2, " floor=", walker.is_on_floor())
+	if not walker.is_on_floor():
+		fails.append("walker did not land")
+	if y2 >= y1 - 0.15:
+		fails.append("walker stayed at hop height")
+	if player and player.has_method("ots_evidence"):
+		var ev: Dictionary = player.ots_evidence()
+		if not bool(ev.get("active", false)):
+			fails.append("OTS dropped after jump pad")
+	if LayerContext and str(LayerContext.site_pin_id) != "SITE_TEST_ARENA_PILLAR":
+		fails.append("SITE pin changed during jump pads")
+	if arena and str(arena.name) != "TestArena":
+		fails.append("left TestArena")
+	walker.queue_free()
+	return fails
+
+
+func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, ar_e: PackedStringArray, river: PackedStringArray, pads: PackedStringArray, code: int) -> void:
 	if ar_a.is_empty():
 		print("[Playtest] PASS arena AR-A")
 	else:
@@ -511,6 +601,12 @@ func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStrin
 	else:
 		print("[Playtest] FAIL river")
 		for f in river:
+			print("[Playtest]  - ", f)
+	if pads.is_empty():
+		print("[Playtest] jump pads hop on footprint")
+	else:
+		print("[Playtest] FAIL jump pads")
+		for f in pads:
 			print("[Playtest]  - ", f)
 	if AutoUpdater and AutoUpdater.has_method("abort_pending"):
 		AutoUpdater.abort_pending()

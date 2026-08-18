@@ -140,6 +140,13 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 
+func apply_arena_hop(impulse: Vector3) -> void:
+	if not _alive:
+		return
+	velocity = impulse
+	_stagger = maxf(_stagger, 0.85)
+
+
 func set_lane_path(path: Array) -> void:
 	lane_waypoints = path.duplicate()
 	_wp_i = 0

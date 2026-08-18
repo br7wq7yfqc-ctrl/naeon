@@ -23,6 +23,7 @@ var _waves: Node = null
 var _camp: Node3D = null
 var _bench: Node3D = null
 var _river: Node3D = null
+var _jump_pads: Node3D = null
 
 func _ready() -> void:
 	var _PoolReset = load("res://scripts/combat/ProjectilePool.gd")
@@ -484,12 +485,14 @@ func _finish_clash_layout() -> void:
 	_setup_clash_camp()
 	_setup_module_bench()
 	_setup_clash_river()
+	_setup_clash_jump_pads()
 	_evidence_ar_a()
 	_evidence_ar_b()
 	_evidence_ar_c()
 	_evidence_ar_d()
 	_evidence_ar_e()
 	_evidence_river()
+	_evidence_jump_pads()
 	_setup_arena_playtest()
 
 
@@ -603,10 +606,13 @@ func _update_clash_radar() -> void:
 			var river := ""
 			if _river and _river.has_method("contains") and bool(_river.contains(player.global_position)):
 				river = "  ·  RIVER"
+			var pad := ""
+			if _jump_pads and _jump_pads.has_method("contains") and bool(_jump_pads.contains(player.global_position)):
+				pad = "  ·  PAD"
 			if press == "":
-				_lane_hud.text = "LANE %s%s%s%s%s%s" % [_lanes.player_lane, wave, camp, kit, mod, river]
+				_lane_hud.text = "LANE %s%s%s%s%s%s%s" % [_lanes.player_lane, wave, camp, kit, mod, river, pad]
 			else:
-				_lane_hud.text = "LANE %s  ·  %s%s%s%s%s%s" % [_lanes.player_lane, press, wave, camp, kit, mod, river]
+				_lane_hud.text = "LANE %s  ·  %s%s%s%s%s%s%s" % [_lanes.player_lane, press, wave, camp, kit, mod, river, pad]
 	if _radar == null or not _radar.has_method("set_snapshot"):
 		return
 	# One entry per node: the old second pass compared a Node against an Array
@@ -933,6 +939,26 @@ func _evidence_river() -> void:
 	if _river and _river.has_method("is_between_lanes"):
 		between = bool(_river.is_between_lanes())
 	print("[ClashRiver] present=", _river != null, " footprint=", on, " between_lanes=", between, " pin=", LayerContext.site_pin_id if LayerContext else "")
+
+
+func _setup_clash_jump_pads() -> void:
+	if get_node_or_null("ClashJumpPads"):
+		_jump_pads = get_node_or_null("ClashJumpPads") as Node3D
+		return
+	_jump_pads = Node3D.new()
+	_jump_pads.set_script(preload("res://scripts/arena/ClashJumpPads.gd"))
+	_jump_pads.name = "ClashJumpPads"
+	add_child(_jump_pads)
+
+
+func _evidence_jump_pads() -> void:
+	var n := 0
+	var on := false
+	if _jump_pads and _jump_pads.has_method("pad_count"):
+		n = int(_jump_pads.pad_count())
+	if _jump_pads and _jump_pads.has_method("is_on_footprint"):
+		on = bool(_jump_pads.is_on_footprint())
+	print("[ClashJumpPads] n=", n, " footprint=", on, " pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
 func _apply_arena_kit(index: int) -> void:
