@@ -375,7 +375,8 @@ func _ship_axis() -> Vector3:
 		strafe += 1.0
 	if Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_W):
 		thrust = max(thrust, 1.0)
-	if Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_S):
+	if Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_S) \
+			or (has_meta("playtest_sink") and bool(get_meta("playtest_sink"))):
 		if not (InputMap.has_action("move_forward") and Input.is_action_pressed("move_forward")) \
 			and not (Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_W)):
 			thrust = -0.45
@@ -402,6 +403,8 @@ func _sink_key_held() -> bool:
 	if Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_S):
 		return true
 	if Input.is_physical_key_pressed(KEY_DOWN) or Input.is_key_pressed(KEY_DOWN):
+		return true
+	if has_meta("playtest_sink") and bool(get_meta("playtest_sink")):
 		return true
 	return false
 
@@ -616,14 +619,19 @@ func _physics_process(delta: float) -> void:
 			# NAV: light gravity bias only near surface
 			accel += g * lerpf(0.02, 0.2, atmo)
 
+	var sink_max: float = _max_speed()
+	var sink_damp: float = _damp_mult()
 	if sink_held:
+		var alt_now := _altitude_now()
 		var sink_acc := 28.0
 		if flight_mode == FlightMode.HOVER:
-			sink_acc = 32.0
+			# HOVER 2.2 damp + 22 m/s cap cancelled S (8000→7999 / tap).
+			sink_acc = _Flight.hover_descend_accel(alt_now)
+			sink_max = _Flight.hover_descend_max_speed(alt_now, max_speed_hover)
+			sink_damp = _Flight.hover_descend_damp_mult()
 		elif flight_mode == FlightMode.NAV:
 			sink_acc = 24.0
-		var alt_now := _altitude_now()
-		if alt_now < 100.0:
+		if alt_now < 100.0 and flight_mode != FlightMode.HOVER:
 			sink_acc *= clampf(alt_now / 100.0, 0.2, 1.0)
 		accel += inward * sink_acc
 		var outward := velocity.dot(-inward)
@@ -660,7 +668,11 @@ func _physics_process(delta: float) -> void:
 			var dpad: float = pad.global_position.distance_to(global_position)
 			velocity = _Flight.approach_assist(velocity, pad.global_position - global_position, dpad, land_pad_snap_distance, delta)
 
-	velocity = _Flight.integrate(velocity, accel, delta, linear_damp_custom, _damp_mult(), atmo, _max_speed())
+	var use_damp: float = sink_damp if sink_held else _damp_mult()
+	var use_max: float = sink_max if sink_held else _max_speed()
+	velocity = _Flight.integrate(velocity, accel, delta, linear_damp_custom, use_damp, atmo, use_max)
+	if sink_held and flight_mode == FlightMode.HOVER and inward.length() > 0.5:
+		velocity = _Flight.limit_hover_while_sink(velocity, inward, max_speed_hover, sink_max)
 	if inward.length() > 0.5:
 		velocity = _Flight.apply_ceiling(velocity, inward, atmo, delta)
 

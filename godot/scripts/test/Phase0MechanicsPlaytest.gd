@@ -971,6 +971,105 @@ func _assert_osc_pad_pip(os: Node, fails: PackedStringArray) -> void:
 		fails.append("OS-C radar contact is not an existing unnamed pad")
 
 
+func _osc_hover_descend_8km(fails: PackedStringArray, os: Node, nex: Node, high: Vector3, rad: float) -> void:
+	## 18 Aug leftover: HOVER + S from OS-C 8 km was ~1 m/tap. Hold-S must
+	## drop a playable amount in a few seconds. Not G1 CRUISE. Land gear stays.
+	if _Flight.max_speed(_Flight.Mode.HOVER, 55.0, 180.0, 22.0) > 22.05:
+		fails.append("OS-C HOVER cruise cap raised (brick / cruise cheat)")
+	if _Flight.base_damp(_Flight.Mode.HOVER) < 1.8:
+		fails.append("OS-C HOVER hold damp removed (brick)")
+	if _Flight.hover_descend_max_speed(40.0, 22.0) > 12.0:
+		fails.append("OS-C HOVER descend near pad too fast for LAND")
+	if _Flight.hover_descend_max_speed(8000.0, 22.0) > 160.0:
+		fails.append("OS-C HOVER descend looks like G1 CRUISE")
+	var inward: Vector3 = (nex.global_position - high).normalized()
+	var vel := Vector3.ZERO
+	var pos: Vector3 = high
+	var dt := 0.016
+	var steps := 250  # 4.0 s
+	for _i in steps:
+		var agl_i: float = pos.distance_to(nex.global_position) - rad
+		var acc: float = _Flight.hover_descend_accel(agl_i)
+		var mx: float = _Flight.hover_descend_max_speed(agl_i, 22.0)
+		var dm: float = _Flight.hover_descend_damp_mult()
+		vel = _Flight.integrate(vel, inward * acc, dt, 0.35, dm, 0.0, mx)
+		vel = _Flight.limit_hover_while_sink(vel, inward, 22.0, mx)
+		vel = _Flight.apply_ceiling(vel, inward, 0.0, dt)
+		pos += vel * dt
+	var alt_kin: float = pos.distance_to(nex.global_position) - rad
+	var drop_kin: float = 8000.0 - alt_kin
+	print("[Playtest] OS-C HOVER hold-S 4.0s drop=", snapped(drop_kin, 1.0), " AGL ", snapped(8000.0, 1.0), "→", snapped(alt_kin, 1.0), " v=", snapped(vel.length(), 0.1))
+	if drop_kin < 220.0:
+		fails.append("OS-C HOVER hold-S 4.0s drop unplayable (%s m)" % snapped(drop_kin, 1.0))
+	if alt_kin < 600.0:
+		fails.append("OS-C HOVER hold-S punched past the 770 m band")
+
+	var ship: Node = os.get("ship") if os else null
+	if ship == null or nex == null:
+		fails.append("OS-C HOVER descend: no ship")
+		return
+	var fuel0: float = float(ship.get("fuel")) if "fuel" in ship else 0.0
+	var fuel_full: float = float(ship.get("max_fuel")) if "max_fuel" in ship else 100.0
+	var mode0: int = int(ship.flight_mode) if "flight_mode" in ship else 0
+	var pos0: Vector3 = (ship as Node3D).global_position
+	var vel0: Vector3 = ship.velocity if "velocity" in ship else Vector3.ZERO
+	var landed0: bool = bool(ship.get("is_landed")) if "is_landed" in ship else false
+	var pilot0: bool = bool(ship.get("pilot_active")) if "pilot_active" in ship else true
+	(ship as Node3D).global_position = high
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	if "is_landed" in ship:
+		ship.is_landed = false
+	if "pilot_active" in ship:
+		ship.pilot_active = true
+	if "_hull_crit_t" in ship:
+		ship._hull_crit_t = 0.0
+	if "fuel" in ship:
+		ship.fuel = fuel_full
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)  # HOVER
+	ship.set_meta("playtest_sink", true)
+	ship.set_physics_process(false)
+	var live_pos: Vector3 = high
+	var live_vel: Vector3 = Vector3.ZERO
+	for _j in steps:
+		ship._physics_process(dt)
+		if "velocity" in ship:
+			live_vel = ship.velocity
+		# Headless move_and_slide may ignore a manual delta — integrate the
+		# velocity the HOVER+S tick just wrote so AGL is the ship path.
+		live_pos += live_vel * dt
+		(ship as Node3D).global_position = live_pos
+	ship.remove_meta("playtest_sink")
+	ship.set_physics_process(true)
+	var alt_live: float = live_pos.distance_to(nex.global_position) - rad
+	var drop_live: float = 8000.0 - alt_live
+	var fuel1: float = float(ship.get("fuel")) if "fuel" in ship else fuel_full
+	print("[Playtest] OS-C HOVER ship hold-S 4.0s drop=", snapped(drop_live, 1.0), " AGL →", snapped(alt_live, 1.0), " fuel ", snapped(fuel_full, 1.0), "→", snapped(fuel1, 1.0))
+	if drop_live < 220.0:
+		fails.append("OS-C HOVER ship hold-S 4.0s drop unplayable (%s m)" % snapped(drop_live, 1.0))
+	if fuel1 >= fuel_full - 0.05:
+		fails.append("OS-C HOVER descend did not spend fuel")
+	var src := FileAccess.get_file_as_string("res://scripts/ship/ShipController.gd")
+	if src.find("hover_descend_accel") < 0:
+		fails.append("OS-C HOVER descend helpers not wired")
+	if src.find("Land denied — G gear") < 0:
+		fails.append("OS-C HOVER descend skipped LAND gear gate")
+	if src.find("FlightMode.CRUISE") >= 0 or src.find("mass_lock") >= 0:
+		fails.append("OS-C HOVER descend shipped G1 CRUISE / mass lock")
+	(ship as Node3D).global_position = pos0
+	if "velocity" in ship:
+		ship.velocity = vel0
+	if "is_landed" in ship:
+		ship.is_landed = landed0
+	if "pilot_active" in ship:
+		ship.pilot_active = pilot0
+	if "fuel" in ship:
+		ship.fuel = fuel0
+	if ship.has_method("_set_mode"):
+		ship._set_mode(mode0)
+
+
 func _osc_read_spawn_agl(os: Node) -> float:
 	var ship: Node3D = os.get("ship") as Node3D if os else null
 	if ship == null or not os.has_method("nearest_planet"):
@@ -1048,6 +1147,8 @@ func _osc_scale_ladder(fails: PackedStringArray, spawn_agl: float) -> void:
 		fails.append("OS-C hold-S did not sink from 8 km")
 	if alt_after < 600.0:
 		fails.append("OS-C hold-S overshot past the 770 m band")
+
+	_osc_hover_descend_8km(fails, os, nex, high, rad)
 
 	# Far / impostor / limb readable at 8 km and 15 km (same Relief paint).
 	var ship: Node3D = os.get("ship") as Node3D

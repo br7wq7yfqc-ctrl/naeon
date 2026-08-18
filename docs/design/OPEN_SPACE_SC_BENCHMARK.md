@@ -131,7 +131,7 @@ WorldFill: scatter + дополнительные unnamed пады, читаем
 
 Космос → атмосфера → посадка → EVA → взлёт → космос. Без load screen (тот же `OpenSpace.tscn`).
 
-**В этом срезе — harness, не новый мир.** Скриптованный ритуал в `Phase0MechanicsPlaytest`: старт на высоте OS-C (8 км), лимб виден, hold-S без mouse pitch, вход в оболочку, посадка честным gate, EVA snap, взлёт, снова выше оболочки. Если шаг пропущен — FAIL громко. Не чеканит `SITE_*`. Не открывает G2–G6. TestArena / Clash не трогали.
+**В этом срезе — harness, не новый мир.** Скриптованный ритуал в `Phase0MechanicsPlaytest`: старт на высоте OS-C (8 км), лимб виден, hold-S без mouse pitch, вход в оболочку, посадка честным gate, EVA snap, взлёт, снова выше оболочки. Если шаг пропущен — FAIL громко. Не чеканит `SITE_*`. Не открывает G2–G6. TestArena / Clash не трогали. **18 Aug leftover:** descend from 8 km is playable — HOVER hold-S drops hundreds of metres in a few seconds, not 1 m/tap.
 
 **Headless PASS ≠ FPS PASS.** Этот срез не закрывает 60 FPS MED и не закрывает 5 мин soak — это human gate на RTX 3090. llvmpipe / dummy не ставят FPS.
 
