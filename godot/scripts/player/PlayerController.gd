@@ -579,7 +579,7 @@ func _form_switch_fx() -> void:
 	if GameManager:
 		GameManager.toast_requested.emit("Hero form → %s (%s) · soft mobility only" % [current_form, faction])
 	if SoftSession:
-		SoftSession.remember_player(self)
+		SoftSession.remember_player(self, "form")
 	var tw := get_tree().create_timer(0.35)
 	tw.timeout.connect(func():
 		if _body_mat:

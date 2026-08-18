@@ -85,6 +85,8 @@ func invite(npc: Node) -> bool:
 	_members.append({"id": id, "kind": "npc", "node": npc})
 	if npc.has_method("accept_squad_invite"):
 		npc.accept_squad_invite(self)
+	if SoftSession and SoftSession.has_method("note_player_action"):
+		SoftSession.note_player_action("invite")
 	print("[Squad] invite ", id, " size=", size())
 	return true
 

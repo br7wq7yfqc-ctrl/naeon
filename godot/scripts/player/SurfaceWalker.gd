@@ -828,7 +828,7 @@ func _cycle_form() -> void:
 	if GameManager:
 		GameManager.toast_requested.emit("Hero form → %s · dual-theme %s" % [form_name, faction])
 	if SoftSession:
-		SoftSession.remember_player(self)
+		SoftSession.remember_player(self, "form")
 	_FormFX.play_at(self, faction, form_name)
 	# reload visual
 	var old = _visual.get_node_or_null("FormGLB") if _visual else null
@@ -1010,7 +1010,7 @@ func toggle_faction() -> void:
 	_ensure_face_arrow()
 	_FormFX.play_at(self, faction, form_name)
 	if SoftSession:
-		SoftSession.remember_player(self)
+		SoftSession.remember_player(self, "faction")
 	if GameManager:
 		GameManager.toast_requested.emit("Faction → %s (surface dual-theme)" % faction)
 

@@ -566,6 +566,7 @@ func _go() -> void:
 	await _npc_takeoff_land(fails)
 	await _npc_occupy_harvest(fails)
 	await _npc_squad_invite(fails)
+	await _npc_offline_cycle(fails)
 	await _eva_snap_pulse(fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
@@ -2310,6 +2311,112 @@ func _npc_squad_invite(fails: PackedStringArray) -> void:
 	print("[Playtest] NP-D invite=", invited, " contains=", bool(squad.contains(pilot)),
 		" size=", sz, " follow=", followed, " seat=", seated, " aura=",
 		snapped(float(squad.combat_bonus()) if squad.has_method("combat_bonus") else 0.0, 0.01))
+
+
+func _npc_offline_cycle(fails: PackedStringArray) -> void:
+	## NP-F: player gone → short local pad/follow cycle via SoftSession.
+	## Last actions shift the next legal step, not the damage table.
+	var os: Node = get_parent()
+	var nex: Node = _osh_nex()
+	if os == null or nex == null:
+		fails.append("NP-F: no OpenSpace/Nex-Prime")
+		return
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	var traffic: Node = nex.call("pad_traffic") if nex.has_method("pad_traffic") else null
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("NP-F: pad traffic missing")
+		return
+	var visitor: Node = traffic.get_visitor() if traffic.has_method("get_visitor") else null
+	var pilot: Node = traffic.get_npc_pilot() if traffic.has_method("get_npc_pilot") else null
+	if visitor == null or not is_instance_valid(visitor) or pilot == null:
+		fails.append("NP-F: visitor/NpcPilot missing")
+		return
+	if not pilot.has_method("run_offline_cycle"):
+		fails.append("NP-F: offline cycle missing")
+		return
+	var host: Node = traffic.get_parent()
+	if host == null or not (host is Node3D) or not host.has_meta("pad_up"):
+		fails.append("NP-F: not on a pad")
+		return
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("NP-F: minted SITE_* (%s)" % pin)
+		return
+	if SoftSession == null or not SoftSession.has_method("begin_offline"):
+		fails.append("NP-F: SoftSession offline missing")
+		return
+	var squad: Node = os.get_squad() if os.has_method("get_squad") else os.get("_squad")
+	var guard: Node = traffic.get_guard() if traffic.has_method("get_guard") else null
+	var dmg0: float = float(guard.get("attack_damage")) if guard != null else 0.0
+	var hp0: float = float(guard.get("max_health")) if guard != null else 0.0
+	var aura0: float = float(squad.combat_bonus()) if squad != null and squad.has_method("combat_bonus") else 0.0
+	SoftSession.note_player_action("occupy")
+	if str(SoftSession.next_legal_step()) != "pad":
+		fails.append("NP-F: occupy did not pick pad")
+	SoftSession.note_player_action("harvest")
+	if str(SoftSession.next_legal_step()) != "pad":
+		fails.append("NP-F: harvest did not pick pad")
+	SoftSession.note_player_action("form")
+	if str(SoftSession.next_legal_step()) != "pad":
+		fails.append("NP-F: form did not pick pad")
+	SoftSession.note_player_action("faction")
+	if str(SoftSession.next_legal_step()) != "pad":
+		fails.append("NP-F: faction did not pick pad")
+	SoftSession.note_player_action("invite")
+	if str(SoftSession.next_legal_step()) != "follow":
+		fails.append("NP-F: invite did not pick follow")
+	if SoftSession.has_method("end_offline"):
+		SoftSession.end_offline()
+	SoftSession.note_player_action("occupy")
+	SoftSession.begin_offline()
+	var pad_step := str(pilot.run_offline_cycle())
+	var waited := 0.0
+	while waited < 0.6:
+		await get_tree().create_timer(0.1).timeout
+		waited += 0.1
+	var pad_ran := bool(pilot.offline_cycle_ran()) if pilot.has_method("offline_cycle_ran") else false
+	var pad_harvest := bool(pilot.is_harvesting()) if pilot.has_method("is_harvesting") else false
+	if pad_step != "pad" or not pad_ran:
+		fails.append("NP-F: pad cycle did not run")
+	if SoftSession.has_method("end_offline"):
+		SoftSession.end_offline()
+	SoftSession.note_player_action("invite")
+	SoftSession.begin_offline()
+	var follow_step := str(pilot.run_offline_cycle())
+	var follow_ok := follow_step == "follow" and bool(pilot.is_squad_following()) if pilot.has_method("is_squad_following") else follow_step == "follow"
+	if follow_step != "follow" or not follow_ok:
+		fails.append("NP-F: follow cycle did not run")
+	var inf: Node = pilot.get_node_or_null("InfectionStatus")
+	if inf == null or not inf.has_method("add_stacks"):
+		fails.append("NP-F: InfectionStatus missing on NPC")
+	else:
+		inf.add_stacks(10)
+		var stacks: int = int(inf.stacks)
+		print("[Playtest] NP-F infection stacks=", stacks, " cap=",
+			int(pilot.infection_cap()) if pilot.has_method("infection_cap") else 5)
+		if stacks != 5:
+			fails.append("NP-F: Infection not capped at 5 (got %s)" % stacks)
+	if squad != null and squad.has_method("combat_bonus") and absf(float(squad.combat_bonus()) - aura0) > 0.0001:
+		fails.append("NP-F: influence changed combat aura")
+	if squad != null and squad.has_method("combat_bonus") and absf(float(squad.combat_bonus())) > 0.0001:
+		fails.append("NP-F: group damage aura")
+	if guard != null:
+		if absf(float(guard.get("attack_damage")) - dmg0) > 0.01:
+			fails.append("NP-F: influence changed guard DPS")
+		if absf(float(guard.get("max_health")) - hp0) > 0.01:
+			fails.append("NP-F: influence changed guard HP")
+	if visitor.has_method("get_landed_pad"):
+		var deck: Node = visitor.get_landed_pad()
+		if deck != null and deck.has_meta("site_pin") and str(deck.get_meta("site_pin")).begins_with("SITE_"):
+			fails.append("NP-F: landed on SITE_*")
+	if SoftSession.has_method("end_offline"):
+		SoftSession.end_offline()
+	if pilot.has_method("stop_harvest"):
+		pilot.stop_harvest()
+	print("[Playtest] NP-F offline pad=", pad_step, " harvest=", pad_harvest,
+		" follow=", follow_step, " ran=", pad_ran, " last=", SoftSession.last_action,
+		" aura=", snapped(float(squad.combat_bonus()) if squad != null and squad.has_method("combat_bonus") else 0.0, 0.01))
 
 
 func _eva_snap_pulse(fails: PackedStringArray) -> void:
