@@ -1,7 +1,7 @@
 extends RefCounted
 class_name AllianceRanks
 ## Alliance hierarchy ranks 0–4 (rules/11). Cosmetic + permission soft gates.
-## NEVER grants combat power, claim strength, or shop DPS.
+## NP-E binds two local NPCs to these ranks. NEVER grants combat/claim/shop DPS.
 
 const RANK_NAMES := {
 	0: "Initiate",
