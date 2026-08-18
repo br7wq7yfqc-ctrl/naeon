@@ -567,6 +567,7 @@ func _go() -> void:
 	await _npc_occupy_harvest(fails)
 	await _npc_squad_invite(fails)
 	await _npc_offline_cycle(fails)
+	await _npc_soft_alliance(fails)
 	await _eva_snap_pulse(fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
@@ -2417,6 +2418,128 @@ func _npc_offline_cycle(fails: PackedStringArray) -> void:
 	print("[Playtest] NP-F offline pad=", pad_step, " harvest=", pad_harvest,
 		" follow=", follow_step, " ran=", pad_ran, " last=", SoftSession.last_action,
 		" aura=", snapped(float(squad.combat_bonus()) if squad != null and squad.has_method("combat_bonus") else 0.0, 0.01))
+
+
+func _npc_soft_alliance(fails: PackedStringArray) -> void:
+	## NP-E: two local NPCs, AllianceRanks + visible raid/logistics intent.
+	## No HP/DPS/claim bonus. Not pay-to-rank. Not rules/23 siege.
+	var os: Node = get_parent()
+	var nex: Node = _osh_nex()
+	if os == null or nex == null:
+		fails.append("NP-E: no OpenSpace/Nex-Prime")
+		return
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	var traffic: Node = nex.call("pad_traffic") if nex.has_method("pad_traffic") else null
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("NP-E: pad traffic missing")
+		return
+	var guard: Node = traffic.get_guard() if traffic.has_method("get_guard") else null
+	var visitor: Node = traffic.get_visitor() if traffic.has_method("get_visitor") else null
+	var pilot: Node = traffic.get_npc_pilot() if traffic.has_method("get_npc_pilot") else null
+	if guard == null or visitor == null or not is_instance_valid(guard) or not is_instance_valid(visitor):
+		fails.append("NP-E: two NPCs missing")
+		return
+	var host: Node = traffic.get_parent()
+	if host == null or not (host is Node3D) or not host.has_meta("pad_up"):
+		fails.append("NP-E: not on a pad")
+		return
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("NP-E: minted SITE_* (%s)" % pin)
+		return
+	var ally: Node = traffic.get_alliance() if traffic.has_method("get_alliance") else null
+	if ally == null and os.has_method("get_alliance"):
+		ally = os.get_alliance()
+	if ally == null or not ally.has_method("hud_line"):
+		fails.append("NP-E: SoftAlliance missing")
+		return
+	if int(ally.member_count()) != 2:
+		fails.append("NP-E: want two NPCs, got %s" % ally.member_count())
+		return
+	var _Ranks = load("res://scripts/systems/AllianceRanks.gd")
+	for who in [guard, pilot if pilot != null else visitor]:
+		var rk: int = int(ally.member_rank(who))
+		var perm := str(ally.member_perm(who))
+		if rk < 0 or rk > 4:
+			fails.append("NP-E: rank %s outside 0–4" % rk)
+		if perm == "" or not bool(_Ranks.has_perm(rk, perm)):
+			fails.append("NP-E: missing/invalid perm (%s rank %s)" % [perm, rk])
+		if not bool(ally.member_has_perm(who)):
+			fails.append("NP-E: member perm not granted by AllianceRanks")
+	var kind := str(ally.intent()) if ally.has_method("intent") else ""
+	if kind != "raid" and kind != "logistics":
+		fails.append("NP-E: intent must be raid or logistics (got %s)" % kind)
+	if ally.has_method("is_siege") and bool(ally.is_siege()):
+		fails.append("NP-E: intent is siege (rules/23)")
+	if ally.has_method("is_war") and bool(ally.is_war()):
+		fails.append("NP-E: intent is war declare")
+	if ally.has_method("set_intent") and bool(ally.set_intent("siege")):
+		fails.append("NP-E: siege accepted as intent")
+	if str(ally.intent()) == "siege":
+		fails.append("NP-E: siege stuck as intent")
+	var line := str(ally.hud_line())
+	if line == "" or line.to_upper().find(str(ally.intent()).to_upper()) < 0:
+		fails.append("NP-E: intent not visible in hud_line")
+	if line.to_upper().find("SIEGE") >= 0:
+		fails.append("NP-E: siege leaked into hud_line")
+	if ally.has_method("intent_visible") and not bool(ally.intent_visible()):
+		fails.append("NP-E: intent_visible false")
+	if ally.has_method("combat_bonus") and absf(float(ally.combat_bonus())) > 0.0001:
+		fails.append("NP-E: combat aura")
+	if ally.has_method("claim_bonus") and absf(float(ally.claim_bonus())) > 0.0001:
+		fails.append("NP-E: claim bonus")
+	if ally.has_method("rank_cost") and float(ally.rank_cost()) > 0.0:
+		fails.append("NP-E: pay-to-rank")
+	if ally.has_method("war_cost") and float(ally.war_cost()) > 0.0:
+		fails.append("NP-E: pay-to-war")
+	var dmg0: float = float(guard.get("attack_damage"))
+	var hp0: float = float(guard.get("max_health"))
+	var claim0 := 0.0
+	var pad: Node = host.get_node_or_null("BaseCluster/PadBaseController")
+	if pad == null:
+		pad = host.find_child("PadBaseController", true, false)
+	if pad != null and "ownership" in pad and pad.ownership:
+		claim0 = float(pad.ownership.claim_strength)
+	var r_g0: int = int(ally.member_rank(guard))
+	var c0: float = float(GameManager.contribution) if GameManager else 0.0
+	if GameManager:
+		GameManager.contribution = c0 + 5000.0
+		if GameManager.has_method("try_promote_alliance"):
+			GameManager.try_promote_alliance()
+	if int(ally.member_rank(guard)) != r_g0:
+		fails.append("NP-E: player spend changed NPC rank (pay-to-rank)")
+	if GameManager:
+		GameManager.contribution = c0
+	if ally.has_method("set_intent"):
+		if not bool(ally.set_intent("logistics")):
+			fails.append("NP-E: logistics intent rejected")
+		var log_line := str(ally.hud_line()).to_upper()
+		if log_line.find("LOGISTICS") < 0:
+			fails.append("NP-E: logistics not visible")
+		ally.set_intent("raid")
+	if traffic.has_method("refresh_labels"):
+		traffic.refresh_labels()
+	var hud = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+	var seen := str(ally.hud_line())
+	if hud != null and hud.has_method("alliance_hud_text"):
+		seen = str(hud.alliance_hud_text())
+	if seen.to_upper().find(str(ally.intent()).to_upper()) < 0:
+		fails.append("NP-E: player cannot see intent")
+	if absf(float(guard.get("attack_damage")) - dmg0) > 0.01:
+		fails.append("NP-E: alliance changed guard DPS")
+	if absf(float(guard.get("max_health")) - hp0) > 0.01:
+		fails.append("NP-E: alliance changed guard HP")
+	if pad != null and "ownership" in pad and pad.ownership:
+		if absf(float(pad.ownership.claim_strength) - claim0) > 0.001:
+			fails.append("NP-E: alliance changed claim strength")
+	if visitor.has_meta("site_pin") and str(visitor.get_meta("site_pin")).begins_with("SITE_"):
+		fails.append("NP-E: visitor minted SITE_*")
+	print("[Playtest] NP-E npcs=", ally.member_count(), " ranks=",
+		int(ally.member_rank(guard)), "/", int(ally.member_rank(pilot if pilot != null else visitor)),
+		" intent=", ally.intent(), " visible=", seen,
+		" aura=", snapped(float(ally.combat_bonus()) if ally.has_method("combat_bonus") else 0.0, 0.01),
+		" claim=", snapped(float(ally.claim_bonus()) if ally.has_method("claim_bonus") else 0.0, 0.01))
 
 
 func _eva_snap_pulse(fails: PackedStringArray) -> void:

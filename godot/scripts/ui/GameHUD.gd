@@ -789,6 +789,9 @@ func _refresh() -> void:
 				break
 	if terra != "":
 		nearest = (nearest + "\n" + terra) if nearest else terra
+	var ally_line := alliance_hud_text()
+	if ally_line != "":
+		nearest = (nearest + "\n" + ally_line) if nearest else ally_line
 	if _owner_label:
 		_owner_label.text = nearest
 
@@ -902,7 +905,22 @@ func _refresh_os_stack(pocket: bool, pad: Node) -> void:
 	if tree_s:
 		ship_n = tree_s.get_first_node_in_group("ship")
 	var snap: Dictionary = _OsStack.snapshot(ship_n, _player, pad)
-	_os_stack.text = _OsStack.stack_text(snap)
+	var body := str(_OsStack.stack_text(snap))
+	var ally_line := alliance_hud_text()
+	if ally_line != "":
+		body += "\n" + ally_line
+	_os_stack.text = body
+
+
+func alliance_hud_text() -> String:
+	## NP-E: player-visible raid/logistics intent. Not siege. Not a combat aura.
+	var tree := get_tree()
+	if tree == null:
+		return ""
+	for n in tree.get_nodes_in_group("soft_alliance"):
+		if n != null and is_instance_valid(n) and n.has_method("hud_line"):
+			return str(n.hud_line())
+	return ""
 
 
 func _on_gm_toast(msg: String) -> void:

@@ -2,6 +2,7 @@ extends Node
 ## NP-A: one local visitor flies the existing SCM / HOVER / LAND loop.
 ## NP-B: after LAND, same PadBaseController occupy / harvest as the player.
 ## NP-D: player may invite this pilot into a local squad — follow or seat.
+## NP-E: this hull + pad-guard share AllianceRanks and a visible raid/logistics intent.
 ## NP-F: after the player leaves, one short pad occupy/harvest or follow cycle.
 ## Not a second IFCS, not G1, not a private yield table, not a damage aura.
 

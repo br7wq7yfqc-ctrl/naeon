@@ -283,6 +283,19 @@ func get_squad() -> Node:
 	return _squad
 
 
+func get_alliance() -> Node:
+	## NP-E: two-NPC soft alliance lives on pad traffic. Not a siege cell.
+	var tree := get_tree()
+	if tree:
+		var listed: Array = tree.get_nodes_in_group("soft_alliance")
+		if listed.size() > 0:
+			return listed[0]
+	var traffic: Node = _pad_traffic_node() if has_method("_pad_traffic_node") else null
+	if traffic != null and traffic.has_method("get_alliance"):
+		return traffic.get_alliance()
+	return null
+
+
 func _setup_mechanics_playtest() -> void:
 	var n := Node.new()
 	n.set_script(preload("res://scripts/test/Phase0MechanicsPlaytest.gd"))
@@ -865,6 +878,11 @@ func _update_hud() -> void:
 	var brief := "%s  ·  %s  ·  %s  ·  %d m/s  ·  HP %d  SHD %d%s%s" % [
 		mode, loc, alt_s, int(spd), int(ship.health), int(ship.shields), extra, tail
 	]
+	var ally: Node = get_alliance()
+	if ally != null and ally.has_method("hud_line"):
+		var al := str(ally.hud_line())
+		if al != "":
+			brief += "\n" + al
 	if not dbg:
 		hud_label.text = brief
 	else:

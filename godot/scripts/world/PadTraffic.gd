@@ -3,7 +3,8 @@ extends Node3D
 ## Pillar 6: one gROT CombatDummy near the plate for surface Pulse (no new weapon).
 ## Visitor flies the existing SCM/HOVER/LAND loop and occupy/harvest (NP-B).
 ## NP-D may invite that pilot into a local squad. NP-F: short offline pad/follow.
-## Not galaxy traffic. Not NP-C. Not NP-E.
+## NP-E: guard + visitor share AllianceRanks and a visible raid/logistics intent.
+## Not galaxy traffic. Not NP-C (waits ST-A). Not siege. Not pay-to-rank.
 ## Knowledge labels only — never yield.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
@@ -17,6 +18,7 @@ var _surface_dummy: Node3D = null
 var _visitor: Node3D = null
 var _visitor_base: Vector3 = Vector3(16.0, 6.5, -12.0)
 var _life_accum: float = 0.0
+var _alliance: Node = null
 
 
 func setup(host_pad: Node3D) -> void:
@@ -28,6 +30,7 @@ func setup(host_pad: Node3D) -> void:
 	_spawn_guard()
 	_spawn_surface_dummy()
 	_spawn_visitor()
+	_setup_alliance()
 	refresh_labels()
 	set_process(true)
 	print("[PadTraffic] host=", _host_name, " guard=1 visitor=1 surface=1")
@@ -62,6 +65,12 @@ func get_surface_dummy() -> Node3D:
 	return null
 
 
+func get_alliance() -> Node:
+	if _alliance != null and is_instance_valid(_alliance):
+		return _alliance
+	return get_node_or_null("SoftAlliance")
+
+
 func pulse_target() -> Node3D:
 	## Hostile dummy for surface Pulse. Pad-guard stays host-faction traffic.
 	var d := get_surface_dummy()
@@ -92,7 +101,10 @@ func surface_dummy_label() -> String:
 
 
 func refresh_labels() -> void:
+	var extra := _alliance_tag()
 	var gname := guard_label()
+	if extra != "":
+		gname = "%s · %s" % [gname, extra]
 	if _guard != null and is_instance_valid(_guard):
 		_guard.set("intel_name", gname)
 		if _guard.has_method("_update_labels"):
@@ -103,12 +115,39 @@ func refresh_labels() -> void:
 		if _surface_dummy.has_method("_update_labels"):
 			_surface_dummy._update_labels()
 	var vname := visitor_label()
+	if extra != "":
+		vname = "%s · %s" % [vname, extra]
 	if _visitor != null and is_instance_valid(_visitor):
 		var lab: Label3D = _visitor.get_node_or_null("Label") as Label3D
 		if lab == null:
 			lab = _visitor.get_node_or_null("StatusLabel") as Label3D
 		if lab:
 			lab.text = vname
+
+
+func _setup_alliance() -> void:
+	## Guard + visitor: ranks/perms only. Intent is raid or logistics, not siege.
+	var a := Node.new()
+	a.set_script(preload("res://scripts/systems/SoftAlliance.gd"))
+	a.name = "SoftAlliance"
+	add_child(a)
+	_alliance = a
+	var g: Node = get_guard()
+	var p: Node = get_npc_pilot()
+	if p == null:
+		p = get_visitor()
+	if a.has_method("bind"):
+		a.bind(g, 1, "harvest_share", p, 2, "constructor_pin", "raid")
+
+
+func _alliance_tag() -> String:
+	var a := get_alliance()
+	if a == null or not a.has_method("intent"):
+		return ""
+	var kind := str(a.intent()).to_upper()
+	if kind != "RAID" and kind != "LOGISTICS":
+		return ""
+	return kind
 
 
 func _spawn_guard() -> void:
