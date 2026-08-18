@@ -336,6 +336,9 @@ func _spawn_ship() -> void:
 	_sync_planet_sun()
 	if p0.has_method("refresh_approach_lod"):
 		p0.call("refresh_approach_lod")
+	# Plates (not BaseBuilder) so OS-C 8 km spawn has a radar contact / pip.
+	if p0.has_method("ensure_pad_plates"):
+		p0.call("ensure_pad_plates")
 	print("[OpenSpace] approach AGL=%.0f over %s (r=%.0f)" % [agl, str(p0.get("planet_name")), r])
 	print("[OpenSpace] OS-H F5: hold S (no pitch) → E land → F EVA → F board → Space takeoff → above atmo")
 

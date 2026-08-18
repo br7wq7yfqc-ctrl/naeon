@@ -37,6 +37,7 @@ func _go() -> void:
 	# Capture OS-C spawn before later tests land / park the ship at 770 m.
 	var osc_spawn_agl := _osc_read_spawn_agl(os)
 	print("[Playtest] OS-C boot AGL=", snapped(osc_spawn_agl, 0.1))
+	await _assert_osc_pad_pip(os, fails)
 	# OS-H uses the real boot altitude. Do not teleport past a step.
 	await _osh_ritual(fails)
 	_assert_hud_stack(os, fails)
@@ -922,6 +923,52 @@ func _osb_atmosphere_shell(fails: PackedStringArray) -> void:
 			fails.append("OS-B fog off at 770m envelope")
 		else:
 			print("[Playtest] OS-B fog@770 dens=", snapped(we.environment.fog_density, 0.0001), " scatter=", snapped(we.environment.fog_sun_scatter, 0.01))
+
+
+func _assert_osc_pad_pip(os: Node, fails: PackedStringArray) -> void:
+	## OS-C spawn (~8 km): HUD/radar must show ≥1 existing unnamed pad.
+	## Not PADS 0. Not a minted SITE_*. One radar tick is enough.
+	var nex: Node = null
+	var tree := get_tree()
+	if tree:
+		for n in tree.get_nodes_in_group("planets"):
+			if str(n.get("planet_name")) == "Nex-Prime":
+				nex = n
+				break
+	if nex != null and nex.has_method("ensure_pad_plates"):
+		nex.call("ensure_pad_plates")
+	var hud = tree.get_first_node_in_group("game_hud") if tree else null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	if hud and hud.has_method("bind_player") and ship:
+		hud.call("bind_player", ship)
+	if hud and hud.has_method("_refresh"):
+		hud.call("_refresh")
+	await get_tree().process_frame
+	if hud and hud.has_method("_refresh"):
+		hud.call("_refresh")
+	var contacts: Array = []
+	if hud and hud.has_method("radar_pad_contacts"):
+		contacts = hud.call("radar_pad_contacts")
+	print("[Playtest] OS-C pad contacts=", contacts.size())
+	if hud == null:
+		fails.append("OS-C spawn has no GameHUD for pad pip")
+		return
+	if contacts.is_empty():
+		fails.append("OS-C spawn radar has no pad contact (PADS 0)")
+		return
+	var unnamed := 0
+	for c in contacts:
+		if c == null or not is_instance_valid(c):
+			continue
+		var nm := str(c.name)
+		if nm.begins_with("SITE_") or str(c.get_meta("site_pin", "")).begins_with("SITE_"):
+			fails.append("OS-C radar minted SITE_* (%s)" % nm)
+			continue
+		if nm == "Pad_North" or nm == "Pad_Approach" or nm == "Pad_Flank":
+			unnamed += 1
+			print("[Playtest] OS-C pad pip ", nm)
+	if unnamed < 1:
+		fails.append("OS-C radar contact is not an existing unnamed pad")
 
 
 func _osc_read_spawn_agl(os: Node) -> float:
