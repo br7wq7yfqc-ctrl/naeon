@@ -31,6 +31,51 @@ static func apply_ceiling(velocity: Vector3, inward: Vector3, atmo: float, delta
 	return velocity - (-inward) * climb * atmo * 0.38 * delta
 
 
+static func hover_descend_accel(alt: float) -> float:
+	## Hold-S in HOVER. High AGL must drop hundreds of m in a few seconds.
+	## Near the pad the land envelope still has to be reachable.
+	if alt >= 600.0:
+		return 52.0
+	if alt >= 120.0:
+		return lerpf(28.0, 52.0, clampf((alt - 120.0) / 480.0, 0.0, 1.0))
+	return 28.0 * clampf(alt / 100.0, 0.2, 1.0)
+
+
+static func hover_descend_max_speed(alt: float, hover_max: float) -> float:
+	## Radial cap only while S is held. Not G1 CRUISE (stays under NAV 180).
+	var hm: float = maxf(hover_max, 16.0)
+	if alt >= 3500.0:
+		return 96.0
+	if alt >= 180.0:
+		return lerpf(hm, 96.0, clampf((alt - 180.0) / 3320.0, 0.0, 1.0))
+	if alt >= 80.0:
+		return lerpf(16.0, hm, clampf((alt - 80.0) / 100.0, 0.0, 1.0))
+	return 16.0 * clampf(alt / 80.0, 0.35, 1.0)
+
+
+static func hover_descend_damp_mult() -> float:
+	## HOVER's 2.2 damp is why a 16 m/s S burst dies in 2–3 s. Hold-S keeps speed.
+	return 0.72
+
+
+static func limit_hover_while_sink(
+	velocity: Vector3,
+	inward: Vector3,
+	hover_max: float,
+	sink_max: float
+) -> Vector3:
+	## Fast radial descend, HOVER lateral stay. Do not turn HOVER into a brick.
+	if inward.length_squared() < 0.25:
+		return velocity
+	var inn: Vector3 = inward.normalized()
+	var rad: float = velocity.dot(inn)
+	var tang: Vector3 = velocity - inn * rad
+	if tang.length() > hover_max:
+		tang = tang.normalized() * hover_max
+	rad = clampf(rad, -hover_max * 0.25, sink_max)
+	return tang + inn * rad
+
+
 static func max_speed(mode: int, scm: float, nav: float, hover: float) -> float:
 	match mode:
 		Mode.NAV:
