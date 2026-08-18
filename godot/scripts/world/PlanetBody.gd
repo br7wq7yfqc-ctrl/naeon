@@ -720,6 +720,7 @@ func _load_glb_pads() -> void:
 	var root := doc.generate_scene(state)
 	if root == null:
 		return
+	_MeshSafe.strip_imported_cameras(root)
 	pad_root.add_child(root)
 	root.scale = Vector3.ONE * 3.5
 	root.position = Vector3(0, 0.8, 0)

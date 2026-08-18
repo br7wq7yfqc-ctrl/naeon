@@ -535,10 +535,33 @@ func nearest_pad(global_pos: Vector3) -> Node3D:
 	return best
 
 func _on_ship_landed() -> void:
+	reclaim_pilot_camera()
 	print("[OpenSpace] ship landed (seamless — same scene)")
 
 func _on_ship_launched() -> void:
+	reclaim_pilot_camera()
 	print("[OpenSpace] ship launched")
+
+
+func reclaim_pilot_camera() -> void:
+	## GPU land/takeoff: pad/hull GLB Camera3D or a visitor Ship.tscn can
+	## steal the viewport. Headless never loads those GLBs, so playtests
+	## used to PASS while the 3090 showed a cleared black buffer.
+	if _in_rover or _interior_view or not _in_ship:
+		return
+	if ship == null or not is_instance_valid(ship):
+		return
+	if ship.has_method("is_npc_pilot") and bool(ship.is_npc_pilot()):
+		return
+	if "pilot_active" in ship and not bool(ship.get("pilot_active")):
+		return
+	var cam: Camera3D = ship.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+	if cam == null:
+		return
+	var vp := get_viewport()
+	if vp != null and vp.get_camera_3d() == cam:
+		return
+	cam.current = true
 
 func try_exit_ship() -> void:
 	if not _in_ship or ship == null or not is_instance_valid(ship):
@@ -745,6 +768,7 @@ func _process(delta: float) -> void:
 	# Fog + HUD ~8Hz (was every frame — string build is not free)
 	if _hud_accum >= 0.12:
 		_hud_accum = 0.0
+		reclaim_pilot_camera()
 		_update_altitude_fog()
 		_update_hud()
 		_park_far_planets()

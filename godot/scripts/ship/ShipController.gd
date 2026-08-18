@@ -96,11 +96,15 @@ var _fuel_toast_t: float = 0.0
 var _npc_driven: bool = false
 var _npc_axes: Vector3 = Vector3.ZERO
 
+func _enter_tree() -> void:
+	## Parent _enter_tree runs before child Camera3D. Force the packed-scene
+	## flag here so a visitor hull never becomes current on enter_tree.
+	_bind_pilot_camera(pilot_active and not _npc_driven)
+
 func _ready() -> void:
 	_gq = get_node_or_null("/root/GraphicsQuality")
 	add_to_group("ship")
-	if camera and is_instance_valid(camera):
-		camera.current = pilot_active
+	_bind_pilot_camera(pilot_active and not _npc_driven)
 	var hull := get_node_or_null("HullMesh") as MeshInstance3D
 	if hull and DisplayServer.get_name() != "headless":
 		var prism := PrismMesh.new()
@@ -132,8 +136,7 @@ func set_open_space_context(ctx: Node) -> void:
 
 func set_pilot_active(active: bool) -> void:
 	pilot_active = active
-	if camera and is_instance_valid(camera):
-		camera.current = active
+	_bind_pilot_camera(active)
 	if active:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	else:
@@ -154,8 +157,26 @@ func set_npc_driven(on: bool) -> void:
 	_npc_driven = on
 	if on:
 		pilot_active = false
-		if camera and is_instance_valid(camera):
-			camera.current = false
+		_bind_pilot_camera(false)
+
+
+func _chase_camera() -> Camera3D:
+	if camera != null and is_instance_valid(camera):
+		return camera
+	return get_node_or_null("CameraPivot/Camera3D") as Camera3D
+
+
+func _bind_pilot_camera(on: bool) -> void:
+	var cam := _chase_camera()
+	if cam == null:
+		return
+	if on:
+		cam.current = true
+		return
+	## current=false calls clear_current(true) and promotes a HashSet-next
+	## Camera3D (imported GLB / visitor). Disable without that lottery.
+	if cam.current:
+		cam.clear_current(false)
 
 
 func set_npc_axes(axes: Vector3) -> void:
@@ -187,6 +208,7 @@ func try_load_hull() -> void:
 	var root := doc.generate_scene(state)
 	if root == null:
 		return
+	MeshSafe.strip_imported_cameras(root)
 	if hull_mesh:
 		hull_mesh.visible = false
 	add_child(root)
@@ -211,6 +233,8 @@ func try_load_hull() -> void:
 	var ph := get_node_or_null("HullMesh")
 	if ph:
 		ph.visible = false
+	if pilot_active and not _npc_driven:
+		_bind_pilot_camera(true)
 	print("[Ship] Loaded hull ", path, " yaw=", rad_to_deg(best_y), " lenZ=", best_len)
 
 func _asset_path(rel: String) -> String:

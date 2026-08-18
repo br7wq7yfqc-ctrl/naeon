@@ -563,6 +563,8 @@ func _go() -> void:
 	_osg_outpost_silhouette(fails)
 	_assert_gear_before_land(fails)
 	_pad_traffic_present(fails)
+	_assert_imported_camera_cannot_steal(fails)
+	await _player_pad_land_hover_view(fails)
 	await _npc_takeoff_land(fails)
 	await _npc_occupy_harvest(fails)
 	await _npc_squad_invite(fails)
@@ -1718,6 +1720,7 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 	if not gear_down:
 		fails.append("OS-H LAND without gear down")
 	done["land"] = true
+	_assert_openspace_view(os, ship, nex, "LAND", fails)
 
 	# --- EVA snap on Relief ---
 	if os.has_method("try_exit_ship"):
@@ -1771,6 +1774,7 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 		return
 	print("[Playtest] OS-H STEP takeoff landed=", ship.get("is_landed"))
 	done["takeoff"] = true
+	_assert_openspace_view(os, ship, nex, "HOVER", fails)
 
 	# --- SPACE OUT: climb above envelope, same scene ---
 	var climb: Dictionary = _osh_climb(nex, ship, env_h + 80.0, 8000)
@@ -2851,6 +2855,171 @@ func _rover_pick_unnamed_pad(os: Node) -> Dictionary:
 			continue
 		return {"deck": deck, "ctrl": pad, "planet": pl if pl != null else nex}
 	return {"deck": null, "ctrl": null, "planet": nex}
+
+
+func _assert_openspace_view(os: Node, ship: Node, nex: Node, label: String, fails: PackedStringArray) -> void:
+	## Headless stand-in for the 3090 black-viewport gate: after unnamed-pad
+	## LAND and HOVER takeoff the chase Camera3D must still be current, have
+	## a usable far clip / environment, and sit outside the body looking at it.
+	if os != null and os.has_method("reclaim_pilot_camera"):
+		os.reclaim_pilot_camera()
+	if ship == null or not is_instance_valid(ship):
+		fails.append("%s view: no ship" % label)
+		return
+	var cam: Camera3D = ship.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+	if cam == null:
+		fails.append("%s view: chase Camera3D missing" % label)
+		return
+	var vp := os.get_viewport() if os else get_viewport()
+	var live: Camera3D = vp.get_camera_3d() if vp else null
+	if live != cam:
+		fails.append("%s view: viewport camera is %s (want chase)" % [
+			label, live.name if live else "none"
+		])
+	elif not cam.current:
+		fails.append("%s view: chase Camera3D not current" % label)
+	var we: WorldEnvironment = null
+	if os:
+		we = os.get_node_or_null("WorldEnvironment") as WorldEnvironment
+	if we == null or we.environment == null:
+		fails.append("%s view: WorldEnvironment missing" % label)
+	else:
+		var env: Environment = we.environment
+		if env.ambient_light_energy <= 0.01:
+			fails.append("%s view: ambient energy 0" % label)
+		if env.background_energy <= 0.0:
+			fails.append("%s view: background energy 0" % label)
+	var sun: DirectionalLight3D = os.get_node_or_null("Sun") as DirectionalLight3D if os else null
+	if sun != null and sun.light_energy <= 0.01:
+		fails.append("%s view: sun energy 0" % label)
+	var rad := 1400.0
+	if nex != null and nex.get("radius") != null:
+		rad = float(nex.get("radius"))
+	if cam.far < rad + 5000.0:
+		fails.append("%s view: far clip %s too short" % [label, snapped(cam.far, 1.0)])
+	if nex != null and is_instance_valid(nex) and nex is Node3D:
+		var body_pos: Vector3 = (nex as Node3D).global_position
+		var dist: float = cam.global_position.distance_to(body_pos)
+		if dist >= cam.far:
+			fails.append("%s view: body beyond far clip (%s >= %s)" % [
+				label, snapped(dist, 1.0), snapped(cam.far, 1.0)
+			])
+		if dist + 2.0 < rad:
+			fails.append("%s view: camera inside body (d=%s r=%s)" % [
+				label, snapped(dist, 1.0), snapped(rad, 1.0)
+			])
+		var pad: Node3D = null
+		if os != null and os.has_method("nearest_pad"):
+			pad = os.nearest_pad(ship.global_position)
+		if pad != null:
+			var pd: float = cam.global_position.distance_to(pad.global_position)
+			if pd >= cam.far:
+				fails.append("%s view: pad beyond far clip (%s)" % [label, snapped(pd, 1.0)])
+	var tree := get_tree()
+	if tree:
+		for n in tree.get_nodes_in_group("ship"):
+			if n == ship or n == null or not is_instance_valid(n):
+				continue
+			if not (n.has_method("is_npc_pilot") and bool(n.is_npc_pilot())):
+				continue
+			var vcam: Camera3D = n.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+			if vcam != null and (vcam.current or live == vcam):
+				fails.append("%s view: visitor Camera3D is current" % label)
+	print("[Playtest] ", label, " view cam=", cam.name, " current=", cam.current,
+		" far=", snapped(cam.far, 1.0), " live=", live.name if live else "none")
+
+
+func _assert_imported_camera_cannot_steal(fails: PackedStringArray) -> void:
+	## GPU land loads pad/hull GLB; those files often ship a Camera3D.
+	## Simulate the steal and require reclaim to hand the view back.
+	var os: Node = get_parent()
+	var ship: Node = os.get("ship") if os else null
+	if ship == null or not is_instance_valid(ship):
+		fails.append("imported-cam: no ship")
+		return
+	var keep: Camera3D = ship.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+	if keep == null:
+		fails.append("imported-cam: chase Camera3D missing")
+		return
+	var thief := Camera3D.new()
+	thief.name = "ImportedCam"
+	thief.current = true
+	var host := Node3D.new()
+	host.name = "FakeHullGLB"
+	host.add_child(thief)
+	MeshSafe.strip_imported_cameras(host)
+	if host.get_node_or_null("ImportedCam") != null:
+		fails.append("imported-cam: MeshSafe.strip left a Camera3D")
+	ship.add_child(host)
+	var late := Camera3D.new()
+	late.name = "LateImportedCam"
+	late.current = true
+	host.add_child(late)
+	if os != null and os.has_method("reclaim_pilot_camera"):
+		os.reclaim_pilot_camera()
+	var live: Camera3D = get_viewport().get_camera_3d()
+	if live != keep:
+		fails.append("imported-cam stole the viewport (%s)" % (live.name if live else "none"))
+	if late != null and is_instance_valid(late):
+		late.queue_free()
+	if host != null and is_instance_valid(host):
+		host.queue_free()
+	if keep:
+		keep.current = true
+	print("[Playtest] imported-cam reclaim live=", live.name if live else "none")
+
+
+func _player_pad_land_hover_view(fails: PackedStringArray) -> void:
+	## 3090 report: LAND on unnamed pad, stay in the seat, Space → HOVER.
+	## OS-H EVA/board would restore the chase cam and hide this bug.
+	var os: Node = get_parent()
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var nex: Node = _osh_nex()
+	if nex != null and nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	if ship == null or nex == null:
+		fails.append("pad LAND/HOVER view: no ship/body")
+		return
+	if not bool(os.get("_in_ship")):
+		if os.has_method("try_enter_ship") and os.get("player") != null:
+			os.try_enter_ship()
+			await get_tree().create_timer(0.35).timeout
+	var pad: Node3D = null
+	if nex.has_method("nearest_pad"):
+		pad = nex.nearest_pad(ship.global_position)
+	if pad == null and os.has_method("nearest_pad"):
+		pad = os.nearest_pad(ship.global_position)
+	if pad == null or not pad.has_meta("pad_up"):
+		fails.append("pad LAND/HOVER view: no unnamed pad")
+		return
+	var pin := str(pad.get_meta("site_pin")) if pad.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("pad LAND/HOVER view: minted SITE_*")
+		return
+	var up: Vector3 = pad.get_meta("pad_up")
+	ship.global_position = pad.global_position + up * 8.0
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	ship.set("_gear_down", true)
+	if ship.has_method("_sync_landing_gear"):
+		ship._sync_landing_gear()
+	if ship.has_method("_do_land"):
+		ship._do_land()
+	if not bool(ship.get("is_landed")):
+		fails.append("pad LAND/HOVER view: LAND refused")
+		return
+	_assert_openspace_view(os, ship, nex, "LAND", fails)
+	if ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+	if bool(ship.get("is_landed")):
+		fails.append("pad LAND/HOVER view: still landed after takeoff")
+		return
+	if "flight_mode" in ship and int(ship.flight_mode) != 2:
+		fails.append("pad LAND/HOVER view: takeoff left mode %s" % int(ship.flight_mode))
+	_assert_openspace_view(os, ship, nex, "HOVER", fails)
 
 
 func _assert_hud_stack(os: Node, fails: PackedStringArray) -> void:

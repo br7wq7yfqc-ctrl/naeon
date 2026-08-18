@@ -162,13 +162,19 @@ func _spawn_visitor() -> void:
 	s.set_meta("pad_traffic_role", "visitor")
 	s.set_meta("npc_pilot", true)
 	s.set_meta("site_pin", "")
-	add_child(s)
-	_visitor = s as Node3D
+	var keep: Camera3D = null
+	var vp := get_viewport()
+	if vp:
+		keep = vp.get_camera_3d()
 	var cam: Camera3D = s.get_node_or_null("CameraPivot/Camera3D") as Camera3D
 	if cam:
 		cam.current = false
+	add_child(s)
+	_visitor = s as Node3D
 	if s.has_method("set_npc_driven"):
 		s.set_npc_driven(true)
+	if keep != null and is_instance_valid(keep) and vp != null and vp.get_camera_3d() != keep:
+		keep.current = true
 	var pilot := Node.new()
 	pilot.set_script(_Pilot)
 	pilot.name = "NpcPilot"

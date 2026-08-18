@@ -34,7 +34,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
 
 [node name="Camera3D" type="Camera3D" parent="CameraPivot"]
 transform = Transform3D(1, 0, 0, 0, 0.96, 0.28, 0, -0.28, 0.96, 0, 2.2, 7.5)
-current = true
+current = false
 fov = 72.0
 far = 22000.0
 
