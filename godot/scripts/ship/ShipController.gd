@@ -96,11 +96,15 @@ var _fuel_toast_t: float = 0.0
 var _npc_driven: bool = false
 var _npc_axes: Vector3 = Vector3.ZERO
 
+func _enter_tree() -> void:
+	## Parent _enter_tree runs before child Camera3D. Force the packed-scene
+	## flag here so a visitor hull never becomes current on enter_tree.
+	_bind_pilot_camera(pilot_active and not _npc_driven)
+
 func _ready() -> void:
 	_gq = get_node_or_null("/root/GraphicsQuality")
 	add_to_group("ship")
-	if camera and is_instance_valid(camera):
-		camera.current = pilot_active
+	_bind_pilot_camera(pilot_active and not _npc_driven)
 	var hull := get_node_or_null("HullMesh") as MeshInstance3D
 	if hull and DisplayServer.get_name() != "headless":
 		var prism := PrismMesh.new()
@@ -129,11 +133,11 @@ func _ready() -> void:
 
 func set_open_space_context(ctx: Node) -> void:
 	_open_space = ctx
+	_reject_airborne_land()
 
 func set_pilot_active(active: bool) -> void:
 	pilot_active = active
-	if camera and is_instance_valid(camera):
-		camera.current = active
+	_bind_pilot_camera(active)
 	if active:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	else:
@@ -154,8 +158,26 @@ func set_npc_driven(on: bool) -> void:
 	_npc_driven = on
 	if on:
 		pilot_active = false
-		if camera and is_instance_valid(camera):
-			camera.current = false
+		_bind_pilot_camera(false)
+
+
+func _chase_camera() -> Camera3D:
+	if camera != null and is_instance_valid(camera):
+		return camera
+	return get_node_or_null("CameraPivot/Camera3D") as Camera3D
+
+
+func _bind_pilot_camera(on: bool) -> void:
+	var cam := _chase_camera()
+	if cam == null:
+		return
+	if on:
+		cam.current = true
+		return
+	## current=false calls clear_current(true) and promotes a HashSet-next
+	## Camera3D (imported GLB / visitor). Disable without that lottery.
+	if cam.current:
+		cam.clear_current(false)
 
 
 func set_npc_axes(axes: Vector3) -> void:
@@ -187,6 +209,7 @@ func try_load_hull() -> void:
 	var root := doc.generate_scene(state)
 	if root == null:
 		return
+	MeshSafe.strip_imported_cameras(root)
 	if hull_mesh:
 		hull_mesh.visible = false
 	add_child(root)
@@ -211,6 +234,8 @@ func try_load_hull() -> void:
 	var ph := get_node_or_null("HullMesh")
 	if ph:
 		ph.visible = false
+	if pilot_active and not _npc_driven:
+		_bind_pilot_camera(true)
 	print("[Ship] Loaded hull ", path, " yaw=", rad_to_deg(best_y), " lenZ=", best_len)
 
 func _asset_path(rel: String) -> String:
@@ -463,6 +488,8 @@ func _physics_process(delta: float) -> void:
 		_palette_accum = 0.0
 		_sync_planet_palette()
 	_tick_scan_pulse(delta)
+	if is_landed:
+		_reject_airborne_land()
 	if not pilot_active and not _npc_driven:
 		# Recovery keeps running with nobody aboard — else stepping out during
 		# hull-critical pins the ship at 45% thrust and 0 regen forever.
@@ -475,6 +502,11 @@ func _physics_process(delta: float) -> void:
 		if is_landed:
 			velocity = Vector3.ZERO
 			_stick_to_pad()
+			_land_lock_t = maxf(0.0, _land_lock_t - delta)
+			# 3090: Space from the ship pocket must leave cockpit → HOVER.
+			# W is walk in the pocket — do not treat it as takeoff.
+			if _cockpit_space_takeoff():
+				_do_launch()
 		return
 	if _npc_driven and is_landed:
 		# NpcPilot calls _do_launch. Do not read player Space/E.
@@ -673,6 +705,23 @@ func _update_status() -> void:
 		_status_cache = txt
 		status_label.text = txt
 
+func _reject_airborne_land() -> bool:
+	## OS-C start is 5–15 km. A LANDED flag up there is a stuck gate, not a pad.
+	## Surface/pad land stays below surface_land_alt / 90 m snap.
+	if not is_landed or _npc_driven:
+		return false
+	var alt := _altitude_now()
+	if alt <= 0.0:
+		return false
+	if alt <= maxf(surface_land_alt, 160.0) + 80.0:
+		return false
+	print("[Ship] clear stuck LANDED at AGL=", int(alt))
+	is_landed = false
+	_landed_pad = null
+	_land_lock_t = 0.0
+	return true
+
+
 func _toggle_landing() -> void:
 	if is_landed:
 		_do_launch()
@@ -762,6 +811,26 @@ func _wants_takeoff() -> bool:
 	return false
 
 
+func _cockpit_space_takeoff() -> bool:
+	## Landed + I pocket: Space/E takeoff. EVA on the pad keeps jump.
+	if _land_lock_t > 0.0:
+		return false
+	if not (Input.is_action_just_pressed("jump") or Input.is_action_just_pressed("ability_2")):
+		return false
+	if _open_space == null or not is_instance_valid(_open_space):
+		return false
+	if _open_space.get("ship") != self:
+		return false
+	var d = _open_space.get("_interior")
+	if d == null or not is_instance_valid(d):
+		return false
+	if not (d.has_method("is_inside") and bool(d.is_inside())):
+		return false
+	if d.has_method("get_kind") and str(d.get_kind()) != "ship":
+		return false
+	return true
+
+
 func _do_launch() -> void:
 	if not is_landed:
 		return
@@ -779,6 +848,9 @@ func _do_launch() -> void:
 	_hover_hold_alt = _altitude_now() + 12.0
 	# Gentle lift — user then applies thrust (no sky rocket)
 	velocity = up_boost * 3.5 + nose * 1.5
+	if not _npc_driven and _open_space != null and is_instance_valid(_open_space) \
+			and _open_space.has_method("ensure_flight_view") and _open_space.get("ship") == self:
+		_open_space.call("ensure_flight_view")
 	launched.emit()
 	print("[Ship] Launched")
 	_toast_ship("Takeoff — WASD fly · Space lift · 3 HOVER")
@@ -1215,7 +1287,7 @@ func _spawn_land_fx() -> void:
 	p.position = Vector3(0, 0.2, 0)
 	var tree := get_tree()
 	if tree:
-		tree.create_timer(1.2).timeout.connect(p.queue_free)
+		tree.create_timer(1.2).timeout.connect(_free_if_valid.bind(p))
 
 
 func apply_faction_modules(fac: String) -> void:
@@ -2058,6 +2130,11 @@ func _ensure_nose_marker() -> void:
 	n.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(n)
 
+
+
+func _free_if_valid(n: Object) -> void:
+	if n != null and is_instance_valid(n):
+		(n as Node).queue_free()
 
 
 func _toast_ship(msg: String) -> void:

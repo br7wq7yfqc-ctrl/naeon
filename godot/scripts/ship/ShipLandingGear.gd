@@ -43,6 +43,7 @@ func _build() -> void:
 			if doc.append_from_file(strut_path, st2) == OK:
 				var scn := doc.generate_scene(st2)
 				if scn:
+					MeshSafe.strip_imported_cameras(scn)
 					leg.add_child(scn)
 					scn.position = Vector3(0, -0.35, 0)
 					scn.scale = Vector3.ONE * 0.55

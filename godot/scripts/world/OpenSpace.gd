@@ -29,6 +29,8 @@ var _eva_warn_t: float = 0.0
 var _eva_tether_t: float = 0.0
 var _spawn_ship_pos := Vector3(0, 0, 2800)
 var _interior_view: bool = false
+## True only when pad↔flight closed a ship pocket; do not free an EVA walker.
+var _drop_pocket_walker: bool = false
 ## OS-C: useful approach in the 5–15 km AGL band. Not the toy 770 m spawn.
 const APPROACH_START_AGL := 8000.0
 const APPROACH_AGL_MIN := 5000.0
@@ -440,6 +442,7 @@ func set_interior_view(on: bool) -> void:
 			sun.light_energy = 0.22
 			sun.shadow_enabled = false
 	else:
+		_restore_exterior_env_sources()
 		if sun:
 			sun.light_energy = 1.35
 			sun.shadow_enabled = true
@@ -461,6 +464,19 @@ func _apply_interior_env() -> void:
 	env.ambient_light_energy = 0.9
 	env.glow_intensity = 0.18
 	env.glow_enabled = true
+
+
+func _restore_exterior_env_sources() -> void:
+	## Pocket paint must not stick after pad↔flight: sky + sky ambient
+	## (OpenSpace.tscn Env). Altitude fog then retunes energy.
+	var we := $WorldEnvironment as WorldEnvironment
+	if we == null or we.environment == null:
+		return
+	var env := we.environment
+	env.background_mode = Environment.BG_SKY
+	env.background_color = Color(0.004, 0.005, 0.02)
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+	env.ambient_light_color = Color(0.05, 0.07, 0.14)
 
 
 func approach_start_agl() -> float:
@@ -548,10 +564,137 @@ func nearest_pad(global_pos: Vector3) -> Node3D:
 	return best
 
 func _on_ship_landed() -> void:
+	reclaim_pilot_camera()
 	print("[OpenSpace] ship landed (seamless — same scene)")
 
 func _on_ship_launched() -> void:
+	## 3090: SPACE @ 8 km is fine. Black is pad LAND / cockpit / Space→HOVER.
+	ensure_flight_view()
 	print("[OpenSpace] ship launched")
+
+
+func ensure_flight_view() -> void:
+	## Pad ↔ flight: close the ship pocket, unhide WorldRoot, seat chase cam.
+	## Boot sky/planet is already correct on the 3090 — do not retune spawn.
+	var pocket_walker := false
+	if _interior != null and is_instance_valid(_interior) and _interior.has_method("is_inside") and bool(_interior.is_inside()):
+		if not _interior.has_method("get_kind") or str(_interior.get_kind()) == "ship":
+			pocket_walker = true
+	if player != null and is_instance_valid(player) and "interior_mode" in player and bool(player.interior_mode):
+		pocket_walker = true
+	_close_interior_for_flight()
+	## OR: _do_launch and launched both call this; the second must not clear the flag.
+	_drop_pocket_walker = _drop_pocket_walker or pocket_walker
+	var eva_walker_live := player != null and is_instance_valid(player) and not pocket_walker
+	if not eva_walker_live:
+		_in_ship = true
+		_eva_mode = false
+		if LayerContext:
+			LayerContext.set_layer("Space")
+			if "seamless_stage" in LayerContext:
+				LayerContext.seamless_stage = "world"
+	_interior_view = false
+	if world_root:
+		world_root.visible = true
+	set_interior_view(false)
+	if not eva_walker_live:
+		_restore_floating_origin_to_ship()
+	if ship == null or not is_instance_valid(ship):
+		return
+	if pocket_walker:
+		for pl_obs in planets:
+			if pl_obs != null and is_instance_valid(pl_obs) and pl_obs.has_method("set_observer"):
+				pl_obs.set_observer(ship)
+		_bind_soft_net_actor(ship)
+		_hand_view_to_ship()
+		if ship.has_method("set_pilot_active"):
+			ship.set_pilot_active(true)
+		_hand_view_to_ship()
+	elif not eva_walker_live:
+		if ship.has_method("set_pilot_active"):
+			ship.set_pilot_active(true)
+		_hand_view_to_ship()
+	var pl: Node3D = nearest_planet(ship.global_position)
+	if pl:
+		_fit_camera_to_approach(ship, pl)
+	if not eva_walker_live:
+		reclaim_pilot_camera()
+	## Walker free / GLB enter_tree can run next idle frame (clear_current lottery).
+	call_deferred("_finish_flight_view")
+
+
+func _close_interior_for_flight() -> void:
+	if _interior == null or not is_instance_valid(_interior):
+		return
+	if not _interior.has_method("is_inside") or not bool(_interior.is_inside()):
+		return
+	if _interior.has_method("exit_for_pilot"):
+		_interior.exit_for_pilot()
+
+
+func _restore_floating_origin_to_ship() -> void:
+	if floating == null or not is_instance_valid(floating):
+		return
+	if floating.has_method("set_process"):
+		floating.set_process(true)
+	if floating.has_method("set_physics_process"):
+		floating.set_physics_process(true)
+	if ship != null and is_instance_valid(ship) and floating.has_method("set_target"):
+		floating.set_target(ship)
+
+
+func _finish_flight_view() -> void:
+	## Only drop the pocket walker. An EVA/pad walker must survive a later
+	## `_do_launch` (harvest / tether / EVA→board tests).
+	if _drop_pocket_walker:
+		_drop_pocket_walker = false
+		_hand_view_to_ship()
+		if player != null and is_instance_valid(player):
+			_safe_free_walker()
+		if ship != null and is_instance_valid(ship):
+			if ship.has_method("set_pilot_active"):
+				ship.set_pilot_active(true)
+			if ship.has_method("set_hatch_open"):
+				ship.set_hatch_open(false)
+		_seat_transition = false
+		var hud = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+		if hud and hud.has_method("bind_player") and ship:
+			hud.bind_player(ship)
+	if _in_ship:
+		reclaim_pilot_camera()
+
+
+func _hand_view_to_ship() -> void:
+	var walker_cam: Camera3D = null
+	if player != null and is_instance_valid(player):
+		walker_cam = player.get_node_or_null("CamPivot/Camera3D") as Camera3D
+		if walker_cam == null and "camera" in player:
+			walker_cam = player.camera as Camera3D
+	if walker_cam != null and walker_cam.current:
+		walker_cam.clear_current(false)
+	var cam: Camera3D = null
+	if ship != null and is_instance_valid(ship):
+		cam = ship.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+	if cam:
+		cam.current = true
+
+
+func reclaim_pilot_camera() -> void:
+	if _in_rover or not _in_ship:
+		return
+	if ship == null or not is_instance_valid(ship):
+		return
+	if ship.has_method("is_npc_pilot") and bool(ship.is_npc_pilot()):
+		return
+	if "pilot_active" in ship and not bool(ship.get("pilot_active")):
+		return
+	var cam: Camera3D = ship.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+	if cam == null:
+		return
+	var vp := get_viewport()
+	if vp != null and vp.get_camera_3d() == cam:
+		return
+	cam.current = true
 
 func try_exit_ship() -> void:
 	if not _in_ship or ship == null or not is_instance_valid(ship):
@@ -612,6 +755,7 @@ func try_enter_ship() -> void:
 		LayerContext.set_layer("Space")
 	if player.has_method("mark_dying"):
 		player.mark_dying()
+	_hand_view_to_ship()
 	for pl in planets:
 		if pl != null and is_instance_valid(pl) and pl.has_method("set_observer"):
 			pl.set_observer(ship)
@@ -625,6 +769,7 @@ func try_enter_ship() -> void:
 
 
 func _finish_board_ship() -> void:
+	_hand_view_to_ship()
 	_safe_free_walker()
 	if ship != null and is_instance_valid(ship) and ship.has_method("set_pilot_active"):
 		ship.set_pilot_active(true)
@@ -713,16 +858,7 @@ func _spawn_player_near_ship() -> void:
 	if player != null and is_instance_valid(player) and player.has_method("set_spawn_basis"):
 		player.set_spawn_basis(pad_up, yaw)
 	if player != null and is_instance_valid(player) and player.has_method("snap_to_surface"):
-		player.call_deferred("snap_to_surface")
-		# Second snap next frames for physics settle
-		get_tree().create_timer(0.05).timeout.connect(func():
-			if player and is_instance_valid(player) and player.has_method("snap_to_surface"):
-				player.snap_to_surface()
-		)
-		get_tree().create_timer(0.15).timeout.connect(func():
-			if player and is_instance_valid(player) and player.has_method("safe_unground"):
-				player.safe_unground()
-		)
+		_schedule_surface_settle()
 	if is_instance_valid(ship) and ship.has_method("set_pilot_active"):
 		ship.set_pilot_active(false)
 	_bind_soft_net_actor(player)
@@ -758,6 +894,7 @@ func _process(delta: float) -> void:
 	# Fog + HUD ~8Hz (was every frame — string build is not free)
 	if _hud_accum >= 0.12:
 		_hud_accum = 0.0
+		reclaim_pilot_camera()
 		_update_altitude_fog()
 		_update_hud()
 		_park_far_planets()
@@ -1116,32 +1253,9 @@ func _try_seat_to_pilot() -> bool:
 			player.set_physics_process(false)
 			if player is CollisionObject3D:
 				(player as CollisionObject3D).collision_layer = 0
-	# Close pocket WITHOUT teleporting walker
-	if _interior.has_method("exit_for_pilot"):
-		_interior.exit_for_pilot()
-	elif _interior.has_method("exit_interior"):
-		# Don't call exit_interior (teleports) — manual close
-		if _interior.get(" _active") != null:
-			pass
-	_in_ship = true
-	_eva_mode = false
-	if LayerContext:
-		LayerContext.set_layer("Space")
-	# Point systems at ship while walker still exists but dead
-	for pl in planets:
-		if pl != null and is_instance_valid(pl) and pl.has_method("set_observer"):
-			pl.set_observer(ship)
-	if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
-		floating.set_target(ship)
-	if SoftNetSession != null and SoftNetSession.has_method("bind_player"):
-		SoftNetSession.bind_player(ship if is_instance_valid(ship) else null)
-	if SoftENet != null and SoftENet.has_method("bind_player"):
-		SoftENet.bind_player(ship if is_instance_valid(ship) else null)
-	if SoftScanCache != null and SoftScanCache.has_method("invalidate_player"):
-		SoftScanCache.invalidate_player()
+	# Same pad↔flight restore as Space-takeoff (close pocket, chase cam).
+	ensure_flight_view()
 	_toast_hud("Taking pilot seat…")
-	# Next idle frame: free walker + activate pilot (no mid-notification free)
-	call_deferred("_finish_seat_to_pilot")
 	return true
 
 
@@ -1487,6 +1601,11 @@ func _safe_free_walker() -> void:
 			(old as CollisionObject3D).collision_mask = 0
 		if old.is_in_group("player"):
 			old.remove_from_group("player")
+	var wcam: Camera3D = old.get_node_or_null("CamPivot/Camera3D") as Camera3D
+	if wcam == null and "camera" in old:
+		wcam = old.camera as Camera3D
+	if wcam != null and wcam.current:
+		wcam.clear_current(false)
 	if old is CanvasItem:
 		pass
 	if old is Node3D:

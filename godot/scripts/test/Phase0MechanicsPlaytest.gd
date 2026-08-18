@@ -563,6 +563,10 @@ func _go() -> void:
 	_osg_outpost_silhouette(fails)
 	_assert_gear_before_land(fails)
 	_pad_traffic_present(fails)
+	_assert_imported_camera_cannot_steal(fails)
+	await _player_pad_land_hover_view(fails)
+	await _eva_board_hover_view(fails)
+	await _cockpit_space_takeoff_view(fails)
 	await _npc_takeoff_land(fails)
 	await _npc_occupy_harvest(fails)
 	await _npc_squad_invite(fails)
@@ -1063,6 +1067,8 @@ func _osc_scale_ladder(fails: PackedStringArray, spawn_agl: float) -> void:
 			print("[Playtest] OS-C cam.far=", snapped(cam.far, 1.0))
 
 	# No G1 CRUISE in this slice — flight enum stays SCM/NAV/HOVER.
+	if ship and bool(ship.get("is_landed")):
+		fails.append("OS-C boot stuck LANDED at approach AGL")
 	if ship and "flight_mode" in ship and int(ship.flight_mode) > 2:
 		fails.append("OS-C unexpected flight mode %s" % int(ship.flight_mode))
 	var cruise_src := FileAccess.get_file_as_string("res://scripts/ship/ShipController.gd")
@@ -1636,6 +1642,23 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 		fails.append("OS-H SPACE WorldRoot hidden (load/interior)")
 	if "_pitch" in ship and absf(float(ship.get("_pitch"))) > 0.02:
 		fails.append("OS-H SPACE already pitched")
+	if bool(ship.get("is_landed")):
+		fails.append("OS-H SPACE stuck LANDED at OS-C AGL")
+	var fuel0 := float(ship.get("fuel")) if "fuel" in ship else -1.0
+	await get_tree().create_timer(0.45).timeout
+	var fuel1 := float(ship.get("fuel")) if "fuel" in ship else -1.0
+	if fuel0 >= 0.0 and fuel1 + 0.4 < fuel0:
+		fails.append("OS-H SPACE fuel bleed at idle (%s→%s)" % [snapped(fuel0, 1.0), snapped(fuel1, 1.0)])
+	var HudPick = load("res://scripts/ui/OpenSpaceHudStack.gd")
+	if HudPick:
+		var pick: Node = HudPick.player_ship(get_tree()) if HudPick.has_method("player_ship") else ship
+		if pick != ship:
+			fails.append("OS-H SPACE HUD ship is %s (want player)" % (pick.name if pick else "none"))
+		var boot_snap: Dictionary = HudPick.snapshot(pick, null, null)
+		if bool(boot_snap.get("landed", false)):
+			fails.append("OS-H SPACE HUD card LANDED at 8 km")
+		print("[Playtest] OS-H SPACE landed=", ship.get("is_landed"), " hud_landed=", boot_snap.get("landed"),
+			" fuel=", snapped(fuel0, 1.0), "→", snapped(fuel1, 1.0), " pick=", pick.name if pick else "none")
 	if start_agl >= 5000.0 and start_agl <= 15000.0 and limb_on and d_space <= 0.001:
 		done["space"] = true
 
@@ -1719,6 +1742,7 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 	if not gear_down:
 		fails.append("OS-H LAND without gear down")
 	done["land"] = true
+	_assert_openspace_view(os, ship, nex, "LAND", fails)
 
 	# --- EVA snap on Relief ---
 	if os.has_method("try_exit_ship"):
@@ -1772,6 +1796,7 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 		return
 	print("[Playtest] OS-H STEP takeoff landed=", ship.get("is_landed"))
 	done["takeoff"] = true
+	_assert_openspace_view(os, ship, nex, "HOVER", fails)
 
 	# --- SPACE OUT: climb above envelope, same scene ---
 	var climb: Dictionary = _osh_climb(nex, ship, env_h + 80.0, 8000)
@@ -2976,6 +3001,320 @@ func _rover_pick_unnamed_pad(os: Node) -> Dictionary:
 	return {"deck": null, "ctrl": null, "planet": nex}
 
 
+func _assert_openspace_view(os: Node, ship: Node, nex: Node, label: String, fails: PackedStringArray) -> void:
+	## Headless stand-in for the 3090 black-viewport gate: after unnamed-pad
+	## LAND and HOVER takeoff the chase Camera3D must still be current, have
+	## a usable far clip / environment, and sit outside the body looking at it.
+	if os != null and os.has_method("reclaim_pilot_camera"):
+		os.reclaim_pilot_camera()
+	if ship == null or not is_instance_valid(ship):
+		fails.append("%s view: no ship" % label)
+		return
+	var cam: Camera3D = ship.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+	if cam == null:
+		fails.append("%s view: chase Camera3D missing" % label)
+		return
+	var vp := os.get_viewport() if os else get_viewport()
+	var live: Camera3D = vp.get_camera_3d() if vp else null
+	if live != cam:
+		fails.append("%s view: viewport camera is %s (want chase)" % [
+			label, live.name if live else "none"
+		])
+	elif not cam.current:
+		fails.append("%s view: chase Camera3D not current" % label)
+	var we: WorldEnvironment = null
+	if os:
+		we = os.get_node_or_null("WorldEnvironment") as WorldEnvironment
+	if we == null or we.environment == null:
+		fails.append("%s view: WorldEnvironment missing" % label)
+	var wr: Node3D = os.get_node_or_null("WorldRoot") as Node3D if os else null
+	if wr != null and not wr.visible:
+		fails.append("%s view: WorldRoot hidden (interior/pad-exit)" % label)
+	if label == "HOVER":
+		var d_in = os.get("_interior") if os else null
+		if d_in != null and is_instance_valid(d_in) and d_in.has_method("is_inside") and bool(d_in.is_inside()):
+			fails.append("HOVER view: still in cockpit after takeoff")
+		if LayerContext and str(LayerContext.current_layer).to_lower() != "space":
+			fails.append("HOVER view: layer %s (want Space)" % LayerContext.current_layer)
+		if we != null and we.environment != null:
+			if we.environment.ambient_light_source != Environment.AMBIENT_SOURCE_SKY:
+				fails.append("HOVER view: ambient source not sky (cockpit leak)")
+	if we != null and we.environment != null:
+		var env: Environment = we.environment
+		if env.ambient_light_energy <= 0.01:
+			fails.append("%s view: ambient energy 0" % label)
+		if env.get("background_energy_multiplier") != null and float(env.background_energy_multiplier) <= 0.0:
+			fails.append("%s view: background energy 0" % label)
+	var sun: DirectionalLight3D = os.get_node_or_null("Sun") as DirectionalLight3D if os else null
+	if sun != null and sun.light_energy <= 0.01:
+		fails.append("%s view: sun energy 0" % label)
+	var rad := 1400.0
+	if nex != null and nex.get("radius") != null:
+		rad = float(nex.get("radius"))
+	if cam.far < rad + 5000.0:
+		fails.append("%s view: far clip %s too short" % [label, snapped(cam.far, 1.0)])
+	if nex != null and is_instance_valid(nex) and nex is Node3D:
+		var body_pos: Vector3 = (nex as Node3D).global_position
+		var dist: float = cam.global_position.distance_to(body_pos)
+		if dist >= cam.far:
+			fails.append("%s view: body beyond far clip (%s >= %s)" % [
+				label, snapped(dist, 1.0), snapped(cam.far, 1.0)
+			])
+		if dist + 2.0 < rad:
+			fails.append("%s view: camera inside body (d=%s r=%s)" % [
+				label, snapped(dist, 1.0), snapped(rad, 1.0)
+			])
+		var pad: Node3D = null
+		if os != null and os.has_method("nearest_pad"):
+			pad = os.nearest_pad(ship.global_position)
+		if pad != null:
+			var pd: float = cam.global_position.distance_to(pad.global_position)
+			if pd >= cam.far:
+				fails.append("%s view: pad beyond far clip (%s)" % [label, snapped(pd, 1.0)])
+	var tree := get_tree()
+	if tree:
+		for n in tree.get_nodes_in_group("ship"):
+			if n == ship or n == null or not is_instance_valid(n):
+				continue
+			if not (n.has_method("is_npc_pilot") and bool(n.is_npc_pilot())):
+				continue
+			var vcam: Camera3D = n.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+			if vcam != null and (vcam.current or live == vcam):
+				fails.append("%s view: visitor Camera3D is current" % label)
+	print("[Playtest] ", label, " view cam=", cam.name, " current=", cam.current,
+		" far=", snapped(cam.far, 1.0), " live=", live.name if live else "none")
+
+
+func _assert_imported_camera_cannot_steal(fails: PackedStringArray) -> void:
+	## GPU land loads pad/hull GLB; those files often ship a Camera3D.
+	## Simulate the steal and require reclaim to hand the view back.
+	var os: Node = get_parent()
+	var ship: Node = os.get("ship") if os else null
+	if ship == null or not is_instance_valid(ship):
+		fails.append("imported-cam: no ship")
+		return
+	var keep: Camera3D = ship.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+	if keep == null:
+		fails.append("imported-cam: chase Camera3D missing")
+		return
+	var thief := Camera3D.new()
+	thief.name = "ImportedCam"
+	thief.current = true
+	var host := Node3D.new()
+	host.name = "FakeHullGLB"
+	host.add_child(thief)
+	MeshSafe.strip_imported_cameras(host)
+	if host.get_node_or_null("ImportedCam") != null:
+		fails.append("imported-cam: MeshSafe.strip left a Camera3D")
+	ship.add_child(host)
+	var late := Camera3D.new()
+	late.name = "LateImportedCam"
+	late.current = true
+	host.add_child(late)
+	if os != null and os.has_method("reclaim_pilot_camera"):
+		os.reclaim_pilot_camera()
+	var live: Camera3D = get_viewport().get_camera_3d()
+	if live != keep:
+		fails.append("imported-cam stole the viewport (%s)" % (live.name if live else "none"))
+	if late != null and is_instance_valid(late):
+		late.queue_free()
+	if host != null and is_instance_valid(host):
+		host.queue_free()
+	if keep:
+		keep.current = true
+	print("[Playtest] imported-cam reclaim live=", live.name if live else "none")
+
+
+func _player_pad_land_hover_view(fails: PackedStringArray) -> void:
+	## 3090 report: LAND on unnamed pad, stay in the seat, Space → HOVER.
+	## OS-H EVA/board would restore the chase cam and hide this bug.
+	var os: Node = get_parent()
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var nex: Node = _osh_nex()
+	if nex != null and nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	if ship == null or nex == null:
+		fails.append("pad LAND/HOVER view: no ship/body")
+		return
+	if not bool(os.get("_in_ship")):
+		if os.has_method("try_enter_ship") and os.get("player") != null:
+			os.try_enter_ship()
+			await get_tree().create_timer(0.35).timeout
+	var pad: Node3D = null
+	if nex.has_method("nearest_pad"):
+		pad = nex.nearest_pad(ship.global_position)
+	if pad == null and os.has_method("nearest_pad"):
+		pad = os.nearest_pad(ship.global_position)
+	if pad == null or not pad.has_meta("pad_up"):
+		fails.append("pad LAND/HOVER view: no unnamed pad")
+		return
+	var pin := str(pad.get_meta("site_pin")) if pad.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("pad LAND/HOVER view: minted SITE_*")
+		return
+	var up: Vector3 = pad.get_meta("pad_up")
+	ship.global_position = pad.global_position + up * 8.0
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	ship.set("_gear_down", true)
+	if ship.has_method("_sync_landing_gear"):
+		ship._sync_landing_gear()
+	if ship.has_method("_do_land"):
+		ship._do_land()
+	if not bool(ship.get("is_landed")):
+		fails.append("pad LAND/HOVER view: LAND refused")
+		return
+	_assert_openspace_view(os, ship, nex, "LAND", fails)
+	if ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+	if bool(ship.get("is_landed")):
+		fails.append("pad LAND/HOVER view: still landed after takeoff")
+		return
+	if "flight_mode" in ship and int(ship.flight_mode) != 2:
+		fails.append("pad LAND/HOVER view: takeoff left mode %s" % int(ship.flight_mode))
+	_assert_openspace_view(os, ship, nex, "HOVER", fails)
+
+
+func _eva_board_hover_view(fails: PackedStringArray) -> void:
+	## 3090: on Pad_North the walker (hero) + pad + dome draw. Space takeoff
+	## after F board must not drop the chase Camera3D (clear_current lottery
+	## + walker-free lambda).
+	var os: Node = get_parent()
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var nex: Node = _osh_nex()
+	if nex != null and nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	if os == null or ship == null or nex == null:
+		fails.append("EVA→HOVER view: no OpenSpace")
+		return
+	if not bool(os.get("_in_ship")):
+		if os.has_method("try_enter_ship") and os.get("player") != null:
+			os.try_enter_ship()
+			await get_tree().create_timer(0.35).timeout
+	var pad: Node3D = os.nearest_pad(ship.global_position) if os.has_method("nearest_pad") else null
+	if pad == null or not pad.has_meta("pad_up"):
+		fails.append("EVA→HOVER view: no unnamed pad")
+		return
+	var up: Vector3 = pad.get_meta("pad_up")
+	ship.global_position = pad.global_position + up * 8.0
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	ship.set("_gear_down", true)
+	if ship.has_method("_sync_landing_gear"):
+		ship._sync_landing_gear()
+	if ship.has_method("_do_land"):
+		ship._do_land()
+	if not bool(ship.get("is_landed")):
+		fails.append("EVA→HOVER view: LAND refused")
+		return
+	if os.has_method("try_exit_ship"):
+		os.try_exit_ship()
+	await get_tree().create_timer(0.25).timeout
+	var walker: Node3D = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("EVA→HOVER view: no walker on pad")
+		return
+	if bool(os.get("_in_ship")):
+		fails.append("EVA→HOVER view: still piloting after EVA")
+		return
+	walker.global_position = ship.global_position + up * 2.0
+	if os.has_method("try_enter_ship"):
+		os.try_enter_ship()
+	await get_tree().create_timer(0.4).timeout
+	if not bool(os.get("_in_ship")):
+		fails.append("EVA→HOVER view: board failed")
+		return
+	if ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+	if bool(ship.get("is_landed")):
+		fails.append("EVA→HOVER view: still landed after takeoff")
+		return
+	_assert_openspace_view(os, ship, nex, "HOVER", fails)
+	print("[Playtest] EVA→board→HOVER view ok")
+
+
+func _cockpit_space_takeoff_view(fails: PackedStringArray) -> void:
+	## 3090: SPACE @ 8 km draws (ship / Nex-Prime / moon). Black is after
+	## pad LAND → I cockpit → Space takeoff to HOVER. Close the pocket.
+	var os: Node = get_parent()
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var nex: Node = _osh_nex()
+	if nex != null and nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	if os == null or ship == null or nex == null:
+		fails.append("cockpit→HOVER view: no OpenSpace")
+		return
+	if not bool(os.get("_in_ship")):
+		if os.has_method("try_enter_ship") and os.get("player") != null:
+			os.try_enter_ship()
+			await get_tree().create_timer(0.35).timeout
+	var pad: Node3D = os.nearest_pad(ship.global_position) if os.has_method("nearest_pad") else null
+	if pad == null or not pad.has_meta("pad_up"):
+		fails.append("cockpit→HOVER view: no unnamed pad")
+		return
+	var up: Vector3 = pad.get_meta("pad_up")
+	ship.global_position = pad.global_position + up * 8.0
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	ship.set("_gear_down", true)
+	if ship.has_method("_sync_landing_gear"):
+		ship._sync_landing_gear()
+	if ship.has_method("_do_land"):
+		ship._do_land()
+	if not bool(ship.get("is_landed")):
+		fails.append("cockpit→HOVER view: LAND refused")
+		return
+	if not bool(os.get("_in_ship")):
+		fails.append("cockpit→HOVER view: not in seat before I")
+		return
+	if os.has_method("_leave_seat_to_pocket"):
+		os._leave_seat_to_pocket()
+	await get_tree().create_timer(0.45).timeout
+	var d: Node = os.get("_interior")
+	if d == null or not is_instance_valid(d) or not (d.has_method("is_inside") and bool(d.is_inside())):
+		fails.append("cockpit→HOVER view: I did not open ship pocket")
+		return
+	if d.has_method("get_kind") and str(d.get_kind()) != "ship":
+		fails.append("cockpit→HOVER view: pocket kind %s" % str(d.get_kind()))
+		return
+	var wr: Node3D = os.get_node_or_null("WorldRoot") as Node3D
+	if wr != null and wr.visible:
+		fails.append("cockpit→HOVER view: WorldRoot still visible in pocket")
+		return
+	var ls := ""
+	if d.has_method("life_support_line"):
+		ls = str(d.life_support_line())
+	if not ls.contains("HULL SEALED"):
+		fails.append("cockpit→HOVER view: expected HULL SEALED, got %s" % ls)
+		return
+	var chase: Camera3D = ship.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+	var live0: Camera3D = get_viewport().get_camera_3d() if get_viewport() else null
+	if chase != null and live0 == chase:
+		fails.append("cockpit→HOVER view: still on chase cam inside pocket")
+		return
+	print("[Playtest] cockpit pocket ls=", ls, " live=", live0.name if live0 else "none")
+	if ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+	await get_tree().create_timer(0.35).timeout
+	if bool(ship.get("is_landed")):
+		fails.append("cockpit→HOVER view: still landed after takeoff")
+		return
+	if d != null and is_instance_valid(d) and d.has_method("is_inside") and bool(d.is_inside()):
+		fails.append("cockpit→HOVER view: pocket still open after takeoff")
+		return
+	_assert_openspace_view(os, ship, nex, "HOVER", fails)
+	print("[Playtest] cockpit→Space→HOVER view ok")
+
+
 func _assert_hud_stack(os: Node, fails: PackedStringArray) -> void:
 	## Presentation helper only — no gameplay, no SITE_*, no number changes.
 	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
@@ -2992,6 +3331,11 @@ func _assert_hud_stack(os: Node, fails: PackedStringArray) -> void:
 	if not bool(Hud.has_fields(empty)):
 		fails.append("HUD helper null snapshot missing fields")
 		return
+	if Hud.has_method("player_ship"):
+		var pick: Node = Hud.player_ship(get_tree())
+		var want: Node = os.get("ship") if os else null
+		if want != null and pick != want:
+			fails.append("HUD player_ship picked %s" % (pick.name if pick else "none"))
 	var snap: Dictionary = Hud.snapshot(os.get("ship") if os else null, os.get("player") if os else null, pad)
 	if not bool(Hud.has_fields(snap)):
 		fails.append("HUD helper missing fields")

@@ -13,6 +13,25 @@ const FIELDS := [
 ]
 
 
+static func player_ship(tree: SceneTree) -> Node:
+	## Do not use get_first_node_in_group("ship"): pad-traffic VisitorShip is
+	## often LANDED and wins the HashSet. Same lottery as the chase Camera3D.
+	if tree == null:
+		return null
+	var os: Node = tree.get_first_node_in_group("open_space")
+	if os != null and is_instance_valid(os):
+		var sh = os.get("ship")
+		if sh != null and is_instance_valid(sh):
+			return sh
+	for n in tree.get_nodes_in_group("ship"):
+		if n == null or not is_instance_valid(n):
+			continue
+		if n.has_method("is_npc_pilot") and bool(n.is_npc_pilot()):
+			continue
+		return n
+	return null
+
+
 static func snapshot(ship: Node = null, player: Node = null, pad: Node = null) -> Dictionary:
 	var snap := {
 		"fuel": -1.0,

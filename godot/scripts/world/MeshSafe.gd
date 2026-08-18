@@ -30,3 +30,25 @@ static func assign(mi: MeshInstance3D, mesh: Mesh, fallback_size: Vector3 = Vect
 	if mi == null:
 		return
 	mi.mesh = visual(mesh, fallback_size)
+
+
+static func strip_imported_cameras(root: Node) -> int:
+	## DCC / GLB files often ship a Camera3D. Godot 4.3 makes that camera
+	## current on enter_tree (or first_camera), and clear_current() then
+	## promotes a HashSet-next camera — a black 3D buffer if none is the
+	## chase cam. Strip before add_child so they never enter the viewport.
+	if root == null:
+		return 0
+	var n := 0
+	var stack: Array = [root]
+	while not stack.is_empty():
+		var cur: Node = stack.pop_back()
+		for c in cur.get_children():
+			if c is Camera3D:
+				(c as Camera3D).current = false
+				cur.remove_child(c)
+				c.free()
+				n += 1
+			else:
+				stack.append(c)
+	return n
