@@ -1,7 +1,9 @@
 extends Node
 ## NP-A: one local visitor flies the existing SCM / HOVER / LAND loop.
 ## NP-B: after LAND, same PadBaseController occupy / harvest as the player.
-## Not a second IFCS, not G1, not a private yield table.
+## NP-D: player may invite this pilot into a local squad — follow or seat.
+## Not a second IFCS, not G1, not a private yield table, not a damage aura.
+
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 
@@ -22,6 +24,10 @@ var _land_pad_name: String = ""
 var _harvesting: bool = false
 var _saw_harvest: bool = false
 var _harvest_got: float = 0.0
+var _squad: Node = null
+var _squad_follow: bool = false
+var _squad_seated: bool = false
+var _companion: Node3D = null
 
 
 func setup(ship: CharacterBody3D, pad: Node3D) -> void:
@@ -102,6 +108,45 @@ func stop_harvest() -> void:
 		_ship.set_meta("npc_harvest", false)
 
 
+func accept_squad_invite(squad: Node) -> void:
+	## SoftNet stays visual. Invite does not grant combat authority.
+	_squad = squad
+	stop_harvest()
+	_auto = false
+	_phase = Phase.IDLE
+	_phase_t = 0.0
+	_squad_seated = false
+	_squad_follow = true
+	_ensure_companion()
+	print("[NpcPilot] squad invite follow")
+
+
+func is_squad_following() -> bool:
+	return _squad_follow and not _squad_seated
+
+
+func is_squad_seated() -> bool:
+	return _squad_seated
+
+
+func squad_body() -> Node3D:
+	return _companion if _companion != null and is_instance_valid(_companion) else null
+
+
+func try_squad_seat(director: Node) -> bool:
+	if director == null or not director.has_method("seat_companion"):
+		return false
+	var body := _ensure_companion()
+	if body == null:
+		return false
+	if not bool(director.seat_companion(body)):
+		return false
+	_squad_follow = false
+	_squad_seated = true
+	print("[NpcPilot] squad seated")
+	return true
+
+
 func start_loop(fast: bool = false) -> void:
 	stop_harvest()
 	_fast = fast
@@ -159,7 +204,9 @@ func _physics_process(delta: float) -> void:
 	if _phase == Phase.IDLE:
 		if _ship.has_method("set_npc_axes"):
 			_ship.set_npc_axes(Vector3.ZERO)
-		if _auto:
+		if _squad_follow and not _squad_seated:
+			_tick_squad_follow(delta)
+		elif _auto:
 			_phase_t += delta
 			if _phase_t >= 5.0:
 				start_loop(false)
@@ -302,6 +349,77 @@ func _on_pad_harvested(amount: float, _total: float) -> void:
 		return
 	_saw_harvest = true
 	_harvest_got += amount
+
+
+func _ensure_companion() -> Node3D:
+	if _companion != null and is_instance_valid(_companion):
+		return _companion
+	var body := Node3D.new()
+	body.name = "SquadCompanion"
+	body.set_meta("squad_npc", true)
+	body.set_meta("squad_id", "npc_visitor")
+	body.set_meta("site_pin", "")
+	var host: Node = _open_space()
+	if host == null:
+		host = _ship
+	if host == null:
+		return null
+	host.add_child(body)
+	var origin: Vector3 = _ship.global_position if _ship != null else Vector3.ZERO
+	body.global_position = origin + Vector3(2.2, 1.0, 1.4)
+	_companion = body
+	if DisplayServer.get_name() != "headless":
+		_build_companion_visual(body)
+	return _companion
+
+
+func _follow_anchor() -> Node3D:
+	var os := _open_space()
+	if os == null:
+		return null
+	var walker: Node3D = os.get("player") as Node3D
+	if walker != null and is_instance_valid(walker):
+		return walker
+	var pship: Node3D = os.get("ship") as Node3D
+	if pship != null and is_instance_valid(pship) and pship != _ship:
+		return pship
+	return pship
+
+
+func _tick_squad_follow(delta: float) -> void:
+	var body := _ensure_companion()
+	var tgt := _follow_anchor()
+	if body == null or tgt == null:
+		return
+	var dest: Vector3 = tgt.global_position + tgt.global_transform.basis.x * 2.4 + Vector3(0.0, 0.9, 0.0)
+	body.global_position = body.global_position.lerp(dest, clampf(delta * 7.0, 0.0, 1.0))
+
+
+func _build_companion_visual(host: Node3D) -> void:
+	var mi := MeshInstance3D.new()
+	mi.name = "Body"
+	var cap := CapsuleMesh.new()
+	cap.radius = 0.32
+	cap.height = 1.05
+	mi.mesh = cap
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(0.55, 0.85, 1.0)
+	mat.emission_enabled = true
+	mat.emission = Color(0.35, 0.7, 1.0)
+	mat.emission_energy_multiplier = 1.2
+	mi.material_override = mat
+	mi.position = Vector3(0, 0.7, 0)
+	host.add_child(mi)
+	var lab := Label3D.new()
+	lab.name = "Label"
+	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lab.font_size = 20
+	lab.outline_size = 4
+	lab.position = Vector3(0, 1.9, 0)
+	lab.text = "SQUAD"
+	lab.modulate = Color(0.75, 0.9, 1.0)
+	host.add_child(lab)
 
 
 func _sign_harvest_label() -> void:

@@ -412,6 +412,27 @@ func _hatch_fx(entering: bool) -> void:
 		(door as MeshInstance3D).rotation.y = deg_to_rad(75.0) if entering else 0.0
 
 
+func seat_companion(body: Node3D) -> bool:
+	## NP-D: squad NPC sits at the existing F seat. No extra combat seat.
+	if body == null or not is_instance_valid(body):
+		return false
+	if not _inside or _kind != "ship" or _active == null or not is_instance_valid(_active):
+		return false
+	var seat: Node3D = _active.get_node_or_null("Seat") as Node3D
+	if seat == null:
+		seat = _active.get_node_or_null("SeatVolume") as Node3D
+	if seat == null:
+		return false
+	if body.get_parent() != _active:
+		if body.get_parent() != null:
+			body.reparent(_active, true)
+		else:
+			_active.add_child(body)
+	body.global_position = seat.global_position + Vector3(0.0, 1.05, 0.0)
+	body.set_meta("squad_seated", true)
+	return true
+
+
 func is_near_seat(player: Node3D, max_dist: float = 3.6) -> bool:
 	if _kind != "ship":
 		return false

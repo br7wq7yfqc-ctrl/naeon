@@ -3,8 +3,8 @@
 **Версия:** 1.0  
 **Дата:** 2026-08-18  
 **Движок:** Godot 4.3  
-**Статус:** NP-A flight + NP-B occupy/harvest в коде. NP-C…F later.  
-**Код срезов:** NP-A…NP-B built. NP-C…F later. Не G2–G6. Не 10k CCU.
+**Статус:** NP-A flight + NP-B occupy/harvest + NP-D invite в коде. NP-C/E/F later.  
+**Код срезов:** NP-A…NP-B + NP-D invite built. NP-C/E/F later. Не G2–G6. Не 10k CCU.
 
 Запрос владельца (в план): NPC должны **полностью закрывать петлю живого игрока**, пока MMO-кластер не запущен — летать, делать все playable-действия, прогрессировать, ставить базы, собирать альянсы и рейды. Живые: отвечают игроку, меняются под его влияние, работают offline и в coop с друзьями. Игрок берёт NPC в отряд и сообщество. **ИИ NPC — подписка AI Agency:** платят за инициативу и диалог, **никогда** за HP / DPS / yield / уникальное оружие (это P2W, отказ). Кластер: [`MMO_SERVERS.md`](MMO_SERVERS.md) — HOLD до Phase 3.
 
@@ -33,14 +33,14 @@ Clash: [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md).
 
 | Узел | Факт репо | Это не |
 |------|-----------|--------|
-| `PadTraffic.gd` | 1 pad-guard `CombatDummy` + visitor `ShipController`/`NpcPilot` (NP-A flight, NP-B occupy/harvest) + surface dummy под Pulse | NP-C модуль; NP-D отряд |
+| `PadTraffic.gd` | 1 pad-guard `CombatDummy` + visitor `ShipController`/`NpcPilot` (NP-A flight, NP-B occupy/harvest, NP-D squad invite) + surface dummy под Pulse | NP-C модуль; NP-E альянс |
 | `PadAmbientLife.gd` | GLB-пропы, bob/wander, **0 боя** | агент, квест, альянс |
 | `ClashWaves.gd` | timed `CombatDummy` march по `ClashLanes` | герой Clash, драфт, agency |
 | `CombatDummy.gd` | HP, optional aggro/lane; цель и миньон | корабль, база, Contribution |
 | `SoftRemotePuppet.gd` | visual peer: поза / форма / фракция / полёт | AI, authority |
 | `SoftNetSession.gd` | loopback/ENet visual; default OFF | MMO, 10k CCU |
 | `AllianceRanks.gd` | ранги 0–4, soft perms; **не** сила / claim | живой альянс NPC |
-| `rules/24` | отряд 2–5; invite | слот NPC в отряде |
+| `rules/24` | отряд 2–5; invite одного NPC (NP-D follow/seat) | NP-E два NPC; pay-slot; аура урона |
 | `rules/07` | role_id квестодателей (`CX_PILOT_LIAISON`…) | полёт / стройка |
 | `rules/11`, `rules/23` | иерархия, war/truce | два NPC с raid intent |
 | `SoftSession.gd` | `user://` form / faction / layer | offline-петля NPC |
@@ -148,7 +148,7 @@ OS-G силуэт и ambient life — WorldFill / плотность, не жи�
 
 | Сейчас | Дальше |
 |--------|--------|
-| NP-A flight + NP-B occupy/harvest on unnamed pad | NP-D отряд; NP-C после ST-A |
+| NP-A flight + NP-B occupy/harvest + NP-D invite (один NPC, follow/seat) | NP-C после ST-A; NP-E/F later |
 | Стратегия — docs; ST-A после честного OS-H на GPU | NP-C только после ST-A |
 | SoftNet — visual | authority later; не 10k |
 | G2–G6 | закрыты |
