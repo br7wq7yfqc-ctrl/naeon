@@ -10,7 +10,8 @@
 Подход космоса: [`OPEN_SPACE_SC_BENCHMARK.md`](OPEN_SPACE_SC_BENCHMARK.md) (OS-A…OS-H).  
 Арена: [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md) (AR-A…AR-F).  
 Роли SC: [`SC_FEATURE_MAP.md`](SC_FEATURE_MAP.md).  
-Длинный план: [`DEVELOPMENT_PLAN.md`](../../DEVELOPMENT_PLAN.md) §1.3 / Phase 3.
+Длинный план: [`DEVELOPMENT_PLAN.md`](../../DEVELOPMENT_PLAN.md) §1.3 / Phase 3.  
+NPC agency (NP-C после ST-A) + MMO HOLD: [`NPC_AGENCY.md`](NPC_AGENCY.md) · [`MMO_SERVERS.md`](MMO_SERVERS.md).
 
 Один мир. Другая камера и ввод. Не вторая галактика.
 
