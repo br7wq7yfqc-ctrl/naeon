@@ -2284,7 +2284,8 @@ func _npc_squad_invite(fails: PackedStringArray) -> void:
 	var d: Node = os.get("_interior")
 	var ship: Node = os.get("ship")
 	if d != null and ship != null and d.has_method("enter_ship") and d.has_method("seat_companion"):
-		var ghost := Node3D.new()
+		var prev_player: Node = os.get("player")
+		var ghost := CharacterBody3D.new()
 		ghost.name = "NpDSeatGhost"
 		os.add_child(ghost)
 		d.enter_ship(ghost, ship)
@@ -2301,6 +2302,8 @@ func _npc_squad_invite(fails: PackedStringArray) -> void:
 			fails.append("NP-D: ship pocket missing for seat")
 		if d.has_method("exit_interior"):
 			d.exit_interior()
+		if os.get("player") == ghost:
+			os.set("player", prev_player if prev_player != null and is_instance_valid(prev_player) else null)
 		if is_instance_valid(ghost):
 			ghost.queue_free()
 		await get_tree().process_frame
