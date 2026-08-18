@@ -7,6 +7,7 @@
 **Clash нативен; бар арены — Predecessor/Paragon, не Arena Commander:** [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md).  
 **Стратегия — третий бар, не Clash и не полёт OPEN SPACE:** [`BASE_STATION_STRATEGY.md`](BASE_STATION_STRATEGY.md).  
 **Каталог — дыры / очередь fill:** [`WORLD_FILL.md`](WORLD_FILL.md) §6 (не mint SITE_*).  
+**NPC agency + MMO HOLD:** [`NPC_AGENCY.md`](NPC_AGENCY.md) (NP-A…NP-F; боты ≠ agency) · [`MMO_SERVERS.md`](MMO_SERVERS.md) (Phase 3 HOLD; 10k CCU; не netcode / не G5).  
 
 Likeness — **вся** фантазия SC (лететь, стыковаться, ходить, работать, драться, жить) в системах NAEON. Это не CIG и не Planet Tech V5. Новых именованных систем, городов и SITE_* пинов нет. Резидентная система одна: **ARK**.
 

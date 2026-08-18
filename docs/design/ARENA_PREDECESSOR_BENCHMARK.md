@@ -8,6 +8,7 @@
 
 Clash — **нативный** слой NAEON. Бар подхода космоса: [`OPEN_SPACE_SC_BENCHMARK.md`](OPEN_SPACE_SC_BENCHMARK.md). Карта SC: [`SC_FEATURE_MAP.md`](SC_FEATURE_MAP.md).  
 Стратегия — третий бар, не Clash и не полёт OPEN SPACE: [`BASE_STATION_STRATEGY.md`](BASE_STATION_STRATEGY.md).  
+NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY.md) · [`MMO_SERVERS.md`](MMO_SERVERS.md).  
 Пластины арены в ledger: `moba_arena`, `hexarena_moba_map_schematic`, `tower_iouter_mid_inhibi` — очередь в [`WORLD_FILL.md`](WORLD_FILL.md) §6, не mint SITE_*.
 
 Это **не** клон карт Omeda/Epic, карточной колоды Paragon и не IP героев. Новых SITE_* и городов нет. G5 (Clash-из-мира) **закрыт**. G2–G6 не реализовывать. P2W запрещён. Knowledge — soft (подпись, не unique DPS). Infection — кап 5. story ≠ power.
