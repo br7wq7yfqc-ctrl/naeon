@@ -605,6 +605,8 @@ func _refresh() -> void:
 		var tree_s := get_tree()
 		if tree_s:
 			for sh in tree_s.get_nodes_in_group("ship"):
+				if sh.has_method("is_npc_pilot") and bool(sh.is_npc_pilot()):
+					continue
 				if sh.has_method("get_soft_systems_line"):
 					var sl := str(sh.get_soft_systems_line()) if sh.has_method("get_soft_systems_line") else ""
 					var fl := str(sh.get_flight_status_line()) if sh.has_method("get_flight_status_line") else ""

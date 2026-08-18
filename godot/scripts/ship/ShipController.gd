@@ -92,10 +92,15 @@ const _FUEL_BURN_AFTER := 4.0
 const _FUEL_EMPTY_THRUST := 0.42
 const _FUEL_EMPTY_FLOOR := 0.05
 var _fuel_toast_t: float = 0.0
+# NP-A: local visitor uses this hull. Not a second IFCS. Not player input.
+var _npc_driven: bool = false
+var _npc_axes: Vector3 = Vector3.ZERO
 
 func _ready() -> void:
 	_gq = get_node_or_null("/root/GraphicsQuality")
 	add_to_group("ship")
+	if camera and is_instance_valid(camera):
+		camera.current = pilot_active
 	var hull := get_node_or_null("HullMesh") as MeshInstance3D
 	if hull and DisplayServer.get_name() != "headless":
 		var prism := PrismMesh.new()
@@ -134,6 +139,23 @@ func set_pilot_active(active: bool) -> void:
 	else:
 		# Keep ship frozen while on foot
 		velocity = Vector3.ZERO
+
+
+func is_npc_pilot() -> bool:
+	return _npc_driven
+
+
+func set_npc_driven(on: bool) -> void:
+	## Visitor hull: same SCM/HOVER/LAND, no mouse, no current camera.
+	_npc_driven = on
+	if on:
+		pilot_active = false
+		if camera and is_instance_valid(camera):
+			camera.current = false
+
+
+func set_npc_axes(axes: Vector3) -> void:
+	_npc_axes = axes
 
 func flight_mode_name() -> String:
 	match flight_mode:
@@ -309,6 +331,8 @@ func _altitude_now() -> float:
 	return 0.0
 
 func _ship_axis() -> Vector3:
+	if _npc_driven:
+		return _npc_axes
 	var thrust := 0.0
 	var strafe := 0.0
 	var lift := 0.0
@@ -410,6 +434,9 @@ func _reference_up() -> Vector3:
 	return up.normalized()
 
 func _update_roll_input(delta: float) -> void:
+	if _npc_driven:
+		_roll = lerpf(_roll, 0.0, 2.4 * delta)
+		return
 	var roll_in := 0.0
 	if Input.is_physical_key_pressed(KEY_Z):
 		roll_in += 1.0
@@ -432,7 +459,7 @@ func _physics_process(delta: float) -> void:
 		_palette_accum = 0.0
 		_sync_planet_palette()
 	_tick_scan_pulse(delta)
-	if not pilot_active:
+	if not pilot_active and not _npc_driven:
 		# Recovery keeps running with nobody aboard — else stepping out during
 		# hull-critical pins the ship at 45% thrust and 0 regen forever.
 		_tick_ship_recovery(delta)
@@ -444,6 +471,18 @@ func _physics_process(delta: float) -> void:
 		if is_landed:
 			velocity = Vector3.ZERO
 			_stick_to_pad()
+		return
+	if _npc_driven and is_landed:
+		# NpcPilot calls _do_launch. Do not read player Space/E.
+		_burn_on = false
+		_stall = 0.0
+		_land_lock_t = maxf(0.0, _land_lock_t - delta)
+		velocity = Vector3.ZERO
+		_stick_to_pad()
+		if _thruster_fx and is_instance_valid(_thruster_fx):
+			_thruster_fx.emitting = false
+		_tick_ship_recovery(delta)
+		_update_status()
 		return
 	if is_landed:
 		_burn_on = false
@@ -598,12 +637,15 @@ func _physics_process(delta: float) -> void:
 	if velocity.length() > 5.0 and SessionObjectives:
 		SessionObjectives.on_moved()
 
-	_tick_combat(delta)
-	if Input.is_action_just_pressed("ability_2"):
-		_toggle_landing()
+	if _npc_driven:
+		_tick_ship_recovery(delta)
+	else:
+		_tick_combat(delta)
+		if Input.is_action_just_pressed("ability_2"):
+			_toggle_landing()
+		if Input.is_action_just_pressed("ability_3"):
+			attach_module(ShipModule.make_extractor())
 	_auto_land_assist(delta)
-	if Input.is_action_just_pressed("ability_3"):
-		attach_module(ShipModule.make_extractor())
 	# _recompute_stats only changes on attach/detach, which already call it.
 	_update_status()
 
@@ -2015,6 +2057,9 @@ func _ensure_nose_marker() -> void:
 
 
 func _toast_ship(msg: String) -> void:
+	if _npc_driven:
+		print("[Ship:NPC] ", msg)
+		return
 	if GameManager and GameManager.has_signal("toast_requested"):
 		GameManager.toast_requested.emit(msg)
 	print("[Ship] ", msg)

@@ -199,7 +199,7 @@ func _find_actor() -> Node3D:
 			_actor_cache = p as Node3D
 			return _actor_cache
 	for s in SoftScanCache.get_ships() if SoftScanCache else tree.get_nodes_in_group("ship"):
-		if s is Node3D and s.is_inside_tree():
+		if s is Node3D and s.is_inside_tree() and not _skip_npc_ship(s):
 			_actor_cache = s as Node3D
 			return _actor_cache
 	_actor_cache = null
@@ -235,6 +235,8 @@ func _nearest_in_zone() -> Node3D:
 		return best
 	for s in SoftScanCache.get_ships() if SoftScanCache else tree.get_nodes_in_group("ship"):
 		if s == null or not (s is Node3D) or not is_instance_valid(s) or not s.is_inside_tree():
+			continue
+		if _skip_npc_ship(s):
 			continue
 		if not bool(s.get("is_landed")):
 			continue
@@ -815,6 +817,8 @@ func _landed_own_ship() -> Node:
 	for s in SoftScanCache.get_ships() if SoftScanCache else tree.get_nodes_in_group("ship"):
 		if s == null or not is_instance_valid(s) or not s.is_inside_tree():
 			continue
+		if _skip_npc_ship(s):
+			continue
 		if not bool(s.get("is_landed")):
 			continue
 		var sfac := "Cybernex"
@@ -952,6 +956,8 @@ func _landed_ship_holds_zone(own_fac: String) -> bool:
 	for s in SoftScanCache.get_ships() if SoftScanCache else tree.get_nodes_in_group("ship"):
 		if s == null or not is_instance_valid(s) or not s.is_inside_tree():
 			continue
+		if _skip_npc_ship(s):
+			continue
 		if not bool(s.get("is_landed")):
 			continue
 		var sfac := "Cybernex"
@@ -962,6 +968,15 @@ func _landed_ship_holds_zone(own_fac: String) -> bool:
 		if _ship_landed_on_this(s):
 			return true
 	return false
+
+
+func _skip_npc_ship(s: Node) -> bool:
+	## NP-A flies the loop. Occupy / harvest stays the player's (NP-B later).
+	if s == null:
+		return false
+	if s.has_method("is_npc_pilot") and bool(s.is_npc_pilot()):
+		return true
+	return s.has_meta("npc_pilot") and bool(s.get_meta("npc_pilot"))
 
 
 func _ship_landed_on_this(ship: Node) -> bool:

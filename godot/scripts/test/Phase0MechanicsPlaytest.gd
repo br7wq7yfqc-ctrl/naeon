@@ -563,6 +563,7 @@ func _go() -> void:
 	_osg_outpost_silhouette(fails)
 	_assert_gear_before_land(fails)
 	_pad_traffic_present(fails)
+	await _npc_takeoff_land(fails)
 	await _eva_snap_pulse(fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
@@ -1966,7 +1967,7 @@ func _assert_gear_before_land(fails: PackedStringArray) -> void:
 
 
 func _pad_traffic_present(fails: PackedStringArray) -> void:
-	## Pillar 13: one guard dummy + one visiting hold on a loaded unnamed pad.
+	## Pillar 13: one guard dummy + one visiting ship on a loaded unnamed pad.
 	var nex: Node = _osh_nex()
 	if nex != null and nex.has_method("ensure_pad_bases"):
 		nex.ensure_pad_bases()
@@ -1982,7 +1983,7 @@ func _pad_traffic_present(fails: PackedStringArray) -> void:
 		fails.append("pad traffic present: no pad-guard dummy")
 		return
 	if visitor == null or not is_instance_valid(visitor):
-		fails.append("pad traffic present: no visiting hold")
+		fails.append("pad traffic present: no visiting ship")
 		return
 	var host: Node = traffic.get_parent()
 	if host == null or not (host is Node3D) or not host.has_meta("pad_up"):
@@ -2015,6 +2016,71 @@ func _pad_traffic_present(fails: PackedStringArray) -> void:
 	if glabel == "":
 		fails.append("Knowledge pad-guard label empty")
 	print("[Playtest] pad traffic present host=", host.name, " guard_d=", snapped(gd, 0.1), " visitor_d=", snapped(vd, 0.1), " label=", glabel)
+
+
+func _npc_takeoff_land(fails: PackedStringArray) -> void:
+	## NP-A: visitor ShipController takeoff → SCM/HOVER → gear-down LAND on unnamed pad.
+	var nex: Node = _osh_nex()
+	if nex != null and nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	var traffic: Node = nex.call("pad_traffic") if nex != null and nex.has_method("pad_traffic") else null
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("NP-A: pad traffic missing")
+		return
+	var visitor: Node = traffic.get_visitor() if traffic.has_method("get_visitor") else null
+	var pilot: Node = traffic.get_npc_pilot() if traffic.has_method("get_npc_pilot") else null
+	if visitor == null or not visitor.has_method("_do_land") or not visitor.has_method("_do_launch"):
+		fails.append("NP-A: visitor is not a ShipController")
+		return
+	if pilot == null or not pilot.has_method("start_loop"):
+		fails.append("NP-A: NpcPilot missing")
+		return
+	var host: Node = traffic.get_parent()
+	if host == null or not (host is Node3D) or not host.has_meta("pad_up"):
+		fails.append("NP-A: not on a pad")
+		return
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("NP-A: minted SITE_* (%s)" % pin)
+		return
+	var pname := str(host.name)
+	if pname != "Pad_North" and pname != "Pad_Approach" and pname != "Pad_Flank":
+		fails.append("NP-A: unknown pad (%s)" % pname)
+		return
+	if not bool(visitor.get("is_landed")):
+		fails.append("NP-A: visitor not seated before loop")
+		return
+	pilot.start_loop(true)
+	var waited := 0.0
+	while not bool(pilot.loop_done()) and waited < 8.0:
+		await get_tree().create_timer(0.1).timeout
+		waited += 0.1
+	var took := bool(pilot.saw_takeoff())
+	var landed := bool(pilot.saw_land()) and bool(visitor.get("is_landed"))
+	var gear := bool(pilot.gear_down_at_land())
+	var scm := bool(pilot.used_scm())
+	var hover := bool(pilot.used_hover())
+	var lname := str(pilot.land_pad_name()) if pilot.has_method("land_pad_name") else ""
+	print("[Playtest] NP-A takeoff=", took, " land=", landed, " gear=", gear,
+		" SCM=", scm, " HOVER=", hover, " pad=", lname, " t=", snapped(waited, 0.1))
+	if not took:
+		fails.append("NP-A takeoff did not leave the pad")
+	if not landed:
+		fails.append("NP-A LAND did not complete")
+	if landed and not gear:
+		fails.append("NP-A LAND without gear down")
+	if not scm:
+		fails.append("NP-A never entered SCM")
+	if not hover:
+		fails.append("NP-A never entered HOVER")
+	if lname != "" and lname != "Pad_North" and lname != "Pad_Approach" and lname != "Pad_Flank":
+		fails.append("NP-A landed on unknown pad (%s)" % lname)
+	if visitor.has_method("get_landed_pad"):
+		var deck: Node = visitor.get_landed_pad()
+		if deck == null:
+			fails.append("NP-A LAND was surface, not unnamed pad")
+		elif deck.has_meta("site_pin") and str(deck.get_meta("site_pin")).begins_with("SITE_"):
+			fails.append("NP-A landed on SITE_*")
 
 
 func _eva_snap_pulse(fails: PackedStringArray) -> void:
