@@ -286,6 +286,7 @@ func _tick_occupy(delta: float) -> void:
 			var same_hold := ownership.is_fully_owned() and ownership.faction_name() == pfac
 			if not same_hold:
 				_nudge_claim(pfac, OCCUPY_RATE * delta, false)
+			_note_player_pad_action(actor, "occupy")
 		if hostile or _status == "contested":
 			_ensure_guard()
 	else:
@@ -599,6 +600,7 @@ func _tick_harvest(delta: float) -> void:
 			_harvest_vfx()
 			_harvest_accum_fx = 0.0
 	harvested.emit(got, total_extracted)
+	_note_player_pad_action(_find_actor(), "harvest")
 	_status = "extracting"
 	# Label is a formatted string + Label3D glyph rebuild — throttle it.
 	_harvest_label_t += delta
@@ -968,6 +970,22 @@ func _landed_ship_holds_zone(own_fac: String) -> bool:
 		if _ship_landed_on_this(s):
 			return true
 	return false
+
+
+func _note_player_pad_action(actor: Node, kind: String) -> void:
+	## NP-F: last player occupy/harvest shifts the next legal step, not yield.
+	if actor == null or not is_instance_valid(actor):
+		return
+	if _skip_npc_ship(actor):
+		return
+	if actor.has_meta("npc_pilot") and bool(actor.get_meta("npc_pilot")):
+		return
+	if actor.has_meta("npc_harvest") and bool(actor.get_meta("npc_harvest")):
+		return
+	if actor.has_meta("pad_traffic_role") and str(actor.get_meta("pad_traffic_role")) == "visitor":
+		return
+	if SoftSession and SoftSession.has_method("note_player_action"):
+		SoftSession.note_player_action(kind)
 
 
 func _skip_npc_ship(s: Node) -> bool:

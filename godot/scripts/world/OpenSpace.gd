@@ -974,6 +974,8 @@ func invite_nearby_npc() -> bool:
 	if not bool(_squad.invite(pilot)):
 		_toast_hud("Squad full (2–5)")
 		return false
+	if SoftSession and SoftSession.has_method("note_player_action"):
+		SoftSession.note_player_action("invite")
 	_toast_hud("Squad 2/5 · visitor · no power")
 	return true
 

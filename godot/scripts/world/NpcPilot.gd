@@ -2,6 +2,7 @@ extends Node
 ## NP-A: one local visitor flies the existing SCM / HOVER / LAND loop.
 ## NP-B: after LAND, same PadBaseController occupy / harvest as the player.
 ## NP-D: player may invite this pilot into a local squad — follow or seat.
+## NP-F: after the player leaves, one short pad occupy/harvest or follow cycle.
 ## Not a second IFCS, not G1, not a private yield table, not a damage aura.
 
 
@@ -28,6 +29,9 @@ var _squad: Node = null
 var _squad_follow: bool = false
 var _squad_seated: bool = false
 var _companion: Node3D = null
+var _offline_ran: bool = false
+var _offline_step: String = ""
+var _offline_busy: bool = false
 
 
 func setup(ship: CharacterBody3D, pad: Node3D) -> void:
@@ -35,6 +39,8 @@ func setup(ship: CharacterBody3D, pad: Node3D) -> void:
 	_pad = pad
 	_auto = not _cmdline_playtest()
 	_seat_on_pad()
+	_ensure_infection()
+	_bind_offline()
 	set_physics_process(true)
 	print("[NpcPilot] seated on ", pad.name if pad else "?", " auto=", _auto)
 	if _auto:
@@ -131,6 +137,48 @@ func is_squad_seated() -> bool:
 
 func squad_body() -> Node3D:
 	return _companion if _companion != null and is_instance_valid(_companion) else null
+
+
+func offline_cycle_ran() -> bool:
+	return _offline_ran
+
+
+func offline_step() -> String:
+	return _offline_step
+
+
+func infection_stacks() -> int:
+	var inf := get_node_or_null("InfectionStatus")
+	return int(inf.stacks) if inf else 0
+
+
+func infection_cap() -> int:
+	return 5
+
+
+func run_offline_cycle() -> String:
+	## Player gone. One short legal step: pad occupy/harvest or follow.
+	## Last player actions pick the step. They do not change combat stats.
+	if _offline_busy:
+		return _offline_step
+	_offline_busy = true
+	var step := "pad"
+	if SoftSession and SoftSession.has_method("next_legal_step"):
+		step = str(SoftSession.next_legal_step())
+	if step != "follow":
+		step = "pad"
+	_offline_step = step
+	_phase = Phase.IDLE
+	_phase_t = 0.0
+	_auto = false
+	if step == "follow":
+		_run_offline_follow()
+	else:
+		_run_offline_pad()
+	_offline_ran = true
+	_offline_busy = false
+	print("[NpcPilot] NP-F offline cycle=", step)
+	return step
 
 
 func try_squad_seat(director: Node) -> bool:
@@ -420,6 +468,47 @@ func _build_companion_visual(host: Node3D) -> void:
 	lab.text = "SQUAD"
 	lab.modulate = Color(0.75, 0.9, 1.0)
 	host.add_child(lab)
+
+
+func _bind_offline() -> void:
+	if SoftSession == null or not SoftSession.has_signal("offline_changed"):
+		return
+	if SoftSession.offline_changed.is_connected(_on_offline_changed):
+		return
+	SoftSession.offline_changed.connect(_on_offline_changed)
+
+
+func _on_offline_changed(offline: bool) -> void:
+	if not offline:
+		return
+	if _cmdline_playtest():
+		return
+	run_offline_cycle()
+
+
+func _ensure_infection() -> void:
+	## Same InfectionStatus as the player. Cap 5. Influence never writes stacks.
+	if get_node_or_null("InfectionStatus") != null:
+		return
+	var n := Node.new()
+	n.set_script(preload("res://scripts/abilities/InfectionStatus.gd"))
+	n.name = "InfectionStatus"
+	add_child(n)
+
+
+func _run_offline_pad() -> void:
+	_squad_follow = false
+	_squad_seated = false
+	if _ship != null and is_instance_valid(_ship) and not bool(_ship.get("is_landed")):
+		_seat_on_pad()
+	start_harvest()
+
+
+func _run_offline_follow() -> void:
+	stop_harvest()
+	_squad_seated = false
+	_squad_follow = true
+	_ensure_companion()
 
 
 func _sign_harvest_label() -> void:

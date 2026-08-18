@@ -56,6 +56,17 @@ func _notification(what: int) -> void:
 		_on_window_close()
 	elif what == NOTIFICATION_APPLICATION_FOCUS_OUT:
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		if SoftSession and SoftSession.has_method("begin_offline"):
+			SoftSession.begin_offline()
+	elif what == NOTIFICATION_APPLICATION_FOCUS_IN:
+		if SoftSession and SoftSession.has_method("end_offline"):
+			SoftSession.end_offline()
+	elif what == NOTIFICATION_APPLICATION_PAUSED:
+		if SoftSession and SoftSession.has_method("begin_offline"):
+			SoftSession.begin_offline()
+	elif what == NOTIFICATION_APPLICATION_RESUMED:
+		if SoftSession and SoftSession.has_method("end_offline"):
+			SoftSession.end_offline()
 
 func get_faction_name() -> String:
 	match player_faction:
