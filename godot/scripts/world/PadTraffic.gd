@@ -1,10 +1,12 @@
 extends Node3D
-## SC pillar 13: one pad-guard dummy + one visiting hull hold on a loaded pad.
+## SC pillar 13 / NP-A: one pad-guard dummy + one visitor ShipController on a loaded pad.
 ## Pillar 6: one gROT CombatDummy near the plate for surface Pulse (no new weapon).
-## Code-first proxy. Not galaxy traffic. Knowledge labels only — never DPS.
+## Visitor flies the existing SCM/HOVER/LAND loop. Not galaxy traffic. Not NP-B.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 const _DUMMY := preload("res://scenes/combat/CombatDummy.tscn")
+const _SHIP := preload("res://scenes/ship/Ship.tscn")
+const _Pilot := preload("res://scripts/world/NpcPilot.gd")
 
 var _host_name: String = ""
 var _guard: Node3D = null
@@ -42,6 +44,13 @@ func get_visitor() -> Node3D:
 	if _visitor != null and is_instance_valid(_visitor):
 		return _visitor
 	return null
+
+
+func get_npc_pilot() -> Node:
+	var v := get_visitor()
+	if v == null:
+		return null
+	return v.get_node_or_null("NpcPilot")
 
 
 func get_surface_dummy() -> Node3D:
@@ -93,6 +102,8 @@ func refresh_labels() -> void:
 	var vname := visitor_label()
 	if _visitor != null and is_instance_valid(_visitor):
 		var lab: Label3D = _visitor.get_node_or_null("Label") as Label3D
+		if lab == null:
+			lab = _visitor.get_node_or_null("StatusLabel") as Label3D
 		if lab:
 			lab.text = vname
 
@@ -139,6 +150,43 @@ func _spawn_surface_dummy() -> void:
 
 
 func _spawn_visitor() -> void:
+	if _SHIP == null:
+		_spawn_visitor_hold()
+		return
+	var s: Node = _SHIP.instantiate()
+	s.name = "VisitorShip"
+	s.set("pilot_active", false)
+	s.set_meta("pad_traffic_role", "visitor")
+	s.set_meta("npc_pilot", true)
+	s.set_meta("site_pin", "")
+	add_child(s)
+	_visitor = s as Node3D
+	var cam: Camera3D = s.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+	if cam:
+		cam.current = false
+	if s.has_method("set_npc_driven"):
+		s.set_npc_driven(true)
+	var pilot := Node.new()
+	pilot.set_script(_Pilot)
+	pilot.name = "NpcPilot"
+	s.add_child(pilot)
+	var host := get_parent() as Node3D
+	if pilot.has_method("setup"):
+		pilot.call("setup", s, host)
+	if DisplayServer.get_name() == "headless":
+		return
+	var lab := Label3D.new()
+	lab.name = "Label"
+	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lab.font_size = 22
+	lab.outline_size = 5
+	lab.position = Vector3(0, 2.4, 0)
+	lab.text = visitor_label()
+	lab.modulate = Color(0.75, 0.9, 1.0)
+	s.add_child(lab)
+
+
+func _spawn_visitor_hold() -> void:
 	var v := Node3D.new()
 	v.name = "VisitorHold"
 	v.set_meta("pad_traffic_role", "visitor")
@@ -212,6 +260,8 @@ func _process(delta: float) -> void:
 	if _life_accum < 0.2:
 		return
 	_life_accum = 0.0
+	if get_npc_pilot() != null:
+		return
 	if _visitor == null or not is_instance_valid(_visitor):
 		return
 	var t := Time.get_ticks_msec() * 0.001

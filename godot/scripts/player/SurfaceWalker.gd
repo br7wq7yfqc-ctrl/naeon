@@ -1301,6 +1301,10 @@ func _find_nearby_ship() -> Node3D:
 	var ships: Array = SoftScanCache.get_ships() if SoftScanCache else tree.get_nodes_in_group("ship")
 	for n in ships:
 		if n is Node3D and is_instance_valid(n) and n.is_inside_tree():
+			if n.has_method("is_npc_pilot") and bool(n.is_npc_pilot()):
+				continue
+			if n.has_meta("npc_pilot") and bool(n.get_meta("npc_pilot")):
+				continue
 			var d: float = global_position.distance_to((n as Node3D).global_position)
 			if d < best_d:
 				best_d = d
