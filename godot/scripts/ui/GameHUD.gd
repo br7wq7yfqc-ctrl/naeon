@@ -45,6 +45,9 @@ var _toast_ttl: float = 0.0
 var _toast_queue: Array = []
 var _radar: Control
 var _radar_dots: Array = []
+var _radar_contacts: Array = []
+const PAD_RADAR_LOCAL_M := 400.0
+const PAD_RADAR_APPROACH_M := 12000.0
 var _debug_overlay: bool = false
 var _hp_bar: ProgressBar
 var _en_bar: ProgressBar
@@ -828,70 +831,124 @@ func _refresh() -> void:
 
 	# Pad radar — skip in pocket (no pads at y=9200)
 	if not pocket and _radar and _radar.visible and _player and _player is Node3D and get_tree():
-		var origin: Vector3 = (_player as Node3D).global_position
-		var pads: Array = []
-		for n in (SoftScanCache.get_pads() if SoftScanCache else get_tree().get_nodes_in_group("pad_bases")):
-			if n is Node3D and n.is_inside_tree():
-				pads.append(n)
-		# One distance per pad, then sort — the old O(n^2) swap recomputed two
-		# distances per comparison, eight times a second.
-		pads.sort_custom(func(a, b): return a.global_position.distance_squared_to(origin) \
-			< b.global_position.distance_squared_to(origin))
-		var title_n := _radar.get_node_or_null("PadTitle") as Label
-		if title_n:
-			title_n.text = "PADS %d" % pads.size()
-		var range_m := 400.0
-		for i in _radar_dots.size():
-			var dot: ColorRect = _radar_dots[i]
-			if i >= pads.size():
-				dot.visible = false
-				continue
-			var p: Node3D = pads[i]
-			var off: Vector3 = p.global_position - origin
-			var up := Vector3.UP
-			var up_val = _player.get("_up")
-			if up_val != null and typeof(up_val) == TYPE_VECTOR3:
-				up = up_val
-			elif p.has_meta("pad_up"):
-				up = p.get_meta("pad_up")
-			var flat: Vector3 = off - up * off.dot(up)
-			var dist := flat.length()
-			if dist > range_m:
-				dot.visible = false
-				continue
-			var east := up.cross(Vector3.FORWARD)
-			if east.length_squared() < 0.05:
-				east = up.cross(Vector3.RIGHT)
-			east = east.normalized()
-			var north := east.cross(up).normalized()
-			var nx := flat.dot(east)
-			var nz := flat.dot(north)
-			var sc := 60.0 / range_m
-			var pip := Vector2(nx * sc, nz * sc)
-			# One nearby pad sat on the center pip and looked like an empty radar.
-			if pip.length() < 16.0:
-				if pip.length_squared() < 0.01:
-					pip = Vector2(0, -18)
-				else:
-					pip = pip.normalized() * 18.0
-			dot.position = Vector2(65.0 + pip.x - 3.0, 65.0 + pip.y - 3.0)
-			dot.size = Vector2(7, 7)
-			var pad_fac := "Neutral"
-			if p.has_method("get_faction"):
-				pad_fac = str(p.get_faction())
-			match pad_fac:
-				"Cybernex":
-					dot.color = Color(0.2, 0.85, 1.0)
-				"gROT":
-					dot.color = Color(0.95, 0.2, 0.45)
-				"Contested":
-					dot.color = Color(1.0, 0.6, 0.15)
-				_:
-					dot.color = Color(0.7, 0.7, 0.75)
-			dot.visible = true
+		_refresh_pad_radar((_player as Node3D).global_position)
+	else:
+		_radar_contacts.clear()
 	_refresh_os_stack(pocket, nearest_pad)
 	_apply_interior_chrome(pocket)
 	_apply_clash_chrome()
+
+
+func radar_pad_contacts() -> Array:
+	## Plates currently on the radar (in-range pips). Playtest / approach gate.
+	return _radar_contacts.duplicate()
+
+
+func radar_pad_count() -> int:
+	return _radar_contacts.size()
+
+
+func _radar_plate_of(n: Node) -> Node3D:
+	var cur: Node = n
+	while cur:
+		if cur is Node3D and bool(cur.get_meta("landing_pad", false)):
+			return cur as Node3D
+		cur = cur.get_parent()
+	if n is Node3D and n.is_inside_tree():
+		return n as Node3D
+	return null
+
+
+func _collect_radar_pads() -> Array:
+	## Unnamed plates first (landing_pads). pad_bases are claim controllers
+	## that only stream in at ~220 m AGL — using them alone is PADS 0 at OS-C.
+	var pads: Array = []
+	var seen := {}
+	var tree := get_tree()
+	if tree == null:
+		return pads
+	for n in tree.get_nodes_in_group("landing_pads"):
+		var plate := _radar_plate_of(n)
+		if plate != null and is_instance_valid(plate) and not seen.has(plate):
+			seen[plate] = true
+			pads.append(plate)
+	if pads.is_empty():
+		for n in (SoftScanCache.get_pads() if SoftScanCache else tree.get_nodes_in_group("pad_bases")):
+			var plate2 := _radar_plate_of(n)
+			if plate2 != null and is_instance_valid(plate2) and not seen.has(plate2):
+				seen[plate2] = true
+				pads.append(plate2)
+	return pads
+
+
+func _refresh_pad_radar(origin: Vector3) -> void:
+	var pads: Array = _collect_radar_pads()
+	# One distance per pad, then sort — the old O(n^2) swap recomputed two
+	# distances per comparison, eight times a second.
+	pads.sort_custom(func(a, b): return a.global_position.distance_squared_to(origin) \
+		< b.global_position.distance_squared_to(origin))
+	var range_m := PAD_RADAR_LOCAL_M
+	if _in_openspace():
+		range_m = PAD_RADAR_APPROACH_M
+	var title_n := _radar.get_node_or_null("PadTitle") as Label
+	var shown: Array = []
+	for i in _radar_dots.size():
+		var dot: ColorRect = _radar_dots[i]
+		if i >= pads.size():
+			dot.visible = false
+			continue
+		var p: Node3D = pads[i]
+		var off: Vector3 = p.global_position - origin
+		var up := Vector3.UP
+		var up_val = _player.get("_up") if _player else null
+		if up_val != null and typeof(up_val) == TYPE_VECTOR3:
+			up = up_val
+		elif p.has_meta("pad_up"):
+			up = p.get_meta("pad_up")
+		var flat: Vector3 = off - up * off.dot(up)
+		var dist := flat.length()
+		if dist > range_m:
+			dot.visible = false
+			continue
+		var east := up.cross(Vector3.FORWARD)
+		if east.length_squared() < 0.05:
+			east = up.cross(Vector3.RIGHT)
+		east = east.normalized()
+		var north := east.cross(up).normalized()
+		var nx := flat.dot(east)
+		var nz := flat.dot(north)
+		var sc := 60.0 / range_m
+		var pip := Vector2(nx * sc, nz * sc)
+		# One nearby pad sat on the center pip and looked like an empty radar.
+		if pip.length() < 16.0:
+			if pip.length_squared() < 0.01:
+				pip = Vector2(0, -18)
+			else:
+				pip = pip.normalized() * 18.0
+		dot.position = Vector2(65.0 + pip.x - 3.0, 65.0 + pip.y - 3.0)
+		dot.size = Vector2(7, 7)
+		var pad_fac := "Neutral"
+		if p.has_method("get_faction"):
+			pad_fac = str(p.get_faction())
+		match pad_fac:
+			"Cybernex":
+				dot.color = Color(0.2, 0.85, 1.0)
+			"gROT":
+				dot.color = Color(0.95, 0.2, 0.45)
+			"Contested":
+				dot.color = Color(1.0, 0.6, 0.15)
+			_:
+				dot.color = Color(0.7, 0.7, 0.75)
+		dot.visible = true
+		shown.append(p)
+	_radar_contacts = shown
+	if title_n:
+		if shown.is_empty():
+			title_n.text = "PADS 0"
+		else:
+			var near_m: float = origin.distance_to((shown[0] as Node3D).global_position)
+			title_n.text = "PADS %d  %.1fkm" % [shown.size(), near_m * 0.001]
+
 
 func _refresh_os_stack(pocket: bool, pad: Node) -> void:
 	if _os_stack == null:

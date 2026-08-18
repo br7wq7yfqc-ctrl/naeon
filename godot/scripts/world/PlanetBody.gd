@@ -480,6 +480,18 @@ func _build_pads() -> void:
 	_spawn_pad_traffic()
 
 
+func ensure_pad_plates() -> void:
+	## Plates + unnamed silhouette for OS-C radar / pip / far read.
+	## Does not stream BaseBuilder (claim controllers still wait ~220 m AGL).
+	## Not SITE_*.
+	if not has_base:
+		return
+	if not _pads_built or _pads.is_empty():
+		_build_pads()
+	if _pads_root:
+		_pads_root.visible = true
+
+
 func ensure_pad_bases() -> void:
 	## Force pad plates + claim controllers even when the ship is still
 	## outside LOW-tier stream distance (headless / orbit spawn).
@@ -542,11 +554,15 @@ func _spawn_pad(pad_name: String, dir: Vector3) -> void:
 	pad_root.set_meta("planet", self)
 	pad_root.set_meta("pad_up", dir)
 	pad_root.set_meta("site_pin", "")
+	# Radar / pip contacts use this group. PadBaseController (pad_bases)
+	# still waits for ~220 m AGL — without this, OS-C spawn is PADS 0.
+	if not pad_root.is_in_group("landing_pads"):
+		pad_root.add_to_group("landing_pads")
 	_pads.append(pad_root)
 
 
 func _add_pad_far_read(pad_root: Node3D) -> void:
-	## Unshaded silhouette so a 28 m collision plate still reads from ~2 km.
+	## Unshaded silhouette so a 28 m collision plate still reads from OS-C (~8 km).
 	if DisplayServer.get_name() == "headless" or pad_root == null:
 		return
 	var col := Color(0.95, 0.18, 0.38) if faction_base == "gROT" else Color(0.25, 0.85, 1.0)
@@ -564,8 +580,8 @@ func _add_pad_far_read(pad_root: Node3D) -> void:
 	far.material_override = mat
 	far.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	far.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-	far.visibility_range_end = 3200.0
-	far.visibility_range_end_margin = 240.0
+	far.visibility_range_end = 10000.0
+	far.visibility_range_end_margin = 400.0
 	far.position = Vector3(0, 0.4, 0)
 	pad_root.add_child(far)
 	var mast := MeshInstance3D.new()
@@ -575,7 +591,7 @@ func _add_pad_far_read(pad_root: Node3D) -> void:
 	mast.mesh = shaft
 	mast.material_override = mat
 	mast.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	mast.visibility_range_end = 3200.0
+	mast.visibility_range_end = 10000.0
 	mast.position = Vector3(0, 12.0, 0)
 	pad_root.add_child(mast)
 
