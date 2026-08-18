@@ -897,10 +897,7 @@ func _refresh_os_stack(pocket: bool, pad: Node) -> void:
 	_os_stack.visible = show
 	if not show:
 		return
-	var ship_n: Node = null
-	var tree_s := get_tree()
-	if tree_s:
-		ship_n = tree_s.get_first_node_in_group("ship")
+	var ship_n: Node = _OsStack.player_ship(get_tree())
 	var snap: Dictionary = _OsStack.snapshot(ship_n, _player, pad)
 	_os_stack.text = _OsStack.stack_text(snap)
 

@@ -1066,6 +1066,8 @@ func _osc_scale_ladder(fails: PackedStringArray, spawn_agl: float) -> void:
 			print("[Playtest] OS-C cam.far=", snapped(cam.far, 1.0))
 
 	# No G1 CRUISE in this slice — flight enum stays SCM/NAV/HOVER.
+	if ship and bool(ship.get("is_landed")):
+		fails.append("OS-C boot stuck LANDED at approach AGL")
 	if ship and "flight_mode" in ship and int(ship.flight_mode) > 2:
 		fails.append("OS-C unexpected flight mode %s" % int(ship.flight_mode))
 	var cruise_src := FileAccess.get_file_as_string("res://scripts/ship/ShipController.gd")
@@ -1639,6 +1641,23 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 		fails.append("OS-H SPACE WorldRoot hidden (load/interior)")
 	if "_pitch" in ship and absf(float(ship.get("_pitch"))) > 0.02:
 		fails.append("OS-H SPACE already pitched")
+	if bool(ship.get("is_landed")):
+		fails.append("OS-H SPACE stuck LANDED at OS-C AGL")
+	var fuel0 := float(ship.get("fuel")) if "fuel" in ship else -1.0
+	await get_tree().create_timer(0.45).timeout
+	var fuel1 := float(ship.get("fuel")) if "fuel" in ship else -1.0
+	if fuel0 >= 0.0 and fuel1 + 0.4 < fuel0:
+		fails.append("OS-H SPACE fuel bleed at idle (%s→%s)" % [snapped(fuel0, 1.0), snapped(fuel1, 1.0)])
+	var HudPick = load("res://scripts/ui/OpenSpaceHudStack.gd")
+	if HudPick:
+		var pick: Node = HudPick.player_ship(get_tree()) if HudPick.has_method("player_ship") else ship
+		if pick != ship:
+			fails.append("OS-H SPACE HUD ship is %s (want player)" % (pick.name if pick else "none"))
+		var boot_snap: Dictionary = HudPick.snapshot(pick, null, null)
+		if bool(boot_snap.get("landed", false)):
+			fails.append("OS-H SPACE HUD card LANDED at 8 km")
+		print("[Playtest] OS-H SPACE landed=", ship.get("is_landed"), " hud_landed=", boot_snap.get("landed"),
+			" fuel=", snapped(fuel0, 1.0), "→", snapped(fuel1, 1.0), " pick=", pick.name if pick else "none")
 	if start_agl >= 5000.0 and start_agl <= 15000.0 and limb_on and d_space <= 0.001:
 		done["space"] = true
 
@@ -3189,6 +3208,11 @@ func _assert_hud_stack(os: Node, fails: PackedStringArray) -> void:
 	if not bool(Hud.has_fields(empty)):
 		fails.append("HUD helper null snapshot missing fields")
 		return
+	if Hud.has_method("player_ship"):
+		var pick: Node = Hud.player_ship(get_tree())
+		var want: Node = os.get("ship") if os else null
+		if want != null and pick != want:
+			fails.append("HUD player_ship picked %s" % (pick.name if pick else "none"))
 	var snap: Dictionary = Hud.snapshot(os.get("ship") if os else null, os.get("player") if os else null, pad)
 	if not bool(Hud.has_fields(snap)):
 		fails.append("HUD helper missing fields")

@@ -133,6 +133,7 @@ func _ready() -> void:
 
 func set_open_space_context(ctx: Node) -> void:
 	_open_space = ctx
+	_reject_airborne_land()
 
 func set_pilot_active(active: bool) -> void:
 	pilot_active = active
@@ -487,6 +488,8 @@ func _physics_process(delta: float) -> void:
 		_palette_accum = 0.0
 		_sync_planet_palette()
 	_tick_scan_pulse(delta)
+	if is_landed:
+		_reject_airborne_land()
 	if not pilot_active and not _npc_driven:
 		# Recovery keeps running with nobody aboard — else stepping out during
 		# hull-critical pins the ship at 45% thrust and 0 regen forever.
@@ -701,6 +704,23 @@ func _update_status() -> void:
 	if txt != _status_cache:
 		_status_cache = txt
 		status_label.text = txt
+
+func _reject_airborne_land() -> bool:
+	## OS-C start is 5–15 km. A LANDED flag up there is a stuck gate, not a pad.
+	## Surface/pad land stays below surface_land_alt / 90 m snap.
+	if not is_landed or _npc_driven:
+		return false
+	var alt := _altitude_now()
+	if alt <= 0.0:
+		return false
+	if alt <= maxf(surface_land_alt, 160.0) + 80.0:
+		return false
+	print("[Ship] clear stuck LANDED at AGL=", int(alt))
+	is_landed = false
+	_landed_pad = null
+	_land_lock_t = 0.0
+	return true
+
 
 func _toggle_landing() -> void:
 	if is_landed:
