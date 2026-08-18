@@ -2887,7 +2887,7 @@ func _assert_openspace_view(os: Node, ship: Node, nex: Node, label: String, fail
 		var env: Environment = we.environment
 		if env.ambient_light_energy <= 0.01:
 			fails.append("%s view: ambient energy 0" % label)
-		if env.background_energy <= 0.0:
+		if env.get("background_energy_multiplier") != null and float(env.background_energy_multiplier) <= 0.0:
 			fails.append("%s view: background energy 0" % label)
 	var sun: DirectionalLight3D = os.get_node_or_null("Sun") as DirectionalLight3D if os else null
 	if sun != null and sun.light_energy <= 0.01:
