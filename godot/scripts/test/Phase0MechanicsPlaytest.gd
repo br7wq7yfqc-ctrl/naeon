@@ -565,6 +565,7 @@ func _go() -> void:
 	_pad_traffic_present(fails)
 	await _npc_takeoff_land(fails)
 	await _npc_occupy_harvest(fails)
+	await _npc_squad_invite(fails)
 	await _eva_snap_pulse(fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
@@ -2184,6 +2185,131 @@ func _npc_occupy_harvest(fails: PackedStringArray) -> void:
 		traffic.refresh_labels()
 	if pilot.has_method("stop_harvest"):
 		pilot.stop_harvest()
+
+
+func _npc_squad_invite(fails: PackedStringArray) -> void:
+	## NP-D: invite one local NPC. Squad contains them. Follow or seat.
+	## No damage aura. No pay-slot. SoftNet stays visual.
+	var os: Node = get_parent()
+	var nex: Node = _osh_nex()
+	if os == null or nex == null:
+		fails.append("NP-D: no OpenSpace/Nex-Prime")
+		return
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	var traffic: Node = nex.call("pad_traffic") if nex.has_method("pad_traffic") else null
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("NP-D: pad traffic missing")
+		return
+	var visitor: Node = traffic.get_visitor() if traffic.has_method("get_visitor") else null
+	var pilot: Node = traffic.get_npc_pilot() if traffic.has_method("get_npc_pilot") else null
+	if visitor == null or not is_instance_valid(visitor) or pilot == null:
+		fails.append("NP-D: visitor/NpcPilot missing")
+		return
+	var host: Node = traffic.get_parent()
+	if host == null or not (host is Node3D) or not host.has_meta("pad_up"):
+		fails.append("NP-D: not on a pad")
+		return
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("NP-D: minted SITE_* (%s)" % pin)
+		return
+	var squad: Node = os.get_squad() if os.has_method("get_squad") else os.get("_squad")
+	if squad == null or not squad.has_method("invite"):
+		fails.append("NP-D: SquadRoster missing")
+		return
+	var pship: Node3D = os.get("ship") as Node3D
+	if pship != null and is_instance_valid(pship) and pship != visitor:
+		pship.global_position = (host as Node3D).global_position + Vector3(18, 10, 8)
+	var walker: Node3D = os.get("player") as Node3D
+	if walker != null and is_instance_valid(walker):
+		walker.global_position = (visitor as Node3D).global_position + Vector3(4, 2, 2)
+	var c0: float = float(GameManager.contribution) if GameManager else 0.0
+	var guard: Node = traffic.get_guard() if traffic.has_method("get_guard") else null
+	var dmg0: float = float(guard.get("attack_damage")) if guard != null else 0.0
+	var hp0: float = float(guard.get("max_health")) if guard != null else 0.0
+	var invited := false
+	if os.has_method("invite_nearby_npc"):
+		invited = bool(os.invite_nearby_npc())
+	if not invited:
+		invited = bool(squad.invite(pilot))
+	if not invited:
+		fails.append("NP-D: invite failed")
+		return
+	if not bool(squad.contains(pilot)):
+		fails.append("NP-D: squad does not contain the NPC")
+		return
+	if visitor != null and squad.has_method("contains") and not bool(squad.contains(visitor)):
+		fails.append("NP-D: squad does not contain visitor hull")
+		return
+	var sz: int = int(squad.size()) if squad.has_method("size") else 0
+	if sz < 2 or sz > 5:
+		fails.append("NP-D: squad size %s outside rules/24 2–5" % sz)
+	var extra := Node.new()
+	extra.name = "NpDSecondNpc"
+	os.add_child(extra)
+	if bool(squad.invite(extra)):
+		fails.append("NP-D: second NPC invite (NP-E)")
+	extra.queue_free()
+	if GameManager and float(GameManager.contribution) < c0 - 0.001:
+		fails.append("NP-D: invite spent Contribution (pay-slot)")
+	if squad.has_method("invite_cost") and float(squad.invite_cost()) > 0.0:
+		fails.append("NP-D: invite_cost is a pay-slot")
+	if squad.has_method("combat_bonus") and absf(float(squad.combat_bonus())) > 0.0001:
+		fails.append("NP-D: group damage aura")
+	if guard != null:
+		if absf(float(guard.get("attack_damage")) - dmg0) > 0.01:
+			fails.append("NP-D: squad changed guard DPS")
+		if absf(float(guard.get("max_health")) - hp0) > 0.01:
+			fails.append("NP-D: squad changed guard HP")
+	if pilot.has_method("is_squad_following") and not bool(pilot.is_squad_following()):
+		fails.append("NP-D: NPC not following after invite")
+	var body: Node3D = pilot.squad_body() if pilot.has_method("squad_body") else null
+	var followed := false
+	var anchor: Node3D = walker if walker != null and is_instance_valid(walker) else pship
+	if body != null and anchor != null and is_instance_valid(anchor):
+		var start: Vector3 = body.global_position
+		anchor.global_position = (host as Node3D).global_position + Vector3(-28, 12, 16)
+		var waited := 0.0
+		while waited < 0.6:
+			await get_tree().create_timer(0.1).timeout
+			waited += 0.1
+		if body != null and is_instance_valid(body):
+			var after: Vector3 = body.global_position
+			var closer: float = start.distance_to(anchor.global_position) - after.distance_to(anchor.global_position)
+			followed = closer > 0.4 or after.distance_to(anchor.global_position) < 8.0
+		if not followed:
+			fails.append("NP-D: NPC did not follow")
+	var seated := false
+	var d: Node = os.get("_interior")
+	var ship: Node = os.get("ship")
+	if d != null and ship != null and d.has_method("enter_ship") and d.has_method("seat_companion"):
+		var prev_player: Node = os.get("player")
+		var ghost := CharacterBody3D.new()
+		ghost.name = "NpDSeatGhost"
+		os.add_child(ghost)
+		d.enter_ship(ghost, ship)
+		await get_tree().create_timer(0.25).timeout
+		if d.has_method("is_inside") and bool(d.is_inside()) and str(d.get_kind()) == "ship":
+			if pilot.has_method("try_squad_seat") and bool(pilot.try_squad_seat(d)):
+				var seated_body: Node3D = pilot.squad_body() if pilot.has_method("squad_body") else null
+				seated = seated_body != null and d.has_method("is_near_seat") and bool(d.is_near_seat(seated_body, 3.8))
+				if not seated:
+					fails.append("NP-D: NPC seat missed InteriorDirector Seat")
+			else:
+				fails.append("NP-D: seat_companion failed")
+		else:
+			fails.append("NP-D: ship pocket missing for seat")
+		if d.has_method("exit_interior"):
+			d.exit_interior()
+		if os.get("player") == ghost:
+			os.set("player", prev_player if prev_player != null and is_instance_valid(prev_player) else null)
+		if is_instance_valid(ghost):
+			ghost.queue_free()
+		await get_tree().process_frame
+	print("[Playtest] NP-D invite=", invited, " contains=", bool(squad.contains(pilot)),
+		" size=", sz, " follow=", followed, " seat=", seated, " aura=",
+		snapped(float(squad.combat_bonus()) if squad.has_method("combat_bonus") else 0.0, 0.01))
 
 
 func _eva_snap_pulse(fails: PackedStringArray) -> void:

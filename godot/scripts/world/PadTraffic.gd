@@ -2,7 +2,8 @@ extends Node3D
 ## SC pillar 13 / NP-A: one pad-guard dummy + one visitor ShipController on a loaded pad.
 ## Pillar 6: one gROT CombatDummy near the plate for surface Pulse (no new weapon).
 ## Visitor flies the existing SCM/HOVER/LAND loop and occupy/harvest (NP-B).
-## Not galaxy traffic. Not NP-C. Knowledge labels only — never yield.
+## NP-D may invite that pilot into a local squad. Not galaxy traffic. Not NP-C.
+## Knowledge labels only — never yield.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 const _DUMMY := preload("res://scenes/combat/CombatDummy.tscn")

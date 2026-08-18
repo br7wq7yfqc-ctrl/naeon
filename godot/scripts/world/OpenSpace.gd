@@ -20,6 +20,7 @@ var planets: Array = []
 var star: Node3D = null
 var _in_ship: bool = true
 var _interior: Node = null
+var _squad: Node = null
 var _eva_mode: bool = false
 var _seat_transition: bool = false
 var _in_rover: bool = false
@@ -58,6 +59,7 @@ func _ready() -> void:
 	# toast of the opening flight is dropped on the floor.
 	_ensure_game_hud()
 	_setup_interior()
+	_setup_squad()
 	_setup_mechanics_playtest()
 	_setup_sandbox_playtest()
 	if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
@@ -267,6 +269,18 @@ func _setup_interior() -> void:
 	add_child(_interior)
 	if _interior.has_method("setup"):
 		_interior.setup(world_root, self)
+
+
+func _setup_squad() -> void:
+	## NP-D: local 2–5 squad. SoftNet stays visual — no combat authority.
+	_squad = Node.new()
+	_squad.set_script(preload("res://scripts/systems/SquadRoster.gd"))
+	_squad.name = "SquadRoster"
+	add_child(_squad)
+
+
+func get_squad() -> Node:
+	return _squad
 
 
 func _setup_mechanics_playtest() -> void:
@@ -915,6 +929,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_skip_edu_quest()
 		KEY_F:
 			_handle_f_interact()
+		KEY_N:
+			invite_nearby_npc()
 		KEY_7:
 			_try_store_rover()
 		KEY_F1:
@@ -930,6 +946,51 @@ func _unhandled_input(event: InputEvent) -> void:
 			_toast_hud("Clash sandbox — not a galaxy map")
 			if ResourceLoader.exists("res://scenes/test/TestArena.tscn"):
 				get_tree().change_scene_to_file("res://scenes/test/TestArena.tscn")
+
+
+func invite_nearby_npc() -> bool:
+	## NP-D: invite the pad visitor into the local squad. Not a pay-slot.
+	if _squad == null or not _squad.has_method("invite"):
+		return false
+	var traffic: Node = _pad_traffic_node()
+	if traffic == null:
+		_toast_hud("No NPC nearby")
+		return false
+	var pilot: Node = traffic.get_npc_pilot() if traffic.has_method("get_npc_pilot") else null
+	var visitor: Node3D = traffic.get_visitor() if traffic.has_method("get_visitor") else null
+	if pilot == null or visitor == null or not is_instance_valid(visitor):
+		_toast_hud("No NPC nearby")
+		return false
+	var actor: Node3D = player if player != null and is_instance_valid(player) else ship
+	if actor == null or not is_instance_valid(actor):
+		_toast_hud("No NPC nearby")
+		return false
+	if actor.global_position.distance_to(visitor.global_position) > 90.0:
+		_toast_hud("Closer to invite")
+		return false
+	if _squad.contains(pilot) if _squad.has_method("contains") else false:
+		_toast_hud(_squad.hud_line() if _squad.has_method("hud_line") else "Already in squad")
+		return false
+	if not bool(_squad.invite(pilot)):
+		_toast_hud("Squad full (2–5)")
+		return false
+	_toast_hud("Squad 2/5 · visitor · no power")
+	return true
+
+
+func _pad_traffic_node() -> Node:
+	var tree := get_tree()
+	if tree == null:
+		return null
+	var listed: Array = tree.get_nodes_in_group("pad_traffic")
+	if listed.size() > 0:
+		return listed[0]
+	for pl in planets:
+		if pl != null and is_instance_valid(pl) and pl.has_method("pad_traffic"):
+			var t: Node = pl.call("pad_traffic")
+			if t != null:
+				return t
+	return null
 
 
 func _handle_f_interact() -> void:
