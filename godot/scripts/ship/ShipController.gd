@@ -499,6 +499,11 @@ func _physics_process(delta: float) -> void:
 		if is_landed:
 			velocity = Vector3.ZERO
 			_stick_to_pad()
+			_land_lock_t = maxf(0.0, _land_lock_t - delta)
+			# 3090: Space from the ship pocket must leave cockpit → HOVER.
+			# W is walk in the pocket — do not treat it as takeoff.
+			if _cockpit_space_takeoff():
+				_do_launch()
 		return
 	if _npc_driven and is_landed:
 		# NpcPilot calls _do_launch. Do not read player Space/E.
@@ -784,6 +789,26 @@ func _wants_takeoff() -> bool:
 	if Input.is_action_just_pressed("ability_2"):
 		return true
 	return false
+
+
+func _cockpit_space_takeoff() -> bool:
+	## Landed + I pocket: Space/E takeoff. EVA on the pad keeps jump.
+	if _land_lock_t > 0.0:
+		return false
+	if not (Input.is_action_just_pressed("jump") or Input.is_action_just_pressed("ability_2")):
+		return false
+	if _open_space == null or not is_instance_valid(_open_space):
+		return false
+	if _open_space.get("ship") != self:
+		return false
+	var d = _open_space.get("_interior")
+	if d == null or not is_instance_valid(d):
+		return false
+	if not (d.has_method("is_inside") and bool(d.is_inside())):
+		return false
+	if d.has_method("get_kind") and str(d.get_kind()) != "ship":
+		return false
+	return true
 
 
 func _do_launch() -> void:

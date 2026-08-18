@@ -521,8 +521,15 @@ func exit_for_pilot() -> void:
 	_set_world_hidden(false)
 	if _open_space:
 		var fo = _open_space.get("floating")
-		if fo != null and is_instance_valid(fo) and fo.has_method("set_physics_process"):
-			fo.set_physics_process(true)
+		if fo != null and is_instance_valid(fo):
+			if fo.has_method("set_process"):
+				fo.set_process(true)
+			if fo.has_method("set_physics_process"):
+				fo.set_physics_process(true)
+			if fo.has_method("set_target"):
+				var sh = _open_space.get("ship")
+				if sh != null and is_instance_valid(sh):
+					fo.set_target(sh)
 	if LayerContext:
 		LayerContext.current_layer = "Space"
 		if "seamless_stage" in LayerContext:
