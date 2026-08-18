@@ -1,6 +1,9 @@
 extends Node
 ## NP-A: one local visitor flies the existing SCM / HOVER / LAND loop.
-## Drives ShipController — not a second IFCS, not G1, not NP-B harvest.
+## NP-B: after LAND, same PadBaseController occupy / harvest as the player.
+## Not a second IFCS, not G1, not a private yield table.
+
+const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 
 enum Phase { IDLE, TAKEOFF, CLIMB, TRANSIT, APPROACH, LAND }
 
@@ -16,6 +19,9 @@ var _loop_done: bool = false
 var _gear_at_land: bool = false
 var _modes: Dictionary = {}
 var _land_pad_name: String = ""
+var _harvesting: bool = false
+var _saw_harvest: bool = false
+var _harvest_got: float = 0.0
 
 
 func setup(ship: CharacterBody3D, pad: Node3D) -> void:
@@ -25,6 +31,8 @@ func setup(ship: CharacterBody3D, pad: Node3D) -> void:
 	_seat_on_pad()
 	set_physics_process(true)
 	print("[NpcPilot] seated on ", pad.name if pad else "?", " auto=", _auto)
+	if _auto:
+		start_harvest()
 
 
 func _cmdline_playtest() -> bool:
@@ -32,18 +40,6 @@ func _cmdline_playtest() -> bool:
 		if str(a).begins_with("--playtest"):
 			return true
 	return false
-
-
-func start_loop(fast: bool = false) -> void:
-	_fast = fast
-	_loop_done = false
-	_saw_takeoff = false
-	_saw_land = false
-	_gear_at_land = false
-	_modes.clear()
-	_land_pad_name = ""
-	_phase = Phase.TAKEOFF
-	_phase_t = 0.0
 
 
 func loop_done() -> bool:
@@ -72,6 +68,51 @@ func used_hover() -> bool:
 
 func land_pad_name() -> String:
 	return _land_pad_name
+
+
+func is_harvesting() -> bool:
+	return _harvesting
+
+
+func saw_harvest() -> bool:
+	return _saw_harvest
+
+
+func harvest_amount() -> float:
+	return _harvest_got
+
+
+func start_harvest() -> void:
+	## Same occupy/harvest path as the player. Knowledge labels only.
+	_harvesting = true
+	_saw_harvest = false
+	_harvest_got = 0.0
+	if _ship != null and is_instance_valid(_ship):
+		_ship.set_meta("npc_harvest", true)
+		if not bool(_ship.get("is_landed")):
+			_seat_on_pad()
+	_bind_pad_harvest()
+	_sign_harvest_label()
+	print("[NpcPilot] occupy/harvest on ", _pad.name if _pad else "?")
+
+
+func stop_harvest() -> void:
+	_harvesting = false
+	if _ship != null and is_instance_valid(_ship):
+		_ship.set_meta("npc_harvest", false)
+
+
+func start_loop(fast: bool = false) -> void:
+	stop_harvest()
+	_fast = fast
+	_loop_done = false
+	_saw_takeoff = false
+	_saw_land = false
+	_gear_at_land = false
+	_modes.clear()
+	_land_pad_name = ""
+	_phase = Phase.TAKEOFF
+	_phase_t = 0.0
 
 
 func _seat_on_pad() -> void:
@@ -215,6 +256,8 @@ func _try_land() -> void:
 		_phase_t = 0.0
 		if _ship.has_method("set_npc_axes"):
 			_ship.set_npc_axes(Vector3.ZERO)
+		if _auto:
+			start_harvest()
 
 
 func _drop_gear() -> void:
@@ -235,3 +278,40 @@ func _height_over_pad() -> float:
 func _note_mode() -> void:
 	if _ship != null and _ship.has_method("flight_mode_name"):
 		_modes[str(_ship.flight_mode_name())] = true
+
+
+func _pad_controller() -> Node:
+	if _pad == null or not is_instance_valid(_pad):
+		return null
+	var named: Node = _pad.get_node_or_null("BaseCluster/PadBaseController")
+	if named != null:
+		return named
+	return _pad.find_child("PadBaseController", true, false)
+
+
+func _bind_pad_harvest() -> void:
+	var ctrl := _pad_controller()
+	if ctrl == null or not ctrl.has_signal("harvested"):
+		return
+	if not ctrl.harvested.is_connected(_on_pad_harvested):
+		ctrl.harvested.connect(_on_pad_harvested)
+
+
+func _on_pad_harvested(amount: float, _total: float) -> void:
+	if not _harvesting or amount <= 0.0:
+		return
+	_saw_harvest = true
+	_harvest_got += amount
+
+
+func _sign_harvest_label() -> void:
+	if _ship == null or not is_instance_valid(_ship):
+		return
+	var grot := false
+	if _ship.has_method("get_faction"):
+		grot = str(_ship.get_faction()) == "gROT"
+	var lab: Label3D = _ship.get_node_or_null("Label") as Label3D
+	if lab == null:
+		lab = _ship.get_node_or_null("StatusLabel") as Label3D
+	if lab:
+		lab.text = "%s · %s" % [_SoftK.traffic_label("visitor"), _SoftK.yield_label(grot)]

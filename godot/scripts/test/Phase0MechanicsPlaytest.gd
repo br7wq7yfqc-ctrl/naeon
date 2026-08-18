@@ -564,6 +564,7 @@ func _go() -> void:
 	_assert_gear_before_land(fails)
 	_pad_traffic_present(fails)
 	await _npc_takeoff_land(fails)
+	await _npc_occupy_harvest(fails)
 	await _eva_snap_pulse(fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
@@ -2081,6 +2082,108 @@ func _npc_takeoff_land(fails: PackedStringArray) -> void:
 			fails.append("NP-A LAND was surface, not unnamed pad")
 		elif deck.has_meta("site_pin") and str(deck.get_meta("site_pin")).begins_with("SITE_"):
 			fails.append("NP-A landed on SITE_*")
+
+
+func _npc_occupy_harvest(fails: PackedStringArray) -> void:
+	## NP-B: visitor occupy + harvest on the same unnamed pad. Same rates as player.
+	var os: Node = get_parent()
+	var nex: Node = _osh_nex()
+	if nex != null and nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	var traffic: Node = nex.call("pad_traffic") if nex != null and nex.has_method("pad_traffic") else null
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("NP-B: pad traffic missing")
+		return
+	var visitor: Node = traffic.get_visitor() if traffic.has_method("get_visitor") else null
+	var pilot: Node = traffic.get_npc_pilot() if traffic.has_method("get_npc_pilot") else null
+	if visitor == null or not is_instance_valid(visitor):
+		fails.append("NP-B: visitor missing")
+		return
+	if pilot == null or not pilot.has_method("start_harvest"):
+		fails.append("NP-B: NpcPilot harvest missing")
+		return
+	var host: Node = traffic.get_parent()
+	if host == null or not (host is Node3D) or not host.has_meta("pad_up"):
+		fails.append("NP-B: not on a pad")
+		return
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("NP-B: minted SITE_* (%s)" % pin)
+		return
+	var pname := str(host.name)
+	if pname != "Pad_North" and pname != "Pad_Approach" and pname != "Pad_Flank":
+		fails.append("NP-B: unknown pad (%s)" % pname)
+		return
+	var pad: Node = host.get_node_or_null("BaseCluster/PadBaseController")
+	if pad == null:
+		pad = host.find_child("PadBaseController", true, false)
+	if pad == null:
+		fails.append("NP-B: PadBaseController missing")
+		return
+	if pad.has_method("claim"):
+		var fac := "Cybernex"
+		if visitor.has_method("get_faction"):
+			fac = str(visitor.get_faction())
+		elif "faction" in visitor:
+			fac = str(visitor.get("faction"))
+		pad.claim(fac, 2.0)
+		var ow = pad.get("ownership")
+		if ow and ow.has_method("advance_transition"):
+			ow.advance_transition(8.0, 5.0)
+		await get_tree().process_frame
+	if not bool(visitor.get("is_landed")) and pilot.has_method("_seat_on_pad"):
+		pilot._seat_on_pad()
+	# Only the NPC hull holds the ring — park the player.
+	if os:
+		var walker: Node3D = os.get("player") as Node3D
+		if walker != null and is_instance_valid(walker):
+			walker.global_position = (host as Node3D).global_position + Vector3(0, 0, 420)
+		var pship: Node = os.get("ship")
+		if pship != null and pship != visitor and is_instance_valid(pship):
+			if bool(pship.get("is_landed")) and pship.has_method("_do_launch"):
+				pship.set("_land_lock_t", 0.0)
+				pship._do_launch()
+			pship.global_position = (host as Node3D).global_position + Vector3(0, 80, 420)
+	if float(pad.get("crystal_reserves")) < 8.0:
+		pad.set("crystal_reserves", float(pad.get("max_reserves")))
+	pad.set("running", true)
+	var rate0: float = float(pad.get("extract_rate"))
+	var cpu0: float = float(pad.get("contribution_per_unit"))
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("colony_ops", 20.0)
+		GameManager.add_mastery("biomass_ops", 20.0)
+	if absf(float(pad.get("extract_rate")) - rate0) > 0.001 \
+		or absf(float(pad.get("contribution_per_unit")) - cpu0) > 0.001:
+		fails.append("Knowledge changed NPC harvest yield")
+	var grot := false
+	if pad.has_method("get_faction"):
+		grot = str(pad.get_faction()) == "gROT"
+	var c0: float = 0.0
+	if GameManager:
+		c0 = float(GameManager.biomass) if grot else float(GameManager.contribution)
+	var t0: float = float(pad.get("total_extracted"))
+	pilot.start_harvest()
+	await get_tree().create_timer(0.7).timeout
+	var c1: float = c0
+	if GameManager:
+		c1 = float(GameManager.biomass) if grot else float(GameManager.contribution)
+	var t1: float = float(pad.get("total_extracted"))
+	var tick := bool(pilot.saw_harvest()) if pilot.has_method("saw_harvest") else false
+	var st := str(pad.get_claim_status()) if pad.has_method("get_claim_status") else ""
+	print("[Playtest] NP-B occupy harvest wallet=", snapped(c0, 0.01), " -> ", snapped(c1, 0.01),
+		" extracted=", snapped(t0, 0.01), " -> ", snapped(t1, 0.01),
+		" tick=", tick, " status=", st, " pad=", pname)
+	if c1 <= c0 + 0.001 and t1 <= t0 + 0.001 and not tick:
+		fails.append("NP-B: NPC occupy did not harvest")
+	if pad.has_method("harvest_hud_line") and st == "extracting":
+		var hl := str(pad.harvest_hud_line())
+		if hl.find("EXTRACTING") < 0:
+			fails.append("NP-B: extracting pad has no harvest HUD line")
+	if traffic.has_method("refresh_labels"):
+		traffic.refresh_labels()
+	if pilot.has_method("stop_harvest"):
+		pilot.stop_harvest()
 
 
 func _eva_snap_pulse(fails: PackedStringArray) -> void:

@@ -971,12 +971,20 @@ func _landed_ship_holds_zone(own_fac: String) -> bool:
 
 
 func _skip_npc_ship(s: Node) -> bool:
-	## NP-A flies the loop. Occupy / harvest stays the player's (NP-B later).
+	## NP-A flight hull is skipped so occupy stays the player's.
+	## NP-B sets npc_harvest / is_npc_harvesting — same pad path, same rates.
 	if s == null:
 		return false
+	var npc := false
 	if s.has_method("is_npc_pilot") and bool(s.is_npc_pilot()):
-		return true
-	return s.has_meta("npc_pilot") and bool(s.get_meta("npc_pilot"))
+		npc = true
+	elif s.has_meta("npc_pilot") and bool(s.get_meta("npc_pilot")):
+		npc = true
+	if not npc:
+		return false
+	if s.has_method("is_npc_harvesting") and bool(s.is_npc_harvesting()):
+		return false
+	return not (s.has_meta("npc_harvest") and bool(s.get_meta("npc_harvest")))
 
 
 func _ship_landed_on_this(ship: Node) -> bool:
