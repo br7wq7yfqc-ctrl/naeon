@@ -565,6 +565,7 @@ func _go() -> void:
 	_pad_traffic_present(fails)
 	_assert_imported_camera_cannot_steal(fails)
 	await _player_pad_land_hover_view(fails)
+	await _eva_board_hover_view(fails)
 	await _npc_takeoff_land(fails)
 	await _npc_occupy_harvest(fails)
 	await _npc_squad_invite(fails)
@@ -2883,7 +2884,10 @@ func _assert_openspace_view(os: Node, ship: Node, nex: Node, label: String, fail
 		we = os.get_node_or_null("WorldEnvironment") as WorldEnvironment
 	if we == null or we.environment == null:
 		fails.append("%s view: WorldEnvironment missing" % label)
-	else:
+	var wr: Node3D = os.get_node_or_null("WorldRoot") as Node3D if os else null
+	if wr != null and not wr.visible:
+		fails.append("%s view: WorldRoot hidden (interior/pad-exit)" % label)
+	if we != null and we.environment != null:
 		var env: Environment = we.environment
 		if env.ambient_light_energy <= 0.01:
 			fails.append("%s view: ambient energy 0" % label)
@@ -3020,6 +3024,67 @@ func _player_pad_land_hover_view(fails: PackedStringArray) -> void:
 	if "flight_mode" in ship and int(ship.flight_mode) != 2:
 		fails.append("pad LAND/HOVER view: takeoff left mode %s" % int(ship.flight_mode))
 	_assert_openspace_view(os, ship, nex, "HOVER", fails)
+
+
+func _eva_board_hover_view(fails: PackedStringArray) -> void:
+	## 3090: on Pad_North the walker (hero) + pad + dome draw. Space takeoff
+	## after F board must not drop the chase Camera3D (clear_current lottery
+	## + walker-free lambda).
+	var os: Node = get_parent()
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var nex: Node = _osh_nex()
+	if nex != null and nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	if os == null or ship == null or nex == null:
+		fails.append("EVA→HOVER view: no OpenSpace")
+		return
+	if not bool(os.get("_in_ship")):
+		if os.has_method("try_enter_ship") and os.get("player") != null:
+			os.try_enter_ship()
+			await get_tree().create_timer(0.35).timeout
+	var pad: Node3D = os.nearest_pad(ship.global_position) if os.has_method("nearest_pad") else null
+	if pad == null or not pad.has_meta("pad_up"):
+		fails.append("EVA→HOVER view: no unnamed pad")
+		return
+	var up: Vector3 = pad.get_meta("pad_up")
+	ship.global_position = pad.global_position + up * 8.0
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	ship.set("_gear_down", true)
+	if ship.has_method("_sync_landing_gear"):
+		ship._sync_landing_gear()
+	if ship.has_method("_do_land"):
+		ship._do_land()
+	if not bool(ship.get("is_landed")):
+		fails.append("EVA→HOVER view: LAND refused")
+		return
+	if os.has_method("try_exit_ship"):
+		os.try_exit_ship()
+	await get_tree().create_timer(0.25).timeout
+	var walker: Node3D = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("EVA→HOVER view: no walker on pad")
+		return
+	if bool(os.get("_in_ship")):
+		fails.append("EVA→HOVER view: still piloting after EVA")
+		return
+	walker.global_position = ship.global_position + up * 2.0
+	if os.has_method("try_enter_ship"):
+		os.try_enter_ship()
+	await get_tree().create_timer(0.4).timeout
+	if not bool(os.get("_in_ship")):
+		fails.append("EVA→HOVER view: board failed")
+		return
+	if ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+	if bool(ship.get("is_landed")):
+		fails.append("EVA→HOVER view: still landed after takeoff")
+		return
+	_assert_openspace_view(os, ship, nex, "HOVER", fails)
+	print("[Playtest] EVA→board→HOVER view ok")
 
 
 func _assert_hud_stack(os: Node, fails: PackedStringArray) -> void:

@@ -539,15 +539,54 @@ func _on_ship_landed() -> void:
 	print("[OpenSpace] ship landed (seamless — same scene)")
 
 func _on_ship_launched() -> void:
-	reclaim_pilot_camera()
+	## 3090: pad view is live (hero / plate / dome). Space → HOVER must keep
+	## the chase Camera3D. Freeing the EVA walker first calls clear_current()
+	## and leaves a black buffer; mouse-look then rotates a non-current cam.
+	ensure_flight_view()
 	print("[OpenSpace] ship launched")
 
 
+func ensure_flight_view() -> void:
+	## LAND → HOVER / pad-exit: seat the chase cam before any walker/GLB cam
+	## exits the tree, and put the world back if an interior hide leaked.
+	_in_ship = true
+	_eva_mode = false
+	_interior_view = false
+	if world_root:
+		world_root.visible = true
+	var sun := get_node_or_null("Sun") as DirectionalLight3D
+	if sun:
+		if sun.light_energy < 0.4:
+			sun.light_energy = 1.35
+		sun.shadow_enabled = true
+	if ship == null or not is_instance_valid(ship):
+		return
+	if ship.has_method("set_pilot_active"):
+		ship.set_pilot_active(true)
+	_hand_view_to_ship()
+	var pl: Node3D = nearest_planet(ship.global_position)
+	if pl:
+		_fit_camera_to_approach(ship, pl)
+	reclaim_pilot_camera()
+
+
+func _hand_view_to_ship() -> void:
+	var walker_cam: Camera3D = null
+	if player != null and is_instance_valid(player):
+		walker_cam = player.get_node_or_null("CamPivot/Camera3D") as Camera3D
+		if walker_cam == null and "camera" in player:
+			walker_cam = player.camera as Camera3D
+	if walker_cam != null and walker_cam.current:
+		walker_cam.clear_current(false)
+	var cam: Camera3D = null
+	if ship != null and is_instance_valid(ship):
+		cam = ship.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+	if cam:
+		cam.current = true
+
+
 func reclaim_pilot_camera() -> void:
-	## GPU land/takeoff: pad/hull GLB Camera3D or a visitor Ship.tscn can
-	## steal the viewport. Headless never loads those GLBs, so playtests
-	## used to PASS while the 3090 showed a cleared black buffer.
-	if _in_rover or _interior_view or not _in_ship:
+	if _in_rover or not _in_ship:
 		return
 	if ship == null or not is_instance_valid(ship):
 		return
@@ -622,6 +661,7 @@ func try_enter_ship() -> void:
 		LayerContext.set_layer("Space")
 	if player.has_method("mark_dying"):
 		player.mark_dying()
+	_hand_view_to_ship()
 	for pl in planets:
 		if pl != null and is_instance_valid(pl) and pl.has_method("set_observer"):
 			pl.set_observer(ship)
@@ -635,6 +675,7 @@ func try_enter_ship() -> void:
 
 
 func _finish_board_ship() -> void:
+	_hand_view_to_ship()
 	_safe_free_walker()
 	if ship != null and is_instance_valid(ship) and ship.has_method("set_pilot_active"):
 		ship.set_pilot_active(true)
@@ -723,16 +764,7 @@ func _spawn_player_near_ship() -> void:
 	if player != null and is_instance_valid(player) and player.has_method("set_spawn_basis"):
 		player.set_spawn_basis(pad_up, yaw)
 	if player != null and is_instance_valid(player) and player.has_method("snap_to_surface"):
-		player.call_deferred("snap_to_surface")
-		# Second snap next frames for physics settle
-		get_tree().create_timer(0.05).timeout.connect(func():
-			if player and is_instance_valid(player) and player.has_method("snap_to_surface"):
-				player.snap_to_surface()
-		)
-		get_tree().create_timer(0.15).timeout.connect(func():
-			if player and is_instance_valid(player) and player.has_method("safe_unground"):
-				player.safe_unground()
-		)
+		_schedule_surface_settle()
 	if is_instance_valid(ship) and ship.has_method("set_pilot_active"):
 		ship.set_pilot_active(false)
 	_bind_soft_net_actor(player)
@@ -1133,6 +1165,7 @@ func _try_seat_to_pilot() -> bool:
 	_eva_mode = false
 	if LayerContext:
 		LayerContext.set_layer("Space")
+	_hand_view_to_ship()
 	# Point systems at ship while walker still exists but dead
 	for pl in planets:
 		if pl != null and is_instance_valid(pl) and pl.has_method("set_observer"):
@@ -1493,6 +1526,11 @@ func _safe_free_walker() -> void:
 			(old as CollisionObject3D).collision_mask = 0
 		if old.is_in_group("player"):
 			old.remove_from_group("player")
+	var wcam: Camera3D = old.get_node_or_null("CamPivot/Camera3D") as Camera3D
+	if wcam == null and "camera" in old:
+		wcam = old.camera as Camera3D
+	if wcam != null and wcam.current:
+		wcam.clear_current(false)
 	if old is CanvasItem:
 		pass
 	if old is Node3D:

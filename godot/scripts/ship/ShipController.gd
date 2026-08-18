@@ -803,6 +803,9 @@ func _do_launch() -> void:
 	_hover_hold_alt = _altitude_now() + 12.0
 	# Gentle lift — user then applies thrust (no sky rocket)
 	velocity = up_boost * 3.5 + nose * 1.5
+	if not _npc_driven and _open_space != null and is_instance_valid(_open_space) \
+			and _open_space.has_method("ensure_flight_view") and _open_space.get("ship") == self:
+		_open_space.call("ensure_flight_view")
 	launched.emit()
 	print("[Ship] Launched")
 	_toast_ship("Takeoff — WASD fly · Space lift · 3 HOVER")
@@ -1239,7 +1242,7 @@ func _spawn_land_fx() -> void:
 	p.position = Vector3(0, 0.2, 0)
 	var tree := get_tree()
 	if tree:
-		tree.create_timer(1.2).timeout.connect(p.queue_free)
+		tree.create_timer(1.2).timeout.connect(_free_if_valid.bind(p))
 
 
 func apply_faction_modules(fac: String) -> void:
@@ -2082,6 +2085,11 @@ func _ensure_nose_marker() -> void:
 	n.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(n)
 
+
+
+func _free_if_valid(n: Object) -> void:
+	if n != null and is_instance_valid(n):
+		(n as Node).queue_free()
 
 
 func _toast_ship(msg: String) -> void:
