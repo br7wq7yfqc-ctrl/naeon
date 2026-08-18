@@ -29,6 +29,8 @@ var _eva_warn_t: float = 0.0
 var _eva_tether_t: float = 0.0
 var _spawn_ship_pos := Vector3(0, 0, 2800)
 var _interior_view: bool = false
+## True only when pad↔flight closed a ship pocket; do not free an EVA walker.
+var _drop_pocket_walker: bool = false
 ## OS-C: useful approach in the 5–15 km AGL band. Not the toy 770 m spawn.
 const APPROACH_START_AGL := 8000.0
 const APPROACH_AGL_MIN := 5000.0
@@ -561,32 +563,49 @@ func _on_ship_launched() -> void:
 func ensure_flight_view() -> void:
 	## Pad ↔ flight: close the ship pocket, unhide WorldRoot, seat chase cam.
 	## Boot sky/planet is already correct on the 3090 — do not retune spawn.
-	_in_ship = true
-	_eva_mode = false
-	if LayerContext:
-		LayerContext.set_layer("Space")
-		if "seamless_stage" in LayerContext:
-			LayerContext.seamless_stage = "world"
+	var pocket_walker := false
+	if _interior != null and is_instance_valid(_interior) and _interior.has_method("is_inside") and bool(_interior.is_inside()):
+		if not _interior.has_method("get_kind") or str(_interior.get_kind()) == "ship":
+			pocket_walker = true
+	if player != null and is_instance_valid(player) and "interior_mode" in player and bool(player.interior_mode):
+		pocket_walker = true
 	_close_interior_for_flight()
+	## OR: _do_launch and launched both call this; the second must not clear the flag.
+	_drop_pocket_walker = _drop_pocket_walker or pocket_walker
+	var eva_walker_live := player != null and is_instance_valid(player) and not pocket_walker
+	if not eva_walker_live:
+		_in_ship = true
+		_eva_mode = false
+		if LayerContext:
+			LayerContext.set_layer("Space")
+			if "seamless_stage" in LayerContext:
+				LayerContext.seamless_stage = "world"
 	_interior_view = false
 	if world_root:
 		world_root.visible = true
 	set_interior_view(false)
-	_restore_floating_origin_to_ship()
+	if not eva_walker_live:
+		_restore_floating_origin_to_ship()
 	if ship == null or not is_instance_valid(ship):
 		return
-	for pl_obs in planets:
-		if pl_obs != null and is_instance_valid(pl_obs) and pl_obs.has_method("set_observer"):
-			pl_obs.set_observer(ship)
-	_bind_soft_net_actor(ship)
-	_hand_view_to_ship()
-	if ship.has_method("set_pilot_active"):
-		ship.set_pilot_active(true)
-	_hand_view_to_ship()
+	if pocket_walker:
+		for pl_obs in planets:
+			if pl_obs != null and is_instance_valid(pl_obs) and pl_obs.has_method("set_observer"):
+				pl_obs.set_observer(ship)
+		_bind_soft_net_actor(ship)
+		_hand_view_to_ship()
+		if ship.has_method("set_pilot_active"):
+			ship.set_pilot_active(true)
+		_hand_view_to_ship()
+	elif not eva_walker_live:
+		if ship.has_method("set_pilot_active"):
+			ship.set_pilot_active(true)
+		_hand_view_to_ship()
 	var pl: Node3D = nearest_planet(ship.global_position)
 	if pl:
 		_fit_camera_to_approach(ship, pl)
-	reclaim_pilot_camera()
+	if not eva_walker_live:
+		reclaim_pilot_camera()
 	## Walker free / GLB enter_tree can run next idle frame (clear_current lottery).
 	call_deferred("_finish_flight_view")
 
@@ -612,19 +631,24 @@ func _restore_floating_origin_to_ship() -> void:
 
 
 func _finish_flight_view() -> void:
-	_hand_view_to_ship()
-	if player != null and is_instance_valid(player):
-		_safe_free_walker()
-	if ship != null and is_instance_valid(ship):
-		if ship.has_method("set_pilot_active"):
-			ship.set_pilot_active(true)
-		if ship.has_method("set_hatch_open"):
-			ship.set_hatch_open(false)
-	_seat_transition = false
-	reclaim_pilot_camera()
-	var hud = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
-	if hud and hud.has_method("bind_player") and ship:
-		hud.bind_player(ship)
+	## Only drop the pocket walker. An EVA/pad walker must survive a later
+	## `_do_launch` (harvest / tether / EVA→board tests).
+	if _drop_pocket_walker:
+		_drop_pocket_walker = false
+		_hand_view_to_ship()
+		if player != null and is_instance_valid(player):
+			_safe_free_walker()
+		if ship != null and is_instance_valid(ship):
+			if ship.has_method("set_pilot_active"):
+				ship.set_pilot_active(true)
+			if ship.has_method("set_hatch_open"):
+				ship.set_hatch_open(false)
+		_seat_transition = false
+		var hud = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+		if hud and hud.has_method("bind_player") and ship:
+			hud.bind_player(ship)
+	if _in_ship:
+		reclaim_pilot_camera()
 
 
 func _hand_view_to_ship() -> void:
