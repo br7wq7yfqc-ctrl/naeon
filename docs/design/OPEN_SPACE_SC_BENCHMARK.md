@@ -85,6 +85,9 @@ Headless `[Playtest] PASS` и зонд на dummy — не человеческ�
 
 Не открывает G1–G6. Не новый renderer.
 
+**21 Aug closeout:** `force_ground_at` before EVA/hatch snap; pooled chunks drop collision; analytic floor-assist only as a core-fall catch (no more fighting hills). Character form yaw 0/PI only.
+
+
 ## 4. Срезы OS-A … OS-H
 
 Каждый шаг: playable на GPU владельца. Не начинать следующий, пока текущий красный. Не открывать G2–G6 «чтобы было масштабнее».

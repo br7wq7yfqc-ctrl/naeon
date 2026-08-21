@@ -107,3 +107,11 @@ static func skinned_candidates(form: String, faction: String) -> PackedStringArr
 	out.append("characters/%s/%s_%s.glb" % [folder, folder, fx])
 	return out
 
+
+## Godot body forward is local -Z. Extra Y yaw for a form GLB authored +X.
+## Default 0 — do not 90-deg-guess (sideways walk).
+static func visual_yaw(form: String) -> float:
+	match form:
+		_:
+			return 0.0
+

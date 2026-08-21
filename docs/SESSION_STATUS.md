@@ -1,5 +1,7 @@
 # Session Status
 
+**2026-08-21 — OS-I closeout (code): warm dirt before EVA snap, no analytic hill-fight, yaw 0/PI. Headless PASS. Human gate still 3090.**
+
 **2026-08-17 — P0.6 на RTX 3090 жив; бар подхода записан**
 
 Не «unfit». Петля OPEN SPACE на GPU владельца: land / EVA / takeoff, hold-S 770→0, HOVER+S тонет, EVA на Relief, 6 мин / 60 FPS, 0 debugger errors (`ca904ec` / squash `987cd34`). Галактику не открывали. llvmpipe ≠ FPS PASS.

@@ -205,6 +205,12 @@ func _build_shell() -> void:
 
 	_apply_lod_visual(1)  # start mid until first observer update
 
+func force_surface_collision_at(world_pos: Vector3) -> void:
+	## OS-I: warm dirt trimesh under an actor before snap/EVA.
+	if _surface_detail != null and is_instance_valid(_surface_detail) and _surface_detail.has_method("force_ground_at"):
+		_surface_detail.force_ground_at(world_pos)
+
+
 func set_observer(node: Node3D) -> void:
 	var w = get_node_or_null("SurfaceWater")
 	if w and w.has_method("set_observer"):

@@ -42,6 +42,8 @@ var _live: Dictionary = {}
 var _pool: Array = []
 ## cell key "x,y" -> Mesh on GPU, true on dummy (count only)
 var _mesh_cache: Dictionary = {}
+## Same key -> ConcavePolygonShape3D (OS-I: do not rebuild trimesh every spawn)
+var _shape_cache: Dictionary = {}
 ## FIFO keys for cache eviction
 var _mesh_cache_order: Array = []
 ## cells waiting to build this tick
@@ -108,6 +110,7 @@ func _apply_quality() -> void:
 	# Quality change: drop mesh cache (res may differ). Live cells keep
 	# their current mesh until recycled; next spawn rebuilds at new res.
 	_mesh_cache.clear()
+	_shape_cache.clear()
 	_mesh_cache_order.clear()
 	_tune_near_quality(tier)
 
@@ -266,6 +269,7 @@ func _park_all() -> void:
 	for n in _pool:
 		if n != null and is_instance_valid(n):
 			n.visible = false
+			_set_chunk_collision_enabled(n, false)
 	_trim_pool()
 
 
@@ -300,12 +304,45 @@ func _spawn_cell(cell: Vector2i) -> void:
 		mi.mesh = ph
 		add_child(mi)
 	mi.mesh = _mesh_for_cell(cell)
+	mi.set_meta("chunk_key", _cache_key(cell))
 	_ensure_vertex_mat(mi)
 	_ensure_chunk_collision(mi)
+	_set_chunk_collision_enabled(mi, true)
 	mi.visible = true
 	_live[cell] = mi
 	_refresh_xform(cell)
 
+
+
+func force_ground_at(world_pos: Vector3) -> void:
+	## EVA / hatch / land: build the cell under the actor NOW so snap raycast
+	## hits dirt trimesh, not the catch-sphere (fall-through after F/I).
+	if _planet == null:
+		return
+	_active = true
+	var cell: Vector2i = _Math.cell_of(_planet.global_position, _radius, world_pos, CELL_M)
+	_center_cell = cell
+	var ring: int = mini(1, _load_ring)
+	var want: Array[Vector2i] = _Math.ring_cells(cell, ring)
+	for c in want:
+		if _live.has(c):
+			_refresh_xform(c)
+			var n: Node3D = _live[c]
+			if n is MeshInstance3D:
+				_ensure_chunk_collision(n as MeshInstance3D)
+				_set_chunk_collision_enabled(n, true)
+			continue
+		_spawn_cell(c)
+
+
+func _set_chunk_collision_enabled(n: Node, on: bool) -> void:
+	if n == null or not is_instance_valid(n):
+		return
+	var sb: StaticBody3D = n.get_node_or_null("Col") as StaticBody3D
+	if sb == null:
+		return
+	sb.collision_layer = 1 if on else 0
+	sb.process_mode = Node.PROCESS_MODE_INHERIT if on else Node.PROCESS_MODE_DISABLED
 
 
 func _ensure_chunk_collision(mi: MeshInstance3D) -> void:
@@ -313,6 +350,8 @@ func _ensure_chunk_collision(mi: MeshInstance3D) -> void:
 	if mi == null or mi.mesh == null:
 		return
 	if DisplayServer.get_name() == "headless":
+		return
+	if not (mi.mesh is ArrayMesh):
 		return
 	var sb: StaticBody3D = mi.get_node_or_null("Col") as StaticBody3D
 	if sb == null:
@@ -327,9 +366,17 @@ func _ensure_chunk_collision(mi: MeshInstance3D) -> void:
 	var cs2: CollisionShape3D = sb.get_node_or_null("Shape") as CollisionShape3D
 	if cs2 == null:
 		return
-	var mesh = mi.mesh
-	if mesh is ArrayMesh:
-		cs2.shape = (mesh as ArrayMesh).create_trimesh_shape()
+	var key := str(mi.get_meta("chunk_key", ""))
+	var shape: Shape3D = null
+	if key != "" and _shape_cache.has(key):
+		shape = _shape_cache[key]
+	else:
+		shape = (mi.mesh as ArrayMesh).create_trimesh_shape()
+		if key != "":
+			_shape_cache[key] = shape
+	cs2.shape = shape
+	sb.collision_layer = 1
+	sb.process_mode = Node.PROCESS_MODE_INHERIT
 
 
 func _recycle(cell: Vector2i) -> void:
@@ -340,6 +387,7 @@ func _recycle(cell: Vector2i) -> void:
 	if n == null or not is_instance_valid(n):
 		return
 	n.visible = false
+	_set_chunk_collision_enabled(n, false)
 	# Cap pool — excess MeshInstance3D + mats were a soft leak
 	if _pool.size() < POOL_MAX:
 		_pool.append(n)
@@ -377,6 +425,7 @@ func _mesh_for_cell(cell: Vector2i) -> Variant:
 	while _mesh_cache_order.size() > MESH_CACHE_MAX:
 		var old: String = _mesh_cache_order.pop_front()
 		_mesh_cache.erase(old)
+		_shape_cache.erase(old)
 	return mesh
 
 

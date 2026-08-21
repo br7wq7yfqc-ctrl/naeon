@@ -292,9 +292,13 @@ func _load_form_visual() -> void:
 	_strip_colliders(root)
 	_visual.add_child(root)
 	root.name = "FormGLB"
-	_MeshOrient.face_neg_z(root as Node3D, false)
-	# Characters: body forward = local −Z (same as wish/W). Many GLBs face +X/+Z after import.
-	_force_char_face_neg_z(root as Node3D)
+	# Do NOT MeshOrient.face_neg_z here: long-axis scoring yaws bipeds 90 deg
+	# so they walk sideways. Ships keep MeshOrient; characters only 0/PI.
+	var yaw_off: float = float(_HeroForms.visual_yaw(form_name))
+	if absf(yaw_off) > 0.01:
+		(root as Node3D).rotation.y = yaw_off
+	else:
+		_force_char_face_neg_z(root as Node3D)
 	_form_skel = _FormAnim.find_skeleton(root)
 	root.scale = Vector3.ONE * 1.1
 	root.position = Vector3(0, 0, 0)
@@ -412,6 +416,7 @@ func snap_to_surface() -> void:
 	if interior_mode or is_zero_g():
 		return
 	_update_up()
+	_force_dirt_chunks()
 	var space := get_world_3d().direct_space_state if get_world_3d() else null
 	if space == null:
 		global_position += _up * 4.0
@@ -432,17 +437,14 @@ func snap_to_surface() -> void:
 			velocity = Vector3.ZERO
 			_spawn_grace_t = 0.35
 			safe_unground()
-			_lift_to_visual_relief()
 			print("[SurfaceWalker] snapped to ", hit.position, " from +", lift)
 			return
 	if _relief_snap_fallback():
 		_spawn_grace_t = 0.35
 		safe_unground()
-		_lift_to_visual_relief()
 		return
 	global_position += _up * 5.0
 	_spawn_grace_t = 0.35
-	_lift_to_visual_relief()
 	print("[SurfaceWalker] no hit — boost along up")
 
 
@@ -1063,8 +1065,16 @@ func _visual_relief_metres(pl: Node3D) -> float:
 	return maxf(h, sea)
 
 
+func _force_dirt_chunks() -> void:
+	var pl: Node3D = _nearest_planet_body()
+	if pl == null:
+		return
+	if pl.has_method("force_surface_collision_at"):
+		pl.force_surface_collision_at(global_position)
+
+
 func _lift_to_visual_relief() -> void:
-	## Collision is the bare sphere. Chunks use Relief. Stand on the visual.
+	## OS-I: trimesh is the floor. Analytic lift only as a core-fall catch.
 	var pl: Node3D = _nearest_planet_body()
 	if pl == null or not ("radius" in pl):
 		return
@@ -1074,7 +1084,7 @@ func _lift_to_visual_relief() -> void:
 	dir = dir.normalized()
 	var want_r: float = float(pl.radius) + _visual_relief_metres(pl) + 2.15
 	var cur_r: float = global_position.distance_to(pl.global_position)
-	if want_r > cur_r + 0.05:
+	if want_r > cur_r + 3.0:
 		global_position = pl.global_position + dir * want_r
 		velocity = Vector3.ZERO
 
@@ -1102,13 +1112,13 @@ func _relief_floor_assist(delta: float) -> void:
 	if dir.length_squared() < 1e-6:
 		return
 	dir = dir.normalized()
+	# Trimesh owns contact. Only yank if we fell inside the planet (core).
 	var target_r: float = float(pl.radius) + _visual_relief_metres(pl) + 1.15
 	var cur_r: float = global_position.distance_to(pl.global_position)
 	var err: float = target_r - cur_r
-	if err > 0.25:
-		global_position += dir * err * clampf(delta * 8.0, 0.0, 1.0)
-	elif not is_on_floor() and err < -0.3 and err > -4.0:
-		global_position += dir * err * clampf(delta * 6.0, 0.0, 1.0)
+	if err > 3.0:
+		global_position += dir * err
+		velocity = Vector3.ZERO
 
 
 var _wade_cd: float = 0.0
@@ -1541,24 +1551,17 @@ func _ensure_face_arrow() -> void:
 
 
 func _force_char_face_neg_z(root: Node3D) -> void:
-	## After MeshOrient, pick yaw so mesh "front" mass is toward local −Z (matches W).
+	## Only 0 / PI. 90 deg long-axis scoring made Canine/Feline walk sideways.
 	if root == null:
 		return
+	root.rotation.y = 0.0
 	var base: AABB = _MeshOrient._aabb_children(root)
 	if base.size.length_squared() < 1e-8:
-		# Common biped GLB faces +X — try 90°
-		root.rotation.y = PI * 0.5
 		return
-	var best_y := root.rotation.y
-	var best_score := -1.0e12
-	for y in [0.0, PI * 0.5, PI, PI * 1.5]:
-		var a: AABB = _MeshOrient._rotate_aabb_y(base, y)
-		# Prefer depth along Z (side profile thinner on X), and center of mass toward −Z
-		var score: float = a.size.z - a.size.x * 1.1
-		score += -a.get_center().z * 2.0
-		# Prefer taller than wide (upright)
-		score += a.size.y * 0.15
-		if score > best_score:
-			best_score = score
-			best_y = y
-	root.rotation.y = best_y
+	var a0: AABB = _MeshOrient._rotate_aabb_y(base, 0.0)
+	var a180: AABB = _MeshOrient._rotate_aabb_y(base, PI)
+	# Prefer COM toward local -Z (nose ahead of pivot).
+	if -a180.get_center().z > -a0.get_center().z + 0.04:
+		root.rotation.y = PI
+	else:
+		root.rotation.y = 0.0

@@ -1384,6 +1384,9 @@ func place_from_ship_pocket(walker: Node3D) -> void:
 			walker.set_eva_profile(false)
 		if walker.has_method("set_spawn_basis"):
 			walker.set_spawn_basis(pad_up, 0.0)
+		var pln: Node3D = nearest_planet(walker.global_position)
+		if pln != null and is_instance_valid(pln) and pln.has_method("force_surface_collision_at"):
+			pln.force_surface_collision_at(walker.global_position)
 		if walker.has_method("snap_to_surface"):
 			walker.call_deferred("snap_to_surface")
 		_toast_hud("Hatch → pad")
@@ -1696,6 +1699,9 @@ func _schedule_surface_settle() -> void:
 	## Snap walker to pad/terrain after F exit — aborted if interior_mode.
 	if player == null or not is_instance_valid(player):
 		return
+	var pl_g: Node3D = nearest_planet(player.global_position)
+	if pl_g != null and is_instance_valid(pl_g) and pl_g.has_method("force_surface_collision_at"):
+		pl_g.force_surface_collision_at(player.global_position)
 	if player != null and is_instance_valid(player) and player.has_method("snap_to_surface"):
 		player.call_deferred("snap_to_surface")
 	var tree := get_tree()
