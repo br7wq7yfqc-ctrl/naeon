@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# NAEON Cloud Agent bootstrap: install the Godot 4.3 toolchain + Python pipeline
+# NAEON Cloud Agent bootstrap: install the Godot 4.7.2 toolchain + Python pipeline
 # dependencies, then import the Godot project so res:// assets are cached.
 # Must stay idempotent: it can run repeatedly and against cached/snapshot state.
 set -euo pipefail
 
-GODOT_VERSION="4.3"
+GODOT_VERSION="4.7.2"
 GODOT_BIN="/usr/local/bin/godot"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
@@ -32,9 +32,9 @@ else
 fi
 
 echo "[install] importing Godot project (generates godot/.godot cache)"
-# --editor import triggers resource import; --quit-after bounds the run. Parse
-# errors in game scripts are surfaced by CI, not by this bootstrap, so never fail.
-godot --headless --editor --quit-after 60 --path "$REPO_ROOT/godot" \
+# --import waits for resources then quits. Parse errors in game scripts are
+# surfaced by CI / playtests, not by this bootstrap, so never fail.
+godot --headless --import --path "$REPO_ROOT/godot" \
   >/tmp/naeon_godot_import.log 2>&1 || true
 echo "[install] import finished; log at /tmp/naeon_godot_import.log"
 

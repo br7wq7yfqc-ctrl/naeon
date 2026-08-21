@@ -3,7 +3,7 @@
 **Версия:** 2.3  
 **Дата:** 2026-08-17  
 **Основа:** CONCEPT.md v1.3  
-**Движок:** Godot 4.3 (не 4.4+ как цель)  
+**Движок:** Godot 4.7.2
 **Принцип:** Local-first → Vertical Slices → Iterative Multiplayer → Platform + AI + Educational Systems  
 **SC → NAEON (роли, не клон):** `docs/design/SC_FEATURE_MAP.md` · бар подхода OS-A…OS-H: `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (OS-A…OS-H built; harness ритуала. 60 FPS / 5 мин = 3090 human gate).  
 **Clash нативен; бар арены — Predecessor/Paragon, не Arena Commander:** `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (AR-A…AR-F; код арены не вытесняет OS-A).  

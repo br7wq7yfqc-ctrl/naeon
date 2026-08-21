@@ -5,7 +5,7 @@ How-to пайплайна: `docs/ASSET_PIPELINE.md`.
 Авторский скелет / безымянный filler: `docs/design/WORLD_FILL.md` §3.1.  
 OPEN SPACE бар: `docs/design/OPEN_SPACE_SC_BENCHMARK.md`.
 
-Столпы: нет P2W · Knowledge soft · Infection max 5 · story ≠ power · Godot 4.3 · взрослый hard-sci-fi.
+Столпы: нет P2W · Knowledge soft · Infection max 5 · story ≠ power · Godot 4.7.2 · взрослый hard-sci-fi.
 
 | Класс | Источник | Хранение | Git |
 |-------|----------|----------|-----|

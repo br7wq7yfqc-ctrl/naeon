@@ -1,7 +1,7 @@
 ---
 name: naeon-sequential-dev
 description: >
-  Sequential deepening of NAEON (Godot 4.3) mechanics, physics, and
+  Sequential deepening of NAEON (Godot 4.7.2) mechanics, physics, and
   approved design-to-Tripo pipeline. Use when the user says
   "naeon-sequential-dev", "дальше по плану", continue development,
   or when ingesting approved renders / orthogonal Tripo schemes.

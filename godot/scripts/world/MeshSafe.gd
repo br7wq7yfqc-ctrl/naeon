@@ -1,6 +1,6 @@
 extends RefCounted
 class_name MeshSafe
-## Godot 4.3 dummy mesh_storage:
+## Godot 4.7 dummy mesh_storage:
 ## - Sphere/Torus/Prism/fat Cylinder/ArrayMesh often have a null RID.
 ## - SceneTree.quit() / --quit-after walks those RIDs → Parameter m is null.
 ## - Live MeshInstance add/free (pad plate, interior pocket, chunk park)
@@ -33,7 +33,7 @@ static func assign(mi: MeshInstance3D, mesh: Mesh, fallback_size: Vector3 = Vect
 
 
 static func strip_imported_cameras(root: Node) -> int:
-	## DCC / GLB files often ship a Camera3D. Godot 4.3 makes that camera
+	## DCC / GLB files often ship a Camera3D. Godot 4.7 makes that camera
 	## current on enter_tree (or first_camera), and clear_current() then
 	## promotes a HashSet-next camera — a black 3D buffer if none is the
 	## chase cam. Strip before add_child so they never enter the viewport.

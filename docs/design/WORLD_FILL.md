@@ -40,7 +40,7 @@ break canon. Fill is geology and logistics inside a loaded body. The galaxy
 is authored data. Named places are a catalog.
 
 Pillars this file must not dilute: no P2W, Knowledge stays soft, Infection
-hard-caps at 5, story ≠ power, Tripo-first for authored meshes, Godot 4.3,
+hard-caps at 5, story ≠ power, Tripo-first for authored meshes, Godot 4.7.2,
 adult hard sci-fi. Named sites only from `SITE_PIN_CATALOG.md` (plus the
 narrative rows in `LEGENDARY_SITES.md`). The galaxy is data, not geometry —
 one system resident (`GALAXY_LAYER_PLAN.md` §1, §3, rules/25).
