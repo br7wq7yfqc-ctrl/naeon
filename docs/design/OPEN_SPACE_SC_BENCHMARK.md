@@ -1,6 +1,6 @@
 # OPEN SPACE — бар подхода (не копия Star Citizen)
 
-**Статус:** OS-A…OS-H built. Версия 1.7, 2026-08-17.  
+**Статус:** OS-A…OS-H built. OS-E leftover: PBR bind (this slice). OS-I physics queued. Версия 1.8, 2026-08-21.  
 **Движок:** Godot 4.7.2.  
 **Не открывать:** G2–G6. Код P0.6 (`OpenSpace`, `ShipController`, `SurfaceWalker`, `SurfaceDetail`, `GameHUD`) не ломать.
 
@@ -61,7 +61,7 @@ Headless `[Playtest] PASS` и зонд на dummy — не человеческ�
 - Два сэмплера высоты: дальний шейдер (дешёвый FBM-subset) vs `PlanetRelief`. Шов WorldFill §5 — первый визуальный must. Seed/chart на P0.6 уже общие; континенты с орбиты всё ещё не равны полному Relief.
 - Облаков нет (не OS-B). Вход: лимб + туман + тонкая плотность на 770 м.
 - Почти нет unnamed scatter и силуэта аванпоста с высоты. OS-D: 3 unnamed пада + denser unnamed scatter (ящики / `debris_cluster` / pad-пропсы / лишние мачты) с ~2 км и у грунта. OS-G: мачта+habitat на одном паде, читается с 8 км.
-- Грунт достаточно читаем, чтобы стоять. OS-E: near shader (albedo / декали / near LOD) на тех же чанках; бинарников в git нет.
+- Грунт достаточно читаем, чтобы стоять. OS-E leftover (этот срез): near PBR (CC0 albedo/rough/normal + fallback ImageTexture), не unshaded plastic. Chart UV = `CHART_RADIUS`. Бинарников в git нет.
 - S-sink есть. Drag/потолок оболочки — OS-B. OS-F: подъём/планирование в плотном слое; 770 м тонкая оболочка без крыла.
 - Три unnamed пада (`Pad_North` class). OS-G: один силуэт на `Pad_Approach`.
 
@@ -107,9 +107,9 @@ WorldFill: scatter + дополнительные unnamed пады, читаем
 
 Тайловый PBR, декали, near LOD. Грязь и камень не из Tripo.
 
-**В этом срезе:** `planet_surface_near.gdshader` на существующих `SurfaceDetail` чанках. Vertex albedo + тайловый micro + декали (грязь/камень/пыль) с fade по дистанции. Высота по-прежнему только `PlanetRelief.height_at`. CC0 строки в `p0_filler_manifest.json`; PNG/GLB не в git. Чанк-бюджет не трогали. Walker snap не трогали.
+**В этом срезе (leftover поверх PR #16):** `planet_surface_near.gdshader` — Forward+ PBR, не `unshaded`. Самплеры `albedo_tex` / `rock_tex` / `normal_tex` / `rough_tex`. Runtime биндит CC0 с `s3://neon` / `user://filler` / `assets/` (`forest_ground_04`, `rock_face`, Ground037, Rock023). Если PNG нет — процедурный `ImageTexture`, чтобы headless всё ещё был PBR, не пластилин. Chart UV всегда `PlanetRelief.CHART_RADIUS` (`dir_to_chart`) — body radius не перетайливает грязь vs камень. Декали + `decal_density` + near LOD fade. Высота по-прежнему только `PlanetRelief.height_at`. Чанк-бюджет (40 м / LOAD_BUDGET 1 / queue 12) не трогали. Walker snap не трогали. PNG/GLB не в git.
 
-**DoD:** EVA 5 мин: грунт не «пластилин одного шейдера». Relief тот же. 60 FPS MED на 3090 в этом кольце.
+**DoD:** EVA: грунт не «пластилин одного шейдера»; семплеры связаны (CC0 или fallback). Relief тот же. 60 FPS MED на 3090 в этом кольце — human gate, не headless.
 
 ### OS-F — полёт в атмосфере
 
@@ -158,6 +158,22 @@ godot --headless --path godot --scene res://scenes/world/OpenSpace.tscn -- --pla
 
 ---
 
+### OS-I — физика грунта (SC bar, не CIG clone) — **queued, не этот PR**
+
+Падение сквозь текстуры / «планета не считывается» — это не картинка. Коллайдер сферы `radius` ≠ визуальный Relief ±метры. Чанки без trimesh. Дальний шейдер и грунт на разных chart scale у тел ≠1400 м.
+
+Не Planet Tech V5 и не воксельный шар. Роли из SC-ощущения:
+
+| Роль SC (ощущение) | NAEON рычаг | Не делать |
+|--------------------|-------------|-----------|
+| Visual mesh = physical mesh | trimesh / height collider на live `SurfaceDetail` чанке; sphere catch только ниже Relief | планетарный voxel shell |
+| Object Container streaming | уже: 40 м / budget 1 / queue 12 / park ~140–380 м AGL. Не расти кольцо | шире стрим «чтобы нарисовать сферу» |
+| One chart orbit→dirt | `dir_to_chart` / `CHART_RADIUS` для paint **и** height/collision. Дальний шейдер — тот же chart, не `lon*planet_radius` на чужих телах | второй FBM |
+| No fall-through | walker/ship floor = Relief height (или chunk trimesh), не `radius-8` sphere | отключать гравитацию |
+| LOD drop, not replace | far unshaded subset; near PBR. Не подменять высоту | третий noise |
+
+**DoD (когда очередь дойдёт):** персонаж и корабль не проваливаются сквозь грунт на Nex-Prime / ROT-Hive / Shard-Moon. EVA snap и LAND живы. Чанк-бюджет не вырос. Headless PASS. Не SITE_*. Не G2–G6.
+
 ## 5. Вне скоупа
 
 - Копировать CIG / Planet Tech V5 / их воксельный шар.
@@ -165,4 +181,4 @@ godot --headless --path godot --scene res://scenes/world/OpenSpace.tscn -- --pla
 - Tripo-горы, Tripo-грязь, меши в git, секреты, патч S3 Index.
 - Переписывать P0.6 «с нуля».
 
-Очередь кода: OS-H harness built. 60 FPS / 5 мин soak — human gate на 3090, не этот PR. Не G2. Не открывать G2–G6 этим баром.
+Очередь кода: этот PR = OS-E PBR leftover. Дальше: occupy-refuel бак 0 → EVA snap + takeoff без load (добить OS-H) → OS-I physics → ST-A. NP-C после ST-A. Не G2–G6.

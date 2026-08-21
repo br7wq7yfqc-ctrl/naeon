@@ -1380,8 +1380,9 @@ func _osd_unnamed_fill(fails: PackedStringArray) -> void:
 
 
 func _ose_near_read(fails: PackedStringArray) -> void:
-	## OS-E: EVA near-ground is not one plastic shader. Same Relief. Same
-	## chunk budget. No second height field. No SITE_*. No binaries in git.
+	## OS-E: EVA near-ground is PBR (CC0 or fallback ImageTexture), not
+	## unshaded plastic. Same Relief. Same chunk budget. No second height
+	## field. No SITE_*. No binaries in git.
 	var SD = load("res://scripts/world/SurfaceDetail.gd")
 	if SD == null:
 		fails.append("OS-E SurfaceDetail missing")
@@ -1399,18 +1400,32 @@ func _ose_near_read(fails: PackedStringArray) -> void:
 		fails.append("OS-E added a second height field")
 	if sd_src.find("planet_surface_near.gdshader") < 0:
 		fails.append("OS-E near shader not bound")
-	if sd_src.find(":v6") < 0:
-		fails.append("OS-E cache key not bumped for near UVs")
+	if sd_src.find(":v7") < 0:
+		fails.append("OS-E cache key not bumped for PBR UVs")
+	if sd_src.find("dir_to_chart") < 0:
+		fails.append("OS-E paint UV not chart-locked")
+	if sd_src.find("_bind_pbr_maps") < 0:
+		fails.append("OS-E PBR maps not bound")
 	var sh_src := FileAccess.get_file_as_string("res://shaders/planet_surface_near.gdshader")
 	if sh_src == "" or sh_src.find("shader_type spatial") < 0:
 		fails.append("OS-E planet_surface_near.gdshader missing")
 	else:
 		if sh_src.find("VERTEX +=") >= 0:
 			fails.append("OS-E near shader displaces height")
+		if sh_src.find("render_mode unshaded") >= 0:
+			fails.append("OS-E near shader still unshaded")
+		if sh_src.find("sampler2D albedo_tex") < 0 or sh_src.find("sampler2D rock_tex") < 0:
+			fails.append("OS-E near shader missing PBR samplers")
+		if sh_src.find("ROUGHNESS") < 0 or sh_src.find("NORMAL_MAP") < 0:
+			fails.append("OS-E near shader missing PBR outputs")
 		if sh_src.find("decal_strength") < 0 or sh_src.find("micro_strength") < 0:
 			fails.append("OS-E near shader has no micro/decal terms")
+		if sh_src.find("decal_density") < 0:
+			fails.append("OS-E near shader has no decal density")
 		if sh_src.find("near_fade") < 0:
 			fails.append("OS-E near LOD fade missing")
+		if sh_src.find("chart_radius") < 0:
+			fails.append("OS-E near shader not chart-locked")
 	var godot_root := ProjectSettings.globalize_path("res://").rstrip("/")
 	var man_path := godot_root.get_base_dir().path_join("docs/design/p0_filler_manifest.json")
 	var man := FileAccess.get_file_as_string(man_path)
@@ -1451,13 +1466,33 @@ func _ose_near_read(fails: PackedStringArray) -> void:
 		var us: float = float((nmat as ShaderMaterial).get_shader_parameter("seed"))
 		var um: float = float((nmat as ShaderMaterial).get_shader_parameter("micro_strength"))
 		var ud: float = float((nmat as ShaderMaterial).get_shader_parameter("decal_strength"))
-		print("[Playtest] OS-E near seed=", us, " micro=", snapped(um, 0.01), " decal=", snapped(ud, 0.01))
+		var dens: float = float((nmat as ShaderMaterial).get_shader_parameter("decal_density"))
+		var alb = (nmat as ShaderMaterial).get_shader_parameter("albedo_tex")
+		var rck = (nmat as ShaderMaterial).get_shader_parameter("rock_tex")
+		var nrm = (nmat as ShaderMaterial).get_shader_parameter("normal_tex")
+		var rgh = (nmat as ShaderMaterial).get_shader_parameter("rough_tex")
+		if sd.has_method("near_pbr_status"):
+			var st: Dictionary = sd.call("near_pbr_status")
+			print("[Playtest] OS-E PBR src=", st.get("src"), " albedo=", st.get("albedo"), " rock=", st.get("rock"), " rough=", st.get("rough"), " normal=", st.get("normal"), " unshaded=", st.get("unshaded"))
+			if bool(st.get("unshaded", true)):
+				fails.append("OS-E PBR still marked unshaded")
+			if not bool(st.get("albedo", false)) or not bool(st.get("rock", false)):
+				fails.append("OS-E PBR albedo/rock not bound")
+			if not bool(st.get("normal", false)) or not bool(st.get("rough", false)):
+				fails.append("OS-E PBR normal/rough not bound")
+		print("[Playtest] OS-E near seed=", us, " micro=", snapped(um, 0.01), " decal=", snapped(ud, 0.01), " dens=", snapped(dens, 0.01))
 		if absf(us - float(seed_b)) > 0.51:
 			fails.append("OS-E near shader seed != body_seed (%s vs %s)" % [us, seed_b])
 		if um < 0.05:
 			fails.append("OS-E micro_strength off")
 		if ud < 0.05:
 			fails.append("OS-E decal_strength off")
+		if dens < 0.2:
+			fails.append("OS-E decal_density off")
+		if alb == null or rck == null:
+			fails.append("OS-E albedo/rock sampler empty")
+		if nrm == null or rgh == null:
+			fails.append("OS-E normal/rough sampler empty")
 	# Same Relief under the walker as OS-A snap. Paint must not move height.
 	var up: Vector3 = Vector3(0.18, 0.96, 0.12).normalized()
 	if os and os.has_method("_spawn_eva_near_ship"):

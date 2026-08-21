@@ -1,6 +1,6 @@
 # NAEON — Shared Agent Memory
 
-**Last updated:** 2026-08-17 (OPEN SPACE SC bar; P0.6 3090 loop)
+**Last updated:** 2026-08-21 (OS-E PBR leftover; OS-I physics queued; 4.7.2 on main)
 
 ## Core constraints
 No P2W · soft Knowledge · Infection max 5 · story ≠ power · Godot 4.7.2 · adult hard-sci-fi · site_pin catalog only · WorldFill = authored skeleton + unnamed filler · ready-made assets first, Tripo unique only · one resident system (ARK) · no planetary voxel shell · perf/25 (FPS on owner GPU, not llvmpipe)
@@ -136,6 +136,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-15 | Clash towers are live Turrets; ship afterburn W+Shift (energy); walker variable jump cut. Soft pressure only. | sequential-dev |
 | 2026-08-15 | **Full code audit + hardening** — 101 scripts / 10 scenes / 12 autoloads. ~110 confirmed defects, blockers fixed, pad streaming memory climb closed. Single record: `docs/PROTOTYPE_TO_PLAYABLE.md` | owner brief: prototype → playable |
 | 2026-08-15 | **Galaxy layer planned + G0 built** — star at the system origin, bodies on distinct orbits, belt from data. Hyperspace, hyperdrives, NAEXOS gates, galaxy/system maps and arena-from-map specified. Authority: `docs/design/GALAXY_LAYER_PLAN.md`; assets: `docs/design/TRIPO_ASSET_MANIFEST.md` (78 assets); plan: `DEVELOPMENT_PLAN.md` Phase G | owner brief: star system + hyperspace + gates + map |
+| 2026-08-21 | OS-E PBR leftover: drop unshaded, bind CC0/fallback, chart UV. OS-I physics queued (fall-through). 4.7.2 merged #48. | os-e-pbr |
 | 2026-08-16 | WorldFill canon + asset source split (PR #6). Authored skeleton vs unnamed fill. No SITE_* mint. | world-fill |
 | 2026-08-17 | P0.6 squash on main: HUD, hold-S 770→0, EVA on Relief, HOVER S. RTX 3090: land/EVA/takeoff, 6 min / 60 FPS, 0 debugger errors. Not FPS PASS on llvmpipe. | P0 runtime |
 | 2026-08-17 | OPEN SPACE SC benchmark plan (OS-A…OS-H). Port unique #7 canon docs; drop #7 code. HUMAN_UNFIT superseded by 3090 fact. G2–G6 stay closed. | open-space-sc |

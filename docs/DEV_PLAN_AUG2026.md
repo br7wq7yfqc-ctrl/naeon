@@ -3,7 +3,7 @@
 **Authority:** `DEVELOPMENT_PLAN.md` v2.1 (длинный план) + `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (текущий бар).  
 Этот файл — статус, не склад фич.
 
-## Current focus: OPEN SPACE → бар подхода (OS-A … OS-H)
+## Current focus: OS-E PBR leftover → occupy-refuel 0 → EVA/takeoff → OS-I physics → ST-A
 
 SC roles → NAEON: `docs/design/SC_FEATURE_MAP.md` (OS-A first).  
 Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (arena CODE after OS-A).
@@ -17,10 +17,14 @@ Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (arena COD
 | **OS-B** оболочка атмосферы | **built** | envelope + лимб/туман + drag/потолок; 770 м S-sink жив |
 | **OS-C** лестница 5–15 км | **built** | спавн 8 км AGL; far/лимб до 15 км; без G1 CRUISE |
 | **OS-D** unnamed fill с 2 км | **built** | 3 unnamed пада + denser scatter с полок ledger (crate/debris/mast/pad props); без SITE_*; без семи стримеров |
-| **OS-E** чтение у ног | **built** | near shader на чанках: albedo / декали / near LOD; Relief тот же; без GLB в git |
+| **OS-E** чтение у ног | **built + PBR leftover** | PBR CC0 albedo/rough/normal на чанках (fallback ImageTexture); chart UV; не unshaded; без GLB в git |
 | **OS-F** полёт в атмосфере | **built** | lift/glide в плотном слое; STALL/HOVER/LAND/hold-S живы |
 | **OS-G** силуэт аванпоста | **built** | мачта+habitat на одном unnamed паде; 8 км = 2 км = грунт |
 | **OS-H** ритуал | **built (harness)** | space→atmo→land→EVA→takeoff→space; headless шаги. 60 FPS / 5 мин = 3090 human gate |
+| **OS-I** физика грунта | **queued** | trimesh чанков = визуал; один chart; не проваливаться. Не voxel. Не этот PR |
+| **occupy-refuel бак 0** | **next after this PR** | после спуска бак 0; occupy на паде наполняет со временем |
+| **OS-H EVA/takeoff** | leftover | EVA snap после LAND + взлёт без load screen |
+| **ST-A** стратегия / модульные базы | after OS-I / occupy / EVA | GPU-гейт OS-H снят. NP-C после ST-A |
 | **G1 CRUISE** | later | Не нужен для 5–15 км; mass lock только вместе с CRUISE |
 | **G2–G6** | **locked** | Пока петля OPEN SPACE не честна. В коде 404 |
 
