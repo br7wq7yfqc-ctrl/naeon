@@ -148,6 +148,8 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-17 | OpenSpace HUD stack: fuel / cargo / worst module / landed·occupy / EVA 0G. No overlap with GFX/FPS/OBJECTIVE or no-P2W. Clash unchanged. | openspace-hud-stack |
 | 2026-08-17 | SC pillar 10: live Contribution/Biomass on occupied unnamed pad via OpenSpace HUD stack. Harvest yield unchanged. Not ST-A. | pad-contrib-visible |
 
+| 2026-08-21 | OS-J: orbit-read FarPlate/FarMast/outpost hide below ~400 m. Near hull metal. Cyan 96 m slab was the blue monolith next to the ship. |
+
 ## Full code audit + hardening — 2026-08-15
 
 Authority: **`docs/PROTOTYPE_TO_PLAYABLE.md`** — the single record of this pass.
