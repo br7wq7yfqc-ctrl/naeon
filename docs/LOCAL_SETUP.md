@@ -17,12 +17,12 @@
 
 ---
 
-## Mac (Godot 4.3)
+## Mac (Godot 4.7.2)
 
 ```bash
 # Repo
 git clone https://github.com/br7wq7yfqc-ctrl/naeon.git ~/Documents/naeon
-# Godot 4.3 installed under ~/Applications/Godot.app  (symlink: ~/bin/godot)
+# Godot 4.7.2 installed under ~/Applications/Godot.app  (symlink: ~/bin/godot)
 
 cd ~/Documents/naeon
 cp .env.example .env

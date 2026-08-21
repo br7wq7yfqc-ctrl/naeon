@@ -58,22 +58,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Godot 4.3
+      - name: Setup Godot 4.7.2
         uses: chickensoft-games/setup-godot@v2
         with:
-          version: 4.3.0
+          version: 4.7.2
           use-dotnet: false
 
       - name: Import project (headless)
         working-directory: godot
         run: |
-          godot --headless --editor --quit-after 30 || true
-          echo "Project import finished (or timed out safely)"
+          godot --headless --import --path .
+          echo "Project import finished"
 
       - name: Check for parse errors in scripts
         working-directory: godot
         run: |
-          godot --headless --check-only --path . 2>&1 | tee godot_check.log || true
+          timeout 45 godot --headless --path . --quit-after 20 2>&1 | tee godot_check.log || true
           if grep -i "error" godot_check.log | grep -v "WARNING" | grep -v "Optional"; then
             echo "Possible errors found in Godot check:"
             grep -i "error" godot_check.log
@@ -89,10 +89,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Godot 4.3 + templates
+      - name: Setup Godot 4.7.2 + templates
         uses: chickensoft-games/setup-godot@v2
         with:
-          version: 4.3.0
+          version: 4.7.2
           use-dotnet: false
           include-templates: true
 
@@ -122,10 +122,8 @@ custom_template/debug=""
 custom_template/release=""
 debug/export_console_wrapper=1
 binary_format/embed_pck=false
-texture_format/bptc=true
-texture_format/s3tc=true
-texture_format/etc=false
-texture_format/etc2=false
+texture_format/s3tc_bptc=true
+texture_format/etc2_astc=true
 binary_format/architecture="x86_64"
 codesign/enable=false
 application/modify_resources=true

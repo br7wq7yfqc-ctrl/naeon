@@ -12,6 +12,6 @@ Build-Session 1 foundation.
 
 ## Running
 
-Open `project.godot` in Godot 4.3+.
+Open `project.godot` in Godot 4.7.2.
 
 Main scene currently points to a test scene that needs to be created.

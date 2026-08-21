@@ -41,7 +41,7 @@ S3 Index не патчить. `assets/` / `generations/` не в git.
 
 ## Standing gates
 
-- No P2W, soft Knowledge, Infection cap 5, story ≠ power, Godot 4.3.
+- No P2W, soft Knowledge, Infection cap 5, story ≠ power, Godot 4.7.2.
 - rules/25: ~60 FPS на GPU владельца. llvmpipe не закрывает FPS.
 - `site_pin` только из каталога. WorldFill не чеканит `SITE_*`.
 - Не регрессить P0.6 runtime.

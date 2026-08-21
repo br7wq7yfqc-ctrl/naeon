@@ -9,12 +9,12 @@
 **Локальный сетап:** [docs/LOCAL_SETUP.md](docs/LOCAL_SETUP.md)  
 **Handoff:** [docs/HANDOFF.md](docs/HANDOFF.md)
 
-## Быстрый старт (Godot 4.3)
+## Быстрый старт (Godot 4.7.2)
 
 ```bash
 git clone https://github.com/br7wq7yfqc-ctrl/naeon.git
 cd naeon
-# Открыть папку godot/ в Godot 4.3+
+# Открыть папку godot/ в Godot 4.7.2
 # Main scene: scenes/test/TestArena.tscn
 ```
 
@@ -35,7 +35,7 @@ P0.6 на RTX 3090 (17 Aug 2026): OPEN SPACE — посадка / EVA / взлё
 
 ```
 naeon/
-├── godot/                  # Godot 4.3 проект
+├── godot/                  # Godot 4.7.2 проект
 ├── assets/                 # Тяжёлые ассеты (gitignore)
 ├── pipeline/               # Tripo → Blender → dual-theme
 ├── docs/                   # Документация + handoff

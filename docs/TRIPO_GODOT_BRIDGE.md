@@ -15,7 +15,7 @@ Receive models **directly from Tripo Studio into the Godot editor** (GLB/GLTF/FB
 | API pipeline | — | `pipeline/inbox` → dual-theme LODs → assets/ |
 
 ## Use
-1. Open **Godot 4.3** project `~/Documents/naeon/godot`
+1. Open **Godot 4.7.2** project `~/Documents/naeon/godot`
 2. Dock **Tripo Bridge** (right) — server auto-starts
 3. Tripo Studio → connect Godot DCC Bridge
 4. Generate → model lands in project FS + scene

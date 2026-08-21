@@ -20,7 +20,7 @@ var auto_download: bool = false
 
 func _ready() -> void:
 	# Headless playtests must be able to quit. HTTPRequest worker threads
-	# (and the dummy renderer) keep Godot 4.3 alive after SceneTree.quit().
+	# (and the dummy renderer) keep Godot 4.7 alive after SceneTree.quit().
 	if DisplayServer.get_name() == "headless":
 		check_on_startup = false
 		return
