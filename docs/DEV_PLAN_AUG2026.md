@@ -21,6 +21,7 @@ Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (arena COD
 | **OS-F** полёт в атмосфере | **built** | lift/glide в плотном слое; STALL/HOVER/LAND/hold-S живы |
 | **OS-G** силуэт аванпоста | **built** | мачта+habitat на одном unnamed паде; 8 км = 2 км = грунт |
 | **OS-H** ритуал | **built (harness)** | space→atmo→land→EVA→takeoff→space; headless шаги. 60 FPS / 5 мин = 3090 human gate |
+| **OS-I** ground proxy | **in progress 0.3.26** | Один chart-домен орбита→грунт. Collision = Relief trimesh (не сфера). AGL vs dirt. SC: physics proxy = visual, quantized chunks, no sphere-as-ground. |
 | **G1 CRUISE** | later | Не нужен для 5–15 км; mass lock только вместе с CRUISE |
 | **G2–G6** | **locked** | Пока петля OPEN SPACE не честна. В коде 404 |
 
@@ -32,6 +33,20 @@ Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (arena COD
 | Audit + hardening + `[Playtest] PASS` | **built** логика; **не** human gate |
 | Next = G1 / T1 hypergate | **cut from now** (G1 не открыт OS-C) |
 | PR #7 HUMAN_UNFIT | **снято** прогоном 3090 / P0.6 |
+
+
+
+## OS-I — грунт как в SC (оптимизация физики, не картинки)
+
+Бенчмарк: Star Citizen planetary approach / EVA — **роли**, не Planet Tech V5.
+
+- **Один height field.** Orbit shader, SurfaceDetail, walker snap, ship AGL — `PlanetRelief` chart (`CHART_RADIUS`), не `lon * local_radius`. Иначе биомы/текстуры «перемешиваются» на шве LOD.
+- **Collision proxy = visual Relief.** SC не ставит персонажа на гладкую сферу радиуса планеты. Чанк = ArrayMesh + trimesh. Сфера — только catch под каньонами/морем (`radius - 8`).
+- **AGL vs dirt.** `altitude_of` = dist − (radius + max(relief, sea)). HOVER/посадка не считают «0» внутри горы.
+- **Стриминг как у SC object containers:** чанки 40 м, hysteresis park, load budget 1 mesh/tick. Не воксельная оболочка.
+- **Не делать:** физика на каждом LOD-сфере, второй FBM в near shader, GLB-террейн в git.
+
+Human gate: персонаж и корабль стоят на видимом грунте, не проваливаются; шов орбита/пыль без сдвига текстур.
 
 ## Asset
 

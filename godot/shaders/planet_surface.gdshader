@@ -19,6 +19,7 @@ uniform float mountain_threshold : hint_range(0.0, 1.0) = 0.62;
 uniform float ice_lat : hint_range(0.5, 1.0) = 0.78;
 uniform float seed : hint_range(0.0, 10000.0) = 1.0;
 uniform float planet_radius : hint_range(100.0, 4000.0) = 1400.0;
+uniform float chart_radius : hint_range(100.0, 4000.0) = 1400.0;
 uniform float hill_amp : hint_range(0.0, 8.0) = 2.0;
 uniform float mountain_amp : hint_range(0.0, 16.0) = 7.2;
 uniform float emission_strength : hint_range(0.0, 1.0) = 0.06;
@@ -79,8 +80,8 @@ void fragment() {
 	vec3 n = normalize(v_world_n);
 	float lat = asin(clamp(n.y, -1.0, 1.0));
 	float lon = atan(n.x, n.z);
-	float px = lon * planet_radius;
-	float pz = lat * planet_radius;
+	float px = lon * chart_radius;
+	float pz = lat * chart_radius;
 	float sx = px * 0.07 + seed * 0.017;
 	float sz = pz * 0.07 + seed * 0.013;
 

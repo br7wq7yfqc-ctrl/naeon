@@ -67,6 +67,24 @@ Headless `[Playtest] PASS` и зонд на dummy — не человеческ�
 
 ---
 
+
+## 3.1 OS-I — collision / chart (21 Aug 2026)
+
+Дыра, из-за которой петля ещё не «как SC»:
+
+- Текстуры орбиты и пыли читали **разный xz** (`planet_radius` vs `CHART_RADIUS`) → перемешивание биомов на шве.
+- Collision была `SphereShape` радиуса планеты, visual — Relief ±7 м → корабль/EVA **проваливались сквозь** горы (сетка без прокси).
+- `altitude_of` игнорировал Relief → HOVER/посадка жили внутри меша.
+
+План оптимизации (не копия CIG):
+
+1. Один chart-домен на всех слоях.
+2. Trimesh чанка = physics proxy (как heightfield/quantized physics у SC, в нашем analytic виде).
+3. Сфера только safety net под морем.
+4. AGL от dirt.
+
+Не открывает G1–G6. Не новый renderer.
+
 ## 4. Срезы OS-A … OS-H
 
 Каждый шаг: playable на GPU владельца. Не начинать следующий, пока текущий красный. Не открывать G2–G6 «чтобы было масштабнее».

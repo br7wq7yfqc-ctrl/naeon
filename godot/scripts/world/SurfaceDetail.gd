@@ -301,9 +301,35 @@ func _spawn_cell(cell: Vector2i) -> void:
 		add_child(mi)
 	mi.mesh = _mesh_for_cell(cell)
 	_ensure_vertex_mat(mi)
+	_ensure_chunk_collision(mi)
 	mi.visible = true
 	_live[cell] = mi
 	_refresh_xform(cell)
+
+
+
+func _ensure_chunk_collision(mi: MeshInstance3D) -> void:
+	## Visual Relief mesh IS the physics proxy (SC: no sphere-as-ground).
+	if mi == null or mi.mesh == null:
+		return
+	if DisplayServer.get_name() == "headless":
+		return
+	var sb: StaticBody3D = mi.get_node_or_null("Col") as StaticBody3D
+	if sb == null:
+		sb = StaticBody3D.new()
+		sb.name = "Col"
+		sb.collision_layer = 1
+		sb.collision_mask = 0
+		var cs := CollisionShape3D.new()
+		cs.name = "Shape"
+		sb.add_child(cs)
+		mi.add_child(sb)
+	var cs2: CollisionShape3D = sb.get_node_or_null("Shape") as CollisionShape3D
+	if cs2 == null:
+		return
+	var mesh = mi.mesh
+	if mesh is ArrayMesh:
+		cs2.shape = (mesh as ArrayMesh).create_trimesh_shape()
 
 
 func _recycle(cell: Vector2i) -> void:
@@ -378,7 +404,7 @@ func _build_height_mesh(cell: Vector2i) -> ArrayMesh:
 			var px := -half + float(x) * step
 			var pz := -half + float(z) * step
 			var dir: Vector3 = _Math.vertex_dir(_radius, cell, CELL_M, px, pz)
-			var xz: Vector2 = _Relief.sphere_xz(dir, _radius)
+			var xz: Vector2 = _Relief.dir_to_chart(dir)
 			var wx: float = xz.x
 			var wz: float = xz.y
 			var h: float = float(_Relief.height_at(wx, wz, _seed, _relief_profile))

@@ -32,7 +32,10 @@ static func sphere_xz(dir: Vector3, radius: float) -> Vector2:
 
 
 static func height_on_sphere(dir: Vector3, radius: float, seed: int, profile: Dictionary = {}, macro_only: bool = false) -> float:
-	var xz: Vector2 = sphere_xz(dir, radius)
+	# radius is the displacement frame only. FBM domain is CHART_RADIUS so
+	# orbit paint, dirt chunks, walker, and ship AGL read one field.
+	var _r := radius
+	var xz: Vector2 = dir_to_chart(dir)
 	if macro_only:
 		return height_macro_at(xz.x, xz.y, seed, profile)
 	return height_at(xz.x, xz.y, seed, profile)

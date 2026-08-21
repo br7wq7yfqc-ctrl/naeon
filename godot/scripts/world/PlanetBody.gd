@@ -170,7 +170,8 @@ func _build_shell() -> void:
 	_body.collision_mask = 0
 	var col := CollisionShape3D.new()
 	var ss := SphereShape3D.new()
-	ss.radius = radius
+	# Catch-all under canyons/sea. Land collision is SurfaceDetail trimesh.
+	ss.radius = maxf(radius - 8.0, radius * 0.99)
 	col.shape = ss
 	_body.add_child(col)
 	add_child(_body)
@@ -846,7 +847,12 @@ func _stream_bases() -> void:
 		_BaseBuilder.build_on_pad(_pads[i], faction_base)
 
 func altitude_of(global_pos: Vector3) -> float:
-	return global_pos.distance_to(global_position) - radius
+	## AGL vs local dirt, not the collision sphere. Ship/walker land on Relief.
+	var dist: float = global_pos.distance_to(global_position)
+	var h: float = relief_height_at(global_pos)
+	var pid := str(planet_name)
+	var sea: float = float(_Relief.profile_for_planet(pid).get("sea_level", -0.35))
+	return dist - (radius + maxf(h, sea))
 
 func gravity_at(global_pos: Vector3) -> Vector3:
 	var to_c: Vector3 = global_position - global_pos
