@@ -1,7 +1,7 @@
 {
-  "version": 5,
-  "updated": "2026-08-17",
-  "note": "Unnamed WorldFill props + OS-E near-ground + OS-G outpost stand-ins. Extra pad clutter reuses ledger slugs already on the shelf. Git holds source/license/url only. Binaries stay on s3://neon. Code-first until ingest. Not SITE_*. Not Tripo.",
+  "version": 6,
+  "updated": "2026-08-21",
+  "note": "Unnamed WorldFill props + OS-E PBR near-ground + OS-G outpost stand-ins. Extra pad clutter reuses ledger slugs already on the shelf. Git holds source/license/url only. Binaries stay on s3://neon. Runtime binds CC0 PNG/JPG if present, else procedural ImageTexture so headless still PBR. Not SITE_*. Not Tripo.",
   "props": [
     {
       "id": "pad_crate_cc0",
@@ -58,7 +58,7 @@
       "local_rel": "filler/forest_ground_04/forest_ground_04_diff_1k.png",
       "git_binary": false,
       "site_pin": "",
-      "note": "OS-E tileable dirt. Shader stand-in until the PNG is on neon."
+      "note": "OS-E tileable dirt. Runtime binds PNG from neon/user cache; procedural ImageTexture fallback. Not git."
     },
     {
       "id": "near_rock_face_cc0",
@@ -73,7 +73,7 @@
       "local_rel": "filler/rock_face/rock_face_diff_1k.png",
       "git_binary": false,
       "site_pin": "",
-      "note": "OS-E stone decal/tile. Shader stand-in until the PNG is on neon."
+      "note": "OS-E stone decal/tile. Runtime binds PNG from neon/user cache; procedural ImageTexture fallback. Not git."
     },
     {
       "id": "near_ground037_cc0",
@@ -88,7 +88,7 @@
       "local_rel": "filler/ground037/Ground037_1K-JPG_Color.jpg",
       "git_binary": false,
       "site_pin": "",
-      "note": "OS-E tileable soil. Shader stand-in until the map is on neon."
+      "note": "OS-E tileable soil. Runtime binds map from neon/user cache; procedural ImageTexture fallback. Not git."
     },
     {
       "id": "near_rock023_cc0",
@@ -103,7 +103,7 @@
       "local_rel": "filler/rock023/Rock023_1K-JPG_Color.jpg",
       "git_binary": false,
       "site_pin": "",
-      "note": "OS-E pebble/rock micro. Shader stand-in until the map is on neon."
+      "note": "OS-E pebble/rock micro. Runtime binds map from neon/user cache; procedural ImageTexture fallback. Not git."
     },
     {
       "id": "outpost_mast_cc0",
