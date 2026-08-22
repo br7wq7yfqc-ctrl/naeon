@@ -44,7 +44,7 @@ Clash: [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md).
 | `rules/07` | role_id квестодателей (`CX_PILOT_LIAISON`…) | полёт / стройка |
 | `rules/11`, `rules/23` | иерархия; NP-E intent ≠ siege | pay-to-war; structure siege |
 | `SoftSession.gd` | `user://` form / faction / layer + last action; NP-F short offline cycle | кластер; вторая галактика |
-| `BaseBuilder.gd` | P0 = `PadBaseController` only; игрок модуль не ставит | ST-A; NP-C ждёт ST-A |
+| `BaseBuilder.gd` | P0 controller-only cluster; ST-A `place_player_habitat` on unnamed pad | NP-C next |
 | `PadBaseController.gd` | occupy-to-hold, harvest → Contribution / Biomass; NP-B visitor uses the same path | свой yield; NP-C |
 | `ShipController` / `ShipFlightModel` / `ShipLandingGear` | SCM/NAV/HOVER/STALL/LAND; G = LAND на unnamed pad | NPC-пилот |
 | `Contribution.gd` | `add` / `spend` | кошелёк NPC |
@@ -73,7 +73,7 @@ OS-G силуэт и ambient life — WorldFill / плотность, не жи�
 
 ## 4. Срезы NP-A … NP-F
 
-Каждый срез playable сам, **local-first** (offline и coop SoftNet visual). Код later. NP-C после ST-A. Стратегия по-прежнему GPU-gate (`BASE_STATION_STRATEGY.md`).
+Каждый срез playable сам, **local-first** (offline и coop SoftNet visual). NP-A…F built except NP-C. NP-C next (ST-A overlay is in).
 
 | ID | Роль | Семя | DoD | Отказ |
 |----|------|------|-----|-------|
