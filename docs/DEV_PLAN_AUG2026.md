@@ -24,7 +24,7 @@ Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md`.
 | **OS-J** orbit-read vs dirt | **built** | FarPlate/FarMast/outpost unshaded only beyond ~400 m. Near = metal hull. Cyan 96 m slab was the pad monolith. |
 | **OS-H** ритуал | **built (harness)** | space→atmo→land→EVA→takeoff→space; headless шаги. 60 FPS / 5 мин = 3090 human gate |
 | **OS-I** ground proxy | **built (code) 0.3.26** | Один chart-домен орбита→грунт. Collision = Relief trimesh (не сфера). AGL vs dirt. SC: physics proxy = visual, quantized chunks, no sphere-as-ground. |
-| **ST-A** | **this pass** | B overlay на unnamed паде; один habitat (0 combat); ship/TPS живы. Не SITE_*, не G2. |
+| **ST-A** | **built** | B overlay на unnamed паде; один habitat (0 combat); ship/TPS живы. Не SITE_*, не G2. |
 | **ST-B** | next | Extractor + видимый Contribution |
 | **NP-C** | after ST-A | NPC ставит один модуль |
 | **G1 CRUISE** | later | Не нужен для 5–15 км; mass lock только вместе с CRUISE |
