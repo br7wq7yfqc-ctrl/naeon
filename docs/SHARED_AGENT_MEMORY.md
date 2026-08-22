@@ -1,15 +1,15 @@
 # NAEON — Shared Agent Memory
 
-**Last updated:** 2026-08-17 (OPEN SPACE SC bar; P0.6 3090 loop)
+**Last updated:** 2026-08-22 (ST-A strategy overlay)
 
 ## Core constraints
 No P2W · soft Knowledge · Infection max 5 · story ≠ power · Godot 4.7.2 · adult hard-sci-fi · site_pin catalog only · WorldFill = authored skeleton + unnamed filler · ready-made assets first, Tripo unique only · one resident system (ARK) · no planetary voxel shell · perf/25 (FPS on owner GPU, not llvmpipe)
 
 ## Design corpus
-rules/00–26 · **OPEN_SPACE_SC_BENCHMARK** · **ASSET_SOURCE_CANON** · **WORLD_FILL** · DEVELOPMENT_PLAN 2.1 · SITE_PIN · GALAXY_LAYER_PLAN (G2–G6 locked) · TRIPO_ASSET_MANIFEST
+rules/00–26 · **OPEN_SPACE_SC_BENCHMARK** · **BASE_STATION_STRATEGY** · **ASSET_SOURCE_CANON** · **WORLD_FILL** · DEVELOPMENT_PLAN 2.4 · SITE_PIN · GALAXY_LAYER_PLAN (G2–G6 locked) · TRIPO_ASSET_MANIFEST
 
 ## Where things are authored
-- **Order of work** → `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (OS-A first). Pointer in `DEVELOPMENT_PLAN.md`
+- **Order of work** → `docs/design/BASE_STATION_STRATEGY.md` (ST-A built; ST-B next). OS-A…OS-H remain in `OPEN_SPACE_SC_BENCHMARK.md`. Pointer in `DEVELOPMENT_PLAN.md`
 - **Mesh source** → `docs/design/ASSET_SOURCE_CANON.md`
 - **Fill vs authored** → `docs/design/WORLD_FILL.md`
 - **Human GPU fact** → `docs/PLAYTEST_SANDBOX.md` (3090 / P0.6; not FPS PASS on llvmpipe)
@@ -147,6 +147,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-17 | SC pillar 3 ship as place: seat→pocket→hatch EVA; doors lead to pocket or EVA. No multi-crew. No SITE_*. | ship-as-place |
 | 2026-08-17 | OpenSpace HUD stack: fuel / cargo / worst module / landed·occupy / EVA 0G. No overlap with GFX/FPS/OBJECTIVE or no-P2W. Clash unchanged. | openspace-hud-stack |
 | 2026-08-17 | SC pillar 10: live Contribution/Biomass on occupied unnamed pad via OpenSpace HUD stack. Harvest yield unchanged. Not ST-A. | pad-contrib-visible |
+| 2026-08-22 | ST-A: StrategyOverlay (B) on unnamed Nex-Prime pad + one PlayerHabitat (0 combat). Honest range refusal. No SITE_*. Ship/TPS survive exit. G2–G6 stay closed. | st-a-overlay |
 
 ## Full code audit + hardening — 2026-08-15
 

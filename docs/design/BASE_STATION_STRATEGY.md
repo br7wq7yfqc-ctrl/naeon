@@ -3,8 +3,8 @@
 **Версия:** 1.0  
 **Дата:** 2026-08-17  
 **Движок:** Godot 4.7.2  
-**Статус:** план only. Этим PR runtime Godot не менять.  
-**Очередь кода:** OS-H harness built (`2b344c6`). ST-A…ST-F после честного OS-H на GPU (60 FPS / 5 мин — human gate). До этого — только docs.
+**Статус:** ST-A built (2026-08-22). ST-B…ST-F next.  
+**Очередь кода:** ST-A overlay + one habitat on an unnamed pad. NP-C may follow. G2–G6 still locked.
 
 Это **третий бар**: не полёт OPEN SPACE и не Clash.  
 Подход космоса: [`OPEN_SPACE_SC_BENCHMARK.md`](OPEN_SPACE_SC_BENCHMARK.md) (OS-A…OS-H).  
@@ -151,11 +151,11 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 
 ## 9. Срезы ST-A … ST-F
 
-Каждый срез playable сам. Код — после честного OS-H. До OS-H — этот файл, без Godot.
+Каждый срез playable сам. ST-A built 2026-08-22 (`StrategyOverlay` + `PlayerBaseModule`). ST-B next.
 
 | ID | Роль | Семя | DoD | Отказ |
 |----|------|------|-----|-------|
-| **ST-A** | Strategy-камера + **один** модуль на unnamed паде | `BaseBuilder` (существует; P0 = controller-only) | overlay на Nex-Prime; модуль на `Pad_North` / `Pad_Approach` / `Pad_Flank`; корабль и TPS живы | вторая галактика; mint `SITE_*` |
+| **ST-A** | Strategy-камера + **один** модуль на unnamed паде | **built:** `StrategyOverlay` (B) / `BaseBuilder.place_player_habitat` | overlay на Nex-Prime; habitat на `Pad_North` / `Pad_Approach` / `Pad_Flank`; корабль и TPS живы | вторая галактика; mint `SITE_*` |
 | **ST-B** | Extractor + видимый Contribution | `PadBaseController` harvest; `Extractor.gd`; `Contribution.gd` | occupy → добыча → число на HUD; Knowledge только подпись | P2W-ноды; Knowledge→yield |
 | **ST-C** | Печать модуля на паде / NPC-верстаке | `rules/12`, `rules/15`, §6(a) | списать Contribution/Biomass; получить **один** модуль | cash-shop skip |
 | **ST-D** | Очередь на носителе (один модуль) | каталожные hulls; Phase 3 seed | очередь в hangar; упёрлась в mass/power | мобильный `SITE_*` |
@@ -185,8 +185,8 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 
 | Сейчас | Дальше |
 |--------|--------|
-| Этот документ + ссылки из плана и двух баров | OS-H harness built; 60 FPS / 5 мин — 3090 human gate |
-| Стратегия — docs | ST-A после честного OS-H на GPU |
+| ST-A overlay + habitat | ST-B extractor / Contribution |
+| NP-C | NPC ставит один модуль (после ST-A) |
 | G2–G6 | закрыты |
 
 Не открывать G2 «чтобы была карта стратегии». Overlay живёт на загруженном теле ARK.

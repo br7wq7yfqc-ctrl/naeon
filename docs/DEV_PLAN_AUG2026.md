@@ -1,28 +1,26 @@
 # NAEON Dev Plan — Aug 2026
 
-**Authority:** `DEVELOPMENT_PLAN.md` v2.1 (длинный план) + `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (текущий бар).  
+**Authority:** `DEVELOPMENT_PLAN.md` v2.4 (длинный план) + `docs/design/BASE_STATION_STRATEGY.md` (текущий бар).  
 Этот файл — статус, не склад фич.
 
-## Current focus: OPEN SPACE → бар подхода (OS-A … OS-H)
+## Current focus: ST-A strategy overlay (OS-A…OS-H built)
 
-SC roles → NAEON: `docs/design/SC_FEATURE_MAP.md` (OS-A first).  
-Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (arena CODE after OS-A).
+SC roles → NAEON: `docs/design/SC_FEATURE_MAP.md`.  
+Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md`.  
+Стратегия: `docs/design/BASE_STATION_STRATEGY.md`.
 
-Не галактический слой. Петля P0.6 на RTX 3090 жива — не ломать.
+Не галактический слой. Петля P0.6 на RTX 3090 жива — не ломать. G2–G6 locked. G1 CRUISE closed.
 
 | Шаг | State | Gist |
 |-----|-------|------|
-| **P0.6** land / EVA / takeoff | **built (3090)** | hold-S 770→0, HOVER+S, EVA на Relief, 6 мин / 60 FPS. Не FPS PASS на llvmpipe |
-| **OS-A** шов сферы = Relief | **built** | WorldFill §5. Дальний фейк не подменяет грунт |
-| **OS-B** оболочка атмосферы | **built** | envelope + лимб/туман + drag/потолок; 770 м S-sink жив |
-| **OS-C** лестница 5–15 км | **built** | спавн 8 км AGL; far/лимб до 15 км; без G1 CRUISE |
-| **OS-D** unnamed fill с 2 км | **built** | 3 unnamed пада + denser scatter с полок ledger (crate/debris/mast/pad props); без SITE_*; без семи стримеров |
-| **OS-E** чтение у ног | **built** | near shader на чанках: albedo / декали / near LOD; Relief тот же; без GLB в git |
-| **OS-F** полёт в атмосфере | **built** | lift/glide в плотном слое; STALL/HOVER/LAND/hold-S живы |
-| **OS-G** силуэт аванпоста | **built** | мачта+habitat на одном unnamed паде; 8 км = 2 км = грунт |
-| **OS-H** ритуал | **built (harness)** | space→atmo→land→EVA→takeoff→space; headless шаги. 60 FPS / 5 мин = 3090 human gate |
-| **G1 CRUISE** | later | Не нужен для 5–15 км; mass lock только вместе с CRUISE |
-| **G2–G6** | **locked** | Пока петля OPEN SPACE не честна. В коде 404 |
+| **OS-A…OS-H** | **built** | подход / ритуал. 60 FPS / 5 мин = 3090 human gate |
+| **ST-A** | **built** | B overlay на unnamed паде; один habitat (0 combat); ship/TPS живы |
+| **ST-B** | next | Extractor + видимый Contribution |
+| **NP-C** | next after ST-A | NPC ставит один модуль |
+| **G1 CRUISE** | later | Не нужен для 5–15 км |
+| **G2–G6** | **locked** | Пока петля OPEN SPACE честна |
+
+OS-A…OS-H remain built (P0.6 3090 loop). Do not regress them.
 
 ## Старое «DONE» — не очередь
 

@@ -47,7 +47,7 @@ elif [ "$MECH_CODE" -eq 0 ]; then
   MECH_CODE=1
 fi
 echo MECH_CODE=$MECH_CODE MECH_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_mech.log || true)
-grep -E 'Playtest|SCRIPT ERROR|OS-H' /tmp/pt_mech.log | head -60 || true
+grep -E 'Playtest|SCRIPT ERROR|OS-H|ST-A' /tmp/pt_mech.log | head -80 || true
 grep -E 'SurfaceWater|CaveInterior|SurfaceFauna|SCRIPT ERROR|CanonPlates|PadAmbientLife|site_pin' /tmp/pt_os.log | head -20 || true
 grep -E 'SCRIPT ERROR|CanonPlates|TestArena|AbilitySystem' /tmp/pt_ta.log | head -20 || true
 grep -E 'SCRIPT ERROR|CanonPlates' /tmp/pt_mm.log | head -20 || true
