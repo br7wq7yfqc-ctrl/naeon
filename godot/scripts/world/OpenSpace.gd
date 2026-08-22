@@ -31,6 +31,7 @@ var _spawn_ship_pos := Vector3(0, 0, 2800)
 var _interior_view: bool = false
 ## True only when pad↔flight closed a ship pocket; do not free an EVA walker.
 var _drop_pocket_walker: bool = false
+var _strategy: Node = null
 ## OS-C: useful approach in the 5–15 km AGL band. Not the toy 770 m spawn.
 const APPROACH_START_AGL := 8000.0
 const APPROACH_AGL_MIN := 5000.0
@@ -60,6 +61,7 @@ func _ready() -> void:
 	# HUD must exist before any walker does, or every claim / contest / harvest
 	# toast of the opening flight is dropped on the floor.
 	_ensure_game_hud()
+	_setup_strategy_overlay()
 	_setup_interior()
 	_setup_squad()
 	_setup_mechanics_playtest()
@@ -296,6 +298,27 @@ func get_alliance() -> Node:
 	if traffic != null and traffic.has_method("get_alliance"):
 		return traffic.get_alliance()
 	return null
+
+
+func _setup_strategy_overlay() -> void:
+	if not _P0.ST_A_OVERLAY:
+		return
+	var n := Node.new()
+	n.set_script(preload("res://scripts/world/StrategyOverlay.gd"))
+	n.name = "StrategyOverlay"
+	add_child(n)
+	_strategy = n
+	if n.has_method("setup"):
+		n.setup(self)
+
+
+func strategy_overlay() -> Node:
+	return _strategy
+
+
+func strategy_overlay_active() -> bool:
+	return _strategy != null and is_instance_valid(_strategy) \
+		and _strategy.has_method("is_active") and bool(_strategy.is_active())
 
 
 func _setup_mechanics_playtest() -> void:
@@ -579,6 +602,8 @@ func _on_ship_launched() -> void:
 func ensure_flight_view() -> void:
 	## Pad ↔ flight: close the ship pocket, unhide WorldRoot, seat chase cam.
 	## Boot sky/planet is already correct on the 3090 — do not retune spawn.
+	if strategy_overlay_active():
+		return
 	var pocket_walker := false
 	if _interior != null and is_instance_valid(_interior) and _interior.has_method("is_inside") and bool(_interior.is_inside()):
 		if not _interior.has_method("get_kind") or str(_interior.get_kind()) == "ship":
@@ -683,6 +708,8 @@ func _hand_view_to_ship() -> void:
 
 
 func reclaim_pilot_camera() -> void:
+	if strategy_overlay_active():
+		return
 	if _in_rover or not _in_ship:
 		return
 	if ship == null or not is_instance_valid(ship):
@@ -949,6 +976,11 @@ func _tick_eva_tether(delta: float) -> void:
 func _update_hud() -> void:
 	if hud_label == null or ship == null or not is_instance_valid(ship):
 		return
+	if strategy_overlay_active() and _strategy.has_method("readiness_line"):
+		var ov := str(_strategy.readiness_line())
+		hud_label.visible = true
+		hud_label.text = ov + "  ·  Esc leave"
+		return
 	var pl: Node3D = nearest_planet(ship.global_position)
 	var alt := 0.0
 	var pname := "-"
@@ -1015,6 +1047,10 @@ func _update_hud() -> void:
 		tail = "  ·  S descend · occupy/C · E land · F EVA"
 	elif bool(ship.get("is_landed")):
 		tail = ""
+	if _strategy != null and _strategy.has_method("readiness_line"):
+		var rl := str(_strategy.readiness_line())
+		if rl.find("B overlay") >= 0:
+			tail += "  ·  B overlay"
 	var brief := "%s  ·  %s  ·  %s  ·  %d m/s  ·  HP %d  SHD %d%s%s" % [
 		mode, loc, alt_s, int(spd), int(ship.health), int(ship.shields), extra, tail
 	]
@@ -1067,6 +1103,10 @@ func _update_hud() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and (event.keycode == KEY_ESCAPE or event.physical_keycode == KEY_ESCAPE):
+		if strategy_overlay_active() and _strategy.has_method("exit_overlay"):
+			_strategy.exit_overlay()
+			get_viewport().set_input_as_handled()
+			return
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 		get_tree().change_scene_to_file("res://scenes/ui/MainMenu.tscn")
 		return

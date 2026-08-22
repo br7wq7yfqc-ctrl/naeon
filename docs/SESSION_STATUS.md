@@ -1,14 +1,15 @@
 # Session Status
 
+**2026-08-23 — ST-A strategy overlay (this pass)**
+
 **2026-08-21 — OS-I closeout (code): warm dirt before EVA snap, no analytic hill-fight, yaw 0/PI. Headless PASS. Human gate still 3090.**
 
 **2026-08-17 — P0.6 на RTX 3090 жив; бар подхода записан**
 
-Не «unfit». Петля OPEN SPACE на GPU владельца: land / EVA / takeoff, hold-S 770→0, HOVER+S тонет, EVA на Relief, 6 мин / 60 FPS, 0 debugger errors (`ca904ec` / squash `987cd34`). Галактику не открывали. llvmpipe ≠ FPS PASS.
+OS-A…OS-H built. G2–G6 locked. G1 CRUISE closed.  
+ST-A: `B` opens a top-down overlay on an unnamed Nex-Prime pad and places **one** habitat (0 combat). Esc/B leaves; ship + TPS still run. No `SITE_*`. No galaxy map.
 
-OS-H harness на main-очереди: ритуал space→atmo→land→EVA→takeoff→space. 60 FPS / 5 мин — human gate на 3090, не headless. Не G2. План: `docs/design/OPEN_SPACE_SC_BENCHMARK.md`.  
-Канон ассетов (уникальное из PR #7): `docs/design/ASSET_SOURCE_CANON.md`.  
-WorldFill (PR #6, на main): `docs/design/WORLD_FILL.md`.
+P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
 **Skill:** sequential-dev + holistic. Не ломать P0.6 runtime.
 
@@ -16,30 +17,25 @@ WorldFill (PR #6, на main): `docs/design/WORLD_FILL.md`.
 
 | Документ | Роль |
 |----------|------|
-| `docs/design/OPEN_SPACE_SC_BENCHMARK.md` | Бар подхода OS-A…OS-H. G1 только для масштаба. G2–G6 закрыты |
+| `docs/design/BASE_STATION_STRATEGY.md` | ST-A built; ST-B…ST-F next |
+| `docs/design/OPEN_SPACE_SC_BENCHMARK.md` | Бар подхода OS-A…OS-H. G2–G6 закрыты |
 | `docs/design/ASSET_SOURCE_CANON.md` | unique→Tripo / CC0→neon / paid→neon+notice / отказ |
 | `docs/design/WORLD_FILL.md` | Авторский скелет / безымянный filler. Не чеканит `SITE_*` |
-| `docs/PLAYTEST_SANDBOX.md` | 3090 факт + исторический dummy-зонд. Не FPS PASS на llvmpipe |
-| `DEVELOPMENT_PLAN.md` v2.1 | Длинный план фаз. Указатель на SC-бар в шапке |
+| `docs/PLAYTEST_SANDBOX.md` | 3090 факт. Не FPS PASS на llvmpipe |
+| `DEVELOPMENT_PLAN.md` v2.4 | Длинный план фаз |
 | `docs/PROTOTYPE_TO_PLAYABLE.md` | Исторический audit 2026-08-15 |
-
-## Старое «DONE»
-
-`scripts/playtest_headless_smoke.sh` → mechanics PASS — **не human gate**.  
-`docs/PLAYTEST_REPORT.md` 10/10 — **stale smoke**.  
-G0 «СДЕЛАНО» — **built layout**, не галактика.  
-PR #7 писал HUMAN_UNFIT на llvmpipe — **снято** фактом 3090 / P0.6.
 
 ## Tracks
 
 | Track | Status |
 |-------|--------|
 | P0.6 runtime (HUD, descend, EVA, HOVER S) | **built** на 3090 — не регрессить |
-| OPEN SPACE SC bar | **OS-A…OS-H built** — harness ритуала; 60 FPS / 5 мин = 3090 human gate |
+| OPEN SPACE SC bar | **OS-A…OS-H built** — 60 FPS / 5 мин = 3090 human gate |
+| ST-A strategy overlay | **built** — один habitat на unnamed паде |
+| ST-B…ST-F | **next** |
+| NP-C | waits ST-A — **unblocked** (next NPC slice) |
 | Galaxy G2–G6 | **locked** |
 | G1 CRUISE | **in-scope only for OS-C scale** |
-| Asset ingest T1 hypergate | **locked** |
-| S3 Index rebuild | **не этот PR** |
 
 ## Asset catalog (не трогали)
 

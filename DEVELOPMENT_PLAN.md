@@ -1,22 +1,20 @@
 # NAEON — Подробный план разработки по фазам (для build-сессий)
 
-**Версия:** 2.3  
-**Дата:** 2026-08-17  
+**Версия:** 2.4  
+**Дата:** 2026-08-22  
 **Основа:** CONCEPT.md v1.3  
 **Движок:** Godot 4.7.2
 **Принцип:** Local-first → Vertical Slices → Iterative Multiplayer → Platform + AI + Educational Systems  
 **SC → NAEON (роли, не клон):** `docs/design/SC_FEATURE_MAP.md` · бар подхода OS-A…OS-H: `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (OS-A…OS-H built; harness ритуала. 60 FPS / 5 мин = 3090 human gate).  
 **Clash нативен; бар арены — Predecessor/Paragon, не Arena Commander:** `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (AR-A…AR-F; код арены не вытесняет OS-A).  
-**Стратегия — третий бар, не Clash и не полёт OPEN SPACE:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-F; docs now, код после честного OS-H на GPU).  
+**Стратегия — третий бар, не Clash и не полёт OPEN SPACE:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A built: overlay + один habitat на unnamed паде; ST-B…ST-F next).  
 **Каталог — дыры (очередь, не новый catalog):** `docs/design/WORLD_FILL.md` §6. Ready-made fill → locked plates без GLB → пластины только на титульную дыру. Не mint SITE_*. Не capital-ship wave. OS-H harness built; не G2.  
-**NPC agency + MMO HOLD:** `docs/design/NPC_AGENCY.md` (NP-A…NP-F; боты есть, замены игрока нет) · `docs/design/MMO_SERVERS.md` (Phase 3 HOLD; 10k CCU / ≥100 на шард без instance-split; нет netcode сейчас; не G5 / G2–G6).
+**NPC agency + MMO HOLD:** `docs/design/NPC_AGENCY.md` (NP-A…NP-F; NP-C next after ST-A) · `docs/design/MMO_SERVERS.md` (Phase 3 HOLD; 10k CCU / ≥100 на шард без instance-split; нет netcode сейчас; не G5 / G2–G6).
 
-**2026-08-17 — текущий бар OPEN SPACE (не галактика):**  
-`docs/design/OPEN_SPACE_SC_BENCHMARK.md` (срезы OS-A … OS-H).  
-Петля P0.6 на RTX 3090 жива (посадка / EVA / взлёт, hold-S 770→0, 6 мин / 60 FPS) — не ломать.  
-G1 CRUISE не открыт: OS-C = старт 8 км AGL + far/лимб, без сверхсвета. G2–G6 закрыты, пока петля честна.  
-Канон ассетов: `docs/design/ASSET_SOURCE_CANON.md`. WorldFill: `docs/design/WORLD_FILL.md`.  
-Плейтест: `docs/PLAYTEST_SANDBOX.md`. llvmpipe ≠ FPS PASS.
+**2026-08-22 — текущий бар стратегия ST-A (не галактика):**  
+OS-A…OS-H built. G2–G6 закрыты. G1 CRUISE не открыт.  
+ST-A: `StrategyOverlay` (B) на unnamed паде Nex-Prime + один `PlayerHabitat` (0 combat). Корабль и TPS живы после выхода.  
+Петля P0.6 на RTX 3090 жива — не ломать. llvmpipe ≠ FPS PASS.
 
 ---
 
@@ -73,14 +71,14 @@ G1 CRUISE не открыт: OS-C = старт 8 км AGL + far/лимб, без
 - **DoD**: экипировать, летать, стрелять, save/load
 
 ### 1.3 Colony / Strategy Core
-**Бар:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-F). Набросок ниже — не playable слой. Код после честного OS-H на GPU (harness уже в `2b344c6`).
+**Бар:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A built; ST-B…ST-F next). Overlay на загруженном теле ARK — не карта галактики.
 
-- Режим стратегии: top-down / overlay на уже загруженном теле или станции ARK (не вторая галактика, не замена TPS/корабля)
-- Свои базы из модулей на unnamed pads / claimed dirt (occupy-to-hold): habitat, extractor, turret, pad, storage, hangar stub
+- **ST-A (built):** `StrategyOverlay` (клавиша B) + один habitat на `Pad_North` / `Pad_Approach` / `Pad_Flank`. `LayerContext` = Strategy. Корабль и TPS живы после Esc/B. Не `SITE_*`.
+- Свои базы из модулей на unnamed pads / claimed dirt (occupy-to-hold): habitat (ST-A), extractor (ST-B), turret, pad, storage, hangar stub
 - Свои орбитальные станции из той же грамматики (dock, habitat, factory, defense, hangar) — орбита authored-тела, не `SITE_*`
-- Печать модулей на трёх верстаках: (a) NPC/authored пад или станция, (b) hangar carrier/mothership, (c) своя factory
-- Ресурсные ноды + extraction + локальный Contribution / RBE / Biomass
-- **DoD старого наброска** (ещё не слой): построить outpost, добыть ресурс, увидеть Contribution
+- Печать модулей на трёх верстаках: (a) NPC/authored пад или станция, (b) hangar carrier/mothership, (c) своя factory — ST-C+
+- Ресурсные ноды + extraction + локальный Contribution / RBE / Biomass — ST-B
+- **DoD ST-A:** overlay на Nex-Prime; модуль на unnamed паде; корабль и TPS живы
 
 ### Cross
 - Asset pipeline (GLTF + LOD), dark-neon materials, local save
