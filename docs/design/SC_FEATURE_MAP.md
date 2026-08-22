@@ -28,7 +28,7 @@ Likeness — **вся** фантазия SC (лететь, стыковатьс�
 | 7 | Zero-G EVA | `eva_mode` + fuel + tether; всё в ARK | zero-G у корпуса (не грунт); fuel+tether; грунт SurfaceWalker | полировка; всё ещё ARK | вторая система |
 | 8 | Scanning / radar / ping | `soft_scan`; `SoftKnowledge`; `SoftScanCache`; HUD radar | метки / intel; V на паде | Knowledge может подписать (soft) | rarer fill; +DPS от скана |
 | 9 | Contracts / loops | SessionObjectives; Phase 3 Contract Board | boot-loop тексты; квестов нет | Phase 3; **миссии в этом PR не делать** | story=power |
-| 10 | Industry | RBE / biomass / Contribution / `Extractor` / `ResourceNode` / pad harvest | добыча на occupied unnamed паде; live Contribution/Biomass в OpenSpace HUD stack | ST-C later; не ST-A | P2W richer nodes |
+| 10 | Industry | RBE / biomass / Contribution / `Extractor` / `ResourceNode` / pad harvest | ST-A: overlay + one habitat on unnamed pad (0 combat); harvest still occupy-to-hold | ST-B extractor readout; ST-C print later | P2W richer nodes |
 | 11 | Refuel / repair / restock | пады; occupy-to-hold refill SCM/HOVER; GLB pump/tank как проп | заправка + медленный repair + locker restock (energy / Pulse) с occupy; Knowledge подписывает насос/локер, не скипает wait; empty ≠ hard lock | G1/G3 hyperdrive fuel later | paid skip |
 | 12 | World composition | ARK authored (`StarSystemCatalog`); Nex-Prime / ROT-Hive / Shard-Moon; пояс authored | G0 layout жив; outposts = unnamed pads; `CityNightLights` ≠ город | пады unnamed; SITE_* позже из каталога; города ждут; погода после OS-B | сгенерированная галактика; SITE_* mint |
 | 13 | Traffic / AI | dummy / pad guard / Clash bots | NPC can fly the existing loop (NP-A); occupy/harvest on unnamed pad (NP-B); player invites one NPC into the squad (NP-D); short offline pad/follow cycle (NP-F); two NPCs soft-alliance / raid or logistics intent (NP-E) | Clash density later | generated galaxy traffic |
@@ -54,8 +54,8 @@ CIG copy · воксели · SITE_* mint · G2–G6 сейчас · P2W · Trip
 
 | Класс | Факт репо |
 |-------|-----------|
-| Уже есть | SCM/HOVER/STALL/LAND, OpenSpace ARK, пады, EVA snap, Clash, Infection 5, Contribution, Alliance, pad pip, rover петля на Relief, local save, лимб + OS-B оболочка, OS-C подход 8 км, OS-D unnamed fill, OS-E near read, OS-F lift/glide, OS-G силуэт, OS-H harness ритуала |
-| Приближаем | 3090 FPS / 5 мин soak (human gate) |
+| Уже есть | SCM/HOVER/STALL/LAND, OpenSpace ARK, пады, EVA snap, Clash, Infection 5, Contribution, Alliance, pad pip, rover петля на Relief, local save, лимб + OS-B оболочка, OS-C подход 8 км, OS-D unnamed fill, OS-E near read, OS-F lift/glide, OS-G силуэт, OS-H harness ритуала, ST-A strategy overlay + habitat |
+| Приближаем | ST-B extractor; 3090 FPS / 5 мин soak (human gate) |
 | Отказ | quantum сейчас, карта галактики, гейты-прыжки, арена-из-мира (G5), города, каталожные SITE_*, воксели, P2W |
 
-Очередь кода: **OS-H built**. Pillar 6 Pulse после EVA snap. Pillar 7 zero-G у корпуса. Pillar 11 pad fuel. Pillar 3 ship-as-place (seat↔pocket↔hatch). Pillar 5 occupy dock 1 unit. Headless PASS ≠ FPS PASS. Не G2.
+Очередь кода: **ST-A built**. ST-B next. NP-C unblocked. Headless PASS ≠ FPS PASS. Не G2.

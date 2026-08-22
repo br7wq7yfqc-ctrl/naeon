@@ -1,14 +1,15 @@
 # NAEON Dev Plan — Aug 2026
 
-**Authority:** `DEVELOPMENT_PLAN.md` v2.1 (длинный план) + `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (текущий бар).  
+**Authority:** `DEVELOPMENT_PLAN.md` v2.4 (длинный план) + `docs/design/BASE_STATION_STRATEGY.md` (текущий бар).  
 Этот файл — статус, не склад фич.
 
-## Current focus: OPEN SPACE → бар подхода (OS-A … OS-H)
+## Current focus: ST-A strategy overlay (OS-A…OS-H built)
 
-SC roles → NAEON: `docs/design/SC_FEATURE_MAP.md` (OS-A first).  
-Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (arena CODE after OS-A).
+SC roles → NAEON: `docs/design/SC_FEATURE_MAP.md`.  
+Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md`.  
+Стратегия: `docs/design/BASE_STATION_STRATEGY.md`.
 
-Не галактический слой. Петля P0.6 на RTX 3090 жива — не ломать.
+Не галактический слой. Петля P0.6 на RTX 3090 жива — не ломать. G2–G6 locked. G1 CRUISE closed.
 
 | Шаг | State | Gist |
 |-----|-------|------|
@@ -23,6 +24,9 @@ Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (arena COD
 | **OS-J** orbit-read vs dirt | **built** | FarPlate/FarMast/outpost unshaded only beyond ~400 m. Near = metal hull. Cyan 96 m slab was the pad monolith. |
 | **OS-H** ритуал | **built (harness)** | space→atmo→land→EVA→takeoff→space; headless шаги. 60 FPS / 5 мин = 3090 human gate |
 | **OS-I** ground proxy | **built (code) 0.3.26** | Один chart-домен орбита→грунт. Collision = Relief trimesh (не сфера). AGL vs dirt. SC: physics proxy = visual, quantized chunks, no sphere-as-ground. |
+| **ST-A** | **built** | B overlay на unnamed паде; один habitat (0 combat); ship/TPS живы. Не SITE_*, не G2. |
+| **ST-B** | next | Extractor + видимый Contribution |
+| **NP-C** | after ST-A | NPC ставит один модуль |
 | **G1 CRUISE** | later | Не нужен для 5–15 км; mass lock только вместе с CRUISE |
 | **G2–G6** | **locked** | Пока петля OPEN SPACE не честна. В коде 404 |
 

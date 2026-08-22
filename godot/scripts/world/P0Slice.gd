@@ -20,6 +20,8 @@ const OS_G_OUTPOST := true
 const FILLER_PROP_ID := "pad_crate_cc0"
 const ORBITAL_STATIONS := false
 const PAD_DENSITY := false
+## ST-A: strategy overlay + one player habitat on an unnamed pad. Not G2.
+const ST_A_OVERLAY := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6
