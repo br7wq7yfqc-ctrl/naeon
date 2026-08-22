@@ -20,6 +20,7 @@ Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (arena COD
 | **OS-E** чтение у ног | **built** | near shader на чанках: albedo / декали / near LOD; Relief тот же; без GLB в git |
 | **OS-F** полёт в атмосфере | **built** | lift/glide в плотном слое; STALL/HOVER/LAND/hold-S живы |
 | **OS-G** силуэт аванпоста | **built** | мачта+habitat на одном unnamed паде; 8 км = 2 км = грунт |
+| **OS-J** orbit-read vs dirt | **built** | FarPlate/FarMast/outpost unshaded only beyond ~400 m. Near = metal hull. Cyan 96 m slab was the pad monolith. |
 | **OS-H** ритуал | **built (harness)** | space→atmo→land→EVA→takeoff→space; headless шаги. 60 FPS / 5 мин = 3090 human gate |
 | **OS-I** ground proxy | **built (code) 0.3.26** | Один chart-домен орбита→грунт. Collision = Relief trimesh (не сфера). AGL vs dirt. SC: physics proxy = visual, quantized chunks, no sphere-as-ground. |
 | **G1 CRUISE** | later | Не нужен для 5–15 км; mass lock только вместе с CRUISE |
@@ -56,7 +57,7 @@ S3 Index не патчить. `assets/` / `generations/` не в git.
 
 ## Standing gates
 
-- No P2W, soft Knowledge, Infection cap 5, story ≠ power, Godot 4.3.
+- No P2W, soft Knowledge, Infection cap 5, story ≠ power, Godot 4.7.2.
 - rules/25: ~60 FPS на GPU владельца. llvmpipe не закрывает FPS.
 - `site_pin` только из каталога. WorldFill не чеканит `SITE_*`.
 - Не регрессить P0.6 runtime.

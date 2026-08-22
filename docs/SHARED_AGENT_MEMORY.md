@@ -3,7 +3,7 @@
 **Last updated:** 2026-08-17 (OPEN SPACE SC bar; P0.6 3090 loop)
 
 ## Core constraints
-No P2W · soft Knowledge · Infection max 5 · story ≠ power · Godot 4.3 · adult hard-sci-fi · site_pin catalog only · WorldFill = authored skeleton + unnamed filler · ready-made assets first, Tripo unique only · one resident system (ARK) · no planetary voxel shell · perf/25 (FPS on owner GPU, not llvmpipe)
+No P2W · soft Knowledge · Infection max 5 · story ≠ power · Godot 4.7.2 · adult hard-sci-fi · site_pin catalog only · WorldFill = authored skeleton + unnamed filler · ready-made assets first, Tripo unique only · one resident system (ARK) · no planetary voxel shell · perf/25 (FPS on owner GPU, not llvmpipe)
 
 ## Design corpus
 rules/00–26 · **OPEN_SPACE_SC_BENCHMARK** · **ASSET_SOURCE_CANON** · **WORLD_FILL** · DEVELOPMENT_PLAN 2.1 · SITE_PIN · GALAXY_LAYER_PLAN (G2–G6 locked) · TRIPO_ASSET_MANIFEST
@@ -149,6 +149,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-17 | SC pillar 10: live Contribution/Biomass on occupied unnamed pad via OpenSpace HUD stack. Harvest yield unchanged. Not ST-A. | pad-contrib-visible |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
+| 2026-08-21 | OS-J: orbit-read FarPlate/FarMast/outpost hide below ~400 m. Near hull metal. Cyan 96 m slab was the blue monolith next to the ship. |
 
 ## Full code audit + hardening — 2026-08-15
 

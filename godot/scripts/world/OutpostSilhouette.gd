@@ -71,7 +71,7 @@ func _faction_color() -> Color:
 	return Color(0.28, 0.88, 1.0)
 
 
-func _mat(col: Color, energy: float) -> StandardMaterial3D:
+func _mat_far(col: Color, energy: float) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.albedo_color = col
@@ -81,43 +81,66 @@ func _mat(col: Color, energy: float) -> StandardMaterial3D:
 	return mat
 
 
-func _orbit_mesh(n: Node3D, mesh: Mesh, mat: Material, pos: Vector3) -> void:
-	var mi := MeshInstance3D.new()
-	mi.name = n.name + "Mesh"
-	mi.mesh = mesh
-	mi.material_override = mat
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-	mi.visibility_range_end = ORBIT_READ_M
-	mi.visibility_range_end_margin = 400.0
-	mi.position = pos
-	n.add_child(mi)
+func _mat_near(col: Color) -> StandardMaterial3D:
+	## Dirt-range hull: metal, thin neon trim — not a glowing slab.
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = col.darkened(0.72)
+	mat.metallic = 0.72
+	mat.roughness = 0.42
+	mat.emission_enabled = true
+	mat.emission = col
+	mat.emission_energy_multiplier = 0.18
+	return mat
+
+
+func _orbit_mesh(n: Node3D, mesh: Mesh, col: Color, energy: float, pos: Vector3) -> void:
+	## Same node from 8 km and dirt (OS-G). Far = unshaded pip. Near = hull.
+	var far := MeshInstance3D.new()
+	far.name = n.name + "Far"
+	far.mesh = mesh
+	far.material_override = _mat_far(col, energy)
+	far.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	far.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	far.visibility_range_begin = 380.0
+	far.visibility_range_begin_margin = 70.0
+	far.visibility_range_end = ORBIT_READ_M
+	far.visibility_range_end_margin = 400.0
+	far.position = pos
+	n.add_child(far)
+	var near := MeshInstance3D.new()
+	near.name = n.name + "Near"
+	near.mesh = mesh
+	near.material_override = _mat_near(col)
+	near.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	near.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	near.visibility_range_end = 480.0
+	near.visibility_range_end_margin = 80.0
+	near.position = pos
+	n.add_child(near)
 
 
 func _build_mast(col: Color) -> void:
 	var n: Node3D = get_node_or_null("Mast") as Node3D
 	if n == null:
 		return
-	var mat := _mat(col, 2.1)
-	var shaft := BoxMesh.new()
+		var shaft := BoxMesh.new()
 	shaft.size = Vector3(8.0, MAST_H, 8.0)
-	_orbit_mesh(n, shaft, mat, Vector3.ZERO)
+	_orbit_mesh(n, shaft, col, 2.1, Vector3.ZERO)
 	var arm := BoxMesh.new()
 	arm.size = Vector3(28.0, 4.0, 4.0)
-	_orbit_mesh(n, arm, mat, Vector3(0.0, MAST_H * 0.28, 0.0))
+	_orbit_mesh(n, arm, col, 2.1, Vector3(0.0, MAST_H * 0.28, 0.0))
 	var beacon := BoxMesh.new()
 	beacon.size = Vector3(14.0, 10.0, 14.0)
-	_orbit_mesh(n, beacon, _mat(col.lightened(0.25), 2.6), Vector3(0.0, MAST_H * 0.48, 0.0))
+	_orbit_mesh(n, beacon, col.lightened(0.25), 2.6, Vector3(0.0, MAST_H * 0.48, 0.0))
 
 
 func _build_habitat(col: Color) -> void:
 	var n: Node3D = get_node_or_null("Habitat") as Node3D
 	if n == null:
 		return
-	var mat := _mat(col.darkened(0.18), 1.6)
-	var hall := BoxMesh.new()
+		var hall := BoxMesh.new()
 	hall.size = HAB_SIZE
-	_orbit_mesh(n, hall, mat, Vector3.ZERO)
+	_orbit_mesh(n, hall, col.darkened(0.18), 1.6, Vector3.ZERO)
 	var annex := BoxMesh.new()
 	annex.size = Vector3(18.0, 12.0, 16.0)
-	_orbit_mesh(n, annex, mat, Vector3(16.0, -2.0, 8.0))
+	_orbit_mesh(n, annex, col.darkened(0.18), 1.6, Vector3(16.0, -2.0, 8.0))

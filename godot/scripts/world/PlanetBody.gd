@@ -587,7 +587,10 @@ func _add_pad_far_read(pad_root: Node3D) -> void:
 	far.material_override = mat
 	far.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	far.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-	far.visibility_range_end = 10000.0
+	# Hide when close — 96 m unshaded plate was the blue monolith next to the ship.
+	far.visibility_range_begin = 420.0
+	far.visibility_range_begin_margin = 80.0
+	far.visibility_range_end = 12000.0
 	far.visibility_range_end_margin = 400.0
 	far.position = Vector3(0, 0.4, 0)
 	pad_root.add_child(far)
@@ -598,7 +601,9 @@ func _add_pad_far_read(pad_root: Node3D) -> void:
 	mast.mesh = shaft
 	mast.material_override = mat
 	mast.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	mast.visibility_range_end = 10000.0
+	mast.visibility_range_begin = 420.0
+	mast.visibility_range_begin_margin = 80.0
+	mast.visibility_range_end = 12000.0
 	mast.position = Vector3(0, 12.0, 0)
 	pad_root.add_child(mast)
 

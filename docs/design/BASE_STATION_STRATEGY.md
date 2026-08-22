@@ -2,7 +2,7 @@
 
 **Версия:** 1.0  
 **Дата:** 2026-08-17  
-**Движок:** Godot 4.3  
+**Движок:** Godot 4.7.2  
 **Статус:** план only. Этим PR runtime Godot не менять.  
 **Очередь кода:** OS-H harness built (`2b344c6`). ST-A…ST-F после честного OS-H на GPU (60 FPS / 5 мин — human gate). До этого — только docs.
 
@@ -25,7 +25,7 @@ NPC agency (NP-C после ST-A) + MMO HOLD: [`NPC_AGENCY.md`](NPC_AGENCY.md) �
 - Tripo только unique / фракция. Безымянный scatter (пад, мачта, ящик) — не легендарный сайт.
 - Dual-theme CX lattice / GR biomass — через Dynamic Ownership, не второй `SITE_*`.
 - Нет воксельной планеты. Нет Clash-из-мира (G5).
-- Godot 4.3.
+- Godot 4.7.2.
 
 ---
 

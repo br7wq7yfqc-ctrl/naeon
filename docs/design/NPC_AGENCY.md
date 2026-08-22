@@ -2,7 +2,7 @@
 
 **Версия:** 1.0  
 **Дата:** 2026-08-18  
-**Движок:** Godot 4.3  
+**Движок:** Godot 4.7.2  
 **Статус:** NP-A flight + NP-B occupy/harvest + NP-D invite + NP-F short offline + NP-E two-NPC soft alliance в коде. NP-C later (ждёт ST-A).  
 **Код срезов:** NP-A…NP-B + NP-D invite + NP-F short offline + NP-E soft alliance. NP-C later. Не G2–G6. Не 10k CCU.
 
@@ -23,7 +23,7 @@ Clash: [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md).
 - Не чеканить `SITE_*`. Не изобретать UUID каталога.
 - Бесплатный dummy остаётся. Подписка не сильнее в бою и не скипает печать ST.
 - SoftNet сейчас visual (`docs/systems/SOFT_NET.md`): без combat authority.
-- Godot 4.3. Local-first: offline + LAN/coop, без Yandex Cloud.
+- Godot 4.7.2. Local-first: offline + LAN/coop, без Yandex Cloud.
 
 ---
 

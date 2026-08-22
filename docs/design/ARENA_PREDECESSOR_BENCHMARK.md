@@ -2,7 +2,7 @@
 
 **Версия:** 1.0  
 **Дата:** 2026-08-17  
-**Движок:** Godot 4.3  
+**Движок:** Godot 4.7.2  
 **Дверь:** `MainMenu` → AEXION CLASH → `TestArena` (`ClashLanes` / `AexionClash` / `ClashMatchDirector`)  
 **Likeness:** 3rd-person over-the-shoulder MOBA (Paragon / Predecessor) — **ролями** в Clash NAEON, не Arena Commander и не top-down Dota/LoL.
 
