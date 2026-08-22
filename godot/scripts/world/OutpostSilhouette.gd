@@ -121,26 +121,24 @@ func _orbit_mesh(n: Node3D, mesh: Mesh, col: Color, energy: float, pos: Vector3)
 
 func _build_mast(col: Color) -> void:
 	var n: Node3D = get_node_or_null("Mast") as Node3D
-	if n == null:
-		return
+	if n != null:
 		var shaft: BoxMesh = BoxMesh.new()
-	shaft.size = Vector3(8.0, MAST_H, 8.0)
-	_orbit_mesh(n, shaft, col, 2.1, Vector3.ZERO)
-	var arm: BoxMesh = BoxMesh.new()
-	arm.size = Vector3(28.0, 4.0, 4.0)
-	_orbit_mesh(n, arm, col, 2.1, Vector3(0.0, MAST_H * 0.28, 0.0))
-	var beacon: BoxMesh = BoxMesh.new()
-	beacon.size = Vector3(14.0, 10.0, 14.0)
-	_orbit_mesh(n, beacon, col.lightened(0.25), 2.6, Vector3(0.0, MAST_H * 0.48, 0.0))
+		shaft.size = Vector3(8.0, MAST_H, 8.0)
+		_orbit_mesh(n, shaft, col, 2.1, Vector3.ZERO)
+		var arm: BoxMesh = BoxMesh.new()
+		arm.size = Vector3(28.0, 4.0, 4.0)
+		_orbit_mesh(n, arm, col, 2.1, Vector3(0.0, MAST_H * 0.28, 0.0))
+		var beacon: BoxMesh = BoxMesh.new()
+		beacon.size = Vector3(14.0, 10.0, 14.0)
+		_orbit_mesh(n, beacon, col.lightened(0.25), 2.6, Vector3(0.0, MAST_H * 0.48, 0.0))
 
 
 func _build_habitat(col: Color) -> void:
 	var n: Node3D = get_node_or_null("Habitat") as Node3D
-	if n == null:
-		return
+	if n != null:
 		var hall: BoxMesh = BoxMesh.new()
-	hall.size = HAB_SIZE
-	_orbit_mesh(n, hall, col.darkened(0.18), 1.6, Vector3.ZERO)
-	var annex: BoxMesh = BoxMesh.new()
-	annex.size = Vector3(18.0, 12.0, 16.0)
-	_orbit_mesh(n, annex, col.darkened(0.18), 1.6, Vector3(16.0, -2.0, 8.0))
+		hall.size = HAB_SIZE
+		_orbit_mesh(n, hall, col.darkened(0.18), 1.6, Vector3.ZERO)
+		var annex: BoxMesh = BoxMesh.new()
+		annex.size = Vector3(18.0, 12.0, 16.0)
+		_orbit_mesh(n, annex, col.darkened(0.18), 1.6, Vector3(16.0, -2.0, 8.0))
