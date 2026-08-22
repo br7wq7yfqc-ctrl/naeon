@@ -39,6 +39,8 @@
     **`docs/PROTOTYPE_TO_PLAYABLE.md`** (this pass)
 17. Next: 10-min soak on Mac GPU for the FPS half of rules/25 (this VM is
     llvmpipe, so only the memory half could be signed off here)
+18. ST-A: strategy overlay (B) + one habitat on unnamed pad; ship/TPS remain
+    (this pass). G2–G6 still locked.
 
 ## Tripo
 - Balance check when generating; code-first when zero.

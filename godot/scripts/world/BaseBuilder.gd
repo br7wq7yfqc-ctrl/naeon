@@ -63,3 +63,42 @@ static func build_on_pad(pad: Node3D, faction: String) -> void:
 	ctrl.name = "PadBaseController"
 	root.add_child(ctrl)
 	print("[BaseBuilder] cluster+controller on ", pad.name, " faction=", faction)
+
+
+static func is_unnamed_pad(pad: Node) -> bool:
+	if pad == null:
+		return false
+	return str(pad.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]
+
+
+static func player_module_on(pad: Node3D) -> Node3D:
+	if pad == null or not is_instance_valid(pad):
+		return null
+	for c in pad.get_children():
+		if c is Node3D and c.has_meta("player_module") and bool(c.get_meta("player_module")):
+			return c as Node3D
+	return pad.find_child("PlayerHabitat", true, false) as Node3D
+
+
+static func pad_has_player_module(pad: Node3D) -> bool:
+	return player_module_on(pad) != null
+
+
+static func place_player_habitat(pad: Node3D, faction: String) -> Node3D:
+	## ST-A: one habitat, code-first. Not a SITE_*, not the OS-G silhouette.
+	if pad == null or not is_instance_valid(pad):
+		return null
+	if not is_unnamed_pad(pad):
+		return null
+	if pad_has_player_module(pad):
+		return null
+	var n := Node3D.new()
+	n.set_script(preload("res://scripts/world/PlayerBaseModule.gd"))
+	n.name = "PlayerHabitat"
+	n.set_meta("site_pin", "")
+	pad.add_child(n)
+	n.position = Vector3(8.0, 2.6, 6.0)
+	if n.has_method("setup"):
+		n.setup(faction)
+	print("[BaseBuilder] player habitat on ", pad.name, " faction=", faction)
+	return n

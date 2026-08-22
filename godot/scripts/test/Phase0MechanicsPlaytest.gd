@@ -45,6 +45,8 @@ func _go() -> void:
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
 
+	await _assert_st_a(os, fails)
+
 	# --- stall math (no scene) ---
 	if _Flight.stall_amount(0.0, 4.0, 20.0) > 0.01:
 		fails.append("stall in vacuum")
@@ -3461,6 +3463,94 @@ func _cockpit_space_takeoff_view(fails: PackedStringArray) -> void:
 		return
 	_assert_openspace_view(os, ship, nex, "HOVER", fails)
 	print("[Playtest] cockpit→Space→HOVER view ok")
+
+
+func _assert_st_a(os: Node, fails: PackedStringArray) -> void:
+	## ST-A: strategy overlay + one habitat on an unnamed pad. Not G2. Not SITE_*.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.ST_A_OVERLAY):
+		fails.append("ST-A P0Slice flag missing")
+		return
+	var ov: Node = os.strategy_overlay() if os != null and os.has_method("strategy_overlay") else null
+	if ov == null or not ov.has_method("try_enter"):
+		fails.append("ST-A StrategyOverlay missing")
+		return
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var far_ok := not bool(ov.try_enter())
+	var far_line := str(ov.readiness_line()) if ov.has_method("readiness_line") else ""
+	print("[Playtest] ST-A far deny=", far_ok, " line=", far_line)
+	if not far_ok:
+		fails.append("ST-A overlay opened from orbit")
+		if ov.has_method("exit_overlay"):
+			ov.exit_overlay()
+		return
+	if far_line.find("m — land or EVA first") < 0 and far_line.find("no unnamed pad") < 0:
+		fails.append("ST-A far refusal did not name distance (%s)" % far_line)
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var pl: Node3D = os.nearest_planet(ship.global_position) if os != null and os.has_method("nearest_planet") and ship else null
+	if pl != null and pl.has_method("ensure_pad_bases"):
+		pl.ensure_pad_bases()
+		await get_tree().create_timer(0.35).timeout
+	var pad: Node3D = null
+	var tree := get_tree()
+	if tree:
+		for n in tree.get_nodes_in_group("landing_pads"):
+			if n is Node3D and str(n.name) == "Pad_North":
+				pad = n as Node3D
+				break
+		if pad == null:
+			for n in tree.get_nodes_in_group("landing_pads"):
+				if n is Node3D and (str(n.name) == "Pad_Approach" or str(n.name) == "Pad_Flank"):
+					pad = n as Node3D
+					break
+	if pad == null:
+		fails.append("ST-A no unnamed pad (Pad_North class)")
+		return
+	var up: Vector3 = pad.get_meta("pad_up") if pad.has_meta("pad_up") else Vector3.UP
+	if ship:
+		ship.global_position = pad.global_position + up * 8.0
+	await get_tree().process_frame
+	if not bool(ov.try_enter()):
+		fails.append("ST-A enter failed at pad (%s)" % str(ov.readiness_line() if ov.has_method("readiness_line") else ""))
+		return
+	var ly := str(LayerContext.current_layer) if LayerContext else ""
+	print("[Playtest] ST-A layer=", ly, " pad=", pad.name)
+	if ly != "Strategy":
+		fails.append("ST-A LayerContext not Strategy (%s)" % ly)
+	var mod: Node3D = ov.place_module() if ov.has_method("place_module") else null
+	if mod == null or not is_instance_valid(mod):
+		fails.append("ST-A habitat was not placed")
+	else:
+		var mpin := str(mod.get_meta("site_pin", "missing"))
+		var combat := int(mod.combat_stats()) if mod.has_method("combat_stats") else -1
+		print("[Playtest] ST-A module=", mod.name, " pin=", mpin, " combat=", combat)
+		if mpin != "":
+			fails.append("ST-A module minted site_pin (%s)" % mpin)
+		if combat != 0:
+			fails.append("ST-A habitat has combat stats")
+		if str(mod.get_meta("module_type", "")) != "habitat":
+			fails.append("ST-A module is not habitat")
+	var again: Node3D = ov.place_module() if ov.has_method("place_module") else Node3D.new()
+	if again != null:
+		fails.append("ST-A placed a second module on the same pad")
+	if ov.has_method("exit_overlay"):
+		ov.exit_overlay()
+	await get_tree().process_frame
+	var ly2 := str(LayerContext.current_layer) if LayerContext else ""
+	if ly2 == "Strategy":
+		fails.append("ST-A still Strategy after exit")
+	if os != null and os.has_method("strategy_overlay_active") and bool(os.strategy_overlay_active()):
+		fails.append("ST-A overlay stayed active after exit")
+	if ship != null and is_instance_valid(ship) and not ship.is_physics_processing():
+		fails.append("ST-A left ship physics frozen")
+	if LayerContext and str(LayerContext.site_pin_id) != pin0:
+		fails.append("ST-A changed site_pin (%s → %s)" % [pin0, LayerContext.site_pin_id])
+	var extras := 0
+	if tree:
+		extras = tree.get_nodes_in_group("player_base_modules").size()
+	if extras != 1:
+		fails.append("ST-A want exactly one player module, got %s" % extras)
+	print("[Playtest] ST-A overlay pad=", pad.name, " layer_out=", ly2, " pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
 func _assert_hud_stack(os: Node, fails: PackedStringArray) -> void:

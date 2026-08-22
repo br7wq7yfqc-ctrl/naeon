@@ -3,7 +3,7 @@
 **Версия:** 1.0  
 **Дата:** 2026-08-18  
 **Движок:** Godot 4.7.2  
-**Статус:** NP-A flight + NP-B occupy/harvest + NP-D invite + NP-F short offline + NP-E two-NPC soft alliance в коде. NP-C later (ждёт ST-A).  
+**Статус:** NP-A flight + NP-B occupy/harvest + NP-D invite + NP-F short offline + NP-E two-NPC soft alliance в коде. ST-A built. **NP-C next.**  
 **Код срезов:** NP-A…NP-B + NP-D invite + NP-F short offline + NP-E soft alliance. NP-C later. Не G2–G6. Не 10k CCU.
 
 Запрос владельца (в план): NPC должны **полностью закрывать петлю живого игрока**, пока MMO-кластер не запущен — летать, делать все playable-действия, прогрессировать, ставить базы, собирать альянсы и рейды. Живые: отвечают игроку, меняются под его влияние, работают offline и в coop с друзьями. Игрок берёт NPC в отряд и сообщество. **ИИ NPC — подписка AI Agency:** платят за инициативу и диалог, **никогда** за HP / DPS / yield / уникальное оружие (это P2W, отказ). Кластер: [`MMO_SERVERS.md`](MMO_SERVERS.md) — HOLD до Phase 3.
@@ -44,7 +44,7 @@ Clash: [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md).
 | `rules/07` | role_id квестодателей (`CX_PILOT_LIAISON`…) | полёт / стройка |
 | `rules/11`, `rules/23` | иерархия; NP-E intent ≠ siege | pay-to-war; structure siege |
 | `SoftSession.gd` | `user://` form / faction / layer + last action; NP-F short offline cycle | кластер; вторая галактика |
-| `BaseBuilder.gd` | P0 = `PadBaseController` only; игрок модуль не ставит | ST-A; NP-C ждёт ST-A |
+| `BaseBuilder.gd` | P0 controller-only cluster; ST-A `place_player_habitat` on unnamed pad | NP-C next |
 | `PadBaseController.gd` | occupy-to-hold, harvest → Contribution / Biomass; NP-B visitor uses the same path | свой yield; NP-C |
 | `ShipController` / `ShipFlightModel` / `ShipLandingGear` | SCM/NAV/HOVER/STALL/LAND; G = LAND на unnamed pad | NPC-пилот |
 | `Contribution.gd` | `add` / `spend` | кошелёк NPC |
@@ -73,13 +73,13 @@ OS-G силуэт и ambient life — WorldFill / плотность, не жи�
 
 ## 4. Срезы NP-A … NP-F
 
-Каждый срез playable сам, **local-first** (offline и coop SoftNet visual). Код later. NP-C после ST-A. Стратегия по-прежнему GPU-gate (`BASE_STATION_STRATEGY.md`).
+Каждый срез playable сам, **local-first** (offline и coop SoftNet visual). NP-A…F built except NP-C. NP-C next (ST-A overlay is in).
 
 | ID | Роль | Семя | DoD | Отказ |
 |----|------|------|-----|-------|
 | **NP-A** | Один NPC летает **существующей** петлёй корабля | `ShipController` / `ShipFlightModel` / `ShipLandingGear`; тело уже в ARK | взлёт и LAND на unnamed pad (`Pad_North` / `Pad_Approach` / `Pad_Flank`); игрок видит тот же SCM/HOVER/LAND | новый IFCS; G1; вторая система |
 | **NP-B** | NPC occupy / harvest / Contribution | `PadBaseController`; `Contribution.gd`; `Extractor.gd` | те же числа и таймеры, что у игрока; Knowledge только подпись | свой yield; P2W-ноды |
-| **NP-C** | Один модуль или очередь на паде | ST-A overlay; §6(a) `BASE_STATION_STRATEGY`; `BaseBuilder` | после ST-A: поставить **один** модуль на unnamed pad **или** встать в очередь печати; без ST-A — не начинать | mint `SITE_*`; cash-shop skip ST; код до OS-H GPU |
+| **NP-C** | Один модуль или очередь на паде | ST-A overlay **built**; §6(a) `BASE_STATION_STRATEGY`; `BaseBuilder` | после ST-A: поставить **один** модуль на unnamed pad **или** встать в очередь печати | mint `SITE_*`; cash-shop skip ST |
 | **NP-D** | Отряд: игрок зовёт **одного** NPC | `rules/24` (2–5); seat/F в `InteriorDirector` | invite; NPC следует / садится; coop: visual SoftNet, без combat authority | аура урона от группы; pay-slot |
 | **NP-E** | Два NPC: soft-альянс / raid intent | `AllianceRanks` 0–4; `rules/11`; intent ≠ `rules/23` siege | оба с рангом и perm; intent виден (рейд/логистика); без бонуса HP/DPS/claim | P2W-ранг; pay-to-war |
 | **NP-F** | Offline: короткая петля без игрока | `SoftSession` (`user://`); влияние **последних** действий игрока | игрок ушёл — NPC доигрывает короткий цикл (пад / follow); не кластер | серверный 10k sim; вторая галактика «под NPC» |
