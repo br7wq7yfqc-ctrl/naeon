@@ -151,6 +151,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
 | 2026-08-21 | OS-J: orbit-read FarPlate/FarMast/outpost hide below ~400 m. Near hull metal. Cyan 96 m slab was the blue monolith next to the ship. |
+| 2026-08-23 | ST-A: B overlay on unnamed pad (Pad_North class); one catalog habitat, 0 combat, no SITE_*. Esc leaves ship/TPS. |
 
 ## Full code audit + hardening — 2026-08-15
 
