@@ -148,6 +148,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-17 | OpenSpace HUD stack: fuel / cargo / worst module / landed·occupy / EVA 0G. No overlap with GFX/FPS/OBJECTIVE or no-P2W. Clash unchanged. | openspace-hud-stack |
 | 2026-08-17 | SC pillar 10: live Contribution/Biomass on occupied unnamed pad via OpenSpace HUD stack. Harvest yield unchanged. Not ST-A. | pad-contrib-visible |
 | 2026-08-22 | ST-A: StrategyOverlay (B) on unnamed Nex-Prime pad + one PlayerHabitat (0 combat). Honest range refusal. No SITE_*. Ship/TPS survive exit. G2–G6 stay closed. | st-a-overlay |
+| 2026-08-27 | ST-B: visible PadHarvestExtractor on unnamed pad; occupy → harvest → Contribution on HUD. Knowledge labels only. No SITE_*. | st-b-extractor |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
 | 2026-08-21 | OS-J: orbit-read FarPlate/FarMast/outpost hide below ~400 m. Near hull metal. Cyan 96 m slab was the blue monolith next to the ship. |
