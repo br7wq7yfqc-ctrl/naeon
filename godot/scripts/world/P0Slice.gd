@@ -22,6 +22,8 @@ const ORBITAL_STATIONS := false
 const PAD_DENSITY := false
 ## ST-A: strategy overlay + one player habitat on an unnamed pad. Not G2.
 const ST_A_OVERLAY := true
+## NP-C: visitor places one habitat on an empty unnamed pad. Same BaseBuilder. Not SITE_*.
+const NP_C_MODULE := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6

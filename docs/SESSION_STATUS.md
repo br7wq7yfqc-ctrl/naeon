@@ -1,3 +1,5 @@
+**2026-08-28 — NP-C: NPC habitat on empty unnamed pad**
+
 # Session Status
 
 **2026-08-23 — ST-A strategy overlay (this pass)**

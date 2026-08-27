@@ -26,7 +26,7 @@ Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md`.
 | **OS-I** ground proxy | **built (code) 0.3.26** | Один chart-домен орбита→грунт. Collision = Relief trimesh (не сфера). AGL vs dirt. SC: physics proxy = visual, quantized chunks, no sphere-as-ground. |
 | **ST-A** | **built** | B overlay на unnamed паде; один habitat (0 combat); ship/TPS живы. Не SITE_*, не G2. |
 | **ST-B** | next | Extractor + видимый Contribution |
-| **NP-C** | after ST-A | NPC ставит один модуль |
+| **NP-C** | **built** | NPC ставит один habitat на пустой unnamed пад (тот же BaseBuilder). Не SITE_*. |
 | **G1 CRUISE** | later | Не нужен для 5–15 км; mass lock только вместе с CRUISE |
 | **G2–G6** | **locked** | Пока петля OPEN SPACE не честна. В коде 404 |
 
