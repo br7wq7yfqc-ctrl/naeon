@@ -19,6 +19,23 @@ func setup_npc(fac: String) -> void:
 	_bind(fac, true)
 
 
+func setup_printed(fac: String, kind: String) -> void:
+	## ST-C: catalog grant after Contribution/Biomass spend. Not ST-A/NP-C slots.
+	var k := kind if kind == "habitat" or kind == "extractor" else "extractor"
+	faction = fac if fac != "" else "Cybernex"
+	name = "PrintedHabitat" if k == "habitat" else "PrintedExtractor"
+	set_meta("player_module", false)
+	set_meta("npc_module", false)
+	set_meta("printed_module", true)
+	set_meta("module_type", k)
+	set_meta("site_pin", "")
+	set_meta("combat_stats", 0)
+	if k == "extractor":
+		set_meta("ledger_slug", "t1_resource_extractor")
+	add_to_group("printed_base_modules")
+	_spawn_printed(k)
+
+
 func _bind(fac: String, by_npc: bool) -> void:
 	faction = fac if fac != "" else "Cybernex"
 	name = "NpcHabitat" if by_npc else "PlayerHabitat"
@@ -33,7 +50,7 @@ func _bind(fac: String, by_npc: bool) -> void:
 
 
 func module_type() -> String:
-	return "habitat"
+	return str(get_meta("module_type", "habitat"))
 
 
 func combat_stats() -> int:
@@ -61,3 +78,23 @@ func _spawn_mesh() -> void:
 	prop.set("add_static_collision", true)
 	prop.name = "HabitatMesh"
 	n.add_child(prop)
+
+
+func _spawn_printed(kind: String) -> void:
+	var marker := Node3D.new()
+	marker.name = "Habitat" if kind == "habitat" else "Extractor"
+	marker.set_meta("site_pin", "")
+	marker.set_meta("outpost_part", "printed_%s" % kind)
+	add_child(marker)
+	var fx := "cybernex" if faction != "gROT" else "grot"
+	var prop := Node3D.new()
+	prop.set_script(_Prop)
+	if kind == "habitat":
+		prop.set("relative_path", "colony/colony_habitat/colony_habitat_%s_lod1.glb" % fx)
+		prop.set("scale_factor", 2.2)
+	else:
+		prop.set("relative_path", "colony/extractor_unit/extractor_unit_%s_lod1.glb" % fx)
+		prop.set("scale_factor", 1.4)
+	prop.set("add_static_collision", true)
+	prop.name = "PrintedMesh"
+	marker.add_child(prop)

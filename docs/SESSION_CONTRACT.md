@@ -42,7 +42,9 @@
 18. ST-A: strategy overlay (B) + one habitat on unnamed pad; ship/TPS remain
     (built). G2–G6 still locked.
 19. ST-B: extractor visible on unnamed pad + Contribution on HUD after occupy
-    harvest. Knowledge is a label only (this pass).
+    harvest. Knowledge is a label only (built).
+20. ST-C: spend Contribution/Biomass at pad / NPC bench → one catalog module.
+    No cash-shop skip. Knowledge does not cheapen rules/15 (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

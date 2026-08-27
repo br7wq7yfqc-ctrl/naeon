@@ -103,6 +103,24 @@ func try_spend_contribution(amount: float) -> bool:
 	contribution_changed.emit(contribution)
 	return true
 
+
+func try_spend_biomass(amount: float) -> bool:
+	## Soft economy spend — never cash, never combat unlock.
+	if amount <= 0.0:
+		return true
+	if biomass < amount:
+		return false
+	biomass -= amount
+	biomass_changed.emit(biomass)
+	return true
+
+
+func try_spend_economy(amount: float) -> bool:
+	## Faction wallet: Contribution (CX) or Biomass (GR). Never cash.
+	if player_faction == Faction.GROT:
+		return try_spend_biomass(amount)
+	return try_spend_contribution(amount)
+
 func add_biomass(amount: float) -> void:
 	biomass += amount
 	biomass_changed.emit(biomass)
