@@ -148,7 +148,7 @@ llvmpipe этого не подтверждает и **не** ставит FPS P
 - Дальний шейдер всё ещё дешёвый subset vs полный `PlanetRelief` (WorldFill §5 / OS-A).
 - Нет атмосферы / облаков / входа.
 - OS-D: с ~2 км видны 3 unnamed пада + unnamed scatter (ящики / обломки / pad-пропсы / лишние мачты) с полок ledger. Не `SITE_*`.
-- OS-E: near shader на чанках (albedo / декали / near LOD). Relief тот же.
+- OS-E leftover: near PBR (CC0 или fallback ImageTexture), не unshaded. Relief тот же. Chart UV.
 - OS-F: подъём/планирование в плотном слое. S-sink геометрический. 770 м без крыла.
 - OS-G: с 8 км / 2 км читается мачта+пад на `Pad_Approach`; на грунте то же место.
 - OS-H: headless ритуал space→atmo→land→EVA→takeoff→space. Не FPS PASS.

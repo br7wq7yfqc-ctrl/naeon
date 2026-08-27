@@ -1,6 +1,6 @@
 # NAEON — Shared Agent Memory
 
-**Last updated:** 2026-08-22 (ST-A strategy overlay)
+**Last updated:** 2026-08-27 (OS-E PBR leftover on ST-A main)
 
 ## Core constraints
 No P2W · soft Knowledge · Infection max 5 · story ≠ power · Godot 4.7.2 · adult hard-sci-fi · site_pin catalog only · WorldFill = authored skeleton + unnamed filler · ready-made assets first, Tripo unique only · one resident system (ARK) · no planetary voxel shell · perf/25 (FPS on owner GPU, not llvmpipe)
@@ -152,6 +152,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
 | 2026-08-21 | OS-J: orbit-read FarPlate/FarMast/outpost hide below ~400 m. Near hull metal. Cyan 96 m slab was the blue monolith next to the ship. |
 | 2026-08-23 | ST-A: B overlay on unnamed pad (Pad_North class); one catalog habitat, 0 combat, no SITE_*. Esc leaves ship/TPS. |
+| 2026-08-27 | OS-E PBR leftover on current main: drop unshaded, bind CC0/fallback, chart UV. ST-A overlay/habitat kept. OS-I physics not this slice. | os-e-pbr |
 
 ## Full code audit + hardening — 2026-08-15
 

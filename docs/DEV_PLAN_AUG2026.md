@@ -18,7 +18,7 @@ Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md`.
 | **OS-B** оболочка атмосферы | **built** | envelope + лимб/туман + drag/потолок; 770 м S-sink жив |
 | **OS-C** лестница 5–15 км | **built** | спавн 8 км AGL; far/лимб до 15 км; без G1 CRUISE |
 | **OS-D** unnamed fill с 2 км | **built** | 3 unnamed пада + denser scatter с полок ledger (crate/debris/mast/pad props); без SITE_*; без семи стримеров |
-| **OS-E** чтение у ног | **built** | near shader на чанках: albedo / декали / near LOD; Relief тот же; без GLB в git |
+| **OS-E** чтение у ног | **built + PBR leftover** | PBR CC0 albedo/rough/normal на чанках (fallback ImageTexture); chart UV; не unshaded; без GLB в git |
 | **OS-F** полёт в атмосфере | **built** | lift/glide в плотном слое; STALL/HOVER/LAND/hold-S живы |
 | **OS-G** силуэт аванпоста | **built** | мачта+habitat на одном unnamed паде; 8 км = 2 км = грунт |
 | **OS-J** orbit-read vs dirt | **built** | FarPlate/FarMast/outpost unshaded only beyond ~400 m. Near = metal hull. Cyan 96 m slab was the pad monolith. |
