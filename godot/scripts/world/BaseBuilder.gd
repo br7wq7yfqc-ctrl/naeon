@@ -80,25 +80,57 @@ static func player_module_on(pad: Node3D) -> Node3D:
 	return pad.find_child("PlayerHabitat", true, false) as Node3D
 
 
+static func npc_module_on(pad: Node3D) -> Node3D:
+	if pad == null or not is_instance_valid(pad):
+		return null
+	for c in pad.get_children():
+		if c is Node3D and c.has_meta("npc_module") and bool(c.get_meta("npc_module")):
+			return c as Node3D
+	return pad.find_child("NpcHabitat", true, false) as Node3D
+
+
 static func pad_has_player_module(pad: Node3D) -> bool:
-	return player_module_on(pad) != null
+	return module_on(pad) != null
+
+
+static func module_on(pad: Node3D) -> Node3D:
+	var p := player_module_on(pad)
+	if p != null:
+		return p
+	return npc_module_on(pad)
+
+
+static func pad_has_module(pad: Node3D) -> bool:
+	return module_on(pad) != null
 
 
 static func place_player_habitat(pad: Node3D, faction: String) -> Node3D:
 	## ST-A: one habitat, code-first. Not a SITE_*, not the OS-G silhouette.
+	return _place_habitat(pad, faction, false)
+
+
+static func place_npc_habitat(pad: Node3D, faction: String) -> Node3D:
+	## NP-C: one habitat by the visitor. Same mesh, other pad slot. Not SITE_*.
+	return _place_habitat(pad, faction, true)
+
+
+static func _place_habitat(pad: Node3D, faction: String, by_npc: bool) -> Node3D:
+	var n: Node3D = null
 	if pad == null or not is_instance_valid(pad):
 		return null
 	if not is_unnamed_pad(pad):
 		return null
-	if pad_has_player_module(pad):
+	if pad_has_module(pad):
 		return null
-	var n := Node3D.new()
+	n = Node3D.new()
 	n.set_script(preload("res://scripts/world/PlayerBaseModule.gd"))
-	n.name = "PlayerHabitat"
+	n.name = "NpcHabitat" if by_npc else "PlayerHabitat"
 	n.set_meta("site_pin", "")
 	pad.add_child(n)
-	n.position = Vector3(8.0, 2.6, 6.0)
-	if n.has_method("setup"):
+	n.position = Vector3(-8.0, 2.6, 6.0) if by_npc else Vector3(8.0, 2.6, 6.0)
+	if by_npc and n.has_method("setup_npc"):
+		n.setup_npc(faction)
+	elif n.has_method("setup"):
 		n.setup(faction)
-	print("[BaseBuilder] player habitat on ", pad.name, " faction=", faction)
+	print("[BaseBuilder] ", "npc" if by_npc else "player", " habitat on ", pad.name, " faction=", faction)
 	return n

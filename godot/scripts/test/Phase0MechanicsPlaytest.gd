@@ -572,6 +572,7 @@ func _go() -> void:
 	await _cockpit_space_takeoff_view(fails)
 	await _npc_takeoff_land(fails)
 	await _npc_occupy_harvest(fails)
+	await _npc_place_module(fails)
 	await _npc_squad_invite(fails)
 	await _npc_offline_cycle(fails)
 	await _npc_soft_alliance(fails)
@@ -2519,6 +2520,65 @@ func _npc_occupy_harvest(fails: PackedStringArray) -> void:
 		traffic.refresh_labels()
 	if pilot.has_method("stop_harvest"):
 		pilot.stop_harvest()
+
+
+
+func _npc_place_module(fails: PackedStringArray) -> void:
+	## NP-C: visitor places one habitat on an empty unnamed pad.
+	## Same BaseBuilder as ST-A. Not SITE_*. Not a second module from this hull.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.NP_C_MODULE):
+		fails.append("NP-C P0Slice flag missing")
+		return
+	var nex: Node = _osh_nex()
+	if nex != null and nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.2).timeout
+	var traffic: Node = nex.call("pad_traffic") if nex != null and nex.has_method("pad_traffic") else null
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("NP-C: pad traffic missing")
+		return
+	var pilot: Node = traffic.get_npc_pilot() if traffic.has_method("get_npc_pilot") else null
+	if pilot == null or not pilot.has_method("place_one_module"):
+		fails.append("NP-C: NpcPilot place_one_module missing")
+		return
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var tree := get_tree()
+	var before := 0
+	if tree:
+		before = tree.get_nodes_in_group("npc_base_modules").size()
+	var mod: Node3D = pilot.place_one_module()
+	if mod == null or not is_instance_valid(mod):
+		fails.append("NP-C: habitat was not placed")
+		return
+	var pad: Node = mod.get_parent()
+	var pname := str(pad.name) if pad else "?"
+	if pname != "Pad_North" and pname != "Pad_Approach" and pname != "Pad_Flank":
+		fails.append("NP-C: unknown pad (%s)" % pname)
+	var mpin := str(mod.get_meta("site_pin", "missing"))
+	var combat := int(mod.combat_stats()) if mod.has_method("combat_stats") else -1
+	print("[Playtest] NP-C module=", mod.name, " pad=", pname, " pin=", mpin, " combat=", combat)
+	if mpin != "":
+		fails.append("NP-C module minted site_pin (%s)" % mpin)
+	if combat != 0:
+		fails.append("NP-C habitat has combat stats")
+	if str(mod.get_meta("module_type", "")) != "habitat":
+		fails.append("NP-C module is not habitat")
+	if not bool(mod.get_meta("npc_module", false)):
+		fails.append("NP-C module not marked npc_module")
+	if bool(mod.get_meta("player_module", true)):
+		fails.append("NP-C stole the player_module slot")
+	var again: Node3D = pilot.place_one_module()
+	if again != null:
+		fails.append("NP-C placed a second module from the same hull")
+	if LayerContext and str(LayerContext.site_pin_id) != pin0:
+		fails.append("NP-C changed site_pin (%s → %s)" % [pin0, LayerContext.site_pin_id])
+	var after := before
+	if tree:
+		after = tree.get_nodes_in_group("npc_base_modules").size()
+	if after != before + 1:
+		fails.append("NP-C want exactly one npc module, got %s (was %s)" % [after, before])
+	print("[Playtest] NP-C overlay pad=", pname, " pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
 func _npc_squad_invite(fails: PackedStringArray) -> void:

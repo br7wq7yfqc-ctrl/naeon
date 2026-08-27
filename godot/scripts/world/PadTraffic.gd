@@ -4,7 +4,7 @@ extends Node3D
 ## Visitor flies the existing SCM/HOVER/LAND loop and occupy/harvest (NP-B).
 ## NP-D may invite that pilot into a local squad. NP-F: short offline pad/follow.
 ## NP-E: guard + visitor share AllianceRanks and a visible raid/logistics intent.
-## Not galaxy traffic. Not NP-C (waits ST-A). Not siege. Not pay-to-rank.
+## NP-C: visitor may place one habitat on an empty unnamed pad. Not siege. Not pay-to-rank.
 ## Knowledge labels only — never yield.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")

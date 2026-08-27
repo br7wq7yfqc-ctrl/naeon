@@ -4,6 +4,7 @@ extends Node
 ## NP-D: player may invite this pilot into a local squad — follow or seat.
 ## NP-E: this hull + pad-guard share AllianceRanks and a visible raid/logistics intent.
 ## NP-F: after the player leaves, one short pad occupy/harvest or follow cycle.
+## NP-C: after ST-A, place one habitat on an empty unnamed pad (same BaseBuilder).
 ## Not a second IFCS, not G1, not a private yield table, not a damage aura.
 
 
@@ -31,6 +32,7 @@ var _squad_follow: bool = false
 var _squad_seated: bool = false
 var _companion: Node3D = null
 var _offline_ran: bool = false
+var _placed_mod: Node3D = null
 var _offline_step: String = ""
 var _offline_busy: bool = false
 
@@ -93,6 +95,75 @@ func saw_harvest() -> bool:
 
 func harvest_amount() -> float:
 	return _harvest_got
+
+
+func placed_module() -> Node3D:
+	if _placed_mod != null and is_instance_valid(_placed_mod):
+		return _placed_mod
+	return null
+
+
+func saw_place_module() -> bool:
+	return placed_module() != null
+
+
+func place_one_module() -> Node3D:
+	## NP-C: one habitat, empty unnamed pad, same BaseBuilder as ST-A.
+	## This hull places at most one. No SITE_*. No cash skip.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var pad: Node3D = null
+	var fac: String = ""
+	var mod: Node3D = null
+	if P0 == null or not bool(P0.NP_C_MODULE):
+		return null
+	if placed_module() != null:
+		return null
+	pad = _empty_unnamed_pad()
+	if pad == null:
+		print("[NpcPilot] NP-C no empty unnamed pad")
+		return null
+	fac = _hull_faction()
+	mod = BaseBuilder.place_npc_habitat(pad, fac)
+	if mod == null:
+		return null
+	if str(mod.get_meta("site_pin", "x")) != "":
+		push_error("[NpcPilot] NP-C minted a site_pin")
+		mod.queue_free()
+		return null
+	_placed_mod = mod
+	print("[NpcPilot] NP-C habitat on ", pad.name, " fac=", fac)
+	return mod
+
+
+func _empty_unnamed_pad() -> Node3D:
+	var legal: Array = ["Pad_North", "Pad_Approach", "Pad_Flank"]
+	var cands: Array = []
+	if _pad != null and is_instance_valid(_pad) and str(_pad.name) in legal:
+		cands.append(_pad)
+	var tree := get_tree()
+	if tree:
+		for n in tree.get_nodes_in_group("landing_pads"):
+			if n is Node3D and str(n.name) in legal and n not in cands:
+				cands.append(n)
+	for n in cands:
+		var pad: Node3D = n as Node3D
+		if pad == null:
+			continue
+		if BaseBuilder.pad_has_module(pad):
+			continue
+		return pad
+	return null
+
+
+func _hull_faction() -> String:
+	if _ship != null and is_instance_valid(_ship):
+		if _ship.has_method("get_faction"):
+			return str(_ship.get_faction())
+		if "faction" in _ship:
+			return str(_ship.get("faction"))
+	if GameManager and GameManager.has_method("get_faction_name"):
+		return str(GameManager.get_faction_name())
+	return "Cybernex"
 
 
 func start_harvest() -> void:

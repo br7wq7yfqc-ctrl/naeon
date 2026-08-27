@@ -3,7 +3,7 @@
 **Версия:** 1.0  
 **Дата:** 2026-08-18  
 **Движок:** Godot 4.7.2  
-**Статус:** NP-A flight + NP-B occupy/harvest + NP-D invite + NP-F short offline + NP-E two-NPC soft alliance в коде. ST-A built. **NP-C next.**  
+**Статус:** NP-A…NP-B + NP-D + NP-F + NP-E built. ST-A built. **NP-C this pass** (one habitat on empty unnamed pad).  
 **Код срезов:** NP-A…NP-B + NP-D invite + NP-F short offline + NP-E soft alliance. NP-C later. Не G2–G6. Не 10k CCU.
 
 Запрос владельца (в план): NPC должны **полностью закрывать петлю живого игрока**, пока MMO-кластер не запущен — летать, делать все playable-действия, прогрессировать, ставить базы, собирать альянсы и рейды. Живые: отвечают игроку, меняются под его влияние, работают offline и в coop с друзьями. Игрок берёт NPC в отряд и сообщество. **ИИ NPC — подписка AI Agency:** платят за инициативу и диалог, **никогда** за HP / DPS / yield / уникальное оружие (это P2W, отказ). Кластер: [`MMO_SERVERS.md`](MMO_SERVERS.md) — HOLD до Phase 3.
@@ -44,7 +44,7 @@ Clash: [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md).
 | `rules/07` | role_id квестодателей (`CX_PILOT_LIAISON`…) | полёт / стройка |
 | `rules/11`, `rules/23` | иерархия; NP-E intent ≠ siege | pay-to-war; structure siege |
 | `SoftSession.gd` | `user://` form / faction / layer + last action; NP-F short offline cycle | кластер; вторая галактика |
-| `BaseBuilder.gd` | P0 controller-only cluster; ST-A `place_player_habitat` on unnamed pad | NP-C next |
+| `BaseBuilder.gd` | P0 controller-only; ST-A `place_player_habitat`; NP-C `place_npc_habitat` | mint SITE_* |
 | `PadBaseController.gd` | occupy-to-hold, harvest → Contribution / Biomass; NP-B visitor uses the same path | свой yield; NP-C |
 | `ShipController` / `ShipFlightModel` / `ShipLandingGear` | SCM/NAV/HOVER/STALL/LAND; G = LAND на unnamed pad | NPC-пилот |
 | `Contribution.gd` | `add` / `spend` | кошелёк NPC |
@@ -73,7 +73,7 @@ OS-G силуэт и ambient life — WorldFill / плотность, не жи�
 
 ## 4. Срезы NP-A … NP-F
 
-Каждый срез playable сам, **local-first** (offline и coop SoftNet visual). NP-A…F built except NP-C. NP-C next (ST-A overlay is in).
+Каждый срез playable сам, **local-first** (offline и coop SoftNet visual). NP-A…F built including NP-C (one habitat, empty unnamed pad).
 
 | ID | Роль | Семя | DoD | Отказ |
 |----|------|------|-----|-------|

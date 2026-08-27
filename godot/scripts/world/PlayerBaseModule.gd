@@ -11,13 +11,23 @@ var faction: String = "Cybernex"
 
 
 func setup(fac: String) -> void:
+	_bind(fac, false)
+
+
+func setup_npc(fac: String) -> void:
+	## NP-C: same habitat, not the player's ST-A slot, not SITE_*.
+	_bind(fac, true)
+
+
+func _bind(fac: String, by_npc: bool) -> void:
 	faction = fac if fac != "" else "Cybernex"
-	name = "PlayerHabitat"
-	set_meta("player_module", true)
+	name = "NpcHabitat" if by_npc else "PlayerHabitat"
+	set_meta("player_module", not by_npc)
+	set_meta("npc_module", by_npc)
 	set_meta("module_type", "habitat")
 	set_meta("site_pin", "")
 	set_meta("combat_stats", 0)
-	add_to_group("player_base_modules")
+	add_to_group("npc_base_modules" if by_npc else "player_base_modules")
 	_spawn_marker()
 	_spawn_mesh()
 
@@ -34,7 +44,7 @@ func _spawn_marker() -> void:
 	var n := Node3D.new()
 	n.name = "Habitat"
 	n.set_meta("site_pin", "")
-	n.set_meta("outpost_part", "player_habitat")
+	n.set_meta("outpost_part", "npc_habitat" if bool(get_meta("npc_module", false)) else "player_habitat")
 	add_child(n)
 
 
