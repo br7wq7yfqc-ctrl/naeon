@@ -68,6 +68,7 @@ func _ready() -> void:
 	set_process(true)
 	add_to_group("pad_bases")
 	call_deferred("_ensure_visible_extractor")
+	call_deferred("_ensure_print_bench")
 	_seed_pad_cargo()
 	_contest_ring = Node3D.new()
 	_contest_ring.set_script(preload("res://scripts/world/ContestedRing.gd"))
@@ -739,6 +740,44 @@ func _ensure_visible_extractor() -> void:
 	if ext.has_method("bind_pad"):
 		ext.bind_pad(self)
 	print("[PadBase] ST-B extractor on ", pad.name)
+
+
+func print_bench() -> Node:
+	var pad := _unnamed_pad_host()
+	if pad != null:
+		var n: Node = pad.get_node_or_null("PadPrintBench")
+		if n != null:
+			return n
+	return find_child("PadPrintBench", true, false)
+
+
+func print_one_module(kind: String = "") -> Node3D:
+	var b := print_bench()
+	if b != null and b.has_method("print_one_module"):
+		return b.print_one_module(kind)
+	return null
+
+
+func _ensure_print_bench() -> void:
+	## ST-C: §6(a) pad / NPC bench. Does not touch the ST-B harvest machine.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var pad: Node3D = null
+	var bench: Node3D = null
+	if P0 == null or not bool(P0.ST_C_PRINT):
+		return
+	pad = _unnamed_pad_host()
+	if pad == null:
+		return
+	if pad.get_node_or_null("PadPrintBench") != null:
+		return
+	bench = Node3D.new()
+	bench.set_script(preload("res://scripts/world/PadPrintBench.gd"))
+	bench.name = "PadPrintBench"
+	bench.set_meta("site_pin", "")
+	pad.add_child(bench)
+	# Off ST-A (8, 2.6, 6), NP-C (-8, 2.6, 6), ST-B extractor (10, 1.2, -8).
+	bench.position = Vector3(0.0, 0.35, 12.0)
+	print("[PadBase] ST-C print bench on ", pad.name)
 
 
 func pad_repair_hud_line() -> String:

@@ -24,6 +24,8 @@ const PAD_DENSITY := false
 const ST_A_OVERLAY := true
 ## ST-B: visible extractor on unnamed pad + Contribution on HUD. Knowledge labels only.
 const ST_B_EXTRACTOR := true
+## ST-C: print one catalog module at pad / NPC bench. Spend Contribution/Biomass. No cash skip.
+const ST_C_PRINT := true
 ## NP-C: visitor places one habitat on an empty unnamed pad. Same BaseBuilder. Not SITE_*.
 const NP_C_MODULE := true
 

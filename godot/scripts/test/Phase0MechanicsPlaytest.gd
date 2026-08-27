@@ -282,6 +282,7 @@ func _go() -> void:
 				fails.append("no harvest while owner in ring")
 			_assert_occupy_contrib(os, pad, c0, c1, fails)
 			_assert_st_b(os, pad, c0, c1, fails)
+			_assert_st_c(os, pad, fails)
 			_assert_occupy_energy(os, pad, walker2, e0, pulse0, fails)
 			if pad.has_method("harvest_hud_line"):
 				var hl0 := str(pad.harvest_hud_line())
@@ -3935,6 +3936,117 @@ func _assert_st_b(os: Node, pad: Node, before: float, after: float, fails: Packe
 	var up := stxt.to_upper()
 	if up.find("CONTRIB") < 0 and up.find("BIOMASS") < 0:
 		fails.append("ST-B HUD missing Contribution number")
+
+
+func _assert_st_c(os: Node, pad: Node, fails: PackedStringArray) -> void:
+	## ST-C: spend Contribution/Biomass at pad / NPC bench → ONE catalog module.
+	## Cash-shop skip is impossible. Knowledge does not cheapen rules/15.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var bench: Node = null
+	var cost := 0.0
+	var cost_after := 0.0
+	var before := 0.0
+	var after := 0.0
+	var wallet0 := 0.0
+	var skip_ok := true
+	var cash_mod: Node3D = null
+	var broke: Node3D = null
+	var mod: Node3D = null
+	var again: Node3D = null
+	var pin := ""
+	var slug := ""
+	var kind := ""
+	var extras := 0
+	var tree: SceneTree = get_tree()
+	if P0 == null or not bool(P0.ST_C_PRINT):
+		fails.append("ST-C P0Slice flag missing")
+		return
+	if pad != null and pad.has_method("print_bench"):
+		bench = pad.print_bench()
+	if bench == null and tree:
+		var benches: Array = tree.get_nodes_in_group("print_benches")
+		if not benches.is_empty():
+			bench = benches[0]
+	if bench == null or not bench.has_method("print_one_module"):
+		fails.append("ST-C print bench missing")
+		return
+	if bench.has_method("print_cost"):
+		cost = float(bench.print_cost())
+	if cost <= 0.0:
+		fails.append("ST-C print cost is not a rules/15 sink")
+		return
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("colony_ops", 20.0)
+		GameManager.add_mastery("biomass_ops", 20.0)
+	if bench.has_method("print_cost"):
+		cost_after = float(bench.print_cost())
+	if absf(cost_after - cost) > 0.001:
+		fails.append("Knowledge cheapened print tables")
+	if bench.has_method("cash_shop_skip_possible") and bool(bench.cash_shop_skip_possible()):
+		fails.append("ST-C cash-shop skip possible")
+	if bench.has_method("try_cash_skip_print"):
+		skip_ok = bool(bench.try_cash_skip_print(999.0))
+	if skip_ok:
+		fails.append("ST-C cash-shop skip printed a module")
+	if GameManager:
+		wallet0 = float(GameManager.contribution)
+		GameManager.contribution = 0.0
+	cash_mod = bench.print_one_module("", 50.0)
+	if cash_mod != null:
+		fails.append("ST-C accepted cash instead of Contribution")
+		if is_instance_valid(cash_mod):
+			cash_mod.queue_free()
+	broke = bench.print_one_module()
+	if broke != null:
+		fails.append("ST-C printed with empty wallet")
+		if is_instance_valid(broke):
+			broke.queue_free()
+	if GameManager:
+		if wallet0 < cost:
+			GameManager.contribution = cost
+		else:
+			GameManager.contribution = wallet0
+		if GameManager.has_method("add_contribution") and GameManager.contribution < cost:
+			GameManager.add_contribution(cost - GameManager.contribution)
+		before = float(GameManager.contribution)
+	mod = pad.print_one_module() if pad != null and pad.has_method("print_one_module") else bench.print_one_module()
+	if GameManager:
+		after = float(GameManager.contribution)
+	if mod == null or not is_instance_valid(mod):
+		fails.append("ST-C did not grant a module after spend")
+		return
+	if after > before - cost + 0.001:
+		fails.append("ST-C did not spend Contribution (%s → %s, cost=%s)" % [
+			str(snapped(before, 0.01)), str(snapped(after, 0.01)), str(snapped(cost, 0.01))
+		])
+	pin = str(mod.get_meta("site_pin", "missing"))
+	kind = str(mod.get_meta("module_type", ""))
+	slug = str(mod.get_meta("ledger_slug", ""))
+	print("[Playtest] ST-C print spent Contribution ", snapped(before, 0.01), " -> ", snapped(after, 0.01),
+		" cost=", snapped(cost, 0.01), " module=", mod.name, " kind=", kind,
+		" pad=", str(pad.name) if pad else "?", " cash_skip=false")
+	if pin != "":
+		fails.append("ST-C module minted site_pin (%s)" % pin)
+	if kind != "habitat" and kind != "extractor":
+		fails.append("ST-C granted an unknown module (%s)" % kind)
+	if kind == "extractor" and slug != "" and slug != "t1_resource_extractor":
+		fails.append("ST-C invented slug (%s)" % slug)
+	if bool(mod.get_meta("player_module", false)):
+		fails.append("ST-C stole the ST-A player_module slot")
+	if bool(mod.get_meta("npc_module", false)):
+		fails.append("ST-C stole the NP-C npc_module slot")
+	if not bool(mod.get_meta("printed_module", false)):
+		fails.append("ST-C module not marked printed_module")
+	again = bench.print_one_module()
+	if again != null:
+		fails.append("ST-C granted a second module")
+	if tree:
+		extras = tree.get_nodes_in_group("printed_base_modules").size()
+	if extras != 1:
+		fails.append("ST-C want exactly one printed module, got %s" % extras)
+	if os == null:
+		return
 
 
 func _osh_report_skips(fails: PackedStringArray, done: Dictionary, required: PackedStringArray) -> void:

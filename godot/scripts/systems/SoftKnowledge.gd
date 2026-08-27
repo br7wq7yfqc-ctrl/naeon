@@ -150,6 +150,15 @@ static func yield_label(grot: bool = false) -> String:
 	return "CONTRIBUTION" if ops >= 15.0 or rank() >= 5 else "CONTRIB"
 
 
+## Colony/history: name the §6(a) print bench. Never changes print cost.
+static func print_bench_label() -> String:
+	var ops := mastery("colony_ops")
+	var hist := mastery("history")
+	if ops >= 15.0 or hist >= 15.0 or rank() >= 5:
+		return "T1 PRINT BENCH"
+	return "PRINT BENCH"
+
+
 ## Colony/history: name the pad extractor. Never changes extract_rate or yield.
 static func extractor_label() -> String:
 	var ops := mastery("colony_ops")

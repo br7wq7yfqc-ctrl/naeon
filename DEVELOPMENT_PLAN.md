@@ -7,14 +7,15 @@
 **Принцип:** Local-first → Vertical Slices → Iterative Multiplayer → Platform + AI + Educational Systems  
 **SC → NAEON (роли, не клон):** `docs/design/SC_FEATURE_MAP.md` · бар подхода OS-A…OS-H: `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (OS-A…OS-H built; harness ритуала. 60 FPS / 5 мин = 3090 human gate).  
 **Clash нативен; бар арены — Predecessor/Paragon, не Arena Commander:** `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (AR-A…AR-F; код арены не вытесняет OS-A).  
-**Стратегия — третий бар, не Clash и не полёт OPEN SPACE:** `docs/design/BASE_STATION_STRATEGY.md` (ST-B built: extractor + visible Contribution; ST-C…ST-F next).  
+**Стратегия — третий бар, не Clash и не полёт OPEN SPACE:** `docs/design/BASE_STATION_STRATEGY.md` (ST-C built: print one catalog module; ST-D…ST-F next).  
 **Каталог — дыры (очередь, не новый catalog):** `docs/design/WORLD_FILL.md` §6. Ready-made fill → locked plates без GLB → пластины только на титульную дыру. Не mint SITE_*. Не capital-ship wave. OS-H harness built; не G2.  
 **NPC agency + MMO HOLD:** `docs/design/NPC_AGENCY.md` (NP-A…NP-F; NP-C next after ST-A) · `docs/design/MMO_SERVERS.md` (Phase 3 HOLD; 10k CCU / ≥100 на шард без instance-split; нет netcode сейчас; не G5 / G2–G6).
 
-**2026-08-27 — текущий бар стратегия ST-B (не галактика):**  
+**2026-08-27 — текущий бар стратегия ST-C (не галактика):**  
 OS-A…OS-H built. G2–G6 закрыты. G1 CRUISE не открыт.  
 ST-A: `StrategyOverlay` (B) на unnamed паде Nex-Prime + один `PlayerHabitat` (0 combat).  
 ST-B: occupy unnamed pad → harvest → Contribution на HUD; видимый `PadHarvestExtractor`. Knowledge ≠ yield.  
+ST-C: `PadPrintBench` на unnamed паде / NPC-верстаке. Spend Contribution/Biomass → один catalog-модуль. Нет cash-shop skip.  
 Петля P0.6 на RTX 3090 жива — не ломать. llvmpipe ≠ FPS PASS.
 
 ---
@@ -72,16 +73,18 @@ ST-B: occupy unnamed pad → harvest → Contribution на HUD; видимый `
 - **DoD**: экипировать, летать, стрелять, save/load
 
 ### 1.3 Colony / Strategy Core
-**Бар:** `docs/design/BASE_STATION_STRATEGY.md` (ST-B built; ST-C…ST-F next). Overlay на загруженном теле ARK — не карта галактики.
+**Бар:** `docs/design/BASE_STATION_STRATEGY.md` (ST-C built; ST-D…ST-F next). Overlay на загруженном теле ARK — не карта галактики.
 
 - **ST-A (built):** `StrategyOverlay` (клавиша B) + один habitat на `Pad_North` / `Pad_Approach` / `Pad_Flank`. `LayerContext` = Strategy. Корабль и TPS живы после Esc/B. Не `SITE_*`.
 - **ST-B (built):** видимый extractor на unnamed паде; occupy → harvest → Contribution на HUD. Knowledge только подпись.
+- **ST-C (built):** печать одного catalog-модуля на паде / NPC-верстаке (`PadPrintBench`). Spend Contribution/Biomass (`rules/15`). Нет cash-shop skip. Knowledge ≠ cheaper tables.
 - Свои базы из модулей на unnamed pads / claimed dirt (occupy-to-hold): habitat (ST-A), extractor (ST-B), turret, pad, storage, hangar stub
 - Свои орбитальные станции из той же грамматики (dock, habitat, factory, defense, hangar) — орбита authored-тела, не `SITE_*`
-- Печать модулей на трёх верстаках: (a) NPC/authored пад или станция, (b) hangar carrier/mothership, (c) своя factory — ST-C+
+- Печать модулей на трёх верстаках: (a) NPC/authored пад или станция — ST-C built; (b) hangar carrier/mothership, (c) своя factory — ST-D+
 - Ресурсные ноды + extraction + локальный Contribution / RBE / Biomass — ST-B built
 - **DoD ST-A:** overlay на Nex-Prime; модуль на unnamed паде; корабль и TPS живы
 - **DoD ST-B:** occupy → добыча → число Contribution на HUD; Knowledge ≠ yield
+- **DoD ST-C:** списать Contribution/Biomass; получить один модуль; cash-shop skip невозможен
 
 ### Cross
 - Asset pipeline (GLTF + LOD), dark-neon materials, local save

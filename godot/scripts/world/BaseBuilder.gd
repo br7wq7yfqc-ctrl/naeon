@@ -104,6 +104,41 @@ static func pad_has_module(pad: Node3D) -> bool:
 	return module_on(pad) != null
 
 
+static func printed_module_on(pad: Node3D) -> Node3D:
+	var kids: Array = []
+	if pad == null or not is_instance_valid(pad):
+		return null
+	kids = pad.get_children()
+	for c in kids:
+		if c is Node3D and c.has_meta("printed_module") and bool(c.get_meta("printed_module")):
+			return c as Node3D
+	return pad.find_child("PrintedExtractor", true, false) as Node3D
+
+
+static func print_catalog_module(pad: Node3D, faction: String, kind: String = "extractor") -> Node3D:
+	## ST-C: one catalog habitat or extractor after a wallet spend. Not SITE_*.
+	var n: Node3D = null
+	var k := kind
+	if pad == null or not is_instance_valid(pad):
+		return null
+	if not is_unnamed_pad(pad):
+		return null
+	if printed_module_on(pad) != null:
+		return null
+	if k != "habitat" and k != "extractor":
+		k = "extractor"
+	n = Node3D.new()
+	n.set_script(preload("res://scripts/world/PlayerBaseModule.gd"))
+	n.name = "PrintedHabitat" if k == "habitat" else "PrintedExtractor"
+	n.set_meta("site_pin", "")
+	pad.add_child(n)
+	n.position = Vector3(-10.0, 1.2, -8.0) if k == "extractor" else Vector3(0.0, 2.6, 12.0)
+	if n.has_method("setup_printed"):
+		n.setup_printed(faction, k)
+	print("[BaseBuilder] printed ", k, " on ", pad.name, " faction=", faction)
+	return n
+
+
 static func place_player_habitat(pad: Node3D, faction: String) -> Node3D:
 	## ST-A: one habitat, code-first. Not a SITE_*, not the OS-G silhouette.
 	return _place_habitat(pad, faction, false)
