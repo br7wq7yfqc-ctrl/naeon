@@ -67,6 +67,7 @@ func _ready() -> void:
 	_ensure_label()
 	set_process(true)
 	add_to_group("pad_bases")
+	call_deferred("_ensure_visible_extractor")
 	_seed_pad_cargo()
 	_contest_ring = Node3D.new()
 	_contest_ring.set_script(preload("res://scripts/world/ContestedRing.gd"))
@@ -689,12 +690,55 @@ func harvest_hud_line() -> String:
 	if _status != "extracting":
 		return ""
 	var rate: float = extract_rate * contribution_per_unit
-	var unit := "CONTRIB"
+	var grot := false
 	if GameManager and GameManager.has_method("get_faction_name") and str(GameManager.get_faction_name()) == "gROT":
-		unit = "BIOMASS"
+		grot = true
 	elif ownership and ownership.faction_name() == "gROT":
-		unit = "BIOMASS"
-	return "EXTRACTING  %s +%.1f/s  R%.0f" % [unit, rate, crystal_reserves]
+		grot = true
+	var unit := _SoftK.yield_label(grot)
+	var machine := _SoftK.extractor_label()
+	return "EXTRACTING  %s  %s +%.1f/s  R%.0f" % [machine, unit, rate, crystal_reserves]
+
+
+func visible_extractor() -> Node3D:
+	var pad := _unnamed_pad_host()
+	if pad != null:
+		var n: Node = pad.get_node_or_null("PadHarvestExtractor")
+		if n is Node3D:
+			return n as Node3D
+	return find_child("PadHarvestExtractor", true, false) as Node3D
+
+
+func _unnamed_pad_host() -> Node3D:
+	var n: Node = get_parent()
+	while n:
+		if n is Node3D and str(n.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+			return n as Node3D
+		n = n.get_parent()
+	return null
+
+
+func _ensure_visible_extractor() -> void:
+	## ST-B: harvest machine on the unnamed plate. Deposit stays here.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.ST_B_EXTRACTOR):
+		return
+	var pad := _unnamed_pad_host()
+	if pad == null:
+		return
+	if pad.get_node_or_null("PadHarvestExtractor") != null:
+		return
+	var ext := Node3D.new()
+	ext.set_script(preload("res://scripts/colony/Extractor.gd"))
+	ext.name = "PadHarvestExtractor"
+	ext.set("auto_start", false)
+	ext.set_meta("site_pin", "")
+	pad.add_child(ext)
+	# Off ST-A habitat (8, 2.6, 6), NP-C habitat (-8, 2.6, 6), OS-D PadExtractor (0, 0, -16).
+	ext.position = Vector3(10.0, 1.2, -8.0)
+	if ext.has_method("bind_pad"):
+		ext.bind_pad(self)
+	print("[PadBase] ST-B extractor on ", pad.name)
 
 
 func pad_repair_hud_line() -> String:

@@ -281,6 +281,7 @@ func _go() -> void:
 			if c1 <= c0 + 0.001:
 				fails.append("no harvest while owner in ring")
 			_assert_occupy_contrib(os, pad, c0, c1, fails)
+			_assert_st_b(os, pad, c0, c1, fails)
 			_assert_occupy_energy(os, pad, walker2, e0, pulse0, fails)
 			if pad.has_method("harvest_hud_line"):
 				var hl0 := str(pad.harvest_hud_line())
@@ -3872,6 +3873,68 @@ func _assert_occupy_contrib(os: Node, pad: Node, before: float, after: float, fa
 	var up := stxt.to_upper()
 	if up.find("CONTRIB") < 0 and up.find("BIOMASS") < 0:
 		fails.append("HUD stack missing live Contribution while occupying")
+
+
+func _assert_st_b(os: Node, pad: Node, before: float, after: float, fails: PackedStringArray) -> void:
+	## ST-B: occupy → harvest → Contribution > 0 on HUD. Extractor visible.
+	## Knowledge labels the machine / wallet only — never yield.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.ST_B_EXTRACTOR):
+		fails.append("ST-B P0Slice flag missing")
+		return
+	if after <= before + 0.001:
+		fails.append("ST-B occupy→harvest did not raise Contribution")
+		return
+	var ext: Node = null
+	if pad != null and pad.has_method("visible_extractor"):
+		ext = pad.visible_extractor()
+	if ext == null and pad != null:
+		var host: Node = pad
+		while host:
+			if host is Node3D and str(host.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+				ext = host.get_node_or_null("PadHarvestExtractor")
+				break
+			host = host.get_parent()
+	if ext == null or not is_instance_valid(ext):
+		fails.append("ST-B extractor not visible on unnamed pad")
+		return
+	var pin := str(ext.get_meta("site_pin", "missing"))
+	if pin != "":
+		fails.append("ST-B extractor minted site_pin (%s)" % pin)
+	if ext.has_meta("player_module") and bool(ext.get_meta("player_module")):
+		fails.append("ST-B extractor claimed ST-A player_module slot")
+	if str(ext.get_meta("module_type", "")) != "extractor":
+		fails.append("ST-B module is not extractor")
+	var slug := str(ext.get_meta("ledger_slug", ""))
+	if slug != "" and slug != "t1_resource_extractor":
+		fails.append("ST-B invented slug (%s)" % slug)
+	var rate0 := 0.0
+	var cpu0 := 0.0
+	if pad != null:
+		rate0 = float(pad.get("extract_rate"))
+		cpu0 = float(pad.get("contribution_per_unit"))
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("colony_ops", 20.0)
+		GameManager.add_mastery("biomass_ops", 20.0)
+	if pad != null and (absf(float(pad.get("extract_rate")) - rate0) > 0.001 \
+		or absf(float(pad.get("contribution_per_unit")) - cpu0) > 0.001):
+		fails.append("Knowledge changed harvest yield")
+	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
+	if Hud == null:
+		fails.append("ST-B HUD helper missing")
+		return
+	var snap: Dictionary = Hud.snapshot(os.get("ship") if os else null, os.get("player") if os else null, pad)
+	var hud_c := float(snap.get("econ", -1.0))
+	var stxt := str(Hud.stack_text(snap))
+	print("[Playtest] ST-B occupy→harvest→Contribution ", snapped(before, 0.01), " -> ", snapped(after, 0.01),
+		" hud=", snapped(hud_c, 0.01), " extractor=", ext.name, " pad=",
+		str(pad.name) if pad else "?")
+	if hud_c <= 0.0 or hud_c <= before + 0.001:
+		fails.append("ST-B HUD Contribution not > 0 after harvest")
+	var up := stxt.to_upper()
+	if up.find("CONTRIB") < 0 and up.find("BIOMASS") < 0:
+		fails.append("ST-B HUD missing Contribution number")
 
 
 func _osh_report_skips(fails: PackedStringArray, done: Dictionary, required: PackedStringArray) -> void:

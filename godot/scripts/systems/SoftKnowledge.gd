@@ -150,6 +150,15 @@ static func yield_label(grot: bool = false) -> String:
 	return "CONTRIBUTION" if ops >= 15.0 or rank() >= 5 else "CONTRIB"
 
 
+## Colony/history: name the pad extractor. Never changes extract_rate or yield.
+static func extractor_label() -> String:
+	var ops := mastery("colony_ops")
+	var hist := mastery("history")
+	if ops >= 15.0 or hist >= 15.0 or rank() >= 5:
+		return "T1 EXTRACTOR"
+	return "EXTRACTOR"
+
+
 ## Logistics: resource warning threshold earlier (QoL)
 static func low_energy_threshold() -> float:
 	var logi := mastery("logistics")

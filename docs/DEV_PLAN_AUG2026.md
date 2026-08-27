@@ -3,7 +3,7 @@
 **Authority:** `DEVELOPMENT_PLAN.md` v2.4 (длинный план) + `docs/design/BASE_STATION_STRATEGY.md` (текущий бар).  
 Этот файл — статус, не склад фич.
 
-## Current focus: ST-A strategy overlay (OS-A…OS-H built)
+## Current focus: ST-B extractor + Contribution (OS-A…OS-H / ST-A built)
 
 SC roles → NAEON: `docs/design/SC_FEATURE_MAP.md`.  
 Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md`.  
@@ -25,7 +25,7 @@ Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md`.
 | **OS-H** ритуал | **built (harness)** | space→atmo→land→EVA→takeoff→space; headless шаги. 60 FPS / 5 мин = 3090 human gate |
 | **OS-I** ground proxy | **built (code) 0.3.26** | Один chart-домен орбита→грунт. Collision = Relief trimesh (не сфера). AGL vs dirt. SC: physics proxy = visual, quantized chunks, no sphere-as-ground. |
 | **ST-A** | **built** | B overlay на unnamed паде; один habitat (0 combat); ship/TPS живы. Не SITE_*, не G2. |
-| **ST-B** | next | Extractor + видимый Contribution |
+| **ST-B** | **built** | Extractor на unnamed паде; occupy → harvest → Contribution на HUD. Knowledge ≠ yield. |
 | **NP-C** | **built** | NPC ставит один habitat на пустой unnamed пад (тот же BaseBuilder). Не SITE_*. |
 | **G1 CRUISE** | later | Не нужен для 5–15 км; mass lock только вместе с CRUISE |
 | **G2–G6** | **locked** | Пока петля OPEN SPACE не честна. В коде 404 |

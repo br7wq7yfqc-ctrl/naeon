@@ -2,14 +2,17 @@
 
 # Session Status
 
-**2026-08-23 — ST-A strategy overlay (this pass)**
+**2026-08-27 — ST-B extractor + visible Contribution (this pass)**
+
+**2026-08-23 — ST-A strategy overlay**
 
 **2026-08-21 — OS-I closeout (code): warm dirt before EVA snap, no analytic hill-fight, yaw 0/PI. Headless PASS. Human gate still 3090.**
 
 **2026-08-17 — P0.6 на RTX 3090 жив; бар подхода записан**
 
 OS-A…OS-H built. G2–G6 locked. G1 CRUISE closed.  
-ST-A: `B` opens a top-down overlay on an unnamed Nex-Prime pad and places **one** habitat (0 combat). Esc/B leaves; ship + TPS still run. No `SITE_*`. No galaxy map.
+ST-A: `B` opens a top-down overlay on an unnamed Nex-Prime pad and places **one** habitat (0 combat). Esc/B leaves; ship + TPS still run. No `SITE_*`. No galaxy map.  
+ST-B: occupy unnamed pad → harvest → Contribution number on the OpenSpace HUD. Visible `PadHarvestExtractor` (catalog slug `t1_resource_extractor`). Knowledge labels only.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -19,7 +22,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
 | Документ | Роль |
 |----------|------|
-| `docs/design/BASE_STATION_STRATEGY.md` | ST-A built; ST-B…ST-F next |
+| `docs/design/BASE_STATION_STRATEGY.md` | ST-B built; ST-C…ST-F next |
 | `docs/design/OPEN_SPACE_SC_BENCHMARK.md` | Бар подхода OS-A…OS-H. G2–G6 закрыты |
 | `docs/design/ASSET_SOURCE_CANON.md` | unique→Tripo / CC0→neon / paid→neon+notice / отказ |
 | `docs/design/WORLD_FILL.md` | Авторский скелет / безымянный filler. Не чеканит `SITE_*` |
@@ -34,8 +37,9 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | P0.6 runtime (HUD, descend, EVA, HOVER S) | **built** на 3090 — не регрессить |
 | OPEN SPACE SC bar | **OS-A…OS-H built** — 60 FPS / 5 мин = 3090 human gate |
 | ST-A strategy overlay | **built** — один habitat на unnamed паде |
-| ST-B…ST-F | **next** |
-| NP-C | waits ST-A — **unblocked** (next NPC slice) |
+| ST-B extractor / Contribution | **built** — occupy → harvest → HUD number |
+| ST-C…ST-F | **next** |
+| NP-C | **built** — NPC habitat on empty unnamed pad |
 | Galaxy G2–G6 | **locked** |
 | G1 CRUISE | **in-scope only for OS-C scale** |
 
