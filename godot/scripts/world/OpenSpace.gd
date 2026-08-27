@@ -58,6 +58,7 @@ func _ready() -> void:
 	if _P0.ORBITAL_STATIONS:
 		_spawn_orbital_stations()
 	_spawn_ship()
+	_spawn_catalog_carrier()
 	# HUD must exist before any walker does, or every claim / contest / harvest
 	# toast of the opening flight is dropped on the floor.
 	_ensure_game_hud()
@@ -364,6 +365,46 @@ func _spawn_ship() -> void:
 		p0.call("ensure_pad_plates")
 	print("[OpenSpace] approach AGL=%.0f over %s (r=%.0f)" % [agl, str(p0.get("planet_name")), r])
 	print("[OpenSpace] OS-H F5: hold S (no pitch) → E land → F EVA → F board → Space takeoff → above atmo")
+
+
+func _spawn_catalog_carrier() -> void:
+	## ST-D: one catalog hull with a hangar queue. Not a mobile SITE_*.
+	var n: Node3D = null
+	var p0: Node3D = null
+	var r := 1400.0
+	if not _P0.ST_D_HANGAR:
+		return
+	if world_root == null:
+		return
+	if world_root.get_node_or_null("CatalogCarrier") != null:
+		return
+	n = Node3D.new()
+	n.set_script(preload("res://scripts/world/CatalogCarrier.gd"))
+	n.name = "CatalogCarrier"
+	n.set_meta("site_pin", "")
+	world_root.add_child(n)
+	if not planets.is_empty():
+		p0 = planets[0] as Node3D
+		r = float(p0.get("radius") if p0.get("radius") != null else 1400.0)
+		n.global_position = p0.global_position + Vector3(r + 600.0, 80.0, 0.0)
+	elif ship != null:
+		n.global_position = ship.global_position + Vector3(180.0, 40.0, 80.0)
+	if n.has_method("setup"):
+		n.setup("cybernex_capital_carrier")
+	print("[OpenSpace] ST-D catalog carrier=", n.get("hull_id"), " hangar queue · not SITE_*")
+
+
+func catalog_carrier() -> Node3D:
+	if world_root == null:
+		return null
+	return world_root.get_node_or_null("CatalogCarrier") as Node3D
+
+
+func hangar_queue() -> Node:
+	var c := catalog_carrier()
+	if c != null and c.has_method("hangar_queue"):
+		return c.hangar_queue()
+	return find_child("CarrierHangarQueue", true, false)
 
 
 func _bind_planet_observers() -> void:

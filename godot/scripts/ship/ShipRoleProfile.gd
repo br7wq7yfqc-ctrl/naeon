@@ -55,3 +55,21 @@ static func make_hauler() -> ShipRoleProfile:
 	p.cargo_mass_t = 40.0
 	p.has_cargo_ramp = true
 	return p
+
+
+static func make_carrier(slug: String = "cybernex_capital_carrier") -> ShipRoleProfile:
+	## Phase 3 hangar seed. Catalog slug only — no new hull UUID. Interiors later.
+	var p := ShipRoleProfile.new()
+	var id := slug.strip_edges()
+	if id == "":
+		id = "cybernex_capital_carrier"
+	p.hull_id = id
+	p.display_name = "Carrier"
+	p.interior_profile_id = "scout_single"
+	p.allows_siege = false
+	p.allows_scan = true
+	p.hangar_slots = 1
+	p.cargo_volume_m3 = 80.0
+	p.cargo_mass_t = 20.0
+	p.has_cargo_ramp = false
+	return p

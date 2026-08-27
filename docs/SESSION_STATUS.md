@@ -1,3 +1,5 @@
+**2026-08-27 — ST-D: hangar queue of one module on a catalog carrier**
+
 **2026-08-27 — ST-C: print one catalog module at pad / NPC bench**
 
 **2026-08-28 — NP-C: NPC habitat on empty unnamed pad**
@@ -15,7 +17,8 @@
 OS-A…OS-H built. G2–G6 locked. G1 CRUISE closed.  
 ST-A: `B` opens a top-down overlay on an unnamed Nex-Prime pad and places **one** habitat (0 combat). Esc/B leaves; ship + TPS still run. No `SITE_*`. No galaxy map.  
 ST-B: occupy unnamed pad → harvest → Contribution number on the OpenSpace HUD. Visible `PadHarvestExtractor` (catalog slug `t1_resource_extractor`). Knowledge labels only.  
-ST-C: spend Contribution/Biomass at `PadPrintBench` (§6(a)) → **one** catalog module. No cash-shop skip. Knowledge does not cheapen `rules/15`.
+ST-C: spend Contribution/Biomass at `PadPrintBench` (§6(a)) → **one** catalog module. No cash-shop skip. Knowledge does not cheapen `rules/15`.  
+ST-D: hangar queue of **one** module on a catalog carrier (`cybernex_capital_carrier` …). Refuse if mass/power exceeded. Not a mobile `SITE_*`.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -25,7 +28,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
 | Документ | Роль |
 |----------|------|
-| `docs/design/BASE_STATION_STRATEGY.md` | ST-C built; ST-D…ST-F next |
+| `docs/design/BASE_STATION_STRATEGY.md` | ST-D built; ST-E…ST-F next |
 | `docs/design/OPEN_SPACE_SC_BENCHMARK.md` | Бар подхода OS-A…OS-H. G2–G6 закрыты |
 | `docs/design/ASSET_SOURCE_CANON.md` | unique→Tripo / CC0→neon / paid→neon+notice / отказ |
 | `docs/design/WORLD_FILL.md` | Авторский скелет / безымянный filler. Не чеканит `SITE_*` |
@@ -42,7 +45,8 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | ST-A strategy overlay | **built** — один habitat на unnamed паде |
 | ST-B extractor / Contribution | **built** — occupy → harvest → HUD number |
 | ST-C print one module | **built** — spend Contribution/Biomass → one catalog module |
-| ST-D…ST-F | **next** |
+| ST-D hangar queue | **built** — one module on catalog carrier; mass/power refuse |
+| ST-E…ST-F | **next** |
 | NP-C | **built** — NPC habitat on empty unnamed pad |
 | Galaxy G2–G6 | **locked** |
 | G1 CRUISE | **in-scope only for OS-C scale** |

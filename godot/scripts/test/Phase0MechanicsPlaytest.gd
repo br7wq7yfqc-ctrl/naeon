@@ -46,6 +46,7 @@ func _go() -> void:
 		return
 
 	await _assert_st_a(os, fails)
+	_assert_st_d(os, fails)
 
 	# --- stall math (no scene) ---
 	if _Flight.stall_amount(0.0, 4.0, 20.0) > 0.01:
@@ -4047,6 +4048,142 @@ func _assert_st_c(os: Node, pad: Node, fails: PackedStringArray) -> void:
 		fails.append("ST-C want exactly one printed module, got %s" % extras)
 	if os == null:
 		return
+
+
+func _assert_st_d(os: Node, fails: PackedStringArray) -> void:
+	## ST-D: hangar queue of ONE module on a catalog carrier. Mass/power refuse.
+	## Not a mobile SITE_*. Does not rewrite ST-C print bench.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var hull: Node = null
+	var queue: Node = null
+	var slug := ""
+	var pin0 := ""
+	var pin1 := ""
+	var mass_cap := 0.0
+	var power_cap := 0.0
+	var mass_after := 0.0
+	var power_after := 0.0
+	var heavy: Node3D = null
+	var hot: Node3D = null
+	var cash: Node3D = null
+	var mod: Node3D = null
+	var again: Node3D = null
+	var refuse := ""
+	var refuse_power := ""
+	var kind := ""
+	var mpin := ""
+	var extras := 0
+	var tree: SceneTree = get_tree()
+	if P0 == null or not bool(P0.ST_D_HANGAR):
+		fails.append("ST-D P0Slice flag missing")
+		return
+	if LayerContext:
+		pin0 = str(LayerContext.site_pin_id)
+	if os != null and os.has_method("catalog_carrier"):
+		hull = os.catalog_carrier()
+	if hull == null and tree:
+		var hulls: Array = tree.get_nodes_in_group("catalog_carriers")
+		if not hulls.is_empty():
+			hull = hulls[0]
+	if hull == null:
+		fails.append("ST-D catalog carrier missing")
+		return
+	if hull.has_method("hull_slug"):
+		slug = str(hull.hull_slug())
+	elif hull.has_meta("catalog_hull"):
+		slug = str(hull.get_meta("catalog_hull"))
+	if slug != "cybernex_capital_carrier" and slug != "grot_capital_carrier" \
+			and slug != "grot_drone_carrier" and slug != "cybernex_mothership" \
+			and slug != "grot_mothership":
+		fails.append("ST-D invented hull slug (%s)" % slug)
+	if str(hull.get_meta("site_pin", "missing")) != "":
+		fails.append("ST-D carrier minted site_pin (%s)" % str(hull.get_meta("site_pin")))
+	if bool(hull.get_meta("mobile_site", true)):
+		fails.append("ST-D carrier marked mobile SITE_*")
+	if hull.has_method("hangar_queue"):
+		queue = hull.hangar_queue()
+	if queue == null and os != null and os.has_method("hangar_queue"):
+		queue = os.hangar_queue()
+	if queue == null and tree:
+		var queues: Array = tree.get_nodes_in_group("hangar_queues")
+		if not queues.is_empty():
+			queue = queues[0]
+	if queue == null or not queue.has_method("enqueue_module"):
+		fails.append("ST-D hangar queue missing")
+		return
+	if hull.has_method("mass_remaining"):
+		mass_cap = float(hull.mass_remaining())
+	if hull.has_method("power_remaining"):
+		power_cap = float(hull.power_remaining())
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("colony_ops", 20.0)
+	if hull.has_method("mass_remaining"):
+		mass_after = float(hull.mass_remaining())
+	if hull.has_method("power_remaining"):
+		power_after = float(hull.power_remaining())
+	if absf(mass_after - mass_cap) > 0.001 or absf(power_after - power_cap) > 0.001:
+		fails.append("Knowledge changed hangar mass/power caps")
+	if queue.has_method("cash_shop_skip_possible") and bool(queue.cash_shop_skip_possible()):
+		fails.append("ST-D cash-shop skip possible")
+	if queue.has_method("try_cash_skip_queue"):
+		if bool(queue.try_cash_skip_queue(999.0)):
+			fails.append("ST-D cash-shop skip queued a module")
+	cash = queue.enqueue_module("sensor", 50.0)
+	if cash != null:
+		fails.append("ST-D accepted cash instead of hangar budget")
+		if is_instance_valid(cash):
+			cash.queue_free()
+	heavy = queue.enqueue_module("extractor")
+	if queue.has_method("last_refuse"):
+		refuse = str(queue.last_refuse())
+	if heavy != null:
+		fails.append("ST-D queued a module that exceeds mass")
+		if is_instance_valid(heavy):
+			heavy.queue_free()
+	if refuse != "mass":
+		fails.append("ST-D mass refuse missing (%s)" % refuse)
+	hot = queue.enqueue_module("engine")
+	if queue.has_method("last_refuse"):
+		refuse_power = str(queue.last_refuse())
+	if hot != null:
+		fails.append("ST-D queued a module that exceeds power")
+		if is_instance_valid(hot):
+			hot.queue_free()
+	if refuse_power != "power":
+		fails.append("ST-D power refuse missing (%s)" % refuse_power)
+	mod = queue.enqueue_module("sensor")
+	if mod == null or not is_instance_valid(mod):
+		fails.append("ST-D did not queue one hangar module")
+		print("[Playtest] ST-D hangar queue missing module hull=", slug, " refuse=", refuse)
+		return
+	kind = str(mod.get_meta("module_type", ""))
+	mpin = str(mod.get_meta("site_pin", "missing"))
+	if kind != "sensor":
+		fails.append("ST-D queued an unknown module (%s)" % kind)
+	if mpin != "":
+		fails.append("ST-D queued module minted site_pin (%s)" % mpin)
+	if bool(mod.get_meta("printed_module", false)):
+		fails.append("ST-D stole the ST-C printed_module slot")
+	if bool(mod.get_meta("player_module", false)):
+		fails.append("ST-D stole the ST-A player_module slot")
+	if bool(mod.get_meta("npc_module", false)):
+		fails.append("ST-D stole the NP-C npc_module slot")
+	if not bool(mod.get_meta("hangar_queued", false)):
+		fails.append("ST-D module not marked hangar_queued")
+	again = queue.enqueue_module("sensor")
+	if again != null:
+		fails.append("ST-D queued a second module")
+	if tree:
+		extras = tree.get_nodes_in_group("hangar_queued_modules").size()
+	if extras != 1:
+		fails.append("ST-D want hangar queue of one module, got %s" % extras)
+	if LayerContext:
+		pin1 = str(LayerContext.site_pin_id)
+	if pin1 != pin0:
+		fails.append("ST-D changed site_pin (%s → %s)" % [pin0, pin1])
+	print("[Playtest] ST-D hangar queue hull=", slug, " module=", kind,
+		" slots=1 refuse=mass/", refuse_power, " pin=", pin1, " mobile_site=false")
 
 
 func _osh_report_skips(fails: PackedStringArray, done: Dictionary, required: PackedStringArray) -> void:

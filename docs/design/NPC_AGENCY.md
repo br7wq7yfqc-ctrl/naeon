@@ -48,7 +48,7 @@ Clash: [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md).
 | `PadBaseController.gd` | occupy-to-hold, harvest → Contribution / Biomass; NP-B visitor uses the same path | свой yield; NP-C |
 | `ShipController` / `ShipFlightModel` / `ShipLandingGear` | SCM/NAV/HOVER/STALL/LAND; G = LAND на unnamed pad | NPC-пилот |
 | `Contribution.gd` | `add` / `spend` | кошелёк NPC |
-| Каталог носителей | slug `cybernex_capital_carrier`, `grot_capital_carrier`, `grot_drone_carrier`, `cybernex_mothership`, `grot_mothership` | hangar + очередь (ST-D) |
+| Каталог носителей | slug `cybernex_capital_carrier`, `grot_capital_carrier`, `grot_drone_carrier`, `cybernex_mothership`, `grot_mothership` | hangar + очередь (ST-D **built**) |
 | `DEVELOPMENT_PLAN` Phase 2 | «AI-bots + multi-crew» | код agency |
 
 OS-G силуэт и ambient life — WorldFill / плотность, не жители.
