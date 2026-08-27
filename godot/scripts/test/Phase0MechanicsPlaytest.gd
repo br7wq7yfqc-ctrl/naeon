@@ -1931,7 +1931,7 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 	_assert_openspace_view(os, ship, nex, "LAND", fails)
 	await _osh_occupy_refuel(os, ship, nex, fails)
 
-	# --- EVA snap on Relief ---
+	# --- EVA snap on pad (not dirt void / fall-through) ---
 	if os.has_method("try_exit_ship"):
 		os.try_exit_ship()
 	await get_tree().create_timer(0.35).timeout
@@ -1942,14 +1942,15 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 		fails.append("OS-H skipped space_out (no takeoff)")
 		_osh_report_skips(fails, done, required)
 		return
-	if walker.has_method("_relief_snap_fallback"):
-		walker.call("_relief_snap_fallback")
+	var pad_eva: Node3D = os.nearest_pad(ship.global_position) if os.has_method("nearest_pad") else null
+	if walker.has_method("snap_to_pad") and pad_eva != null:
+		walker.call("snap_to_pad", pad_eva)
 	elif walker.has_method("snap_to_surface"):
 		walker.call("snap_to_surface")
+	elif walker.has_method("_relief_snap_fallback"):
+		walker.call("_relief_snap_fallback")
 	var eva_agl: float = _osh_agl(nex, walker.global_position)
-	print("[Playtest] OS-H STEP eva snap AGL=", snapped(eva_agl, 0.01), " in_ship=", os.get("_in_ship"))
-	if eva_agl > 40.0 or eva_agl < -6.0:
-		fails.append("OS-H EVA snap left walker off relief (%s)" % snapped(eva_agl, 0.01))
+	if not _osh_eva_on_pad(walker, pad_eva, nex, eva_agl, fails):
 		fails.append("OS-H skipped takeoff (no eva)")
 		fails.append("OS-H skipped space_out (no takeoff)")
 		_osh_report_skips(fails, done, required)
@@ -1962,7 +1963,7 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 		return
 	done["eva"] = true
 
-	# --- TAKEOFF: board then launch (F board → Space) ---
+	# --- TAKEOFF: board then launch (F board → Space), same scene ---
 	var up_b: Vector3 = (ship.global_position - nex.global_position).normalized()
 	walker.global_position = ship.global_position + up_b * 2.0
 	if os.has_method("try_enter_ship"):
@@ -1981,7 +1982,19 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 		fails.append("OS-H skipped space_out (no takeoff)")
 		_osh_report_skips(fails, done, required)
 		return
-	print("[Playtest] OS-H STEP takeoff landed=", ship.get("is_landed"))
+	var take_scene := _osh_scene_file()
+	print("[Playtest] OS-H STEP takeoff landed=", ship.get("is_landed"),
+		" scene=", take_scene, " (no MainMenu / load screen)")
+	if not _osh_same_scene(scene0):
+		fails.append("OS-H load screen on takeoff (%s)" % take_scene)
+		fails.append("OS-H skipped space_out (no takeoff)")
+		_osh_report_skips(fails, done, required)
+		return
+	if take_scene.find("MainMenu") >= 0:
+		fails.append("OS-H takeoff reloaded MainMenu")
+		fails.append("OS-H skipped space_out (no takeoff)")
+		_osh_report_skips(fails, done, required)
+		return
 	done["takeoff"] = true
 	_assert_openspace_view(os, ship, nex, "HOVER", fails)
 
@@ -2006,6 +2019,7 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 	_osh_invariants(fails)
 	_osh_report_skips(fails, done, required)
 	if fails.is_empty():
+		print("[Playtest] OS-H notes: EVA snap walker on pad (not void); takeoff same OpenSpace scene (no load)")
 		print("[Playtest] OS-H ritual complete (headless steps; not FPS PASS)")
 
 
@@ -2102,6 +2116,45 @@ func _osh_scene_file() -> String:
 
 func _osh_same_scene(scene0: String) -> bool:
 	return _osh_scene_file() == scene0 and scene0.find("OpenSpace.tscn") >= 0
+
+
+func _osh_eva_on_pad(walker: Node3D, pad: Node3D, nex: Node, eva_agl: float, fails: PackedStringArray) -> bool:
+	## GPU leftover: walker must stand on the unnamed plate, not dirt void.
+	if walker == null or not is_instance_valid(walker):
+		fails.append("OS-H EVA snap left walker off pad (no walker)")
+		return false
+	if pad == null or not is_instance_valid(pad):
+		fails.append("OS-H EVA snap left walker off pad (no plate)")
+		return false
+	var up := Vector3.UP
+	if pad.has_meta("pad_up"):
+		up = (pad.get_meta("pad_up") as Vector3).normalized()
+	var rel: Vector3 = walker.global_position - pad.global_position
+	var lat: float = (rel - up * rel.dot(up)).length()
+	var deck: float = rel.dot(up)
+	print("[Playtest] OS-H STEP eva snap AGL=", snapped(eva_agl, 0.01),
+		" pad=", pad.name, " lat=", snapped(lat, 0.1), " deck=", snapped(deck, 0.01),
+		" (walker on pad, not void)")
+	if lat > 14.0 or deck < 0.35 or deck > 8.0:
+		fails.append("OS-H EVA snap left walker off pad (lat=%s deck=%s)" % [
+			str(snapped(lat, 0.1)), str(snapped(deck, 0.01))
+		])
+		return false
+	if eva_agl > 40.0 or eva_agl < -6.0:
+		fails.append("OS-H EVA snap left walker off relief (%s)" % snapped(eva_agl, 0.01))
+		return false
+	var rad := 1400.0
+	if nex != null and nex.get("radius") != null:
+		rad = float(nex.get("radius"))
+	var wcam: Camera3D = walker.get_node_or_null("CamPivot/Camera3D") as Camera3D
+	if wcam != null and nex != null and nex is Node3D:
+		var cd: float = wcam.global_position.distance_to((nex as Node3D).global_position)
+		if cd + 2.0 < rad:
+			fails.append("OS-H EVA snap camera in void/core (d=%s r=%s)" % [
+				str(snapped(cd, 0.1)), str(snapped(rad, 0.1))
+			])
+			return false
+	return true
 
 
 func _osh_invariants(fails: PackedStringArray) -> void:
@@ -3473,6 +3526,8 @@ func _eva_board_hover_view(fails: PackedStringArray) -> void:
 	if walker == null or not is_instance_valid(walker):
 		fails.append("EVA→HOVER view: no walker on pad")
 		return
+	if walker.has_method("snap_to_pad"):
+		walker.call("snap_to_pad", pad)
 	if bool(os.get("_in_ship")):
 		fails.append("EVA→HOVER view: still piloting after EVA")
 		return

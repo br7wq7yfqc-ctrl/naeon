@@ -887,6 +887,8 @@ func _spawn_player_near_ship() -> void:
 	var yaw := atan2(-nose.x, -nose.z)
 	if player != null and is_instance_valid(player) and player.has_method("set_spawn_basis"):
 		player.set_spawn_basis(pad_up, yaw)
+	if player != null and is_instance_valid(player) and pad != null and player.has_method("snap_to_pad"):
+		player.snap_to_pad(pad)
 	if player != null and is_instance_valid(player) and player.has_method("snap_to_surface"):
 		_schedule_surface_settle()
 	if is_instance_valid(ship) and ship.has_method("set_pilot_active"):
@@ -1427,7 +1429,9 @@ func place_from_ship_pocket(walker: Node3D) -> void:
 		var pln: Node3D = nearest_planet(walker.global_position)
 		if pln != null and is_instance_valid(pln) and pln.has_method("force_surface_collision_at"):
 			pln.force_surface_collision_at(walker.global_position)
-		if walker.has_method("snap_to_surface"):
+		if pad != null and walker.has_method("snap_to_pad"):
+			walker.snap_to_pad(pad)
+		elif walker.has_method("snap_to_surface"):
 			walker.call_deferred("snap_to_surface")
 		_toast_hud("Hatch → pad")
 	else:
@@ -1758,6 +1762,11 @@ func _surface_settle_tick(stage: int) -> void:
 	if "interior_mode" in player and bool(player.interior_mode):
 		return
 	if _interior != null and is_instance_valid(_interior) and _interior.has_method("is_inside") and bool(_interior.is_inside()):
+		return
+	var pad: Node3D = nearest_pad(player.global_position)
+	if pad != null and player.global_position.distance_to(pad.global_position) <= 20.0 \
+			and player.has_method("snap_to_pad"):
+		_call_if(player, &"snap_to_pad", [pad])
 		return
 	if stage <= 1:
 		_call_if(player, &"snap_to_surface")
