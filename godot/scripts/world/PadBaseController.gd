@@ -142,10 +142,13 @@ func _process(delta: float) -> void:
 	_tick_occupy(delta)
 	_tick_guard_respawn(delta)
 	_tick_arena_influence(delta)
+	## LAND/occupy pump: empty after OS-H descend. Ownership transition
+	## must not hold the tank at 0 — harvest still needs a held pad.
+	if running:
+		_tick_pad_refuel(delta)
 	if running and ownership and ownership.is_fully_owned() and _status != "contested" and _owner_in_zone():
 		_tick_harvest(delta)
 		_tick_pad_repair(delta)
-		_tick_pad_refuel(delta)
 		_tick_pad_restock(delta)
 	else:
 		if _status == "extracting":
@@ -705,7 +708,7 @@ func pad_repair_hud_line() -> String:
 
 
 func pad_refuel_hud_line() -> String:
-	var ship := _landed_own_ship()
+	var ship := _landed_refuel_ship()
 	if ship == null:
 		return ""
 	if ship.has_method("needs_fuel") and not bool(ship.needs_fuel()):
@@ -813,6 +816,19 @@ func _landed_own_ship() -> Node:
 	if ownership == null or not ownership.is_fully_owned():
 		return null
 	var own_fac := ownership.faction_name()
+	var ship := _landed_refuel_ship()
+	if ship == null:
+		return null
+	var sfac := "Cybernex"
+	if ship.has_method("get_faction"):
+		sfac = str(ship.get_faction())
+	if sfac != own_fac:
+		return null
+	return ship
+
+
+func _landed_refuel_ship() -> Node:
+	## LAND or occupy on this plate. Seed/transition do not gate the pump.
 	var tree := get_tree()
 	if tree == null:
 		return null
@@ -822,11 +838,6 @@ func _landed_own_ship() -> Node:
 		if _skip_npc_ship(s):
 			continue
 		if not bool(s.get("is_landed")):
-			continue
-		var sfac := "Cybernex"
-		if s.has_method("get_faction"):
-			sfac = str(s.get_faction())
-		if sfac != own_fac:
 			continue
 		if _ship_landed_on_this(s):
 			return s
@@ -850,7 +861,7 @@ func _tick_pad_repair(delta: float) -> void:
 
 func _tick_pad_refuel(delta: float) -> void:
 	## Occupy-to-hold fill. Knowledge labels the pump; it never changes this rate.
-	var ship := _landed_own_ship()
+	var ship := _landed_refuel_ship()
 	if ship == null or not ship.has_method("refuel"):
 		return
 	if ship.has_method("needs_fuel") and not bool(ship.needs_fuel()):

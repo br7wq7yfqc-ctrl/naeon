@@ -1869,8 +1869,9 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 	var atmo_agl: float = float(sink.get("atmo_agl", -1.0))
 	var atmo_d: float = float(sink.get("atmo_dens", 0.0))
 	var pitch1: float = float(ship.get("_pitch")) if "_pitch" in ship else 0.0
+	var fuel_desc := float(ship.get("fuel")) if "fuel" in ship else -1.0
 	print("[Playtest] OS-H STEP atmo entered AGL=", snapped(atmo_agl, 0.1), " dens=", snapped(atmo_d, 0.01))
-	print("[Playtest] OS-H STEP descend AGL=", snapped(start_agl, 0.1), "→", snapped(end_agl, 0.1), " pitch=", snapped(pitch1 - pitch0, 0.001), " steps=", int(sink.get("steps", 0)))
+	print("[Playtest] OS-H STEP descend AGL=", snapped(start_agl, 0.1), "→", snapped(end_agl, 0.1), " pitch=", snapped(pitch1 - pitch0, 0.001), " steps=", int(sink.get("steps", 0)), " fuel=", snapped(fuel_desc, 1.0))
 	if not saw_atmo:
 		fails.append("OS-H ATMO skipped — hold-S never entered envelope")
 	elif atmo_agl > env_h + 20.0:
@@ -1928,6 +1929,7 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 		fails.append("OS-H LAND without gear down")
 	done["land"] = true
 	_assert_openspace_view(os, ship, nex, "LAND", fails)
+	await _osh_occupy_refuel(os, ship, nex, fails)
 
 	# --- EVA snap on Relief ---
 	if os.has_method("try_exit_ship"):
@@ -2034,6 +2036,9 @@ func _osh_hold_s(nex: Node, ship: Node3D, target_agl: float, max_steps: int) -> 
 		vel = _Flight.integrate(vel, inward * 28.0, 0.016, 0.35, 1.0, dens, 55.0)
 		vel = _Flight.apply_ceiling(vel, inward, dens, 0.016)
 		pos += vel * 0.016
+		# Same SCM/HOVER tank as a live hold-S. 8 km empties the hull.
+		if ship.has_method("_tick_fuel"):
+			ship._tick_fuel(0.016, Vector3(0, 0, 1))
 	ship.global_position = pos
 	if "velocity" in ship:
 		ship.velocity = vel
@@ -2112,6 +2117,70 @@ func _osh_invariants(fails: PackedStringArray) -> void:
 	var src := FileAccess.get_file_as_string("res://scripts/ship/ShipController.gd")
 	if src.find("FlightMode.CRUISE") >= 0 or src.find("mass_lock") >= 0:
 		fails.append("OS-H shipped G1 CRUISE / mass lock")
+
+
+func _osh_occupy_refuel(_os: Node, ship: Node3D, nex: Node, fails: PackedStringArray) -> void:
+	## After OS-H descend the tank is empty. LAND+occupy on an unnamed pad
+	## restores fuel (occupy wait, no cash skip). Not EVA snap.
+	if nex != null and nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	await get_tree().create_timer(0.35).timeout
+	var deck: Node3D = _osh_unnamed_deck()
+	if deck == null:
+		fails.append("OS-H occupy-refuel: no unnamed pad")
+		print("[Playtest] occupy fuel after LAND skipped (no pad)")
+		return
+	var up: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	ship.global_position = deck.global_position + up * 6.0
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	if ship.has_method("_do_land"):
+		ship._do_land()
+	if not bool(ship.get("is_landed")):
+		fails.append("OS-H occupy-refuel: LAND on unnamed pad refused")
+		print("[Playtest] occupy fuel after LAND refused pad=", deck.name)
+		return
+	var f0: float = float(ship.get("fuel")) if "fuel" in ship else -1.0
+	await get_tree().create_timer(0.7).timeout
+	var f1: float = float(ship.get("fuel")) if "fuel" in ship else -1.0
+	print("[Playtest] occupy fuel after LAND ", snapped(f0, 0.1), " -> ", snapped(f1, 0.1), " pad=", deck.name)
+	if f0 < 0.0 or not ship.has_method("refuel"):
+		fails.append("ship has no occupy refuel API")
+	elif f1 <= 0.5:
+		fails.append("occupy did not restore fuel after LAND (%s → %s)" % [
+			str(snapped(f0, 0.1)), str(snapped(f1, 0.1))
+		])
+	elif f1 >= 99.0:
+		fails.append("pad fuel filled instantly (no occupy wait / paid skip)")
+
+
+func _osh_unnamed_deck() -> Node3D:
+	var tree := get_tree()
+	if tree == null:
+		return null
+	var prefer := ["Pad_Approach", "Pad_North", "Pad_Flank"]
+	var pads: Array = tree.get_nodes_in_group("pad_bases")
+	var fallback: Node3D = null
+	for want in prefer:
+		for p in pads:
+			if p == null or not is_instance_valid(p):
+				continue
+			var host: Node = p
+			var deck: Node3D = null
+			while host:
+				if host is Node3D and host.has_meta("pad_up"):
+					deck = host as Node3D
+					break
+				host = host.get_parent()
+			if deck == null:
+				continue
+			if fallback == null:
+				fallback = deck
+			if str(deck.name) == want:
+				return deck
+	return fallback
 
 
 func _assert_gear_before_land(fails: PackedStringArray) -> void:

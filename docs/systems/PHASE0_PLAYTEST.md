@@ -119,3 +119,4 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 93. Surface Pulse after EVA snap: grounded walker on Relief fires existing Pulse Bolt at a gROT CombatDummy near the pad. Knowledge labels only — Pulse DPS stays 11. `--playtest-mechanics` asserts EVA-snap→Pulse-hit.
 94. Landing gear is a pad LAND gate: G toggles (SCM default up). SCM + gear up denies unnamed-pad land. HOVER near pad/surface auto-drops so OS-H E land still PASS. `--playtest-mechanics` asserts gear-down-before-land.
 95. Occupied unnamed pad locker restocks player energy / Pulse CDs (occupy wait, no cash). Knowledge labels the locker only. Fuel + module repair stay. `--playtest-mechanics` asserts occupy→energy-up.
+96. OS-H descend empties the SCM/HOVER tank. LAND+occupy on an unnamed pad restores fuel (occupy wait, no cash). Seed/transition do not gate the pump. `--playtest-ritual` / `--playtest-mechanics` print `occupy fuel after LAND` and fail if still 0.
