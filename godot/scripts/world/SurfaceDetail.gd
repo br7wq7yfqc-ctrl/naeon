@@ -5,11 +5,13 @@ class_name SurfaceDetail
 ## - Object pool + mesh cache
 ## - Per-tick load budget
 ## - Load ring + hysteresis unload ring
-## OS-E: near shader paints albedo / decals on these meshes. Height stays Relief.
+## OS-E: PBR near shader (CC0 albedo/rough/normal) on these meshes.
+## Height stays Relief. Binaries never in git.
 
 const _Math = preload("res://scripts/world/SurfaceChunkMath.gd")
 const _Relief = preload("res://scripts/world/PlanetRelief.gd")
 const _P0 = preload("res://scripts/world/P0Slice.gd")
+const _AP = preload("res://scripts/assets/AssetPaths.gd")
 const _NEAR_SHADER = preload("res://shaders/planet_surface_near.gdshader")
 
 const CELL_M := 40.0
@@ -54,6 +56,11 @@ var _warm_cells: int = 0
 var _xform_accum: float = 0.0
 ## Shared near-read material. One ShaderMaterial for the whole ring.
 var _near_mat: ShaderMaterial
+var _pbr_src: String = "none"
+var _albedo_tex: Texture2D
+var _rock_tex: Texture2D
+var _normal_tex: Texture2D
+var _rough_tex: Texture2D
 
 
 func setup(planet: Node3D, radius: float, color: Color, seed_i: int = 1) -> void:
@@ -244,7 +251,7 @@ func _desired_ring() -> int:
 
 
 func _cache_key(cell: Vector2i) -> String:
-	return "%d:%d:r%d:v6" % [cell.x, cell.y, _res]
+	return "%d:%d:r%d:v7" % [cell.x, cell.y, _res]
 
 
 func _restore_ring(center: Vector2i, ring: int) -> void:
@@ -483,7 +490,8 @@ func _build_height_mesh(cell: Vector2i) -> ArrayMesh:
 			verts[i] = Vector3(rel.dot(east), rel.dot(dir_c), -rel.dot(north))
 			colors[i] = Color(col.r, col.g, col.b, _biome_pack(biome, h, sea))
 			uvs[i] = Vector2((px + half) / PATCH_SIZE, (pz + half) / PATCH_SIZE)
-			uv2s[i] = xz
+			## Paint UV is CHART_RADIUS so dirt/rock don't retile per body radius.
+			uv2s[i] = _Relief.dir_to_chart(dir)
 	for z in _res - 1:
 		for x in _res - 1:
 			var i00 := z * _res + x
@@ -496,6 +504,7 @@ func _build_height_mesh(cell: Vector2i) -> ArrayMesh:
 				st.set_uv2(uv2s[idx])
 				st.add_vertex(verts[idx])
 	st.generate_normals()
+	st.generate_tangents()
 	return st.commit()
 
 
@@ -548,6 +557,7 @@ func _biome_pack(biome: String, h: float, sea: float) -> float:
 func _ensure_near_mat() -> void:
 	if _near_mat != null and _near_mat.shader != null:
 		_near_mat.set_shader_parameter("seed", float(_seed))
+		_bind_pbr_maps()
 		_sync_near_origin()
 		return
 	_near_mat = ShaderMaterial.new()
@@ -556,10 +566,14 @@ func _ensure_near_mat() -> void:
 	_near_mat.set_shader_parameter("chart_radius", float(_Relief.CHART_RADIUS))
 	_near_mat.set_shader_parameter("micro_strength", 0.22)
 	_near_mat.set_shader_parameter("decal_strength", 0.55)
+	_near_mat.set_shader_parameter("decal_density", 1.0)
+	_near_mat.set_shader_parameter("tile_meters", 4.0)
 	_near_mat.set_shader_parameter("near_fade_start", 8.0)
 	_near_mat.set_shader_parameter("near_fade_end", 52.0)
-	_near_mat.set_shader_parameter("emission_strength", 0.10)
+	_near_mat.set_shader_parameter("emission_strength", 0.06)
 	_near_mat.set_shader_parameter("roughness_var", 0.55)
+	_near_mat.set_shader_parameter("normal_depth", 0.85)
+	_bind_pbr_maps()
 	_sync_near_origin()
 	var gq := get_node_or_null("/root/GraphicsQuality")
 	_tune_near_quality(int(gq.tier) if gq else 1)
@@ -572,12 +586,21 @@ func _tune_near_quality(tier: int) -> void:
 		0:
 			_near_mat.set_shader_parameter("micro_strength", 0.12)
 			_near_mat.set_shader_parameter("decal_strength", 0.35)
+			_near_mat.set_shader_parameter("decal_density", 0.7)
+			_near_mat.set_shader_parameter("tile_meters", 5.5)
+			_near_mat.set_shader_parameter("normal_depth", 0.45)
 		1:
 			_near_mat.set_shader_parameter("micro_strength", 0.22)
 			_near_mat.set_shader_parameter("decal_strength", 0.55)
+			_near_mat.set_shader_parameter("decal_density", 1.0)
+			_near_mat.set_shader_parameter("tile_meters", 4.0)
+			_near_mat.set_shader_parameter("normal_depth", 0.85)
 		_:
 			_near_mat.set_shader_parameter("micro_strength", 0.26)
 			_near_mat.set_shader_parameter("decal_strength", 0.62)
+			_near_mat.set_shader_parameter("decal_density", 1.25)
+			_near_mat.set_shader_parameter("tile_meters", 3.2)
+			_near_mat.set_shader_parameter("normal_depth", 1.05)
 
 
 func _sync_near_origin() -> void:
@@ -598,8 +621,144 @@ func near_read_enabled() -> bool:
 	return _near_mat != null and _near_mat.shader != null
 
 
+func near_pbr_status() -> Dictionary:
+	_ensure_near_mat()
+	return {
+		"src": _pbr_src,
+		"albedo": _albedo_tex != null,
+		"rock": _rock_tex != null,
+		"normal": _normal_tex != null,
+		"rough": _rough_tex != null,
+		"unshaded": false,
+	}
+
+
 func _ensure_vertex_mat(mi: MeshInstance3D) -> void:
 	if mi == null:
 		return
 	_ensure_near_mat()
 	mi.material_override = _near_mat
+
+
+func _bind_pbr_maps() -> void:
+	if _near_mat == null:
+		return
+	if _albedo_tex == null:
+		var dirt_paths: PackedStringArray = PackedStringArray([
+			"filler/forest_ground_04/forest_ground_04_diff_1k.png",
+			"filler/forest_ground_04/forest_ground_04_diff_1k.jpg",
+			"filler/ground037/Ground037_1K-JPG_Color.jpg",
+			"filler/ground037/Ground037_1K-PNG_Color.png",
+		])
+		var rock_paths: PackedStringArray = PackedStringArray([
+			"filler/rock_face/rock_face_diff_1k.png",
+			"filler/rock_face/rock_face_diff_1k.jpg",
+			"filler/rock023/Rock023_1K-JPG_Color.jpg",
+			"filler/rock023/Rock023_1K-PNG_Color.png",
+		])
+		var nrm_paths: PackedStringArray = PackedStringArray([
+			"filler/forest_ground_04/forest_ground_04_nor_gl_1k.png",
+			"filler/forest_ground_04/forest_ground_04_nor_gl_1k.jpg",
+			"filler/ground037/Ground037_1K-JPG_NormalGL.jpg",
+		])
+		var rgh_paths: PackedStringArray = PackedStringArray([
+			"filler/forest_ground_04/forest_ground_04_rough_1k.png",
+			"filler/forest_ground_04/forest_ground_04_rough_1k.jpg",
+			"filler/ground037/Ground037_1K-JPG_Roughness.jpg",
+		])
+		_albedo_tex = _load_cc0_tex(dirt_paths)
+		_rock_tex = _load_cc0_tex(rock_paths)
+		_normal_tex = _load_cc0_tex(nrm_paths)
+		_rough_tex = _load_cc0_tex(rgh_paths)
+		var loaded := _albedo_tex != null or _rock_tex != null
+		if _albedo_tex == null:
+			_albedo_tex = _fallback_albedo(Color(0.32, 0.24, 0.16))
+		if _rock_tex == null:
+			_rock_tex = _fallback_albedo(Color(0.44, 0.41, 0.38))
+		if _normal_tex == null:
+			_normal_tex = _fallback_normal()
+		if _rough_tex == null:
+			_rough_tex = _fallback_rough()
+		_pbr_src = "cc0" if loaded else "fallback"
+	_near_mat.set_shader_parameter("albedo_tex", _albedo_tex)
+	_near_mat.set_shader_parameter("rock_tex", _rock_tex)
+	_near_mat.set_shader_parameter("normal_tex", _normal_tex)
+	_near_mat.set_shader_parameter("rough_tex", _rough_tex)
+
+
+func _load_cc0_tex(rels: PackedStringArray) -> Texture2D:
+	for rel in rels:
+		var path := _cc0_path(str(rel))
+		if path == "" or not FileAccess.file_exists(path):
+			continue
+		var img := Image.new()
+		if img.load(path) != OK:
+			continue
+		if img.is_compressed():
+			img.decompress()
+		if img.get_width() > 1024 or img.get_height() > 1024:
+			img.resize(1024, 1024, Image.INTERPOLATE_LANCZOS)
+		img.generate_mipmaps()
+		print("[SurfaceDetail] CC0 ", rel, " <- ", path)
+		return ImageTexture.create_from_image(img)
+	return null
+
+
+func _cc0_path(rel: String) -> String:
+	var hits: PackedStringArray = PackedStringArray()
+	var resolved: String = str(_AP.resolve(rel))
+	if resolved != "":
+		hits.append(resolved)
+	var user_p := ProjectSettings.globalize_path("user://filler/%s" % rel)
+	hits.append(user_p)
+	var user_bare := ProjectSettings.globalize_path("user://%s" % rel)
+	hits.append(user_bare)
+	var res_base: String = ProjectSettings.globalize_path("res://")
+	hits.append(res_base.get_base_dir().path_join("assets").path_join(rel))
+	hits.append(res_base.path_join("bundled_assets").path_join(rel))
+	var home: String = OS.get_environment("HOME")
+	if home != "":
+		hits.append(home.path_join("Documents/naeon/assets").path_join(rel))
+		hits.append(home.path_join("Library/Application Support/NAEON/assets").path_join(rel))
+	for c in hits:
+		if c != "" and FileAccess.file_exists(c):
+			return c
+	return ""
+
+
+func _fallback_albedo(base: Color) -> ImageTexture:
+	var img := Image.create(64, 64, false, Image.FORMAT_RGBA8)
+	for y in 64:
+		for x in 64:
+			var n := sin(float(x) * 0.37 + float(_seed) * 0.01) * cos(float(y) * 0.29)
+			n += 0.35 * sin(float(x) * 1.1 - float(y) * 0.8)
+			n *= 0.07
+			var c := Color(
+				clampf(base.r + n, 0.0, 1.0),
+				clampf(base.g + n * 0.7, 0.0, 1.0),
+				clampf(base.b + n * 0.45, 0.0, 1.0)
+			)
+			img.set_pixel(x, y, c)
+	img.generate_mipmaps()
+	return ImageTexture.create_from_image(img)
+
+
+func _fallback_normal() -> ImageTexture:
+	var img := Image.create(64, 64, false, Image.FORMAT_RGBA8)
+	for y in 64:
+		for x in 64:
+			var nx := 0.5 + 0.08 * sin(float(x) * 0.41 + float(y) * 0.17)
+			var ny := 0.5 + 0.08 * cos(float(y) * 0.37 - float(x) * 0.13)
+			img.set_pixel(x, y, Color(nx, ny, 1.0))
+	img.generate_mipmaps()
+	return ImageTexture.create_from_image(img)
+
+
+func _fallback_rough() -> ImageTexture:
+	var img := Image.create(64, 64, false, Image.FORMAT_RGBA8)
+	for y in 64:
+		for x in 64:
+			var r := 0.62 + 0.18 * sin(float(x) * 0.22) * cos(float(y) * 0.19)
+			img.set_pixel(x, y, Color(r, r, r))
+	img.generate_mipmaps()
+	return ImageTexture.create_from_image(img)
