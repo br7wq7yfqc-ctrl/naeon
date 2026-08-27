@@ -59,6 +59,7 @@ func _ready() -> void:
 		_spawn_orbital_stations()
 	_spawn_ship()
 	_spawn_catalog_carrier()
+	_spawn_player_orbital_station()
 	# HUD must exist before any walker does, or every claim / contest / harvest
 	# toast of the opening flight is dropped on the floor.
 	_ensure_game_hud()
@@ -405,6 +406,44 @@ func hangar_queue() -> Node:
 	if c != null and c.has_method("hangar_queue"):
 		return c.hangar_queue()
 	return find_child("CarrierHangarQueue", true, false)
+
+
+func _spawn_player_orbital_station() -> void:
+	## ST-E: two catalog modules in one player-owned cluster. Nex-Prime orbit.
+	## Does not flip P0Slice.ORBITAL_STATIONS. Not SITE_*. Not a city.
+	var n: Node3D = null
+	var p0: Node3D = null
+	var r := 1400.0
+	var body_name := "Nex-Prime"
+	if not _P0.ST_E_ORBITAL:
+		return
+	if world_root == null:
+		return
+	if world_root.get_node_or_null("PlayerOrbitalStation") != null:
+		return
+	n = Node3D.new()
+	n.set_script(preload("res://scripts/world/PlayerOrbitalStation.gd"))
+	n.name = "PlayerOrbitalStation"
+	n.set_meta("site_pin", "")
+	n.set_meta("city", false)
+	world_root.add_child(n)
+	if not planets.is_empty():
+		p0 = planets[0] as Node3D
+		r = float(p0.get("radius") if p0.get("radius") != null else 1400.0)
+		if p0.get("planet_name") != null and str(p0.get("planet_name")) != "":
+			body_name = str(p0.get("planet_name"))
+		n.global_position = p0.global_position + Vector3(r + 480.0, 60.0, 40.0)
+	elif ship != null:
+		n.global_position = ship.global_position + Vector3(-220.0, 50.0, 90.0)
+	if n.has_method("setup"):
+		n.setup(body_name, "Cybernex")
+	print("[OpenSpace] ST-E player orbital cluster modules=2 body=", body_name, " · not SITE_* · not city")
+
+
+func player_orbital_station() -> Node3D:
+	if world_root == null:
+		return null
+	return world_root.get_node_or_null("PlayerOrbitalStation") as Node3D
 
 
 func _bind_planet_observers() -> void:

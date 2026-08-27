@@ -47,6 +47,7 @@ func _go() -> void:
 
 	await _assert_st_a(os, fails)
 	_assert_st_d(os, fails)
+	_assert_st_e(os, fails)
 
 	# --- stall math (no scene) ---
 	if _Flight.stall_amount(0.0, 4.0, 20.0) > 0.01:
@@ -4184,6 +4185,113 @@ func _assert_st_d(os: Node, fails: PackedStringArray) -> void:
 		fails.append("ST-D changed site_pin (%s → %s)" % [pin0, pin1])
 	print("[Playtest] ST-D hangar queue hull=", slug, " module=", kind,
 		" slots=1 refuse=mass/", refuse_power, " pin=", pin1, " mobile_site=false")
+
+
+func _assert_st_e(os: Node, fails: PackedStringArray) -> void:
+	## ST-E: two catalog modules in one player orbital cluster.
+	## Authored ARK body. Not a city. Not SITE_*. Not ORBITAL_STATIONS.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var sys = load("res://scripts/world/StarSystemCatalog.gd")
+	var cluster: Node3D = null
+	var mods: Array = []
+	var kinds := PackedStringArray()
+	var kinds_s := ""
+	var body := ""
+	var pin0 := ""
+	var pin1 := ""
+	var extras := 0
+	var unnamed: Node = null
+	var tree: SceneTree = get_tree()
+	if P0 == null or not bool(P0.ST_E_ORBITAL):
+		fails.append("ST-E P0Slice flag missing")
+		return
+	if bool(P0.ORBITAL_STATIONS):
+		fails.append("ST-E enabled P0Slice.ORBITAL_STATIONS unnamed props")
+	if LayerContext:
+		pin0 = str(LayerContext.site_pin_id)
+	if os != null and os.has_method("player_orbital_station"):
+		cluster = os.player_orbital_station()
+	if cluster == null and tree:
+		var listed: Array = tree.get_nodes_in_group("player_orbital_stations")
+		if not listed.is_empty() and listed[0] is Node3D:
+			cluster = listed[0] as Node3D
+	if cluster == null:
+		fails.append("ST-E player orbital cluster missing")
+		return
+	if os != null:
+		unnamed = os.find_child("OrbitalStations", true, false)
+	if unnamed != null:
+		fails.append("ST-E spawned unnamed ORBITAL_STATIONS props as my station")
+	if str(cluster.name) == "CityNightLights":
+		fails.append("ST-E cluster is a city")
+	if bool(cluster.get_meta("city", true)):
+		fails.append("ST-E cluster marked city")
+	if cluster.has_method("is_city") and bool(cluster.is_city()):
+		fails.append("ST-E is_city() is true")
+	if str(cluster.get_meta("site_pin", "missing")) != "":
+		fails.append("ST-E cluster minted site_pin (%s)" % str(cluster.get_meta("site_pin")))
+	if cluster.has_method("authored_body"):
+		body = str(cluster.authored_body())
+	elif cluster.has_meta("orbit_body"):
+		body = str(cluster.get_meta("orbit_body"))
+	if body != "Nex-Prime" and body != "ROT-Hive" and body != "Shard-Moon":
+		fails.append("ST-E orbit is not an authored ARK body (%s)" % body)
+	if sys and str(sys.HOME) != "ARK":
+		fails.append("ST-E left ARK (%s)" % str(sys.HOME))
+	if os != null:
+		var planets: Array = os.get("planets") if os.get("planets") != null else []
+		if planets.size() != 1:
+			fails.append("ST-E loaded a second system/body (%s)" % planets.size())
+	if cluster.has_method("cluster_modules"):
+		mods = cluster.cluster_modules()
+	elif tree:
+		mods = tree.get_nodes_in_group("player_orbital_modules")
+	if mods.size() != 2:
+		fails.append("ST-E want two modules in one cluster, got %s" % mods.size())
+	for m in mods:
+		var kind := ""
+		var mpin := ""
+		if not (m is Node3D):
+			fails.append("ST-E module is not a Node3D")
+			continue
+		if (m as Node).get_parent() != cluster:
+			fails.append("ST-E module is not in the player orbital cluster")
+		kind = str((m as Node).get_meta("module_type", ""))
+		mpin = str((m as Node).get_meta("site_pin", "missing"))
+		kinds.append(kind)
+		if cluster.has_method("is_grammar_kind"):
+			if not bool(cluster.is_grammar_kind(kind)):
+				fails.append("ST-E module kind outside §5 grammar (%s)" % kind)
+		elif kind != "dock" and kind != "habitat" and kind != "factory" \
+				and kind != "defense" and kind != "hangar":
+			fails.append("ST-E module kind outside §5 grammar (%s)" % kind)
+		if mpin != "":
+			fails.append("ST-E module minted site_pin (%s)" % mpin)
+		if bool((m as Node).get_meta("player_module", false)):
+			fails.append("ST-E stole the ST-A player_module slot")
+		if bool((m as Node).get_meta("npc_module", false)):
+			fails.append("ST-E stole the NP-C npc_module slot")
+		if bool((m as Node).get_meta("printed_module", false)):
+			fails.append("ST-E stole the ST-C printed_module slot")
+		if bool((m as Node).get_meta("hangar_queued", false)):
+			fails.append("ST-E stole the ST-D hangar_queued slot")
+		if kind == "habitat" and int((m as Node).get_meta("combat_stats", 1)) != 0:
+			fails.append("ST-E habitat has combat stats")
+		if bool((m as Node).get_meta("city", false)):
+			fails.append("ST-E module marked city")
+	if tree:
+		extras = tree.get_nodes_in_group("player_orbital_modules").size()
+	if extras != 2:
+		fails.append("ST-E want two modules in one player orbital cluster, got %s" % extras)
+	if LayerContext:
+		pin1 = str(LayerContext.site_pin_id)
+	if pin1 != pin0:
+		fails.append("ST-E changed site_pin (%s → %s)" % [pin0, pin1])
+	if pin1.begins_with("SITE_") and pin1 != "SITE_SPACE_TEST_PAD":
+		fails.append("ST-E minted a new SITE_* (%s)" % pin1)
+	kinds_s = ",".join(kinds)
+	print("[Playtest] ST-E cluster=", cluster.name, " modules=", extras,
+		" kinds=", kinds_s, " body=", body, " pin=", pin1, " city=false")
 
 
 func _osh_report_skips(fails: PackedStringArray, done: Dictionary, required: PackedStringArray) -> void:

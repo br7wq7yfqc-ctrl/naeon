@@ -3,8 +3,8 @@
 **Версия:** 1.0  
 **Дата:** 2026-08-17  
 **Движок:** Godot 4.7.2  
-**Статус:** ST-D built (2026-08-27). ST-E…ST-F next.  
-**Очередь кода:** ST-D hangar queue of one module on a catalog carrier. G2–G6 still locked.
+**Статус:** ST-E built (2026-08-27). ST-F next.  
+**Очередь кода:** ST-E player orbital cluster of two catalog modules near Nex-Prime. G2–G6 still locked.
 
 Это **третий бар**: не полёт OPEN SPACE и не Clash.  
 Подход космоса: [`OPEN_SPACE_SC_BENCHMARK.md`](OPEN_SPACE_SC_BENCHMARK.md) (OS-A…OS-H).  
@@ -151,7 +151,7 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 
 ## 9. Срезы ST-A … ST-F
 
-Каждый срез playable сам. ST-A built 2026-08-22. ST-B built 2026-08-27. ST-C built 2026-08-27. ST-D built 2026-08-27 (`CarrierHangarQueue` on catalog hull; mass/power refuse).
+Каждый срез playable сам. ST-A built 2026-08-22. ST-B built 2026-08-27. ST-C built 2026-08-27. ST-D built 2026-08-27. ST-E built 2026-08-27 (`PlayerOrbitalStation`: dock + habitat on Nex-Prime orbit).
 
 | ID | Роль | Семя | DoD | Отказ |
 |----|------|------|-----|-------|
@@ -159,7 +159,7 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 | **ST-B** | Extractor + видимый Contribution | **built:** `PadBaseController` harvest; `Extractor.bind_pad`; HUD stack | occupy → добыча → число на HUD; Knowledge только подпись | P2W-ноды; Knowledge→yield |
 | **ST-C** | Печать модуля на паде / NPC-верстаке | **built:** `PadPrintBench`; `rules/12`, `rules/15`, §6(a) | списать Contribution/Biomass; получить **один** модуль | cash-shop skip |
 | **ST-D** | Очередь на носителе (один модуль) | **built:** `CatalogCarrier` + `CarrierHangarQueue`; catalog slugs; Phase 3 hangar seed | очередь в hangar; упёрлась в mass/power | мобильный `SITE_*` |
-| **ST-E** | Своя орбитальная станция ≥2 модулей | орбита authored-тела ARK; грамматика §5 | два модуля в одном кластере; не город | mint `SITE_*`; 2-я система |
+| **ST-E** | Своя орбитальная станция ≥2 модулей | **built:** `PlayerOrbitalStation` dock+habitat на орбите Nex-Prime; грамматика §5 | два модуля в одном кластере; не город | mint `SITE_*`; 2-я система |
 | **ST-F** | Смена владельца CX↔GR на одной базе | `swap_cluster_theme`; `OwnershipComponent` | визуал + услуги, те же числа тира | второй `SITE_*`; арена-флип |
 
 ---
@@ -185,7 +185,7 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 
 | Сейчас | Дальше |
 |--------|--------|
-| ST-D очередь на носителе (один модуль) | ST-E своя орбитальная станция |
+| ST-E своя орбитальная станция (≥2 модуля) | ST-F смена владельца CX↔GR |
 | NP-C | NPC ставит один модуль (после ST-A) |
 | G2–G6 | закрыты |
 

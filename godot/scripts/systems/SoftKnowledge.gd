@@ -150,6 +150,15 @@ static func yield_label(grot: bool = false) -> String:
 	return "CONTRIBUTION" if ops >= 15.0 or rank() >= 5 else "CONTRIB"
 
 
+## Colony/history: name the ST-E orbital cluster. Never mints SITE_* or a city.
+static func orbital_station_label() -> String:
+	var ops := mastery("colony_ops")
+	var hist := mastery("history")
+	if ops >= 15.0 or hist >= 15.0 or rank() >= 5:
+		return "T1 ORBITAL CLUSTER"
+	return "ORBITAL CLUSTER"
+
+
 ## Colony/history: name the §6(b) hangar queue. Never changes mass/power caps.
 static func hangar_queue_label() -> String:
 	var ops := mastery("colony_ops")
