@@ -3,14 +3,12 @@ class_name CatalogCarrier
 ## ST-D §6(b) / §7: one catalog carrier hull. Hangar queue lives here.
 ## Not a mobile SITE_*. Interiors later. No new hull UUID.
 
-const CATALOG_HULLS := PackedStringArray([
-	"cybernex_capital_carrier",
-	"grot_capital_carrier",
-	"grot_drone_carrier",
-	"cybernex_mothership",
-	"grot_mothership",
-])
 const DEFAULT_HULL := "cybernex_capital_carrier"
+const HULL_CX_CARRIER := "cybernex_capital_carrier"
+const HULL_GR_CARRIER := "grot_capital_carrier"
+const HULL_GR_DRONE := "grot_drone_carrier"
+const HULL_CX_MOTHER := "cybernex_mothership"
+const HULL_GR_MOTHER := "grot_mothership"
 
 ## Tight hull budget so a catalog ShipModule can exceed mass or power.
 const HULL_MASS_CAP := 2.0
@@ -51,7 +49,11 @@ func setup(slug: String = DEFAULT_HULL) -> void:
 
 
 static func is_catalog_hull(slug: String) -> bool:
-	return slug in CATALOG_HULLS
+	match slug:
+		HULL_CX_CARRIER, HULL_GR_CARRIER, HULL_GR_DRONE, HULL_CX_MOTHER, HULL_GR_MOTHER:
+			return true
+		_:
+			return false
 
 
 func hangar_queue() -> Node:

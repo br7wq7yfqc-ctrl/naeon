@@ -4092,7 +4092,9 @@ func _assert_st_d(os: Node, fails: PackedStringArray) -> void:
 		slug = str(hull.hull_slug())
 	elif hull.has_meta("catalog_hull"):
 		slug = str(hull.get_meta("catalog_hull"))
-	if not CatalogCarrier.is_catalog_hull(slug):
+	if slug != "cybernex_capital_carrier" and slug != "grot_capital_carrier" \
+			and slug != "grot_drone_carrier" and slug != "cybernex_mothership" \
+			and slug != "grot_mothership":
 		fails.append("ST-D invented hull slug (%s)" % slug)
 	if str(hull.get_meta("site_pin", "missing")) != "":
 		fails.append("ST-D carrier minted site_pin (%s)" % str(hull.get_meta("site_pin")))
