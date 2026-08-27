@@ -3,7 +3,7 @@
 **Authority:** `DEVELOPMENT_PLAN.md` v2.4 (длинный план) + `docs/design/BASE_STATION_STRATEGY.md` (текущий бар).  
 Этот файл — статус, не склад фич.
 
-## Current focus: ST-C print one module (OS-A…OS-H / ST-A / ST-B built)
+## Current focus: ST-D hangar queue (OS-A…OS-H / ST-A / ST-B / ST-C built)
 
 SC roles → NAEON: `docs/design/SC_FEATURE_MAP.md`.  
 Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md`.  
@@ -27,6 +27,7 @@ Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md`.
 | **ST-A** | **built** | B overlay на unnamed паде; один habitat (0 combat); ship/TPS живы. Не SITE_*, не G2. |
 | **ST-B** | **built** | Extractor на unnamed паде; occupy → harvest → Contribution на HUD. Knowledge ≠ yield. |
 | **ST-C** | **built** | Печать одного catalog-модуля на паде / NPC-верстаке. Spend Contribution/Biomass. Нет cash-shop skip. |
+| **ST-D** | **built** | Очередь одного модуля в hangar catalog-носителя. Refuse mass/power. Не мобильный SITE_*. |
 | **NP-C** | **built** | NPC ставит один habitat на пустой unnamed пад (тот же BaseBuilder). Не SITE_*. |
 | **G1 CRUISE** | later | Не нужен для 5–15 км; mass lock только вместе с CRUISE |
 | **G2–G6** | **locked** | Пока петля OPEN SPACE не честна. В коде 404 |

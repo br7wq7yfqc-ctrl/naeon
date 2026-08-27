@@ -26,6 +26,8 @@ const ST_A_OVERLAY := true
 const ST_B_EXTRACTOR := true
 ## ST-C: print one catalog module at pad / NPC bench. Spend Contribution/Biomass. No cash skip.
 const ST_C_PRINT := true
+## ST-D: hangar queue of one module on a catalog carrier. Blocked by mass/power. Not SITE_*.
+const ST_D_HANGAR := true
 ## NP-C: visitor places one habitat on an empty unnamed pad. Same BaseBuilder. Not SITE_*.
 const NP_C_MODULE := true
 

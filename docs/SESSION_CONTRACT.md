@@ -44,7 +44,9 @@
 19. ST-B: extractor visible on unnamed pad + Contribution on HUD after occupy
     harvest. Knowledge is a label only (built).
 20. ST-C: spend Contribution/Biomass at pad / NPC bench → one catalog module.
-    No cash-shop skip. Knowledge does not cheapen rules/15 (this pass).
+    No cash-shop skip. Knowledge does not cheapen rules/15 (built).
+21. ST-D: hangar queue of one module on a catalog carrier hull. Refuse if
+    mass/power exceeded. Not a mobile SITE_*. Interiors later (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.
