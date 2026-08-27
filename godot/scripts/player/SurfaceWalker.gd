@@ -415,6 +415,9 @@ func _firewall_break_nearby_channels() -> void:
 func snap_to_surface() -> void:
 	if interior_mode or is_zero_g():
 		return
+	var pad: Node3D = _nearest_landing_pad()
+	if pad != null and snap_to_pad(pad):
+		return
 	_update_up()
 	_force_dirt_chunks()
 	var space := get_world_3d().direct_space_state if get_world_3d() else null
@@ -1089,7 +1092,64 @@ func _lift_to_visual_relief() -> void:
 		velocity = Vector3.ZERO
 
 
+func snap_to_pad(pad: Node3D) -> bool:
+	## Pad LAND EVA: stand on the 28 m plate. Dirt/sphere snap can land
+	## inside the 1.2 m deck (black void) or drop through on GPU.
+	if pad == null or not is_instance_valid(pad):
+		return false
+	if interior_mode or is_zero_g():
+		return false
+	var up := Vector3.UP
+	if pad.has_meta("pad_up"):
+		var raw: Vector3 = pad.get_meta("pad_up")
+		if raw.length_squared() > 0.01:
+			up = raw.normalized()
+	_up = up
+	up_direction = up
+	var rel: Vector3 = global_position - pad.global_position
+	var lat: Vector3 = rel - up * rel.dot(up)
+	var lat_len: float = lat.length()
+	if lat_len > 12.0 or lat_len < 1.2:
+		if lat_len > 0.2:
+			lat = lat.normalized() * 5.5
+		else:
+			var side: Vector3 = pad.global_transform.basis.x
+			side = side - up * side.dot(up)
+			if side.length_squared() < 0.01:
+				side = up.cross(Vector3.RIGHT)
+			lat = side.normalized() * 5.5
+	global_position = pad.global_position + up * 1.35 + lat
+	velocity = Vector3.ZERO
+	_spawn_grace_t = 0.45
+	_force_dirt_chunks()
+	_apply_body_basis()
+	_apply_surface_camera()
+	if camera != null and is_instance_valid(camera):
+		camera.current = true
+	print("[SurfaceWalker] snapped to pad ", pad.name, " deck+1.35 lat=", snapped(lat.length(), 0.1))
+	return true
+
+
+func _nearest_landing_pad() -> Node3D:
+	var tree := get_tree()
+	if tree == null:
+		return null
+	var best: Node3D = null
+	var best_d := 16.0
+	for n in tree.get_nodes_in_group("landing_pads"):
+		if n == null or not is_instance_valid(n) or not (n is Node3D):
+			continue
+		var d: float = global_position.distance_to((n as Node3D).global_position)
+		if d < best_d:
+			best_d = d
+			best = n as Node3D
+	return best
+
+
 func _relief_snap_fallback() -> bool:
+	var pad: Node3D = _nearest_landing_pad()
+	if pad != null and snap_to_pad(pad):
+		return true
 	var best: Node3D = _nearest_planet_body()
 	if best == null or not ("radius" in best):
 		return false
