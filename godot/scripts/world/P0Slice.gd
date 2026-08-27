@@ -28,6 +28,9 @@ const ST_B_EXTRACTOR := true
 const ST_C_PRINT := true
 ## ST-D: hangar queue of one module on a catalog carrier. Blocked by mass/power. Not SITE_*.
 const ST_D_HANGAR := true
+## ST-E: player-owned orbital cluster of two catalog modules near Nex-Prime. Not SITE_*.
+## Does not flip ORBITAL_STATIONS (those remain unnamed props, still off).
+const ST_E_ORBITAL := true
 ## NP-C: visitor places one habitat on an empty unnamed pad. Same BaseBuilder. Not SITE_*.
 const NP_C_MODULE := true
 

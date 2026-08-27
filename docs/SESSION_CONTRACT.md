@@ -46,7 +46,10 @@
 20. ST-C: spend Contribution/Biomass at pad / NPC bench → one catalog module.
     No cash-shop skip. Knowledge does not cheapen rules/15 (built).
 21. ST-D: hangar queue of one module on a catalog carrier hull. Refuse if
-    mass/power exceeded. Not a mobile SITE_*. Interiors later (this pass).
+    mass/power exceeded. Not a mobile SITE_*. Interiors later (built).
+22. ST-E: player-owned orbital cluster of two catalog modules (dock +
+    habitat) on Nex-Prime orbit. Not a city. Not SITE_*. Not a second
+    system. P0Slice.ORBITAL_STATIONS stays off (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.
