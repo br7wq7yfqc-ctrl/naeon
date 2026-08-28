@@ -4,6 +4,7 @@
 - **No combat authority** — puppets visual-only
 - **No P2W** — state is pose/form/faction/flight only
 - is_instance_valid on all rebind/free paths
+- **AR-F:** `bind_visual_puppet` tags Clash bot slots. Host keeps combat. Do not `enable()` the 20Hz loop for those slots.
 
 ## Continuum fields (UDP STATE)
 

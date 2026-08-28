@@ -1,5 +1,5 @@
 extends Node
-## Headless AR-A + AR-B + AR-C + AR-D + AR-E + river + jump pads: OTS, structures, waves, camp, kits/module, river, short hop.
+## Headless AR-A + AR-B + AR-C + AR-D + AR-E + AR-F + river + jump pads: OTS, structures, waves, camp, kits/module, 3v3 local, river, short hop.
 ## godot --path godot --scene res://scenes/test/TestArena.tscn -- --playtest-arena
 
 func _ready() -> void:
@@ -11,7 +11,7 @@ func _ready() -> void:
 	if not wanted:
 		queue_free()
 		return
-	print("[Playtest] arena AR-A/AR-B/AR-C/AR-D/AR-E + river + jump pads driver on")
+	print("[Playtest] arena AR-A/AR-B/AR-C/AR-D/AR-E/AR-F + river + jump pads driver on")
 	call_deferred("_go")
 
 
@@ -20,7 +20,7 @@ func _go() -> void:
 	var fails: PackedStringArray = PackedStringArray()
 	var arena: Node = get_parent()
 	if arena == null or str(arena.name) != "TestArena":
-		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
+		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
 		return
 
 	var player: Node = arena.get("player")
@@ -90,6 +90,7 @@ func _go() -> void:
 	var ar_d_fails: PackedStringArray = _check_ar_d(arena, lanes, player)
 	var ar_e_fails: PackedStringArray = _check_ar_e(arena, lanes, player)
 	var river_fails: PackedStringArray = _check_river(arena)
+	var ar_f_fails: PackedStringArray = _check_ar_f(arena, lanes, player)
 	var pad_fails: PackedStringArray = await _check_jump_pads(arena, player)
 	fails.append_array(ar_c_fails)
 	fails.append_array(ar_b_fails)
@@ -97,8 +98,9 @@ func _go() -> void:
 	fails.append_array(ar_e_fails)
 	fails.append_array(river_fails)
 	fails.append_array(pad_fails)
+	fails.append_array(ar_f_fails)
 
-	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, ar_e_fails, river_fails, pad_fails, 0 if fails.is_empty() else 1)
+	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, ar_e_fails, river_fails, pad_fails, ar_f_fails, 0 if fails.is_empty() else 1)
 
 
 func _check_ar_b(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
@@ -565,7 +567,91 @@ func _check_jump_pads(arena: Node, player: Node) -> PackedStringArray:
 	return fails
 
 
-func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, ar_e: PackedStringArray, river: PackedStringArray, pads: PackedStringArray, code: int) -> void:
+func _check_ar_f(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
+	var fails: PackedStringArray = PackedStringArray()
+	var matchn: Node = arena.get_node_or_null("ClashLocalMatch") if arena else null
+	if matchn == null and arena:
+		matchn = arena.get("_local_match")
+	if matchn == null or not is_instance_valid(matchn):
+		fails.append("ClashLocalMatch missing")
+		return fails
+	if not matchn.has_method("living_actors") or not matchn.has_method("is_local_authority"):
+		fails.append("ClashLocalMatch API missing")
+		return fails
+	var live: Array = matchn.living_actors()
+	print("[Playtest] AR-F 3v3 local match actors=", live.size(), " lanes=", matchn.lane_ids() if matchn.has_method("lane_ids") else "?",
+		" authority=", matchn.combat_authority() if matchn.has_method("combat_authority") else "?",
+		" G5=", "closed" if matchn.has_method("is_g5_closed") and bool(matchn.is_g5_closed()) else "open")
+	if live.size() != 6:
+		fails.append("want 6 actors on 3v3, got %s" % live.size())
+	var seen: Dictionary = {}
+	var cx := 0
+	var gr := 0
+	for n in live:
+		var lane := ""
+		if matchn.has_method("lane_of"):
+			lane = str(matchn.lane_of(n))
+		elif n != null and n.has_meta("lane"):
+			lane = str(n.get_meta("lane"))
+		if lane != "TOP" and lane != "MID" and lane != "BOT":
+			fails.append("actor not on a Clash lane (%s)" % lane)
+		else:
+			seen[lane] = true
+		var fac := str(n.get("faction")) if n != null and "faction" in n else ""
+		if fac == "Cybernex":
+			cx += 1
+		elif fac == "gROT":
+			gr += 1
+		if absf((n as Node3D).global_position.x) > 28.0 or absf((n as Node3D).global_position.z) > 28.0:
+			fails.append("actor left the 60×60 footprint")
+	for need in ["TOP", "MID", "BOT"]:
+		if not seen.has(need):
+			fails.append("3v3 missing lane " + need)
+	if cx != 3 or gr != 3:
+		fails.append("want 3+3, got CX=%s GR=%s" % [cx, gr])
+	if matchn.has_method("is_local_authority") and not bool(matchn.is_local_authority()):
+		fails.append("not local host authority")
+	if matchn.has_method("is_g5_closed") and not bool(matchn.is_g5_closed()):
+		fails.append("G5 Clash-from-world is open")
+	if matchn.has_method("is_5v5") and bool(matchn.is_5v5()):
+		fails.append("5v5 shipped before 3v3")
+	if matchn.has_method("visual_puppet_count") and int(matchn.visual_puppet_count()) < 5:
+		fails.append("SoftNet visual puppets missing (got %s)" % int(matchn.visual_puppet_count()))
+	var dmg0 := -1.0
+	for n in live:
+		if n != player and n != null and "attack_damage" in n:
+			dmg0 = float(n.get("attack_damage"))
+			break
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("cybernetics", 20.0)
+	for n in live:
+		if n != player and n != null and "attack_damage" in n:
+			if dmg0 >= 0.0 and absf(float(n.get("attack_damage")) - dmg0) > 0.01:
+				fails.append("Knowledge changed DPS")
+			break
+	if player and player.has_method("ots_evidence"):
+		var ev: Dictionary = player.ots_evidence()
+		if not bool(ev.get("active", false)):
+			fails.append("OTS dropped after AR-F")
+	if LayerContext and str(LayerContext.site_pin_id) != "SITE_TEST_ARENA_PILLAR":
+		fails.append("SITE pin changed during AR-F")
+	if arena and str(arena.name) != "TestArena":
+		fails.append("left TestArena")
+	var waves: Node = arena.get_node_or_null("ClashWaves") if arena else null
+	if waves == null and arena:
+		waves = arena.get("_waves")
+	if waves == null or not waves.has_method("living_minions") or waves.living_minions().is_empty():
+		fails.append("waves gone after AR-F")
+	if lanes and lanes.has_method("living_roles"):
+		var living: PackedStringArray = lanes.living_roles()
+		for need in ["OUTER", "MID", "INHIB", "CORE"]:
+			if not living.has(need):
+				fails.append("structure role gone after AR-F: " + need)
+	print("[Playtest] AR-F 6 actors on existing lanes · local authority · G5 closed · no SITE_*")
+	return fails
+
+
+func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, ar_e: PackedStringArray, river: PackedStringArray, pads: PackedStringArray, ar_f: PackedStringArray, code: int) -> void:
 	if ar_a.is_empty():
 		print("[Playtest] PASS arena AR-A")
 	else:
@@ -607,6 +693,12 @@ func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStrin
 	else:
 		print("[Playtest] FAIL jump pads")
 		for f in pads:
+			print("[Playtest]  - ", f)
+	if ar_f.is_empty():
+		print("[Playtest] PASS arena AR-F")
+	else:
+		print("[Playtest] FAIL arena AR-F")
+		for f in ar_f:
 			print("[Playtest]  - ", f)
 	if AutoUpdater and AutoUpdater.has_method("abort_pending"):
 		AutoUpdater.abort_pending()

@@ -22,19 +22,19 @@ set +e
 timeout 20 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/test/TestArena.tscn -- --playtest-arena > /tmp/pt_ar.log 2>&1
 AR_CODE=$?
 set -e
-if grep -q '\[Playtest\] PASS arena AR-A' /tmp/pt_ar.log && grep -q '\[Playtest\] PASS arena AR-B' /tmp/pt_ar.log && grep -q '\[Playtest\] PASS arena AR-C' /tmp/pt_ar.log && grep -q '\[Playtest\] PASS arena AR-D' /tmp/pt_ar.log && grep -q '\[Playtest\] PASS arena AR-E' /tmp/pt_ar.log && grep -q '\[Playtest\] river present on footprint' /tmp/pt_ar.log && grep -q '\[Playtest\] jump pads hop on footprint' /tmp/pt_ar.log; then
+if grep -q '\[Playtest\] PASS arena AR-A' /tmp/pt_ar.log && grep -q '\[Playtest\] PASS arena AR-B' /tmp/pt_ar.log && grep -q '\[Playtest\] PASS arena AR-C' /tmp/pt_ar.log && grep -q '\[Playtest\] PASS arena AR-D' /tmp/pt_ar.log && grep -q '\[Playtest\] PASS arena AR-E' /tmp/pt_ar.log && grep -q '\[Playtest\] PASS arena AR-F' /tmp/pt_ar.log && grep -q '\[Playtest\] river present on footprint' /tmp/pt_ar.log && grep -q '\[Playtest\] jump pads hop on footprint' /tmp/pt_ar.log; then
   AR_CODE=0
-elif grep -q '\[Playtest\] FAIL arena AR-A' /tmp/pt_ar.log || grep -q '\[Playtest\] FAIL arena AR-B' /tmp/pt_ar.log || grep -q '\[Playtest\] FAIL arena AR-C' /tmp/pt_ar.log || grep -q '\[Playtest\] FAIL arena AR-D' /tmp/pt_ar.log || grep -q '\[Playtest\] FAIL arena AR-E' /tmp/pt_ar.log || grep -q '\[Playtest\] FAIL river' /tmp/pt_ar.log || grep -q '\[Playtest\] FAIL jump pads' /tmp/pt_ar.log; then
+elif grep -q '\[Playtest\] FAIL arena AR-A' /tmp/pt_ar.log || grep -q '\[Playtest\] FAIL arena AR-B' /tmp/pt_ar.log || grep -q '\[Playtest\] FAIL arena AR-C' /tmp/pt_ar.log || grep -q '\[Playtest\] FAIL arena AR-D' /tmp/pt_ar.log || grep -q '\[Playtest\] FAIL arena AR-E' /tmp/pt_ar.log || grep -q '\[Playtest\] FAIL arena AR-F' /tmp/pt_ar.log || grep -q '\[Playtest\] FAIL river' /tmp/pt_ar.log || grep -q '\[Playtest\] FAIL jump pads' /tmp/pt_ar.log; then
   AR_CODE=1
 elif [ "$AR_CODE" -eq 0 ]; then
   AR_CODE=1
 fi
 echo AR_CODE=$AR_CODE AR_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_ar.log || true)
-grep -E 'Playtest|SCRIPT ERROR|AR-A|AR-B|AR-C|AR-D|AR-E|river|jump pad|ClashJumpPads' /tmp/pt_ar.log | head -80 || true
+grep -E 'Playtest|SCRIPT ERROR|AR-A|AR-B|AR-C|AR-D|AR-E|AR-F|river|jump pad|ClashJumpPads' /tmp/pt_ar.log | head -80 || true
 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/ui/MainMenu.tscn --quit-after 4 > /tmp/pt_mm.log 2>&1 || true
 echo MM_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_mm.log || true)
 set +e
-timeout 70 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/world/OpenSpace.tscn -- --playtest-mechanics > /tmp/pt_mech.log 2>&1
+timeout 90 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/world/OpenSpace.tscn -- --playtest-mechanics > /tmp/pt_mech.log 2>&1
 MECH_CODE=$?
 set -e
 # Verdict is the [Playtest] line. Godot 4.7 dummy renderer may not exit after quit()

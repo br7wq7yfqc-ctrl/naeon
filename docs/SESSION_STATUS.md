@@ -1,3 +1,5 @@
+**2026-08-28 — AR-F: 3v3 local authority on existing Clash lanes (SoftNet visual)**
+
 **2026-08-28 — Q-C: optional Learning Node on Q-A harvest/deliver (SoftKnowledge label)**
 
 **2026-08-28 — Q-B: Alliance Quest Constructor (one shared occupy/logistics contract)**
@@ -54,7 +56,8 @@ IN-E: drive onto ramp mouth / `hangar_bay` → store in `CargoHold` (`id` + `hea
 WF-A: denser crate/debris on the three unnamed Nex-Prime pads from existing ledger slugs (`debris_cluster`, `t1_resource_extractor`, `utility_bay`) and filler IDs. `pad_fill=22`. No new `SITE_*`. No new lock UUID. OS-G silhouette is not a legend. `ORBITAL_STATIONS` stays off.  
 Q-A: IN-B station ops console on an occupied unnamed pad offers **one** generated contract (`occupy` / `harvest` / `deliver_crate`) on Nex-Prime. Complete → SoftKnowledge `quest_intel` label (`CONTRACT` → `PAD INTEL`). Harvest / print / hangar numbers stay. No cash-shop skip. No pay-to-complete. No Knowledge-gated exclusive weapons/modules. Not a campaign. Not a second knowledge system.  
 Q-B: one alliance-shared `occupy` / `logistics` contract on the same unnamed pad / ARK body. The two NP-E NPCs see the **same** ContractBoard id. Complete → SoftKnowledge `alliance_intel` label (`ALLY` → `ALLY INTEL`). Harvest / print / hangar / Q-A numbers stay. No pay-to-complete. No pay-to-rank. No Knowledge-gated exclusive modules. Intent ≠ siege. Not a second quest or knowledge system.  
-Q-C: one optional Learning Node on a Q-A `harvest` / `deliver_crate` contract. Interact reads pad / extractor / crate via SoftKnowledge. Complete → `field_intel` label (`FIELD` → `FIELD INTEL`). Harvest / print / hangar / Q-A / Q-B numbers stay. No exclusive modules. Not a second knowledge system.
+Q-C: one optional Learning Node on a Q-A `harvest` / `deliver_crate` contract. Interact reads pad / extractor / crate via SoftKnowledge. Complete → `field_intel` label (`FIELD` → `FIELD INTEL`). Harvest / print / hangar / Q-A / Q-B numbers stay. No exclusive modules. Not a second knowledge system.  
+AR-F: 3v3 local host authority on the existing TestArena / Clash 60×60. Six actors on TOP/MID/BOT (player + five SoftNet visual `CombatDummy` puppets, or 3+3 isolated). G5 stays closed. No new `SITE_*`. Knowledge does not change DPS. 5v5 later.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -94,6 +97,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | Q-A contract / Knowledge | **built** — one ops-board contract; SoftKnowledge label only; numbers stay |
 | Q-B alliance constructor | **built** — one shared occupy/logistics contract; two NPCs same id; alliance intel label only |
 | Q-C learning node | **built** — optional node on harvest/deliver; field intel label only; numbers stay |
+| AR-F 3v3 local | **built** — 6 actors on existing lanes; host authority; SoftNet visual; G5 closed |
 | NP-C | **built** — NPC habitat on empty unnamed pad |
 | Galaxy G2–G6 | **locked** |
 | G1 CRUISE | **in-scope only for OS-C scale** |
