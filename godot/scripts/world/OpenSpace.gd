@@ -986,49 +986,115 @@ func _spawn_eva_near_ship() -> void:
 	print("[OpenSpace] EVA zero-G deployed from hatch")
 
 
+func _land_eva_pad() -> Node3D:
+	## Occupied unnamed deck the hull actually landed on. Not nearest dirt.
+	if ship != null and is_instance_valid(ship) and ship.has_method("get_landed_pad"):
+		var landed_pad: Node3D = ship.get_landed_pad() as Node3D
+		if landed_pad != null and is_instance_valid(landed_pad):
+			return landed_pad
+	if ship != null and is_instance_valid(ship):
+		return nearest_pad(ship.global_position)
+	return null
+
+
+func _place_walker_on_land_deck(walker: Node3D) -> bool:
+	## Outdoor pad-deck walker. Not the in-flight ship pocket (y=9200).
+	if walker == null or not is_instance_valid(walker):
+		return false
+	if world_root != null and is_instance_valid(world_root):
+		world_root.visible = true
+	if walker.has_method("set_interior_mode"):
+		walker.set_interior_mode(false)
+	elif "interior_mode" in walker:
+		walker.interior_mode = false
+	if walker.has_method("set_eva_profile"):
+		walker.set_eva_profile(false)
+	var pad: Node3D = _land_eva_pad()
+	if pad == null or not is_instance_valid(pad):
+		return false
+	var pad_up := Vector3.UP
+	if pad.has_meta("pad_up"):
+		var raw: Vector3 = pad.get_meta("pad_up")
+		if raw.length_squared() > 0.01:
+			pad_up = raw.normalized()
+	else:
+		var pl = nearest_planet(pad.global_position)
+		if pl != null and is_instance_valid(pl):
+			pad_up = (pad.global_position - pl.global_position).normalized()
+	var side: Vector3 = Vector3.ZERO
+	if ship != null and is_instance_valid(ship):
+		side = ship.global_transform.basis.x
+	if side.length_squared() < 0.01:
+		side = pad.global_transform.basis.x
+	side = side - pad_up * side.dot(pad_up)
+	if side.length_squared() < 0.01:
+		side = pad_up.cross(Vector3.RIGHT)
+	side = side.normalized()
+	# On the 28 m plate, clear of the hull (5.5 m was still inside the mesh).
+	walker.global_position = pad.global_position + pad_up * 1.35 + side * 11.0
+	if walker.has_method("set_planet_gravity_provider"):
+		walker.set_planet_gravity_provider(self)
+	var nose := Vector3.FORWARD
+	if ship != null and is_instance_valid(ship):
+		nose = -ship.global_transform.basis.z
+	nose = nose - pad_up * nose.dot(pad_up)
+	if nose.length_squared() < 0.01:
+		nose = -pad.global_transform.basis.z
+		nose = nose - pad_up * nose.dot(pad_up)
+	if nose.length_squared() > 0.01:
+		nose = nose.normalized()
+	var yaw := atan2(-nose.x, -nose.z)
+	if walker.has_method("set_spawn_basis"):
+		walker.set_spawn_basis(pad_up, yaw)
+	if walker.has_method("snap_to_pad"):
+		walker.snap_to_pad(pad)
+	print("[OpenSpace] land EVA on pad deck ", pad.name, " at ", walker.global_position)
+	return true
+
+
 func _spawn_player_near_ship() -> void:
 	_eva_mode = false
 
-	# SurfaceWalker + safe pad spawn (clear of density props / terrain embed).
+	# SurfaceWalker on the occupied unnamed pad deck — not the ship pocket.
 	if ship == null or not is_instance_valid(ship):
 		return
 	player = _make_fallback_player()
+	player.set_meta("skip_ready_snap", true)
 	world_root.add_child(player)
-	var pad_up := Vector3.UP
-	var pad: Node3D = nearest_pad(ship.global_position)
-	if pad and is_instance_valid(pad) and pad.has_meta("pad_up"):
-		pad_up = pad.get_meta("pad_up")
-	else:
-		var pl = nearest_planet(ship.global_position)
-		if pl and is_instance_valid(pl):
-			pad_up = (ship.global_position - pl.global_position).normalized()
-	var side: Vector3 = ship.global_transform.basis.x
-	side = (side - pad_up * side.dot(pad_up))
-	if side.length_squared() < 0.01:
-		side = pad_up.cross(Vector3(0, 0, -1))
+	if not _place_walker_on_land_deck(player):
+		var pad_up := Vector3.UP
+		var pad: Node3D = nearest_pad(ship.global_position)
+		if pad and is_instance_valid(pad) and pad.has_meta("pad_up"):
+			pad_up = pad.get_meta("pad_up")
+		else:
+			var pl = nearest_planet(ship.global_position)
+			if pl and is_instance_valid(pl):
+				pad_up = (ship.global_position - pl.global_position).normalized()
+		var side: Vector3 = ship.global_transform.basis.x
+		side = (side - pad_up * side.dot(pad_up))
 		if side.length_squared() < 0.01:
-			side = pad_up.cross(Vector3.RIGHT)
-	side = side.normalized()
-	# High clear spawn — well above pad deck / props (was too low → terrain embed)
-	player.global_position = ship.global_position + pad_up * 3.2 + side * 5.5
-	if player != null and is_instance_valid(player) and player.has_method("set_planet_gravity_provider"):
-		player.set_planet_gravity_provider(self)
-	if player != null and is_instance_valid(player) and player.has_method("set_eva_profile"):
-		player.set_eva_profile(false)
-	# Face same way as ship nose (−Z of ship)
-	var nose: Vector3 = -ship.global_transform.basis.z
-	nose = (nose - pad_up * nose.dot(pad_up)).normalized()
-	var yaw := atan2(-nose.x, -nose.z)
-	if player != null and is_instance_valid(player) and player.has_method("set_spawn_basis"):
-		player.set_spawn_basis(pad_up, yaw)
-	if player != null and is_instance_valid(player) and pad != null and player.has_method("snap_to_pad"):
-		player.snap_to_pad(pad)
+			side = pad_up.cross(Vector3(0, 0, -1))
+			if side.length_squared() < 0.01:
+				side = pad_up.cross(Vector3.RIGHT)
+		side = side.normalized()
+		player.global_position = ship.global_position + pad_up * 3.2 + side * 11.0
+		if player.has_method("set_planet_gravity_provider"):
+			player.set_planet_gravity_provider(self)
+		if player.has_method("set_eva_profile"):
+			player.set_eva_profile(false)
+		var nose: Vector3 = -ship.global_transform.basis.z
+		nose = (nose - pad_up * nose.dot(pad_up)).normalized()
+		var yaw := atan2(-nose.x, -nose.z)
+		if player.has_method("set_spawn_basis"):
+			player.set_spawn_basis(pad_up, yaw)
+		if pad != null and player.has_method("snap_to_pad"):
+			player.snap_to_pad(pad)
+		print("[OpenSpace] TPS exit at ", player.global_position, " up=", pad_up)
 	if player != null and is_instance_valid(player) and player.has_method("snap_to_surface"):
 		_schedule_surface_settle()
 	if is_instance_valid(ship) and ship.has_method("set_pilot_active"):
 		ship.set_pilot_active(false)
 	_bind_soft_net_actor(player)
-	print("[OpenSpace] TPS exit at ", player.global_position, " up=", pad_up)
 
 
 func _make_fallback_player() -> CharacterBody3D:
@@ -1543,32 +1609,36 @@ func place_from_ship_pocket(walker: Node3D) -> void:
 	if walker.has_method("set_planet_gravity_provider"):
 		walker.set_planet_gravity_provider(self)
 	if landed:
-		var pad_up := Vector3.UP
-		var pad: Node3D = nearest_pad(ship.global_position)
-		if pad and is_instance_valid(pad) and pad.has_meta("pad_up"):
-			pad_up = pad.get_meta("pad_up")
-		else:
-			var pl = nearest_planet(ship.global_position)
-			if pl and is_instance_valid(pl):
-				pad_up = (ship.global_position - pl.global_position).normalized()
-		var side: Vector3 = ship.global_transform.basis.x
-		side = (side - pad_up * side.dot(pad_up))
-		if side.length_squared() < 0.01:
-			side = pad_up.cross(Vector3.RIGHT)
-		if side.length_squared() > 0.01:
-			side = side.normalized()
-		walker.global_position = ship.global_position + pad_up * 3.2 + side * 5.5
-		if walker.has_method("set_eva_profile"):
-			walker.set_eva_profile(false)
-		if walker.has_method("set_spawn_basis"):
-			walker.set_spawn_basis(pad_up, 0.0)
-		var pln: Node3D = nearest_planet(walker.global_position)
-		if pln != null and is_instance_valid(pln) and pln.has_method("force_surface_collision_at"):
-			pln.force_surface_collision_at(walker.global_position)
-		if pad != null and walker.has_method("snap_to_pad"):
-			walker.snap_to_pad(pad)
-		elif walker.has_method("snap_to_surface"):
-			walker.call_deferred("snap_to_surface")
+		# Same outdoor pad-deck snap as F-from-LANDED. Do not keep the pocket.
+		if walker.has_method("set_meta"):
+			walker.set_meta("skip_ready_snap", true)
+		if not _place_walker_on_land_deck(walker):
+			var pad_up := Vector3.UP
+			var pad: Node3D = nearest_pad(ship.global_position)
+			if pad and is_instance_valid(pad) and pad.has_meta("pad_up"):
+				pad_up = pad.get_meta("pad_up")
+			else:
+				var pl = nearest_planet(ship.global_position)
+				if pl and is_instance_valid(pl):
+					pad_up = (ship.global_position - pl.global_position).normalized()
+			var side: Vector3 = ship.global_transform.basis.x
+			side = (side - pad_up * side.dot(pad_up))
+			if side.length_squared() < 0.01:
+				side = pad_up.cross(Vector3.RIGHT)
+			if side.length_squared() > 0.01:
+				side = side.normalized()
+			if pad != null:
+				walker.global_position = pad.global_position + pad_up * 1.35 + side * 11.0
+			else:
+				walker.global_position = ship.global_position + pad_up * 3.2 + side * 11.0
+			if walker.has_method("set_eva_profile"):
+				walker.set_eva_profile(false)
+			if walker.has_method("set_spawn_basis"):
+				walker.set_spawn_basis(pad_up, 0.0)
+			if pad != null and walker.has_method("snap_to_pad"):
+				walker.snap_to_pad(pad)
+			elif walker.has_method("snap_to_surface"):
+				walker.call_deferred("snap_to_surface")
 		_toast_hud("Hatch → pad")
 	else:
 		var hatch: Node3D = ship.get_node_or_null("HatchPoint") as Node3D
