@@ -1,3 +1,5 @@
+**2026-08-28 — IN-A: station foyer/ops + hangar_bay pockets (not ship cockpit)**
+
 **2026-08-28 — ST-G: own factory print §6(c) in the existing player cluster**
 
 **2026-08-27 — ST-F: CX↔GR owner swap on one occupied unnamed pad**
@@ -27,7 +29,8 @@ ST-C: spend Contribution/Biomass at `PadPrintBench` (§6(a)) → **one** catalog
 ST-D: hangar queue of **one** module on a catalog carrier (`cybernex_capital_carrier` …). Refuse if mass/power exceeded. Not a mobile `SITE_*`.  
 ST-E: player-owned orbital cluster of **two** catalog modules (dock + habitat) on Nex-Prime orbit. Same scene. Not a city. Not `SITE_*`. `ORBITAL_STATIONS` stays off.  
 ST-F: occupy unnamed pad → `O` / `flip_cluster_owner` CX↔GR. Theme + services list change. Harvest / print / hangar numbers stay. Not a second `SITE_*`. Not arena-flip.  
-ST-G: factory in the existing `PlayerOrbitalStation` cluster (ST-E stays dock+habitat). Spend Contribution/Biomass at bench (c) → **one** catalog module. Without factory, (c) refuses. No cash-shop skip. Knowledge does not cheapen `rules/15`.
+ST-G: factory in the existing `PlayerOrbitalStation` cluster (ST-E stays dock+habitat). Spend Contribution/Biomass at bench (c) → **one** catalog module. Without factory, (c) refuses. No cash-shop skip. Knowledge does not cheapen `rules/15`.  
+IN-A: `I` at the player orbital cluster or an occupied unnamed pad → station foyer/ops pocket. `I` on the ST-D catalog carrier → `hangar_bay` pocket. Seat↔pocket↔hatch stays. Hatch from station/hangar returns to pad or dock (not MainMenu). No `SITE_*`. 0 Tripo.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -58,6 +61,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | ST-E orbital cluster | **built** — two catalog modules (dock + habitat) near Nex-Prime |
 | ST-F ownership swap | **built** — CX↔GR on one occupied unnamed pad; same-tier numbers |
 | ST-G own factory print | **built** — factory in player cluster; spend → one catalog module; (c) refuses without factory |
+| IN-A interiors bar | **built** — station pocket ≠ ship; hangar_bay ≠ ship; doors not locked props |
 | NP-C | **built** — NPC habitat on empty unnamed pad |
 | Galaxy G2–G6 | **locked** |
 | G1 CRUISE | **in-scope only for OS-C scale** |
