@@ -1,6 +1,6 @@
 # Ground Vehicles · Hangars · Cargo Ramps
 
-**Status:** IN-C V0+V1 + IN-D V2 + IN-E V3 built · SoftNet later  
+**Status:** IN-C V0+V1 + IN-D V2 + IN-E V3 + IN-F V4 visual built  
 **Benchmarks:** SC (vehicle hangar + ramp) · NMS (exocraft) · economical code-first  
 **No P2W:** vehicle tiers = role / soft logistics, not shop combat power  
 
@@ -93,7 +93,7 @@ CapitalShip / Hauler
 | V1 | CargoRamp deploy/stow + walk plates hangar_bay → pad (**built**, IN-C) |
 | V2 | GroundVehicle rover drive on surface (**built**, IN-D) |
 | V3 | Store/retrieve flow (**built**, IN-E) |
-| V4 | SoftNet + multi-seat soft |
+| V4 | SoftNet visual puppet (**built**, IN-F). No second seat — `GroundVehicle` only has the IN-D pilot |
 | V5 | Optional Tripo rover A |
 
 ## 8. Acceptance
@@ -101,7 +101,7 @@ CapitalShip / Hauler
 1. Hauler lands → ramp deploys → rover drives out  
 2. Rover returns up ramp → stored in hold  
 3. Ship takes off with vehicle inventory  
-4. Second player sees ramp + vehicle puppet (soft)  
+4. Second local viewer sees ramp + vehicle puppet (soft) — **built**, IN-F visual only  
 
 ## 9. Links
 
@@ -114,3 +114,5 @@ IN-C (V0+V1): `HangarBay.gd` + `CargoHold` + `CargoRamp` on `CatalogCarrier` (`c
 IN-D (V2): `GroundVehicle` rover on ramp top when plates are `DEPLOYED`. WASD drive, `F` board/exit (walker parked, not freed). Drive onto the unnamed pad deck. One rover. No SoftNet multi-seat. No `SITE_*`. 0 Tripo. Procedural chassis/wheels.
 
 IN-E (V3): drive onto the deployed ramp mouth / `hangar_bay` volume → despawn world rover → `CargoHold` (`id` + `health`). Bay console or hangar interact retrieves onto ramp top when `DEPLOYED` and IN-C pose rules pass. Takeoff keeps inventory. No second world rover. No pay-stat power. No SoftNet multi-seat. No `SITE_*`. 0 Tripo.
+
+IN-F (V4 visual): second local viewer on the host sees CargoRamp `DEPLOYED` plus a SoftNet visual rover puppet (or stored ghost after IN-E store). Host keeps rover authority. Puppet is not a second `GroundVehicle` and has no combat. No passenger seat — `GroundVehicle` only has the IN-D `pilot`. Not a netcode cluster. No `SITE_*`. 0 Tripo.

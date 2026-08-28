@@ -5,6 +5,7 @@
 - **No P2W** — state is pose/form/faction/flight only
 - is_instance_valid on all rebind/free paths
 - **AR-F / AR-G:** `bind_visual_puppet` tags Clash bot slots (3v3 or 5v5). Host keeps combat. Do not `enable()` the 20Hz loop for those slots.
+- **IN-F:** same tag on hangar viewer + rover / stored-ghost puppet. Host keeps rover drive. Not a netcode cluster.
 
 ## Continuum fields (UDP STATE)
 
