@@ -22,7 +22,7 @@ Likeness — **вся** фантазия SC (лететь, стыковатьс�
 | 1 | Flight / IFCS (SCM, NAV/quantum, decoupled, gear, VTOL/hover, boost, fuel) | `ShipController` SCM / NAV / HOVER / STALL / LAND; `ShipFlightModel`; afterburn W+Shift; `ShipLandingGear` (G, pad LAND gate) | SCM/NAV/HOVER/STALL/LAND живы; gear down нужен для чистого LAND на unnamed pad (G; SCM default up); HOVER у пада автосброс (OS-H); decoupled нет; топливо SCM/HOVER расход; empty = limited thrust / no afterburn | G1 CRUISE **закрыт** (OS-C без сверхсвета); quantum / interdiction ждать G1/G3 | клон IFCS; G3 сейчас; P2W-топливо |
 | 2 | Atmosphere / planet approach | бар OS-A…OS-H; шейдеры лимба/дымки | OS-A шов; OS-B оболочка; OS-C старт 8 км; OS-D unnamed fill; OS-E near read; OS-F lift/glide; OS-G силуэт; OS-H harness ритуала | 60 FPS / 5 мин soak на 3090 (human gate) | Planet Tech V5; воксельная оболочка |
 | 3 | Ship as place (interior, seats, multi-crew) | `InteriorDirector` / `InteriorGenerator`; Seat; F seat→pilot | seat↔pocket↔hatch EVA; двери ведут в карман/EVA; multi-crew нет | Phase 2 multi-crew | фейковые двери |
-| 4 | Ship engineering (power/cool/life, component HP) | модульный hull + `ShipModule` (engine/weapon/shield/cargo/extractor); hull-crit recover | модули HP (integrity→thrust/weapon/shield); hull HP; шины power/cool/life нет | шины power/cool later; life-support уже в pocket | pay-to-repair |
+| 4 | Ship engineering (power/cool/life, component HP) | модульный hull + `ShipModule` (engine/weapon/shield/cargo/extractor); hull-crit recover; `SoftShipSystems` buses | модули HP (integrity→thrust/weapon/shield); hull HP; шины power/cool/life живы (overdraw/overheat = soft sag); hull LS = IN-B soft | — | pay-to-repair |
 | 5 | Cargo / tractor / dock | `CargoHold` + `CargoRamp`; unnamed pads | occupy dock: 1 unit pad↔hold; Knowledge подписывает crate; 3 пада/тело + один unnamed силуэт | hangar later; пады unnamed до pin каталога | трактор-клон; SITE_* mint |
 | 6 | On-foot FPS | `SurfaceWalker` EVA + Pulse | TPS на сфере, snap, Pulse по dummy после EVA | полировка / больше FPS later | SC armor-meta |
 | 7 | Zero-G EVA | `eva_mode` + fuel + tether; всё в ARK | zero-G у корпуса (не грунт); fuel+tether; грунт SurfaceWalker | полировка; всё ещё ARK | вторая система |
@@ -58,4 +58,4 @@ CIG copy · воксели · SITE_* mint · G2–G6 сейчас · P2W · Trip
 | Приближаем | 3090 FPS / 5 мин soak (human gate) |
 | Отказ | quantum сейчас, карта галактики, гейты-прыжки, арена-из-мира (G5), города, каталожные SITE_*, воксели, P2W |
 
-Очередь кода: **ST-F built**. Headless PASS ≠ FPS PASS. Не G2.
+Очередь кода: **SE-A built**. Headless PASS ≠ FPS PASS. Не G2.
