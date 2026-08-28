@@ -191,8 +191,9 @@ func _ready() -> void:
 	_load_form_visual()
 	_ensure_face_arrow()
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	# Snap to floor next frame
-	if not eva_mode:
+	# Pad-deck EVA sets skip_ready_snap so _ready cannot raycast the hull
+	# (ON FOOT / TPS ship-pocket look) before OpenSpace snaps to the plate.
+	if not eva_mode and not bool(get_meta("skip_ready_snap", false)):
 		call_deferred("snap_to_surface")
 	if SoftNetSession:
 		SoftNetSession.bind_player(self)
@@ -1109,15 +1110,20 @@ func snap_to_pad(pad: Node3D) -> bool:
 	var rel: Vector3 = global_position - pad.global_position
 	var lat: Vector3 = rel - up * rel.dot(up)
 	var lat_len: float = lat.length()
-	if lat_len > 12.0 or lat_len < 1.2:
+	# 28 m plate, ship sits on center. 5.5 m kept the walker inside the hull
+	# (GPU: ON FOOT / TPS ship pocket). Stand on-deck, clear of the hull.
+	var deck_lat := 11.0
+	if lat_len > 12.5 or lat_len < 9.5:
 		if lat_len > 0.2:
-			lat = lat.normalized() * 5.5
+			lat = lat.normalized() * deck_lat
 		else:
 			var side: Vector3 = pad.global_transform.basis.x
 			side = side - up * side.dot(up)
 			if side.length_squared() < 0.01:
 				side = up.cross(Vector3.RIGHT)
-			lat = side.normalized() * 5.5
+			lat = side.normalized() * deck_lat
+	if lat.length() > 12.5:
+		lat = lat.normalized() * deck_lat
 	global_position = pad.global_position + up * 1.35 + lat
 	velocity = Vector3.ZERO
 	_spawn_grace_t = 0.45

@@ -49,6 +49,7 @@ func _go() -> void:
 	_assert_st_d(os, fails)
 	_assert_st_e(os, fails)
 	_assert_st_f(os, fails)
+	await _assert_landed_hatch_on_pad(os, fails)
 
 	# --- stall math (no scene) ---
 	if _Flight.stall_amount(0.0, 4.0, 20.0) > 0.01:
@@ -1937,10 +1938,12 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 	_assert_openspace_view(os, ship, nex, "LAND", fails)
 	await _osh_occupy_refuel(os, ship, nex, fails)
 
-	# --- EVA snap on pad (not dirt void / fall-through) ---
-	if os.has_method("try_exit_ship"):
+	# --- EVA snap on pad (real F-from-LANDED path, no harness re-snap) ---
+	if os.has_method("_handle_f_interact"):
+		os._handle_f_interact()
+	elif os.has_method("try_exit_ship"):
 		os.try_exit_ship()
-	await get_tree().create_timer(0.35).timeout
+	await get_tree().create_timer(0.45).timeout
 	var walker: Node3D = os.get("player") as Node3D
 	if walker == null or not is_instance_valid(walker):
 		fails.append("OS-H EVA skipped — no walker")
@@ -1948,15 +1951,12 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 		fails.append("OS-H skipped space_out (no takeoff)")
 		_osh_report_skips(fails, done, required)
 		return
-	var pad_eva: Node3D = os.nearest_pad(ship.global_position) if os.has_method("nearest_pad") else null
-	if walker.has_method("snap_to_pad") and pad_eva != null:
-		walker.call("snap_to_pad", pad_eva)
-	elif walker.has_method("snap_to_surface"):
-		walker.call("snap_to_surface")
-	elif walker.has_method("_relief_snap_fallback"):
-		walker.call("_relief_snap_fallback")
-	var eva_agl: float = _osh_agl(nex, walker.global_position)
-	if not _osh_eva_on_pad(walker, pad_eva, nex, eva_agl, fails):
+	var pad_eva: Node3D = null
+	if ship.has_method("get_landed_pad"):
+		pad_eva = ship.get_landed_pad() as Node3D
+	if pad_eva == null and os.has_method("nearest_pad"):
+		pad_eva = os.nearest_pad(ship.global_position)
+	if not _assert_eva_from_landed_on_deck(os, walker, pad_eva, nex, fails):
 		fails.append("OS-H skipped takeoff (no eva)")
 		fails.append("OS-H skipped space_out (no takeoff)")
 		_osh_report_skips(fails, done, required)
@@ -2122,6 +2122,48 @@ func _osh_scene_file() -> String:
 
 func _osh_same_scene(scene0: String) -> bool:
 	return _osh_scene_file() == scene0 and scene0.find("OpenSpace.tscn") >= 0
+
+
+func _assert_eva_from_landed_on_deck(os: Node, walker: Node3D, pad: Node3D, nex: Node, fails: PackedStringArray) -> bool:
+	## GPU leftover: F from LANDED must be ON the unnamed pad deck, not the
+	## ship-pocket TPS (y=9200 / interior_mode). Do not re-snap here.
+	if walker == null or not is_instance_valid(walker):
+		fails.append("EVA from LANDED: no walker")
+		return false
+	var d: Node = os.get("_interior") if os else null
+	if d != null and is_instance_valid(d) and d.has_method("is_inside") and bool(d.is_inside()):
+		fails.append("EVA from LANDED entered ship pocket")
+		return false
+	if bool(walker.get("interior_mode")):
+		fails.append("EVA from LANDED walker still interior_mode")
+		return false
+	if walker.global_position.y > 2000.0:
+		fails.append("EVA from LANDED still in ship pocket (y=%s)" % snapped(walker.global_position.y, 0.1))
+		return false
+	if bool(walker.get("eva_mode")) or (walker.has_method("is_zero_g") and bool(walker.is_zero_g())):
+		fails.append("EVA from LANDED used in-flight 0G pocket spawn")
+		return false
+	var wr: Node3D = os.get_node_or_null("WorldRoot") as Node3D if os else null
+	if wr != null and not wr.visible:
+		fails.append("EVA from LANDED hid WorldRoot (pocket)")
+		return false
+	var eva_agl: float = _osh_agl(nex, walker.global_position)
+	if not _osh_eva_on_pad(walker, pad, nex, eva_agl, fails):
+		return false
+	var legal := str(pad.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"] if pad else false
+	if not legal:
+		fails.append("EVA from LANDED not on unnamed pad deck (%s)" % (pad.name if pad else "none"))
+		return false
+	var up := Vector3.UP
+	if pad.has_meta("pad_up"):
+		up = (pad.get_meta("pad_up") as Vector3).normalized()
+	var rel: Vector3 = walker.global_position - pad.global_position
+	var lat: float = (rel - up * rel.dot(up)).length()
+	var deck: float = rel.dot(up)
+	print("[Playtest] EVA from LANDED on pad deck pad=", pad.name,
+		" lat=", snapped(lat, 0.1), " deck=", snapped(deck, 0.01),
+		" (not ship pocket)")
+	return true
 
 
 func _osh_eva_on_pad(walker: Node3D, pad: Node3D, nex: Node, eva_agl: float, fails: PackedStringArray) -> bool:
@@ -3687,6 +3729,94 @@ func _cockpit_space_takeoff_view(fails: PackedStringArray) -> void:
 		return
 	_assert_openspace_view(os, ship, nex, "HOVER", fails)
 	print("[Playtest] cockpit→Space→HOVER view ok")
+
+
+func _assert_landed_hatch_on_pad(os: Node, fails: PackedStringArray) -> void:
+	## Real hatch path: LANDED seat → I pocket → I hatch → pad deck.
+	## Not the playtest snap_to_pad stub. Does not rewrite ST-A…F.
+	if os == null:
+		fails.append("landed hatch: no OpenSpace")
+		return
+	var ship: Node3D = os.get("ship") as Node3D
+	var nex: Node = _osh_nex()
+	if nex != null and nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	if ship == null or nex == null:
+		fails.append("landed hatch: no ship/body")
+		return
+	if not bool(os.get("_in_ship")):
+		if os.has_method("try_enter_ship") and os.get("player") != null:
+			os.try_enter_ship()
+			await get_tree().create_timer(0.35).timeout
+	if not bool(os.get("_in_ship")):
+		fails.append("landed hatch: not piloting")
+		return
+	var pad: Node3D = null
+	if ship.has_method("get_landed_pad"):
+		pad = ship.get_landed_pad() as Node3D
+	if pad == null and os.has_method("nearest_pad"):
+		pad = os.nearest_pad(ship.global_position)
+	if pad == null or not pad.has_meta("pad_up"):
+		var deck: Node3D = _osh_unnamed_deck()
+		if deck != null:
+			pad = deck
+	if pad == null:
+		fails.append("landed hatch: no unnamed pad")
+		return
+	var up: Vector3 = pad.get_meta("pad_up") if pad.has_meta("pad_up") else Vector3.UP
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	ship.global_position = pad.global_position + up * 8.0
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	ship.set("_gear_down", true)
+	if ship.has_method("_sync_landing_gear"):
+		ship._sync_landing_gear()
+	if ship.has_method("_do_land"):
+		ship._do_land()
+	if not bool(ship.get("is_landed")):
+		fails.append("landed hatch: LAND refused")
+		return
+	if ship.has_method("get_landed_pad"):
+		var landed_pad: Node3D = ship.get_landed_pad() as Node3D
+		if landed_pad != null:
+			pad = landed_pad
+	if os.has_method("_leave_seat_to_pocket"):
+		os._leave_seat_to_pocket()
+	await get_tree().create_timer(0.45).timeout
+	var d: Node = os.get("_interior")
+	if d == null or not (d.has_method("is_inside") and bool(d.is_inside())):
+		fails.append("landed hatch: I did not open ship pocket")
+		return
+	var walker: Node3D = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("landed hatch: no pocket walker")
+		return
+	if walker.global_position.y < 2000.0:
+		fails.append("landed hatch: pocket walker not in pocket")
+		return
+	var hatch: Node3D = null
+	var pocket: Node3D = d.get_active_interior() if d.has_method("get_active_interior") else null
+	if pocket != null:
+		hatch = pocket.get_node_or_null("ExitVolume") as Node3D
+	if hatch != null:
+		walker.global_position = hatch.global_position + Vector3(0, 0.15, 0)
+		await get_tree().process_frame
+	if d.has_method("exit_interior"):
+		d.exit_interior()
+	await get_tree().create_timer(0.45).timeout
+	walker = os.get("player") as Node3D
+	if d.has_method("is_inside") and bool(d.is_inside()):
+		fails.append("landed hatch: still in ship pocket after I hatch")
+		return
+	if not _assert_eva_from_landed_on_deck(os, walker, pad, nex, fails):
+		fails.append("landed hatch: I hatch did not snap onto pad deck")
+		return
+	print("[Playtest] landed hatch → pad deck pad=", pad.name, " (not ship pocket)")
+	if walker != null and is_instance_valid(walker) and os.has_method("try_enter_ship"):
+		walker.global_position = ship.global_position + up * 2.0
+		os.try_enter_ship()
+		await get_tree().create_timer(0.35).timeout
 
 
 func _assert_st_a(os: Node, fails: PackedStringArray) -> void:
