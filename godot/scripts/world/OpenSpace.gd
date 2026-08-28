@@ -25,6 +25,7 @@ var _eva_mode: bool = false
 var _seat_transition: bool = false
 var _in_rover: bool = false
 var _rover: Node3D = null
+var _rover_transition: bool = false
 var _eva_warn_t: float = 0.0
 var _eva_tether_t: float = 0.0
 var _spawn_ship_pos := Vector3(0, 0, 2800)
@@ -1342,6 +1343,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			_skip_edu_quest()
 		KEY_F:
 			_handle_f_interact()
+		KEY_6:
+			if not _in_ship:
+				_try_deploy_hangar_rover()
 		KEY_N:
 			invite_nearby_npc()
 		KEY_7:
@@ -1412,7 +1416,7 @@ func _pad_traffic_node() -> Node:
 
 func _handle_f_interact() -> void:
 	# Priority: unboard rover → board rover → seat→pilot (interior) → ship board/exit
-	if _seat_transition:
+	if _seat_transition or _rover_transition:
 		return
 	if _in_rover and _rover != null and is_instance_valid(_rover):
 		_unboard_rover()
@@ -1430,7 +1434,25 @@ func _handle_f_interact() -> void:
 		try_enter_ship()
 
 
+func _try_deploy_hangar_rover() -> bool:
+	## IN-D: KEY_6 on foot near the catalog carrier. One rover. No store.
+	var c := catalog_carrier()
+	if c == null or not c.has_method("try_deploy_rover"):
+		return false
+	var result := str(c.try_deploy_rover())
+	if result == "DEPLOYED":
+		_toast_hud("Rover on ramp · F board")
+		return true
+	if result == "ALREADY":
+		_toast_hud("Rover already out · F board")
+		return false
+	_toast_hud("Rover needs ramp DEPLOYED · land/slow hover")
+	return false
+
+
 func _try_board_nearby_rover() -> bool:
+	if _rover_transition:
+		return true
 	if player == null or not is_instance_valid(player):
 		return false
 	var best: Node3D = null
@@ -1443,6 +1465,14 @@ func _try_board_nearby_rover() -> bool:
 			if d < best_d:
 				best = r
 				best_d = d
+	var c := catalog_carrier()
+	if c != null and c.has_method("get_deployed_rover"):
+		var cr: Node3D = c.get_deployed_rover()
+		if cr != null and is_instance_valid(cr):
+			var dc: float = player.global_position.distance_to(cr.global_position)
+			if dc < best_d:
+				best = cr
+				best_d = dc
 	if best == null:
 		var tree := get_tree()
 		if tree:
@@ -1454,6 +1484,7 @@ func _try_board_nearby_rover() -> bool:
 						best_d = d2
 	if best == null:
 		return false
+	_rover_transition = true
 	_rover = best
 	_in_rover = true
 	if _rover.has_method("board"):
@@ -1461,15 +1492,19 @@ func _try_board_nearby_rover() -> bool:
 	if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
 		floating.set_target(_rover)
 	_bind_soft_net_actor(_rover)
+	_rover_transition = false
 	print("[OpenSpace] boarded rover")
 	return true
 
 
 func _unboard_rover() -> void:
+	if _rover_transition:
+		return
 	if _rover == null or not is_instance_valid(_rover):
 		_in_rover = false
 		_rover = null
 		return
+	_rover_transition = true
 	var actor: Node3D = null
 	if _rover.has_method("unboard"):
 		actor = _rover.unboard()
@@ -1482,6 +1517,7 @@ func _unboard_rover() -> void:
 			floating.set_target(player)
 		_bind_soft_net_actor(player)
 	_rover = null
+	_rover_transition = false
 	print("[OpenSpace] left rover")
 
 

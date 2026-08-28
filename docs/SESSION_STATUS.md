@@ -1,3 +1,5 @@
+**2026-08-28 — IN-D: GroundVehicle rover drive from hangar ramp onto unnamed pad**
+
 **2026-08-28 — IN-C: HangarBay + CargoHold + cargo ramp on the ST-D catalog carrier**
 
 **2026-08-28 — IN-B: ops console + legal seats + life-support (not ship cockpit)**
@@ -36,7 +38,8 @@ ST-F: occupy unnamed pad → `O` / `flip_cluster_owner` CX↔GR. Theme + service
 ST-G: factory in the existing `PlayerOrbitalStation` cluster (ST-E stays dock+habitat). Spend Contribution/Biomass at bench (c) → **one** catalog module. Without factory, (c) refuses. No cash-shop skip. Knowledge does not cheapen `rules/15`.  
 IN-A: `I` at the player orbital cluster or an occupied unnamed pad → station foyer/ops pocket. `I` on the ST-D catalog carrier → `hangar_bay` pocket. Seat↔pocket↔hatch stays. Hatch from station/hangar returns to pad or dock (not MainMenu). No `SITE_*`. 0 Tripo.  
 IN-B: station **E** is board status / occupy / factory print gate (recycler toggle stays). **F** at `OpsSeat` or `HangarSeat` boards that seat; **I** returns to the same pocket. Live life-support readout; vented pocket uses the EVA suit soft warn (no HP). Station/hangar still ≠ ship cockpit. No `SITE_*`. 0 Tripo.  
-IN-C: ST-D catalog carrier has `HangarBay` + `CargoHold`. Ramp deploys when landed / slow hover / docked; BLOCKED when too fast or too high. Hatch from `hangar_bay` walks plates to the pad (not MainMenu). No rover. No `SITE_*`. 0 Tripo.
+IN-C: ST-D catalog carrier has `HangarBay` + `CargoHold`. Ramp deploys when landed / slow hover / docked; BLOCKED when too fast or too high. Hatch from `hangar_bay` walks plates to the pad (not MainMenu). No rover. No `SITE_*`. 0 Tripo.  
+IN-D: ramp `DEPLOYED` → one `GroundVehicle` on ramp top. `F` board, WASD onto the unnamed pad, `F` exit. No store/retrieve. No SoftNet multi-seat. No `SITE_*`. 0 Tripo.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -70,6 +73,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | IN-A interiors bar | **built** — station pocket ≠ ship; hangar_bay ≠ ship; doors not locked props |
 | IN-B interiors bar | **built** — ops console occupy/factory gate; F seat → I same pocket; LS readout |
 | IN-C hangar ramp | **built** — HangarBay+CargoHold on catalog carrier; gated ramp; hatch → plates → pad; no rover |
+| IN-D rover drive | **built** — one rover on DEPLOYED ramp; F board; drive onto pad; F exit; no store |
 | NP-C | **built** — NPC habitat on empty unnamed pad |
 | Galaxy G2–G6 | **locked** |
 | G1 CRUISE | **in-scope only for OS-C scale** |

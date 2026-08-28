@@ -28,6 +28,8 @@ var _label: Label3D = null
 var _cmd_throttle: float = 0.0
 var _cmd_turn: float = 0.0
 var _use_cmd: bool = false
+var _pad_deck: Node3D = null
+var _hangar_ramp: Node3D = null
 
 
 func _ready() -> void:
@@ -90,6 +92,25 @@ func set_planet_provider(p: Node) -> void:
 	align_to_surface()
 
 
+func set_pad_deck(p: Node3D) -> void:
+	## Stay on the unnamed pad deck — do not snap to PlanetRelief.
+	_pad_deck = p
+
+
+func set_hangar_ramp(r: Node3D) -> void:
+	## Drive the IN-C plates hangar_bay → pad. Not a SITE_*.
+	_hangar_ramp = r
+
+
+func face_along(world_dir: Vector3) -> void:
+	var d: Vector3 = world_dir - _up * world_dir.dot(_up)
+	if d.length_squared() < 1e-6:
+		return
+	_ref_fwd = d.normalized()
+	_yaw = 0.0
+	_apply_basis()
+
+
 func label_text() -> String:
 	return _SoftK.rover_label()
 
@@ -140,18 +161,22 @@ func snap_to_relief() -> bool:
 
 
 func board(actor: Node3D) -> void:
+	## Same hardened park as the ship seat: freeze the walker, do not free it.
+	if actor == null or not is_instance_valid(actor):
+		return
+	if pilot != null and is_instance_valid(pilot):
+		return
 	pilot = actor
-	if actor:
-		actor.visible = false
-		if actor is CollisionObject3D:
-			(actor as CollisionObject3D).collision_layer = 0
-		# Park the walker: otherwise WASD drives the rover AND walks the hidden
-		# body away, Space jumps it, and its abilities still fire.
-		if actor is CharacterBody3D:
-			(actor as CharacterBody3D).velocity = Vector3.ZERO
-		actor.set_physics_process(false)
-		actor.set_process_input(false)
-		actor.set_process_unhandled_input(false)
+	actor.visible = false
+	if actor is CollisionObject3D:
+		(actor as CollisionObject3D).collision_layer = 0
+		(actor as CollisionObject3D).collision_mask = 0
+	if actor is CharacterBody3D:
+		(actor as CharacterBody3D).velocity = Vector3.ZERO
+	actor.set_process(false)
+	actor.set_physics_process(false)
+	actor.set_process_input(false)
+	actor.set_process_unhandled_input(false)
 	if _cam:
 		_cam.current = true
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -168,8 +193,10 @@ func unboard() -> Node3D:
 		a.global_position = global_position + _up * 1.6 + global_transform.basis.x * 2.2
 		if a is CollisionObject3D:
 			(a as CollisionObject3D).collision_layer = 2
+			(a as CollisionObject3D).collision_mask = 1 | 2
 		if a is CharacterBody3D:
 			(a as CharacterBody3D).velocity = Vector3.ZERO
+		a.set_process(true)
 		a.set_physics_process(true)
 		a.set_process_input(true)
 		a.set_process_unhandled_input(true)
@@ -322,6 +349,13 @@ func _visual_relief_metres(pl: Node3D) -> float:
 
 
 func _relief_floor_assist(delta: float) -> void:
+	## Hangar ramp / pad deck first. Relief only when not on IN-D plates.
+	if _hangar_ramp != null and is_instance_valid(_hangar_ramp) and _hangar_ramp.has_method("sample_walk"):
+		_ramp_floor_assist(delta)
+		return
+	if _pad_deck != null and is_instance_valid(_pad_deck):
+		_pad_floor_assist(delta)
+		return
 	## Collision is the bare sphere + pad plate. Drive on PlanetRelief like the walker.
 	var pl: Node3D = _nearest_planet()
 	if pl == null or not ("radius" in pl):
@@ -337,6 +371,41 @@ func _relief_floor_assist(delta: float) -> void:
 		global_position += dir * err * clampf(delta * 8.0, 0.0, 1.0)
 	elif not is_on_floor() and err < -0.3 and err > -4.0:
 		global_position += dir * err * clampf(delta * 6.0, 0.0, 1.0)
+
+
+func _ramp_floor_assist(delta: float) -> void:
+	var mouth: Vector3 = _hangar_ramp.walk_mouth_global() if _hangar_ramp.has_method("walk_mouth_global") else global_position
+	var foot: Vector3 = _hangar_ramp.walk_foot_global() if _hangar_ramp.has_method("walk_foot_global") else mouth
+	var along: Vector3 = foot - mouth
+	var span: float = maxf(along.length(), 0.01)
+	var nalong: Vector3 = along / span
+	var t: float = (global_position - mouth).dot(nalong) / span
+	var path: Vector3
+	if t <= 1.02:
+		path = mouth.lerp(foot, clampf(t, 0.0, 1.0))
+	elif _pad_deck != null and is_instance_valid(_pad_deck):
+		path = _pad_deck.global_position + _pad_up() * 0.55
+	else:
+		path = foot
+	var corr: Vector3 = path - global_position
+	var vert: Vector3 = _up * corr.dot(_up)
+	if vert.length() > 0.12:
+		global_position += vert * clampf(delta * 8.0, 0.0, 1.0)
+
+
+func _pad_floor_assist(delta: float) -> void:
+	var up := _pad_up()
+	var h: float = (global_position - _pad_deck.global_position).dot(up)
+	if h < 0.35:
+		global_position += up * (0.55 - h) * clampf(delta * 8.0, 0.0, 1.0)
+
+
+func _pad_up() -> Vector3:
+	if _pad_deck != null and _pad_deck.has_meta("pad_up"):
+		var raw: Vector3 = _pad_deck.get_meta("pad_up")
+		if raw.length_squared() > 0.01:
+			return raw.normalized()
+	return _up
 
 
 func _ensure_label() -> void:
