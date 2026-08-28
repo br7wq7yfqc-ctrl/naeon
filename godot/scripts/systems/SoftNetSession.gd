@@ -13,6 +13,8 @@ var _player: Node3D = null
 var _ghost: Node3D = null
 var _tick: float = 0.0
 var _ghost_pending: bool = false
+## AR-F: pose-only bot slots. Host keeps combat authority. Do not enable() for these.
+var _visual_puppets: Array = []
 const SNAP_INTERVAL := 0.4   ## soft net rare; GC safe
 const HISTORY_MS := 1500
 
@@ -44,6 +46,40 @@ func enable(on: bool = true, with_ghost: bool = false) -> void:
 		if ghost_enabled and _player:
 			_ghost_pending = true
 			call_deferred("_ensure_ghost")
+
+func bind_visual_puppet(n: Node3D) -> void:
+	## Clash bot / NPC slot: visual pose only. Never grants combat authority.
+	if n == null or not is_instance_valid(n):
+		return
+	n.set_meta("softnet_visual", true)
+	n.set_meta("combat_authority", "host")
+	_prune_visual_puppets()
+	for e in _visual_puppets:
+		if e == n:
+			return
+	_visual_puppets.append(n)
+
+
+func visual_puppet_count() -> int:
+	_prune_visual_puppets()
+	return _visual_puppets.size()
+
+
+func is_visual_puppet(n: Node) -> bool:
+	return n != null and is_instance_valid(n) and bool(n.get_meta("softnet_visual", false))
+
+
+func combat_authority() -> String:
+	return "host"
+
+
+func _prune_visual_puppets() -> void:
+	var keep: Array = []
+	for e in _visual_puppets:
+		if e != null and is_instance_valid(e):
+			keep.append(e)
+	_visual_puppets = keep
+
 
 func bind_player(p: Node3D) -> void:
 	_player = p if p != null and is_instance_valid(p) else null

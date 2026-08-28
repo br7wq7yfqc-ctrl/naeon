@@ -24,6 +24,7 @@ var _camp: Node3D = null
 var _bench: Node3D = null
 var _river: Node3D = null
 var _jump_pads: Node3D = null
+var _local_match: Node3D = null
 
 func _ready() -> void:
 	var _PoolReset = load("res://scripts/combat/ProjectilePool.gd")
@@ -493,6 +494,8 @@ func _finish_clash_layout() -> void:
 	_evidence_ar_e()
 	_evidence_river()
 	_evidence_jump_pads()
+	_setup_clash_local_match()
+	_evidence_ar_f()
 	_setup_arena_playtest()
 
 
@@ -609,10 +612,13 @@ func _update_clash_radar() -> void:
 			var pad := ""
 			if _jump_pads and _jump_pads.has_method("contains") and bool(_jump_pads.contains(player.global_position)):
 				pad = "  ·  PAD"
+			var localm := ""
+			if _local_match and _local_match.has_method("actor_count"):
+				localm = "  ·  3v3 %d" % int(_local_match.actor_count())
 			if press == "":
-				_lane_hud.text = "LANE %s%s%s%s%s%s%s" % [_lanes.player_lane, wave, camp, kit, mod, river, pad]
+				_lane_hud.text = "LANE %s%s%s%s%s%s%s%s" % [_lanes.player_lane, wave, camp, kit, mod, river, pad, localm]
 			else:
-				_lane_hud.text = "LANE %s  ·  %s%s%s%s%s%s%s" % [_lanes.player_lane, press, wave, camp, kit, mod, river, pad]
+				_lane_hud.text = "LANE %s  ·  %s%s%s%s%s%s%s%s" % [_lanes.player_lane, press, wave, camp, kit, mod, river, pad, localm]
 	if _radar == null or not _radar.has_method("set_snapshot"):
 		return
 	# One entry per node: the old second pass compared a Node against an Array
@@ -992,6 +998,27 @@ func _evidence_ar_e() -> void:
 	if _bench and _bench.has_method("equipped_id"):
 		equipped = str(_bench.equipped_id())
 	print("[AR-E] kits=", n, " kit=", kit_id, " bench=", _bench != null, " equipped=", equipped, " pin=", LayerContext.site_pin_id if LayerContext else "")
+
+
+func _setup_clash_local_match() -> void:
+	if get_node_or_null("ClashLocalMatch"):
+		_local_match = get_node_or_null("ClashLocalMatch") as Node3D
+		return
+	_local_match = Node3D.new()
+	_local_match.set_script(preload("res://scripts/arena/ClashLocalMatch.gd"))
+	_local_match.name = "ClashLocalMatch"
+	add_child(_local_match)
+	if _local_match.has_method("bind"):
+		_local_match.bind(self, _lanes, dummy_scene, player)
+
+
+func _evidence_ar_f() -> void:
+	var ev: Dictionary = {}
+	if _local_match and _local_match.has_method("evidence"):
+		ev = _local_match.evidence()
+	print("[AR-F] 3v3 local match actors=", ev.get("actors", 0), " lanes=", ev.get("lanes", ""),
+		" authority=", ev.get("authority", ""), " G5=", ev.get("g5", ""),
+		" pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
 func _setup_arena_playtest() -> void:

@@ -222,6 +222,8 @@ func _find_lane_hostile() -> Node3D:
 	var candidates: Array = []
 	for n in tree.get_nodes_in_group("clash_minion"):
 		candidates.append(n)
+	for n in tree.get_nodes_in_group("clash_hero"):
+		candidates.append(n)
 	for n in tree.get_nodes_in_group("clash_structure"):
 		if n is Node3D:
 			var gun: Node = n.get_node_or_null("Gun")

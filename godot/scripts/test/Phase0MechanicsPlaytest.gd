@@ -58,6 +58,7 @@ func _go() -> void:
 	await _assert_q_a(os, fails)
 	await _assert_q_b(os, fails)
 	await _assert_q_c(os, fails)
+	await _assert_ar_f(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 
 	# --- stall math (no scene) ---
@@ -6633,6 +6634,91 @@ func _assert_q_c(os: Node, fails: PackedStringArray) -> void:
 		if absf(float(guard.get("max_health")) - hp0) > 0.01:
 			fails.append("Q-C changed guard HP")
 	print("[Playtest] Q-C learning node · Knowledge label only · no P2W")
+
+
+func _assert_ar_f(os: Node, fails: PackedStringArray) -> void:
+	## AR-F: 3v3 local authority on the existing Clash footprint.
+	## Isolated probe — does not change scene to TestArena, does not open G5.
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var dummy_scene: PackedScene = load("res://scenes/combat/CombatDummy.tscn")
+	if dummy_scene == null:
+		fails.append("AR-F CombatDummy missing")
+		return
+	var matchn: Node3D = Node3D.new()
+	matchn.set_script(preload("res://scripts/arena/ClashLocalMatch.gd"))
+	matchn.name = "ClashLocalMatchProbe"
+	if os:
+		os.add_child(matchn)
+	else:
+		add_child(matchn)
+	if matchn.has_method("start_isolated"):
+		matchn.start_isolated(os if os else self, dummy_scene)
+	await get_tree().process_frame
+	var live: Array = matchn.living_actors() if matchn.has_method("living_actors") else []
+	var lanes: PackedStringArray = matchn.lane_ids() if matchn.has_method("lane_ids") else PackedStringArray()
+	var auth := str(matchn.combat_authority()) if matchn.has_method("combat_authority") else ""
+	var g5 := bool(matchn.is_g5_closed()) if matchn.has_method("is_g5_closed") else false
+	var pin1 := str(LayerContext.site_pin_id) if LayerContext else ""
+	print("[Playtest] AR-F 3v3 local match actors=", live.size(), " lanes=", ",".join(lanes),
+		" authority=", auth, " G5=", "closed" if g5 else "open", " pin=", pin1)
+	if live.size() != 6:
+		fails.append("AR-F want 6 actors, got %s" % live.size())
+	var seen: Dictionary = {}
+	var cx := 0
+	var gr := 0
+	for n in live:
+		var lane := str(matchn.lane_of(n)) if matchn.has_method("lane_of") else ""
+		if lane != "TOP" and lane != "MID" and lane != "BOT":
+			fails.append("AR-F actor not on a Clash lane (%s)" % lane)
+		else:
+			seen[lane] = true
+		var fac := str(n.get("faction")) if n != null and "faction" in n else ""
+		if fac == "Cybernex":
+			cx += 1
+		elif fac == "gROT":
+			gr += 1
+	for need in ["TOP", "MID", "BOT"]:
+		if not seen.has(need):
+			fails.append("AR-F missing lane " + need)
+	if cx != 3 or gr != 3:
+		fails.append("AR-F want 3+3, got CX=%s GR=%s" % [cx, gr])
+	if matchn.has_method("is_local_authority") and not bool(matchn.is_local_authority()):
+		fails.append("AR-F not local host authority")
+	if auth != "host":
+		fails.append("AR-F authority is not host (%s)" % auth)
+	if not g5:
+		fails.append("AR-F G5 Clash-from-world is open")
+	if os != null and os.has_method("enter_clash_from_world"):
+		fails.append("AR-F opened G5 world-to-arena")
+	if matchn.has_method("is_5v5") and bool(matchn.is_5v5()):
+		fails.append("AR-F shipped 5v5")
+	if matchn.has_method("visual_puppet_count") and int(matchn.visual_puppet_count()) < 5:
+		fails.append("AR-F SoftNet visual puppets missing (got %s)" % int(matchn.visual_puppet_count()))
+	var dmg0 := -1.0
+	var probe: Node = null
+	for n in live:
+		if n != null and "attack_damage" in n:
+			probe = n
+			dmg0 = float(n.get("attack_damage"))
+			break
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("cybernetics", 20.0)
+	if probe != null and dmg0 >= 0.0 and absf(float(probe.get("attack_damage")) - dmg0) > 0.01:
+		fails.append("AR-F Knowledge changed DPS")
+	if pin1 != pin0:
+		fails.append("AR-F changed site_pin (%s → %s)" % [pin0, pin1])
+	if pin1.begins_with("SITE_") and pin1 != "SITE_SPACE_TEST_PAD" and pin1 != "SITE_TEST_ARENA_PILLAR":
+		fails.append("AR-F minted a new SITE_* (%s)" % pin1)
+	if pin1 == "SITE_TEST_ARENA_PILLAR" and pin0 != "SITE_TEST_ARENA_PILLAR":
+		fails.append("AR-F entered TestArena from OpenSpace (G5)")
+	print("[Playtest] AR-F 6 actors on existing lanes · local authority · G5 closed · no SITE_*")
+	if matchn.has_method("shutdown"):
+		matchn.shutdown()
+	matchn.queue_free()
+	await get_tree().process_frame
+	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
+		SoftScanCache.invalidate_enemies()
 
 
 func _in_a_occupied_pad(os: Node) -> Node3D:
