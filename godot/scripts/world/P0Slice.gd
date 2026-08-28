@@ -31,6 +31,9 @@ const ST_D_HANGAR := true
 ## ST-E: player-owned orbital cluster of two catalog modules near Nex-Prime. Not SITE_*.
 ## Does not flip ORBITAL_STATIONS (those remain unnamed props, still off).
 const ST_E_ORBITAL := true
+## ST-F: CX↔GR owner swap on one occupied unnamed pad. Theme + services; same tier numbers.
+## Uses swap_cluster_theme + OwnershipData. Not a second SITE_*. Not arena-flip.
+const ST_F_OWNERSHIP := true
 ## NP-C: visitor places one habitat on an empty unnamed pad. Same BaseBuilder. Not SITE_*.
 const NP_C_MODULE := true
 

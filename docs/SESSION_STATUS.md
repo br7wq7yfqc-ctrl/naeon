@@ -1,3 +1,5 @@
+**2026-08-27 — ST-F: CX↔GR owner swap on one occupied unnamed pad**
+
 **2026-08-27 — ST-E: player orbital cluster of two catalog modules**
 
 **2026-08-27 — ST-D: hangar queue of one module on a catalog carrier**
@@ -21,7 +23,8 @@ ST-A: `B` opens a top-down overlay on an unnamed Nex-Prime pad and places **one*
 ST-B: occupy unnamed pad → harvest → Contribution number on the OpenSpace HUD. Visible `PadHarvestExtractor` (catalog slug `t1_resource_extractor`). Knowledge labels only.  
 ST-C: spend Contribution/Biomass at `PadPrintBench` (§6(a)) → **one** catalog module. No cash-shop skip. Knowledge does not cheapen `rules/15`.  
 ST-D: hangar queue of **one** module on a catalog carrier (`cybernex_capital_carrier` …). Refuse if mass/power exceeded. Not a mobile `SITE_*`.  
-ST-E: player-owned orbital cluster of **two** catalog modules (dock + habitat) on Nex-Prime orbit. Same scene. Not a city. Not `SITE_*`. `ORBITAL_STATIONS` stays off.
+ST-E: player-owned orbital cluster of **two** catalog modules (dock + habitat) on Nex-Prime orbit. Same scene. Not a city. Not `SITE_*`. `ORBITAL_STATIONS` stays off.  
+ST-F: occupy unnamed pad → `O` / `flip_cluster_owner` CX↔GR. Theme + services list change. Harvest / print / hangar numbers stay. Not a second `SITE_*`. Not arena-flip.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -31,7 +34,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
 | Документ | Роль |
 |----------|------|
-| `docs/design/BASE_STATION_STRATEGY.md` | ST-E built; ST-F next |
+| `docs/design/BASE_STATION_STRATEGY.md` | ST-A…ST-F built |
 | `docs/design/OPEN_SPACE_SC_BENCHMARK.md` | Бар подхода OS-A…OS-H. G2–G6 закрыты |
 | `docs/design/ASSET_SOURCE_CANON.md` | unique→Tripo / CC0→neon / paid→neon+notice / отказ |
 | `docs/design/WORLD_FILL.md` | Авторский скелет / безымянный filler. Не чеканит `SITE_*` |
@@ -50,7 +53,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | ST-C print one module | **built** — spend Contribution/Biomass → one catalog module |
 | ST-D hangar queue | **built** — one module on catalog carrier; mass/power refuse |
 | ST-E orbital cluster | **built** — two catalog modules (dock + habitat) near Nex-Prime |
-| ST-F ownership swap | **next** |
+| ST-F ownership swap | **built** — CX↔GR on one occupied unnamed pad; same-tier numbers |
 | NP-C | **built** — NPC habitat on empty unnamed pad |
 | Galaxy G2–G6 | **locked** |
 | G1 CRUISE | **in-scope only for OS-C scale** |

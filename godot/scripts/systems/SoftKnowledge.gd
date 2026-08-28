@@ -186,6 +186,13 @@ static func extractor_label() -> String:
 	return "EXTRACTOR"
 
 
+## ST-F: owner skins the service list. Never harvest / print / hangar numbers.
+static func cluster_services(grot: bool = false) -> PackedStringArray:
+	if grot:
+		return PackedStringArray(["biomass harvest", "vat print", "spore locker"])
+	return PackedStringArray(["contribution harvest", "factory print", "nex locker"])
+
+
 ## Logistics: resource warning threshold earlier (QoL)
 static func low_energy_threshold() -> float:
 	var logi := mastery("logistics")
