@@ -33,6 +33,7 @@ var _console_board: Dictionary = {}
 var _ls_warn_t: float = 0.0
 var _ls_warn_shown: bool = false
 var _occupy_host: Node = null  # pad controller for board occupy; never a SITE_*
+var _hangar_host: Node = null  # ST-D catalog carrier; hatch may land on a deployed ramp
 
 
 func setup(world_root: Node3D, open_space: Node) -> void:
@@ -201,6 +202,7 @@ func enter_hangar(player: Node3D, carrier: Node3D) -> void:
 		return
 	print("[Interior] building hangar_bay pocket hull=", slug)
 	_begin(player, "hangar_bay", interior, carrier.global_position, up, "dock")
+	_hangar_host = carrier
 
 
 func enter_ship(player: Node3D, ship: Node3D) -> void:
@@ -245,6 +247,7 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	_ls_warn_t = 0.0
 	_ls_warn_shown = false
 	_occupy_host = null
+	_hangar_host = null
 	_recycler_on = true
 	_return_mode = "dock" if return_mode == "dock" else "pad"
 	_return_up = ret_up.normalized() if ret_up.length_squared() > 0.01 else Vector3.UP
@@ -429,6 +432,11 @@ func exit_interior() -> void:
 		return
 	var was_ship := _kind == "ship"
 	var dest := _return_mode
+	var ramp: Node3D = null
+	if not was_ship and _kind == "hangar_bay":
+		ramp = _deployed_hangar_ramp()
+		if ramp != null:
+			dest = "ramp"
 	_hatch_fx(false)
 	if _player and is_instance_valid(_player):
 		if _player != null and is_instance_valid(_player) and _player.has_method("set_interior_mode"):
@@ -444,7 +452,10 @@ func exit_interior() -> void:
 		_restore_player_parent()
 		var via_hatch := was_ship and _open_space != null and _open_space.has_method("place_from_ship_pocket")
 		if not via_hatch:
-			_player.global_position = _return_pos
+			if dest == "ramp" and ramp != null and ramp.has_method("walk_mouth_global"):
+				_player.global_position = ramp.walk_mouth_global()
+			else:
+				_player.global_position = _return_pos
 			if _player is CharacterBody3D:
 				(_player as CharacterBody3D).velocity = Vector3.ZERO
 			if dest == "pad":
@@ -453,6 +464,11 @@ func exit_interior() -> void:
 					_player.set_eva_profile(false)
 				if _player != null and is_instance_valid(_player) and _player.has_method("snap_to_surface"):
 					_player.call_deferred("snap_to_surface")
+			elif dest == "ramp":
+				# Hangar mouth → deployed plates. Walk to pad. Same OpenSpace.
+				if _player != null and is_instance_valid(_player) and _player.has_method("set_eva_profile"):
+					var grounded := _hangar_host != null and _hangar_host.has_method("is_landed") and bool(_hangar_host.is_landed())
+					_player.set_eva_profile(not grounded)
 			else:
 				# Cluster / carrier hatch: stay at dock. Zero-G, same scene.
 				if _player != null and is_instance_valid(_player) and _player.has_method("set_eva_profile"):
@@ -494,11 +510,14 @@ func exit_interior() -> void:
 		_toast("Hatch → EVA")
 	elif dest == "pad":
 		_toast("Hatch → pad")
+	elif dest == "ramp":
+		_toast("Hatch → ramp")
 	else:
 		_toast("Hatch → dock")
 	print("[Interior] exited ", _kind, " → ", dest if not was_ship else "eva")
 	_kind = ""
 	_return_mode = "pad"
+	_hangar_host = null
 	set_process(false)
 
 
@@ -734,7 +753,24 @@ func exit_for_pilot() -> void:
 	print("[Interior] exit_for_pilot")
 	_kind = ""
 	_return_mode = "pad"
+	_hangar_host = null
 	set_process(false)
+
+
+func _deployed_hangar_ramp() -> Node3D:
+	## IN-C: hatch onto plates only when the carrier ramp is DEPLOYED.
+	if _hangar_host == null or not is_instance_valid(_hangar_host):
+		return null
+	var ramp: Node = null
+	if _hangar_host.has_method("cargo_ramp"):
+		ramp = _hangar_host.cargo_ramp()
+	if ramp == null:
+		ramp = _hangar_host.find_child("CargoRamp", true, false)
+	if ramp == null or not is_instance_valid(ramp):
+		return null
+	if ramp.has_method("is_driveable") and bool(ramp.is_driveable()):
+		return ramp as Node3D
+	return null
 
 
 func _process(delta: float) -> void:
@@ -790,6 +826,8 @@ func _process(delta: float) -> void:
 		(hlab as Label3D).modulate.a = 1.0 if near_h else 0.55
 		if _kind == "ship":
 			(hlab as Label3D).text = "AIRLOCK · HATCH [I] EVA" if near_h else "AIRLOCK · HATCH [I]"
+		elif _kind == "hangar_bay" and _deployed_hangar_ramp() != null:
+			(hlab as Label3D).text = "HATCH [I] RAMP" if near_h else "HATCH [I]"
 		elif _return_mode == "dock":
 			(hlab as Label3D).text = "HATCH [I] DOCK" if near_h else "HATCH [I]"
 		else:
