@@ -51,6 +51,7 @@ func _go() -> void:
 	_assert_st_f(os, fails)
 	_assert_st_g(os, fails)
 	await _assert_in_a(os, fails)
+	await _assert_in_b(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 
 	# --- stall math (no scene) ---
@@ -5030,6 +5031,256 @@ func _assert_in_a(os: Node, fails: PackedStringArray) -> void:
 		elif walker.global_position.distance_to(carrier.global_position) > 40.0:
 			fails.append("IN-A hangar hatch missed dock")
 	print("[Playtest] IN-A hangar hatch → dock (not MainMenu)")
+	_in_a_restore_pilot(os, ship, was_piloting)
+	await get_tree().create_timer(0.35).timeout
+
+
+func _assert_in_b(os: Node, fails: PackedStringArray) -> void:
+	## IN-B: ops console is a real board action; legal seat F→seat I→same pocket;
+	## live life-support readout; station/hangar still ≠ ship cockpit.
+	var d: Node = os.get("_interior") if os else null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var walker: Node3D = os.get("player") as Node3D if os else null
+	var cluster: Node3D = null
+	var carrier: Node3D = null
+	var pad: Node3D = null
+	var was_piloting := false
+	var pocket: Node3D = null
+	var kind := ""
+	var host: Node3D = null
+	var cv: Node3D = null
+	var seat: Node3D = null
+	var act: Dictionary = {}
+	var ls := ""
+	var hp0 := 100.0
+	var hp1 := 100.0
+	var role := ""
+	var y_pocket := 0.0
+	if os == null or d == null:
+		fails.append("IN-B no OpenSpace/interior")
+		return
+	was_piloting = bool(os.get("_in_ship"))
+	if d.has_method("is_inside") and bool(d.is_inside()) and d.has_method("exit_interior"):
+		d.exit_interior()
+		await get_tree().create_timer(0.2).timeout
+	if bool(os.get("_in_ship")) and os.has_method("try_exit_ship"):
+		os.try_exit_ship()
+		await get_tree().create_timer(0.35).timeout
+	walker = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("IN-B no walker")
+		return
+	if os.has_method("player_orbital_station"):
+		cluster = os.player_orbital_station()
+	if cluster == null:
+		fails.append("IN-B player orbital cluster missing")
+		_in_a_restore_pilot(os, ship, was_piloting)
+		return
+	host = cluster.get_node_or_null("DockModule") as Node3D
+	if host == null:
+		host = cluster
+	walker.global_position = host.global_position + Vector3(0.0, 2.0, 0.0)
+	if walker is CharacterBody3D:
+		(walker as CharacterBody3D).velocity = Vector3.ZERO
+	if ship != null and is_instance_valid(ship):
+		ship.global_position = host.global_position + Vector3(10.0, 2.0, 0.0)
+	await get_tree().process_frame
+	if d.has_method("try_toggle"):
+		d.try_toggle(walker, ship)
+	await get_tree().create_timer(0.45).timeout
+	kind = str(d.get_kind()) if d.has_method("get_kind") else ""
+	pocket = d.get_active_interior() if d.has_method("get_active_interior") else null
+	print("[Playtest] IN-B station/hangar ≠ ship cockpit kind=", kind, " name=",
+		str(pocket.name) if pocket else "")
+	if kind != "station":
+		fails.append("IN-B cluster I opened %s, not station" % kind)
+	if pocket == null:
+		fails.append("IN-B station pocket missing")
+		_in_a_restore_pilot(os, ship, was_piloting)
+		return
+	if str(pocket.get_meta("interior_kind", "")) == "ship" or str(pocket.name).begins_with("ShipInterior"):
+		fails.append("IN-B station reused the ship cockpit pocket")
+	if pocket.get_node_or_null("Seat") != null or pocket.get_node_or_null("SeatVolume") != null:
+		fails.append("IN-B station minted a ship Seat/SeatVolume")
+	if pocket.get_node_or_null("OpsSeat") == null:
+		fails.append("IN-B station missing OpsSeat")
+	ls = str(d.life_support_line()) if d.has_method("life_support_line") else ""
+	print("[Playtest] IN-B life-support readout ", ls)
+	if ls == "":
+		fails.append("IN-B station life-support readout empty")
+	if d.has_method("has_life_support") and not bool(d.has_life_support()):
+		fails.append("IN-B sealed station has no life-support")
+	cv = pocket.get_node_or_null("ConsoleVolume") as Node3D
+	if cv == null:
+		fails.append("IN-B station ConsoleVolume missing")
+	else:
+		walker.global_position = cv.global_position
+		if "health" in walker:
+			hp0 = float(walker.health)
+		await get_tree().process_frame
+		await get_tree().process_frame
+		if d.has_method("try_use_console") and not bool(d.try_use_console()):
+			fails.append("IN-B ops console not usable")
+		else:
+			act = d.last_console_action() if d.has_method("last_console_action") else {}
+			ls = str(d.life_support_line()) if d.has_method("life_support_line") else ""
+			print("[Playtest] IN-B ops console used occupy=", act.get("occupy", false),
+				" factory_gate=", act.get("factory_gate", false), " ls=", ls)
+			if act.is_empty() or not bool(act.get("used", false)):
+				fails.append("IN-B ops console was toast-only / unused")
+			if not ("factory_gate" in act) or not ("board" in act):
+				fails.append("IN-B ops console missing board/factory gate")
+			if not bool(act.get("factory_gate", false)):
+				fails.append("IN-B factory print gate closed after ST-G factory")
+			if str(act.get("board", "")) == "":
+				fails.append("IN-B ops console board status empty")
+			if d.has_method("has_life_support") and bool(d.has_life_support()):
+				fails.append("IN-B vented orbital station still reports life-support")
+			if ls.find("SUIT") < 0 and ls.find("VENTED") < 0 and ls.find("POWER IDLE") < 0:
+				fails.append("IN-B vented station LS line missing suit/vent")
+			if d.has_method("life_support_warn_shown") and not bool(d.life_support_warn_shown()):
+				fails.append("IN-B missing EVA suit soft warn")
+			if "health" in walker:
+				hp1 = float(walker.health)
+				if hp1 < hp0 - 0.05:
+					fails.append("IN-B life-support cut HP (P2W/lethal)")
+		await get_tree().create_timer(0.55).timeout
+		if d.has_method("try_use_console"):
+			d.try_use_console()
+		if d.has_method("has_life_support") and not bool(d.has_life_support()):
+			fails.append("IN-B station E did not restore life-support")
+	seat = pocket.get_node_or_null("OpsSeat") as Node3D
+	if seat == null:
+		fails.append("IN-B OpsSeat missing for F")
+	else:
+		walker.global_position = seat.global_position + Vector3(0, 1.05, 0)
+		await get_tree().process_frame
+		if os.has_method("_try_board_pocket_seat"):
+			if not bool(os._try_board_pocket_seat()):
+				fails.append("IN-B F did not board ops seat")
+		elif d.has_method("try_board_legal_seat"):
+			if not bool(d.try_board_legal_seat(walker)):
+				fails.append("IN-B F did not board ops seat")
+		role = str(d.get_seat_role()) if d.has_method("get_seat_role") else ""
+		kind = str(d.get_kind()) if d.has_method("get_kind") else ""
+		y_pocket = walker.global_position.y
+		print("[Playtest] IN-B seat F→", role, " kind=", kind)
+		if not (d.has_method("is_seated") and bool(d.is_seated())):
+			fails.append("IN-B F did not sit ops seat")
+		if role != "ops":
+			fails.append("IN-B station seat role=%s, want ops" % role)
+		if kind != "station":
+			fails.append("IN-B ops seat left station pocket")
+		if bool(os.get("_in_ship")):
+			fails.append("IN-B ops seat stole the ship cockpit")
+		if d.has_method("try_toggle"):
+			d.try_toggle(walker, ship)
+		await get_tree().process_frame
+		if d.has_method("is_seated") and bool(d.is_seated()):
+			fails.append("IN-B I did not leave ops seat")
+		if not (d.has_method("is_inside") and bool(d.is_inside())):
+			fails.append("IN-B I from ops seat hopped exterior")
+		if str(d.get_kind()) != "station":
+			fails.append("IN-B I from ops seat left station")
+		if walker.global_position.y < 2000.0:
+			fails.append("IN-B I from ops seat dropped out of pocket")
+		print("[Playtest] IN-B seat F→ops I→same pocket kind=station y=",
+			snapped(walker.global_position.y, 0.1), " was=", snapped(y_pocket, 0.1))
+	if d.has_method("is_inside") and bool(d.is_inside()) and d.has_method("exit_interior"):
+		d.exit_interior()
+		await get_tree().create_timer(0.25).timeout
+
+	pad = _in_a_occupied_pad(os)
+	if pad == null:
+		fails.append("IN-B occupied unnamed pad missing")
+	else:
+		if pad.has_method("claim"):
+			pad.claim("Cybernex", 2.0)
+		walker = os.get("player") as Node3D
+		if walker != null and is_instance_valid(walker):
+			walker.global_position = pad.global_position + Vector3(0, 3.0, 0)
+			if walker is CharacterBody3D:
+				(walker as CharacterBody3D).velocity = Vector3.ZERO
+		await get_tree().process_frame
+		if d.has_method("enter_station"):
+			d.enter_station(walker, pad)
+		await get_tree().create_timer(0.4).timeout
+		pocket = d.get_active_interior() if d.has_method("get_active_interior") else null
+		cv = pocket.get_node_or_null("ConsoleVolume") as Node3D if pocket else null
+		if cv != null and walker != null:
+			walker.global_position = cv.global_position
+			await get_tree().process_frame
+			await get_tree().process_frame
+			if d.has_method("try_use_console"):
+				d.try_use_console()
+			act = d.last_console_action() if d.has_method("last_console_action") else {}
+			print("[Playtest] IN-B ops console used occupy=", act.get("occupy", false),
+				" factory_gate=", act.get("factory_gate", false),
+				" status=", act.get("occupy_status", ""))
+			if not bool(act.get("occupy", false)):
+				fails.append("IN-B pad ops console did not occupy")
+		if d.has_method("is_inside") and bool(d.is_inside()) and d.has_method("exit_interior"):
+			d.exit_interior()
+			await get_tree().create_timer(0.2).timeout
+
+	if os.has_method("catalog_carrier"):
+		carrier = os.catalog_carrier()
+	if carrier == null:
+		fails.append("IN-B catalog carrier missing")
+		_in_a_restore_pilot(os, ship, was_piloting)
+		return
+	walker = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("IN-B no walker for hangar seat")
+		_in_a_restore_pilot(os, ship, was_piloting)
+		return
+	walker.global_position = carrier.global_position + Vector3(0.0, 2.0, 0.0)
+	if walker is CharacterBody3D:
+		(walker as CharacterBody3D).velocity = Vector3.ZERO
+	await get_tree().process_frame
+	if d.has_method("enter_hangar"):
+		d.enter_hangar(walker, carrier)
+	await get_tree().create_timer(0.45).timeout
+	kind = str(d.get_kind()) if d.has_method("get_kind") else ""
+	pocket = d.get_active_interior() if d.has_method("get_active_interior") else null
+	if kind != "hangar_bay":
+		fails.append("IN-B carrier I opened %s, not hangar_bay" % kind)
+	if pocket != null and (pocket.get_node_or_null("Seat") != null or pocket.get_node_or_null("SeatVolume") != null):
+		fails.append("IN-B hangar minted a ship Seat/SeatVolume")
+	if pocket != null and str(pocket.get_meta("interior_kind", "")) == "ship":
+		fails.append("IN-B hangar reused the ship cockpit")
+	ls = str(d.life_support_line()) if d.has_method("life_support_line") else ""
+	print("[Playtest] IN-B hangar life-support readout ", ls, " kind=", kind)
+	if ls == "":
+		fails.append("IN-B hangar life-support readout empty")
+	seat = pocket.get_node_or_null("HangarSeat") as Node3D if pocket else null
+	if seat == null:
+		fails.append("IN-B HangarSeat missing")
+	else:
+		walker.global_position = seat.global_position + Vector3(0, 1.05, 0)
+		await get_tree().process_frame
+		if os.has_method("_try_board_pocket_seat") and not bool(os._try_board_pocket_seat()):
+			fails.append("IN-B F did not board carrier seat")
+		role = str(d.get_seat_role()) if d.has_method("get_seat_role") else ""
+		print("[Playtest] IN-B seat F→", role, " kind=", d.get_kind() if d.has_method("get_kind") else "?")
+		if role != "carrier_pilot":
+			fails.append("IN-B hangar seat role=%s, want carrier_pilot" % role)
+		if bool(os.get("_in_ship")):
+			fails.append("IN-B hangar seat stole the ship cockpit")
+		if d.has_method("try_toggle"):
+			d.try_toggle(walker, ship)
+		await get_tree().process_frame
+		if d.has_method("is_seated") and bool(d.is_seated()):
+			fails.append("IN-B I did not leave carrier seat")
+		if not (d.has_method("is_inside") and bool(d.is_inside())):
+			fails.append("IN-B I from carrier seat hopped exterior")
+		if str(d.get_kind()) != "hangar_bay":
+			fails.append("IN-B I from carrier seat left hangar_bay")
+		print("[Playtest] IN-B seat F→carrier_pilot I→same pocket kind=hangar_bay")
+	if d.has_method("is_inside") and bool(d.is_inside()) and d.has_method("exit_interior"):
+		d.exit_interior()
+		await get_tree().create_timer(0.2).timeout
+	print("[Playtest] IN-B station/hangar ≠ ship cockpit")
 	_in_a_restore_pilot(os, ship, was_piloting)
 	await get_tree().create_timer(0.35).timeout
 
