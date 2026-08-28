@@ -52,6 +52,7 @@ func _go() -> void:
 	_assert_st_g(os, fails)
 	await _assert_in_a(os, fails)
 	await _assert_in_b(os, fails)
+	await _assert_in_c(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 
 	# --- stall math (no scene) ---
@@ -5283,6 +5284,183 @@ func _assert_in_b(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] IN-B station/hangar ≠ ship cockpit")
 	_in_a_restore_pilot(os, ship, was_piloting)
 	await get_tree().create_timer(0.35).timeout
+
+
+func _assert_in_c(os: Node, fails: PackedStringArray) -> void:
+	## IN-C: HangarBay+CargoHold on the ST-D carrier. Ramp V0/V1 only.
+	## No GroundVehicle. No store/retrieve rover. No SoftNet multi-seat.
+	var d: Node = os.get("_interior") if os else null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var walker: Node3D = os.get("player") as Node3D if os else null
+	var carrier: Node3D = null
+	var pad: Node3D = null
+	var hold: Node = null
+	var bay: Node = null
+	var ramp: Node = null
+	var pocket: Node3D = null
+	var was_piloting := false
+	var scene0 := _osh_scene_file()
+	var rover_n := 0
+	var result := ""
+	var reason := ""
+	var kind := ""
+	var dest := ""
+	if os == null:
+		fails.append("IN-C no OpenSpace")
+		return
+	was_piloting = bool(os.get("_in_ship"))
+	if d != null and d.has_method("is_inside") and bool(d.is_inside()) and d.has_method("exit_interior"):
+		d.exit_interior()
+		await get_tree().create_timer(0.2).timeout
+	if os.has_method("catalog_carrier"):
+		carrier = os.catalog_carrier()
+	if carrier == null:
+		fails.append("IN-C catalog carrier missing")
+		return
+	if str(carrier.get_meta("site_pin", "")) != "":
+		fails.append("IN-C hangar minted site_pin")
+	if bool(carrier.get_meta("mobile_site", false)):
+		fails.append("IN-C hangar marked mobile SITE_*")
+	hold = carrier.cargo_hold() if carrier.has_method("cargo_hold") else carrier.get_node_or_null("CargoHold")
+	bay = carrier.hangar_bay() if carrier.has_method("hangar_bay") else carrier.get_node_or_null("HangarBay")
+	print("[Playtest] IN-C hangar has HangarBay+CargoHold")
+	if hold == null:
+		fails.append("IN-C CargoHold missing on catalog carrier")
+	if bay == null:
+		fails.append("IN-C HangarBay missing on catalog carrier")
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("IN-C enabled P0Slice.ORBITAL_STATIONS")
+	pad = _in_a_occupied_pad(os)
+	if pad == null and os.has_method("nearest_pad") and carrier != null:
+		pad = os.nearest_pad(carrier.global_position)
+	if pad == null:
+		fails.append("IN-C unnamed pad missing")
+		_in_c_restore(os, carrier, ship, was_piloting)
+		return
+
+	# Refuse: too high / too fast. State stays STOWED.
+	if carrier.has_method("set_pose_flight"):
+		carrier.set_pose_flight(40.0, 12.0, pad)
+	await get_tree().process_frame
+	result = str(carrier.try_deploy_ramp()) if carrier.has_method("try_deploy_ramp") else ""
+	ramp = carrier.cargo_ramp() if carrier.has_method("cargo_ramp") else null
+	reason = str(ramp.get("last_block_reason")) if ramp != null else ""
+	print("[Playtest] IN-C refuses when too fast/too high reason=", reason, " result=", result)
+	if result != "BLOCKED":
+		fails.append("IN-C ramp deployed while too fast/too high")
+	if ramp != null and ramp.has_method("is_driveable") and bool(ramp.is_driveable()):
+		fails.append("IN-C ramp left DEPLOYED after BLOCKED")
+	if carrier.has_method("set_pose_hover"):
+		carrier.set_pose_flight(40.0, 0.0, pad)
+	await get_tree().process_frame
+	result = str(carrier.try_deploy_ramp()) if carrier.has_method("try_deploy_ramp") else ""
+	if result != "BLOCKED":
+		fails.append("IN-C ramp deployed while too high")
+	if carrier.has_method("set_pose_hover"):
+		carrier.set_pose_hover(4.5, 12.0, pad)
+	await get_tree().process_frame
+	result = str(carrier.try_deploy_ramp()) if carrier.has_method("try_deploy_ramp") else ""
+	if result != "BLOCKED":
+		fails.append("IN-C ramp deployed while too fast")
+
+	# Deploy: slow hover < 8 m AGL, then landed.
+	if ramp != null and ramp.has_method("stow_immediate"):
+		ramp.stow_immediate()
+	if carrier.has_method("set_pose_hover"):
+		carrier.set_pose_hover(4.5, 3.0, pad)
+	await get_tree().process_frame
+	result = str(carrier.try_deploy_ramp()) if carrier.has_method("try_deploy_ramp") else ""
+	await get_tree().create_timer(0.55).timeout
+	ramp = carrier.cargo_ramp() if carrier.has_method("cargo_ramp") else ramp
+	if ramp != null and ramp.has_method("is_driveable") and not bool(ramp.is_driveable()) and ramp.has_method("deploy_immediate") and result != "BLOCKED":
+		ramp.deploy_immediate()
+	print("[Playtest] IN-C ramp deploys when landed/slow hover state=",
+		ramp.state_name() if ramp != null and ramp.has_method("state_name") else result)
+	if ramp == null or not (ramp.has_method("is_driveable") and bool(ramp.is_driveable())):
+		fails.append("IN-C ramp did not deploy on slow hover")
+	if ramp != null and ramp.has_method("stow_immediate"):
+		ramp.stow_immediate()
+	if carrier.has_method("set_pose_landed"):
+		carrier.set_pose_landed(pad)
+	await get_tree().process_frame
+	result = str(carrier.try_deploy_ramp()) if carrier.has_method("try_deploy_ramp") else ""
+	await get_tree().create_timer(0.55).timeout
+	if ramp != null and ramp.has_method("is_driveable") and not bool(ramp.is_driveable()) and ramp.has_method("deploy_immediate") and result != "BLOCKED":
+		ramp.deploy_immediate()
+	if ramp == null or not (ramp.has_method("is_driveable") and bool(ramp.is_driveable())):
+		fails.append("IN-C ramp did not deploy when landed")
+
+	# Hatch from hangar_bay onto the deployed ramp, then walk plates to the pad.
+	walker = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		if bool(os.get("_in_ship")) and os.has_method("try_exit_ship"):
+			os.try_exit_ship()
+			await get_tree().create_timer(0.3).timeout
+		walker = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("IN-C no walker for hangar hatch")
+		_in_c_restore(os, carrier, ship, was_piloting)
+		return
+	walker.global_position = carrier.global_position + Vector3(0.0, 2.0, 0.0)
+	if walker is CharacterBody3D:
+		(walker as CharacterBody3D).velocity = Vector3.ZERO
+	await get_tree().process_frame
+	if d != null and d.has_method("enter_hangar"):
+		d.enter_hangar(walker, carrier)
+	await get_tree().create_timer(0.4).timeout
+	kind = str(d.get_kind()) if d != null and d.has_method("get_kind") else ""
+	pocket = d.get_active_interior() if d != null and d.has_method("get_active_interior") else null
+	if kind != "hangar_bay":
+		fails.append("IN-C I opened %s, not hangar_bay" % kind)
+	var hatch: Node3D = pocket.get_node_or_null("ExitVolume") as Node3D if pocket else null
+	if hatch != null:
+		walker.global_position = hatch.global_position + Vector3(0, 0.15, 0)
+		await get_tree().process_frame
+	if d != null and d.has_method("try_toggle"):
+		d.try_toggle(walker, ship)
+	await get_tree().create_timer(0.4).timeout
+	if d != null and d.has_method("is_inside") and bool(d.is_inside()):
+		fails.append("IN-C hangar hatch did not exit onto ramp")
+		if d.has_method("exit_interior"):
+			d.exit_interior()
+			await get_tree().create_timer(0.15).timeout
+	walker = os.get("player") as Node3D
+	if not _in_a_same_openspace(scene0):
+		fails.append("IN-C hangar hatch returned to MainMenu")
+	if walker == null or not is_instance_valid(walker):
+		fails.append("IN-C walker lost after hangar hatch")
+		_in_c_restore(os, carrier, ship, was_piloting)
+		return
+	if walker.global_position.y > 5000.0:
+		fails.append("IN-C hangar hatch left walker in the pocket")
+	if ramp != null and ramp.has_method("walk_mouth_global"):
+		if walker.global_position.distance_to(ramp.walk_mouth_global()) > 6.0:
+			fails.append("IN-C hangar hatch missed deployed ramp")
+	# Walk hangar_bay → ramp plates → pad.
+	if ramp != null and ramp.has_method("sample_walk"):
+		for t in [0.25, 0.5, 0.75, 1.0]:
+			walker.global_position = ramp.sample_walk(float(t))
+			if walker is CharacterBody3D:
+				(walker as CharacterBody3D).velocity = Vector3.ZERO
+			await get_tree().process_frame
+	if walker.global_position.distance_to(pad.global_position) > 14.0:
+		fails.append("IN-C walk path missed pad")
+	if walker.global_position.y > 5000.0:
+		fails.append("IN-C walk path stayed in hangar_bay pocket")
+	print("[Playtest] IN-C walk path hangar_bay → ramp → pad")
+	rover_n = get_tree().get_nodes_in_group("ground_vehicle").size() if get_tree() else 0
+	if rover_n > 0:
+		fails.append("IN-C spawned a rover")
+	print("[Playtest] IN-C no rover spawned")
+	_in_c_restore(os, carrier, ship, was_piloting)
+	await get_tree().create_timer(0.3).timeout
+
+
+func _in_c_restore(os: Node, carrier: Node3D, ship: Node3D, was_piloting: bool) -> void:
+	if carrier != null and is_instance_valid(carrier) and carrier.has_method("restore_orbit_pose"):
+		carrier.restore_orbit_pose()
+	_in_a_restore_pilot(os, ship, was_piloting)
 
 
 func _in_a_first_door(pocket: Node3D) -> Node3D:
