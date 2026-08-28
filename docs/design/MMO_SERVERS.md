@@ -47,7 +47,7 @@ Clash net: [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md) AR
 | `SoftRemotePuppet.gd` | поза / форма / фракция / полёт | симуляция мира |
 | `SoftENet.gd` | LAN host/join seed | 10k CCU |
 | Phase 2 план | 2–4 игрока, multi-crew, server authority + prediction | сделано |
-| AR-F | 3v3 local authority later; G5 закрыт | вход в Clash из OPEN SPACE |
+| AR-F | 3v3 local host authority **built**; SoftNet visual; 5v5 later; G5 закрыт | вход в Clash из OPEN SPACE |
 | Phase 3 план | vertical slice **одной** системы ARK; quests; MOBA full proto | кластер 10k |
 | Phase 5 план | interest management; load test «50–100+ entities» | целевые 10k CCU |
 | `NPC_AGENCY.md` | боты есть; agency — docs | замена кластера кодом NPC |
