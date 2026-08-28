@@ -57,6 +57,7 @@ func _go() -> void:
 	await _assert_in_e(os, fails)
 	await _assert_q_a(os, fails)
 	await _assert_q_b(os, fails)
+	await _assert_q_c(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 
 	# --- stall math (no scene) ---
@@ -6479,6 +6480,159 @@ func _assert_q_b(os: Node, fails: PackedStringArray) -> void:
 		if absf(float(pad_ctrl.ownership.claim_strength) - claim0) > 0.001 and tmpl != "occupy":
 			fails.append("Q-B changed claim strength")
 	print("[Playtest] Q-B alliance board · Knowledge label only · no P2W")
+
+
+func _assert_q_c(os: Node, fails: PackedStringArray) -> void:
+	## Q-C: one optional Learning Node on a Q-A harvest (or deliver) contract.
+	## Interact reads pad / extractor / crate via SoftKnowledge.
+	## Complete → field_intel label. Harvest / print / hangar / Q-A / Q-B stay.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var Board = load("res://scripts/systems/ContractBoard.gd")
+	var pad: Node = _in_a_occupied_pad(os)
+	var offer: Dictionary = {}
+	var node: Dictionary = {}
+	var read: Dictionary = {}
+	var intel: Dictionary = {}
+	var done: Dictionary = {}
+	var lab0 := ""
+	var lab1 := ""
+	var harvest0 := 0.0
+	var harvest1 := 0.0
+	var print0 := 0.0
+	var print1 := 0.0
+	var hangar_m0 := 0.0
+	var hangar_m1 := 0.0
+	var hangar_p0 := 0.0
+	var hangar_p1 := 0.0
+	var rate0 := 0.0
+	var rate1 := 0.0
+	var bench: Node = null
+	var qa_intel0 := 0.0
+	var qa_intel1 := 0.0
+	var qa_lab0 := ""
+	var qa_lab1 := ""
+	var qb0: Dictionary = {}
+	var qb1: Dictionary = {}
+	var traffic: Node = null
+	var guard: Node = null
+	var dmg0 := 0.0
+	var hp0 := 0.0
+	var nex: Node = _osh_nex()
+	if P0 == null or not bool(P0.Q_C_LEARNING):
+		fails.append("Q-C P0Slice flag missing")
+		return
+	if Board == null:
+		fails.append("Q-C ContractBoard missing")
+		return
+	if pad != null and pad.has_method("print_bench"):
+		bench = pad.print_bench()
+	if pad != null and pad.has_method("tier_budget"):
+		var bud: Dictionary = pad.tier_budget()
+		harvest0 = float(bud.get("harvest", 0.0))
+		print0 = float(bud.get("print_cost", 0.0))
+		hangar_m0 = float(bud.get("hangar_mass", 0.0))
+		hangar_p0 = float(bud.get("hangar_power", 0.0))
+	if pad != null and "extract_rate" in pad:
+		rate0 = float(pad.get("extract_rate"))
+	if bench != null and bench.has_method("print_cost"):
+		print0 = float(bench.print_cost())
+	if GameManager:
+		qa_intel0 = float(GameManager.subject_mastery.get("quest_intel", 0.0))
+		GameManager.subject_mastery["field_intel"] = 0.0
+	qa_lab0 = SoftKnowledge.contract_intel_label()
+	lab0 = SoftKnowledge.field_intel_label()
+	qb0 = Board.alliance_snapshot()
+	if nex != null and nex.has_method("pad_traffic"):
+		traffic = nex.call("pad_traffic")
+	if traffic != null and traffic.has_method("get_guard"):
+		guard = traffic.get_guard()
+	if guard != null:
+		dmg0 = float(guard.get("attack_damage"))
+		hp0 = float(guard.get("max_health"))
+	Board.reset_slice()
+	offer = Board.offer_one("Pad_North", "Nex-Prime", "harvest")
+	node = Board.learning_node()
+	print("[Playtest] Q-C node present on contract id=", offer.get("id", ""),
+		" template=", offer.get("template", ""), " node=", node.get("id", ""),
+		" status=", node.get("status", ""))
+	if offer.is_empty() or str(offer.get("id", "")) != "QA-harvest-Pad_North":
+		fails.append("Q-C harvest contract missing (%s)" % offer.get("id", ""))
+		return
+	if node.is_empty() or str(node.get("id", "")) == "":
+		fails.append("Q-C learning node missing on harvest contract")
+		return
+	if str(offer.get("body", "")) != "Nex-Prime":
+		fails.append("Q-C contract left the ARK body")
+	if str(offer.get("id", "")).begins_with("SITE_"):
+		fails.append("Q-C minted SITE_*")
+	if not bool(node.get("optional", false)):
+		fails.append("Q-C learning node is not optional")
+	if Board.cash_shop_skip_possible() or bool(Board.try_cash_skip()) \
+			or bool(Board.try_pay_complete(999.0)):
+		fails.append("Q-C cash-shop skip / pay-to-complete accepted")
+	if bool(Board.try_unlock_exclusive_module("extractor")) \
+			or SoftKnowledge.exclusive_module_unlocked("extractor"):
+		fails.append("Q-C Knowledge-gated exclusive module")
+	read = Board.interact_learning_node()
+	intel = read.get("intel", {})
+	if typeof(intel) != TYPE_DICTIONARY:
+		intel = {}
+	print("[Playtest] Q-C interact intel pad=", intel.get("pad", ""),
+		" extractor=", intel.get("extractor", ""), " crate=", intel.get("crate", ""))
+	if intel.is_empty() or str(intel.get("pad", "")) == "" \
+			or str(intel.get("extractor", "")) == "" or str(intel.get("crate", "")) == "":
+		fails.append("Q-C interact did not read pad/extractor/crate intel")
+	done = Board.try_complete_learning_node()
+	node = done.get("learning_node", {})
+	if typeof(node) != TYPE_DICTIONARY:
+		node = Board.learning_node()
+	lab1 = SoftKnowledge.field_intel_label()
+	print("[Playtest] Q-C complete node status=", node.get("status", ""),
+		" Knowledge ", lab0, " → ", lab1)
+	if str(node.get("status", "")) != "complete":
+		fails.append("Q-C did not complete the learning node")
+	if lab1 == lab0 or lab1 != "FIELD INTEL":
+		fails.append("Q-C Knowledge label did not change (%s → %s)" % [lab0, lab1])
+	if pad != null and pad.has_method("tier_budget"):
+		var bud1: Dictionary = pad.tier_budget()
+		harvest1 = float(bud1.get("harvest", -1.0))
+		print1 = float(bud1.get("print_cost", -1.0))
+		hangar_m1 = float(bud1.get("hangar_mass", -1.0))
+		hangar_p1 = float(bud1.get("hangar_power", -1.0))
+	if pad != null and "extract_rate" in pad:
+		rate1 = float(pad.get("extract_rate"))
+	if bench != null and bench.has_method("print_cost"):
+		print1 = float(bench.print_cost())
+	if GameManager:
+		qa_intel1 = float(GameManager.subject_mastery.get("quest_intel", 0.0))
+	qa_lab1 = SoftKnowledge.contract_intel_label()
+	qb1 = Board.alliance_snapshot()
+	print("[Playtest] Q-C harvest/print/hangar/Q-A/Q-B ", snapped(harvest0, 0.01), "/",
+		snapped(print0, 0.01), "/", snapped(hangar_m0, 0.01), " → ",
+		snapped(harvest1, 0.01), "/", snapped(print1, 0.01), "/", snapped(hangar_m1, 0.01))
+	if absf(harvest1 - harvest0) > 0.0001 or harvest0 <= 0.0:
+		fails.append("Q-C harvest number changed (%s → %s)" % [harvest0, harvest1])
+	if absf(print1 - print0) > 0.0001 or print0 <= 0.0:
+		fails.append("Q-C print number changed (%s → %s)" % [print0, print1])
+	if absf(hangar_m1 - hangar_m0) > 0.0001 or absf(hangar_p1 - hangar_p0) > 0.0001:
+		fails.append("Q-C hangar numbers changed")
+	if absf(rate1 - rate0) > 0.0001:
+		fails.append("Q-C extract_rate changed")
+	if absf(qa_intel1 - qa_intel0) > 0.0001 or qa_lab1 != qa_lab0:
+		fails.append("Q-C changed Q-A Knowledge (%s/%s → %s/%s)" % [
+			qa_intel0, qa_lab0, qa_intel1, qa_lab1
+		])
+	if str(qb1.get("id", "")) != str(qb0.get("id", "")) \
+			or str(qb1.get("status", "")) != str(qb0.get("status", "")):
+		fails.append("Q-C overwrote Q-B contract (%s/%s → %s/%s)" % [
+			qb0.get("id", ""), qb0.get("status", ""), qb1.get("id", ""), qb1.get("status", "")
+		])
+	if guard != null:
+		if absf(float(guard.get("attack_damage")) - dmg0) > 0.01:
+			fails.append("Q-C changed guard DPS")
+		if absf(float(guard.get("max_health")) - hp0) > 0.01:
+			fails.append("Q-C changed guard HP")
+	print("[Playtest] Q-C learning node · Knowledge label only · no P2W")
 
 
 func _in_a_occupied_pad(os: Node) -> Node3D:

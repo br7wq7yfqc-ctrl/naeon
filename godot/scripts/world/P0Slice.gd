@@ -47,6 +47,9 @@ const Q_A_CONTRACT := true
 ## Q-B: one alliance-shared occupy/logistics contract on the same unnamed pad.
 ## SoftKnowledge alliance intel only. Reuses ContractBoard / SoftSession. Not siege.
 const Q_B_ALLIANCE := true
+## Q-C: one optional Learning Node on a Q-A harvest / deliver contract.
+## Interact reads pad / extractor / crate via SoftKnowledge. Subject label only.
+const Q_C_LEARNING := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6
