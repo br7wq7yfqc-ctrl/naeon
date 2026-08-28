@@ -5,6 +5,7 @@ class_name CatalogCarrier
 ## IN-C: HangarBay + CargoHold data + CargoRamp V0/V1. Not a mobile SITE_*.
 ## IN-D: one GroundVehicle on ramp top when DEPLOYED. No SoftNet.
 ## IN-E: store/retrieve as CargoHold data (id + health). No second world rover.
+## IN-F: SoftNet visual puppet of ramp + rover/stored ghost. Host authority.
 ## No new hull UUID.
 
 const DEFAULT_HULL := "cybernex_capital_carrier"
@@ -35,6 +36,7 @@ var _home_basis: Basis = Basis.IDENTITY
 var _home_ok: bool = false
 var _deployed_rover: Node3D = null
 var _rover_left_store_volume: bool = false
+var _softnet: Node = null
 
 
 func _ready() -> void:
@@ -106,6 +108,16 @@ func cargo_ramp() -> Node:
 	return find_child("CargoRamp", true, false)
 
 
+func hangar_softnet() -> Node:
+	if _softnet != null and is_instance_valid(_softnet):
+		return _softnet
+	return get_node_or_null("HangarSoftNet")
+
+
+func rover_authority() -> String:
+	return "host"
+
+
 func is_landed() -> bool:
 	return _landed
 
@@ -172,6 +184,7 @@ func try_deploy_rover() -> String:
 		rover.face_along(foot - spawn)
 	_deployed_rover = rover
 	_rover_left_store_volume = false
+	_sync_hangar_softnet()
 	print("[CatalogCarrier] rover on ramp mouth")
 	return "DEPLOYED"
 
@@ -185,6 +198,7 @@ func clear_deployed_rover() -> void:
 		_deployed_rover.queue_free()
 	_deployed_rover = null
 	_rover_left_store_volume = false
+	_sync_hangar_softnet()
 
 
 func stored_vehicle_count() -> int:
@@ -251,6 +265,7 @@ func try_store_rover() -> String:
 	rover.queue_free()
 	_deployed_rover = null
 	_rover_left_store_volume = false
+	_sync_hangar_softnet()
 	print("[CatalogCarrier] rover stored hold=", stored_vehicle_count())
 	return "STORED"
 
@@ -326,6 +341,7 @@ func _spawn_retrieved_rover(entry: Dictionary) -> String:
 		rover.face_along(foot - spawn)
 	_deployed_rover = rover
 	_rover_left_store_volume = false
+	_sync_hangar_softnet()
 	print("[CatalogCarrier] rover on ramp mouth")
 	return "DEPLOYED"
 
@@ -359,7 +375,9 @@ func try_deploy_ramp() -> String:
 		var up := _up_at(_pad)
 		ramp.layout_to_deck(_pad.global_position + up * 0.15)
 	if ramp.has_method("try_deploy"):
-		return str(ramp.try_deploy())
+		var result := str(ramp.try_deploy())
+		_sync_hangar_softnet()
+		return result
 	return "BLOCKED"
 
 
@@ -427,6 +445,7 @@ func restore_orbit_pose() -> void:
 	var ramp: Node = cargo_ramp()
 	if ramp != null and ramp.has_method("stow_immediate"):
 		ramp.stow_immediate()
+	_sync_hangar_softnet()
 
 
 func hangar_slots() -> int:
@@ -468,6 +487,27 @@ func _ensure_hangar_queue() -> void:
 	_queue = q
 
 
+func _sync_hangar_softnet() -> void:
+	var n: Node = hangar_softnet()
+	if n != null and n.has_method("sync_from_host"):
+		n.sync_from_host()
+
+
+func _ensure_hangar_softnet() -> void:
+	if get_node_or_null("HangarSoftNet") != null:
+		_softnet = get_node_or_null("HangarSoftNet")
+		if _softnet.has_method("bind_carrier"):
+			_softnet.bind_carrier(self)
+		return
+	_softnet = Node3D.new()
+	_softnet.set_script(preload("res://scripts/world/HangarSoftNet.gd"))
+	_softnet.name = "HangarSoftNet"
+	_softnet.set_meta("site_pin", "")
+	add_child(_softnet)
+	if _softnet.has_method("bind_carrier"):
+		_softnet.bind_carrier(self)
+
+
 func _ensure_hangar_systems() -> void:
 	## V0: CargoHold + HangarBay data. V1: CargoRamp plates. V2 rover is try_deploy_rover.
 	if get_node_or_null("CargoHold") == null:
@@ -500,6 +540,7 @@ func _ensure_hangar_systems() -> void:
 		_bay.add_child(_ramp)
 	elif _bay != null:
 		_ramp = _bay.get_node_or_null("CargoRamp") as Node3D
+	_ensure_hangar_softnet()
 
 
 func _remember_home() -> void:

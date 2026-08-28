@@ -55,6 +55,7 @@ func _go() -> void:
 	await _assert_in_c(os, fails)
 	await _assert_in_d(os, fails)
 	await _assert_in_e(os, fails)
+	await _assert_in_f(os, fails)
 	await _assert_q_a(os, fails)
 	await _assert_q_b(os, fails)
 	await _assert_q_c(os, fails)
@@ -6052,6 +6053,192 @@ func _in_e_restore(os: Node, carrier: Node3D, ship: Node3D, was_piloting: bool) 
 					hold.retrieve_vehicle(0)
 					vehs = hold.get("vehicles")
 	_in_d_restore(os, carrier, ship, was_piloting)
+
+
+func _assert_in_f(os: Node, fails: PackedStringArray) -> void:
+	## IN-F V4 visual: second local viewer sees ramp DEPLOYED + rover/stored ghost.
+	## Host keeps rover authority. Puppet is not a second physical rover.
+	## No passenger seat this slice — GroundVehicle only has the IN-D pilot.
+	var d: Node = os.get("_interior") if os else null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var carrier: Node3D = null
+	var pad: Node3D = null
+	var ramp: Node = null
+	var rover: Node3D = null
+	var soft: Node = null
+	var viewer: Node3D = null
+	var puppet: Node3D = null
+	var pose: Dictionary = {}
+	var was_piloting := false
+	var result := ""
+	var hold_n := 0
+	var world_n := 0
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	if os == null:
+		fails.append("IN-F no OpenSpace")
+		return
+	was_piloting = bool(os.get("_in_ship"))
+	if d != null and d.has_method("is_inside") and bool(d.is_inside()) and d.has_method("exit_interior"):
+		d.exit_interior()
+		await get_tree().create_timer(0.2).timeout
+	if os.has_method("catalog_carrier"):
+		carrier = os.catalog_carrier()
+	if carrier == null:
+		fails.append("IN-F catalog carrier missing")
+		return
+	if str(carrier.get_meta("site_pin", "")) != "":
+		fails.append("IN-F hangar minted site_pin")
+	if bool(carrier.get_meta("mobile_site", false)):
+		fails.append("IN-F hangar marked mobile SITE_*")
+	pad = _in_a_occupied_pad(os)
+	if pad == null and os.has_method("nearest_pad"):
+		pad = os.nearest_pad(carrier.global_position)
+	if pad == null:
+		fails.append("IN-F unnamed pad missing")
+		_in_e_restore(os, carrier, ship, was_piloting)
+		return
+	if str(pad.get_meta("site_pin", "")) != "":
+		fails.append("IN-F pad minted SITE_*")
+	if carrier.has_method("clear_deployed_rover"):
+		carrier.clear_deployed_rover()
+
+	if carrier.has_method("set_pose_landed"):
+		carrier.set_pose_landed(pad)
+	await get_tree().process_frame
+	result = str(carrier.try_deploy_ramp()) if carrier.has_method("try_deploy_ramp") else ""
+	await get_tree().create_timer(0.55).timeout
+	ramp = carrier.cargo_ramp() if carrier.has_method("cargo_ramp") else null
+	if ramp != null and ramp.has_method("is_driveable") and not bool(ramp.is_driveable()) and ramp.has_method("deploy_immediate") and result != "BLOCKED":
+		ramp.deploy_immediate()
+	if ramp == null or not (ramp.has_method("is_driveable") and bool(ramp.is_driveable())):
+		fails.append("IN-F ramp not DEPLOYED")
+		_in_e_restore(os, carrier, ship, was_piloting)
+		return
+	if not carrier.has_method("try_deploy_rover"):
+		fails.append("IN-F IN-D try_deploy_rover missing")
+		_in_e_restore(os, carrier, ship, was_piloting)
+		return
+	result = str(carrier.try_deploy_rover())
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	rover = carrier.get_deployed_rover() if carrier.has_method("get_deployed_rover") else null
+	if result != "DEPLOYED" or rover == null or not is_instance_valid(rover):
+		fails.append("IN-F host rover did not spawn")
+		_in_e_restore(os, carrier, ship, was_piloting)
+		return
+	if carrier.has_method("rover_authority") and str(carrier.rover_authority()) != "host":
+		fails.append("IN-F rover authority is not host")
+	print("[Playtest] IN-F host rover authority")
+
+	soft = carrier.hangar_softnet() if carrier.has_method("hangar_softnet") else carrier.get_node_or_null("HangarSoftNet")
+	if soft == null:
+		fails.append("IN-F HangarSoftNet missing")
+		_in_e_restore(os, carrier, ship, was_piloting)
+		return
+	if soft.has_method("bind_carrier"):
+		soft.bind_carrier(carrier)
+	if soft.has_method("sync_from_host"):
+		soft.sync_from_host()
+	await get_tree().process_frame
+	if soft.has_method("is_host_authority") and not bool(soft.is_host_authority()):
+		fails.append("IN-F SoftNet stole rover authority")
+	if soft.has_method("rover_authority") and str(soft.rover_authority()) != "host":
+		fails.append("IN-F SoftNet authority is not host")
+	if SoftNetSession and SoftNetSession.has_method("combat_authority") and str(SoftNetSession.combat_authority()) != "host":
+		fails.append("IN-F SoftNet combat authority left host")
+	if SoftNetSession and SoftNetSession.get("enabled") == true:
+		fails.append("IN-F enabled SoftNet 20Hz loop")
+	viewer = soft.viewer() if soft.has_method("viewer") else null
+	puppet = soft.rover_puppet() if soft.has_method("rover_puppet") else null
+	pose = soft.observed_pose() if soft.has_method("observed_pose") else {}
+	if viewer == null or not is_instance_valid(viewer):
+		fails.append("IN-F second local viewer missing")
+	elif not bool(viewer.get_meta("softnet_visual", false)):
+		fails.append("IN-F viewer is not a SoftNet visual puppet")
+	if puppet == null or not is_instance_valid(puppet) or not puppet.visible:
+		fails.append("IN-F rover puppet missing")
+	elif not bool(puppet.get_meta("softnet_visual", false)):
+		fails.append("IN-F rover puppet is not SoftNet visual")
+	if puppet != null and puppet.is_in_group("ground_vehicle"):
+		fails.append("IN-F rover puppet joined ground_vehicle")
+	if puppet is CharacterBody3D:
+		fails.append("IN-F rover puppet is a physical body")
+	if puppet != null and puppet.has_method("board"):
+		fails.append("IN-F rover puppet has combat/drive board")
+	if str(pose.get("ramp_state", "")) != "DEPLOYED":
+		fails.append("IN-F viewer missed ramp DEPLOYED (saw %s)" % str(pose.get("ramp_state", "")))
+	if str(pose.get("rover_mode", "")) != "world":
+		fails.append("IN-F viewer missed world rover puppet (mode=%s)" % str(pose.get("rover_mode", "")))
+	if soft.has_method("viewer_sees_ramp_deployed") and not bool(soft.viewer_sees_ramp_deployed()):
+		fails.append("IN-F second actor does not see ramp DEPLOYED")
+	if soft.has_method("viewer_sees_rover_puppet") and not bool(soft.viewer_sees_rover_puppet()):
+		fails.append("IN-F second actor does not see rover puppet")
+	world_n = _in_e_world_rover_count()
+	if world_n != 1:
+		fails.append("IN-F want 1 physical rover, got %s" % world_n)
+	if soft.has_method("physical_rover_count") and int(soft.physical_rover_count()) != 1:
+		fails.append("IN-F SoftNet physical rover count want 1")
+	if str(carrier.try_deploy_rover()) != "ALREADY":
+		fails.append("IN-F allowed a second physical rover")
+	print("[Playtest] IN-F second local actor sees ramp DEPLOYED + rover puppet")
+	print("[Playtest] IN-F no second physical rover")
+
+	if ramp.has_method("walk_mouth_global"):
+		rover.global_position = ramp.walk_mouth_global()
+		if rover.has_method("align_to_surface"):
+			rover.align_to_surface()
+	await get_tree().process_frame
+	result = str(carrier.try_store_rover())
+	await get_tree().process_frame
+	if soft.has_method("sync_from_host"):
+		soft.sync_from_host()
+	rover = carrier.get_deployed_rover() if carrier.has_method("get_deployed_rover") else null
+	hold_n = int(carrier.stored_vehicle_count()) if carrier.has_method("stored_vehicle_count") else 0
+	world_n = _in_e_world_rover_count()
+	pose = soft.observed_pose() if soft.has_method("observed_pose") else {}
+	puppet = soft.rover_puppet() if soft.has_method("rover_puppet") else puppet
+	if result != "STORED" or rover != null or hold_n != 1:
+		fails.append("IN-F IN-E store lost (result=%s hold=%s)" % [result, str(hold_n)])
+	if world_n != 0:
+		fails.append("IN-F store left a physical rover (%s)" % world_n)
+	if str(pose.get("rover_mode", "")) != "stored_ghost":
+		fails.append("IN-F viewer missed stored ghost (mode=%s)" % str(pose.get("rover_mode", "")))
+	if puppet == null or not is_instance_valid(puppet) or not puppet.visible:
+		fails.append("IN-F stored ghost puppet missing")
+	elif puppet.is_in_group("ground_vehicle") or puppet is CharacterBody3D:
+		fails.append("IN-F stored ghost became a physical rover")
+
+	result = str(carrier.try_retrieve_rover())
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	if soft.has_method("sync_from_host"):
+		soft.sync_from_host()
+	rover = carrier.get_deployed_rover() if carrier.has_method("get_deployed_rover") else null
+	hold_n = int(carrier.stored_vehicle_count()) if carrier.has_method("stored_vehicle_count") else 0
+	world_n = _in_e_world_rover_count()
+	pose = soft.observed_pose() if soft.has_method("observed_pose") else {}
+	print("[Playtest] IN-F IN-E store/retrieve still works hold=", hold_n, " result=", result, " world=", world_n)
+	if result != "DEPLOYED" or rover == null or not is_instance_valid(rover):
+		fails.append("IN-F IN-E retrieve lost")
+	if hold_n != 0:
+		fails.append("IN-F retrieve hold count want 0 got %s" % hold_n)
+	if world_n != 1:
+		fails.append("IN-F retrieve want 1 physical rover, got %s" % world_n)
+	if str(pose.get("rover_mode", "")) != "world":
+		fails.append("IN-F retrieve viewer missed world puppet")
+	if soft.has_method("has_passenger_seat") and bool(soft.has_passenger_seat()):
+		fails.append("IN-F invented a pay-slot passenger seat")
+	var pin1 := str(LayerContext.site_pin_id) if LayerContext else ""
+	if pin1 != pin0 and pin1.begins_with("SITE_"):
+		fails.append("IN-F minted SITE_* (%s)" % pin1)
+	if str(carrier.get_meta("site_pin", "")) != "" or str(pad.get_meta("site_pin", "")) != "":
+		fails.append("IN-F minted SITE_* on hangar/pad")
+	if SoftNetSession and SoftNetSession.get("enabled") == true:
+		fails.append("IN-F enabled SoftNet netcode after sync")
+	print("[Playtest] IN-F no SITE_*")
+	print("[Playtest] IN-F no second seat — GroundVehicle has only the IN-D pilot seat")
+	_in_e_restore(os, carrier, ship, was_piloting)
+	await get_tree().create_timer(0.2).timeout
 
 
 func _in_a_first_door(pocket: Node3D) -> Node3D:
