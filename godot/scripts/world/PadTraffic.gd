@@ -147,7 +147,7 @@ func _offer_alliance_contract(ally: Node) -> void:
 	var host := _host_name
 	var intent := ""
 	var offer: Dictionary = {}
-	if ally == null or Board == null or not Board.has_method("offer_alliance_one"):
+	if ally == null or Board == null:
 		return
 	if host == "":
 		var pad := get_parent()

@@ -110,14 +110,14 @@ func try_pay_complete_contract(cash: float = 0.0) -> bool:
 
 func try_accept_alliance_contract() -> Dictionary:
 	## Q-B: accept the shared alliance contract. Same board. Not a second quest system.
-	var cur: Dictionary = _Board.accept_alliance() if _Board.has_method("accept_alliance") else {}
+	var cur: Dictionary = _Board.accept_alliance()
 	_console_board["alliance_contract"] = cur
 	return cur
 
 
 func try_complete_alliance_contract() -> Dictionary:
 	## Q-B: complete after occupy/logistics progress. Alliance intel label only.
-	var cur: Dictionary = _Board.try_complete_alliance() if _Board.has_method("try_complete_alliance") else {}
+	var cur: Dictionary = _Board.try_complete_alliance()
 	_console_board["alliance_contract"] = cur
 	return cur
 
@@ -1011,8 +1011,6 @@ func _attach_alliance_offer(pad: Node3D) -> void:
 	var intent := ""
 	var ally: Node = null
 	if _kind != "station":
-		return
-	if not _Board.has_method("offer_alliance_one"):
 		return
 	host = _contract_host_id(pad)
 	if get_tree():
