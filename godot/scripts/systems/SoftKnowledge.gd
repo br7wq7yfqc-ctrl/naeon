@@ -219,6 +219,28 @@ static func alliance_intel_label() -> String:
 	return "ALLY"
 
 
+## Hull buses: name only. Never changes supply / draw / sag / repair.
+static func power_bus_label() -> String:
+	var cyber := mastery("cybernetics")
+	if cyber >= 10.0 or rank() >= 5:
+		return "PWR BUS"
+	return "PWR"
+
+
+static func cool_bus_label() -> String:
+	var cyber := mastery("cybernetics")
+	if cyber >= 10.0 or rank() >= 5:
+		return "COOL BUS"
+	return "COOL"
+
+
+static func life_bus_label() -> String:
+	var bio := mastery("biology")
+	if bio >= 10.0 or rank() >= 5:
+		return "LIFE SUPPORT"
+	return "LS"
+
+
 ## Q-C: Learning Node subject label. story ≠ power. Never yield / DPS / modules.
 static func field_intel_label() -> String:
 	var intel := mastery("field_intel")

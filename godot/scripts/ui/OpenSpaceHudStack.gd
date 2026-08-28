@@ -10,6 +10,7 @@ const FIELDS := [
 	"landed", "occupy", "eva_mode",
 	"econ", "econ_rate", "econ_grot",
 	"energy", "energy_max",
+	"power_draw", "power_supply", "cool_load", "cool_cap", "life",
 ]
 
 
@@ -47,6 +48,11 @@ static func snapshot(ship: Node = null, player: Node = null, pad: Node = null) -
 		"econ_grot": false,
 		"energy": -1.0,
 		"energy_max": -1.0,
+		"power_draw": 0.0,
+		"power_supply": 0.0,
+		"cool_load": 0.0,
+		"cool_cap": 0.0,
+		"life": "",
 	}
 	if ship != null and is_instance_valid(ship):
 		if "fuel" in ship:
@@ -60,6 +66,22 @@ static func snapshot(ship: Node = null, player: Node = null, pad: Node = null) -
 		var worst := _worst_module(ship)
 		snap["module_tag"] = str(worst.get("tag", ""))
 		snap["module_pct"] = float(worst.get("pct", 100.0))
+		var buses: Node = null
+		if ship.has_method("engineering_buses"):
+			buses = ship.engineering_buses()
+		if buses == null:
+			buses = ship.get_node_or_null("SoftShipSystems")
+		if buses != null:
+			if buses.has_method("power_draw_total"):
+				snap["power_draw"] = float(buses.power_draw_total())
+			if buses.has_method("power_supply"):
+				snap["power_supply"] = float(buses.power_supply())
+			if buses.has_method("cool_load"):
+				snap["cool_load"] = float(buses.cool_load())
+			if buses.has_method("cool_capacity"):
+				snap["cool_cap"] = float(buses.cool_capacity())
+			if buses.has_method("life_support_line"):
+				snap["life"] = str(buses.life_support_line())
 	if pad != null and is_instance_valid(pad) and pad.has_method("get_claim_status"):
 		snap["occupy"] = str(pad.get_claim_status())
 		# Rate is display-only. Knowledge may label it; harvest yield stays.
@@ -129,7 +151,23 @@ static func stack_text(snap: Dictionary) -> String:
 	var en_max := float(snap.get("energy_max", -1.0))
 	if en_now >= 0.0 and en_max > 0.0:
 		en_s = "EN %.0f/%.0f" % [en_now, en_max]
-	return "%s\n%s\n%s\n%s\n%s\n%s\n%s" % [econ_s, fuel_s, cargo_s, mod_s, land_s, eva, en_s]
+	var pwr_s := "PWR —"
+	var p_draw := float(snap.get("power_draw", 0.0))
+	var p_sup := float(snap.get("power_supply", 0.0))
+	if p_draw > 0.0 or p_sup > 0.0:
+		pwr_s = "%s %.1f/%.1f" % [_SoftK.power_bus_label(), p_draw, p_sup]
+	var cool_s := "COOL —"
+	var c_load := float(snap.get("cool_load", 0.0))
+	var c_cap := float(snap.get("cool_cap", 0.0))
+	if c_load > 0.0 or c_cap > 0.0:
+		cool_s = "%s %.1f/%.1f" % [_SoftK.cool_bus_label(), c_load, c_cap]
+	var life_raw := str(snap.get("life", ""))
+	var ls_s := "%s —" % _SoftK.life_bus_label()
+	if life_raw != "":
+		ls_s = "%s %s" % [_SoftK.life_bus_label(), life_raw]
+	return "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s" % [
+		econ_s, fuel_s, cargo_s, mod_s, pwr_s, cool_s, ls_s, land_s, eva, en_s,
+	]
 
 
 static func _worst_module(ship: Node) -> Dictionary:
