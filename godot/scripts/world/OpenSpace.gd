@@ -1435,9 +1435,24 @@ func _handle_f_interact() -> void:
 
 
 func _try_deploy_hangar_rover() -> bool:
-	## IN-D: KEY_6 on foot near the catalog carrier. One rover. No store.
+	## IN-D spawn if hold is empty. IN-E retrieve if CargoHold has a vehicle.
 	var c := catalog_carrier()
-	if c == null or not c.has_method("try_deploy_rover"):
+	if c == null:
+		return false
+	if c.has_method("stored_vehicle_count") and int(c.stored_vehicle_count()) > 0 and c.has_method("try_retrieve_rover"):
+		var retrieved := str(c.try_retrieve_rover())
+		if retrieved == "DEPLOYED":
+			_toast_hud("Rover on ramp · F board")
+			return true
+		if retrieved == "ALREADY":
+			_toast_hud("Rover already out · F board")
+			return false
+		if retrieved == "BLOCKED":
+			_toast_hud("Rover needs ramp DEPLOYED · land/slow hover")
+			return false
+		_toast_hud("Retrieve refused")
+		return false
+	if not c.has_method("try_deploy_rover"):
 		return false
 	var result := str(c.try_deploy_rover())
 	if result == "DEPLOYED":
@@ -1600,6 +1615,8 @@ func _finish_seat_to_pilot() -> void:
 
 
 func _try_store_rover() -> void:
+	if _try_store_hangar_rover():
+		return
 	if _in_rover:
 		print("[OpenSpace] Unboard rover first (F)")
 		return
@@ -1632,6 +1649,33 @@ func _try_store_rover() -> void:
 		if ship.has_method("clear_deployed_rover"):
 			ship.clear_deployed_rover()
 		print("[OpenSpace] Rover despawned (no hold)")
+
+
+func _try_store_hangar_rover() -> bool:
+	## IN-E: KEY_7 stores the catalog-carrier rover when it is on the ramp mouth.
+	var c := catalog_carrier()
+	if c == null or not c.has_method("try_store_rover"):
+		return false
+	var hangar_r: Node3D = c.get_deployed_rover() if c.has_method("get_deployed_rover") else null
+	if hangar_r == null or not is_instance_valid(hangar_r):
+		return false
+	if _in_rover and _rover == hangar_r:
+		_unboard_rover()
+	var stored := str(c.try_store_rover())
+	if stored == "STORED":
+		_toast_hud("Rover stored · hangar hold")
+		print("[OpenSpace] Hangar rover stored")
+		return true
+	if stored == "FAR":
+		_toast_hud("Drive onto hangar ramp to store")
+		return true
+	if stored == "BLOCKED":
+		_toast_hud("Ramp BLOCKED · cannot store")
+		return true
+	if stored == "FULL":
+		_toast_hud("Hangar hold full")
+		return true
+	return false
 
 
 func _toggle_interior() -> void:

@@ -705,9 +705,15 @@ func try_use_console() -> bool:
 		_refresh_life_support()
 		_apply_ops_console()
 		_tick_life_support_warn(0.0, true)
+		var retrieved := _try_hangar_retrieve()
 		var rec := "HABITAT SEALED" if _recycler_on else "VENTED TO PLANET"
 		var board := str(_console_board.get("board", _pad_status_line()))
-		_toast("%s · ATMO %.2f · %s" % [rec, _atmo, board])
+		if retrieved == "DEPLOYED":
+			_toast("ROVER ON RAMP · F board")
+		elif retrieved == "BLOCKED":
+			_toast("RAMP BLOCKED · cannot retrieve")
+		else:
+			_toast("%s · ATMO %.2f · %s" % [rec, _atmo, board])
 	else:
 		_toast("COCKPIT · %s · F seat · I hatch" % life_support_line())
 	if AudioDirector and AudioDirector.has_method("play_ui"):
@@ -881,6 +887,22 @@ func _pad_status_line() -> String:
 	if pad.has_method("get_claim_status"):
 		st = str(pad.get_claim_status())
 	return "PAD %s %s claim %.0f%%" % [fac, st, clampf(cs / 1.75, 0.0, 1.0) * 100.0]
+
+
+func _try_hangar_retrieve() -> String:
+	## IN-E: bay console retrieves a stored rover when the ramp is DEPLOYED.
+	if _kind != "hangar_bay":
+		return ""
+	if _hangar_host == null or not is_instance_valid(_hangar_host):
+		return ""
+	if not _hangar_host.has_method("try_retrieve_rover"):
+		return ""
+	if _hangar_host.has_method("stored_vehicle_count") and int(_hangar_host.stored_vehicle_count()) <= 0:
+		return "EMPTY"
+	var retrieved := str(_hangar_host.try_retrieve_rover())
+	_console_board["retrieve"] = retrieved
+	print("[Interior] hangar retrieve=", retrieved)
+	return retrieved
 
 
 func _apply_ops_console() -> void:
