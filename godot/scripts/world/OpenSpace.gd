@@ -446,6 +446,60 @@ func player_orbital_station() -> Node3D:
 	return world_root.get_node_or_null("PlayerOrbitalStation") as Node3D
 
 
+func occupied_pad_base() -> Node:
+	## ST-F: unnamed pad controller the player already occupies. Not a new SITE_*.
+	var tree := get_tree()
+	var actor: Node3D = null
+	var best: Node = null
+	var best_d := 48.0
+	if not _P0.ST_F_OWNERSHIP:
+		return null
+	if player != null and is_instance_valid(player) and player.is_inside_tree():
+		actor = player
+	elif ship != null and is_instance_valid(ship) and ship.is_inside_tree():
+		actor = ship
+	if tree == null:
+		return null
+	for n in tree.get_nodes_in_group("pad_bases"):
+		var d := 9999.0
+		if n == null or not is_instance_valid(n):
+			continue
+		if not (n is Node3D):
+			continue
+		if not n.has_method("flip_cluster_owner"):
+			continue
+		if actor != null:
+			d = actor.global_position.distance_to((n as Node3D).global_position)
+			if d > best_d:
+				continue
+		if n.has_method("get_faction"):
+			var fac := str(n.get_faction())
+			if fac != "Cybernex" and fac != "gROT":
+				continue
+		if actor == null:
+			return n
+		if d < best_d:
+			best_d = d
+			best = n
+	return best
+
+
+func _try_flip_pad_owner() -> void:
+	var pad: Node = occupied_pad_base()
+	var after := ""
+	if pad == null or not pad.has_method("flip_cluster_owner"):
+		_toast_hud("Occupy an unnamed pad to flip owner (CX↔GR)")
+		return
+	after = str(pad.flip_cluster_owner())
+	if after == "":
+		_toast_hud("Owner flip refused — hold the pad first")
+		return
+	if pad.has_method("services_line"):
+		_toast_hud("Owner → %s · %s · same tier" % [after, str(pad.services_line())])
+	else:
+		_toast_hud("Owner → %s · same tier" % after)
+
+
 func _bind_planet_observers() -> void:
 	for pl in planets:
 		if pl and pl.has_method("set_observer") and ship:
@@ -1220,6 +1274,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_P:
 			if GameManager and GameManager.has_method("try_promote_alliance"):
 				GameManager.try_promote_alliance()
+		KEY_O:
+			_try_flip_pad_owner()
 		KEY_M:
 			_toast_hud("Galaxy map locked (G2) — not implemented. M is not a map.")
 		KEY_TAB:

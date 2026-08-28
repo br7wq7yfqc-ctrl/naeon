@@ -54,6 +54,14 @@ func is_pad_driven() -> bool:
 	return _pad != null and is_instance_valid(_pad)
 
 
+func reload_for_faction(faction_name: String) -> void:
+	## ST-F mesh theme only. Does not touch extract_rate / contribution_per_unit.
+	var mesh: Node = get_node_or_null("ExtractorMesh")
+	if mesh != null and mesh.has_method("reload_for_faction"):
+		mesh.reload_for_faction(faction_name)
+	_sync_from_pad()
+
+
 func _process(_delta: float) -> void:
 	if is_pad_driven():
 		_sync_from_pad()

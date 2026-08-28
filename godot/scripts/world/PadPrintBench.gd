@@ -40,6 +40,31 @@ func cash_shop_skip_possible() -> bool:
 	return false
 
 
+func reload_for_faction(faction_name: String) -> void:
+	## ST-F bench skin only. print_cost stays the rules/15 T1 number.
+	var fac := faction_name
+	var slab: MeshInstance3D = get_node_or_null("Slab") as MeshInstance3D
+	var lab: Label3D = get_node_or_null("BenchLabel") as Label3D
+	var col := Color(0.35, 0.85, 0.7)
+	var mat: StandardMaterial3D = null
+	if fac == "gROT":
+		col = Color(0.95, 0.22, 0.42)
+	elif fac == "Cybernex":
+		col = Color(0.15, 0.85, 1.0)
+	if slab != null:
+		mat = slab.material_override as StandardMaterial3D
+		if mat == null:
+			mat = StandardMaterial3D.new()
+			slab.material_override = mat
+		mat.albedo_color = col * 0.4
+		mat.emission_enabled = true
+		mat.emission = col
+		mat.emission_energy_multiplier = 1.05
+	if lab != null:
+		lab.modulate = col
+		lab.text = "%s\n%.0f %s · no cash" % [_SoftK.print_bench_label(), print_cost(), _wallet_name().to_upper()]
+
+
 func try_cash_skip_print(_cash: float = 0.0) -> bool:
 	## Freemium / rules/19: shop may not skip print. Always refuse.
 	print("[PadPrintBench] cash-shop skip refused")

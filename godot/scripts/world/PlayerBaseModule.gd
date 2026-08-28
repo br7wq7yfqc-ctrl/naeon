@@ -57,6 +57,13 @@ func combat_stats() -> int:
 	return 0
 
 
+func reload_for_faction(faction_name: String) -> void:
+	## ST-F theme only. Does not move the ST-A / NP-C / ST-C slot or mint SITE_*.
+	var fac := faction_name if faction_name != "" else faction
+	faction = fac
+	_reload_prop_children(self, fac)
+
+
 func _spawn_marker() -> void:
 	var n := Node3D.new()
 	n.name = "Habitat"
@@ -98,3 +105,13 @@ func _spawn_printed(kind: String) -> void:
 	prop.set("add_static_collision", true)
 	prop.name = "PrintedMesh"
 	marker.add_child(prop)
+
+
+func _reload_prop_children(n: Node, fac: String) -> void:
+	if n == null:
+		return
+	if n.has_method("reload_for_faction") and n != self:
+		n.reload_for_faction(fac)
+		return
+	for c in n.get_children():
+		_reload_prop_children(c, fac)

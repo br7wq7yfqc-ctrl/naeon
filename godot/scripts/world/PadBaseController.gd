@@ -1118,19 +1118,119 @@ func _ship_landed_on_this(ship: Node) -> bool:
 func get_faction() -> String:
 	return ownership.faction_name() if ownership else "Neutral"
 
+
+func cluster_theme() -> String:
+	if ownership and ownership.faction_name() == "gROT":
+		return "grot"
+	if ownership and ownership.faction_name() == "Cybernex":
+		return "cybernex"
+	return "neutral"
+
+
+func services_list() -> PackedStringArray:
+	## Owner skins the list (rules/12, rules/03). Numbers stay on the same tier.
+	return _SoftK.cluster_services(get_faction() == "gROT")
+
+
+func services_line() -> String:
+	return ",".join(services_list())
+
+
+func tier_budget() -> Dictionary:
+	## Same numbers before/after an owner flip. Knowledge never writes these.
+	var print_c := 100.0
+	var hangar_m := 2.0
+	var hangar_p := 2.0
+	var bench: Node = print_bench()
+	var hull: Node = _catalog_carrier()
+	if bench != null and bench.has_method("print_cost"):
+		print_c = float(bench.print_cost())
+	if hull != null:
+		if "mass_cap" in hull:
+			hangar_m = float(hull.get("mass_cap"))
+		if "power_cap" in hull:
+			hangar_p = float(hull.get("power_cap"))
+	return {
+		"harvest": extract_rate * contribution_per_unit,
+		"extract_rate": extract_rate,
+		"contribution_per_unit": contribution_per_unit,
+		"print_cost": print_c,
+		"hangar_mass": hangar_m,
+		"hangar_power": hangar_p,
+	}
+
+
+func flip_cluster_owner(to_faction: String = "") -> String:
+	## ST-F: CX↔GR on this occupied unnamed pad. Theme + services. Same budget.
+	## Not contest. Not arena-flip. Does not mint SITE_*.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var dest := ""
+	var cur := ""
+	var f: OwnershipData.Faction = OwnershipData.Faction.NEUTRAL
+	if P0 == null or not bool(P0.ST_F_OWNERSHIP):
+		return ""
+	if ownership == null or not ownership.is_fully_owned():
+		return ""
+	if _status == "contested":
+		return ""
+	cur = ownership.faction_name()
+	dest = to_faction
+	if dest == "":
+		dest = "gROT" if cur == "Cybernex" else "Cybernex"
+	if dest != "Cybernex" and dest != "gROT":
+		return ""
+	if dest == cur:
+		return dest
+	f = OwnershipData.from_string(dest)
+	ownership.start_transition(f)
+	ownership.transition_progress = 1.0
+	_status = "owned"
+	_contest_side = ""
+	_set_contested_ring(false)
+	swap_cluster_theme(dest)
+	_apply_faction_visual()
+	_refresh_label()
+	_update_city_density()
+	claimed.emit(dest)
+	_notify_hud("Owner → %s · theme + services · same tier" % dest)
+	print("[PadBase] ST-F owner ", cur, "→", dest, " theme=", cluster_theme(),
+		" services=", services_line(),
+		" harvest=", snapped(extract_rate * contribution_per_unit, 0.01))
+	return dest
+
+
 func swap_cluster_theme(faction_name: String) -> void:
 	var cluster := get_parent()
-	if cluster == null:
-		return
+	var pad: Node3D = _unnamed_pad_host()
 	var fac := faction_name
 	if fac == "Contested" or fac == "Neutral":
 		return
-	for c in cluster.get_children():
+	_reload_theme_under(cluster, fac)
+	if pad != null and pad != cluster:
+		_reload_theme_under(pad, fac)
+	if DisplayServer.get_name() != "headless":
+		call_deferred("_ensure_claim_beacon")
+	print("[PadBase] dual-theme cluster → ", fac)
+
+
+func _reload_theme_under(root: Node, fac: String) -> void:
+	if root == null:
+		return
+	for c in root.get_children():
 		if c == self:
 			continue
 		if c.has_method("reload_for_faction"):
 			c.reload_for_faction(fac)
-	print("[PadBase] dual-theme cluster → ", fac)
+
+
+func _catalog_carrier() -> Node:
+	var tree := get_tree()
+	if tree == null:
+		return null
+	var listed: Array = tree.get_nodes_in_group("catalog_carriers")
+	if listed.is_empty():
+		return null
+	return listed[0]
 
 func _set_contested_ring(on: bool) -> void:
 	if _contest_ring and _contest_ring.has_method("set_contested"):

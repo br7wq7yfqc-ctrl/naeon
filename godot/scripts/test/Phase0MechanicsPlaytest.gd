@@ -48,6 +48,7 @@ func _go() -> void:
 	await _assert_st_a(os, fails)
 	_assert_st_d(os, fails)
 	_assert_st_e(os, fails)
+	_assert_st_f(os, fails)
 
 	# --- stall math (no scene) ---
 	if _Flight.stall_amount(0.0, 4.0, 20.0) > 0.01:
@@ -4292,6 +4293,181 @@ func _assert_st_e(os: Node, fails: PackedStringArray) -> void:
 	kinds_s = ",".join(kinds)
 	print("[Playtest] ST-E cluster=", cluster.name, " modules=", extras,
 		" kinds=", kinds_s, " body=", body, " pin=", pin1, " city=false")
+
+
+func _assert_st_f(os: Node, fails: PackedStringArray) -> void:
+	## ST-F: CX↔GR owner swap on ONE occupied unnamed pad cluster.
+	## Theme + services change. Contribution / harvest / print / hangar numbers stay.
+	## Not a second SITE_*. Not arena-flip. Does not rewrite ST-A…E slots.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var pad: Node = null
+	var host: Node = null
+	var tree: SceneTree = get_tree()
+	var pin0 := ""
+	var pin1 := ""
+	var owner0 := ""
+	var owner1 := ""
+	var theme0 := ""
+	var theme1 := ""
+	var svc0 := ""
+	var svc1 := ""
+	var bud0: Dictionary = {}
+	var bud1: Dictionary = {}
+	var harvest0 := 0.0
+	var harvest1 := 0.0
+	var print0 := 0.0
+	var print1 := 0.0
+	var hangar_m0 := 0.0
+	var hangar_m1 := 0.0
+	var hangar_p0 := 0.0
+	var hangar_p1 := 0.0
+	var arena_owner := ""
+	var player_n := 0
+	var npc_n := 0
+	var printed_n := 0
+	var hangar_n := 0
+	var orbital_n := 0
+	var player_n1 := 0
+	var npc_n1 := 0
+	var printed_n1 := 0
+	var hangar_n1 := 0
+	var orbital_n1 := 0
+	var flipped := ""
+	var restored := ""
+	var pad_name := "?"
+	if P0 == null or not bool(P0.ST_F_OWNERSHIP):
+		fails.append("ST-F P0Slice flag missing")
+		return
+	if bool(P0.ORBITAL_STATIONS):
+		fails.append("ST-F enabled P0Slice.ORBITAL_STATIONS unnamed props")
+	if LayerContext:
+		pin0 = str(LayerContext.site_pin_id)
+	if os != null and os.has_method("occupied_pad_base"):
+		pad = os.occupied_pad_base()
+	if pad == null and tree:
+		for n in tree.get_nodes_in_group("pad_bases"):
+			host = n
+			while host:
+				if host is Node3D and str(host.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+					pad = n
+					break
+				host = host.get_parent()
+			if pad != null:
+				break
+	if pad == null:
+		fails.append("ST-F no unnamed pad cluster")
+		return
+	host = pad.get_parent()
+	while host:
+		if host is Node3D and str(host.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+			pad_name = str(host.name)
+			break
+		host = host.get_parent()
+	if pad.has_method("claim"):
+		pad.claim("Cybernex", 2.0)
+	if "ownership" in pad and pad.ownership and pad.ownership.has_method("advance_transition"):
+		pad.ownership.advance_transition(8.0, 5.0)
+	if pad.has_method("get_faction"):
+		owner0 = str(pad.get_faction())
+	if owner0 != "Cybernex" and owner0 != "gROT":
+		fails.append("ST-F pad is not CX/GR held (%s)" % owner0)
+		return
+	if owner0 != "Cybernex":
+		if pad.has_method("flip_cluster_owner"):
+			pad.flip_cluster_owner("Cybernex")
+		owner0 = str(pad.get_faction()) if pad.has_method("get_faction") else owner0
+	if pad.has_method("apply_arena_influence"):
+		pad.apply_arena_influence(0.30)
+		arena_owner = str(pad.get_faction()) if pad.has_method("get_faction") else ""
+		if arena_owner != owner0:
+			fails.append("ST-F arena flipped owner (%s → %s)" % [owner0, arena_owner])
+	if pad.has_method("cluster_theme"):
+		theme0 = str(pad.cluster_theme())
+	if pad.has_method("services_line"):
+		svc0 = str(pad.services_line())
+	if pad.has_method("tier_budget"):
+		bud0 = pad.tier_budget()
+	harvest0 = float(bud0.get("harvest", 0.0))
+	print0 = float(bud0.get("print_cost", 0.0))
+	hangar_m0 = float(bud0.get("hangar_mass", 0.0))
+	hangar_p0 = float(bud0.get("hangar_power", 0.0))
+	if tree:
+		player_n = tree.get_nodes_in_group("player_base_modules").size()
+		npc_n = tree.get_nodes_in_group("npc_base_modules").size()
+		printed_n = tree.get_nodes_in_group("printed_base_modules").size()
+		hangar_n = tree.get_nodes_in_group("hangar_queued_modules").size()
+		orbital_n = tree.get_nodes_in_group("player_orbital_modules").size()
+	if not pad.has_method("flip_cluster_owner"):
+		fails.append("ST-F flip_cluster_owner missing")
+		return
+	flipped = str(pad.flip_cluster_owner("gROT"))
+	owner1 = str(pad.get_faction()) if pad.has_method("get_faction") else ""
+	if pad.has_method("cluster_theme"):
+		theme1 = str(pad.cluster_theme())
+	if pad.has_method("services_line"):
+		svc1 = str(pad.services_line())
+	if pad.has_method("tier_budget"):
+		bud1 = pad.tier_budget()
+	harvest1 = float(bud1.get("harvest", -1.0))
+	print1 = float(bud1.get("print_cost", -1.0))
+	hangar_m1 = float(bud1.get("hangar_mass", -1.0))
+	hangar_p1 = float(bud1.get("hangar_power", -1.0))
+	if flipped != "gROT" or owner1 != "gROT":
+		fails.append("ST-F did not flip CX→GR (%s / %s)" % [flipped, owner1])
+	if theme0 == theme1:
+		fails.append("ST-F theme did not change (%s)" % theme1)
+	if svc0 == "" or svc1 == "" or svc0 == svc1:
+		fails.append("ST-F services list did not change (%s → %s)" % [svc0, svc1])
+	if svc0.find("contribution") < 0 or svc1.find("biomass") < 0:
+		fails.append("ST-F services not CX/GR (%s → %s)" % [svc0, svc1])
+	if absf(harvest1 - harvest0) > 0.0001 or harvest0 <= 0.0:
+		fails.append("ST-F harvest budget changed (%s → %s)" % [harvest0, harvest1])
+	if absf(print1 - print0) > 0.0001 or print0 <= 0.0:
+		fails.append("ST-F print cost changed (%s → %s)" % [print0, print1])
+	if absf(hangar_m1 - hangar_m0) > 0.0001 or absf(hangar_p1 - hangar_p0) > 0.0001:
+		fails.append("ST-F hangar mass/power changed")
+	if "extract_rate" in pad and absf(float(pad.get("extract_rate")) - float(bud0.get("extract_rate", 0.0))) > 0.0001:
+		fails.append("ST-F extract_rate changed")
+	if "contribution_per_unit" in pad \
+			and absf(float(pad.get("contribution_per_unit")) - float(bud0.get("contribution_per_unit", 0.0))) > 0.0001:
+		fails.append("ST-F contribution_per_unit changed")
+	if tree:
+		player_n1 = tree.get_nodes_in_group("player_base_modules").size()
+		npc_n1 = tree.get_nodes_in_group("npc_base_modules").size()
+		printed_n1 = tree.get_nodes_in_group("printed_base_modules").size()
+		hangar_n1 = tree.get_nodes_in_group("hangar_queued_modules").size()
+		orbital_n1 = tree.get_nodes_in_group("player_orbital_modules").size()
+	if player_n1 != player_n:
+		fails.append("ST-F stole the ST-A player_module slot")
+	if npc_n1 != npc_n:
+		fails.append("ST-F stole the NP-C npc_module slot")
+	if printed_n1 != printed_n:
+		fails.append("ST-F stole the ST-C printed_module slot")
+	if hangar_n1 != hangar_n:
+		fails.append("ST-F stole the ST-D hangar_queued slot")
+	if orbital_n1 != orbital_n:
+		fails.append("ST-F stole the ST-E orbital cluster slot")
+	if LayerContext:
+		pin1 = str(LayerContext.site_pin_id)
+	if pin1 != pin0:
+		fails.append("ST-F changed site_pin (%s → %s)" % [pin0, pin1])
+	if pin1.begins_with("SITE_") and pin1 != "SITE_SPACE_TEST_PAD":
+		fails.append("ST-F minted a new SITE_* (%s)" % pin1)
+	if str(pad.get_meta("site_pin", "missing")) != "" and str(pad.get_meta("site_pin", "")) != "missing":
+		if str(pad.get_meta("site_pin")).begins_with("SITE_") \
+				and str(pad.get_meta("site_pin")) != "SITE_SPACE_TEST_PAD":
+			fails.append("ST-F pad minted site_pin (%s)" % str(pad.get_meta("site_pin")))
+	print("[Playtest] ST-F cluster=", pad_name, " owner=", owner0, "→", owner1,
+		" theme=", theme0, "→", theme1,
+		" services=", svc0, "→", svc1,
+		" harvest=", snapped(harvest0, 0.01), "/", snapped(harvest1, 0.01),
+		" print=", snapped(print0, 0.1), "/", snapped(print1, 0.1),
+		" hangar=", snapped(hangar_m0, 0.01), "×", snapped(hangar_p0, 0.01),
+		"/", snapped(hangar_m1, 0.01), "×", snapped(hangar_p1, 0.01),
+		" pin=", pin1)
+	restored = str(pad.flip_cluster_owner("Cybernex"))
+	if restored != "Cybernex":
+		fails.append("ST-F could not restore Cybernex owner (%s)" % restored)
 
 
 func _osh_report_skips(fails: PackedStringArray, done: Dictionary, required: PackedStringArray) -> void:
