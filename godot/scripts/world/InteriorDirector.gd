@@ -108,6 +108,22 @@ func try_pay_complete_contract(cash: float = 0.0) -> bool:
 	return bool(_Board.try_pay_complete(cash))
 
 
+func try_interact_learning_node() -> Dictionary:
+	## Q-C: read pad / extractor / crate intel. Does not harvest / print / mint SITE_*.
+	var cur: Dictionary = _Board.interact_learning_node()
+	_console_board["learning_node"] = cur.get("node", {})
+	_console_board["learning_intel"] = cur.get("intel", {})
+	return cur
+
+
+func try_complete_learning_node() -> Dictionary:
+	## Q-C: subject mastery label only. Combat / economy tables stay.
+	var cur: Dictionary = _Board.try_complete_learning_node()
+	_console_board["learning_node"] = cur.get("learning_node", {})
+	_console_board["contract"] = cur
+	return cur
+
+
 func try_accept_alliance_contract() -> Dictionary:
 	## Q-B: accept the shared alliance contract. Same board. Not a second quest system.
 	var cur: Dictionary = _Board.accept_alliance()
@@ -1000,6 +1016,10 @@ func _attach_contract_offer(pad: Node3D, occupy_applied: bool) -> void:
 		_SoftK.contract_board_label(),
 		str(offer.get("template", "")),
 	]
+	if typeof(offer.get("learning_node")) == TYPE_DICTIONARY \
+			and not (offer.get("learning_node") as Dictionary).is_empty():
+		_console_board["learning_node"] = offer.get("learning_node")
+		_console_board["board"] = str(_console_board.get("board", "")) + " · NODE"
 	if occupy_applied:
 		_Board.note_progress("occupy")
 

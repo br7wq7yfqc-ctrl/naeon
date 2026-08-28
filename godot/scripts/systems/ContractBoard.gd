@@ -25,7 +25,7 @@ static func snapshot() -> Dictionary:
 	return _state().duplicate(true)
 
 
-static func offer_one(host_id: String, body: String = BODY) -> Dictionary:
+static func offer_one(host_id: String, body: String = BODY, template: String = "") -> Dictionary:
 	var P0 = load("res://scripts/world/P0Slice.gd")
 	var cur := _state()
 	var host := str(host_id).strip_edges()
@@ -38,10 +38,12 @@ static func offer_one(host_id: String, body: String = BODY) -> Dictionary:
 	if on != BODY:
 		return {}
 	if not cur.is_empty():
+		if _ensure_learning_node(cur):
+			_write(cur)
 		return cur.duplicate(true)
 	if host == "":
 		host = "unnamed_pad"
-	tmpl = _pick_template(host)
+	tmpl = _resolve_template(host, template)
 	cur = {
 		"id": "QA-%s-%s" % [tmpl, host],
 		"template": tmpl,
@@ -51,6 +53,7 @@ static func offer_one(host_id: String, body: String = BODY) -> Dictionary:
 		"progress": false,
 		"reward": "knowledge_label",
 	}
+	_ensure_learning_node(cur)
 	_write(cur)
 	print("[ContractBoard] offered ", cur["id"], " template=", tmpl, " host=", host)
 	return cur.duplicate(true)
@@ -141,6 +144,79 @@ static func try_unlock_exclusive_weapon(_id: String = "") -> bool:
 static func try_unlock_exclusive_module(_id: String = "") -> bool:
 	print("[ContractBoard] Knowledge-gated exclusive module refused")
 	return false
+
+
+static func learning_node() -> Dictionary:
+	## Q-C: optional node on harvest / deliver. Empty on occupy.
+	var cur := _state()
+	var node = cur.get("learning_node", {})
+	if typeof(node) != TYPE_DICTIONARY:
+		return {}
+	return (node as Dictionary).duplicate(true)
+
+
+static func interact_learning_node() -> Dictionary:
+	## Read pad / extractor / crate via SoftKnowledge. Never yield / DPS.
+	var cur := _state()
+	var node = cur.get("learning_node", {})
+	var intel := {}
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var reads: Array = []
+	var kind := ""
+	if cur.is_empty() or typeof(node) != TYPE_DICTIONARY or (node as Dictionary).is_empty():
+		return {}
+	if str(cur.get("status", "")) == "":
+		return {}
+	reads = node.get("reads", ["pad", "extractor", "crate"])
+	if SoftK == null:
+		return {}
+	for k in reads:
+		kind = str(k)
+		intel[kind] = str(SoftK.read_node_intel(kind))
+	node["status"] = "read"
+	node["intel"] = intel
+	cur["learning_node"] = node
+	_write(cur)
+	if GameManager:
+		GameManager.toast_requested.emit(
+			"Learning Node — %s / %s / %s (soft intel only)" % [
+				str(intel.get("pad", "")),
+				str(intel.get("extractor", "")),
+				str(intel.get("crate", "")),
+			]
+		)
+	print("[ContractBoard] learning node read ", cur.get("id", ""),
+		" pad=", intel.get("pad", ""),
+		" extractor=", intel.get("extractor", ""),
+		" crate=", intel.get("crate", ""))
+	return {"id": str(cur.get("id", "")), "node": node.duplicate(true), "intel": intel}
+
+
+static func try_complete_learning_node() -> Dictionary:
+	## Subject mastery label only. Combat / economy tables stay identical.
+	var cur := _state()
+	var node = cur.get("learning_node", {})
+	var gained := 0.0
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if cur.is_empty() or typeof(node) != TYPE_DICTIONARY or (node as Dictionary).is_empty():
+		return cur.duplicate(true)
+	if str(node.get("status", "")) != "read":
+		return cur.duplicate(true)
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("field_intel", MASTERY_GRANT)
+		gained = MASTERY_GRANT
+	node["status"] = "complete"
+	node["mastery_granted"] = gained
+	cur["learning_node"] = node
+	_write(cur)
+	if GameManager:
+		var lab := "FIELD INTEL" if SoftK == null else str(SoftK.field_intel_label())
+		GameManager.toast_requested.emit(
+			"Learning Node complete — %s (soft Knowledge only, no yield)" % lab
+		)
+	print("[ContractBoard] learning node complete ", cur.get("id", ""),
+		" +", snapped(gained, 0.1), " field_intel")
+	return cur.duplicate(true)
 
 
 static func alliance_templates() -> PackedStringArray:
@@ -253,6 +329,39 @@ static func _pick_template(host_id: String) -> String:
 	if list.is_empty():
 		return "occupy"
 	return str(list[h % list.size()])
+
+
+static func _resolve_template(host_id: String, template: String) -> String:
+	var want := str(template).strip_edges()
+	if want != "" and templates().has(want):
+		return want
+	return _pick_template(host_id)
+
+
+static func _learning_templates() -> PackedStringArray:
+	return PackedStringArray(["harvest", "deliver_crate"])
+
+
+static func _ensure_learning_node(cur: Dictionary) -> bool:
+	## Optional. Occupy stays node-less. Does not rewrite Q-A pick.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var tmpl := str(cur.get("template", ""))
+	var node = cur.get("learning_node", {})
+	if P0 == null or not bool(P0.Q_C_LEARNING):
+		return false
+	if not _learning_templates().has(tmpl):
+		return false
+	if typeof(node) == TYPE_DICTIONARY and not (node as Dictionary).is_empty():
+		return false
+	cur["learning_node"] = {
+		"id": "LN-%s" % str(cur.get("id", "QA")),
+		"status": "available",
+		"subject": "field_intel",
+		"reads": ["pad", "extractor", "crate"],
+		"optional": true,
+	}
+	print("[ContractBoard] learning node on ", cur.get("id", ""))
+	return true
 
 
 static func _pick_alliance_template(host_id: String, intent: String = "") -> String:

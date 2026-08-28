@@ -219,6 +219,31 @@ static func alliance_intel_label() -> String:
 	return "ALLY"
 
 
+## Q-C: Learning Node subject label. story ≠ power. Never yield / DPS / modules.
+static func field_intel_label() -> String:
+	var intel := mastery("field_intel")
+	if intel >= 10.0:
+		return "FIELD INTEL"
+	return "FIELD"
+
+
+## Q-C: read pad / extractor / crate intel. Labels only. Never harvest numbers.
+static func read_node_intel(kind: String) -> String:
+	match str(kind):
+		"extractor":
+			return extractor_label()
+		"crate":
+			return crate_label()
+		"pad":
+			var intel := mastery("field_intel")
+			var hist := mastery("history")
+			if intel >= 10.0 or hist >= 15.0:
+				return "HELD PAD"
+			return "PAD"
+		_:
+			return ""
+
+
 static func exclusive_weapon_unlocked(_id: String = "") -> bool:
 	return false
 
