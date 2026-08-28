@@ -49,7 +49,10 @@
     mass/power exceeded. Not a mobile SITE_*. Interiors later (built).
 22. ST-E: player-owned orbital cluster of two catalog modules (dock +
     habitat) on Nex-Prime orbit. Not a city. Not SITE_*. Not a second
-    system. P0Slice.ORBITAL_STATIONS stays off (this pass).
+    system. P0Slice.ORBITAL_STATIONS stays off (built).
+23. ST-F: CX↔GR owner swap on one occupied unnamed pad. Visual theme +
+    services list change; harvest / print / hangar numbers stay. Not a
+    second SITE_*. Not arena-flip (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

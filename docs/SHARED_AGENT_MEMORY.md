@@ -1,6 +1,6 @@
 # NAEON — Shared Agent Memory
 
-**Last updated:** 2026-08-27 (ST-E player orbital cluster of two catalog modules)
+**Last updated:** 2026-08-27 (ST-F CX↔GR owner swap on one occupied unnamed pad)
 
 ## Core constraints
 No P2W · soft Knowledge · Infection max 5 · story ≠ power · Godot 4.7.2 · adult hard-sci-fi · site_pin catalog only · WorldFill = authored skeleton + unnamed filler · ready-made assets first, Tripo unique only · one resident system (ARK) · no planetary voxel shell · perf/25 (FPS on owner GPU, not llvmpipe)
@@ -9,7 +9,7 @@ No P2W · soft Knowledge · Infection max 5 · story ≠ power · Godot 4.7.2 ·
 rules/00–26 · **OPEN_SPACE_SC_BENCHMARK** · **BASE_STATION_STRATEGY** · **ASSET_SOURCE_CANON** · **WORLD_FILL** · DEVELOPMENT_PLAN 2.4 · SITE_PIN · GALAXY_LAYER_PLAN (G2–G6 locked) · TRIPO_ASSET_MANIFEST
 
 ## Where things are authored
-- **Order of work** → `docs/design/BASE_STATION_STRATEGY.md` (ST-E built; ST-F next). OS-A…OS-H remain in `OPEN_SPACE_SC_BENCHMARK.md`. Pointer in `DEVELOPMENT_PLAN.md`
+- **Order of work** → `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-F built). OS-A…OS-H remain in `OPEN_SPACE_SC_BENCHMARK.md`. Pointer in `DEVELOPMENT_PLAN.md`
 - **Mesh source** → `docs/design/ASSET_SOURCE_CANON.md`
 - **Fill vs authored** → `docs/design/WORLD_FILL.md`
 - **Human GPU fact** → `docs/PLAYTEST_SANDBOX.md` (3090 / P0.6; not FPS PASS on llvmpipe)
@@ -152,6 +152,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-27 | ST-C: PadPrintBench on unnamed pad / NPC bench. Spend Contribution/Biomass (rules/15 T1) → one catalog module. No cash-shop skip. Knowledge labels only. | st-c-print |
 | 2026-08-27 | ST-D: hangar queue of one module on catalog carrier (`cybernex_capital_carrier` …). Refuse mass/power. Not a mobile SITE_*. Interiors later. | st-d-hangar |
 | 2026-08-27 | ST-E: player-owned orbital cluster of two catalog modules (dock + habitat) on Nex-Prime orbit. Not a city. Not SITE_*. Not ORBITAL_STATIONS. | st-e-orbital |
+| 2026-08-27 | ST-F: CX↔GR owner swap on one occupied unnamed pad. Theme + services change. Harvest / print / hangar numbers stay. Not SITE_*. Not arena-flip. | st-f-owner |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
 | 2026-08-21 | OS-J: orbit-read FarPlate/FarMast/outpost hide below ~400 m. Near hull metal. Cyan 96 m slab was the blue monolith next to the ship. |
