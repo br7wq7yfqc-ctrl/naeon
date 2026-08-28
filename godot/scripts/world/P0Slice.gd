@@ -15,6 +15,9 @@ const ONE_PAD := true
 ## OS-D: Pad_North + two extra unnamed plates + denser unnamed scatter
 ## from existing ledger slugs (crates, debris, pad props, extra masts).
 const OS_D_FILL := true
+## WF-A: one density slice on those same unnamed pads. Existing ledger slugs
+## / filler IDs only. Not a new pad. Not SITE_*. Does not flip ORBITAL_STATIONS.
+const WF_A_DENSITY := true
 ## OS-G: one unnamed mast+habitat cluster on an existing pad. Not SITE_*.
 const OS_G_OUTPOST := true
 const FILLER_PROP_ID := "pad_crate_cc0"
