@@ -30,7 +30,7 @@ NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY
 | 7 | Items / cards | модули / blueprints NAEON, не колода Paragon | **AR-E:** один `ClashModuleBench` (session `ShipModule.SENSOR`); Knowledge только подпись; не колода | не shop of power | cash-shop power; клон карт Epic |
 | 8 | Vision / wards | `ClashRadar`; soft scan | радар всегда рисует форму; вард-предметов нет | wait или soft label; Knowledge не покупает вард | pay-to-ward |
 | 9 | Draft / match | `ClashMatchDirector` + kill-to-5 / 3 lane objectives | матч в редакторе; драфта нет; вход из мира = **G5 закрыт** | драфт later; дверь = TestArena | Arena Commander; G5 сейчас |
-| 10 | Net | SoftNet сейчас visual; Phase 2 server authority | **AR-F:** 3v3 local host authority; SoftNet visual puppets на bot-слотах; 5v5 later | 5v5 later; не cluster | pay-rank matchmaking |
+| 10 | Net | SoftNet сейчас visual; Phase 2 server authority | **AR-G:** 5v5 local host authority на том же 60×60; SoftNet visual puppets; 3v3 startable | feel lock; не cluster | pay-rank matchmaking |
 
 ---
 
@@ -45,17 +45,17 @@ NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY
 | `ClashCamp.gd` | один off-lane pit; HP; soft contest announce; drop = soft WS (не оружие) |
 | `ClashRiver.gd` | река на том же 60×60: mid-crossing + каналы между полосами; terrain/read, не objective |
 | `ClashJumpPads.gd` | 4 pad на том же 60×60; короткий hop walker/hero, не полёт и не корабль |
-| `TestArena.gd` | дверь слоя; beacons Neutral; `ClashWaves` на полосах; один `ClashCamp`; один `ClashModuleBench`; `ClashRiver`; `ClashJumpPads`; `ClashLocalMatch` 3v3 |
-| `ClashLocalMatch.gd` | 3v3 local host authority; 6 actors на TOP/MID/BOT; SoftNet visual puppets; G5 закрыт |
+| `TestArena.gd` | дверь слоя; beacons Neutral; `ClashWaves` на полосах; один `ClashCamp`; один `ClashModuleBench`; `ClashRiver`; `ClashJumpPads`; `ClashLocalMatch` 5v5 (3v3 startable) |
+| `ClashLocalMatch.gd` | 5v5 local host authority; 10 actors на TOP/MID/BOT + jungle; 3v3 startable; SoftNet visual puppets; G5 закрыт |
 | `AbilityKitCatalog.gd` | 4 кита; costs из `EnergyEconomy`; `kit_for_faction` = прежний default |
 | `HeroFormCatalog.gd` | Canine/Feline/Avian/Human + лёгкие loco-числа — **не** rank; не усиливать |
 | `docs/systems/AEXION_CLASH_SLICE.md` | бар уже назван Predecessor; non-goal: full lanes/items P2W |
 | `docs/rules/13_MOBA_ARENA_INFLUENCE.md` | арена не флипает планету; daily WS 60 |
-| Phase 3 план | 5v5 later; 6–8 heroes / full jungle / items — **ещё не код** |
+| Phase 3 план | 6–8 heroes / full jungle / items — **ещё не код** (5v5 local = AR-G) |
 
 ---
 
-## Срезы AR-A…AR-F
+## Срезы AR-A…AR-G
 
 Каждый срез playable сам. **Не начинать, пока OS-A зелёный** (космос читает одно тело). Арена не перехватывает очередь Open Space.
 
@@ -66,7 +66,8 @@ NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY
 | **AR-C** | Волны миньонов по линиям | **сделано:** timed `ClashWaves` + lane march | этот срез | P2W waves |
 | **AR-D** | Jungle / river / вертикаль на **том же** футпринте | **сделано:** один off-lane camp + река + jump pads на том же 60×60 | этот срез | SITE_* city-map |
 | **AR-E** | 4–8 китов; предметы = modules/blueprints | **сделано:** 4 кита + один session-bench | этот срез | Paragon deck; форма=стат |
-| **AR-F** | 3v3 local authority, затем 5v5 | **сделано:** 3v3 local host + SoftNet visual puppets на том же 60×60 | этот срез; 5v5 later | вход из мира сейчас |
+| **AR-F** | 3v3 local authority, затем 5v5 | **сделано:** 3v3 local host + SoftNet visual puppets на том же 60×60 | 3v3 startable | вход из мира сейчас |
+| **AR-G** | 5v5 local authority на тех же полосах + jungle | **сделано:** 10 actors (host Cybernex MID + 9 SoftNet visual puppets) на том же 60×60 | этот срез | вход из мира сейчас |
 
 ---
 
@@ -78,4 +79,4 @@ NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY
 
 ## Этот PR
 
-3v3 local authority на том же 60×60 TestArena (host process; SoftNet visual puppets на bot-слотах ClashWaves/`CombatDummy`). AR-A…AR-E, река и jump pads не откатывать. G5 закрыт. Не mint SITE_*. Knowledge не меняет DPS. Дверь: меню → AEXION CLASH → TestArena. 5v5 later.
+5v5 local authority на том же 60×60 TestArena (host process; SoftNet visual puppets на bot-слотах ClashWaves/`CombatDummy`; jungle из AR-D). 3v3 остаётся startable. AR-A…AR-F, река и jump pads не откатывать. G5 закрыт. Не mint SITE_*. Knowledge не меняет DPS. Дверь: меню → AEXION CLASH → TestArena.
