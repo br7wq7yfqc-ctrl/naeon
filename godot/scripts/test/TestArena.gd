@@ -496,6 +496,7 @@ func _finish_clash_layout() -> void:
 	_evidence_jump_pads()
 	_setup_clash_local_match()
 	_evidence_ar_f()
+	_evidence_ar_g()
 	_setup_arena_playtest()
 
 
@@ -614,7 +615,8 @@ func _update_clash_radar() -> void:
 				pad = "  ·  PAD"
 			var localm := ""
 			if _local_match and _local_match.has_method("actor_count"):
-				localm = "  ·  3v3 %d" % int(_local_match.actor_count())
+				var mlabel := "5v5" if _local_match.has_method("is_5v5") and bool(_local_match.is_5v5()) else "3v3"
+				localm = "  ·  %s %d" % [mlabel, int(_local_match.actor_count())]
 			if press == "":
 				_lane_hud.text = "LANE %s%s%s%s%s%s%s%s" % [_lanes.player_lane, wave, camp, kit, mod, river, pad, localm]
 			else:
@@ -1000,6 +1002,13 @@ func _evidence_ar_e() -> void:
 	print("[AR-E] kits=", n, " kit=", kit_id, " bench=", _bench != null, " equipped=", equipped, " pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
+func _want_clash_5v5() -> bool:
+	for a in OS.get_cmdline_user_args():
+		if str(a) == "--clash-3v3":
+			return false
+	return true
+
+
 func _setup_clash_local_match() -> void:
 	if get_node_or_null("ClashLocalMatch"):
 		_local_match = get_node_or_null("ClashLocalMatch") as Node3D
@@ -1008,15 +1017,30 @@ func _setup_clash_local_match() -> void:
 	_local_match.set_script(preload("res://scripts/arena/ClashLocalMatch.gd"))
 	_local_match.name = "ClashLocalMatch"
 	add_child(_local_match)
-	if _local_match.has_method("bind"):
+	if _want_clash_5v5() and _local_match.has_method("bind_5v5"):
+		_local_match.bind_5v5(self, _lanes, dummy_scene, player)
+	elif _local_match.has_method("bind"):
 		_local_match.bind(self, _lanes, dummy_scene, player)
 
 
 func _evidence_ar_f() -> void:
+	if _local_match and _local_match.has_method("is_5v5") and bool(_local_match.is_5v5()):
+		return
 	var ev: Dictionary = {}
 	if _local_match and _local_match.has_method("evidence"):
 		ev = _local_match.evidence()
 	print("[AR-F] 3v3 local match actors=", ev.get("actors", 0), " lanes=", ev.get("lanes", ""),
+		" authority=", ev.get("authority", ""), " G5=", ev.get("g5", ""),
+		" pin=", LayerContext.site_pin_id if LayerContext else "")
+
+
+func _evidence_ar_g() -> void:
+	if _local_match == null or not _local_match.has_method("is_5v5") or not bool(_local_match.is_5v5()):
+		return
+	var ev: Dictionary = {}
+	if _local_match.has_method("evidence"):
+		ev = _local_match.evidence()
+	print("[AR-G] 5v5 local match actors=", ev.get("actors", 0), " lanes=", ev.get("lanes", ""),
 		" authority=", ev.get("authority", ""), " G5=", ev.get("g5", ""),
 		" pin=", LayerContext.site_pin_id if LayerContext else "")
 
