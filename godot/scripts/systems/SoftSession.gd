@@ -11,6 +11,7 @@ var form: String = "Canine"
 var faction: String = "Cybernex"
 var last_layer: String = "Space"
 var last_action: String = ""
+var quest: Dictionary = {}
 var _offline: bool = false
 
 func _ready() -> void:
@@ -32,6 +33,9 @@ func load_session() -> void:
 	var act := str(data.get("last_action", last_action))
 	if LEGAL_ACTIONS.has(act):
 		last_action = act
+	var q = data.get("quest", {})
+	if typeof(q) == TYPE_DICTIONARY:
+		quest = q
 	print("[SoftSession] loaded form=", form, " faction=", faction)
 
 func save_session() -> void:
@@ -40,6 +44,7 @@ func save_session() -> void:
 		"faction": faction,
 		"last_layer": last_layer,
 		"last_action": last_action,
+		"quest": quest,
 		"saved_at": Time.get_datetime_string_from_system(true),
 	}
 	var f := FileAccess.open(PATH, FileAccess.WRITE)
@@ -47,6 +52,14 @@ func save_session() -> void:
 		return
 	f.store_string(JSON.stringify(payload, "\t"))
 	f.close()
+
+func remember_quest(q: Dictionary) -> void:
+	## Q-A contract state only. Not DPS. Not a second Knowledge system.
+	if typeof(q) != TYPE_DICTIONARY:
+		return
+	quest = q.duplicate(true)
+	save_session()
+
 
 func note_player_action(kind: String) -> void:
 	## Last occupy / harvest / invite / form / faction. Choice only — not DPS.

@@ -73,6 +73,10 @@ func store_unit(entry: Dictionary) -> bool:
 	used_volume += vol
 	used_mass += mass
 	inventory_changed.emit()
+	if str(packed.get("kind", "")) == "crate":
+		var Board = load("res://scripts/systems/ContractBoard.gd")
+		if Board:
+			Board.note_progress("deliver_crate")
 	return true
 
 func retrieve_unit(index: int = 0) -> Dictionary:

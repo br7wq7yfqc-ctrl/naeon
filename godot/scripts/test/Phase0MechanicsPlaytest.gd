@@ -55,6 +55,7 @@ func _go() -> void:
 	await _assert_in_c(os, fails)
 	await _assert_in_d(os, fails)
 	await _assert_in_e(os, fails)
+	await _assert_q_a(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 
 	# --- stall math (no scene) ---
@@ -6064,6 +6065,201 @@ func _in_a_same_openspace(scene0: String) -> bool:
 	if scene0 != "" and now != "" and now != scene0:
 		return false
 	return now.find("OpenSpace") >= 0 or _osh_same_scene(scene0)
+
+
+func _assert_q_a(os: Node, fails: PackedStringArray) -> void:
+	## Q-A: Contract Board on the IN-B station ops console.
+	## One generated template on the same ARK body. Complete → SoftKnowledge label.
+	## Harvest / print / hangar numbers stay. No cash skip. No exclusive modules.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var Board = load("res://scripts/systems/ContractBoard.gd")
+	var d: Node = os.get("_interior") if os else null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var walker: Node3D = os.get("player") as Node3D if os else null
+	var pad: Node = null
+	var pocket: Node3D = null
+	var cv: Node3D = null
+	var act: Dictionary = {}
+	var offer: Dictionary = {}
+	var tmpl := ""
+	var lab0 := ""
+	var lab1 := ""
+	var harvest0 := 0.0
+	var harvest1 := 0.0
+	var print0 := 0.0
+	var print1 := 0.0
+	var hangar_m0 := 0.0
+	var hangar_m1 := 0.0
+	var hangar_p0 := 0.0
+	var hangar_p1 := 0.0
+	var rate0 := 0.0
+	var rate1 := 0.0
+	var bench: Node = null
+	var done: Dictionary = {}
+	var paid := true
+	var skip_ok := true
+	var weap := true
+	var modu := true
+	if P0 == null or not bool(P0.Q_A_CONTRACT):
+		fails.append("Q-A P0Slice flag missing")
+		return
+	if Board == null:
+		fails.append("Q-A ContractBoard missing")
+		return
+	if d == null or not d.has_method("try_use_console"):
+		fails.append("Q-A no OpenSpace/interior")
+		return
+	if Board.has_method("reset_slice"):
+		Board.reset_slice()
+	if d.has_method("is_inside") and bool(d.is_inside()) and d.has_method("exit_interior"):
+		d.exit_interior()
+		await get_tree().create_timer(0.2).timeout
+	pad = _in_a_occupied_pad(os)
+	if pad == null:
+		fails.append("Q-A occupied unnamed pad missing")
+		return
+	if pad.has_method("claim"):
+		pad.claim("Cybernex", 2.0)
+	if "ownership" in pad and pad.ownership and pad.ownership.has_method("advance_transition"):
+		pad.ownership.advance_transition(8.0, 5.0)
+	if pad.has_method("print_bench"):
+		bench = pad.print_bench()
+	if pad.has_method("tier_budget"):
+		var bud: Dictionary = pad.tier_budget()
+		harvest0 = float(bud.get("harvest", 0.0))
+		print0 = float(bud.get("print_cost", 0.0))
+		hangar_m0 = float(bud.get("hangar_mass", 0.0))
+		hangar_p0 = float(bud.get("hangar_power", 0.0))
+	if "extract_rate" in pad:
+		rate0 = float(pad.get("extract_rate"))
+	if bench != null and bench.has_method("print_cost"):
+		print0 = float(bench.print_cost())
+	lab0 = SoftKnowledge.contract_intel_label()
+	walker = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		if os.has_method("try_exit_ship"):
+			os.try_exit_ship()
+			await get_tree().create_timer(0.3).timeout
+		walker = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("Q-A no walker for ops board")
+		return
+	walker.global_position = (pad as Node3D).global_position + Vector3(0, 3.0, 0)
+	if walker is CharacterBody3D:
+		(walker as CharacterBody3D).velocity = Vector3.ZERO
+	await get_tree().process_frame
+	if d.has_method("enter_station"):
+		d.enter_station(walker, pad as Node3D)
+	await get_tree().create_timer(0.4).timeout
+	if not (d.has_method("is_inside") and bool(d.is_inside())):
+		fails.append("Q-A station ops pocket missing")
+		return
+	if d.has_method("get_kind") and str(d.get_kind()) != "station":
+		fails.append("Q-A opened %s, not station ops" % str(d.get_kind()))
+	pocket = d.get_active_interior() if d.has_method("get_active_interior") else null
+	cv = pocket.get_node_or_null("ConsoleVolume") as Node3D if pocket else null
+	if cv == null:
+		fails.append("Q-A ops console missing")
+		if d.has_method("exit_interior"):
+			d.exit_interior()
+		return
+	walker.global_position = cv.global_position
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if not bool(d.try_use_console()):
+		fails.append("Q-A ops console not usable")
+	act = d.last_console_action() if d.has_method("last_console_action") else {}
+	offer = act.get("contract", {})
+	if typeof(offer) != TYPE_DICTIONARY:
+		offer = {}
+	tmpl = str(offer.get("template", act.get("contract_template", "")))
+	print("[Playtest] Q-A board offers one contract template=", tmpl,
+		" id=", offer.get("id", ""), " status=", offer.get("status", ""))
+	if not bool(act.get("contract_offered", false)) and offer.is_empty():
+		fails.append("Q-A board did not offer a contract")
+		if d.has_method("exit_interior"):
+			d.exit_interior()
+		return
+	if not Board.templates().has(tmpl):
+		fails.append("Q-A unknown template (%s)" % tmpl)
+	if str(offer.get("body", "")) != "Nex-Prime":
+		fails.append("Q-A contract left the ARK body")
+	if str(offer.get("id", "")).begins_with("SITE_"):
+		fails.append("Q-A minted SITE_*")
+	if Board.cash_shop_skip_possible():
+		fails.append("Q-A cash-shop skip possible")
+	skip_ok = bool(Board.try_cash_skip())
+	paid = bool(Board.try_pay_complete(999.0))
+	if d.has_method("try_pay_complete_contract"):
+		paid = paid or bool(d.try_pay_complete_contract(999.0))
+	weap = bool(Board.try_unlock_exclusive_weapon("pulse"))
+	modu = bool(Board.try_unlock_exclusive_module("extractor"))
+	if skip_ok or paid:
+		fails.append("Q-A cash-shop skip / pay-to-complete accepted")
+	if weap or modu or SoftKnowledge.exclusive_weapon_unlocked("pulse") \
+			or SoftKnowledge.exclusive_module_unlocked("extractor"):
+		fails.append("Q-A Knowledge-gated exclusive weapon/module")
+	if d.has_method("try_accept_contract"):
+		offer = d.try_accept_contract()
+	else:
+		offer = Board.accept()
+	if str(offer.get("status", "")) != "accepted":
+		fails.append("Q-A did not accept the offered contract")
+	match tmpl:
+		"occupy":
+			if pad.has_method("claim"):
+				pad.claim("Cybernex", 0.55)
+		"harvest":
+			if "crystal_reserves" in pad:
+				pad.crystal_reserves = maxf(float(pad.crystal_reserves), 8.0)
+			if pad.has_method("_tick_harvest"):
+				pad._tick_harvest(0.5)
+		"deliver_crate":
+			if ship != null:
+				var hold: Node = ship.get_node_or_null("CargoHold")
+				if hold != null and hold.has_method("store_unit"):
+					hold.store_unit(CargoHold.make_crate("qa_crate"))
+			if pad.has_method("ensure_pad_cargo"):
+				pad.ensure_pad_cargo(1)
+		_:
+			fails.append("Q-A cannot complete template (%s)" % tmpl)
+	await get_tree().process_frame
+	if d.has_method("try_complete_contract"):
+		done = d.try_complete_contract()
+	else:
+		done = Board.try_complete()
+	lab1 = SoftKnowledge.contract_intel_label()
+	print("[Playtest] Q-A complete template=", tmpl, " status=", done.get("status", ""),
+		" Knowledge ", lab0, " → ", lab1)
+	if str(done.get("status", "")) != "complete":
+		fails.append("Q-A did not complete template (%s)" % tmpl)
+	if lab1 == lab0 or lab1 != "PAD INTEL":
+		fails.append("Q-A Knowledge label did not change (%s → %s)" % [lab0, lab1])
+	if pad != null and pad.has_method("tier_budget"):
+		var bud1: Dictionary = pad.tier_budget()
+		harvest1 = float(bud1.get("harvest", -1.0))
+		print1 = float(bud1.get("print_cost", -1.0))
+		hangar_m1 = float(bud1.get("hangar_mass", -1.0))
+		hangar_p1 = float(bud1.get("hangar_power", -1.0))
+	if "extract_rate" in pad:
+		rate1 = float(pad.get("extract_rate"))
+	if bench != null and bench.has_method("print_cost"):
+		print1 = float(bench.print_cost())
+	print("[Playtest] Q-A harvest/print/hangar ", snapped(harvest0, 0.01), "/", snapped(print0, 0.01),
+		"/", snapped(hangar_m0, 0.01), " → ", snapped(harvest1, 0.01), "/", snapped(print1, 0.01),
+		"/", snapped(hangar_m1, 0.01))
+	if absf(harvest1 - harvest0) > 0.0001 or harvest0 <= 0.0:
+		fails.append("Q-A harvest number changed (%s → %s)" % [harvest0, harvest1])
+	if absf(print1 - print0) > 0.0001 or print0 <= 0.0:
+		fails.append("Q-A print number changed (%s → %s)" % [print0, print1])
+	if absf(hangar_m1 - hangar_m0) > 0.0001 or absf(hangar_p1 - hangar_p0) > 0.0001:
+		fails.append("Q-A hangar numbers changed")
+	if absf(rate1 - rate0) > 0.0001:
+		fails.append("Q-A extract_rate changed")
+	if d.has_method("is_inside") and bool(d.is_inside()) and d.has_method("exit_interior"):
+		d.exit_interior()
+		await get_tree().create_timer(0.2).timeout
+	print("[Playtest] Q-A station ops board · Knowledge label only · no P2W")
 
 
 func _in_a_occupied_pad(os: Node) -> Node3D:

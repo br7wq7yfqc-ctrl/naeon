@@ -1599,6 +1599,9 @@ func try_dock_cargo_transfer(to_hold: bool) -> bool:
 		_cargo_ramp.deploy()
 	var ok := bool(pad.try_dock_transfer(self, to_hold))
 	if ok:
+		var Board = load("res://scripts/systems/ContractBoard.gd")
+		if Board:
+			Board.note_progress("deliver_crate")
 		var hold := get_node_or_null("CargoHold")
 		var n := int(hold.unit_count()) if hold != null and hold.has_method("unit_count") else 0
 		var yard := int(pad.pad_cargo_count()) if pad.has_method("pad_cargo_count") else 0
