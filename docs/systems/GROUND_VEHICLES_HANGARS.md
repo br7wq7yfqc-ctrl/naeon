@@ -1,6 +1,6 @@
 # Ground Vehicles · Hangars · Cargo Ramps
 
-**Status:** IN-C V0+V1 + IN-D V2 built · store/retrieve later  
+**Status:** IN-C V0+V1 + IN-D V2 + IN-E V3 built · SoftNet later  
 **Benchmarks:** SC (vehicle hangar + ramp) · NMS (exocraft) · economical code-first  
 **No P2W:** vehicle tiers = role / soft logistics, not shop combat power  
 
@@ -92,7 +92,7 @@ CapitalShip / Hauler
 | V0 | CargoHold + HangarBay data on the ST-D catalog carrier (**built**, IN-C) |
 | V1 | CargoRamp deploy/stow + walk plates hangar_bay → pad (**built**, IN-C) |
 | V2 | GroundVehicle rover drive on surface (**built**, IN-D) |
-| V3 | Store/retrieve flow |
+| V3 | Store/retrieve flow (**built**, IN-E) |
 | V4 | SoftNet + multi-seat soft |
 | V5 | Optional Tripo rover A |
 
@@ -111,4 +111,6 @@ CapitalShip / Hauler
 
 IN-C (V0+V1): `HangarBay.gd` + `CargoHold` + `CargoRamp` on `CatalogCarrier` (`cybernex_capital_carrier` …). Deploy when landed / hover < 8 m AGL / docked and speed < 5; else BLOCKED toast. Hatch from `hangar_bay` onto deployed plates (not MainMenu). No rover spawn. 0 Tripo.
 
-IN-D (V2): `GroundVehicle` rover on ramp top when plates are `DEPLOYED`. WASD drive, `F` board/exit (walker parked, not freed). Drive onto the unnamed pad deck. One rover. No store/retrieve. No SoftNet multi-seat. No `SITE_*`. 0 Tripo. Procedural chassis/wheels.
+IN-D (V2): `GroundVehicle` rover on ramp top when plates are `DEPLOYED`. WASD drive, `F` board/exit (walker parked, not freed). Drive onto the unnamed pad deck. One rover. No SoftNet multi-seat. No `SITE_*`. 0 Tripo. Procedural chassis/wheels.
+
+IN-E (V3): drive onto the deployed ramp mouth / `hangar_bay` volume → despawn world rover → `CargoHold` (`id` + `health`). Bay console or hangar interact retrieves onto ramp top when `DEPLOYED` and IN-C pose rules pass. Takeoff keeps inventory. No second world rover. No pay-stat power. No SoftNet multi-seat. No `SITE_*`. 0 Tripo.

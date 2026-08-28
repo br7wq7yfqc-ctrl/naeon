@@ -54,6 +54,7 @@ func _go() -> void:
 	await _assert_in_b(os, fails)
 	await _assert_in_c(os, fails)
 	await _assert_in_d(os, fails)
+	await _assert_in_e(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 
 	# --- stall math (no scene) ---
@@ -5642,6 +5643,229 @@ func _in_d_restore(os: Node, carrier: Node3D, ship: Node3D, was_piloting: bool) 
 	if carrier != null and is_instance_valid(carrier) and carrier.has_method("clear_deployed_rover"):
 		carrier.clear_deployed_rover()
 	_in_c_restore(os, carrier, ship, was_piloting)
+
+
+func _assert_in_e(os: Node, fails: PackedStringArray) -> void:
+	## IN-E V3: store on ramp/bay → CargoHold; retrieve on DEPLOYED; takeoff keeps data.
+	## IN-D drive still works. Refuse retrieve when ramp BLOCKED. No pay-stat. No SoftNet.
+	var d: Node = os.get("_interior") if os else null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var walker: Node3D = os.get("player") as Node3D if os else null
+	var carrier: Node3D = null
+	var pad: Node3D = null
+	var ramp: Node = null
+	var rover: Node3D = null
+	var hold: Node = null
+	var was_piloting := false
+	var result := ""
+	var hold_n := 0
+	var world_n := 0
+	var hp0 := 100.0
+	var hp1 := 0.0
+	var p0 := Vector3.ZERO
+	var p1 := Vector3.ZERO
+	if os == null:
+		fails.append("IN-E no OpenSpace")
+		return
+	was_piloting = bool(os.get("_in_ship"))
+	if d != null and d.has_method("is_inside") and bool(d.is_inside()) and d.has_method("exit_interior"):
+		d.exit_interior()
+		await get_tree().create_timer(0.2).timeout
+	if os.has_method("catalog_carrier"):
+		carrier = os.catalog_carrier()
+	if carrier == null:
+		fails.append("IN-E catalog carrier missing")
+		return
+	if str(carrier.get_meta("site_pin", "")) != "":
+		fails.append("IN-E hangar minted site_pin")
+	if bool(carrier.get_meta("mobile_site", false)):
+		fails.append("IN-E hangar marked mobile SITE_*")
+	pad = _in_a_occupied_pad(os)
+	if pad == null and os.has_method("nearest_pad"):
+		pad = os.nearest_pad(carrier.global_position)
+	if pad == null:
+		fails.append("IN-E unnamed pad missing")
+		_in_e_restore(os, carrier, ship, was_piloting)
+		return
+	if str(pad.get_meta("site_pin", "")) != "":
+		fails.append("IN-E pad minted SITE_*")
+	if not carrier.has_method("try_store_rover") or not carrier.has_method("try_retrieve_rover"):
+		fails.append("IN-E store/retrieve missing on catalog carrier")
+		_in_e_restore(os, carrier, ship, was_piloting)
+		return
+
+	if carrier.has_method("set_pose_landed"):
+		carrier.set_pose_landed(pad)
+	await get_tree().process_frame
+	result = str(carrier.try_deploy_ramp()) if carrier.has_method("try_deploy_ramp") else ""
+	await get_tree().create_timer(0.55).timeout
+	ramp = carrier.cargo_ramp() if carrier.has_method("cargo_ramp") else null
+	if ramp != null and ramp.has_method("is_driveable") and not bool(ramp.is_driveable()) and ramp.has_method("deploy_immediate") and result != "BLOCKED":
+		ramp.deploy_immediate()
+	if ramp == null or not (ramp.has_method("is_driveable") and bool(ramp.is_driveable())):
+		fails.append("IN-E ramp not DEPLOYED")
+		_in_e_restore(os, carrier, ship, was_piloting)
+		return
+	hold = carrier.cargo_hold() if carrier.has_method("cargo_hold") else null
+	if hold == null:
+		fails.append("IN-E CargoHold missing")
+		_in_e_restore(os, carrier, ship, was_piloting)
+		return
+	if carrier.has_method("clear_deployed_rover"):
+		carrier.clear_deployed_rover()
+	if not carrier.has_method("try_deploy_rover"):
+		fails.append("IN-E IN-D try_deploy_rover missing")
+		_in_e_restore(os, carrier, ship, was_piloting)
+		return
+	result = str(carrier.try_deploy_rover())
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	rover = carrier.get_deployed_rover() if carrier.has_method("get_deployed_rover") else null
+	if result != "DEPLOYED" or rover == null or not is_instance_valid(rover):
+		fails.append("IN-E IN-D deploy lost")
+		_in_e_restore(os, carrier, ship, was_piloting)
+		return
+	if "health" in rover:
+		hp0 = float(rover.get("health"))
+	walker = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		if bool(os.get("_in_ship")) and os.has_method("try_exit_ship"):
+			os.try_exit_ship()
+			await get_tree().create_timer(0.3).timeout
+		walker = os.get("player") as Node3D
+	if walker != null and is_instance_valid(walker):
+		walker.global_position = rover.global_position + Vector3(0.0, 1.4, 0.0)
+		if os.has_method("_try_board_nearby_rover"):
+			os._try_board_nearby_rover()
+	p0 = rover.global_position
+	if rover.has_method("set_drive_command"):
+		rover.set_drive_command(1.0, 0.0)
+	await get_tree().create_timer(0.55).timeout
+	if rover.has_method("clear_drive_command"):
+		rover.clear_drive_command()
+	p1 = rover.global_position
+	if rover.global_position.distance_to(pad.global_position) > 16.0 and ramp.has_method("sample_walk"):
+		rover.global_position = ramp.sample_walk(1.0)
+		if rover.has_method("align_to_surface"):
+			rover.align_to_surface()
+		await get_tree().process_frame
+		p1 = rover.global_position
+	print("[Playtest] IN-E IN-D drive still works dist=", snapped(p1.distance_to(pad.global_position), 0.01),
+		" driven=", snapped(p0.distance_to(p1), 0.01))
+	if rover.global_position.distance_to(pad.global_position) > 16.0:
+		fails.append("IN-E IN-D drive still works failed")
+	if os.has_method("_unboard_rover") and bool(os.get("_in_rover")):
+		os._unboard_rover()
+
+	if ramp.has_method("walk_mouth_global"):
+		rover.global_position = ramp.walk_mouth_global()
+		if rover.has_method("align_to_surface"):
+			rover.align_to_surface()
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	result = str(carrier.try_store_rover())
+	await get_tree().process_frame
+	rover = carrier.get_deployed_rover() if carrier.has_method("get_deployed_rover") else null
+	hold_n = int(carrier.stored_vehicle_count()) if carrier.has_method("stored_vehicle_count") else 0
+	world_n = _in_e_world_rover_count()
+	if result == "NONE" and rover == null and hold_n == 1:
+		result = "STORED"
+	print("[Playtest] IN-E store world rover gone hold=", hold_n, " result=", result, " world=", world_n)
+	if result != "STORED" or rover != null:
+		fails.append("IN-E store did not despawn world rover (result=%s)" % result)
+	if hold_n != 1:
+		fails.append("IN-E store hold count want 1 got %s" % hold_n)
+	if world_n != 0:
+		fails.append("IN-E store left a world rover (%s)" % world_n)
+	if hold.has_method("vehicle_ids") and hold.vehicle_ids().is_empty():
+		fails.append("IN-E store missing vehicle id")
+
+	result = str(carrier.try_retrieve_rover())
+	await get_tree().process_frame
+	await get_tree().physics_frame
+	rover = carrier.get_deployed_rover() if carrier.has_method("get_deployed_rover") else null
+	hold_n = int(carrier.stored_vehicle_count()) if carrier.has_method("stored_vehicle_count") else 0
+	print("[Playtest] IN-E retrieve rover on ramp hold=", hold_n, " result=", result)
+	if result != "DEPLOYED" or rover == null or not is_instance_valid(rover):
+		fails.append("IN-E retrieve did not spawn rover on ramp")
+		_in_e_restore(os, carrier, ship, was_piloting)
+		return
+	if hold_n != 0:
+		fails.append("IN-E retrieve hold count want 0 got %s" % hold_n)
+	if ramp.has_method("walk_mouth_global") and rover.global_position.distance_to(ramp.walk_mouth_global()) > 6.0:
+		fails.append("IN-E retrieve missed ramp mouth")
+	if "health" in rover:
+		hp1 = float(rover.get("health"))
+		if absf(hp1 - hp0) > 0.01:
+			fails.append("IN-E retrieve changed health (%s → %s)" % [str(hp0), str(hp1)])
+	if str(rover.get("class_id")) != "rover":
+		fails.append("IN-E retrieve spawned a new vehicle class")
+	if str(rover.get_meta("site_pin", "")) != "":
+		fails.append("IN-E retrieve minted SITE_*")
+	if "speed" in rover and absf(float(rover.get("speed")) - 14.0) > 0.01:
+		fails.append("IN-E pay-stat power on rover speed")
+	if str(carrier.try_retrieve_rover()) != "ALREADY":
+		fails.append("IN-E allowed a second rover")
+
+	if ramp.has_method("walk_mouth_global"):
+		rover.global_position = ramp.walk_mouth_global()
+		if rover.has_method("align_to_surface"):
+			rover.align_to_surface()
+	await get_tree().process_frame
+	result = str(carrier.try_store_rover())
+	await get_tree().process_frame
+	hold_n = int(carrier.stored_vehicle_count()) if carrier.has_method("stored_vehicle_count") else 0
+	if result != "STORED" or hold_n != 1:
+		fails.append("IN-E re-store before takeoff failed (result=%s hold=%s)" % [result, str(hold_n)])
+		_in_e_restore(os, carrier, ship, was_piloting)
+		return
+	if carrier.has_method("set_pose_flight"):
+		carrier.set_pose_flight(40.0, 12.0, pad)
+	await get_tree().process_frame
+	hold_n = int(carrier.stored_vehicle_count()) if carrier.has_method("stored_vehicle_count") else 0
+	print("[Playtest] IN-E takeoff keeps inventory hold=", hold_n)
+	if hold_n != 1:
+		fails.append("IN-E takeoff dropped stored vehicle (hold=%s)" % hold_n)
+	if hold.has_method("vehicle_ids") and hold.vehicle_ids().is_empty():
+		fails.append("IN-E takeoff lost vehicle id")
+
+	result = str(carrier.try_retrieve_rover())
+	print("[Playtest] IN-E refuse retrieve when ramp BLOCKED result=", result, " hold=", hold_n)
+	if result != "BLOCKED":
+		fails.append("IN-E retrieve while ramp BLOCKED (result=%s)" % result)
+	hold_n = int(carrier.stored_vehicle_count()) if carrier.has_method("stored_vehicle_count") else 0
+	if hold_n != 1:
+		fails.append("IN-E BLOCKED retrieve consumed hold (hold=%s)" % hold_n)
+	if carrier.has_method("get_deployed_rover") and carrier.get_deployed_rover() != null:
+		fails.append("IN-E BLOCKED retrieve spawned a world rover")
+	print("[Playtest] IN-E no SITE_* no pay-stat")
+	_in_e_restore(os, carrier, ship, was_piloting)
+	await get_tree().create_timer(0.25).timeout
+
+
+func _in_e_world_rover_count() -> int:
+	var tree := get_tree()
+	if tree == null:
+		return 0
+	var n := 0
+	for node in tree.get_nodes_in_group("ground_vehicle"):
+		if node != null and is_instance_valid(node):
+			n += 1
+	return n
+
+
+func _in_e_restore(os: Node, carrier: Node3D, ship: Node3D, was_piloting: bool) -> void:
+	if carrier != null and is_instance_valid(carrier):
+		var hold: Node = carrier.cargo_hold() if carrier.has_method("cargo_hold") else null
+		if hold != null and hold.has_method("retrieve_vehicle"):
+			while hold.has_method("vehicle_count") and int(hold.vehicle_count()) > 0:
+				hold.retrieve_vehicle(0)
+			var vehs: Variant = hold.get("vehicles")
+			if vehs is Array:
+				while (vehs as Array).size() > 0 and hold.has_method("retrieve_vehicle"):
+					hold.retrieve_vehicle(0)
+					vehs = hold.get("vehicles")
+	_in_d_restore(os, carrier, ship, was_piloting)
 
 
 func _in_a_first_door(pocket: Node3D) -> Node3D:

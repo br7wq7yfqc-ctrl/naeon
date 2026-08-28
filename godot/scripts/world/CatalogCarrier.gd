@@ -3,7 +3,8 @@ class_name CatalogCarrier
 ## ST-D §6(b) / §7: one catalog carrier hull. Hangar queue lives here.
 ## IN-A: I enters InteriorGenerator hangar_bay pocket (not a mobile SITE_*).
 ## IN-C: HangarBay + CargoHold data + CargoRamp V0/V1. Not a mobile SITE_*.
-## IN-D: one GroundVehicle on ramp top when DEPLOYED. No store/retrieve. No SoftNet.
+## IN-D: one GroundVehicle on ramp top when DEPLOYED. No SoftNet.
+## IN-E: store/retrieve as CargoHold data (id + health). No second world rover.
 ## No new hull UUID.
 
 const DEFAULT_HULL := "cybernex_capital_carrier"
@@ -33,6 +34,7 @@ var _home_pos: Vector3 = Vector3.ZERO
 var _home_basis: Basis = Basis.IDENTITY
 var _home_ok: bool = false
 var _deployed_rover: Node3D = null
+var _rover_left_store_volume: bool = false
 
 
 func _ready() -> void:
@@ -169,6 +171,7 @@ func try_deploy_rover() -> String:
 	if rover.has_method("face_along"):
 		rover.face_along(foot - spawn)
 	_deployed_rover = rover
+	_rover_left_store_volume = false
 	print("[CatalogCarrier] rover on ramp mouth")
 	return "DEPLOYED"
 
@@ -181,6 +184,171 @@ func clear_deployed_rover() -> void:
 	if _deployed_rover != null and is_instance_valid(_deployed_rover):
 		_deployed_rover.queue_free()
 	_deployed_rover = null
+	_rover_left_store_volume = false
+
+
+func stored_vehicle_count() -> int:
+	var hold: Node = cargo_hold()
+	if hold != null and hold.has_method("vehicle_count"):
+		return int(hold.vehicle_count())
+	if hold != null:
+		var vehs: Variant = hold.get("vehicles")
+		if vehs is Array:
+			return (vehs as Array).size()
+	return 0
+
+
+func rover_on_store_volume(rover: Node3D) -> bool:
+	## Hangar mouth / bay only. Pad-end of the ramp stays a drive path (IN-D).
+	if rover == null or not is_instance_valid(rover):
+		return false
+	var ramp: Node = cargo_ramp()
+	if ramp == null or not is_instance_valid(ramp):
+		return false
+	if ramp.has_method("is_driveable") and not bool(ramp.is_driveable()):
+		return false
+	var mouth: Vector3 = rover.global_position
+	if ramp.has_method("walk_mouth_global"):
+		mouth = ramp.walk_mouth_global()
+	if rover.global_position.distance_to(mouth) <= 4.8:
+		return true
+	var bay: Node = hangar_bay()
+	if bay is Node3D and rover.global_position.distance_to((bay as Node3D).global_position) <= 6.5:
+		return true
+	return false
+
+
+func try_store_rover() -> String:
+	## Drive onto ramp / hangar_bay → despawn world rover → CargoHold (id + health).
+	var rover: Node3D = get_deployed_rover()
+	if rover == null:
+		return "NONE"
+	var ramp: Node = cargo_ramp()
+	if ramp == null:
+		return "BLOCKED"
+	if ramp.has_method("block_reason") and str(ramp.block_reason()) != "":
+		return "BLOCKED"
+	if ramp.has_method("is_driveable") and not bool(ramp.is_driveable()):
+		return "BLOCKED"
+	if not rover_on_store_volume(rover):
+		return "FAR"
+	_release_hangar_pilot()
+	rover = get_deployed_rover()
+	if rover == null or not is_instance_valid(rover):
+		return "NONE"
+	var hold: Node = cargo_hold()
+	if hold == null or not hold.has_method("store_vehicle"):
+		return "NOHOLD"
+	var entry: Dictionary = rover.as_storage_entry() if rover.has_method("as_storage_entry") else {
+		"id": str(rover.get_instance_id()),
+		"class_id": str(rover.get("class_id") if "class_id" in rover else "rover"),
+		"volume": 8.0,
+		"mass": 2.0,
+		"health": float(rover.get("health") if "health" in rover else 100.0),
+	}
+	if not bool(hold.store_vehicle(entry)):
+		return "FULL"
+	rover.queue_free()
+	_deployed_rover = null
+	_rover_left_store_volume = false
+	print("[CatalogCarrier] rover stored hold=", stored_vehicle_count())
+	return "STORED"
+
+
+func try_retrieve_rover() -> String:
+	## Bay console / hangar interact. Ramp must be DEPLOYED and IN-C pose gate pass.
+	## No second world rover. No pay-stat power.
+	if get_deployed_rover() != null:
+		return "ALREADY"
+	if stored_vehicle_count() <= 0:
+		return "EMPTY"
+	var ramp: Node = cargo_ramp()
+	if ramp == null:
+		return "BLOCKED"
+	if ramp.has_method("block_reason") and str(ramp.block_reason()) != "":
+		return "BLOCKED"
+	if ramp.has_method("is_driveable") and not bool(ramp.is_driveable()):
+		return "BLOCKED"
+	var hold: Node = cargo_hold()
+	if hold == null or not hold.has_method("retrieve_vehicle"):
+		return "NOHOLD"
+	var entry: Dictionary = hold.retrieve_vehicle(0)
+	if entry.is_empty():
+		return "EMPTY"
+	var result := _spawn_retrieved_rover(entry)
+	if result != "DEPLOYED":
+		if hold.has_method("store_vehicle"):
+			hold.store_vehicle(entry)
+		return result
+	print("[CatalogCarrier] rover retrieved hold=", stored_vehicle_count())
+	return "DEPLOYED"
+
+
+func _spawn_retrieved_rover(entry: Dictionary) -> String:
+	var ramp: Node = cargo_ramp()
+	if ramp == null:
+		return "BLOCKED"
+	var rover: Node3D = CharacterBody3D.new()
+	rover.set_script(load("res://scripts/vehicle/GroundVehicle.gd"))
+	rover.name = "GroundVehicle"
+	rover.set_meta("site_pin", "")
+	rover.set_meta("mobile_site", false)
+	var cid := str(entry.get("class_id", "rover"))
+	if cid != "":
+		rover.set("class_id", cid)
+	if "health" in rover:
+		rover.set("health", float(entry.get("health", 100.0)))
+	var parent_n: Node = get_parent()
+	if parent_n == null:
+		parent_n = self
+	parent_n.add_child(rover)
+	var spawn: Vector3 = global_position
+	var bay: Node = hangar_bay()
+	if bay != null and bay.has_method("rover_spawn_global"):
+		spawn = bay.rover_spawn_global()
+	elif ramp.has_method("walk_mouth_global"):
+		spawn = ramp.walk_mouth_global()
+	var up := _up_at(_pad) if _pad != null else _up_at(self)
+	rover.global_position = spawn + up * 0.45
+	var os: Node = _open_space_node()
+	if rover.has_method("set_planet_provider") and os != null:
+		rover.set_planet_provider(os)
+	if rover.has_method("set_pad_deck") and _pad != null:
+		rover.set_pad_deck(_pad)
+	if rover.has_method("set_hangar_ramp"):
+		rover.set_hangar_ramp(ramp)
+	if rover.has_method("align_to_surface"):
+		rover.align_to_surface()
+	var foot: Vector3 = spawn
+	if ramp.has_method("walk_foot_global"):
+		foot = ramp.walk_foot_global()
+	if rover.has_method("face_along"):
+		rover.face_along(foot - spawn)
+	_deployed_rover = rover
+	_rover_left_store_volume = false
+	print("[CatalogCarrier] rover on ramp mouth")
+	return "DEPLOYED"
+
+
+func _release_hangar_pilot() -> void:
+	var os: Node = _open_space_node()
+	if os != null and os.get("_rover") == _deployed_rover and os.has_method("_unboard_rover"):
+		os._unboard_rover()
+	elif _deployed_rover != null and is_instance_valid(_deployed_rover) and _deployed_rover.has_method("unboard"):
+		if _deployed_rover.get("pilot") != null:
+			_deployed_rover.unboard()
+
+
+func _physics_process(_delta: float) -> void:
+	## After the rover leaves the bay, driving back onto the ramp stores it.
+	var rover: Node3D = get_deployed_rover()
+	if rover == null:
+		return
+	if rover_on_store_volume(rover):
+		if _rover_left_store_volume:
+			try_store_rover()
+	else:
+		_rover_left_store_volume = true
 
 
 func try_deploy_ramp() -> String:

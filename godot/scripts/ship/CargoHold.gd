@@ -46,6 +46,18 @@ func retrieve_vehicle(index: int = 0) -> Dictionary:
 	inventory_changed.emit()
 	return e
 
+
+func vehicle_count() -> int:
+	return vehicles.size()
+
+
+func vehicle_ids() -> PackedStringArray:
+	var ids: PackedStringArray = PackedStringArray()
+	for e in vehicles:
+		if e is Dictionary:
+			ids.append(str((e as Dictionary).get("id", "")))
+	return ids
+
 func can_store_unit(vol: float, mass: float) -> bool:
 	if units.size() >= max_unit_slots:
 		return false
