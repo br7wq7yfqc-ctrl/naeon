@@ -758,6 +758,14 @@ func print_one_module(kind: String = "") -> Node3D:
 	return null
 
 
+func print_one_factory_module(kind: String = "") -> Node3D:
+	## ST-G §6(c). Does not replace ST-C print_one_module.
+	var b := print_bench()
+	if b != null and b.has_method("print_one_factory_module"):
+		return b.print_one_factory_module(kind)
+	return null
+
+
 func _ensure_print_bench() -> void:
 	## ST-C: §6(a) pad / NPC bench. Does not touch the ST-B harvest machine.
 	var P0 = load("res://scripts/world/P0Slice.gd")

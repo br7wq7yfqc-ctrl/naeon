@@ -27,12 +27,32 @@ func setup_printed(fac: String, kind: String) -> void:
 	set_meta("player_module", false)
 	set_meta("npc_module", false)
 	set_meta("printed_module", true)
+	set_meta("factory_printed", false)
 	set_meta("module_type", k)
 	set_meta("site_pin", "")
 	set_meta("combat_stats", 0)
 	if k == "extractor":
 		set_meta("ledger_slug", "t1_resource_extractor")
 	add_to_group("printed_base_modules")
+	_spawn_printed(k)
+
+
+func setup_factory_printed(fac: String, kind: String) -> void:
+	## ST-G §6(c): catalog grant at own factory. Not the ST-C printed_module slot.
+	var k := kind if kind == "habitat" or kind == "extractor" else "extractor"
+	faction = fac if fac != "" else "Cybernex"
+	name = "FactoryPrintedHabitat" if k == "habitat" else "FactoryPrintedExtractor"
+	set_meta("player_module", false)
+	set_meta("npc_module", false)
+	set_meta("printed_module", false)
+	set_meta("factory_printed", true)
+	set_meta("hangar_queued", false)
+	set_meta("module_type", k)
+	set_meta("site_pin", "")
+	set_meta("combat_stats", 0)
+	if k == "extractor":
+		set_meta("ledger_slug", "t1_resource_extractor")
+	add_to_group("factory_printed_modules")
 	_spawn_printed(k)
 
 

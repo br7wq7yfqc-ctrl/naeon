@@ -437,6 +437,8 @@ func _spawn_player_orbital_station() -> void:
 		n.global_position = ship.global_position + Vector3(-220.0, 50.0, 90.0)
 	if n.has_method("setup"):
 		n.setup(body_name, "Cybernex")
+	if _P0.ST_G_FACTORY and n.has_method("ensure_factory"):
+		n.ensure_factory()
 	print("[OpenSpace] ST-E player orbital cluster modules=2 body=", body_name, " · not SITE_* · not city")
 
 
@@ -444,6 +446,14 @@ func player_orbital_station() -> Node3D:
 	if world_root == null:
 		return null
 	return world_root.get_node_or_null("PlayerOrbitalStation") as Node3D
+
+
+func player_factory() -> Node3D:
+	## ST-G: factory in the existing player cluster. Not a new SITE_*.
+	var cluster := player_orbital_station()
+	if cluster != null and cluster.has_method("factory_module"):
+		return cluster.factory_module()
+	return find_child("FactoryModule", true, false) as Node3D
 
 
 func occupied_pad_base() -> Node:

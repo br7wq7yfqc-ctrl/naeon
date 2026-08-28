@@ -49,6 +49,7 @@ func _go() -> void:
 	_assert_st_d(os, fails)
 	_assert_st_e(os, fails)
 	_assert_st_f(os, fails)
+	_assert_st_g(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 
 	# --- stall math (no scene) ---
@@ -4607,6 +4608,198 @@ func _assert_st_f(os: Node, fails: PackedStringArray) -> void:
 	restored = str(pad.flip_cluster_owner("Cybernex"))
 	if restored != "Cybernex":
 		fails.append("ST-F could not restore Cybernex owner (%s)" % restored)
+
+
+func _assert_st_g(os: Node, fails: PackedStringArray) -> void:
+	## ST-G: factory in the existing player cluster. Bench (c) spend → one module.
+	## Without factory, (c) refuses. Does not rewrite ST-A…F slots.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var cluster: Node3D = null
+	var factory: Node3D = null
+	var bench: Node = null
+	var tree: SceneTree = get_tree()
+	var cost := 0.0
+	var cost_after := 0.0
+	var before := 0.0
+	var after := 0.0
+	var wallet0 := 0.0
+	var cash_mod: Node3D = null
+	var broke: Node3D = null
+	var refused: Node3D = null
+	var mod: Node3D = null
+	var again: Node3D = null
+	var pin := ""
+	var kind := ""
+	var slug := ""
+	var pin0 := ""
+	var pin1 := ""
+	var extras := 0
+	var orbital_n := 0
+	var printed_n := 0
+	var parent: Node = null
+	if P0 == null or not bool(P0.ST_G_FACTORY):
+		fails.append("ST-G P0Slice flag missing")
+		return
+	if bool(P0.ORBITAL_STATIONS):
+		fails.append("ST-G enabled P0Slice.ORBITAL_STATIONS unnamed props")
+	if LayerContext:
+		pin0 = str(LayerContext.site_pin_id)
+	if os != null and os.has_method("player_orbital_station"):
+		cluster = os.player_orbital_station()
+	if cluster == null and tree:
+		var listed: Array = tree.get_nodes_in_group("player_orbital_stations")
+		if not listed.is_empty() and listed[0] is Node3D:
+			cluster = listed[0] as Node3D
+	if cluster == null:
+		fails.append("ST-G player cluster missing")
+		return
+	if cluster.has_method("factory_module"):
+		factory = cluster.factory_module()
+	if factory == null and os != null and os.has_method("player_factory"):
+		factory = os.player_factory()
+	if factory == null and tree:
+		var facs: Array = tree.get_nodes_in_group("player_factory_modules")
+		if not facs.is_empty() and facs[0] is Node3D:
+			factory = facs[0] as Node3D
+	if factory == null:
+		fails.append("ST-G factory missing from player cluster")
+		return
+	if factory.get_parent() != cluster:
+		fails.append("ST-G factory is not in the player cluster")
+	if str(factory.get_meta("module_type", "")) != "factory":
+		fails.append("ST-G factory kind is not factory")
+	if str(factory.get_meta("site_pin", "missing")) != "":
+		fails.append("ST-G factory minted site_pin (%s)" % str(factory.get_meta("site_pin")))
+	if bool(factory.get_meta("player_module", false)):
+		fails.append("ST-G stole the ST-A player_module slot")
+	if bool(factory.get_meta("npc_module", false)):
+		fails.append("ST-G stole the NP-C npc_module slot")
+	if bool(factory.get_meta("printed_module", false)):
+		fails.append("ST-G stole the ST-C printed_module slot")
+	if bool(factory.get_meta("hangar_queued", false)):
+		fails.append("ST-G stole the ST-D hangar_queued slot")
+	if bool(factory.get_meta("orbital_module", false)):
+		fails.append("ST-G folded factory into the ST-E orbital pair")
+	if cluster.has_method("cluster_modules") and cluster.cluster_modules().size() != 2:
+		fails.append("ST-G rewrote ST-E cluster_modules (%s)" % cluster.cluster_modules().size())
+	if tree:
+		orbital_n = tree.get_nodes_in_group("player_orbital_modules").size()
+		if orbital_n != 2:
+			fails.append("ST-G rewrote ST-E orbital pair, got %s" % orbital_n)
+	if tree:
+		for n in tree.get_nodes_in_group("print_benches"):
+			if n != null and n.has_method("print_one_factory_module"):
+				bench = n
+				break
+	if bench == null and cluster.has_method("print_one_factory_module"):
+		bench = cluster
+	if bench == null or not bench.has_method("print_one_factory_module"):
+		fails.append("ST-G factory print path missing")
+		return
+	if bench.has_method("print_cost"):
+		cost = float(bench.print_cost())
+	elif cluster.has_method("print_one_factory_module"):
+		cost = 100.0
+	if cost <= 0.0:
+		fails.append("ST-G print cost is not a rules/15 sink")
+		return
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("colony_ops", 20.0)
+		GameManager.add_mastery("biomass_ops", 20.0)
+	if bench.has_method("print_cost"):
+		cost_after = float(bench.print_cost())
+		if absf(cost_after - cost) > 0.001:
+			fails.append("Knowledge cheapened print tables")
+	if bench.has_method("cash_shop_skip_possible") and bool(bench.cash_shop_skip_possible()):
+		fails.append("ST-G cash-shop skip possible")
+	if bench.has_method("try_cash_skip_print") and bool(bench.try_cash_skip_print(999.0)):
+		fails.append("ST-G cash-shop skip printed a module")
+	parent = factory.get_parent()
+	if parent != null:
+		parent.remove_child(factory)
+	refused = bench.print_one_factory_module()
+	if refused != null:
+		fails.append("ST-G printed without a factory")
+		if is_instance_valid(refused):
+			refused.queue_free()
+	if parent != null and factory.get_parent() == null:
+		parent.add_child(factory)
+	if GameManager:
+		wallet0 = float(GameManager.contribution)
+		GameManager.contribution = 0.0
+	cash_mod = bench.print_one_factory_module("", 50.0)
+	if cash_mod != null:
+		fails.append("ST-G accepted cash instead of Contribution")
+		if is_instance_valid(cash_mod):
+			cash_mod.queue_free()
+	broke = bench.print_one_factory_module()
+	if broke != null:
+		fails.append("ST-G printed with empty wallet")
+		if is_instance_valid(broke):
+			broke.queue_free()
+	if GameManager:
+		if wallet0 < cost:
+			GameManager.contribution = cost
+		else:
+			GameManager.contribution = wallet0
+		if GameManager.has_method("add_contribution") and GameManager.contribution < cost:
+			GameManager.add_contribution(cost - GameManager.contribution)
+		before = float(GameManager.contribution)
+	mod = bench.print_one_factory_module()
+	if GameManager:
+		after = float(GameManager.contribution)
+	if mod == null or not is_instance_valid(mod):
+		fails.append("ST-G did not grant a module after spend")
+		print("[Playtest] ST-G factory present but print failed cluster=", cluster.name)
+		return
+	if after > before - cost + 0.001:
+		fails.append("ST-G did not spend Contribution (%s → %s, cost=%s)" % [
+			str(snapped(before, 0.01)), str(snapped(after, 0.01)), str(snapped(cost, 0.01))
+		])
+	pin = str(mod.get_meta("site_pin", "missing"))
+	kind = str(mod.get_meta("module_type", ""))
+	slug = str(mod.get_meta("ledger_slug", ""))
+	if pin != "":
+		fails.append("ST-G module minted site_pin (%s)" % pin)
+	if kind != "habitat" and kind != "extractor":
+		fails.append("ST-G granted an unknown module (%s)" % kind)
+	if kind == "extractor" and slug != "" and slug != "t1_resource_extractor":
+		fails.append("ST-G invented slug (%s)" % slug)
+	if bool(mod.get_meta("player_module", false)):
+		fails.append("ST-G stole the ST-A player_module slot")
+	if bool(mod.get_meta("npc_module", false)):
+		fails.append("ST-G stole the NP-C npc_module slot")
+	if bool(mod.get_meta("printed_module", false)):
+		fails.append("ST-G stole the ST-C printed_module slot")
+	if bool(mod.get_meta("hangar_queued", false)):
+		fails.append("ST-G stole the ST-D hangar_queued slot")
+	if not bool(mod.get_meta("factory_printed", false)):
+		fails.append("ST-G module not marked factory_printed")
+	if mod.get_parent() != cluster:
+		fails.append("ST-G printed module is not in the player cluster")
+	again = bench.print_one_factory_module()
+	if again != null:
+		fails.append("ST-G granted a second module")
+	if tree:
+		extras = tree.get_nodes_in_group("factory_printed_modules").size()
+		printed_n = tree.get_nodes_in_group("printed_base_modules").size()
+		orbital_n = tree.get_nodes_in_group("player_orbital_modules").size()
+	if extras != 1:
+		fails.append("ST-G want exactly one factory-printed module, got %s" % extras)
+	if printed_n != 0:
+		fails.append("ST-G wrote into the ST-C printed_base_modules slot (%s)" % printed_n)
+	if orbital_n != 2:
+		fails.append("ST-G rewrote ST-E orbital pair after print, got %s" % orbital_n)
+	if LayerContext:
+		pin1 = str(LayerContext.site_pin_id)
+	if pin1 != pin0:
+		fails.append("ST-G changed site_pin (%s → %s)" % [pin0, pin1])
+	if pin1.begins_with("SITE_") and pin1 != "SITE_SPACE_TEST_PAD":
+		fails.append("ST-G minted a new SITE_* (%s)" % pin1)
+	print("[Playtest] ST-G factory present spent Contribution ", snapped(before, 0.01),
+		" -> ", snapped(after, 0.01), " cost=", snapped(cost, 0.01),
+		" module=", mod.name, " kind=", kind, " cash_skip=false")
 
 
 func _osh_report_skips(fails: PackedStringArray, done: Dictionary, required: PackedStringArray) -> void:

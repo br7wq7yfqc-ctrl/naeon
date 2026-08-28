@@ -168,6 +168,15 @@ static func hangar_queue_label() -> String:
 	return "HANGAR QUEUE"
 
 
+## Colony/history: name the §6(c) factory. Never changes print cost.
+static func factory_label() -> String:
+	var ops := mastery("colony_ops")
+	var hist := mastery("history")
+	if ops >= 15.0 or hist >= 15.0 or rank() >= 5:
+		return "T1 FACTORY"
+	return "FACTORY"
+
+
 ## Colony/history: name the §6(a) print bench. Never changes print cost.
 static func print_bench_label() -> String:
 	var ops := mastery("colony_ops")

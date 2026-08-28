@@ -139,6 +139,40 @@ static func print_catalog_module(pad: Node3D, faction: String, kind: String = "e
 	return n
 
 
+static func print_factory_catalog_module(cluster: Node3D, faction: String, kind: String = "extractor") -> Node3D:
+	## ST-G §6(c): one catalog module at the player factory cluster. Not SITE_*.
+	## Separate slot from ST-C printed_base_modules.
+	var n: Node3D = null
+	var k := kind
+	if cluster == null or not is_instance_valid(cluster):
+		return null
+	if factory_printed_on(cluster) != null:
+		return null
+	if k != "habitat" and k != "extractor":
+		k = "extractor"
+	n = Node3D.new()
+	n.set_script(preload("res://scripts/world/PlayerBaseModule.gd"))
+	n.name = "FactoryPrintedHabitat" if k == "habitat" else "FactoryPrintedExtractor"
+	n.set_meta("site_pin", "")
+	cluster.add_child(n)
+	n.position = Vector3(0.0, 0.4, 16.0) if k == "extractor" else Vector3(10.0, 0.4, 12.0)
+	if n.has_method("setup_factory_printed"):
+		n.setup_factory_printed(faction, k)
+	print("[BaseBuilder] factory printed ", k, " on ", cluster.name, " faction=", faction)
+	return n
+
+
+static func factory_printed_on(cluster: Node3D) -> Node3D:
+	var kids: Array = []
+	if cluster == null or not is_instance_valid(cluster):
+		return null
+	kids = cluster.get_children()
+	for c in kids:
+		if c is Node3D and c.has_meta("factory_printed") and bool(c.get_meta("factory_printed")):
+			return c as Node3D
+	return cluster.find_child("FactoryPrintedExtractor", true, false) as Node3D
+
+
 static func place_player_habitat(pad: Node3D, faction: String) -> Node3D:
 	## ST-A: one habitat, code-first. Not a SITE_*, not the OS-G silhouette.
 	return _place_habitat(pad, faction, false)

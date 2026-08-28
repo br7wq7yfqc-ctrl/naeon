@@ -34,6 +34,9 @@ const ST_E_ORBITAL := true
 ## ST-F: CX↔GR owner swap on one occupied unnamed pad. Theme + services; same tier numbers.
 ## Uses swap_cluster_theme + OwnershipData. Not a second SITE_*. Not arena-flip.
 const ST_F_OWNERSHIP := true
+## ST-G: factory in the existing player cluster. Bench (c) print of one catalog module.
+## Does not rewrite ST-E dock+habitat. Does not flip ORBITAL_STATIONS.
+const ST_G_FACTORY := true
 ## NP-C: visitor places one habitat on an empty unnamed pad. Same BaseBuilder. Not SITE_*.
 const NP_C_MODULE := true
 
