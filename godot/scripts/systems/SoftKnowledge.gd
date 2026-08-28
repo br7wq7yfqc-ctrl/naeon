@@ -195,6 +195,30 @@ static func extractor_label() -> String:
 	return "EXTRACTOR"
 
 
+## Q-A: name the ops contract board. Never yield / DPS / exclusive modules.
+static func contract_board_label() -> String:
+	var intel := mastery("quest_intel")
+	if intel >= 10.0:
+		return "OPS CONTRACT BOARD"
+	return "CONTRACT BOARD"
+
+
+## Q-A: contract intel rank/label. story ≠ power. Never a weapon gate.
+static func contract_intel_label() -> String:
+	var intel := mastery("quest_intel")
+	if intel >= 10.0:
+		return "PAD INTEL"
+	return "CONTRACT"
+
+
+static func exclusive_weapon_unlocked(_id: String = "") -> bool:
+	return false
+
+
+static func exclusive_module_unlocked(_id: String = "") -> bool:
+	return false
+
+
 ## ST-F: owner skins the service list. Never harvest / print / hangar numbers.
 static func cluster_services(grot: bool = false) -> PackedStringArray:
 	if grot:

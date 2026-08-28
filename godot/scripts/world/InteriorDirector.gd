@@ -8,6 +8,8 @@ signal entered(kind: String)
 signal exited(kind: String)
 
 const _Gen = preload("res://scripts/world/InteriorGenerator.gd")
+const _Board = preload("res://scripts/systems/ContractBoard.gd")
+const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 ## Pocket is parented under OpenSpace (NOT WorldRoot). Nex-Prime sits at
 ## origin with radius 1400 — y=120 was inside the planet mesh.
 const POCKET_LOCAL := Vector3(0.0, 9200.0, 0.0)
@@ -84,6 +86,26 @@ func get_seat_role() -> String:
 
 func last_console_action() -> Dictionary:
 	return _console_board.duplicate()
+
+
+func try_accept_contract() -> Dictionary:
+	## Q-A: accept the offered ops contract. Does not occupy / print / mint SITE_*.
+	var cur: Dictionary = _Board.accept()
+	_console_board["contract"] = cur
+	_console_board["contract_status"] = str(cur.get("status", ""))
+	return cur
+
+
+func try_complete_contract() -> Dictionary:
+	## Q-A: complete after template progress. Knowledge label only.
+	var cur: Dictionary = _Board.try_complete()
+	_console_board["contract"] = cur
+	_console_board["contract_status"] = str(cur.get("status", ""))
+	return cur
+
+
+func try_pay_complete_contract(cash: float = 0.0) -> bool:
+	return bool(_Board.try_pay_complete(cash))
 
 
 func has_life_support() -> bool:
@@ -940,8 +962,42 @@ func _apply_ops_console() -> void:
 		"factory_gate": factory_gate,
 		"ls": life_support_line(),
 	}
+	_attach_contract_offer(pad, occupy_applied)
 	print("[Interior] ops console used occupy=", occupy_applied, " factory_gate=", factory_gate,
 		" status=", occupy_status, " ls=", life_support_line())
+
+
+func _attach_contract_offer(pad: Node3D, occupy_applied: bool) -> void:
+	## Q-A board lives on the station ops console. Hangar/ship keep IN-B/IN-E roles.
+	var offer: Dictionary = {}
+	var host := ""
+	if _kind != "station":
+		return
+	host = _contract_host_id(pad)
+	offer = _Board.offer_one(host, "Nex-Prime")
+	if offer.is_empty():
+		return
+	_console_board["contract"] = offer
+	_console_board["contract_offered"] = true
+	_console_board["contract_template"] = str(offer.get("template", ""))
+	_console_board["contract_status"] = str(offer.get("status", ""))
+	_console_board["board"] = str(_console_board.get("board", "")) + " · %s %s" % [
+		_SoftK.contract_board_label(),
+		str(offer.get("template", "")),
+	]
+	if occupy_applied:
+		_Board.note_progress("occupy")
+
+
+func _contract_host_id(pad: Node3D) -> String:
+	var n: Node = pad
+	while n:
+		if n is Node3D and str(n.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+			return str(n.name)
+		n = n.get_parent()
+	if pad != null and is_instance_valid(pad):
+		return str(pad.name)
+	return "orbital_ops"
 
 
 func _linked_occupy_pad() -> Node3D:

@@ -42,6 +42,8 @@ const ST_F_OWNERSHIP := true
 const ST_G_FACTORY := true
 ## NP-C: visitor places one habitat on an empty unnamed pad. Same BaseBuilder. Not SITE_*.
 const NP_C_MODULE := true
+## Q-A: one Contract Board + one generated template. SoftKnowledge label only.
+const Q_A_CONTRACT := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6

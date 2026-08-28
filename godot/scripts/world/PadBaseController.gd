@@ -1,6 +1,7 @@
 extends Node3D
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 const _Hold = preload("res://scripts/ship/CargoHold.gd")
+const _Board = preload("res://scripts/systems/ContractBoard.gd")
 ## Pad base: Dynamic Ownership claim + extractor harvest → Contribution (soft economy, no P2W combat).
 
 signal claimed(faction: String)
@@ -253,6 +254,7 @@ func _nearest_in_zone() -> Node3D:
 
 func claim(faction_name: String, strength: float = 1.0) -> void:
 	_nudge_claim(faction_name, strength, true)
+	_Board.note_progress("occupy")
 
 
 func on_hacked(caster: Node, amount: float = 1.0) -> void:
@@ -594,6 +596,7 @@ func _tick_harvest(delta: float) -> void:
 		# Asymmetric soft economy (CONCEPT): Cybernex Contribution vs gROT Biomass.
 		# Credit the pad's owner, not whichever faction the local player picked.
 		GameManager.deposit_economy(econ, true, ownership.faction_name() if ownership else "")
+		_Board.note_progress("harvest")
 		_harvest_accum_fx += econ
 		_harvest_fx_cd -= delta
 		if _harvest_fx_cd <= 0.0 and _harvest_accum_fx > 0.4:
