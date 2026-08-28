@@ -649,8 +649,12 @@ func _refresh() -> void:
 			if director.has_method("get_kind"):
 				k = str(director.get_kind())
 			var ctx := "I"
-			if director.has_method("is_near_seat") and _player and director.is_near_seat(_player):
+			if director.has_method("is_seated") and director.is_seated():
+				ctx = "I leave seat"
+			elif director.has_method("is_near_seat") and _player and director.is_near_seat(_player):
 				ctx = "F seat · I airlock"
+			elif director.has_method("is_near_legal_seat") and _player and director.is_near_legal_seat(_player):
+				ctx = "F seat · I"
 			elif director.has_method("is_near_hatch") and _player and director.is_near_hatch(_player):
 				ctx = "I hatch · F seat"
 			elif director.has_method("is_near_console") and _player and director.is_near_console(_player):

@@ -1418,6 +1418,8 @@ func _handle_f_interact() -> void:
 		_unboard_rover()
 		return
 	if not _in_ship and player and is_instance_valid(player):
+		if _try_board_pocket_seat():
+			return
 		if _try_board_nearby_rover():
 			return
 		if _try_seat_to_pilot():
@@ -1481,6 +1483,25 @@ func _unboard_rover() -> void:
 		_bind_soft_net_actor(player)
 	_rover = null
 	print("[OpenSpace] left rover")
+
+
+func _try_board_pocket_seat() -> bool:
+	## Station ops / hangar carrier seat. Stays in the same pocket. Not ship pilot.
+	if _interior == null or not is_instance_valid(_interior):
+		return false
+	if not _interior.has_method("is_inside") or not bool(_interior.is_inside()):
+		return false
+	if _interior.has_method("get_kind"):
+		var k := str(_interior.get_kind())
+		if k != "station" and k != "hangar_bay":
+			return false
+	if player == null or not is_instance_valid(player):
+		return false
+	if _interior.has_method("is_seated") and bool(_interior.is_seated()):
+		return true
+	if _interior.has_method("try_board_legal_seat"):
+		return bool(_interior.try_board_legal_seat(player))
+	return false
 
 
 func _try_seat_to_pilot() -> bool:

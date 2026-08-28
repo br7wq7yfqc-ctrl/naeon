@@ -102,6 +102,8 @@ static func build_station(faction: String = "Cybernex", hatch_to: String = "pad"
 	_door_portal(root, Vector3(5, 0, 14), neon, 8.0, "pocket")
 	_door_portal(root, Vector3(0, 0, -6), neon, 6.0, dest)
 	_console_volume(root, Vector3(0, 0, 30), neon, "OPS")
+	_legal_seat(root, Vector3(-3.4, 0.2, 28.5), neon, "OpsSeat", "OpsSeatVolume", "OpsSeatLabel", "OPS SEAT", "ops")
+	_attach_ambient(root, "station", neon)
 	return root
 
 
@@ -148,6 +150,7 @@ static func build_hangar_bay(faction: String = "Cybernex") -> Node3D:
 	_link_ship_rooms(root, rooms, neon)
 	_door_portal(root, Vector3(hatch_pos.x, 0.0, hatch_pos.z), neon, 5.0, "dock")
 	_console_volume(root, Vector3(4.5, 0, -2), neon, "BAY")
+	_legal_seat(root, Vector3(-4.5, 0.2, -2.0), neon, "HangarSeat", "HangarSeatVolume", "HangarSeatLabel", "CARRIER PILOT", "carrier_pilot")
 	_attach_ambient(root, "hangar_bay", neon)
 	return root
 
@@ -544,6 +547,31 @@ static func _seat_glow(root: Node3D, seat_pos: Vector3, neon: Color) -> void:
 		root.add_child(lab)
 	if seat_v is Node3D:
 		pass
+
+static func _legal_seat(root: Node3D, pos: Vector3, neon: Color, seat_name: String, vol_name: String, label_name: String, label: String, role: String) -> void:
+	## Station ops / hangar carrier seats. Never named Seat or SeatVolume (IN-A).
+	var seat := Marker3D.new()
+	seat.name = seat_name
+	seat.set_meta("legal_seat", true)
+	seat.set_meta("seat_role", role)
+	seat.position = pos
+	root.add_child(seat)
+	var vol := Marker3D.new()
+	vol.name = vol_name
+	vol.set_meta("legal_seat", true)
+	vol.set_meta("seat_role", role)
+	vol.position = pos
+	root.add_child(vol)
+	if DisplayServer.get_name() != "headless":
+		var lab := Label3D.new()
+		lab.name = label_name
+		lab.text = "%s  [F]" % label
+		lab.font_size = 36
+		lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		lab.modulate = neon
+		lab.position = pos + Vector3(0, 1.85, 0)
+		root.add_child(lab)
+
 
 static func _console_volume(root: Node3D, pos: Vector3, neon: Color, tag: String = "OPS") -> void:
 	var vol := Marker3D.new()

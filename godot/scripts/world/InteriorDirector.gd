@@ -27,6 +27,11 @@ var _atmo: float = 1.0
 var _recycler_on: bool = true
 var _console_cd: float = 0.0
 var _door_hold: Dictionary = {}  # portal name -> remain-open seconds
+var _seated: bool = false
+var _seat_role: String = ""  # ops | carrier_pilot — never the ship cockpit
+var _console_board: Dictionary = {}
+var _ls_warn_t: float = 0.0
+var _ls_warn_shown: bool = false
 
 
 func setup(world_root: Node3D, open_space: Node) -> void:
@@ -67,6 +72,27 @@ func recycler_on() -> bool:
 	return _recycler_on
 
 
+func is_seated() -> bool:
+	return _inside and _seated
+
+
+func get_seat_role() -> String:
+	return _seat_role if _seated else ""
+
+
+func last_console_action() -> Dictionary:
+	return _console_board.duplicate()
+
+
+func has_life_support() -> bool:
+	## Soft flag only. Thin / vented air is a suit warn, never HP.
+	return _inside and _atmo >= 0.25
+
+
+func life_support_warn_shown() -> bool:
+	return _ls_warn_shown
+
+
 func life_support_line() -> String:
 	if not _inside:
 		return ""
@@ -82,6 +108,9 @@ func life_support_line() -> String:
 
 func try_toggle(player: Node3D, ship: Node3D = null) -> void:
 	if _inside:
+		if _seated:
+			leave_legal_seat()
+			return
 		if player != null and is_instance_valid(player) and not is_near_hatch(player):
 			if _kind == "ship":
 				_toast("AIRLOCK · walk to hatch [I] · F seat")
@@ -207,6 +236,11 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	_player = player
 	_console_cd = 0.0
 	_door_hold.clear()
+	_console_board.clear()
+	_seated = false
+	_seat_role = ""
+	_ls_warn_t = 0.0
+	_ls_warn_shown = false
 	_recycler_on = true
 	_return_mode = "dock" if return_mode == "dock" else "pad"
 	_return_up = ret_up.normalized() if ret_up.length_squared() > 0.01 else Vector3.UP
@@ -287,9 +321,9 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	if kind == "ship":
 		_toast("Ship pocket · F seat · walk to airlock [I]")
 	elif kind == "hangar_bay":
-		_toast("Hangar bay · door to airlock · I hatch")
+		_toast("Hangar bay · F carrier seat · E bay · I hatch")
 	else:
-		_toast("Entered station · door to ops · I hatch")
+		_toast("Entered station · F ops seat · E console · I hatch")
 	print("[Interior] entered ", kind, " at ", target, " atmo=", snapped(_atmo, 0.01), " return=", _return_mode)
 	set_process(true)
 
@@ -423,6 +457,9 @@ func exit_interior() -> void:
 		_active.queue_free()
 	_active = null
 	_inside = false
+	_seated = false
+	_seat_role = ""
+	_ls_warn_t = 0.0
 
 	_set_world_hidden(false)
 	# Resume floating origin on walker/ship
@@ -512,6 +549,7 @@ func seat_companion(body: Node3D) -> bool:
 
 
 func is_near_seat(player: Node3D, max_dist: float = 3.6) -> bool:
+	## Ship cockpit Seat/SeatVolume only. Station/hangar use legal seats.
 	if _kind != "ship":
 		return false
 	if player == null or not is_instance_valid(player) or not _inside or _active == null:
@@ -524,6 +562,76 @@ func is_near_seat(player: Node3D, max_dist: float = 3.6) -> bool:
 			if player.global_position.distance_to((n as Node3D).global_position) <= max_dist:
 				return true
 	return false
+
+
+func is_near_legal_seat(player: Node3D, max_dist: float = 3.6) -> bool:
+	## Ops seat (station) or carrier pilot seat (hangar_bay). Not the ship cockpit.
+	if _kind != "station" and _kind != "hangar_bay":
+		return false
+	if player == null or not is_instance_valid(player) or not _inside or _active == null:
+		return false
+	if not is_instance_valid(_active):
+		return false
+	var seat: Node3D = _legal_seat_node()
+	if seat == null:
+		return false
+	return player.global_position.distance_to(seat.global_position) <= max_dist
+
+
+func _legal_seat_node() -> Node3D:
+	if _active == null or not is_instance_valid(_active):
+		return null
+	for nm in ["OpsSeat", "OpsSeatVolume", "HangarSeat", "HangarSeatVolume"]:
+		var n: Node = _active.get_node_or_null(nm)
+		if n is Node3D:
+			return n as Node3D
+	return null
+
+
+func try_board_legal_seat(player: Node3D = null) -> bool:
+	## F in station/hangar boards the legal seat. Walker stays in this pocket.
+	var who: Node3D = player if player != null else _player
+	if not _inside or _kind == "ship":
+		return false
+	if who == null or not is_instance_valid(who):
+		return false
+	if _seated:
+		return true
+	if not is_near_legal_seat(who, 3.8):
+		return false
+	var seat: Node3D = _legal_seat_node()
+	if seat == null:
+		return false
+	_player = who
+	_seated = true
+	_seat_role = "ops" if _kind == "station" else "carrier_pilot"
+	who.global_position = seat.global_position + Vector3(0.0, 1.05, 0.0)
+	if who is CharacterBody3D:
+		(who as CharacterBody3D).velocity = Vector3.ZERO
+	if _kind == "station":
+		_toast("OPS SEAT · I leave · same pocket")
+	else:
+		_toast("CARRIER PILOT · I leave · same pocket")
+	print("[Interior] boarded legal seat role=", _seat_role, " kind=", _kind)
+	return true
+
+
+func leave_legal_seat() -> bool:
+	## I from the legal seat returns to the same pocket. No exterior hop.
+	if not _inside or not _seated:
+		return false
+	var seat: Node3D = _legal_seat_node()
+	var role := _seat_role
+	_seated = false
+	_seat_role = ""
+	if _player != null and is_instance_valid(_player):
+		if seat != null:
+			_player.global_position = seat.global_position + Vector3(0.0, 1.05, 1.2)
+		if _player is CharacterBody3D:
+			(_player as CharacterBody3D).velocity = Vector3.ZERO
+	_toast("Left seat — %s pocket" % _kind)
+	print("[Interior] left legal seat ", role, " → ", _kind)
+	return true
 
 
 func is_near_hatch(player: Node3D, max_dist: float = 3.6) -> bool:
@@ -572,8 +680,11 @@ func try_use_console() -> bool:
 	if _kind == "station" or _kind == "hangar_bay":
 		_recycler_on = not _recycler_on
 		_refresh_life_support()
+		_apply_ops_console()
+		_tick_life_support_warn(0.0, true)
 		var rec := "HABITAT SEALED" if _recycler_on else "VENTED TO PLANET"
-		_toast("%s · ATMO %.2f · %s" % [rec, _atmo, _pad_status_line()])
+		var board := str(_console_board.get("board", _pad_status_line()))
+		_toast("%s · ATMO %.2f · %s" % [rec, _atmo, board])
 	else:
 		_toast("COCKPIT · %s · F seat · I hatch" % life_support_line())
 	if AudioDirector and AudioDirector.has_method("play_ui"):
@@ -596,6 +707,8 @@ func exit_for_pilot() -> void:
 		_active.queue_free()
 	_active = null
 	_inside = false
+	_seated = false
+	_seat_role = ""
 	_player = null
 	_set_world_hidden(false)
 	if _open_space:
@@ -627,7 +740,14 @@ func _process(delta: float) -> void:
 		return
 	_console_cd = maxf(0.0, _console_cd - delta)
 	_refresh_life_support()
+	_tick_life_support_warn(delta, false)
 	_tick_doors(delta)
+	if _seated:
+		var seat_hold: Node3D = _legal_seat_node()
+		if seat_hold != null and _player != null and is_instance_valid(_player):
+			_player.global_position = seat_hold.global_position + Vector3(0.0, 1.05, 0.0)
+			if _player is CharacterBody3D:
+				(_player as CharacterBody3D).velocity = Vector3.ZERO
 	# Keep player from falling out of pocket bounds
 	var anchor: Vector3 = _active.global_position
 	var ppos: Vector3 = _player.global_position
@@ -651,6 +771,15 @@ func _process(delta: float) -> void:
 		var near_c := is_near_console(_player)
 		(clab as Label3D).modulate.a = 1.0 if near_c else 0.5
 		(clab as Label3D).text = "OPS CONSOLE · E" if near_c else "OPS CONSOLE"
+	var near_legal := is_near_legal_seat(_player, 3.6)
+	for lnm in ["OpsSeatLabel", "HangarSeatLabel"]:
+		var sl = _active.get_node_or_null(lnm)
+		if sl is Label3D:
+			(sl as Label3D).modulate.a = 1.0 if near_legal or _seated else 0.55
+			if lnm == "OpsSeatLabel":
+				(sl as Label3D).text = "OPS SEAT · I" if _seated else ("OPS SEAT · F" if near_legal else "OPS SEAT")
+			else:
+				(sl as Label3D).text = "CARRIER PILOT · I" if _seated else ("CARRIER PILOT · F" if near_legal else "CARRIER PILOT")
 	var hlab = _active.get_node_or_null("HatchLabel")
 	if hlab is Label3D:
 		var near_h := is_near_hatch(_player)
@@ -710,6 +839,103 @@ func _pad_status_line() -> String:
 	if pad.has_method("get_claim_status"):
 		st = str(pad.get_claim_status())
 	return "PAD %s %s claim %.0f%%" % [fac, st, clampf(cs / 1.75, 0.0, 1.0) * 100.0]
+
+
+func _apply_ops_console() -> void:
+	## Real board action: occupy the linked pad and/or read the factory print gate.
+	## Not a locked prop. Not toast-only. Does not print a module. Does not mint SITE_*.
+	var pad: Node3D = _linked_occupy_pad()
+	var occupy_applied := false
+	var occupy_status := ""
+	var occupy_before := 0.0
+	var occupy_after := 0.0
+	var fac := "Cybernex"
+	var factory: Node3D = _factory_in_cluster()
+	var factory_gate := factory != null
+	if _player != null and is_instance_valid(_player) and _player.has_method("get_faction"):
+		fac = str(_player.get_faction())
+	elif GameManager:
+		fac = GameManager.get_faction_name()
+	if pad != null and pad.has_method("claim"):
+		if pad.has_method("get_occupy_strength"):
+			occupy_before = float(pad.get_occupy_strength())
+		pad.claim(fac, 0.55)
+		occupy_applied = true
+		if pad.has_method("get_occupy_strength"):
+			occupy_after = float(pad.get_occupy_strength())
+		if pad.has_method("get_claim_status"):
+			occupy_status = str(pad.get_claim_status())
+	_console_board = {
+		"used": true,
+		"kind": _kind,
+		"board": _board_status_line(pad, factory_gate, occupy_status),
+		"occupy": occupy_applied,
+		"occupy_status": occupy_status,
+		"occupy_before": occupy_before,
+		"occupy_after": occupy_after,
+		"factory_gate": factory_gate,
+		"ls": life_support_line(),
+	}
+	print("[Interior] ops console used occupy=", occupy_applied, " factory_gate=", factory_gate,
+		" status=", occupy_status, " ls=", life_support_line())
+
+
+func _linked_occupy_pad() -> Node3D:
+	## Pad-linked station only. Orbital dock / hangar do not steal a distant plate.
+	if _return_mode != "pad" or _open_space == null or not _open_space.has_method("nearest_pad"):
+		return null
+	var pad: Node3D = _open_space.nearest_pad(_return_pos)
+	if pad == null or not is_instance_valid(pad):
+		return null
+	if pad.global_position.distance_to(_return_pos) > 50.0:
+		return null
+	return pad
+
+
+func _factory_in_cluster() -> Node3D:
+	if _open_space == null:
+		return null
+	var cluster: Node3D = null
+	if _open_space.has_method("player_orbital_station"):
+		cluster = _open_space.player_orbital_station()
+	if cluster == null or not is_instance_valid(cluster):
+		return null
+	if cluster.has_method("factory_module"):
+		var fac: Node3D = cluster.factory_module()
+		if fac != null and is_instance_valid(fac):
+			return fac
+	return null
+
+
+func _board_status_line(pad: Node3D, factory_gate: bool, occupy_status: String) -> String:
+	var line := ""
+	if pad != null:
+		line = _pad_status_line()
+		if occupy_status != "":
+			line += " · OCCUPY %s" % occupy_status
+	elif _return_mode == "dock":
+		line = "DOCK BOARD"
+	if factory_gate:
+		line += " · FACTORY PRINT OPEN"
+	else:
+		line += " · FACTORY PRINT GATED"
+	return line.strip_edges()
+
+
+func _tick_life_support_warn(delta: float, force: bool) -> void:
+	## Same soft suit line as EVA. Never HP. Never lethal.
+	if not _inside:
+		_ls_warn_t = 0.0
+		return
+	if has_life_support():
+		_ls_warn_t = 0.0
+		return
+	_ls_warn_t += delta
+	if force or _ls_warn_t >= 8.0:
+		_ls_warn_t = 0.0
+		_ls_warn_shown = true
+		_toast("EVA suit — reboard soon (soft warn)")
+		print("[Interior] EVA soft warning — reboard soon")
 
 
 func _nearby_pad(player: Node3D) -> Node3D:
