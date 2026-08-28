@@ -1520,8 +1520,10 @@ func _wf_a_catalog_frozen(fails: PackedStringArray) -> void:
 	if FileAccess.file_exists(pos_path):
 		var pos = JSON.parse_string(FileAccess.get_file_as_string(pos_path))
 		if typeof(pos) == TYPE_DICTIONARY:
-			var items = pos.get("items", {})
-			var n_items := items.size() if typeof(items) == TYPE_DICTIONARY else 0
+			var items: Variant = pos.get("items", {})
+			var n_items: int = 0
+			if typeof(items) == TYPE_DICTIONARY:
+				n_items = (items as Dictionary).size()
 			if n_items != 137:
 				fails.append("WF-A ledger items changed (%s)" % n_items)
 			if int(pos.get("bound_sheets", 0)) != 213:
@@ -1531,8 +1533,10 @@ func _wf_a_catalog_frozen(fails: PackedStringArray) -> void:
 	if FileAccess.file_exists(lock_path):
 		var locks = JSON.parse_string(FileAccess.get_file_as_string(lock_path))
 		if typeof(locks) == TYPE_DICTIONARY:
-			var locked = locks.get("locked", [])
-			var n_locked := locked.size() if typeof(locked) == TYPE_ARRAY else 0
+			var locked: Variant = locks.get("locked", [])
+			var n_locked: int = 0
+			if typeof(locked) == TYPE_ARRAY:
+				n_locked = (locked as Array).size()
 			if n_locked != 151:
 				fails.append("WF-A approved_sketches locked count changed (%s)" % n_locked)
 			if int(locks.get("positions_unbound", -1)) != 1:
