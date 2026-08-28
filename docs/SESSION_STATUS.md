@@ -1,3 +1,5 @@
+**2026-08-28 — WF-A: ready-made density on unnamed Nex-Prime pads (ledger slugs only)**
+
 **2026-08-28 — IN-E: store/retrieve rover on catalog carrier hangar (V3)**
 
 **2026-08-28 — IN-D: GroundVehicle rover drive from hangar ramp onto unnamed pad**
@@ -42,7 +44,8 @@ IN-A: `I` at the player orbital cluster or an occupied unnamed pad → station f
 IN-B: station **E** is board status / occupy / factory print gate (recycler toggle stays). **F** at `OpsSeat` or `HangarSeat` boards that seat; **I** returns to the same pocket. Live life-support readout; vented pocket uses the EVA suit soft warn (no HP). Station/hangar still ≠ ship cockpit. No `SITE_*`. 0 Tripo.  
 IN-C: ST-D catalog carrier has `HangarBay` + `CargoHold`. Ramp deploys when landed / slow hover / docked; BLOCKED when too fast or too high. Hatch from `hangar_bay` walks plates to the pad (not MainMenu). No rover. No `SITE_*`. 0 Tripo.  
 IN-D: ramp `DEPLOYED` → one `GroundVehicle` on ramp top. `F` board, WASD onto the unnamed pad, `F` exit. No SoftNet multi-seat. No `SITE_*`. 0 Tripo.  
-IN-E: drive onto ramp mouth / `hangar_bay` → store in `CargoHold` (`id` + `health`). Retrieve on `DEPLOYED` ramp (IN-C pose gate). Takeoff keeps inventory. No second world rover. No pay-stat. No SoftNet. No `SITE_*`. 0 Tripo.
+IN-E: drive onto ramp mouth / `hangar_bay` → store in `CargoHold` (`id` + `health`). Retrieve on `DEPLOYED` ramp (IN-C pose gate). Takeoff keeps inventory. No second world rover. No pay-stat. No SoftNet. No `SITE_*`. 0 Tripo.  
+WF-A: denser crate/debris on the three unnamed Nex-Prime pads from existing ledger slugs (`debris_cluster`, `t1_resource_extractor`, `utility_bay`) and filler IDs. `pad_fill=22`. No new `SITE_*`. No new lock UUID. OS-G silhouette is not a legend. `ORBITAL_STATIONS` stays off.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -78,6 +81,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | IN-C hangar ramp | **built** — HangarBay+CargoHold on catalog carrier; gated ramp; hatch → plates → pad; no rover |
 | IN-D rover drive | **built** — one rover on DEPLOYED ramp; F board; drive onto pad; F exit |
 | IN-E store/retrieve | **built** — store on ramp mouth; retrieve on DEPLOYED; takeoff keeps hold; BLOCKED refuse |
+| WF-A unnamed pad density | **built** — rim crate/debris on 3 unnamed pads; existing slugs only; no SITE_* / UUID |
 | NP-C | **built** — NPC habitat on empty unnamed pad |
 | Galaxy G2–G6 | **locked** |
 | G1 CRUISE | **in-scope only for OS-C scale** |

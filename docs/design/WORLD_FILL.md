@@ -1,7 +1,7 @@
 # NAEON — WorldFill
 
 **Status:** design authority for unnamed fill inside an already-loaded body or
-system. **Version 1.4, 2026-08-17.**
+system. **Version 1.5, 2026-08-28.** WF-A density slice built (unnamed pads).
 
 This document is the contract. It does **not** replace
 `docs/design/GALAXY_LAYER_PLAN.md` (authored galaxy, travel, maps, gates) or
@@ -297,7 +297,7 @@ OS-A остаётся первым кодом. Это очередь ассет�
 
 | # | Что | Зачем | Не делать |
 |---|-----|-------|-----------|
-| 1 | Ready-made fill | OS-D/E: unnamed dirt/rock/tile/crate/cable/HDRI в `s3://neon`. OS-D denser: code-first scatter + pad clutter с **уже существующих** slug (`debris_cluster`, `t1_resource_extractor`, `utility_bay`) и filler ID (`pad_crate_cc0`, `outpost_mast_cc0`). OS-G: одна мачта/habitat на уже существующем паде | Tripo на грязь; commit в git; mint SITE_*; новый slug / UUID |
+| 1 | Ready-made fill | OS-D/E: unnamed dirt/rock/tile/crate/cable/HDRI в `s3://neon`. OS-D denser: code-first scatter + pad clutter с **уже существующих** slug (`debris_cluster`, `t1_resource_extractor`, `utility_bay`) и filler ID (`pad_crate_cc0`, `outpost_mast_cc0`). OS-G: одна мачта/habitat на уже существующем паде. **WF-A built:** один density-срез на тех же unnamed Nex-Prime падах (rim crate/debris; `pad_fill=22`; slug shelf only; `new_SITE_*=0`; `new_UUID=0`). OS-G силуэт не легенда. | Tripo на грязь; commit в git; mint SITE_*; новый slug / UUID |
 | 2 | Tripo с **уже locked** пластин без честного GLB | Beacons: `cybernex_claim_beacon` / `grot_claim_beacon` (dump `phjM0` / `nFxgT`). Pad / extractor / debris — **slug в ledger, lock-строки в `approved_sketches` нет** — сначала lock существующей пластины, не mint ID. Outpost-kit: slug нет → skip | выдумать UUID; вторая волна капиталок |
 | 3 | Новые пластины только на **титульную дыру** ledger | CX interceptor; interiors (0 locked); арена tower/inhib/core **если** кроме `tower_iouter_mid_inhibi` структуры нет | SITE_*; новая city-map |
 | 4 | Капиталы | уже толсто | ещё одна capital-ship wave |
