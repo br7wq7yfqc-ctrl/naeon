@@ -61,7 +61,12 @@
     occupy / harvest / deliver-crate template on the same ARK body.
     Completing grants a SoftKnowledge rank/label only. Harvest / print /
     hangar numbers stay. No cash-shop skip, pay-to-complete, or
-    Knowledge-gated exclusive weapons/modules (this pass).
+    Knowledge-gated exclusive weapons/modules (built).
+26. Q-B: one alliance-shared occupy/logistics contract on the same
+    unnamed pad / ARK body. Visible to the two NP-E NPCs (same id).
+    Completing grants a SoftKnowledge alliance intel label only.
+    Harvest / print / hangar / Q-A numbers stay. No pay-to-complete,
+    pay-to-rank, or Knowledge-gated exclusive modules (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

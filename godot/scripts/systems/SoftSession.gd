@@ -12,6 +12,7 @@ var faction: String = "Cybernex"
 var last_layer: String = "Space"
 var last_action: String = ""
 var quest: Dictionary = {}
+var alliance_quest: Dictionary = {}
 var _offline: bool = false
 
 func _ready() -> void:
@@ -36,6 +37,9 @@ func load_session() -> void:
 	var q = data.get("quest", {})
 	if typeof(q) == TYPE_DICTIONARY:
 		quest = q
+	var aq = data.get("alliance_quest", {})
+	if typeof(aq) == TYPE_DICTIONARY:
+		alliance_quest = aq
 	print("[SoftSession] loaded form=", form, " faction=", faction)
 
 func save_session() -> void:
@@ -45,6 +49,7 @@ func save_session() -> void:
 		"last_layer": last_layer,
 		"last_action": last_action,
 		"quest": quest,
+		"alliance_quest": alliance_quest,
 		"saved_at": Time.get_datetime_string_from_system(true),
 	}
 	var f := FileAccess.open(PATH, FileAccess.WRITE)
@@ -58,6 +63,14 @@ func remember_quest(q: Dictionary) -> void:
 	if typeof(q) != TYPE_DICTIONARY:
 		return
 	quest = q.duplicate(true)
+	save_session()
+
+
+func remember_alliance_quest(q: Dictionary) -> void:
+	## Q-B shared alliance contract. Same SoftSession file. Not a second quest system.
+	if typeof(q) != TYPE_DICTIONARY:
+		return
+	alliance_quest = q.duplicate(true)
 	save_session()
 
 

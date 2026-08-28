@@ -108,6 +108,20 @@ func try_pay_complete_contract(cash: float = 0.0) -> bool:
 	return bool(_Board.try_pay_complete(cash))
 
 
+func try_accept_alliance_contract() -> Dictionary:
+	## Q-B: accept the shared alliance contract. Same board. Not a second quest system.
+	var cur: Dictionary = _Board.accept_alliance() if _Board.has_method("accept_alliance") else {}
+	_console_board["alliance_contract"] = cur
+	return cur
+
+
+func try_complete_alliance_contract() -> Dictionary:
+	## Q-B: complete after occupy/logistics progress. Alliance intel label only.
+	var cur: Dictionary = _Board.try_complete_alliance() if _Board.has_method("try_complete_alliance") else {}
+	_console_board["alliance_contract"] = cur
+	return cur
+
+
 func has_life_support() -> bool:
 	## Recycler is the pocket LS. Vented / off = no LS (suit warn, never HP).
 	return _inside and _recycler_on
@@ -963,6 +977,7 @@ func _apply_ops_console() -> void:
 		"ls": life_support_line(),
 	}
 	_attach_contract_offer(pad, occupy_applied)
+	_attach_alliance_offer(pad)
 	print("[Interior] ops console used occupy=", occupy_applied, " factory_gate=", factory_gate,
 		" status=", occupy_status, " ls=", life_support_line())
 
@@ -987,6 +1002,34 @@ func _attach_contract_offer(pad: Node3D, occupy_applied: bool) -> void:
 	]
 	if occupy_applied:
 		_Board.note_progress("occupy")
+
+
+func _attach_alliance_offer(pad: Node3D) -> void:
+	## Q-B: same ContractBoard, alliance slot. Does not replace the Q-A offer.
+	var offer: Dictionary = {}
+	var host := ""
+	var intent := ""
+	var ally: Node = null
+	if _kind != "station":
+		return
+	if not _Board.has_method("offer_alliance_one"):
+		return
+	host = _contract_host_id(pad)
+	if get_tree():
+		for n in get_tree().get_nodes_in_group("soft_alliance"):
+			if n != null and is_instance_valid(n):
+				ally = n
+				break
+	if ally != null and ally.has_method("intent"):
+		intent = str(ally.intent())
+	offer = _Board.offer_alliance_one(host, "Nex-Prime", intent)
+	if offer.is_empty():
+		return
+	if ally != null and ally.has_method("see_contract"):
+		ally.see_contract(str(offer.get("id", "")))
+	_console_board["alliance_contract"] = offer
+	_console_board["alliance_offered"] = true
+	_console_board["board"] = str(_console_board.get("board", "")) + " · ALLY %s" % str(offer.get("template", ""))
 
 
 func _contract_host_id(pad: Node3D) -> String:

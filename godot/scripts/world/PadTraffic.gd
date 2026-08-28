@@ -138,6 +138,28 @@ func _setup_alliance() -> void:
 		p = get_visitor()
 	if a.has_method("bind"):
 		a.bind(g, 1, "harvest_share", p, 2, "constructor_pin", "raid")
+	_offer_alliance_contract(a)
+
+
+func _offer_alliance_contract(ally: Node) -> void:
+	## Q-B: one shared occupy/logistics contract on this unnamed pad. Same id for both NPCs.
+	var Board = load("res://scripts/systems/ContractBoard.gd")
+	var host := _host_name
+	var intent := ""
+	var offer: Dictionary = {}
+	if ally == null or Board == null or not Board.has_method("offer_alliance_one"):
+		return
+	if host == "":
+		var pad := get_parent()
+		host = str(pad.name) if pad != null else "unnamed_pad"
+	if ally.has_method("intent"):
+		intent = str(ally.intent())
+	offer = Board.offer_alliance_one(host, "Nex-Prime", intent)
+	if offer.is_empty():
+		return
+	if ally.has_method("see_contract"):
+		ally.see_contract(str(offer.get("id", "")))
+	refresh_labels()
 
 
 func _alliance_tag() -> String:
