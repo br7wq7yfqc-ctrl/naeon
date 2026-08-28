@@ -6076,6 +6076,7 @@ func _assert_q_a(os: Node, fails: PackedStringArray) -> void:
 	var d: Node = os.get("_interior") if os else null
 	var ship: Node3D = os.get("ship") as Node3D if os else null
 	var walker: Node3D = os.get("player") as Node3D if os else null
+	var was_piloting := false
 	var pad: Node = null
 	var pocket: Node3D = null
 	var cv: Node3D = null
@@ -6111,6 +6112,7 @@ func _assert_q_a(os: Node, fails: PackedStringArray) -> void:
 		return
 	if Board.has_method("reset_slice"):
 		Board.reset_slice()
+	was_piloting = bool(os.get("_in_ship")) if os else false
 	if d.has_method("is_inside") and bool(d.is_inside()) and d.has_method("exit_interior"):
 		d.exit_interior()
 		await get_tree().create_timer(0.2).timeout
@@ -6143,6 +6145,7 @@ func _assert_q_a(os: Node, fails: PackedStringArray) -> void:
 		walker = os.get("player") as Node3D
 	if walker == null or not is_instance_valid(walker):
 		fails.append("Q-A no walker for ops board")
+		_in_a_restore_pilot(os, ship, true)
 		return
 	walker.global_position = (pad as Node3D).global_position + Vector3(0, 3.0, 0)
 	if walker is CharacterBody3D:
@@ -6153,6 +6156,7 @@ func _assert_q_a(os: Node, fails: PackedStringArray) -> void:
 	await get_tree().create_timer(0.4).timeout
 	if not (d.has_method("is_inside") and bool(d.is_inside())):
 		fails.append("Q-A station ops pocket missing")
+		_in_a_restore_pilot(os, ship, true)
 		return
 	if d.has_method("get_kind") and str(d.get_kind()) != "station":
 		fails.append("Q-A opened %s, not station ops" % str(d.get_kind()))
@@ -6162,6 +6166,7 @@ func _assert_q_a(os: Node, fails: PackedStringArray) -> void:
 		fails.append("Q-A ops console missing")
 		if d.has_method("exit_interior"):
 			d.exit_interior()
+		_in_a_restore_pilot(os, ship, true)
 		return
 	walker.global_position = cv.global_position
 	await get_tree().process_frame
@@ -6179,6 +6184,7 @@ func _assert_q_a(os: Node, fails: PackedStringArray) -> void:
 		fails.append("Q-A board did not offer a contract")
 		if d.has_method("exit_interior"):
 			d.exit_interior()
+		_in_a_restore_pilot(os, ship, true)
 		return
 	if not Board.templates().has(tmpl):
 		fails.append("Q-A unknown template (%s)" % tmpl)
@@ -6259,6 +6265,8 @@ func _assert_q_a(os: Node, fails: PackedStringArray) -> void:
 	if d.has_method("is_inside") and bool(d.is_inside()) and d.has_method("exit_interior"):
 		d.exit_interior()
 		await get_tree().create_timer(0.2).timeout
+	_in_a_restore_pilot(os, ship, true)
+	await get_tree().create_timer(0.3).timeout
 	print("[Playtest] Q-A station ops board · Knowledge label only · no P2W")
 
 
