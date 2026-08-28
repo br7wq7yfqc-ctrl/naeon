@@ -11,6 +11,7 @@ const MEMBER_MAX := 2
 
 var _members: Array = []
 var _intent: String = "raid"
+var _shared_contract_id: String = ""
 
 
 func _ready() -> void:
@@ -105,13 +106,57 @@ func hud_line() -> String:
 		return ""
 	var a: Dictionary = _members[0]
 	var b: Dictionary = _members[1]
-	return "ALLY 2 · %s/%s · %s · %s/%s · no power" % [
+	var line := "ALLY 2 · %s/%s · %s · %s/%s · no power" % [
 		_Ranks.rank_name(int(a.get("rank", 0))),
 		_Ranks.rank_name(int(b.get("rank", 0))),
 		_intent.to_upper(),
 		str(a.get("perm", "")),
 		str(b.get("perm", "")),
 	]
+	var intel := intel_label()
+	if intel == "ALLY INTEL":
+		line += " · ALLY INTEL"
+	return line
+
+
+func intel_label() -> String:
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if SoftK == null:
+		return "ALLY"
+	return str(SoftK.alliance_intel_label())
+
+
+func shared_contract_id() -> String:
+	return _shared_contract_id
+
+
+func member_seen_id(who) -> String:
+	var m: Dictionary = _find(who)
+	if m.is_empty():
+		return ""
+	var n: Node = m.get("node") as Node
+	if n != null and is_instance_valid(n) and n.has_meta("alliance_contract_id"):
+		return str(n.get_meta("alliance_contract_id"))
+	return _shared_contract_id
+
+
+func see_contract(id: String) -> bool:
+	## Constructor pin (Officer+) shares one ContractBoard id. Not pay-to-rank.
+	var cid := str(id).strip_edges()
+	if cid == "" or cid.begins_with("SITE_"):
+		return false
+	if member_count() < MEMBER_MAX:
+		return false
+	var can_pin := false
+	for m in _members:
+		if _Ranks.has_perm(int(m.get("rank", -1)), "constructor_pin"):
+			can_pin = true
+			break
+	if not can_pin:
+		return false
+	_shared_contract_id = cid
+	_stamp_contract(cid)
+	return true
 
 
 func intent_visible() -> bool:
@@ -143,6 +188,19 @@ func _stamp_intent() -> void:
 		if n != null and is_instance_valid(n):
 			n.set_meta("alliance_intent", _intent)
 			n.set_meta("site_pin", "")
+
+
+func _stamp_contract(id: String) -> void:
+	for m in _members:
+		var n: Node = m.get("node") as Node
+		if n == null or not is_instance_valid(n):
+			continue
+		n.set_meta("alliance_contract_id", id)
+		n.set_meta("site_pin", "")
+		var p := n.get_parent()
+		if p != null and is_instance_valid(p):
+			p.set_meta("alliance_contract_id", id)
+			p.set_meta("site_pin", "")
 
 
 func _find(who) -> Dictionary:

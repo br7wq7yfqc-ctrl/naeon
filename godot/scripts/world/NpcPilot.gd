@@ -85,6 +85,16 @@ func land_pad_name() -> String:
 	return _land_pad_name
 
 
+func seen_contract_id() -> String:
+	## Q-B: same alliance-shared ContractBoard id as the pad-guard. Not DPS.
+	if has_meta("alliance_contract_id"):
+		return str(get_meta("alliance_contract_id"))
+	var hull := get_parent()
+	if hull != null and hull.has_meta("alliance_contract_id"):
+		return str(hull.get_meta("alliance_contract_id"))
+	return ""
+
+
 func is_harvesting() -> bool:
 	return _harvesting
 

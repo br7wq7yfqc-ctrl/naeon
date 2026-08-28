@@ -211,6 +211,14 @@ static func contract_intel_label() -> String:
 	return "CONTRACT"
 
 
+## Q-B: alliance intel rank/label. story ≠ power. Never HP / DPS / claim.
+static func alliance_intel_label() -> String:
+	var intel := mastery("alliance_intel")
+	if intel >= 10.0:
+		return "ALLY INTEL"
+	return "ALLY"
+
+
 static func exclusive_weapon_unlocked(_id: String = "") -> bool:
 	return false
 

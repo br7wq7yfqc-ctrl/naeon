@@ -44,6 +44,9 @@ const ST_G_FACTORY := true
 const NP_C_MODULE := true
 ## Q-A: one Contract Board + one generated template. SoftKnowledge label only.
 const Q_A_CONTRACT := true
+## Q-B: one alliance-shared occupy/logistics contract on the same unnamed pad.
+## SoftKnowledge alliance intel only. Reuses ContractBoard / SoftSession. Not siege.
+const Q_B_ALLIANCE := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6

@@ -56,6 +56,7 @@ func _go() -> void:
 	await _assert_in_d(os, fails)
 	await _assert_in_e(os, fails)
 	await _assert_q_a(os, fails)
+	await _assert_q_b(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 
 	# --- stall math (no scene) ---
@@ -6268,6 +6269,216 @@ func _assert_q_a(os: Node, fails: PackedStringArray) -> void:
 	_in_a_restore_pilot(os, ship, true)
 	await get_tree().create_timer(0.3).timeout
 	print("[Playtest] Q-A station ops board · Knowledge label only · no P2W")
+
+
+func _assert_q_b(os: Node, fails: PackedStringArray) -> void:
+	## Q-B: one alliance-shared occupy/logistics contract on the same unnamed pad.
+	## Two NP-E NPCs see the same ContractBoard id. Complete → alliance intel label.
+	## Harvest / print / hangar / Q-A numbers stay. No pay-to-complete / pay-to-rank.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var Board = load("res://scripts/systems/ContractBoard.gd")
+	var nex: Node = _osh_nex()
+	var pad: Node = _in_a_occupied_pad(os)
+	var traffic: Node = null
+	var ally: Node = null
+	var guard: Node = null
+	var visitor: Node = null
+	var pilot: Node = null
+	var offer: Dictionary = {}
+	var done: Dictionary = {}
+	var tmpl := ""
+	var cid := ""
+	var id_g := ""
+	var id_p := ""
+	var lab0 := ""
+	var lab1 := ""
+	var harvest0 := 0.0
+	var harvest1 := 0.0
+	var print0 := 0.0
+	var print1 := 0.0
+	var hangar_m0 := 0.0
+	var hangar_m1 := 0.0
+	var hangar_p0 := 0.0
+	var hangar_p1 := 0.0
+	var rate0 := 0.0
+	var rate1 := 0.0
+	var bench: Node = null
+	var qa0: Dictionary = {}
+	var qa1: Dictionary = {}
+	var paid := false
+	var skip_ok := false
+	var ranked := false
+	var modu := false
+	var host_name := ""
+	var pad_ctrl: Node = null
+	var dmg0 := 0.0
+	var hp0 := 0.0
+	var claim0 := 0.0
+	if P0 == null or not bool(P0.Q_B_ALLIANCE):
+		fails.append("Q-B P0Slice flag missing")
+		return
+	if Board == null or not Board.has_method("offer_alliance_one"):
+		fails.append("Q-B ContractBoard alliance slot missing")
+		return
+	if nex != null and nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	if nex != null and nex.has_method("pad_traffic"):
+		traffic = nex.call("pad_traffic")
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("Q-B pad traffic missing")
+		return
+	guard = traffic.get_guard() if traffic.has_method("get_guard") else null
+	visitor = traffic.get_visitor() if traffic.has_method("get_visitor") else null
+	pilot = traffic.get_npc_pilot() if traffic.has_method("get_npc_pilot") else null
+	ally = traffic.get_alliance() if traffic.has_method("get_alliance") else null
+	if guard == null or visitor == null or ally == null:
+		fails.append("Q-B NP-E alliance NPCs missing")
+		return
+	if int(ally.member_count()) != 2:
+		fails.append("Q-B want two NPCs, got %s" % ally.member_count())
+		return
+	if pad != null and pad.has_method("print_bench"):
+		bench = pad.print_bench()
+	if pad != null and pad.has_method("tier_budget"):
+		var bud: Dictionary = pad.tier_budget()
+		harvest0 = float(bud.get("harvest", 0.0))
+		print0 = float(bud.get("print_cost", 0.0))
+		hangar_m0 = float(bud.get("hangar_mass", 0.0))
+		hangar_p0 = float(bud.get("hangar_power", 0.0))
+	if pad != null and "extract_rate" in pad:
+		rate0 = float(pad.get("extract_rate"))
+	if bench != null and bench.has_method("print_cost"):
+		print0 = float(bench.print_cost())
+	if SoftSession != null:
+		var q0 = SoftSession.get("quest")
+		if typeof(q0) == TYPE_DICTIONARY:
+			qa0 = (q0 as Dictionary).duplicate(true)
+	if GameManager:
+		GameManager.subject_mastery["alliance_intel"] = 0.0
+	lab0 = SoftKnowledge.alliance_intel_label()
+	if Board.has_method("reset_alliance_slice"):
+		Board.reset_alliance_slice()
+	if traffic.has_method("host_pad_name"):
+		host_name = str(traffic.host_pad_name())
+	if host_name == "":
+		var host_n: Node = traffic.get_parent()
+		host_name = str(host_n.name) if host_n != null else "unnamed_pad"
+	offer = Board.offer_alliance_one(host_name, "Nex-Prime", str(ally.intent()) if ally.has_method("intent") else "")
+	tmpl = str(offer.get("template", ""))
+	cid = str(offer.get("id", ""))
+	print("[Playtest] Q-B alliance board offers one shared contract template=", tmpl,
+		" id=", cid, " status=", offer.get("status", ""))
+	if offer.is_empty() or not bool(offer.get("shared", false)):
+		fails.append("Q-B alliance board did not offer a shared contract")
+		return
+	if not Board.alliance_templates().has(tmpl):
+		fails.append("Q-B unknown template (%s)" % tmpl)
+	if str(offer.get("body", "")) != "Nex-Prime":
+		fails.append("Q-B contract left the ARK body")
+	if cid.begins_with("SITE_"):
+		fails.append("Q-B minted SITE_*")
+	if ally.has_method("see_contract") and not bool(ally.see_contract(cid)):
+		fails.append("Q-B NPCs could not see the shared contract")
+	id_g = str(ally.member_seen_id(guard)) if ally.has_method("member_seen_id") else ""
+	if id_g == "" and guard.has_meta("alliance_contract_id"):
+		id_g = str(guard.get_meta("alliance_contract_id"))
+	if pilot != null and pilot.has_method("seen_contract_id"):
+		id_p = str(pilot.seen_contract_id())
+	elif visitor.has_meta("alliance_contract_id"):
+		id_p = str(visitor.get_meta("alliance_contract_id"))
+	print("[Playtest] Q-B npcs see id=", id_g, " / ", id_p)
+	if id_g == "" or id_g != id_p or id_g != cid:
+		fails.append("Q-B two NPCs did not see the same id (%s / %s vs %s)" % [id_g, id_p, cid])
+	if Board.cash_shop_skip_possible():
+		fails.append("Q-B cash-shop skip possible")
+	skip_ok = bool(Board.try_cash_skip())
+	paid = bool(Board.try_pay_complete(999.0))
+	if Board.has_method("try_pay_rank"):
+		ranked = bool(Board.try_pay_rank(999.0))
+	modu = bool(Board.try_unlock_exclusive_module("extractor"))
+	if skip_ok or paid or ranked:
+		fails.append("Q-B cash-shop skip / pay-to-complete / pay-to-rank accepted")
+	if modu or SoftKnowledge.exclusive_module_unlocked("extractor"):
+		fails.append("Q-B Knowledge-gated exclusive module")
+	if ally.has_method("rank_cost") and float(ally.rank_cost()) > 0.0:
+		fails.append("Q-B pay-to-rank")
+	if ally.has_method("is_siege") and bool(ally.is_siege()):
+		fails.append("Q-B intent is siege")
+	if ally.has_method("combat_bonus") and absf(float(ally.combat_bonus())) > 0.0001:
+		fails.append("Q-B combat aura")
+	if ally.has_method("claim_bonus") and absf(float(ally.claim_bonus())) > 0.0001:
+		fails.append("Q-B claim bonus")
+	if guard != null:
+		dmg0 = float(guard.get("attack_damage"))
+		hp0 = float(guard.get("max_health"))
+	pad_ctrl = traffic.get_parent().get_node_or_null("BaseCluster/PadBaseController") if traffic.get_parent() else null
+	if pad_ctrl == null and traffic.get_parent():
+		pad_ctrl = traffic.get_parent().find_child("PadBaseController", true, false)
+	if pad_ctrl != null and "ownership" in pad_ctrl and pad_ctrl.ownership:
+		claim0 = float(pad_ctrl.ownership.claim_strength)
+	offer = Board.accept_alliance()
+	if str(offer.get("status", "")) != "accepted":
+		fails.append("Q-B did not accept the shared contract")
+	match tmpl:
+		"occupy":
+			if pad_ctrl != null and pad_ctrl.has_method("claim"):
+				pad_ctrl.claim("Cybernex", 0.55)
+			Board.note_alliance_progress("occupy")
+		"logistics":
+			if pad_ctrl != null and "crystal_reserves" in pad_ctrl:
+				pad_ctrl.crystal_reserves = maxf(float(pad_ctrl.crystal_reserves), 8.0)
+			if pad_ctrl != null and pad_ctrl.has_method("_tick_harvest"):
+				pad_ctrl._tick_harvest(0.5)
+			Board.note_alliance_progress("logistics")
+		_:
+			fails.append("Q-B cannot complete template (%s)" % tmpl)
+	await get_tree().process_frame
+	done = Board.try_complete_alliance()
+	lab1 = SoftKnowledge.alliance_intel_label()
+	print("[Playtest] Q-B complete template=", tmpl, " status=", done.get("status", ""),
+		" Knowledge ", lab0, " → ", lab1)
+	if str(done.get("status", "")) != "complete":
+		fails.append("Q-B did not complete template (%s)" % tmpl)
+	if lab1 == lab0 or lab1 != "ALLY INTEL":
+		fails.append("Q-B Knowledge label did not change (%s → %s)" % [lab0, lab1])
+	if pad != null and pad.has_method("tier_budget"):
+		var bud1: Dictionary = pad.tier_budget()
+		harvest1 = float(bud1.get("harvest", -1.0))
+		print1 = float(bud1.get("print_cost", -1.0))
+		hangar_m1 = float(bud1.get("hangar_mass", -1.0))
+		hangar_p1 = float(bud1.get("hangar_power", -1.0))
+	if pad != null and "extract_rate" in pad:
+		rate1 = float(pad.get("extract_rate"))
+	if bench != null and bench.has_method("print_cost"):
+		print1 = float(bench.print_cost())
+	if SoftSession != null:
+		var q1 = SoftSession.get("quest")
+		if typeof(q1) == TYPE_DICTIONARY:
+			qa1 = (q1 as Dictionary).duplicate(true)
+	print("[Playtest] Q-B harvest/print/hangar/Q-A ", snapped(harvest0, 0.01), "/", snapped(print0, 0.01),
+		"/", snapped(hangar_m0, 0.01), " → ", snapped(harvest1, 0.01), "/", snapped(print1, 0.01),
+		"/", snapped(hangar_m1, 0.01))
+	if absf(harvest1 - harvest0) > 0.0001 or harvest0 <= 0.0:
+		fails.append("Q-B harvest number changed (%s → %s)" % [harvest0, harvest1])
+	if absf(print1 - print0) > 0.0001 or print0 <= 0.0:
+		fails.append("Q-B print number changed (%s → %s)" % [print0, print1])
+	if absf(hangar_m1 - hangar_m0) > 0.0001 or absf(hangar_p1 - hangar_p0) > 0.0001:
+		fails.append("Q-B hangar numbers changed")
+	if absf(rate1 - rate0) > 0.0001:
+		fails.append("Q-B extract_rate changed")
+	if str(qa1.get("id", "")) != str(qa0.get("id", "")) or str(qa1.get("status", "")) != str(qa0.get("status", "")):
+		fails.append("Q-B overwrote Q-A contract (%s/%s → %s/%s)" % [
+			qa0.get("id", ""), qa0.get("status", ""), qa1.get("id", ""), qa1.get("status", "")
+		])
+	if guard != null:
+		if absf(float(guard.get("attack_damage")) - dmg0) > 0.01:
+			fails.append("Q-B changed guard DPS")
+		if absf(float(guard.get("max_health")) - hp0) > 0.01:
+			fails.append("Q-B changed guard HP")
+	if pad_ctrl != null and "ownership" in pad_ctrl and pad_ctrl.ownership:
+		if absf(float(pad_ctrl.ownership.claim_strength) - claim0) > 0.001 and tmpl != "occupy":
+			fails.append("Q-B changed claim strength")
+	print("[Playtest] Q-B alliance board · Knowledge label only · no P2W")
 
 
 func _in_a_occupied_pad(os: Node) -> Node3D:
