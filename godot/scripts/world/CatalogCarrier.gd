@@ -1,7 +1,8 @@
 extends Node3D
 class_name CatalogCarrier
 ## ST-D §6(b) / §7: one catalog carrier hull. Hangar queue lives here.
-## Not a mobile SITE_*. Interiors later. No new hull UUID.
+## IN-A: I enters InteriorGenerator hangar_bay pocket (not a mobile SITE_*).
+## No new hull UUID.
 
 const DEFAULT_HULL := "cybernex_capital_carrier"
 const HULL_CX_CARRIER := "cybernex_capital_carrier"

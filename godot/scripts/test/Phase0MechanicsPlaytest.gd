@@ -50,6 +50,7 @@ func _go() -> void:
 	_assert_st_e(os, fails)
 	_assert_st_f(os, fails)
 	_assert_st_g(os, fails)
+	await _assert_in_a(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 
 	# --- stall math (no scene) ---
@@ -4800,6 +4801,287 @@ func _assert_st_g(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] ST-G factory present spent Contribution ", snapped(before, 0.01),
 		" -> ", snapped(after, 0.01), " cost=", snapped(cost, 0.01),
 		" module=", mod.name, " kind=", kind, " cash_skip=false")
+
+
+func _assert_in_a(os: Node, fails: PackedStringArray) -> void:
+	## IN-A: station foyer/ops + hangar_bay pockets. Distinct from ship cockpit.
+	## I at cluster/occupied pad / catalog carrier must not reuse the ship pocket.
+	## Doors lead to pocket or hatch. Hatch returns to pad or dock — not MainMenu.
+	var d: Node = os.get("_interior") if os else null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var walker: Node3D = os.get("player") as Node3D if os else null
+	var cluster: Node3D = null
+	var carrier: Node3D = null
+	var pad: Node3D = null
+	var was_piloting := false
+	var scene0 := _osh_scene_file()
+	var pocket: Node3D = null
+	var kind := ""
+	var pname := ""
+	var door: Node3D = null
+	var dest := ""
+	var hatch: Node3D = null
+	var slab: Node3D = null
+	var host: Node3D = null
+	if os == null or d == null:
+		fails.append("IN-A no OpenSpace/interior")
+		return
+	was_piloting = bool(os.get("_in_ship"))
+	if d.has_method("is_inside") and bool(d.is_inside()) and d.has_method("exit_interior"):
+		d.exit_interior()
+		await get_tree().create_timer(0.2).timeout
+	if bool(os.get("_in_ship")) and os.has_method("try_exit_ship"):
+		os.try_exit_ship()
+		await get_tree().create_timer(0.35).timeout
+	walker = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("IN-A no walker for I")
+		return
+	if os.has_method("player_orbital_station"):
+		cluster = os.player_orbital_station()
+	if cluster == null:
+		fails.append("IN-A player orbital cluster missing")
+		return
+	host = cluster.get_node_or_null("DockModule") as Node3D
+	if host == null:
+		host = cluster
+	if ship != null and is_instance_valid(ship):
+		ship.global_position = host.global_position + Vector3(10.0, 2.0, 0.0)
+		if "velocity" in ship:
+			ship.velocity = Vector3.ZERO
+	walker.global_position = host.global_position + Vector3(0.0, 2.0, 0.0)
+	if walker is CharacterBody3D:
+		(walker as CharacterBody3D).velocity = Vector3.ZERO
+	await get_tree().process_frame
+	if d.has_method("try_toggle"):
+		d.try_toggle(walker, ship)
+	await get_tree().create_timer(0.45).timeout
+	kind = str(d.get_kind()) if d.has_method("get_kind") else ""
+	pocket = d.get_active_interior() if d.has_method("get_active_interior") else null
+	pname = str(pocket.name) if pocket else ""
+	print("[Playtest] IN-A station pocket kind=", kind, " name=", pname, " ≠ ship")
+	if kind != "station":
+		fails.append("IN-A cluster I opened %s, not station" % kind)
+	if pocket == null:
+		fails.append("IN-A station pocket missing")
+	else:
+		if str(pocket.get_meta("interior_kind", "")) == "ship" or pname.begins_with("ShipInterior"):
+			fails.append("IN-A station reused the ship cockpit pocket")
+		if pocket.get_node_or_null("Seat") != null or pocket.get_node_or_null("SeatVolume") != null:
+			fails.append("IN-A station pocket has a ship seat")
+		if str(pocket.get_meta("site_pin", "")) != "":
+			fails.append("IN-A station minted site_pin")
+		door = _in_a_first_door(pocket)
+		if door == null:
+			fails.append("IN-A station has no door")
+		else:
+			dest = str(door.get_meta("leads_to", ""))
+			print("[Playtest] IN-A door leads_to=", dest, " (not locked)")
+			if dest != "pocket" and dest != "eva" and dest != "pad" and dest != "dock":
+				fails.append("IN-A station door is a locked prop (leads_to=%s)" % dest)
+			slab = door.get_node_or_null("Slab") as Node3D
+			walker.global_position = door.global_position + Vector3(0, 1.15, 0)
+			await get_tree().create_timer(0.5).timeout
+			if slab != null and slab.position.x < 0.6:
+				fails.append("IN-A station door did not slide open")
+		hatch = pocket.get_node_or_null("ExitVolume") as Node3D
+		if hatch != null:
+			walker.global_position = hatch.global_position + Vector3(0, 0.15, 0)
+			await get_tree().process_frame
+		if d.has_method("try_toggle"):
+			d.try_toggle(walker, ship)
+		await get_tree().create_timer(0.4).timeout
+	if d.has_method("is_inside") and bool(d.is_inside()):
+		fails.append("IN-A station hatch did not exit")
+		if d.has_method("exit_interior"):
+			d.exit_interior()
+			await get_tree().create_timer(0.2).timeout
+	walker = os.get("player") as Node3D
+	if not _in_a_same_openspace(scene0):
+		fails.append("IN-A station hatch returned to MainMenu")
+	if walker != null and is_instance_valid(walker):
+		if walker.global_position.y > 5000.0:
+			fails.append("IN-A station hatch left walker in the pocket")
+		elif walker.global_position.distance_to(host.global_position) > 40.0 \
+				and walker.global_position.distance_to(cluster.global_position) > 40.0:
+			fails.append("IN-A station hatch missed dock")
+	print("[Playtest] IN-A station hatch → dock (not MainMenu)")
+
+	pad = _in_a_occupied_pad(os)
+	if pad == null:
+		fails.append("IN-A occupied unnamed pad missing")
+	else:
+		if pad.has_method("claim"):
+			pad.claim("Cybernex", 2.0)
+		if "ownership" in pad and pad.ownership and pad.ownership.has_method("advance_transition"):
+			pad.ownership.advance_transition(8.0, 5.0)
+		walker = os.get("player") as Node3D
+		if walker != null and is_instance_valid(walker):
+			walker.global_position = pad.global_position + Vector3(0, 3.0, 0)
+			if walker is CharacterBody3D:
+				(walker as CharacterBody3D).velocity = Vector3.ZERO
+		if ship != null and is_instance_valid(ship):
+			ship.global_position = pad.global_position + Vector3(8.0, 4.0, 0.0)
+		await get_tree().process_frame
+		if d.has_method("try_toggle"):
+			d.try_toggle(walker, ship)
+		await get_tree().create_timer(0.45).timeout
+		kind = str(d.get_kind()) if d.has_method("get_kind") else ""
+		pocket = d.get_active_interior() if d.has_method("get_active_interior") else null
+		pname = str(pocket.name) if pocket else ""
+		print("[Playtest] IN-A occupied pad station kind=", kind, " name=", pname, " ≠ ship")
+		if kind != "station":
+			fails.append("IN-A occupied pad I opened %s, not station" % kind)
+		if pocket != null and (pname.begins_with("ShipInterior") or str(pocket.get_meta("interior_kind", "")) == "ship"):
+			fails.append("IN-A occupied pad reused the ship cockpit pocket")
+		hatch = pocket.get_node_or_null("ExitVolume") as Node3D if pocket else null
+		if hatch != null and walker != null:
+			walker.global_position = hatch.global_position + Vector3(0, 0.15, 0)
+			await get_tree().process_frame
+		if d.has_method("try_toggle"):
+			d.try_toggle(walker, ship)
+		await get_tree().create_timer(0.4).timeout
+		if d.has_method("is_inside") and bool(d.is_inside()):
+			fails.append("IN-A pad hatch did not exit")
+			if d.has_method("exit_interior"):
+				d.exit_interior()
+				await get_tree().create_timer(0.2).timeout
+		walker = os.get("player") as Node3D
+		if not _in_a_same_openspace(scene0):
+			fails.append("IN-A pad hatch returned to MainMenu")
+		if walker != null and is_instance_valid(walker) and walker.global_position.y > 5000.0:
+			fails.append("IN-A pad hatch left walker in the pocket")
+		elif walker != null and is_instance_valid(walker) and walker.global_position.distance_to(pad.global_position) > 45.0:
+			fails.append("IN-A pad hatch missed pad")
+		print("[Playtest] IN-A occupied pad station hatch → pad (not MainMenu)")
+
+	if os.has_method("catalog_carrier"):
+		carrier = os.catalog_carrier()
+	if carrier == null:
+		fails.append("IN-A catalog carrier missing")
+		_in_a_restore_pilot(os, ship, was_piloting)
+		return
+	if str(carrier.get_meta("site_pin", "")) != "" or bool(carrier.get_meta("mobile_site", false)):
+		fails.append("IN-A hangar is a SITE_* / mobile site")
+	walker = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("IN-A no walker for hangar I")
+		_in_a_restore_pilot(os, ship, was_piloting)
+		return
+	walker.global_position = carrier.global_position + Vector3(0.0, 2.0, 0.0)
+	if walker is CharacterBody3D:
+		(walker as CharacterBody3D).velocity = Vector3.ZERO
+	if ship != null and is_instance_valid(ship):
+		ship.global_position = carrier.global_position + Vector3(12.0, 2.0, 0.0)
+		if "velocity" in ship:
+			ship.velocity = Vector3.ZERO
+	await get_tree().process_frame
+	if d.has_method("try_toggle"):
+		d.try_toggle(walker, ship)
+	await get_tree().create_timer(0.45).timeout
+	kind = str(d.get_kind()) if d.has_method("get_kind") else ""
+	pocket = d.get_active_interior() if d.has_method("get_active_interior") else null
+	pname = str(pocket.name) if pocket else ""
+	print("[Playtest] IN-A hangar_bay pocket kind=", kind, " name=", pname, " ≠ ship")
+	if kind != "hangar_bay":
+		fails.append("IN-A carrier I opened %s, not hangar_bay" % kind)
+	if pocket == null:
+		fails.append("IN-A hangar_bay pocket missing")
+	else:
+		if str(pocket.get_meta("interior_kind", "")) == "ship" or pname.begins_with("ShipInterior"):
+			fails.append("IN-A hangar_bay reused the ship cockpit pocket")
+		if pocket.get_node_or_null("Seat") != null or pocket.get_node_or_null("SeatVolume") != null:
+			fails.append("IN-A hangar_bay pocket has a ship seat")
+		if str(pocket.get_meta("site_pin", "")) != "":
+			fails.append("IN-A hangar_bay minted site_pin")
+		if pocket.get_node_or_null("Foyer") != null and pocket.get_node_or_null("HangarBay") == null:
+			fails.append("IN-A hangar_bay reused the station foyer pocket")
+		door = _in_a_first_door(pocket)
+		if door == null:
+			fails.append("IN-A hangar_bay has no door")
+		else:
+			dest = str(door.get_meta("leads_to", ""))
+			print("[Playtest] IN-A hangar door leads_to=", dest, " (not locked)")
+			if dest != "pocket" and dest != "eva" and dest != "pad" and dest != "dock":
+				fails.append("IN-A hangar door is a locked prop (leads_to=%s)" % dest)
+			slab = door.get_node_or_null("Slab") as Node3D
+			walker.global_position = door.global_position + Vector3(0, 1.15, 0)
+			await get_tree().create_timer(0.5).timeout
+			if slab != null and slab.position.x < 0.6:
+				fails.append("IN-A hangar door did not slide open")
+		hatch = pocket.get_node_or_null("ExitVolume") as Node3D
+		if hatch != null:
+			walker.global_position = hatch.global_position + Vector3(0, 0.15, 0)
+			await get_tree().process_frame
+		if d.has_method("try_toggle"):
+			d.try_toggle(walker, ship)
+		await get_tree().create_timer(0.4).timeout
+	if d.has_method("is_inside") and bool(d.is_inside()):
+		fails.append("IN-A hangar hatch did not exit")
+		if d.has_method("exit_interior"):
+			d.exit_interior()
+			await get_tree().create_timer(0.2).timeout
+	walker = os.get("player") as Node3D
+	if not _in_a_same_openspace(scene0):
+		fails.append("IN-A hangar hatch returned to MainMenu")
+	if walker != null and is_instance_valid(walker):
+		if walker.global_position.y > 5000.0:
+			fails.append("IN-A hangar hatch left walker in the pocket")
+		elif walker.global_position.distance_to(carrier.global_position) > 40.0:
+			fails.append("IN-A hangar hatch missed dock")
+	print("[Playtest] IN-A hangar hatch → dock (not MainMenu)")
+	_in_a_restore_pilot(os, ship, was_piloting)
+	await get_tree().create_timer(0.35).timeout
+
+
+func _in_a_first_door(pocket: Node3D) -> Node3D:
+	if pocket == null:
+		return null
+	var n: Node = pocket.get_node_or_null("DoorPortal_0")
+	if n is Node3D:
+		return n as Node3D
+	for c in pocket.get_children():
+		if c is Node3D and str(c.name).begins_with("DoorPortal"):
+			return c as Node3D
+	return null
+
+
+func _in_a_same_openspace(scene0: String) -> bool:
+	var now := _osh_scene_file()
+	if now.find("MainMenu") >= 0:
+		return false
+	if scene0 != "" and now != "" and now != scene0:
+		return false
+	return now.find("OpenSpace") >= 0 or _osh_same_scene(scene0)
+
+
+func _in_a_occupied_pad(os: Node) -> Node3D:
+	var pad: Node = null
+	var host: Node = null
+	var tree := get_tree()
+	if os != null and os.has_method("occupied_pad_base"):
+		pad = os.occupied_pad_base()
+	if pad is Node3D:
+		return pad as Node3D
+	if tree == null:
+		return null
+	for n in tree.get_nodes_in_group("pad_bases"):
+		host = n
+		while host:
+			if host is Node3D and str(host.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+				return n as Node3D
+			host = host.get_parent()
+	return null
+
+
+func _in_a_restore_pilot(os: Node, ship: Node3D, was_piloting: bool) -> void:
+	var walker: Node3D = os.get("player") as Node3D if os else null
+	if not was_piloting or os == null:
+		return
+	if ship != null and is_instance_valid(ship) and walker != null and is_instance_valid(walker):
+		walker.global_position = ship.global_position + Vector3(0.0, 2.0, 2.0)
+		if os.has_method("try_enter_ship"):
+			os.try_enter_ship()
 
 
 func _osh_report_skips(fails: PackedStringArray, done: Dictionary, required: PackedStringArray) -> void:

@@ -46,11 +46,14 @@ static func _try_glb(parent: Node3D, rel: String, pos: Vector3, scl: float = 1.0
 		(inst as Node3D).position = pos
 		(inst as Node3D).scale = Vector3.ONE * scl
 
-static func build_station(faction: String = "Cybernex") -> Node3D:
+static func build_station(faction: String = "Cybernex", hatch_to: String = "pad") -> Node3D:
 	var root := Node3D.new()
 	root.name = "StationInterior"
+	root.set_meta("interior_kind", "station")
+	root.set_meta("site_pin", "")
+	var dest := hatch_to if hatch_to == "dock" else "pad"
 	var neon := _NEON_GR if faction == "gROT" else _NEON_CX
-	# Rooms along +Z
+	# Rooms along +Z — foyer / corridor / ops. Not a ship cockpit.
 	_room(root, Vector3(0, 0, 0), Vector3(12, 4, 10), "Foyer", neon)
 	_room(root, Vector3(0, 0, 14), Vector3(6, 3.5, 16), "Corridor", neon.darkened(0.1))
 	_room(root, Vector3(0, 0, 30), Vector3(14, 5, 12), "OpsBay", neon)
@@ -69,6 +72,7 @@ static func build_station(faction: String = "Cybernex") -> Node3D:
 	# Exit marker at foyer back
 	var exit := Area3D.new()
 	exit.name = "ExitVolume"
+	exit.set_meta("leads_to", dest)
 	exit.collision_layer = 0
 	exit.collision_mask = 2  # player
 	var cs := CollisionShape3D.new()
@@ -80,7 +84,8 @@ static func build_station(faction: String = "Cybernex") -> Node3D:
 	root.add_child(exit)
 	if DisplayServer.get_name() != "headless":
 		var elabel := Label3D.new()
-		elabel.text = "EXIT  [I]"
+		elabel.name = "HatchLabel"
+		elabel.text = "HATCH  [I]"
 		elabel.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		elabel.font_size = 48
 		elabel.position = Vector3(0, 2.5, -6)
@@ -92,15 +97,64 @@ static func build_station(faction: String = "Cybernex") -> Node3D:
 	spawn.position = Vector3(0, 1.35, 2)
 	root.add_child(spawn)
 	_add_neon_strips(root, faction)
-	_door_portal(root, Vector3(0, 0, 7), neon, 6.0)
-	_door_portal(root, Vector3(0, 0, 22), neon, 6.0)
-	_door_portal(root, Vector3(5, 0, 14), neon, 8.0)
+	_door_portal(root, Vector3(0, 0, 7), neon, 6.0, "pocket")
+	_door_portal(root, Vector3(0, 0, 22), neon, 6.0, "pocket")
+	_door_portal(root, Vector3(5, 0, 14), neon, 8.0, "pocket")
+	_door_portal(root, Vector3(0, 0, -6), neon, 6.0, dest)
 	_console_volume(root, Vector3(0, 0, 30), neon, "OPS")
+	return root
+
+
+static func build_hangar_bay(faction: String = "Cybernex") -> Node3D:
+	## IN-A: catalog carrier bay pocket. Not a SITE_*. Not a ship cockpit.
+	var root := Node3D.new()
+	root.name = "HangarBayInterior"
+	root.set_meta("interior_kind", "hangar_bay")
+	root.set_meta("site_pin", "")
+	var neon := _NEON_GR if faction == "gROT" else _NEON_CX
+	var rooms: Array = [
+		{"name": "HangarBay", "pos": Vector3(0, 0, 0), "size": Vector3(16, 6, 18)},
+		{"name": "Airlock", "pos": Vector3(0, 0, 13), "size": Vector3(6, 3.4, 6)},
+	]
+	for room in rooms:
+		_room(root, room["pos"], room["size"], str(room["name"]), neon)
+	_strip_light(root, Vector3(0, 0.06, 6), Vector3(0.45, 0.08, 22), neon)
+	_interior_point_lights(root, neon)
+	var hatch_pos := Vector3(0, 1.2, 16.2)
+	var exit := Area3D.new()
+	exit.name = "ExitVolume"
+	exit.set_meta("leads_to", "dock")
+	var cs := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(3.2, 2.4, 1.6)
+	cs.shape = box
+	exit.add_child(cs)
+	exit.position = hatch_pos
+	root.add_child(exit)
+	var spawn := Marker3D.new()
+	spawn.name = "Spawn"
+	spawn.position = Vector3(0, 1.35, -2)
+	root.add_child(spawn)
+	if DisplayServer.get_name() != "headless":
+		var elabel := Label3D.new()
+		elabel.name = "HatchLabel"
+		elabel.text = "HATCH  [I]"
+		elabel.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		elabel.font_size = 40
+		elabel.position = hatch_pos + Vector3(0, 1.1, 0)
+		elabel.modulate = neon
+		root.add_child(elabel)
+	_add_neon_strips(root, faction)
+	_link_ship_rooms(root, rooms, neon)
+	_door_portal(root, Vector3(hatch_pos.x, 0.0, hatch_pos.z), neon, 5.0, "dock")
+	_console_volume(root, Vector3(4.5, 0, -2), neon, "BAY")
+	_attach_ambient(root, "hangar_bay", neon)
 	return root
 
 static func build_ship(faction: String = "Cybernex") -> Node3D:
 	var root := Node3D.new()
 	root.name = "ShipInterior"
+	root.set_meta("interior_kind", "ship")
 	var neon := _NEON_GR if faction == "gROT" else _NEON_CX
 	_room(root, Vector3(0, 0, 0), Vector3(5, 2.8, 8), "Cockpit", neon)
 	_room(root, Vector3(0, 0, 8), Vector3(4, 2.6, 6), "MidDeck", neon.darkened(0.08))
@@ -322,6 +376,7 @@ static func build_from_profile(profile_id: String, faction: String = "Cybernex")
 	var prof: Dictionary = cat.profile(profile_id)
 	var root := Node3D.new()
 	root.name = "ShipInterior_%s" % str(prof.get("id", profile_id))
+	root.set_meta("interior_kind", "ship")
 	var neon := _NEON_GR if faction == "gROT" else _NEON_CX
 	var fx := "grot" if faction == "gROT" else "cybernex"
 	for room in prof.get("rooms", []):
