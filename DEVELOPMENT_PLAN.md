@@ -11,14 +11,10 @@
 **Каталог — дыры (очередь, не новый catalog):** `docs/design/WORLD_FILL.md` §6. Ready-made fill → locked plates без GLB → пластины только на титульную дыру. Не mint SITE_*. Не capital-ship wave. OS-H harness built; не G2.  
 **NPC agency + MMO HOLD:** `docs/design/NPC_AGENCY.md` (NP-A…NP-F; NP-C next after ST-A) · `docs/design/MMO_SERVERS.md` (Phase 3 HOLD; 10k CCU / ≥100 на шард без instance-split; нет netcode сейчас; не G5 / G2–G6).
 
-**2026-08-27 — текущий бар стратегия ST-E (не галактика):**  
+**2026-08-28 — текущий бар Q-A (не кампании, не галактика):**  
 OS-A…OS-H built. G2–G6 закрыты. G1 CRUISE не открыт.  
-ST-A: `StrategyOverlay` (B) на unnamed паде Nex-Prime + один `PlayerHabitat` (0 combat).  
-ST-B: occupy unnamed pad → harvest → Contribution на HUD; видимый `PadHarvestExtractor`. Knowledge ≠ yield.  
-ST-C: `PadPrintBench` на unnamed паде / NPC-верстаке. Spend Contribution/Biomass → один catalog-модуль. Нет cash-shop skip.  
-ST-D: `CarrierHangarQueue` на catalog hull (`cybernex_capital_carrier` …). Один слот; refuse mass/power. Не мобильный `SITE_*`.  
-ST-E: `PlayerOrbitalStation` — два catalog-модуля (dock + habitat) в одном кластере на орбите Nex-Prime. Не город. Не `SITE_*`.  
-ST-G: factory в том же player cluster. Spend Contribution/Biomass → один catalog-модуль по §6(c). Без factory — отказ.  
+ST-A…ST-G / IN-A…E / WF-A built.  
+Q-A: `ContractBoard` на IN-B station ops console. Один generated template на том же теле ARK. Complete → SoftKnowledge label (`quest_intel`). Harvest / print / hangar numbers stay. Нет cash-shop skip / pay-to-complete / exclusive weapons.  
 Петля P0.6 на RTX 3090 жива — не ломать. llvmpipe ≠ FPS PASS.
 
 ---
@@ -137,8 +133,8 @@ ST-G: factory в том же player cluster. Spend Contribution/Biomass → од
 - Carriers seed (hangar + drones/fighters) — очередь печати модуля: `docs/design/BASE_STATION_STRATEGY.md` ST-D **built**
 - **Dynamic Ownership Transformation** (prototype): visual + mechanical swap Cybernex (Venus Project) ↔ gROT (biomass industrial) на 1–2 объектах
 - Advanced AI-bots + NPC quest givers skeleton
-- **Quest system foundation**: Contract Board, generated quests (templates), basic Alliance Quest Constructor
-- **Knowledge & Skills foundation**: Knowledge Rank / Subject Mastery, optional Learning Nodes в квестах, soft combat integration (informational)
+- **Quest system foundation**: Contract Board, generated quests (templates), basic Alliance Quest Constructor — **Q-A built** (one board, one template; not campaigns; Alliance Constructor later)
+- **Knowledge & Skills foundation**: Knowledge Rank / Subject Mastery, optional Learning Nodes в квестах, soft combat integration (informational) — **Q-A built** (`SoftKnowledge` `quest_intel` label only; never DPS / yield / exclusive modules)
 - **MOBA Full Prototype**: 5v5/3v3, 6–8 heroes, lanes + jungle, items, objectives, rewards pipeline, basic matchmaking
 - aiNEX basic (colony planner + MOBA builds + simple educational puzzle generation)
 - Voice foundation (open-source STT/TTS path first)

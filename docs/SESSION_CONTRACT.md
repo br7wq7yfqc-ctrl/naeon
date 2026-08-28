@@ -56,7 +56,12 @@
 24. ST-G: factory in the existing player orbital cluster. Bench (c)
     spends Contribution/Biomass → one catalog module. Without factory,
     (c) refuses. No cash-shop skip. Knowledge does not cheapen rules/15.
-    ST-E stays dock+habitat. ORBITAL_STATIONS stays off (this pass).
+    ST-E stays dock+habitat. ORBITAL_STATIONS stays off (built).
+25. Q-A: Contract Board on the IN-B station ops console. One generated
+    occupy / harvest / deliver-crate template on the same ARK body.
+    Completing grants a SoftKnowledge rank/label only. Harvest / print /
+    hangar numbers stay. No cash-shop skip, pay-to-complete, or
+    Knowledge-gated exclusive weapons/modules (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.
