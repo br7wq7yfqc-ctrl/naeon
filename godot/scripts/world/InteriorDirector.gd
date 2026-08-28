@@ -32,6 +32,7 @@ var _seat_role: String = ""  # ops | carrier_pilot — never the ship cockpit
 var _console_board: Dictionary = {}
 var _ls_warn_t: float = 0.0
 var _ls_warn_shown: bool = false
+var _occupy_host: Node = null  # pad controller for board occupy; never a SITE_*
 
 
 func setup(world_root: Node3D, open_space: Node) -> void:
@@ -85,8 +86,8 @@ func last_console_action() -> Dictionary:
 
 
 func has_life_support() -> bool:
-	## Soft flag only. Thin / vented air is a suit warn, never HP.
-	return _inside and _atmo >= 0.25
+	## Recycler is the pocket LS. Vented / off = no LS (suit warn, never HP).
+	return _inside and _recycler_on
 
 
 func life_support_warn_shown() -> bool:
@@ -170,6 +171,8 @@ func enter_station(player: Node3D, host: Node3D) -> void:
 			ret_pos = dock.global_position
 		up = _up_from_planet(host.global_position)
 	_begin(player, "station", _Gen.build_station(fac, hatch_to), ret_pos, up, hatch_to)
+	if hatch_to == "pad":
+		_occupy_host = _claimable_from(host)
 
 
 func enter_hangar(player: Node3D, carrier: Node3D) -> void:
@@ -241,6 +244,7 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	_seat_role = ""
 	_ls_warn_t = 0.0
 	_ls_warn_shown = false
+	_occupy_host = null
 	_recycler_on = true
 	_return_mode = "dock" if return_mode == "dock" else "pad"
 	_return_up = ret_up.normalized() if ret_up.length_squared() > 0.01 else Vector3.UP
@@ -882,14 +886,50 @@ func _apply_ops_console() -> void:
 
 func _linked_occupy_pad() -> Node3D:
 	## Pad-linked station only. Orbital dock / hangar do not steal a distant plate.
-	if _return_mode != "pad" or _open_space == null or not _open_space.has_method("nearest_pad"):
+	var found: Node = null
+	if _occupy_host != null and is_instance_valid(_occupy_host) and _occupy_host.has_method("claim"):
+		return _occupy_host as Node3D
+	if _return_mode != "pad":
 		return null
-	var pad: Node3D = _open_space.nearest_pad(_return_pos)
-	if pad == null or not is_instance_valid(pad):
+	if _open_space != null and _open_space.has_method("nearest_pad"):
+		found = _claimable_from(_open_space.nearest_pad(_return_pos))
+		if found is Node3D:
+			return found as Node3D
+	found = _claimable_near(_return_pos, 50.0)
+	if found is Node3D:
+		return found as Node3D
+	return null
+
+
+func _claimable_from(n: Node) -> Node:
+	var cur: Node = n
+	while cur != null:
+		if cur.has_method("claim"):
+			return cur
+		cur = cur.get_parent()
+	if n != null:
+		for c in n.get_children():
+			if c.has_method("claim"):
+				return c
+	return null
+
+
+func _claimable_near(at: Vector3, max_d: float) -> Node:
+	var tree := get_tree()
+	var best: Node = null
+	var best_d := max_d
+	if tree == null:
 		return null
-	if pad.global_position.distance_to(_return_pos) > 50.0:
-		return null
-	return pad
+	for n in tree.get_nodes_in_group("pad_bases"):
+		if n == null or not is_instance_valid(n) or not n.has_method("claim"):
+			continue
+		if not (n is Node3D):
+			continue
+		var d: float = (n as Node3D).global_position.distance_to(at)
+		if d < best_d:
+			best_d = d
+			best = n
+	return best
 
 
 func _factory_in_cluster() -> Node3D:
