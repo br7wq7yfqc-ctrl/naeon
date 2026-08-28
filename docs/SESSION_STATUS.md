@@ -1,3 +1,5 @@
+**2026-08-28 — IN-B: ops console + legal seats + life-support (not ship cockpit)**
+
 **2026-08-28 — IN-A: station foyer/ops + hangar_bay pockets (not ship cockpit)**
 
 **2026-08-28 — ST-G: own factory print §6(c) in the existing player cluster**
@@ -30,7 +32,8 @@ ST-D: hangar queue of **one** module on a catalog carrier (`cybernex_capital_car
 ST-E: player-owned orbital cluster of **two** catalog modules (dock + habitat) on Nex-Prime orbit. Same scene. Not a city. Not `SITE_*`. `ORBITAL_STATIONS` stays off.  
 ST-F: occupy unnamed pad → `O` / `flip_cluster_owner` CX↔GR. Theme + services list change. Harvest / print / hangar numbers stay. Not a second `SITE_*`. Not arena-flip.  
 ST-G: factory in the existing `PlayerOrbitalStation` cluster (ST-E stays dock+habitat). Spend Contribution/Biomass at bench (c) → **one** catalog module. Without factory, (c) refuses. No cash-shop skip. Knowledge does not cheapen `rules/15`.  
-IN-A: `I` at the player orbital cluster or an occupied unnamed pad → station foyer/ops pocket. `I` on the ST-D catalog carrier → `hangar_bay` pocket. Seat↔pocket↔hatch stays. Hatch from station/hangar returns to pad or dock (not MainMenu). No `SITE_*`. 0 Tripo.
+IN-A: `I` at the player orbital cluster or an occupied unnamed pad → station foyer/ops pocket. `I` on the ST-D catalog carrier → `hangar_bay` pocket. Seat↔pocket↔hatch stays. Hatch from station/hangar returns to pad or dock (not MainMenu). No `SITE_*`. 0 Tripo.  
+IN-B: station **E** is board status / occupy / factory print gate (recycler toggle stays). **F** at `OpsSeat` or `HangarSeat` boards that seat; **I** returns to the same pocket. Live life-support readout; vented pocket uses the EVA suit soft warn (no HP). Station/hangar still ≠ ship cockpit. No `SITE_*`. 0 Tripo.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -62,6 +65,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | ST-F ownership swap | **built** — CX↔GR on one occupied unnamed pad; same-tier numbers |
 | ST-G own factory print | **built** — factory in player cluster; spend → one catalog module; (c) refuses without factory |
 | IN-A interiors bar | **built** — station pocket ≠ ship; hangar_bay ≠ ship; doors not locked props |
+| IN-B interiors bar | **built** — ops console occupy/factory gate; F seat → I same pocket; LS readout |
 | NP-C | **built** — NPC habitat on empty unnamed pad |
 | Galaxy G2–G6 | **locked** |
 | G1 CRUISE | **in-scope only for OS-C scale** |
