@@ -60,6 +60,7 @@ func _go() -> void:
 	await _assert_q_c(os, fails)
 	await _assert_ar_f(os, fails)
 	await _assert_ar_g(os, fails)
+	_assert_se_a(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 
 	# --- stall math (no scene) ---
@@ -4140,7 +4141,10 @@ func _assert_hud_stack(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] HUD stack ok fuel=", snap.get("fuel"), " cargo=", snap.get("cargo"),
 		" mod=", snap.get("module_tag"), " landed=", snap.get("landed"),
 		" occupy=", snap.get("occupy"), " eva=", snap.get("eva_mode"),
-		" econ=", snap.get("econ"), " energy=", snap.get("energy"))
+		" econ=", snap.get("econ"), " energy=", snap.get("energy"),
+		" power=", snap.get("power_draw"), "/", snap.get("power_supply"),
+		" cool=", snap.get("cool_load"), "/", snap.get("cool_cap"),
+		" life=", snap.get("life"))
 
 
 func _assert_occupy_energy(os: Node, pad: Node, walker: Node, before: float, pulse_before: float, fails: PackedStringArray) -> void:
@@ -6820,6 +6824,174 @@ func _assert_ar_g(os: Node, fails: PackedStringArray) -> void:
 	await get_tree().process_frame
 	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
 		SoftScanCache.invalidate_enemies()
+
+
+func _assert_se_a(os: Node, fails: PackedStringArray) -> void:
+	## SE-A: live power / cool / life buses on the player hull.
+	## Overdraw / overheat = soft sag. No P2W repair skip. IN-B LS stays soft.
+	## ST-D hangar mass/power refuse still holds. Knowledge labels only.
+	var ship: Node = os.get("ship") if os else null
+	var buses: Node = null
+	var d: Node = os.get("_interior") if os else null
+	var hull: Node = null
+	var queue: Node = null
+	var tree: SceneTree = get_tree()
+	var draw0 := 0.0
+	var heat0 := 0.0
+	var supply0 := 0.0
+	var cool0 := 0.0
+	var ls := ""
+	var tm0 := 1.0
+	var tm_od := 1.0
+	var tm_oh := 1.0
+	var w0 := 0.0
+	var w_od := 0.0
+	var w_oh := 0.0
+	var hp0 := 100.0
+	var hp1 := 100.0
+	var remain_m := -1.0
+	var remain_p := -1.0
+	var extras := 0
+	if ship == null or not is_instance_valid(ship):
+		fails.append("SE-A no player hull")
+		return
+	if ship.has_method("engineering_buses"):
+		buses = ship.engineering_buses()
+	if buses == null:
+		buses = ship.get_node_or_null("SoftShipSystems")
+	if buses == null or not buses.has_method("power_draw_total"):
+		fails.append("SE-A hull buses missing")
+		return
+	if buses.has_method("restore_bus_caps"):
+		buses.restore_bus_caps()
+	if buses.has_method("set_hull_vented"):
+		buses.set_hull_vented(false)
+	draw0 = float(buses.power_draw_total())
+	heat0 = float(buses.cool_load()) if buses.has_method("cool_load") else draw0
+	supply0 = float(buses.power_supply()) if buses.has_method("power_supply") else 0.0
+	cool0 = float(buses.cool_capacity()) if buses.has_method("cool_capacity") else 0.0
+	ls = str(buses.life_support_line()) if buses.has_method("life_support_line") else ""
+	print("[Playtest] SE-A power ", snapped(draw0, 0.01), "/", snapped(supply0, 0.01),
+		" cool ", snapped(heat0, 0.01), "/", snapped(cool0, 0.01),
+		" life=", ls)
+	if draw0 <= 0.05:
+		fails.append("SE-A power draw missing (ShipModule.power_draw unused)")
+	if supply0 <= 0.05:
+		fails.append("SE-A power supply missing")
+	if heat0 <= 0.05 or cool0 <= 0.05:
+		fails.append("SE-A cool bus missing")
+	if ls == "":
+		fails.append("SE-A hull life-support readout empty")
+	elif ls.find("LIFE SUPPORT") < 0 and ls.find("POWER BUS") < 0:
+		fails.append("SE-A hull LS does not match IN-B (%s)" % ls)
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("cybernetics", 20.0)
+		GameManager.add_mastery("biology", 20.0)
+		if absf(float(buses.power_draw_total()) - draw0) > 0.001 \
+				or absf(float(buses.power_supply()) - supply0) > 0.001 \
+				or absf(float(buses.cool_capacity()) - cool0) > 0.001:
+			fails.append("Knowledge changed hull bus numbers")
+	if ship.has_method("_thrust_mult"):
+		tm0 = float(ship._thrust_mult())
+	if ship.has_method("weapon_output"):
+		w0 = float(ship.weapon_output())
+	if buses.has_method("set_bus_caps"):
+		buses.set_bus_caps(1.0, 100.0)
+	if ship.has_method("_thrust_mult"):
+		tm_od = float(ship._thrust_mult())
+	if ship.has_method("weapon_output"):
+		w_od = float(ship.weapon_output())
+	print("[Playtest] SE-A overdraw sag thrust ", snapped(tm0, 0.01), " → ", snapped(tm_od, 0.01),
+		" weapons ", snapped(w0, 0.1), " → ", snapped(w_od, 0.1))
+	if buses.has_method("is_overdrawn"):
+		if not bool(buses.is_overdrawn()):
+			fails.append("SE-A overdraw not flagged")
+	else:
+		fails.append("SE-A overdraw not flagged")
+	if tm_od >= tm0 - 0.01:
+		fails.append("SE-A overdraw did not sag thrust")
+	if tm_od <= 0.01:
+		fails.append("SE-A overdraw hard-locked thrust")
+	if w0 > 0.05 and w_od >= w0 - 0.05:
+		fails.append("SE-A overdraw did not sag weapons")
+	if w_od <= 0.01:
+		fails.append("SE-A overdraw hard-locked weapons")
+	if buses.has_method("try_cash_repair_skip") and bool(buses.try_cash_repair_skip(999.0)):
+		fails.append("SE-A P2W repair skip restored buses")
+	if buses.has_method("cash_shop_skip_possible") and bool(buses.cash_shop_skip_possible()):
+		fails.append("SE-A cash-shop skip possible")
+	if ship.has_method("_thrust_mult") and float(ship._thrust_mult()) >= tm0 - 0.01:
+		fails.append("SE-A P2W skip cleared overdraw sag")
+	if buses.has_method("set_bus_caps"):
+		buses.set_bus_caps(100.0, 1.0)
+	if ship.has_method("_thrust_mult"):
+		tm_oh = float(ship._thrust_mult())
+	if ship.has_method("weapon_output"):
+		w_oh = float(ship.weapon_output())
+	print("[Playtest] SE-A overheat sag thrust ", snapped(tm0, 0.01), " → ", snapped(tm_oh, 0.01),
+		" weapons ", snapped(w0, 0.1), " → ", snapped(w_oh, 0.1))
+	if buses.has_method("is_overheated"):
+		if not bool(buses.is_overheated()):
+			fails.append("SE-A overheat not flagged")
+	else:
+		fails.append("SE-A overheat not flagged")
+	if tm_oh >= tm0 - 0.01:
+		fails.append("SE-A overheat did not sag thrust")
+	if tm_oh <= 0.01:
+		fails.append("SE-A overheat instant death / hard lock")
+	if w0 > 0.05 and w_oh >= w0 - 0.05:
+		fails.append("SE-A overheat did not sag weapons")
+	if "health" in ship:
+		hp0 = float(ship.health)
+	if buses.has_method("set_hull_vented"):
+		buses.set_hull_vented(true)
+	ls = str(buses.life_support_line()) if buses.has_method("life_support_line") else ""
+	if "health" in ship:
+		hp1 = float(ship.health)
+	print("[Playtest] SE-A hull LS vented ", ls, " hp ", snapped(hp0, 0.1), " → ", snapped(hp1, 0.1))
+	if buses.has_method("has_life_support") and bool(buses.has_life_support()):
+		fails.append("SE-A vented hull still reports life-support")
+	if ls.find("SUIT") < 0 and ls.find("VENTED") < 0:
+		fails.append("SE-A vented hull LS missing IN-B suit/vent")
+	if buses.has_method("life_support_warn_shown") and not bool(buses.life_support_warn_shown()):
+		fails.append("SE-A missing hull LS soft warn")
+	if hp1 < hp0 - 0.05:
+		fails.append("SE-A hull life-support cut HP")
+	if d != null and d.has_method("life_support_line"):
+		print("[Playtest] SE-A IN-B LS still soft pocket=", d.life_support_line())
+	if buses.has_method("restore_bus_caps"):
+		buses.restore_bus_caps()
+	if buses.has_method("set_hull_vented"):
+		buses.set_hull_vented(false)
+	if os != null and os.has_method("catalog_carrier"):
+		hull = os.catalog_carrier()
+	if hull == null and tree:
+		var hulls: Array = tree.get_nodes_in_group("catalog_carriers")
+		if not hulls.is_empty():
+			hull = hulls[0]
+	if hull != null:
+		if hull.has_method("hangar_queue"):
+			queue = hull.hangar_queue()
+		if hull.has_method("mass_remaining"):
+			remain_m = float(hull.mass_remaining())
+		if hull.has_method("power_remaining"):
+			remain_p = float(hull.power_remaining())
+	if tree:
+		extras = tree.get_nodes_in_group("hangar_queued_modules").size()
+	print("[Playtest] SE-A ST-D hangar mass/power refuse still holds slots=", extras,
+		" remain_m=", snapped(remain_m, 0.01), " remain_p=", snapped(remain_p, 0.01),
+		" cash_skip=", false)
+	if queue == null:
+		fails.append("SE-A ST-D hangar queue missing")
+	elif queue.has_method("cash_shop_skip_possible") and bool(queue.cash_shop_skip_possible()):
+		fails.append("SE-A ST-D cash-shop skip possible")
+	elif queue.has_method("try_cash_skip_queue") and bool(queue.try_cash_skip_queue(999.0)):
+		fails.append("SE-A ST-D cash-shop skip queued a module")
+	if extras != 1:
+		fails.append("SE-A ST-D hangar slot count changed (%s)" % extras)
+	if remain_m < 0.0 or remain_p < 0.0:
+		fails.append("SE-A ST-D mass/power remaining missing")
+	print("[Playtest] SE-A hull buses live · overdraw sag · no P2W repair skip · IN-B LS soft")
 
 
 func _in_a_occupied_pad(os: Node) -> Node3D:

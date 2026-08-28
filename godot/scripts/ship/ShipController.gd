@@ -335,6 +335,7 @@ func _thrust_mult() -> float:
 		m *= _FUEL_EMPTY_THRUST
 	if _burn_on:
 		m *= 1.55
+	m *= _bus_sag()
 	return m
 
 func _damp_mult() -> float:
@@ -897,6 +898,29 @@ func module_thrust() -> float:
 	return _module_thrust()
 
 
+func engineering_buses() -> Node:
+	return get_node_or_null("SoftShipSystems")
+
+
+func bus_sag() -> float:
+	return _bus_sag()
+
+
+func _bus_sag() -> float:
+	var n = get_node_or_null("SoftShipSystems")
+	if n != null and n.has_method("sag_mult"):
+		return float(n.sag_mult())
+	return 1.0
+
+
+func weapon_output() -> float:
+	var dps: float = 8.0
+	for m in modules:
+		if m:
+			dps += m.effective_weapon_dps()
+	return dps * _bus_sag()
+
+
 func _module_thrust() -> float:
 	var t: float = 0.0
 	for m in modules:
@@ -1003,6 +1027,7 @@ func _fire_weapon() -> void:
 	for m in modules:
 		if m:
 			dps += m.effective_weapon_dps()
+	dps *= _bus_sag()
 	if op_mode == 1 and _role:
 		dps *= float(_role.siege_main_dps_mult) if "siege_main_dps_mult" in _role else 1.35
 	var aim: Array = _Hits.aim_from(self)

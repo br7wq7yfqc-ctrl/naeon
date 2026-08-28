@@ -3,7 +3,7 @@ extends Resource
 
 ## Modular ship component (engine / weapon / shield / cargo / extractor).
 ## Own HP: damage degrades this function. Does not delete the hull.
-## power_draw is a stat stub — this slice does not invent power/cool/life buses.
+## power_draw feeds the hull power/cool buses. Integrity still scales function.
 
 enum ModuleType { HULL, ENGINE, WEAPON, SHIELD, CARGO, EXTRACTOR, SENSOR }
 
