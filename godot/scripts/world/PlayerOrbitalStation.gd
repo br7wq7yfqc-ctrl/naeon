@@ -20,6 +20,7 @@ const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 var orbit_body: String = BODY_NEX
 var faction: String = "Cybernex"
 var _modules: Array = []
+var _factory: Node3D = null
 
 
 func _ready() -> void:
@@ -85,6 +86,35 @@ func cluster_modules() -> Array:
 	return out
 
 
+func factory_module() -> Node3D:
+	## ST-G: factory lives in this cluster, not in the ST-E dock+habitat pair.
+	if _factory != null and is_instance_valid(_factory) and _factory.is_inside_tree():
+		return _factory
+	var n: Node = get_node_or_null("FactoryModule")
+	if n is Node3D:
+		_factory = n as Node3D
+		return _factory
+	return null
+
+
+func has_factory() -> bool:
+	return factory_module() != null
+
+
+func ensure_factory() -> Node3D:
+	## ST-G §6(c): one factory in this player cluster. Not a third ST-E module.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var n: Node3D = factory_module()
+	if P0 == null or not bool(P0.ST_G_FACTORY):
+		return null
+	if n != null:
+		return n
+	n = _spawn_factory(Vector3(0.0, 0.2, -16.0))
+	_refresh_label()
+	print("[PlayerOrbitalStation] ST-G factory in cluster body=", orbit_body, " site_pin=")
+	return n
+
+
 static func is_grammar_kind(kind: String) -> bool:
 	match kind:
 		KIND_DOCK, KIND_HABITAT, KIND_FACTORY, KIND_DEFENSE, KIND_HANGAR:
@@ -131,6 +161,52 @@ func _spawn_module(kind: String, offset: Vector3) -> Node3D:
 	return n
 
 
+func _spawn_factory(offset: Vector3) -> Node3D:
+	## Same cluster as ST-E. Own group so ST-E still counts dock+habitat only.
+	var n := Node3D.new()
+	n.name = "FactoryModule"
+	n.set_meta("site_pin", "")
+	n.set_meta("orbital_module", false)
+	n.set_meta("factory_module", true)
+	n.set_meta("module_type", KIND_FACTORY)
+	n.set_meta("player_module", false)
+	n.set_meta("npc_module", false)
+	n.set_meta("printed_module", false)
+	n.set_meta("hangar_queued", false)
+	n.set_meta("factory_printed", false)
+	n.set_meta("combat_stats", 0)
+	n.set_meta("city", false)
+	if not n.is_in_group("player_factory_modules"):
+		n.add_to_group("player_factory_modules")
+	add_child(n)
+	n.position = offset
+	_attach_catalog_mesh(n, KIND_FACTORY)
+	_label_factory(n)
+	_factory = n
+	return n
+
+
+func print_one_factory_module(kind: String = "", cash: float = 0.0) -> Node3D:
+	## ST-G §6(c) via the existing PadPrintBench spend path.
+	var tree := get_tree()
+	if tree:
+		for b in tree.get_nodes_in_group("print_benches"):
+			if b != null and b.has_method("print_one_factory_module"):
+				return b.print_one_factory_module(kind, cash)
+	return null
+
+
+func _label_factory(host: Node3D) -> void:
+	var lab := Label3D.new()
+	lab.name = "FactoryLabel"
+	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lab.font_size = 16
+	lab.outline_size = 4
+	lab.position = Vector3(0.0, 3.2, 0.0)
+	lab.text = _SoftK.factory_label()
+	host.add_child(lab)
+
+
 func _attach_catalog_mesh(host: Node3D, kind: String) -> void:
 	## Existing catalog paths only. GlbProp already proxies on headless.
 	var fx := "cybernex" if faction != "gROT" else "grot"
@@ -141,6 +217,9 @@ func _attach_catalog_mesh(host: Node3D, kind: String) -> void:
 	if kind == KIND_DOCK:
 		rel = "environments/landing_pad/landing_pad_%s_lod1.glb" % fx
 		scale = 1.6
+	elif kind == KIND_FACTORY:
+		rel = "colony/extractor_unit/extractor_unit_%s_lod1.glb" % fx
+		scale = 1.4
 	prop.set("relative_path", rel)
 	prop.set("scale_factor", scale)
 	prop.set("add_static_collision", false)

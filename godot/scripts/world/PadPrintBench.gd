@@ -12,6 +12,7 @@ const HABITAT_T1_COST := 80.0
 const DEFAULT_KIND := "extractor"
 
 var _granted: Node3D = null
+var _factory_granted: Node3D = null
 
 
 func _ready() -> void:
@@ -77,6 +78,83 @@ func granted_module() -> Node3D:
 	return null
 
 
+func factory_granted_module() -> Node3D:
+	if _factory_granted != null and is_instance_valid(_factory_granted):
+		return _factory_granted
+	return null
+
+
+func factory_in_cluster() -> Node3D:
+	## ST-G §6(c): factory must already sit in the player cluster.
+	var tree := get_tree()
+	var cluster: Node = null
+	var n: Node = null
+	if tree:
+		for m in tree.get_nodes_in_group("player_factory_modules"):
+			if m != null and is_instance_valid(m) and m.is_inside_tree():
+				if str(m.get_meta("module_type", "")) == "factory":
+					return m as Node3D
+		var listed: Array = tree.get_nodes_in_group("player_orbital_stations")
+		if not listed.is_empty():
+			cluster = listed[0]
+	if cluster != null and cluster.has_method("factory_module"):
+		n = cluster.factory_module()
+		if n is Node3D and (n as Node3D).is_inside_tree():
+			return n as Node3D
+	return null
+
+
+func print_one_factory_module(kind: String = "", cash: float = 0.0) -> Node3D:
+	## ST-G §6(c): same rules/15 spend as ST-C, gated on a factory in-cluster.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var k := ""
+	var cost := 0.0
+	var fac := ""
+	var cluster: Node3D = null
+	var factory: Node3D = null
+	var mod: Node3D = null
+	if P0 == null or not bool(P0.ST_G_FACTORY):
+		return null
+	if cash > 0.0:
+		print("[PadPrintBench] cash-shop skip refused")
+		return null
+	factory = factory_in_cluster()
+	if factory == null:
+		print("[PadPrintBench] §6(c) refuse: no factory")
+		return null
+	if factory_granted_module() != null:
+		print("[PadPrintBench] §6(c) already granted one module")
+		return null
+	k = _kind(kind)
+	cost = print_cost(k)
+	if cost <= 0.0:
+		return null
+	if GameManager == null or not GameManager.has_method("try_spend_economy"):
+		return null
+	if not bool(GameManager.try_spend_economy(cost)):
+		print("[PadPrintBench] §6(c) need ", snapped(cost, 0.1), " Contribution/Biomass")
+		return null
+	cluster = _factory_cluster()
+	fac = _faction()
+	mod = _Builder.print_factory_catalog_module(cluster, fac, k)
+	if mod == null or not is_instance_valid(mod):
+		_refund(cost)
+		return null
+	if str(mod.get_meta("site_pin", "x")) != "":
+		push_error("[PadPrintBench] factory print minted a site_pin")
+		mod.queue_free()
+		_refund(cost)
+		return null
+	_factory_granted = mod
+	if GameManager:
+		GameManager.toast_requested.emit(
+			"Factory printed %s (−%.0f %s) — no cash skip" % [k, cost, _wallet_name()]
+		)
+	print("[PadPrintBench] §6(c) printed ", k, " spent ", snapped(cost, 0.1),
+		" factory=", factory.name, " cash_skip=false")
+	return mod
+
+
 func print_one_module(kind: String = "", cash: float = 0.0) -> Node3D:
 	## Spend wallet → place ONE existing catalog module. Cash never pays.
 	var P0 = load("res://scripts/world/P0Slice.gd")
@@ -136,6 +214,21 @@ func _pad_host() -> Node3D:
 			return n as Node3D
 		n = n.get_parent()
 	return get_parent() as Node3D
+
+
+func _factory_cluster() -> Node3D:
+	var tree := get_tree()
+	var parent: Node = null
+	if tree:
+		var listed: Array = tree.get_nodes_in_group("player_orbital_stations")
+		if not listed.is_empty() and listed[0] is Node3D:
+			return listed[0] as Node3D
+		for m in tree.get_nodes_in_group("player_factory_modules"):
+			if m is Node and (m as Node).is_inside_tree():
+				parent = (m as Node).get_parent()
+				if parent is Node3D:
+					return parent as Node3D
+	return _pad_host()
 
 
 func _pad_name() -> String:
