@@ -1,6 +1,6 @@
 # Ground Vehicles · Hangars · Cargo Ramps
 
-**Status:** Planned · multi-crew continuum  
+**Status:** IN-C V0+V1 built · rover drive later  
 **Benchmarks:** SC (vehicle hangar + ramp) · NMS (exocraft) · economical code-first  
 **No P2W:** vehicle tiers = role / soft logistics, not shop combat power  
 
@@ -89,8 +89,8 @@ CapitalShip / Hauler
 
 | Sprint | Scope |
 |--------|-------|
-| V0 | CargoHold + HangarBay data on hauler role |
-| V1 | CargoRamp deploy/stow + drive mesh |
+| V0 | CargoHold + HangarBay data on the ST-D catalog carrier (**built**, IN-C) |
+| V1 | CargoRamp deploy/stow + walk plates hangar_bay → pad (**built**, IN-C) |
 | V2 | GroundVehicle rover drive on surface |
 | V3 | Store/retrieve flow |
 | V4 | SoftNet + multi-seat soft |
@@ -109,4 +109,6 @@ CapitalShip / Hauler
 - SEAMLESS_OPENSPACE.md  
 - ShipRoleProfile.make_hauler() capacity fields  
 
-Scaffold: `GroundVehicle.gd`, `CargoHold.gd`, `CargoRamp.gd` (stubs).
+IN-C (V0+V1): `HangarBay.gd` + `CargoHold` + `CargoRamp` on `CatalogCarrier` (`cybernex_capital_carrier` …). Deploy when landed / hover < 8 m AGL / docked and speed < 5; else BLOCKED toast. Hatch from `hangar_bay` onto deployed plates (not MainMenu). No rover spawn. 0 Tripo.
+
+Scaffold still: `GroundVehicle.gd` (V2+, unused this slice).
