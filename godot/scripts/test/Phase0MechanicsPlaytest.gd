@@ -3817,6 +3817,15 @@ func _assert_landed_hatch_on_pad(os: Node, fails: PackedStringArray) -> void:
 		walker.global_position = ship.global_position + up * 2.0
 		os.try_enter_ship()
 		await get_tree().create_timer(0.35).timeout
+	# Leave the pad so later occupy/harvest is not a landed-hull false positive.
+	if ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+	if nex != null and nex is Node3D:
+		var away: Vector3 = ((nex as Node3D).global_position - ship.global_position).normalized()
+		ship.global_position = (nex as Node3D).global_position - away * (float(nex.get("radius")) + 900.0)
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
 
 
 func _assert_st_a(os: Node, fails: PackedStringArray) -> void:
