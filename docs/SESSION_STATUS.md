@@ -1,3 +1,5 @@
+**2026-08-28 — IN-F: hangar SoftNet visual (ramp + rover/stored ghost)**
+
 **2026-08-28 — SE-A: live power / cool / life buses on the player hull**
 
 **2026-08-28 — AR-G: 5v5 local authority on existing Clash lanes (SoftNet visual)**
@@ -57,6 +59,7 @@ IN-B: station **E** is board status / occupy / factory print gate (recycler togg
 IN-C: ST-D catalog carrier has `HangarBay` + `CargoHold`. Ramp deploys when landed / slow hover / docked; BLOCKED when too fast or too high. Hatch from `hangar_bay` walks plates to the pad (not MainMenu). No rover. No `SITE_*`. 0 Tripo.  
 IN-D: ramp `DEPLOYED` → one `GroundVehicle` on ramp top. `F` board, WASD onto the unnamed pad, `F` exit. No SoftNet multi-seat. No `SITE_*`. 0 Tripo.  
 IN-E: drive onto ramp mouth / `hangar_bay` → store in `CargoHold` (`id` + `health`). Retrieve on `DEPLOYED` ramp (IN-C pose gate). Takeoff keeps inventory. No second world rover. No pay-stat. No SoftNet. No `SITE_*`. 0 Tripo.  
+IN-F: second local viewer sees ramp `DEPLOYED` + SoftNet visual rover puppet (or stored ghost). Host keeps IN-D/E authority. No second physical rover. No passenger seat (`GroundVehicle` only has the IN-D pilot). Not a netcode cluster. No `SITE_*`. 0 Tripo.  
 WF-A: denser crate/debris on the three unnamed Nex-Prime pads from existing ledger slugs (`debris_cluster`, `t1_resource_extractor`, `utility_bay`) and filler IDs. `pad_fill=22`. No new `SITE_*`. No new lock UUID. OS-G silhouette is not a legend. `ORBITAL_STATIONS` stays off.  
 Q-A: IN-B station ops console on an occupied unnamed pad offers **one** generated contract (`occupy` / `harvest` / `deliver_crate`) on Nex-Prime. Complete → SoftKnowledge `quest_intel` label (`CONTRACT` → `PAD INTEL`). Harvest / print / hangar numbers stay. No cash-shop skip. No pay-to-complete. No Knowledge-gated exclusive weapons/modules. Not a campaign. Not a second knowledge system.  
 Q-B: one alliance-shared `occupy` / `logistics` contract on the same unnamed pad / ARK body. The two NP-E NPCs see the **same** ContractBoard id. Complete → SoftKnowledge `alliance_intel` label (`ALLY` → `ALLY INTEL`). Harvest / print / hangar / Q-A numbers stay. No pay-to-complete. No pay-to-rank. No Knowledge-gated exclusive modules. Intent ≠ siege. Not a second quest or knowledge system.  
@@ -99,6 +102,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | IN-C hangar ramp | **built** — HangarBay+CargoHold on catalog carrier; gated ramp; hatch → plates → pad; no rover |
 | IN-D rover drive | **built** — one rover on DEPLOYED ramp; F board; drive onto pad; F exit |
 | IN-E store/retrieve | **built** — store on ramp mouth; retrieve on DEPLOYED; takeoff keeps hold; BLOCKED refuse |
+| IN-F hangar SoftNet | **built** — visual ramp + rover/stored-ghost puppet; host authority; no second seat; no SITE_* |
 | WF-A unnamed pad density | **built** — rim crate/debris on 3 unnamed pads; existing slugs only; no SITE_* / UUID |
 | Q-A contract / Knowledge | **built** — one ops-board contract; SoftKnowledge label only; numbers stay |
 | Q-B alliance constructor | **built** — one shared occupy/logistics contract; two NPCs same id; alliance intel label only |

@@ -13,7 +13,7 @@ var _player: Node3D = null
 var _ghost: Node3D = null
 var _tick: float = 0.0
 var _ghost_pending: bool = false
-## AR-F / AR-G: pose-only bot slots. Host keeps combat authority. Do not enable() for these.
+## AR-F / AR-G / IN-F: pose-only slots. Host keeps combat / rover authority. Do not enable() for these.
 var _visual_puppets: Array = []
 const SNAP_INTERVAL := 0.4   ## soft net rare; GC safe
 const HISTORY_MS := 1500
