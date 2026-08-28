@@ -800,6 +800,9 @@ func _close_interior_for_flight() -> void:
 		return
 	if not _interior.has_method("is_inside") or not bool(_interior.is_inside()):
 		return
+	# Station / hangar_bay pockets are not the flight seat. Do not steal their walker.
+	if _interior.has_method("get_kind") and str(_interior.get_kind()) != "ship":
+		return
 	if _interior.has_method("exit_for_pilot"):
 		_interior.exit_for_pilot()
 

@@ -17,6 +17,7 @@ var _active: Node3D
 var _kind: String = ""
 var _return_pos: Vector3 = Vector3.ZERO
 var _return_up: Vector3 = Vector3.UP
+var _return_mode: String = "pad"  # pad | dock — hatch must not dump to MainMenu
 var _player: Node3D
 var _open_space: Node
 var _inside: bool = false
@@ -42,8 +43,16 @@ func get_kind() -> String:
 	return _kind
 
 
+func get_return_mode() -> String:
+	return _return_mode
+
+
 func get_active_interior() -> Node3D:
 	return _active
+
+
+func pocket_is_ship() -> bool:
+	return _kind == "ship"
 
 
 func get_atmo() -> float:
@@ -73,21 +82,30 @@ func life_support_line() -> String:
 
 func try_toggle(player: Node3D, ship: Node3D = null) -> void:
 	if _inside:
-		if _kind == "ship" and player != null and is_instance_valid(player) and not is_near_hatch(player):
-			_toast("AIRLOCK · walk to hatch [I] · F seat")
+		if player != null and is_instance_valid(player) and not is_near_hatch(player):
+			if _kind == "ship":
+				_toast("AIRLOCK · walk to hatch [I] · F seat")
+			else:
+				_toast("HATCH · walk to door [I]")
 			return
 		exit_interior()
 		return
 	if player == null or not is_instance_valid(player):
 		_toast("No walker")
 		return
-	# Prefer station if near pad
-	if _open_space and _open_space.has_method("nearest_pad"):
-		var pad: Node3D = _open_space.nearest_pad(player.global_position)
-		if pad and is_instance_valid(pad) and player.global_position.distance_to(pad.global_position) < 45.0:
-			enter_station(player, pad)
-			return
-	# Ship interior if near ship
+	# IN-A: pad / cluster → station pocket. Carrier → hangar_bay. Not the ship cockpit.
+	var pad: Node3D = _nearby_pad(player)
+	if pad != null:
+		enter_station(player, pad)
+		return
+	var cluster: Node3D = _nearby_orbital_cluster(player)
+	if cluster != null:
+		enter_station(player, cluster)
+		return
+	var carrier: Node3D = _nearby_catalog_carrier(player)
+	if carrier != null:
+		enter_hangar(player, carrier)
+		return
 	if ship and is_instance_valid(ship):
 		var sd: float = player.global_position.distance_to(ship.global_position)
 		if sd < 48.0:
@@ -96,18 +114,61 @@ func try_toggle(player: Node3D, ship: Node3D = null) -> void:
 		print("[Interior] Too far from ship (", int(sd), "m)")
 		_toast("Closer to ship for interior")
 		return
-	print("[Interior] Nothing to enter (near pad or ship)")
-	_toast("Near pad or ship, then I")
+	print("[Interior] Nothing to enter (near pad, cluster, carrier, or ship)")
+	_toast("Near pad, dock, hangar, or ship, then I")
 
 
-func enter_station(player: Node3D, pad: Node3D) -> void:
+func enter_station(player: Node3D, host: Node3D) -> void:
+	if host == null or not is_instance_valid(host):
+		return
 	var fac := "Cybernex"
-	if pad.has_meta("base_faction"):
-		fac = str(pad.get_meta("base_faction"))
+	var up := Vector3.UP
+	var ret_pos: Vector3 = host.global_position
+	var hatch_to := "pad"
+	if host.has_meta("base_faction"):
+		fac = str(host.get_meta("base_faction"))
+	elif host.get("faction") != null and str(host.faction) != "":
+		fac = str(host.faction)
 	elif GameManager:
 		fac = GameManager.get_faction_name()
-	var up: Vector3 = pad.get_meta("pad_up") if pad.has_meta("pad_up") else Vector3.UP
-	_begin(player, "station", _Gen.build_station(fac), pad.global_position, up)
+	if host.has_meta("pad_up"):
+		up = host.get_meta("pad_up")
+		hatch_to = "pad"
+	elif _is_orbital_station_host(host):
+		hatch_to = "dock"
+		var dock: Node3D = _cluster_dock(host)
+		if dock != null:
+			ret_pos = dock.global_position
+		up = _up_from_planet(host.global_position)
+	_begin(player, "station", _Gen.build_station(fac, hatch_to), ret_pos, up, hatch_to)
+
+
+func enter_hangar(player: Node3D, carrier: Node3D) -> void:
+	## Catalog carrier bay. Not a mobile SITE_*. Not the player-ship cockpit.
+	if carrier == null or not is_instance_valid(carrier):
+		_toast("No carrier hangar")
+		return
+	if str(carrier.get_meta("site_pin", "")) != "":
+		print("[Interior] refuse hangar on SITE_* carrier")
+		_toast("Hangar refuses SITE_*")
+		return
+	var fac := "Cybernex"
+	var slug := ""
+	if carrier.get("faction") != null and str(carrier.faction) != "":
+		fac = str(carrier.faction)
+	if carrier.has_method("hull_slug"):
+		slug = str(carrier.hull_slug())
+	elif carrier.get("hull_id") != null:
+		slug = str(carrier.hull_id)
+	if slug.find("grot") >= 0:
+		fac = "gROT"
+	var up := _up_from_planet(carrier.global_position)
+	var interior: Node3D = _Gen.build_hangar_bay(fac)
+	if interior == null:
+		_toast("Hangar build failed")
+		return
+	print("[Interior] building hangar_bay pocket hull=", slug)
+	_begin(player, "hangar_bay", interior, carrier.global_position, up, "dock")
 
 
 func enter_ship(player: Node3D, ship: Node3D) -> void:
@@ -134,7 +195,7 @@ func enter_ship(player: Node3D, ship: Node3D) -> void:
 	_begin(player, "ship", interior, ship.global_position, up)
 
 
-func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, ret_up: Vector3) -> void:
+func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, ret_up: Vector3, return_mode: String = "pad") -> void:
 	if interior == null or player == null or not is_instance_valid(player):
 		return
 	# Tear down previous pocket
@@ -147,6 +208,7 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	_console_cd = 0.0
 	_door_hold.clear()
 	_recycler_on = true
+	_return_mode = "dock" if return_mode == "dock" else "pad"
 	_return_up = ret_up.normalized() if ret_up.length_squared() > 0.01 else Vector3.UP
 	_return_pos = ret_pos + _return_up * 4.0
 	_active = interior
@@ -224,9 +286,11 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	entered.emit(kind)
 	if kind == "ship":
 		_toast("Ship pocket · F seat · walk to airlock [I]")
+	elif kind == "hangar_bay":
+		_toast("Hangar bay · door to airlock · I hatch")
 	else:
-		_toast("Entered station · I exit · E ops console")
-	print("[Interior] entered ", kind, " at ", target, " atmo=", snapped(_atmo, 0.01))
+		_toast("Entered station · door to ops · I hatch")
+	print("[Interior] entered ", kind, " at ", target, " atmo=", snapped(_atmo, 0.01), " return=", _return_mode)
 	set_process(true)
 
 	# Deferred floor settle (same-frame collision may not be ready)
@@ -326,6 +390,7 @@ func exit_interior() -> void:
 	if not _inside:
 		return
 	var was_ship := _kind == "ship"
+	var dest := _return_mode
 	_hatch_fx(false)
 	if _player and is_instance_valid(_player):
 		if _player != null and is_instance_valid(_player) and _player.has_method("set_interior_mode"):
@@ -344,9 +409,16 @@ func exit_interior() -> void:
 			_player.global_position = _return_pos
 			if _player is CharacterBody3D:
 				(_player as CharacterBody3D).velocity = Vector3.ZERO
-			# Snap only AFTER exterior gravity restored
-			if _player != null and is_instance_valid(_player) and _player.has_method("snap_to_surface"):
-				_player.call_deferred("snap_to_surface")
+			if dest == "pad":
+				# Occupied unnamed pad: grounded walker. Do not snap orbital dock onto dirt.
+				if _player != null and is_instance_valid(_player) and _player.has_method("set_eva_profile"):
+					_player.set_eva_profile(false)
+				if _player != null and is_instance_valid(_player) and _player.has_method("snap_to_surface"):
+					_player.call_deferred("snap_to_surface")
+			else:
+				# Cluster / carrier hatch: stay at dock. Zero-G, same scene.
+				if _player != null and is_instance_valid(_player) and _player.has_method("set_eva_profile"):
+					_player.set_eva_profile(true)
 	if _active and is_instance_valid(_active):
 		_active.queue_free()
 	_active = null
@@ -377,9 +449,15 @@ func exit_interior() -> void:
 	if was_ship and _open_space != null and _open_space.has_method("place_from_ship_pocket") and _player != null and is_instance_valid(_player):
 		_open_space.place_from_ship_pocket(_player)
 	exited.emit(_kind)
-	_toast("Hatch → EVA" if was_ship else "Exited interior")
-	print("[Interior] exited ", _kind)
+	if was_ship:
+		_toast("Hatch → EVA")
+	elif dest == "pad":
+		_toast("Hatch → pad")
+	else:
+		_toast("Hatch → dock")
+	print("[Interior] exited ", _kind, " → ", dest if not was_ship else "eva")
 	_kind = ""
+	_return_mode = "pad"
 	set_process(false)
 
 
@@ -463,7 +541,8 @@ func is_near_hatch(player: Node3D, max_dist: float = 3.6) -> bool:
 			continue
 		if not str(n2.name).begins_with("DoorPortal"):
 			continue
-		if str(n2.get_meta("leads_to", "")) != "eva":
+		var dest := str(n2.get_meta("leads_to", ""))
+		if dest != "eva" and dest != "pad" and dest != "dock":
 			continue
 		if player.global_position.distance_to((n2 as Node3D).global_position) <= max_dist:
 			return true
@@ -490,7 +569,7 @@ func try_use_console() -> bool:
 		return false
 	_console_cd = 0.5
 	_refresh_life_support()
-	if _kind == "station":
+	if _kind == "station" or _kind == "hangar_bay":
 		_recycler_on = not _recycler_on
 		_refresh_life_support()
 		var rec := "HABITAT SEALED" if _recycler_on else "VENTED TO PLANET"
@@ -537,6 +616,7 @@ func exit_for_pilot() -> void:
 	exited.emit("ship_to_pilot")
 	print("[Interior] exit_for_pilot")
 	_kind = ""
+	_return_mode = "pad"
 	set_process(false)
 
 
@@ -575,7 +655,12 @@ func _process(delta: float) -> void:
 	if hlab is Label3D:
 		var near_h := is_near_hatch(_player)
 		(hlab as Label3D).modulate.a = 1.0 if near_h else 0.55
-		(hlab as Label3D).text = "AIRLOCK · HATCH [I] EVA" if near_h else "AIRLOCK · HATCH [I]"
+		if _kind == "ship":
+			(hlab as Label3D).text = "AIRLOCK · HATCH [I] EVA" if near_h else "AIRLOCK · HATCH [I]"
+		elif _return_mode == "dock":
+			(hlab as Label3D).text = "HATCH [I] DOCK" if near_h else "HATCH [I]"
+		else:
+			(hlab as Label3D).text = "HATCH [I] PAD" if near_h else "HATCH [I]"
 		(hlab as Label3D).font_size = 48 if near_h else 36
 
 
@@ -625,6 +710,92 @@ func _pad_status_line() -> String:
 	if pad.has_method("get_claim_status"):
 		st = str(pad.get_claim_status())
 	return "PAD %s %s claim %.0f%%" % [fac, st, clampf(cs / 1.75, 0.0, 1.0) * 100.0]
+
+
+func _nearby_pad(player: Node3D) -> Node3D:
+	if player == null or _open_space == null or not _open_space.has_method("nearest_pad"):
+		return null
+	var pad: Node3D = _open_space.nearest_pad(player.global_position)
+	if pad == null or not is_instance_valid(pad):
+		return null
+	if player.global_position.distance_to(pad.global_position) >= 45.0:
+		return null
+	return pad
+
+
+func _nearby_orbital_cluster(player: Node3D) -> Node3D:
+	if player == null or _open_space == null:
+		return null
+	var cluster: Node3D = null
+	if _open_space.has_method("player_orbital_station"):
+		cluster = _open_space.player_orbital_station()
+	if cluster == null or not is_instance_valid(cluster):
+		return null
+	if _host_distance(player, cluster) < 55.0:
+		return cluster
+	if cluster.has_method("cluster_modules"):
+		for m in cluster.cluster_modules():
+			if m is Node3D and _host_distance(player, m as Node3D) < 55.0:
+				return cluster
+	if cluster.has_method("factory_module"):
+		var fac: Node3D = cluster.factory_module()
+		if fac != null and _host_distance(player, fac) < 55.0:
+			return cluster
+	return null
+
+
+func _nearby_catalog_carrier(player: Node3D) -> Node3D:
+	if player == null or _open_space == null:
+		return null
+	var carrier: Node3D = null
+	if _open_space.has_method("catalog_carrier"):
+		carrier = _open_space.catalog_carrier()
+	if carrier == null or not is_instance_valid(carrier):
+		return null
+	if str(carrier.get_meta("site_pin", "")) != "":
+		return null
+	if bool(carrier.get_meta("mobile_site", false)):
+		return null
+	if _host_distance(player, carrier) >= 55.0:
+		return null
+	return carrier
+
+
+func _is_orbital_station_host(host: Node3D) -> bool:
+	if host == null:
+		return false
+	if bool(host.get_meta("player_orbital_station", false)) or bool(host.get_meta("orbital_cluster", false)):
+		return true
+	if bool(host.get_meta("orbital_module", false)) or bool(host.get_meta("factory_module", false)):
+		return true
+	return host.get_node_or_null("DockModule") != null
+
+
+func _cluster_dock(host: Node3D) -> Node3D:
+	if host == null:
+		return null
+	var dock: Node = host.get_node_or_null("DockModule")
+	if dock is Node3D:
+		return dock as Node3D
+	if bool(host.get_meta("orbital_module", false)) and str(host.get_meta("module_type", "")) == "dock":
+		return host
+	return host
+
+
+func _up_from_planet(at: Vector3) -> Vector3:
+	if _open_space != null and _open_space.has_method("nearest_planet"):
+		var pl: Node3D = _open_space.nearest_planet(at)
+		if pl != null and is_instance_valid(pl):
+			var up: Vector3 = at - pl.global_position
+			if up.length_squared() > 0.01:
+				return up.normalized()
+	return Vector3.UP
+
+
+func _host_distance(player: Node3D, host: Node3D) -> float:
+	if player == null or host == null:
+		return 9999.0
+	return player.global_position.distance_to(host.global_position)
 
 
 func _tick_doors(delta: float) -> void:
