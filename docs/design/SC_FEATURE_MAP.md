@@ -54,7 +54,7 @@ CIG copy · воксели · SITE_* mint · G2–G6 сейчас · P2W · Trip
 
 | Класс | Факт репо |
 |-------|-----------|
-| Уже есть | SCM/HOVER/STALL/LAND, OpenSpace ARK, пады, EVA snap, Clash, Infection 5, Contribution, Alliance, pad pip, rover петля на Relief, local save, лимб + OS-B оболочка, OS-C подход 8 км, OS-D unnamed fill, OS-E PBR near read (CC0/fallback), OS-F lift/glide, OS-G силуэт, OS-H harness ритуала, ST-A strategy overlay + habitat, ST-B extractor + HUD Contribution, ST-C pad print bench, ST-D hangar queue, ST-E orbital cluster, ST-F CX↔GR owner swap |
+| Уже есть | SCM/HOVER/STALL/LAND, OpenSpace ARK, пады, EVA snap, Clash, Infection 5, Contribution, Alliance, pad pip, rover петля на Relief, local save, лимб + OS-B оболочка, OS-C подход 8 км, OS-D unnamed fill, OS-E PBR near read (CC0/fallback), OS-F lift/glide, OS-G силуэт, OS-H harness ритуала, ST-A strategy overlay + habitat, ST-B extractor + HUD Contribution, ST-C pad print bench, ST-D hangar queue, ST-E orbital cluster, ST-F CX↔GR owner swap, SE-A hull power/cool/life buses |
 | Приближаем | 3090 FPS / 5 мин soak (human gate) |
 | Отказ | quantum сейчас, карта галактики, гейты-прыжки, арена-из-мира (G5), города, каталожные SITE_*, воксели, P2W |
 
