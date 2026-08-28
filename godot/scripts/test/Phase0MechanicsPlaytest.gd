@@ -573,6 +573,7 @@ func _go() -> void:
 	_osb_atmosphere_shell(fails)
 	_osc_scale_ladder(fails, osc_spawn_agl)
 	_osd_unnamed_fill(fails)
+	_assert_wf_a(fails)
 	_ose_near_read(fails)
 	_osf_atmo_flight(fails)
 	_osg_outpost_silhouette(fails)
@@ -1375,7 +1376,7 @@ func _osd_unnamed_fill(fails: PackedStringArray) -> void:
 				if child == null:
 					continue
 				var cname := str(child.name)
-				if cname.begins_with("PadCrate") or cname == "PadDebris" or cname == "PadMast" or cname == "PadExtractor" or cname == "PadUtility":
+				if cname.begins_with("PadCrate") or cname.begins_with("PadDebris") or cname == "PadMast" or cname == "PadExtractor" or cname == "PadUtility":
 					pad_clutter += 1
 					if str(child.get_meta("site_pin", "")).begins_with("SITE_"):
 						fails.append("OS-D pad clutter minted SITE_* on %s" % cname)
@@ -1392,6 +1393,182 @@ func _osd_unnamed_fill(fails: PackedStringArray) -> void:
 	var sd: Node = nex.get_node_or_null("SurfaceDetail")
 	if sd and sd.has_method("body_seed") and int(sd.call("body_seed")) != seed_b:
 		fails.append("OS-D SurfaceDetail seed != body_seed")
+
+
+func _assert_wf_a(fails: PackedStringArray) -> void:
+	## WF-A: one density slice on already-loaded Nex-Prime unnamed pads.
+	## Existing ledger slugs / filler IDs only. No new SITE_*. No new lock UUID.
+	## OS-G silhouette stays unnamed logistics, not a legend / pin.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null:
+		fails.append("WF-A P0Slice missing")
+		return
+	if not bool(P0.WF_A_DENSITY):
+		fails.append("WF-A WF_A_DENSITY flag off")
+	if bool(P0.ORBITAL_STATIONS):
+		fails.append("WF-A flipped ORBITAL_STATIONS")
+	if bool(P0.FILL_STREAMERS):
+		fails.append("WF-A turned on seven fill streamers")
+	if bool(P0.PAD_DENSITY):
+		fails.append("WF-A enabled PadDensity cluster")
+	var tree_w := get_tree()
+	var nex: Node = null
+	if tree_w:
+		for n in tree_w.get_nodes_in_group("planets"):
+			if str(n.get("planet_name")) == "Nex-Prime":
+				nex = n
+				break
+	if nex == null:
+		fails.append("WF-A no Nex-Prime")
+		return
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	var pads_root: Node3D = nex.get_node_or_null("Pads") as Node3D
+	var plates: Array = []
+	if nex.get("_pads") != null:
+		plates = nex.get("_pads")
+	var unnamed_n := 0
+	var per_pad_min := 999
+	for p in plates:
+		if p == null or not is_instance_valid(p):
+			continue
+		var pname := str(p.name)
+		if pname.begins_with("SITE_") or str(p.get_meta("site_pin", "")).begins_with("SITE_"):
+			fails.append("WF-A minted SITE_* on %s" % pname)
+		if not pname.begins_with("Pad_"):
+			fails.append("WF-A pad not Pad_North class (%s)" % pname)
+		else:
+			unnamed_n += 1
+		var local_n := 0
+		for child in (p as Node).get_children():
+			if child == null:
+				continue
+			var cname := str(child.name)
+			if cname.begins_with("PadCrate") or cname.begins_with("PadDebris") or cname == "PadMast" or cname == "PadExtractor" or cname == "PadUtility":
+				local_n += 1
+				if str(child.get_meta("site_pin", "")).begins_with("SITE_"):
+					fails.append("WF-A pad clutter minted SITE_* on %s" % cname)
+				if _wf_a_looks_like_uuid(str(child.get_meta("uuid", ""))) or _wf_a_looks_like_uuid(cname):
+					fails.append("WF-A pad clutter minted UUID on %s" % cname)
+		if local_n < per_pad_min:
+			per_pad_min = local_n
+	if unnamed_n < 3:
+		fails.append("WF-A want 3 unnamed pads, got %s" % unnamed_n)
+	var sc: Node = pads_root.get_node_or_null("WorldFillScatter") if pads_root else null
+	var fill_n := 0
+	var slugs: PackedStringArray = PackedStringArray()
+	var new_sites: PackedStringArray = PackedStringArray()
+	var new_uuids: PackedStringArray = PackedStringArray()
+	if sc == null:
+		fails.append("WF-A WorldFillScatter missing")
+	else:
+		if sc.has_method("pad_fill_count"):
+			fill_n = int(sc.call("pad_fill_count"))
+		if sc.has_method("pad_slugs_used"):
+			slugs = sc.call("pad_slugs_used")
+		if slugs.is_empty() and sc.has_method("ledger_slugs_used"):
+			slugs = sc.call("ledger_slugs_used")
+		if sc.has_method("invented_site_pins"):
+			new_sites = sc.call("invented_site_pins")
+		if sc.has_method("invented_lock_uuids"):
+			new_uuids = sc.call("invented_lock_uuids")
+		if str(sc.get_meta("site_pin", "")).begins_with("SITE_"):
+			fails.append("WF-A scatter minted SITE_*")
+	var allowed := PackedStringArray(["debris_cluster", "t1_resource_extractor", "utility_bay"])
+	for slug in slugs:
+		if str(slug).begins_with("SITE_"):
+			fails.append("WF-A minted SITE_* slug %s" % slug)
+		elif allowed.find(str(slug)) < 0:
+			fails.append("WF-A used unknown slug %s" % slug)
+	if slugs.find("debris_cluster") < 0:
+		fails.append("WF-A missing debris_cluster on unnamed pads")
+	if slugs.find("t1_resource_extractor") < 0:
+		fails.append("WF-A missing t1_resource_extractor on unnamed pads")
+	if slugs.find("utility_bay") < 0:
+		fails.append("WF-A missing utility_bay on unnamed pads")
+	if fill_n < 16:
+		fails.append("WF-A pad fill too thin (%s)" % fill_n)
+	if per_pad_min < 5:
+		fails.append("WF-A a pad stayed sparse (%s)" % per_pad_min)
+	if not new_sites.is_empty():
+		fails.append("WF-A invented SITE_* %s" % ",".join(new_sites))
+	if not new_uuids.is_empty():
+		fails.append("WF-A invented UUID %s" % ",".join(new_uuids))
+	_wf_a_catalog_frozen(fails)
+	var sil: Node3D = null
+	if nex.has_method("outpost_silhouette"):
+		sil = nex.call("outpost_silhouette") as Node3D
+	if sil != null:
+		if str(sil.get_meta("site_pin", "")).begins_with("SITE_") or str(sil.name).begins_with("SITE_"):
+			fails.append("WF-A treated OS-G silhouette as SITE_*")
+		var host := sil.get_parent()
+		if host != null and (str(host.name).begins_with("SITE_") or str(host.get_meta("site_pin", "")).begins_with("SITE_")):
+			fails.append("WF-A turned OS-G host into a pin")
+		if host != null and not str(host.name).begins_with("Pad_"):
+			fails.append("WF-A OS-G host is not an unnamed pad")
+	if LayerContext and str(LayerContext.site_pin_id) != "" and str(LayerContext.site_pin_id) != "SITE_SPACE_TEST_PAD":
+		fails.append("WF-A site_pin left catalog (%s)" % LayerContext.site_pin_id)
+	print("[Playtest] WF-A pads=", unnamed_n, " fill=", fill_n, " slugs=", ",".join(slugs), " new_SITE_*=", new_sites.size(), " new_UUID=", new_uuids.size())
+
+
+func _wf_a_catalog_frozen(fails: PackedStringArray) -> void:
+	var godot_root := ProjectSettings.globalize_path("res://").rstrip("/")
+	var repo := godot_root.get_base_dir()
+	var pos_path := repo.path_join("docs/asset_positions.json")
+	var lock_path := repo.path_join("docs/design/approved_sketches.json")
+	var pin_path := repo.path_join("docs/lore/SITE_PIN_CATALOG.md")
+	if FileAccess.file_exists(pos_path):
+		var pos = JSON.parse_string(FileAccess.get_file_as_string(pos_path))
+		if typeof(pos) == TYPE_DICTIONARY:
+			var items: Variant = pos.get("items", {})
+			var n_items: int = 0
+			if typeof(items) == TYPE_DICTIONARY:
+				n_items = (items as Dictionary).size()
+			if n_items != 137:
+				fails.append("WF-A ledger items changed (%s)" % n_items)
+			if int(pos.get("bound_sheets", 0)) != 213:
+				fails.append("WF-A bound_sheets changed (%s)" % pos.get("bound_sheets", 0))
+	else:
+		fails.append("WF-A asset_positions.json missing")
+	if FileAccess.file_exists(lock_path):
+		var locks = JSON.parse_string(FileAccess.get_file_as_string(lock_path))
+		if typeof(locks) == TYPE_DICTIONARY:
+			var locked: Variant = locks.get("locked", [])
+			var n_locked: int = 0
+			if typeof(locked) == TYPE_ARRAY:
+				n_locked = (locked as Array).size()
+			if n_locked != 151:
+				fails.append("WF-A approved_sketches locked count changed (%s)" % n_locked)
+			if int(locks.get("positions_unbound", -1)) != 1:
+				fails.append("WF-A positions_unbound changed")
+	else:
+		fails.append("WF-A approved_sketches.json missing")
+	if FileAccess.file_exists(pin_path):
+		var pins := FileAccess.get_file_as_string(pin_path)
+		var seen: Dictionary = {}
+		var idx := 0
+		while true:
+			var at := pins.find("`SITE_", idx)
+			if at < 0:
+				break
+			var end_at := pins.find("`", at + 1)
+			if end_at < 0:
+				break
+			var tok := pins.substr(at + 1, end_at - at - 1)
+			if tok.begins_with("SITE_"):
+				seen[tok] = true
+			idx = end_at + 1
+		if seen.size() != 20:
+			fails.append("WF-A SITE_PIN_CATALOG changed (%s)" % seen.size())
+	else:
+		fails.append("WF-A SITE_PIN_CATALOG.md missing")
+
+
+func _wf_a_looks_like_uuid(s: String) -> bool:
+	if s.length() != 36:
+		return false
+	var parts := s.split("-")
+	return parts.size() == 5 and parts[0].length() == 8 and parts[1].length() == 4
 
 
 func _ose_near_read(fails: PackedStringArray) -> void:

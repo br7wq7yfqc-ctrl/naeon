@@ -3,10 +3,12 @@ class_name WorldFillScatter
 ## Unnamed rock/crate/debris/pad-prop proxies. Same body seed as Relief.
 ## Uses ledger slugs already on the shelf (debris_cluster, t1_resource_extractor,
 ## utility_bay) plus existing filler IDs. Channel offset is placement RNG only.
-## Code-first until CC0 GLB is on s3://neon. Not SITE_*. Not a streamer.
+## WF-A raises pad-rim density on those same unnamed plates. Code-first until
+## CC0 GLB is on s3://neon. Not SITE_*. Not a streamer. Not a lock UUID.
 
 const _Relief = preload("res://scripts/world/PlanetRelief.gd")
 const _Filler = preload("res://scripts/world/FillerProp.gd")
+const _P0 = preload("res://scripts/world/P0Slice.gd")
 
 const CHANNEL := 41
 const ROCK_N := 8
@@ -15,15 +17,20 @@ const DEBRIS_N := 3
 
 var _seed: int = 1
 var _planet_id: String = ""
+var _planet: Node3D = null
 var _placed: int = 0
 var _slugs: PackedStringArray = PackedStringArray()
+var _pad_fill: int = 0
+var _pad_slugs: PackedStringArray = PackedStringArray()
 
 
 func setup(planet: Node3D, radius: float, seed_i: int) -> void:
 	_seed = seed_i
+	_planet = planet
 	if planet != null and "planet_name" in planet:
 		_planet_id = str(planet.planet_name)
 	set_meta("site_pin", "")
+	set_meta("uuid", "")
 	set_meta("worldfill_scatter", true)
 	add_to_group("worldfill_scatter")
 	_place(planet, radius)
@@ -39,6 +46,30 @@ func prop_count() -> int:
 
 func ledger_slugs_used() -> PackedStringArray:
 	return _slugs
+
+
+func pad_fill_count() -> int:
+	return _pad_fill
+
+
+func pad_slugs_used() -> PackedStringArray:
+	return _pad_slugs
+
+
+func invented_site_pins() -> PackedStringArray:
+	var out := PackedStringArray()
+	_collect_invented_site(self, out)
+	for pad in _iter_pads():
+		_collect_invented_site(pad, out)
+	return out
+
+
+func invented_lock_uuids() -> PackedStringArray:
+	var out := PackedStringArray()
+	_collect_invented_uuid(self, out)
+	for pad in _iter_pads():
+		_collect_invented_uuid(pad, out)
+	return out
 
 
 func _place(planet: Node3D, radius: float) -> void:
@@ -85,7 +116,7 @@ func _place(planet: Node3D, radius: float) -> void:
 	_spawn_crates(radius, profile, crate_dirs)
 	_spawn_debris(radius, profile, debris_dirs)
 	_spawn_pad_clutter(planet)
-	print("[WorldFillScatter] props=", _placed, " seed=", _seed, " body=", _planet_id, " slugs=", ",".join(_slugs))
+	print("[WorldFillScatter] props=", _placed, " pad_fill=", _pad_fill, " seed=", _seed, " body=", _planet_id, " slugs=", ",".join(_slugs), " pad_slugs=", ",".join(_pad_slugs))
 
 
 func _host_dirs(planet: Node3D) -> Array[Vector3]:
@@ -195,6 +226,12 @@ func _spawn_pad_clutter(planet: Node3D) -> void:
 			_add_pad_prop(pad, "PadExtractor", "pad_extractor_t1", "t1_resource_extractor", Vector3(0.0, 0.0, -16.0), 1.8)
 		elif pname == "Pad_Flank":
 			_add_pad_prop(pad, "PadUtility", "pad_utility_bay", "utility_bay", Vector3(12.0, 0.0, 14.0), 1.7)
+		# WF-A: denser rim clutter on the same unnamed plates. Center stays clear
+		# for LAND. OS-G host stays a pad, not a legend. No new slug / SITE_*.
+		if _P0.WF_A_DENSITY:
+			_add_pad_prop(pad, "PadCrate_2", "pad_crate_cc0", "", Vector3(11.0, 1.15, 9.0), 3.6)
+			_add_pad_prop(pad, "PadCrate_3", "pad_crate_cc0", "", Vector3(-11.5, 1.15, -8.5), 3.4)
+			_add_pad_prop(pad, "PadDebris_1", "pad_debris_cluster", "debris_cluster", Vector3(6.5, 1.4, -12.5), 2.8)
 
 
 func _add_field_prop(nm: String, filler_id: String, slug: String, pos: Vector3, basis: Basis, scale_f: float, far: bool) -> void:
@@ -226,8 +263,11 @@ func _add_pad_prop(pad: Node3D, nm: String, filler_id: String, slug: String, loc
 	if fp.has_method("setup"):
 		fp.call("setup", filler_id)
 	fp.position = local_pos
+	fp.set_meta("uuid", "")
 	_note_prop(fp, slug)
+	_note_pad_prop(fp, slug)
 	_placed += 1
+	_pad_fill += 1
 
 
 func _note_prop(fp: Node, slug: String) -> void:
@@ -235,6 +275,56 @@ func _note_prop(fp: Node, slug: String) -> void:
 		fp.set_meta("ledger_slug", slug)
 		if not _slugs.has(slug):
 			_slugs.append(slug)
+
+
+func _note_pad_prop(fp: Node, slug: String) -> void:
+	if slug != "" and not _pad_slugs.has(slug):
+		_pad_slugs.append(slug)
+	fp.set_meta("wf_a_pad_fill", true)
+
+
+func _iter_pads() -> Array[Node3D]:
+	var out: Array[Node3D] = []
+	if _planet != null and "_pads" in _planet:
+		for p in _planet._pads:
+			if p is Node3D and is_instance_valid(p):
+				out.append(p as Node3D)
+	return out
+
+
+func _collect_invented_site(n: Node, out: PackedStringArray) -> void:
+	if n == null or not is_instance_valid(n):
+		return
+	var pin := str(n.get_meta("site_pin", ""))
+	if pin.begins_with("SITE_") and not out.has(pin):
+		out.append(pin)
+	if str(n.name).begins_with("SITE_") and not out.has(str(n.name)):
+		out.append(str(n.name))
+	for c in n.get_children():
+		if bool(c.get_meta("filler_prop", false)) or bool(c.get_meta("wf_a_pad_fill", false)) or bool(c.get_meta("worldfill_scatter", false)) or bool(c.get_meta("outpost_silhouette", false)):
+			_collect_invented_site(c, out)
+
+
+func _collect_invented_uuid(n: Node, out: PackedStringArray) -> void:
+	if n == null or not is_instance_valid(n):
+		return
+	var uid := str(n.get_meta("uuid", ""))
+	if _looks_like_lock_uuid(uid) and not out.has(uid):
+		out.append(uid)
+	var nid := str(n.name)
+	if _looks_like_lock_uuid(nid) and not out.has(nid):
+		out.append(nid)
+	for c in n.get_children():
+		if bool(c.get_meta("filler_prop", false)) or bool(c.get_meta("wf_a_pad_fill", false)) or bool(c.get_meta("worldfill_scatter", false)) or bool(c.get_meta("outpost_silhouette", false)):
+			_collect_invented_uuid(c, out)
+
+
+func _looks_like_lock_uuid(s: String) -> bool:
+	if s.length() != 36:
+		return false
+	# Existing catalog locks stay in approved_sketches.json. Fill must not mint one.
+	var parts := s.split("-")
+	return parts.size() == 5 and parts[0].length() == 8 and parts[1].length() == 4
 
 
 func _surface_pos(dir: Vector3, radius: float, profile: Dictionary) -> Vector3:
