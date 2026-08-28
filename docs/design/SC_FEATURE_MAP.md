@@ -32,7 +32,7 @@ Likeness — **вся** фантазия SC (лететь, стыковатьс�
 | 11 | Refuel / repair / restock | пады; occupy-to-hold refill SCM/HOVER; GLB pump/tank как проп | заправка + медленный repair + locker restock (energy / Pulse) с occupy; Knowledge подписывает насос/локер, не скипает wait; empty ≠ hard lock | G1/G3 hyperdrive fuel later | paid skip |
 | 12 | World composition | ARK authored (`StarSystemCatalog`); Nex-Prime / ROT-Hive / Shard-Moon; пояс authored | G0 layout жив; outposts = unnamed pads; `CityNightLights` ≠ город | пады unnamed; SITE_* позже из каталога; города ждут; погода после OS-B | сгенерированная галактика; SITE_* mint |
 | 13 | Traffic / AI | dummy / pad guard / Clash bots | NPC can fly the existing loop (NP-A); occupy/harvest on unnamed pad (NP-B); player invites one NPC into the squad (NP-D); short offline pad/follow cycle (NP-F); two NPCs soft-alliance / raid or logistics intent (NP-E) | Clash density later | generated galaxy traffic |
-| 14 | Combat | dummy + Clash/MOBA (нативно); бар Predecessor | TestArena / Aexion Clash / Turret | AR-A…AR-F **built**; **G5 закрыт** | арена-магазин; Arena Commander |
+| 14 | Combat | dummy + Clash/MOBA (нативно); бар Predecessor | TestArena / Aexion Clash / Turret | AR-A…AR-G **built**; **G5 закрыт** | арена-магазин; Arena Commander |
 | 15 | Medical / death | Infection/Firewall кап 5 + health; downed; hull-crit recover | кап 5 enforced; нет перманентной смерти | кап держать | cash-shop spawn |
 | 16 | Inventory / persistence | `SoftSession` local-first; `CargoHold` | form/faction/layer + last action в `user://`; NP-F short offline cycle | hangar later | insurance P2W |
 | 17 | Social | `AllianceRanks` | ранги + soft permissions; NP-E two-NPC intent visible | Voice later | pay-to-rank |
