@@ -3,8 +3,8 @@
 **Версия:** 1.0  
 **Дата:** 2026-08-17  
 **Движок:** Godot 4.7.2  
-**Статус:** ST-F built (2026-08-27).  
-**Очередь кода:** ST-F CX↔GR owner swap on one occupied unnamed pad. G2–G6 still locked.
+**Статус:** ST-G built (2026-08-28).  
+**Очередь кода:** ST-G own factory print §6(c) in the existing player cluster. G2–G6 still locked.
 
 Это **третий бар**: не полёт OPEN SPACE и не Clash.  
 Подход космоса: [`OPEN_SPACE_SC_BENCHMARK.md`](OPEN_SPACE_SC_BENCHMARK.md) (OS-A…OS-H).  
@@ -40,7 +40,7 @@ NPC agency (NP-C после ST-A) + MMO HOLD: [`NPC_AGENCY.md`](NPC_AGENCY.md) �
 | `LayerContext.gd` | комментарий `Strategy \| Space \| TPS \| Arena` | `set_layer("Strategy")` нигде не зовётся; OpenSpace = Space/TPS, Clash = Arena |
 | `BaseBuilder.gd` | стримит HQ-кластер (habitat, extractor, turret, beacon…) **или** P0: только `PadBaseController` | игрок не ставит один модуль |
 | `P0Slice.ONE_PAD` | `true` → BaseBuilder идёт в controller-only | размещение зданий |
-| `PadBaseController.gd` | occupy-to-hold, harvest → `GameManager.deposit_economy`, Contribution / Biomass, `swap_cluster_theme` | очередь постройки, factory |
+| `PadBaseController.gd` | occupy-to-hold, harvest → `GameManager.deposit_economy`, Contribution / Biomass, `swap_cluster_theme` | очередь постройки |
 | `Extractor.gd` + `ResourceNode.gd` | сцена колонии; harvest + Contribution; живёт в `TestArena` | стратегия на теле OPEN SPACE |
 | `Contribution.gd` | Resource: `add` / `spend` | аллокатор RBE как слой |
 | `rules/22` | Extractor T1, Storage, turret, dock/pad, Factory/vat, Habitat, hangar seed | runtime-модули базы |
@@ -149,9 +149,9 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 
 ---
 
-## 9. Срезы ST-A … ST-F
+## 9. Срезы ST-A … ST-G
 
-Каждый срез playable сам. ST-A built 2026-08-22. ST-B built 2026-08-27. ST-C built 2026-08-27. ST-D built 2026-08-27. ST-E built 2026-08-27 (`PlayerOrbitalStation`: dock + habitat on Nex-Prime orbit). ST-F built 2026-08-27 (`flip_cluster_owner` on the occupied unnamed pad).
+Каждый срез playable сам. ST-A built 2026-08-22. ST-B built 2026-08-27. ST-C built 2026-08-27. ST-D built 2026-08-27. ST-E built 2026-08-27 (`PlayerOrbitalStation`: dock + habitat on Nex-Prime orbit). ST-F built 2026-08-27 (`flip_cluster_owner` on the occupied unnamed pad). ST-G built 2026-08-28 (factory in that same player cluster; bench (c) print of one catalog module).
 
 | ID | Роль | Семя | DoD | Отказ |
 |----|------|------|-----|-------|
@@ -161,6 +161,7 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 | **ST-D** | Очередь на носителе (один модуль) | **built:** `CatalogCarrier` + `CarrierHangarQueue`; catalog slugs; Phase 3 hangar seed | очередь в hangar; упёрлась в mass/power | мобильный `SITE_*` |
 | **ST-E** | Своя орбитальная станция ≥2 модулей | **built:** `PlayerOrbitalStation` dock+habitat на орбите Nex-Prime; грамматика §5 | два модуля в одном кластере; не город | mint `SITE_*`; 2-я система |
 | **ST-F** | Смена владельца CX↔GR на одной базе | **built:** `PadBaseController.flip_cluster_owner`; `swap_cluster_theme`; `OwnershipData` | визуал + услуги, те же числа тира | второй `SITE_*`; арена-флип |
+| **ST-G** | Своя factory + печать (c) | **built:** factory on `PlayerOrbitalStation`; `PadPrintBench.print_one_factory_module`; `rules/15` | factory в том же кластере; списать Contribution/Biomass; **один** модуль; без factory — отказ | cash-shop skip; mint `SITE_*`; ST-E = 3 модуля |
 
 ---
 
@@ -185,7 +186,8 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 
 | Сейчас | Дальше |
 |--------|--------|
-| ST-F смена владельца CX↔GR на одной базе | — |
+| ST-G своя factory + печать (c) в player cluster | — |
+| ST-F смена владельца CX↔GR на одной базе | **built** |
 | NP-C | **built** — NPC ставит один модуль |
 | G2–G6 | закрыты |
 

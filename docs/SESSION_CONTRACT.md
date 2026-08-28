@@ -52,7 +52,11 @@
     system. P0Slice.ORBITAL_STATIONS stays off (built).
 23. ST-F: CX↔GR owner swap on one occupied unnamed pad. Visual theme +
     services list change; harvest / print / hangar numbers stay. Not a
-    second SITE_*. Not arena-flip (this pass).
+    second SITE_*. Not arena-flip (built).
+24. ST-G: factory in the existing player orbital cluster. Bench (c)
+    spends Contribution/Biomass → one catalog module. Without factory,
+    (c) refuses. No cash-shop skip. Knowledge does not cheapen rules/15.
+    ST-E stays dock+habitat. ORBITAL_STATIONS stays off (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

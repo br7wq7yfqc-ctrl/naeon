@@ -7,7 +7,7 @@
 **Принцип:** Local-first → Vertical Slices → Iterative Multiplayer → Platform + AI + Educational Systems  
 **SC → NAEON (роли, не клон):** `docs/design/SC_FEATURE_MAP.md` · бар подхода OS-A…OS-H: `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (OS-A…OS-H built; harness ритуала. 60 FPS / 5 мин = 3090 human gate).  
 **Clash нативен; бар арены — Predecessor/Paragon, не Arena Commander:** `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (AR-A…AR-F; код арены не вытесняет OS-A).  
-**Стратегия — третий бар, не Clash и не полёт OPEN SPACE:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-F built: overlay, extractor, print, hangar, orbital cluster, CX↔GR owner swap).  
+**Стратегия — третий бар, не Clash и не полёт OPEN SPACE:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-G built: overlay, extractor, print, hangar, orbital cluster, CX↔GR owner swap, own factory print).  
 **Каталог — дыры (очередь, не новый catalog):** `docs/design/WORLD_FILL.md` §6. Ready-made fill → locked plates без GLB → пластины только на титульную дыру. Не mint SITE_*. Не capital-ship wave. OS-H harness built; не G2.  
 **NPC agency + MMO HOLD:** `docs/design/NPC_AGENCY.md` (NP-A…NP-F; NP-C next after ST-A) · `docs/design/MMO_SERVERS.md` (Phase 3 HOLD; 10k CCU / ≥100 на шард без instance-split; нет netcode сейчас; не G5 / G2–G6).
 
@@ -18,6 +18,7 @@ ST-B: occupy unnamed pad → harvest → Contribution на HUD; видимый `
 ST-C: `PadPrintBench` на unnamed паде / NPC-верстаке. Spend Contribution/Biomass → один catalog-модуль. Нет cash-shop skip.  
 ST-D: `CarrierHangarQueue` на catalog hull (`cybernex_capital_carrier` …). Один слот; refuse mass/power. Не мобильный `SITE_*`.  
 ST-E: `PlayerOrbitalStation` — два catalog-модуля (dock + habitat) в одном кластере на орбите Nex-Prime. Не город. Не `SITE_*`.  
+ST-G: factory в том же player cluster. Spend Contribution/Biomass → один catalog-модуль по §6(c). Без factory — отказ.  
 Петля P0.6 на RTX 3090 жива — не ломать. llvmpipe ≠ FPS PASS.
 
 ---
@@ -75,7 +76,7 @@ ST-E: `PlayerOrbitalStation` — два catalog-модуля (dock + habitat) в
 - **DoD**: экипировать, летать, стрелять, save/load
 
 ### 1.3 Colony / Strategy Core
-**Бар:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-F built). Overlay на загруженном теле ARK — не карта галактики.
+**Бар:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-G built). Overlay на загруженном теле ARK — не карта галактики.
 
 - **ST-A (built):** `StrategyOverlay` (клавиша B) + один habitat на `Pad_North` / `Pad_Approach` / `Pad_Flank`. `LayerContext` = Strategy. Корабль и TPS живы после Esc/B. Не `SITE_*`.
 - **ST-B (built):** видимый extractor на unnamed паде; occupy → harvest → Contribution на HUD. Knowledge только подпись.
@@ -84,13 +85,14 @@ ST-E: `PlayerOrbitalStation` — два catalog-модуля (dock + habitat) в
 - **ST-E (built):** своя орбитальная станция — два catalog-модуля (dock + habitat) в одном `PlayerOrbitalStation` на орбите Nex-Prime. Не город. Не `SITE_*`. `ORBITAL_STATIONS` выкл.
 - Свои базы из модулей на unnamed pads / claimed dirt (occupy-to-hold): habitat (ST-A), extractor (ST-B), turret, pad, storage, hangar stub
 - Свои орбитальные станции из той же грамматики (dock, habitat, factory, defense, hangar) — орбита authored-тела, не `SITE_*` — ST-E built (два модуля)
-- Печать модулей на трёх верстаках: (a) NPC/authored пад или станция — ST-C built; (b) hangar carrier/mothership — ST-D built; (c) своя factory — ST-F+
+- Печать модулей на трёх верстаках: (a) NPC/authored пад или станция — ST-C built; (b) hangar carrier/mothership — ST-D built; (c) своя factory — ST-G built
 - Ресурсные ноды + extraction + локальный Contribution / RBE / Biomass — ST-B built
 - **DoD ST-A:** overlay на Nex-Prime; модуль на unnamed паде; корабль и TPS живы
 - **DoD ST-B:** occupy → добыча → число Contribution на HUD; Knowledge ≠ yield
 - **DoD ST-C:** списать Contribution/Biomass; получить один модуль; cash-shop skip невозможен
 - **DoD ST-D:** очередь в hangar (один модуль); упёрлась в mass/power; не мобильный `SITE_*`
 - **DoD ST-E:** два модуля в одном player orbital cluster; не город; не mint `SITE_*`; не 2-я система
+- **DoD ST-G:** factory в том же player cluster; списать Contribution/Biomass; один catalog-модуль; без factory — отказ; cash-shop skip невозможен
 
 ### Cross
 - Asset pipeline (GLTF + LOD), dark-neon materials, local save
