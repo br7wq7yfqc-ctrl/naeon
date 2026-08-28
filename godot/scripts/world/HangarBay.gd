@@ -1,7 +1,7 @@
 extends Node3D
 class_name HangarBay
 ## Door + interior spawn on the ST-D catalog carrier. Data only.
-## No GroundVehicle. Not a SITE_*. Not a mobile pad.
+## IN-D rover spawn lives on CatalogCarrier (ramp top). Not a SITE_*. Not a mobile pad.
 
 const INTERIOR_KIND := "hangar_bay"
 const MOUTH_LOCAL := Vector3(0.0, -0.55, 10.4)
@@ -30,3 +30,10 @@ func mouth_local() -> Vector3:
 
 func mouth_global() -> Vector3:
 	return global_position
+
+
+func rover_spawn_global() -> Vector3:
+	var ramp: Node = get_node_or_null("CargoRamp")
+	if ramp != null and ramp.has_method("walk_mouth_global"):
+		return ramp.walk_mouth_global()
+	return global_position + Vector3(0.0, 0.8, 0.0)

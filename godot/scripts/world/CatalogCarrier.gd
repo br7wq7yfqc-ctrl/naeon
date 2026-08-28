@@ -2,7 +2,8 @@ extends Node3D
 class_name CatalogCarrier
 ## ST-D §6(b) / §7: one catalog carrier hull. Hangar queue lives here.
 ## IN-A: I enters InteriorGenerator hangar_bay pocket (not a mobile SITE_*).
-## IN-C: HangarBay + CargoHold data + CargoRamp V0/V1. No rover. Not a mobile SITE_*.
+## IN-C: HangarBay + CargoHold data + CargoRamp V0/V1. Not a mobile SITE_*.
+## IN-D: one GroundVehicle on ramp top when DEPLOYED. No store/retrieve. No SoftNet.
 ## No new hull UUID.
 
 const DEFAULT_HULL := "cybernex_capital_carrier"
@@ -31,6 +32,7 @@ var _pad: Node3D = null
 var _home_pos: Vector3 = Vector3.ZERO
 var _home_basis: Basis = Basis.IDENTITY
 var _home_ok: bool = false
+var _deployed_rover: Node3D = null
 
 
 func _ready() -> void:
@@ -121,6 +123,64 @@ func altitude_agl() -> float:
 	if _pad != null and is_instance_valid(_pad):
 		return global_position.distance_to(_pad.global_position)
 	return 9999.0
+
+
+func try_deploy_rover() -> String:
+	## One rover on hangar_bay / ramp top. Requires DEPLOYED + IN-C pose gate.
+	## Does not write CargoHold. Does not mint SITE_*.
+	if _deployed_rover != null and is_instance_valid(_deployed_rover):
+		return "ALREADY"
+	var ramp: Node = cargo_ramp()
+	if ramp == null:
+		return "BLOCKED"
+	if ramp.has_method("block_reason") and str(ramp.block_reason()) != "":
+		return "BLOCKED"
+	if ramp.has_method("is_driveable") and not bool(ramp.is_driveable()):
+		return "BLOCKED"
+	var rover: Node3D = CharacterBody3D.new()
+	rover.set_script(load("res://scripts/vehicle/GroundVehicle.gd"))
+	rover.name = "GroundVehicle"
+	rover.set_meta("site_pin", "")
+	rover.set_meta("mobile_site", false)
+	var parent_n: Node = get_parent()
+	if parent_n == null:
+		parent_n = self
+	parent_n.add_child(rover)
+	var spawn: Vector3 = global_position
+	var bay: Node = hangar_bay()
+	if bay != null and bay.has_method("rover_spawn_global"):
+		spawn = bay.rover_spawn_global()
+	elif ramp.has_method("walk_mouth_global"):
+		spawn = ramp.walk_mouth_global()
+	var up := _up_at(_pad) if _pad != null else _up_at(self)
+	rover.global_position = spawn + up * 0.45
+	var os: Node = _open_space_node()
+	if rover.has_method("set_planet_provider") and os != null:
+		rover.set_planet_provider(os)
+	if rover.has_method("set_pad_deck") and _pad != null:
+		rover.set_pad_deck(_pad)
+	if rover.has_method("set_hangar_ramp"):
+		rover.set_hangar_ramp(ramp)
+	if rover.has_method("align_to_surface"):
+		rover.align_to_surface()
+	var foot: Vector3 = spawn
+	if ramp.has_method("walk_foot_global"):
+		foot = ramp.walk_foot_global()
+	if rover.has_method("face_along"):
+		rover.face_along(foot - spawn)
+	_deployed_rover = rover
+	print("[CatalogCarrier] rover on ramp mouth")
+	return "DEPLOYED"
+
+
+func get_deployed_rover() -> Node3D:
+	return _deployed_rover if _deployed_rover != null and is_instance_valid(_deployed_rover) else null
+
+
+func clear_deployed_rover() -> void:
+	if _deployed_rover != null and is_instance_valid(_deployed_rover):
+		_deployed_rover.queue_free()
+	_deployed_rover = null
 
 
 func try_deploy_ramp() -> String:
@@ -241,7 +301,7 @@ func _ensure_hangar_queue() -> void:
 
 
 func _ensure_hangar_systems() -> void:
-	## V0: CargoHold + HangarBay data. V1: CargoRamp plates. No GroundVehicle.
+	## V0: CargoHold + HangarBay data. V1: CargoRamp plates. V2 rover is try_deploy_rover.
 	if get_node_or_null("CargoHold") == null:
 		_hold = Node.new()
 		_hold.set_script(preload("res://scripts/ship/CargoHold.gd"))
@@ -280,6 +340,15 @@ func _remember_home() -> void:
 	_home_pos = global_position
 	_home_basis = global_transform.basis
 	_home_ok = true
+
+
+func _open_space_node() -> Node:
+	var n: Node = get_parent()
+	while n != null:
+		if n.has_method("gravity_at") and n.has_method("nearest_planet"):
+			return n
+		n = n.get_parent()
+	return null
 
 
 func _planet() -> Node:
