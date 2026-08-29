@@ -8208,6 +8208,31 @@ func _assert_occupy_hud_dirt(os: Node, walker: Node3D, pad: Node3D, fails: Packe
 	print("[Playtest] occupy HUD plate 11m '", txt.replace("\n", " / ").substr(0, 120), "'")
 	if txt.to_upper().find("PAD") < 0:
 		fails.append("occupy HUD empty on plate")
+	var radar = hud.get("_radar")
+	if radar is CanvasItem:
+		(radar as CanvasItem).visible = true
+	walker.global_position = pad.global_position + side * 50.0 + up * 2.0
+	if hud.has_method("_refresh"):
+		hud._refresh()
+	var near_n := 0
+	if hud.has_method("radar_pad_contacts"):
+		near_n = hud.radar_pad_contacts().size()
+	print("[Playtest] pad radar dirt 50m n=", near_n)
+	if near_n < 1:
+		fails.append("pad radar missed pad at 50m dirt")
+	walker.global_position = pad.global_position + side * 600.0 + up * 2.0
+	if hud.has_method("_refresh"):
+		hud._refresh()
+	var far_n := 0
+	var far_hit := false
+	if hud.has_method("radar_pad_contacts"):
+		for c in hud.radar_pad_contacts():
+			far_n += 1
+			if c is Node3D and (c as Node3D).global_position.distance_to(pad.global_position) < 30.0:
+				far_hit = true
+	print("[Playtest] pad radar dirt 600m n=", far_n, " pad=", far_hit)
+	if far_hit:
+		fails.append("pad radar used 12km approach on-foot")
 	walker.global_position = saved
 
 

@@ -915,7 +915,9 @@ func _refresh_pad_radar(origin: Vector3) -> void:
 	pads.sort_custom(func(a, b): return a.global_position.distance_squared_to(origin) \
 		< b.global_position.distance_squared_to(origin))
 	var range_m := PAD_RADAR_LOCAL_M
-	if _in_openspace():
+	# Approach 12 km is the hull (OS-C 8 km spawn). On-foot dirt EVA is 400 m.
+	var origin_n: Node = _occupy_origin()
+	if _in_openspace() and origin_n != null and origin_n.has_method("flight_mode_name"):
 		range_m = PAD_RADAR_APPROACH_M
 	var title_n := _radar.get_node_or_null("PadTitle") as Label
 	var shown: Array = []
