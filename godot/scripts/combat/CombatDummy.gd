@@ -99,9 +99,10 @@ func _physics_process(delta: float) -> void:
 		_lane_ai(delta, do_ai)
 		move_and_slide()
 		return
-	var player := _find_player() if do_ai or _player_cache == null else _player_cache
+	var player := _find_player()
 	# Far culling: no move/look when far from player (still take damage)
-	if player and global_position.distance_squared_to(player.global_position) > 55.0 * 55.0:
+	if player and is_instance_valid(player) and player.is_inside_tree() \
+			and global_position.distance_squared_to(player.global_position) > 55.0 * 55.0:
 		velocity.x = 0.0
 		velocity.z = 0.0
 		_windup_t = 0.0
@@ -396,30 +397,32 @@ func _same_faction(other: Node) -> bool:
 
 
 func _find_player() -> Node3D:
-	if _player_cache != null and is_instance_valid(_player_cache):
+	if _player_cache != null and is_instance_valid(_player_cache) and _player_cache.is_inside_tree():
 		return _player_cache
+	_player_cache = null
 	var tree := get_tree()
 	if tree == null:
 		return null
 	# Prefer group once
 	if SoftScanCache:
 		var sp = SoftScanCache.get_player()
-		if sp is Node3D and not _same_faction(sp):
+		if sp is Node3D and (sp as Node3D).is_inside_tree() and not _same_faction(sp):
 			_player_cache = sp as Node3D
 			return _player_cache
 	var nodes := tree.get_nodes_in_group("player")
-	if nodes.size() > 0 and nodes[0] is Node3D and not _same_faction(nodes[0]):
+	if nodes.size() > 0 and nodes[0] is Node3D and (nodes[0] as Node3D).is_inside_tree() \
+			and not _same_faction(nodes[0]):
 		_player_cache = nodes[0]
 		return _player_cache
 	for n in tree.get_nodes_in_group("players"):
-		if n is Node3D:
+		if n is Node3D and n.is_inside_tree():
 			_player_cache = n
 			return _player_cache
 	# Fallback once expensive scan
 	var scene := tree.current_scene
 	if scene:
 		for c in scene.get_children():
-			if c is CharacterBody3D and c != self and c.has_method("take_damage"):
+			if c is CharacterBody3D and c != self and c.is_inside_tree() and c.has_method("take_damage"):
 				_player_cache = c
 				return _player_cache
 	return null

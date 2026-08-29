@@ -4785,10 +4785,9 @@ func _assert_st_f(os: Node, fails: PackedStringArray) -> void:
 		fails.append("ST-F changed site_pin (%s → %s)" % [pin0, pin1])
 	if pin1.begins_with("SITE_") and pin1 != "SITE_SPACE_TEST_PAD":
 		fails.append("ST-F minted a new SITE_* (%s)" % pin1)
-	if str(pad.get_meta("site_pin", "missing")) != "" and str(pad.get_meta("site_pin", "")) != "missing":
-		if str(pad.get_meta("site_pin")).begins_with("SITE_") \
-				and str(pad.get_meta("site_pin")) != "SITE_SPACE_TEST_PAD":
-			fails.append("ST-F pad minted site_pin (%s)" % str(pad.get_meta("site_pin")))
+	var pad_pin := str(pad.get_meta("site_pin", ""))
+	if pad_pin.begins_with("SITE_") and pad_pin != "SITE_SPACE_TEST_PAD":
+		fails.append("ST-F pad minted site_pin (%s)" % pad_pin)
 	print("[Playtest] ST-F cluster=", pad_name, " owner=", owner0, "→", owner1,
 		" theme=", theme0, "→", theme1,
 		" services=", svc0, "→", svc1,
