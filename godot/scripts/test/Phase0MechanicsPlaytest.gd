@@ -2945,6 +2945,19 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 			fails.append("hatch dirt teleported away from hull (%s)" % snapped(hd_ship, 0.1))
 		if hd_pad < 60.0:
 			fails.append("hatch dirt snapped to pad (%s)" % snapped(hd_pad, 0.1))
+		var rad_up_h: Vector3 = (walker.global_position - (nex as Node3D).global_position).normalized()
+		var body_fwd_h: Vector3 = -walker.global_transform.basis.z
+		body_fwd_h = body_fwd_h - rad_up_h * body_fwd_h.dot(rad_up_h)
+		var want_h: Vector3 = -ship.global_transform.basis.z
+		want_h = want_h - rad_up_h * want_h.dot(rad_up_h)
+		if body_fwd_h.length_squared() < 0.04 or want_h.length_squared() < 0.04:
+			fails.append("hatch dirt facing not tangent")
+		else:
+			var align_h: float = body_fwd_h.normalized().dot(want_h.normalized())
+			print("[Playtest] hatch dirt facing align=", snapped(align_h, 0.01),
+				" tangent=", snapped(1.0 - absf(body_fwd_h.normalized().dot(rad_up_h)), 0.01))
+			if align_h < 0.55:
+				fails.append("hatch dirt facing sideways vs hull nose (%s)" % snapped(align_h, 0.01))
 	if os.has_method("try_enter_ship"):
 		os.try_enter_ship()
 	await get_tree().create_timer(0.3).timeout
