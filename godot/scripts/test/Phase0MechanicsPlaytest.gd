@@ -2889,6 +2889,29 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 	print("[Playtest] surface land dirt agl=", snapped(agl, 0.01), " hold=", snapped(hold, 0.01))
 	if absf(agl - hold) > 1.6:
 		fails.append("surface land dirt hold is not Relief (%s vs %s)" % [snapped(agl, 0.01), snapped(hold, 0.01)])
+	if os.has_method("try_exit_ship"):
+		os.try_exit_ship()
+	await get_tree().create_timer(0.4).timeout
+	var walker: Node3D = os.get("player") as Node3D if os else null
+	if walker == null or not is_instance_valid(walker) or not walker.is_inside_tree():
+		fails.append("EVA dirt: no walker beside hull")
+	else:
+		var d_ship: float = walker.global_position.distance_to(ship.global_position)
+		var d_pad: float = walker.global_position.distance_to(deck.global_position)
+		var w_agl := 99.0
+		if nex.has_method("altitude_of"):
+			w_agl = float(nex.altitude_of(walker.global_position))
+		print("[Playtest] EVA dirt d_ship=", snapped(d_ship, 0.1), " d_pad=", snapped(d_pad, 0.1),
+			" agl=", snapped(w_agl, 0.01))
+		if d_ship > 22.0:
+			fails.append("EVA dirt teleported away from hull (%s)" % snapped(d_ship, 0.1))
+		if d_pad < 60.0:
+			fails.append("EVA dirt snapped to pad (%s)" % snapped(d_pad, 0.1))
+		if w_agl < 0.2 or w_agl > 5.0:
+			fails.append("EVA dirt walker not on Relief (%s)" % snapped(w_agl, 0.01))
+	if os.has_method("try_enter_ship"):
+		os.try_enter_ship()
+	await get_tree().create_timer(0.35).timeout
 	if ship.has_method("_do_launch"):
 		ship.set("_land_lock_t", 0.0)
 		ship._do_launch()
