@@ -852,6 +852,12 @@ func _hand_view_to_ship() -> void:
 	var cam: Camera3D = null
 	if ship != null and is_instance_valid(ship):
 		cam = ship.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+	var vp := get_viewport()
+	if vp != null:
+		var live: Camera3D = vp.get_camera_3d()
+		if live != null and live != cam:
+			live.current = false
+			live.clear_current(false)
 	if cam:
 		cam.current = true
 

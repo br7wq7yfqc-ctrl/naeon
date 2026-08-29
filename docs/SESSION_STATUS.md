@@ -1,3 +1,5 @@
+**2026-08-30 — HOVER chase after second dirt F-EVA F-board reclaims hull cam**
+
 **2026-08-30 — F-board after second dirt F-EVA: occupy hull, layer Space, radar 12 km**
 
 **2026-08-30 — OS-stack after second dirt F-EVA is TPS, not SPACE/ship_int/0G**
