@@ -605,6 +605,7 @@ func _go() -> void:
 	_osf_atmo_flight(fails)
 	_osg_outpost_silhouette(fails)
 	_assert_gear_before_land(fails)
+	await _assert_ship_land_settle(fails)
 	_pad_traffic_present(fails)
 	_assert_imported_camera_cannot_steal(fails)
 	await _player_pad_land_hover_view(fails)
@@ -2625,6 +2626,59 @@ func _assert_gear_before_land(fails: PackedStringArray) -> void:
 	if not landed_dn:
 		fails.append("gear-down land refused")
 	elif ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+
+
+func _assert_ship_land_settle(fails: PackedStringArray) -> void:
+	## SESSION_CONTRACT 1 leftover: pad land settles from approach height,
+	## not a +4 m teleport.
+	var os: Node = get_parent()
+	var ship: Node = os.get("ship") if os else null
+	var nex: Node = _osh_nex()
+	if ship == null or nex == null:
+		fails.append("land settle: no ship/Nex-Prime")
+		return
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+	var deck: Node3D = _osh_unnamed_deck()
+	if deck == null:
+		fails.append("land settle: no unnamed pad")
+		return
+	var up: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+	if up.length_squared() > 0.01:
+		up = up.normalized()
+	if bool(ship.get("is_landed")) and ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+	if "velocity" in ship:
+		ship.velocity = -up * 3.5
+	ship.global_position = deck.global_position + up * 7.0
+	ship.set("_gear_down", true)
+	if ship.has_method("_sync_landing_gear"):
+		ship._sync_landing_gear()
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	if ship.has_method("_do_land"):
+		ship._do_land()
+	if not bool(ship.get("is_landed")):
+		fails.append("land settle: LAND refused")
+		return
+	var h0: float = (ship.global_position - deck.global_position).dot(up)
+	print("[Playtest] land settle start h=", snapped(h0, 0.01), " sink=", snapped(float(ship.get("last_land_sink")), 0.1))
+	if h0 < 5.2:
+		fails.append("land settle snapped instead of settling (%s)" % snapped(h0, 0.01))
+		return
+	await get_tree().create_timer(0.65).timeout
+	if ship == null or not is_instance_valid(ship):
+		fails.append("land settle: ship gone")
+		return
+	var h1: float = (ship.global_position - deck.global_position).dot(up)
+	var hold: float = float(ship.get("_land_hold_h"))
+	print("[Playtest] land settle end h=", snapped(h1, 0.01), " hold=", snapped(hold, 0.01))
+	if absf(h1 - hold) > 1.0:
+		fails.append("land settle missed hold height (%s vs %s)" % [snapped(h1, 0.01), snapped(hold, 0.01)])
+	if ship.has_method("_do_launch"):
 		ship.set("_land_lock_t", 0.0)
 		ship._do_launch()
 

@@ -57,6 +57,11 @@ var pilot_active: bool = true
 var _open_space: Node = null
 var _landed_pad: Node3D = null
 var _land_hint_cd: float = 0.0
+var _land_settle_t: float = 0.0
+var _land_settle_dur: float = 0.0
+var _land_settle_from: Vector3 = Vector3.ZERO
+var _land_settle_to: Vector3 = Vector3.ZERO
+var last_land_sink: float = 0.0
 var _hover_hold_alt: float = -1.0
 var _stall: float = 0.0
 var _stall_toast_t: float = 0.0
@@ -784,16 +789,19 @@ func _do_land() -> void:
 
 
 func _commit_land(pad: Node3D) -> void:
+	var sink := 0.0
+	if _open_space != null and _open_space.has_method("gravity_at"):
+		var gg: Vector3 = _open_space.gravity_at(global_position)
+		if gg.length() > 0.01:
+			sink = velocity.dot(gg.normalized())
+	last_land_sink = sink
 	velocity = Vector3.ZERO
 	is_landed = true
 	_stall = 0.0
 	_land_lock_t = 1.25
 	_landed_pad = pad
 	if pad:
-		var up: Vector3 = Vector3.UP
-		if pad.has_meta("pad_up"):
-			up = pad.get_meta("pad_up")
-		global_position = pad.global_position + up * 4.0
+		_begin_pad_settle(pad)
 	if _thruster_fx and is_instance_valid(_thruster_fx):
 		_thruster_fx.emitting = false
 	if AudioDirector:
@@ -813,6 +821,31 @@ func _commit_land(pad: Node3D) -> void:
 		_toast_ship("Landed — Space/E takeoff · F EVA · C claim")
 	else:
 		_toast_ship("Surface land — Space/E takeoff · C near a pad to claim")
+
+
+func _begin_pad_settle(pad: Node3D) -> void:
+	## Settle from the approach pose onto gear hold height. Do not teleport to +4 m.
+	if pad == null or not is_instance_valid(pad):
+		return
+	var up := Vector3.UP
+	if pad.has_meta("pad_up"):
+		var raw: Vector3 = pad.get_meta("pad_up")
+		if raw.length_squared() > 0.01:
+			up = raw.normalized()
+	var rel: Vector3 = global_position - pad.global_position
+	var h: float = rel.dot(up)
+	var lat: Vector3 = rel - up * h
+	if lat.length() > 8.0:
+		lat = lat.normalized() * 8.0
+	_land_settle_to = pad.global_position + up * _land_hold_h + lat
+	if h <= _land_hold_h + 0.25:
+		global_position = _land_settle_to
+		_land_settle_t = 0.0
+		_land_settle_dur = 0.0
+	else:
+		_land_settle_from = global_position
+		_land_settle_dur = clampf((h - _land_hold_h) * 0.07, 0.14, 0.55)
+		_land_settle_t = _land_settle_dur
 
 func _wants_takeoff() -> bool:
 	if Input.is_action_just_pressed("jump"):
@@ -855,6 +888,8 @@ func _do_launch() -> void:
 	var nose: Vector3 = -global_transform.basis.z
 	is_landed = false
 	_landed_pad = null
+	_land_settle_t = 0.0
+	_land_settle_dur = 0.0
 	_gear_down = false
 	_sync_landing_gear()
 	# Stay in HOVER (no stall speed): SCM stalls at 16 m/s and launch starts at ~4.
@@ -1741,6 +1776,19 @@ func clear_deployed_rover() -> void:
 func _stick_to_pad() -> void:
 	velocity = Vector3.ZERO
 	if _landed_pad and is_instance_valid(_landed_pad):
+		var dt: float = get_physics_process_delta_time()
+		if dt <= 0.0:
+			dt = 0.016
+		if _land_settle_t > 0.0:
+			_land_settle_t = maxf(0.0, _land_settle_t - dt)
+			var dur: float = maxf(_land_settle_dur, 0.001)
+			var u: float = 1.0 - _land_settle_t / dur
+			u = clampf(u * u * (3.0 - 2.0 * u), 0.0, 1.0)
+			global_position = _land_settle_from.lerp(_land_settle_to, u)
+			_pitch = lerpf(_pitch, 0.0, 0.35)
+			_roll = lerpf(_roll, 0.0, 0.35)
+			_apply_attitude()
+			return
 		var up: Vector3 = Vector3.UP
 		if _landed_pad.has_meta("pad_up"):
 			up = (_landed_pad.get_meta("pad_up") as Vector3).normalized()
