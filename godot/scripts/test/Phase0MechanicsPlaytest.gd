@@ -6193,6 +6193,27 @@ func _assert_in_c(os: Node, fails: PackedStringArray) -> void:
 		ramp.state_name() if ramp != null and ramp.has_method("state_name") else result)
 	if ramp == null or not (ramp.has_method("is_driveable") and bool(ramp.is_driveable())):
 		fails.append("IN-C ramp did not deploy on slow hover")
+	if carrier.has_method("set_pose_hover"):
+		carrier.set_pose_hover(7.0, 3.0, pad)
+	await get_tree().process_frame
+	var plate_agl := 99.0
+	if carrier.has_method("altitude_agl"):
+		plate_agl = float(carrier.altitude_agl())
+	print("[Playtest] IN-C ramp AGL plate hover=", snapped(plate_agl, 0.01))
+	if plate_agl > 7.6:
+		fails.append("IN-C ramp AGL used dirt (pad thickness) (%s)" % snapped(plate_agl, 0.01))
+	result = str(carrier.try_deploy_ramp()) if carrier.has_method("try_deploy_ramp") else ""
+	if result == "BLOCKED":
+		fails.append("IN-C 7m plate hover blocked as too high")
+	if carrier.has_method("set_pose_hover"):
+		carrier.set_pose_hover(40.0, 0.0, pad)
+	await get_tree().process_frame
+	var over_agl := 0.0
+	if carrier.has_method("altitude_agl"):
+		over_agl = float(carrier.altitude_agl())
+	print("[Playtest] IN-C ramp AGL overflight=", snapped(over_agl, 0.1))
+	if over_agl < 22.0:
+		fails.append("IN-C ramp overflight AGL not deck height (%s)" % snapped(over_agl, 0.1))
 	if ramp != null and ramp.has_method("stow_immediate"):
 		ramp.stow_immediate()
 	if carrier.has_method("set_pose_landed"):

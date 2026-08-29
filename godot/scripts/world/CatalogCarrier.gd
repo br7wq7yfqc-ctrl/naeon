@@ -131,11 +131,17 @@ func hull_speed() -> float:
 
 
 func altitude_agl() -> float:
+	## Plate: height above the deck. Dirt: PlanetRelief. 3D pad dist is not AGL.
+	if _pad != null and is_instance_valid(_pad):
+		var pup: Vector3 = _up_at(_pad)
+		var rel: Vector3 = global_position - _pad.global_position
+		var h: float = rel.dot(pup)
+		var lat: float = (rel - pup * h).length()
+		if lat <= 28.0:
+			return h
 	var pl: Node = _planet()
 	if pl != null and pl.has_method("altitude_of"):
 		return float(pl.altitude_of(global_position))
-	if _pad != null and is_instance_valid(_pad):
-		return global_position.distance_to(_pad.global_position)
 	return 9999.0
 
 
