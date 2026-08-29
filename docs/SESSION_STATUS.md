@@ -1,3 +1,5 @@
+**2026-08-30 — Slope after second I-hatch dirt is PlanetRelief, not pocket-Y cliff**
+
 **2026-08-30 — Coyote after second I-hatch dirt: spawn grace cleared, jump live**
 
 **2026-08-30 — Facing after second I-hatch dirt is hull-nose tangent + `_update_up`**
