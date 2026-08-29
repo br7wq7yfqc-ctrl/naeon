@@ -74,6 +74,7 @@ func _go() -> void:
 		fails.append("fast flight should not stall")
 	if _Flight.stall_speed(_Flight.Mode.HOVER) > 0.01:
 		fails.append("HOVER must not stall")
+	_assert_dirt_slope_math(fails)
 
 	# --- interior from pilot ---
 	if os.has_method("_toggle_interior"):
@@ -2174,6 +2175,7 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 		_osh_report_skips(fails, done, required)
 		return
 	await _assert_landing_absorb(walker, pad_eva, fails)
+	await _assert_walker_dirt_slope(walker, pad_eva, fails)
 	if bool(os.get("_in_ship")):
 		fails.append("OS-H EVA skipped — still piloting")
 		fails.append("OS-H skipped takeoff (no eva)")
@@ -2442,6 +2444,62 @@ func _assert_landing_absorb(walker: Node3D, pad: Node3D, fails: PackedStringArra
 		fails.append("landing absorb did not fire (%s)" % snapped(impact, 0.1))
 	if deck < 0.2 or deck > 8.0:
 		fails.append("landing absorb left walker off pad (deck=%s)" % snapped(deck, 0.01))
+	if walker.has_method("snap_to_pad"):
+		walker.global_position = stay
+		walker.call("snap_to_pad", pad)
+
+
+func _assert_dirt_slope_math(fails: PackedStringArray) -> void:
+	## SESSION_CONTRACT 2 leftover: dirt slope from PlanetRelief, not a billiard.
+	var relief = load("res://scripts/world/PlanetRelief.gd")
+	if relief == null or not relief.has_method("slope_rad"):
+		fails.append("dirt slope: PlanetRelief.slope_rad missing")
+		return
+	var pid := "Nex-Prime"
+	var seed: int = int(relief.body_seed(pid))
+	var prof: Dictionary = relief.profile_for_planet(pid)
+	var max_s := 0.0
+	var i := 0
+	while i < 24:
+		var lon: float = float(i) * 0.37
+		var lat: float = sin(float(i) * 0.91) * 0.55
+		var dir := Vector3(cos(lat) * sin(lon), sin(lat), cos(lat) * cos(lon))
+		var s: float = float(relief.slope_rad(dir, seed, prof))
+		if s > max_s:
+			max_s = s
+		if s < 0.0 or s > 1.4:
+			fails.append("dirt slope out of range (%s)" % snapped(s, 0.01))
+			return
+		i += 1
+	print("[Playtest] dirt slope math max=", snapped(rad_to_deg(max_s), 0.1), " deg")
+	if max_s < deg_to_rad(6.0):
+		fails.append("dirt slope is a billiard (%s deg)" % snapped(rad_to_deg(max_s), 0.1))
+
+
+func _assert_walker_dirt_slope(walker: Node3D, pad: Node3D, fails: PackedStringArray) -> void:
+	## Off the unnamed plate, walker grip reads PlanetRelief slope.
+	if walker == null or not is_instance_valid(walker) or pad == null:
+		fails.append("walker dirt slope: no walker/pad")
+		return
+	var up := Vector3.UP
+	if pad.has_meta("pad_up"):
+		var raw: Vector3 = pad.get_meta("pad_up")
+		if raw.length_squared() > 0.01:
+			up = raw.normalized()
+	var stay: Vector3 = walker.global_position
+	var side: Vector3 = walker.global_transform.basis.x
+	side = side - up * side.dot(up)
+	if side.length_squared() < 0.04:
+		side = up.cross(Vector3.RIGHT)
+	side = side.normalized()
+	walker.global_position = pad.global_position + side * 22.0 + up * 2.2
+	walker.set("_spawn_grace_t", 0.0)
+	if walker.has_method("_physics_process"):
+		walker._physics_process(0.016)
+	var ang: float = float(walker.get("last_slope_ang"))
+	print("[Playtest] walker dirt slope last=", snapped(rad_to_deg(ang), 0.1), " deg")
+	if ang < 0.0 or ang > 1.4:
+		fails.append("walker dirt slope last out of range (%s)" % snapped(ang, 0.01))
 	if walker.has_method("snap_to_pad"):
 		walker.global_position = stay
 		walker.call("snap_to_pad", pad)

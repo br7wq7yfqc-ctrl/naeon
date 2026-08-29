@@ -75,6 +75,7 @@ var _was_on_floor: bool = false
 var _land_absorb_t: float = 0.0
 var _land_crouch: float = 0.0
 var last_land_impact: float = 0.0
+var last_slope_ang: float = 0.0
 
 const DOWN_TIME := 2.2
 var _space_held: bool = false
@@ -656,6 +657,12 @@ func _physics_process(delta: float) -> void:
 	if is_on_floor():
 		# Radial up, not world +Y — otherwise flat ground reads as a cliff on a sphere.
 		slope_ang = get_floor_angle(_up)
+	if not interior_mode and not eva_mode:
+		var rel_s: float = _relief_slope_rad()
+		if rel_s > slope_ang:
+			slope_ang = rel_s
+	last_slope_ang = slope_ang
+	if slope_ang > 0.01:
 		sp *= clampf(1.0 - (slope_ang / deg_to_rad(58.0)) * 0.38, 0.52, 1.0)
 	if _land_absorb_t > 0.0:
 		sp *= 0.58
@@ -1094,6 +1101,18 @@ func _visual_relief_metres(pl: Node3D) -> float:
 	var pid: String = str(pl.get("planet_name")) if "planet_name" in pl else "Nex-Prime"
 	var sea: float = float(_Relief.profile_for_planet(pid).get("sea_level", -0.35))
 	return maxf(h, sea)
+
+
+func _relief_slope_rad() -> float:
+	var pl: Node3D = _nearest_planet_body()
+	if pl == null:
+		return 0.0
+	var dir: Vector3 = global_position - pl.global_position
+	if dir.length_squared() < 1e-8:
+		return 0.0
+	var pid: String = str(pl.get("planet_name")) if "planet_name" in pl else "Nex-Prime"
+	var seed: int = int(pl.body_seed()) if pl.has_method("body_seed") else int(absi(pid.hash()) % 10000)
+	return float(_Relief.slope_rad(dir.normalized(), seed, _Relief.profile_for_planet(pid)))
 
 
 func _force_dirt_chunks() -> void:
