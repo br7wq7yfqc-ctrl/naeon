@@ -3366,6 +3366,21 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 			fails.append("occupy HUD origin still walker after F-EVA dirt sink F-board")
 		if ly_b2.to_upper().find("SPACE") < 0:
 			fails.append("layer not Space after F-EVA dirt sink F-board (%s)" % ly_b2)
+		var radar_b2: Variant = hud_b2.get("_radar") if hud_b2 else null
+		if radar_b2 is CanvasItem:
+			(radar_b2 as CanvasItem).visible = true
+		if hud_b2 != null and hud_b2.has_method("_refresh"):
+			hud_b2._refresh()
+		var rng_b2: float = float(hud_b2.get("_radar_range_m")) if hud_b2 else 0.0
+		var n_b2 := 0
+		if hud_b2 != null and hud_b2.has_method("radar_pad_contacts"):
+			n_b2 = hud_b2.radar_pad_contacts().size()
+		print("[Playtest] pad radar F-board after F-EVA dirt range=", snapped(rng_b2, 1.0),
+			" n=", n_b2, " vis=", (radar_b2 as CanvasItem).visible if radar_b2 is CanvasItem else "?")
+		if rng_b2 < 1000.0:
+			fails.append("pad radar still 400m on-foot after F-board (%s)" % snapped(rng_b2, 1.0))
+		if n_b2 < 1:
+			fails.append("pad radar missed pad after F-board")
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
