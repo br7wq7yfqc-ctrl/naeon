@@ -418,12 +418,16 @@ func _alive_player() -> Node:
 
 
 func _occupy_origin() -> Node3D:
-	## After I-hatch the live walker is OpenSpace.player. Do not keep the hull
-	## from F-board / OS-C bind_player(ship). After F-board walker is gone.
+	## After I-hatch the live walker is OpenSpace.player. After F-board
+	## `_in_ship` — hull, even if the dying walker is still in the tree.
 	var tree := get_tree()
 	if tree != null:
 		var os: Node = tree.get_first_node_in_group("open_space")
 		if os != null:
+			if bool(os.get("_in_ship")):
+				var sh_os: Variant = os.get("ship")
+				if sh_os is Node3D and is_instance_valid(sh_os) and (sh_os as Node3D).is_inside_tree():
+					return sh_os as Node3D
 			var w: Variant = os.get("player")
 			if w is Node3D and is_instance_valid(w) and (w as Node3D).is_inside_tree() \
 					and (w as Node).has_method("set_spawn_facing"):
