@@ -46,7 +46,7 @@ func invalidate_player() -> void:
 
 func get_player() -> Node3D:
 	if _player != null:
-		if is_instance_valid(_player) and _player_t < PLAYER_TTL:
+		if is_instance_valid(_player) and _player.is_inside_tree() and _player_t < PLAYER_TTL:
 			return _player
 		_player = null
 	_player_t = 0.0
@@ -55,11 +55,11 @@ func get_player() -> Node3D:
 		_player = null
 		return null
 	var n = tree.get_first_node_in_group("player")
-	if n is Node3D and is_instance_valid(n):
+	if n is Node3D and is_instance_valid(n) and n.is_inside_tree():
 		_player = n as Node3D
 		return _player
 	for s in tree.get_nodes_in_group("ship"):
-		if s is Node3D and is_instance_valid(s):
+		if s is Node3D and is_instance_valid(s) and s.is_inside_tree():
 			_player = s as Node3D
 			return _player
 	_player = null
@@ -74,7 +74,7 @@ func get_pads() -> Array:
 	var tree := get_tree()
 	if tree:
 		for n in tree.get_nodes_in_group("pad_bases"):
-			if is_instance_valid(n):
+			if is_instance_valid(n) and n.is_inside_tree():
 				_pads.append(n)
 	return _pads
 
@@ -87,7 +87,7 @@ func get_planets() -> Array:
 	var tree := get_tree()
 	if tree:
 		for n in tree.get_nodes_in_group("planets"):
-			if n is Node3D and is_instance_valid(n):
+			if n is Node3D and is_instance_valid(n) and n.is_inside_tree():
 				_planets.append(n)
 	return _planets
 
@@ -100,7 +100,7 @@ func get_enemies() -> Array:
 	var tree := get_tree()
 	if tree:
 		for n in tree.get_nodes_in_group("enemy"):
-			if is_instance_valid(n):
+			if is_instance_valid(n) and n.is_inside_tree():
 				_enemies.append(n)
 	return _enemies
 
@@ -118,7 +118,7 @@ func get_ships() -> Array:
 	var tree := get_tree()
 	if tree:
 		for n in tree.get_nodes_in_group("ship"):
-			if is_instance_valid(n):
+			if is_instance_valid(n) and n.is_inside_tree():
 				_ships.append(n)
 	return _ships
 
@@ -132,6 +132,8 @@ static func overlaps_hurtbox(at: Vector3, target: Node, radius: float) -> bool:
 	if target == null or not is_instance_valid(target) or not (target is Node3D):
 		return false
 	var n := target as Node3D
+	if not n.is_inside_tree():
+		return false
 	var c: Vector3 = n.global_position
 	var r := radius
 	if n.has_method("hurtbox_center"):
@@ -149,7 +151,7 @@ func get_terrain_edits() -> Array:
 	var tree := get_tree()
 	if tree:
 		for n in tree.get_nodes_in_group("terrain_edit"):
-			if is_instance_valid(n):
+			if is_instance_valid(n) and n.is_inside_tree():
 				_terrain.append(n)
 	return _terrain
 

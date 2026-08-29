@@ -1421,7 +1421,7 @@ func _handle_f_interact() -> void:
 	if _in_rover and _rover != null and is_instance_valid(_rover):
 		_unboard_rover()
 		return
-	if not _in_ship and player and is_instance_valid(player):
+	if not _in_ship and player and is_instance_valid(player) and player.is_inside_tree():
 		if _try_board_pocket_seat():
 			return
 		if _try_board_nearby_rover():
