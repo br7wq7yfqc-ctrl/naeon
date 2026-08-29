@@ -1,3 +1,5 @@
+**2026-08-30 — F-EVA dirt coyote after HOVER+S land: grace cleared, jump live**
+
 **2026-08-30 — F-EVA dirt facing after HOVER+S land is hull-nose tangent post-settle**
 
 **2026-08-30 — F-EVA after dirt land (post HOVER+S) is hull-side Relief, not pad / 0G**

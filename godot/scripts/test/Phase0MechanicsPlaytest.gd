@@ -3226,6 +3226,30 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 				" tangent=", snapped(1.0 - absf(fwd_e2.normalized().dot(rad_e2)), 0.01))
 			if align_e2 < 0.55:
 				fails.append("F-EVA after dirt sink land facing sideways (%s)" % snapped(align_e2, 0.01))
+		eva2.set("_spawn_grace_t", 0.0)
+		if eva2 is CharacterBody3D:
+			(eva2 as CharacterBody3D).velocity = Vector3.ZERO
+		if eva2.has_method("_physics_process"):
+			eva2._physics_process(0.016)
+		var coy_e2: float = float(eva2.get("_coyote_t"))
+		var near_e2: Variant = eva2.call("_near_dirt_floor") if eva2.has_method("_near_dirt_floor") else false
+		print("[Playtest] F-EVA after dirt sink land coyote t=", snapped(coy_e2, 0.01), " near=", near_e2)
+		if coy_e2 <= 0.0:
+			fails.append("F-EVA after dirt sink land coyote dead")
+		else:
+			var ev0: float = 0.0
+			if eva2 is CharacterBody3D:
+				ev0 = (eva2 as CharacterBody3D).velocity.dot(rad_e2)
+			if eva2.has_method("request_jump"):
+				eva2.request_jump()
+			if eva2.has_method("_physics_process"):
+				eva2._physics_process(0.016)
+			var ev1: float = ev0
+			if eva2 is CharacterBody3D:
+				ev1 = (eva2 as CharacterBody3D).velocity.dot(rad_e2)
+			print("[Playtest] F-EVA after dirt sink land jump v_up ", snapped(ev0, 0.1), "→", snapped(ev1, 0.1))
+			if ev1 < ev0 + 3.0:
+				fails.append("F-EVA after dirt sink land jump died (%s → %s)" % [snapped(ev0, 0.1), snapped(ev1, 0.1)])
 		if os.has_method("try_enter_ship"):
 			os.try_enter_ship()
 		await get_tree().create_timer(0.3).timeout
