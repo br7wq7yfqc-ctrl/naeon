@@ -417,6 +417,17 @@ func _alive_player() -> Node:
 	return null
 
 
+func _occupy_origin() -> Node3D:
+	## After F-board the walker is freed. Occupy/radar must follow the hull.
+	var p: Node = _alive_player()
+	if p is Node3D:
+		return p as Node3D
+	var sh: Node = _OsStack.player_ship(get_tree())
+	if sh is Node3D and is_instance_valid(sh) and (sh as Node3D).is_inside_tree():
+		return sh as Node3D
+	return null
+
+
 func _interior_director() -> Node:
 	var tree := get_tree()
 	if tree == null:
@@ -582,12 +593,13 @@ func _refresh() -> void:
 		_host_hint_cache = ""
 		host_hint = ""
 	var eva_line := ""
-	if _player and is_instance_valid(_player) and "eva_mode" in _player and bool(_player.eva_mode):
+	var eva_actor: Node = _alive_player()
+	if eva_actor and is_instance_valid(eva_actor) and "eva_mode" in eva_actor and bool(eva_actor.eva_mode):
 		var mag_s := ""
-		if "mag_boot" in _player:
-			if "_mag_latched" in _player and bool(_player._mag_latched):
+		if "mag_boot" in eva_actor:
+			if "_mag_latched" in eva_actor and bool(eva_actor._mag_latched):
 				mag_s = " MAG:LATCH"
-			elif bool(_player.mag_boot):
+			elif bool(eva_actor.mag_boot):
 				mag_s = " MAG:ARM"
 			else:
 				mag_s = " MAG:off"
@@ -600,7 +612,7 @@ func _refresh() -> void:
 				if td >= 0.0:
 					tether_s = "  tether %.0fm" % td
 		var zg_s := ""
-		if _player.has_method("is_zero_g") and bool(_player.is_zero_g()):
+		if eva_actor.has_method("is_zero_g") and bool(eva_actor.is_zero_g()):
 			zg_s = " 0G"
 		eva_line = "  |  EVA%s%s%s" % [zg_s, mag_s, tether_s]
 	var sys_line := ""
@@ -649,15 +661,21 @@ func _refresh() -> void:
 			if director.has_method("get_kind"):
 				k = str(director.get_kind())
 			var ctx := "I"
+			var body: Node3D = null
+			var raw_body: Variant = director.get("_player")
+			if raw_body is Node3D and is_instance_valid(raw_body) and (raw_body as Node3D).is_inside_tree():
+				body = raw_body as Node3D
+			elif _alive_player() is Node3D:
+				body = _alive_player() as Node3D
 			if director.has_method("is_seated") and director.is_seated():
 				ctx = "I leave seat"
-			elif director.has_method("is_near_seat") and _player and director.is_near_seat(_player):
-				ctx = "F seat · I airlock"
-			elif director.has_method("is_near_legal_seat") and _player and director.is_near_legal_seat(_player):
-				ctx = "F seat · I"
-			elif director.has_method("is_near_hatch") and _player and director.is_near_hatch(_player):
+			elif body != null and director.has_method("is_near_hatch") and director.is_near_hatch(body):
 				ctx = "F/I hatch"
-			elif director.has_method("is_near_console") and _player and director.is_near_console(_player):
+			elif body != null and director.has_method("is_near_seat") and director.is_near_seat(body):
+				ctx = "F seat · I airlock"
+			elif body != null and director.has_method("is_near_legal_seat") and director.is_near_legal_seat(body):
+				ctx = "F seat · I"
+			elif body != null and director.has_method("is_near_console") and director.is_near_console(body):
 				ctx = "E ops · I"
 			var ls := ""
 			if director.has_method("life_support_line"):
@@ -744,12 +762,13 @@ func _refresh() -> void:
 	var claim_ratio := 0.0
 	var nearest_pad: Node = null
 	var tree := get_tree()
-	if not pocket and tree and _player and _player is Node3D:
+	var origin: Node3D = _occupy_origin()
+	if not pocket and tree and origin != null:
 		var best_d := 80.0
 		var best_txt := ""
 		for n in (SoftScanCache.get_pads() if SoftScanCache else tree.get_nodes_in_group("pad_bases")):
 			if n is Node3D and n.has_method("get_faction"):
-				var d: float = (_player as Node3D).global_position.distance_to((n as Node3D).global_position)
+				var d: float = origin.global_position.distance_to((n as Node3D).global_position)
 				if d < best_d:
 					best_d = d
 					nearest_pad = n
@@ -789,7 +808,7 @@ func _refresh() -> void:
 
 	# Terrain budget
 	var terra := ""
-	if not pocket and _player and _player is Node3D and get_tree():
+	if not pocket and origin != null and get_tree():
 		for n in (SoftScanCache.get_terrain_edits() if SoftScanCache else get_tree().get_nodes_in_group("terrain_edit")):
 			if n.has_method("get_budget_ratio") and n.visible:
 				terra = "TERRA %.0f%% used  G/B edit  U undo" % (float(n.get_budget_ratio()) * 100.0)
@@ -834,8 +853,8 @@ func _refresh() -> void:
 		_owner_label.add_theme_color_override("font_color", Color(0.95, 0.9, 0.55))
 
 	# Pad radar — skip in pocket (no pads at y=9200)
-	if not pocket and _radar and _radar.visible and _player and _player is Node3D and get_tree():
-		_refresh_pad_radar((_player as Node3D).global_position)
+	if not pocket and _radar and _radar.visible and origin != null and get_tree():
+		_refresh_pad_radar(origin.global_position)
 	else:
 		_radar_contacts.clear()
 	_refresh_os_stack(pocket, nearest_pad)
@@ -962,7 +981,7 @@ func _refresh_os_stack(pocket: bool, pad: Node) -> void:
 	if not show:
 		return
 	var ship_n: Node = _OsStack.player_ship(get_tree())
-	var snap: Dictionary = _OsStack.snapshot(ship_n, _player, pad)
+	var snap: Dictionary = _OsStack.snapshot(ship_n, _alive_player(), pad)
 	var body := str(_OsStack.stack_text(snap))
 	var ally_line := alliance_hud_text()
 	if ally_line != "":

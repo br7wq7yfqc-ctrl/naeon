@@ -1,3 +1,5 @@
+**2026-08-29 — OS-H leftover: occupy HUD after F-board follows the hull**
+
 **2026-08-29 — IN leftover: pocket floor catch is stand-height, not 5 m void**
 
 **2026-08-29 — IN leftover: pocket HUD says F/I hatch, not F seat**

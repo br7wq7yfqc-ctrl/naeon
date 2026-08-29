@@ -2196,6 +2196,7 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 		fails.append("OS-H skipped space_out (no takeoff)")
 		_osh_report_skips(fails, done, required)
 		return
+	_assert_occupy_hud_after_board(os, pad_eva, fails)
 	if ship.has_method("_do_launch"):
 		ship.set("_land_lock_t", 0.0)
 		ship._do_launch()
@@ -4263,8 +4264,10 @@ func _cockpit_space_takeoff_view(fails: PackedStringArray) -> void:
 func _assert_pocket_hatch_hud(fails: PackedStringArray) -> void:
 	## IN leftover: F at hatch is the airlock. HUD must not say "F seat".
 	var hud: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
-	if hud != null and hud.has_method("_process"):
-		hud._process(0.05)
+	if hud != null and hud.has_method("_refresh"):
+		hud._refresh()
+	elif hud != null and hud.has_method("_process"):
+		hud._process(0.2)
 	var txt := ""
 	if hud != null:
 		var lab: Variant = hud.get("_interior_label")
@@ -7651,6 +7654,42 @@ func _osh_report_skips(fails: PackedStringArray, done: Dictionary, required: Pac
 			if not already:
 				fails.append(msg)
 			print("[Playtest] OS-H FAIL skipped ", step)
+
+
+func _assert_occupy_hud_after_board(os: Node, pad: Node3D, fails: PackedStringArray) -> void:
+	## OS-H leftover: F-board frees the walker. Occupy/radar follow the hull.
+	var hud: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+	if hud == null:
+		fails.append("occupy HUD after F-board: no GameHUD")
+		return
+	if hud.has_method("_refresh"):
+		hud._refresh()
+	elif hud.has_method("_process"):
+		hud._process(0.2)
+	var origin: Node3D = null
+	if hud.has_method("_occupy_origin"):
+		origin = hud.call("_occupy_origin") as Node3D
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var w: Node = os.get("player") if os else null
+	var w_live := w != null and is_instance_valid(w) and (w as Node).is_inside_tree()
+	print("[Playtest] occupy HUD after F-board origin=", origin.name if origin else "null",
+		" ship=", ship != null, " walker_live=", w_live)
+	if origin == null:
+		fails.append("occupy HUD lost origin after F-board")
+		return
+	if not w_live and ship != null and origin != ship:
+		fails.append("occupy HUD origin not hull after F-board")
+	var txt := ""
+	var lab: Variant = hud.get("_owner_label")
+	if lab is Label:
+		txt += (lab as Label).text
+	var stack: Variant = hud.get("_os_stack")
+	if stack is Label:
+		txt += " " + (stack as Label).text
+	print("[Playtest] occupy HUD after F-board '", txt.replace("\n", " / ").substr(0, 140), "'")
+	var up := txt.to_upper()
+	if pad != null and up.find("PAD") < 0 and up.find("OCCUPY") < 0 and up.find("LANDED") < 0:
+		fails.append("occupy HUD empty after F-board")
 
 
 func _assert_scan_cache_live(fails: PackedStringArray) -> void:
