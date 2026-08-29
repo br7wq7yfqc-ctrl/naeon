@@ -1,3 +1,5 @@
+**2026-08-30 — Coyote after third dirt I-hatch: spawn grace cleared after facing snap**
+
 **2026-08-30 — Facing after third dirt I-hatch: hull-nose tangent after pocket snap**
 
 **2026-08-30 — I-hatch after second dirt F-EVA F-board: pocket ship_int then hull-side Relief**
