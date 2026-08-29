@@ -1132,6 +1132,8 @@ func _spawn_player_near_ship() -> void:
 		player.set("_spawn_grace_t", 0.0)
 		if player.has_method("_update_up"):
 			player._update_up()
+		if player.has_method("_relief_slope_rad") and "last_slope_ang" in player:
+			player.set("last_slope_ang", float(player.call("_relief_slope_rad")))
 		if player.has_method("set_spawn_facing") and nose.length_squared() > 0.01:
 			player.set_spawn_facing(pad_up, nose)
 		print("[OpenSpace] TPS dirt exit at ", player.global_position, " up=", pad_up)
