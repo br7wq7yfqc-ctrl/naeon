@@ -1,3 +1,5 @@
+**2026-08-29 — Rover dirt slope from PlanetRelief (same as walker)**
+
 **2026-08-29 — Walker dirt slope from PlanetRelief (not a billiard)**
 
 **2026-08-29 — HOVER hold is PD; pad does not rewrite hold alt**
