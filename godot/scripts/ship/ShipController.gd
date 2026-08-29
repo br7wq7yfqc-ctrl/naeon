@@ -1801,13 +1801,16 @@ func _stick_to_pad() -> void:
 		_roll = lerpf(_roll, 0.0, 0.35)
 		_apply_attitude()
 		return
-	# Surface land: freeze + soft altitude hold vs nearest planet
+	# Surface land: freeze + hold vs Relief dirt, not the collision sphere.
 	velocity = Vector3.ZERO
 	if _open_space and _open_space.has_method("nearest_planet"):
 		var pl: Node3D = _open_space.nearest_planet(global_position)
 		if pl and is_instance_valid(pl) and "radius" in pl:
 			var up2: Vector3 = (global_position - pl.global_position).normalized()
-			var hold: Vector3 = pl.global_position + up2 * (float(pl.radius) + 3.5)
+			var dirt_h := 0.0
+			if pl.has_method("relief_height_at"):
+				dirt_h = float(pl.relief_height_at(global_position))
+			var hold: Vector3 = pl.global_position + up2 * (float(pl.radius) + dirt_h + _land_hold_h)
 			var dh: float = global_position.distance_to(hold)
 			if dh > 0.4:
 				global_position = global_position.lerp(hold, 0.2)
