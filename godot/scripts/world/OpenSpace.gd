@@ -961,6 +961,9 @@ func _finish_board_ship() -> void:
 	if ship != null and is_instance_valid(ship) and ship.has_method("set_pilot_active"):
 		ship.set_pilot_active(true)
 	_seat_transition = false
+	var hud: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+	if hud != null and hud.has_method("bind_player") and ship != null and is_instance_valid(ship):
+		hud.bind_player(ship)
 	print("[OpenSpace] boarded ship OK")
 
 

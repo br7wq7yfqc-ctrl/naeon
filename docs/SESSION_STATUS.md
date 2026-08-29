@@ -1,3 +1,5 @@
+**2026-08-30 — OS-stack after F-board (post F-EVA dirt) is Space, HUD bound to hull**
+
 **2026-08-30 — Pad radar after F-board (post F-EVA dirt) is hull 12 km, not 400 m on-foot**
 
 **2026-08-30 — F-board after F-EVA dirt (post HOVER+S): occupy origin is hull, layer Space**
