@@ -818,7 +818,7 @@ func _do_land() -> void:
 	if bool(envp.get("plate", false)):
 		_commit_land(pad)
 		return
-	var alt_dirt: float = _altitude_now()
+	var alt_dirt: float = altitude_agl()
 	# Dirt land is off the plate. Overflight (lat ≤28, deck >22) is not a snap.
 	if alt_dirt < surface_land_alt and (not bool(envp.get("ok", false)) or float(envp.get("lat", 0.0)) > 28.0):
 		_commit_land(null)
@@ -2151,7 +2151,7 @@ func land_readiness_line() -> String:
 	## a bug. Spell out the envelope while a landing is plausible.
 	if is_landed:
 		return "LANDED"
-	var alt: float = _altitude_now()
+	var alt: float = altitude_agl()
 	if alt <= 0.0 or alt > 900.0:
 		return ""
 	var env := _land_envelope()
