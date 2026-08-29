@@ -3381,6 +3381,28 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 			fails.append("pad radar still 400m on-foot after F-board (%s)" % snapped(rng_b2, 1.0))
 		if n_b2 < 1:
 			fails.append("pad radar missed pad after F-board")
+		var stack_b2 := ""
+		var stack_b2_on := false
+		var chip_b2 := ""
+		if hud_b2 != null:
+			var sl_b2: Variant = hud_b2.get("_os_stack")
+			if sl_b2 is Label:
+				stack_b2 = (sl_b2 as Label).text
+				stack_b2_on = (sl_b2 as Label).visible
+			var chip: Variant = hud_b2.get("_layer_label")
+			if chip is Label:
+				chip_b2 = (chip as Label).text
+		print("[Playtest] os stack F-board after F-EVA dirt vis=", stack_b2_on,
+			" chip='", chip_b2.replace("\n", " / ").substr(0, 48), "' '",
+			stack_b2.replace("\n", " / ").substr(0, 80), "'")
+		if not stack_b2_on:
+			fails.append("os stack hidden after F-board")
+		if chip_b2.to_upper().find("TPS") >= 0:
+			fails.append("layer chip still TPS after F-board")
+		if chip_b2.to_upper().find("SPACE") < 0:
+			fails.append("layer chip not Space after F-board")
+		if stack_b2.to_upper().find("0G") >= 0:
+			fails.append("os stack EVA 0G after F-board")
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
