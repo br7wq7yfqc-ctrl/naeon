@@ -1,3 +1,5 @@
+**2026-08-30 — OS-stack after second I-hatch dirt is TPS, not ship_int/SPACE/0G**
+
 **2026-08-30 — Pad radar after second I-hatch dirt is 400 m on-foot, not hull 12 km**
 
 **2026-08-30 — Occupy HUD after second I-hatch dirt follows walker, not hull/pocket**

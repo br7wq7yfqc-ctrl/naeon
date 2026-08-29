@@ -564,6 +564,10 @@ func _in_openspace() -> bool:
 func _os_stack_should_show(pocket: bool) -> bool:
 	if pocket or _debug_overlay or _in_clash_arena():
 		return false
+	if LayerContext:
+		var ly := str(LayerContext.current_layer).to_lower()
+		if ly in ["ship_int", "station", "interior"]:
+			return false
 	return _in_openspace()
 
 
