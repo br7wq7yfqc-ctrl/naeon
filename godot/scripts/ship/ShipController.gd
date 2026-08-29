@@ -1499,9 +1499,7 @@ func _near_land_zone() -> bool:
 		if float(envp.get("lat", 999.0)) <= 28.0:
 			return false
 	if _open_space and _open_space.has_method("nearest_planet"):
-		var pl: Node3D = _open_space.nearest_planet(global_position)
-		if pl and pl.has_method("altitude_of"):
-			return float(pl.altitude_of(global_position)) < surface_land_alt
+		return altitude_agl() < surface_land_alt
 	return false
 
 
