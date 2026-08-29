@@ -2952,6 +2952,32 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 		if h_agl < 0.2 or h_agl > 5.0:
 			fails.append("hatch dirt walker not on Relief (%s)" % snapped(h_agl, 0.01))
 		var rad_up_h: Vector3 = (walker.global_position - (nex as Node3D).global_position).normalized()
+		if bool(walker.get("eva_mode")) or bool(walker.get("interior_mode")) or bool(walker.get("zero_g")):
+			fails.append("hatch dirt still EVA/pocket")
+		walker.set("_spawn_grace_t", 0.0)
+		if walker is CharacterBody3D:
+			(walker as CharacterBody3D).velocity = Vector3.ZERO
+		if walker.has_method("_physics_process"):
+			walker._physics_process(0.016)
+		var coy_h: float = float(walker.get("_coyote_t"))
+		var near_h: Variant = walker.call("_near_dirt_floor") if walker.has_method("_near_dirt_floor") else false
+		print("[Playtest] hatch dirt coyote t=", snapped(coy_h, 0.01), " near=", near_h)
+		if coy_h <= 0.0:
+			fails.append("hatch dirt coyote dead")
+		else:
+			var hv0: float = 0.0
+			if walker is CharacterBody3D:
+				hv0 = (walker as CharacterBody3D).velocity.dot(rad_up_h)
+			if walker.has_method("request_jump"):
+				walker.request_jump()
+			if walker.has_method("_physics_process"):
+				walker._physics_process(0.016)
+			var hv1: float = hv0
+			if walker is CharacterBody3D:
+				hv1 = (walker as CharacterBody3D).velocity.dot(rad_up_h)
+			print("[Playtest] hatch dirt jump v_up ", snapped(hv0, 0.1), "→", snapped(hv1, 0.1))
+			if hv1 < hv0 + 3.0:
+				fails.append("hatch dirt jump died (%s → %s)" % [snapped(hv0, 0.1), snapped(hv1, 0.1)])
 		var body_fwd_h: Vector3 = -walker.global_transform.basis.z
 		body_fwd_h = body_fwd_h - rad_up_h * body_fwd_h.dot(rad_up_h)
 		var want_h: Vector3 = -ship.global_transform.basis.z
