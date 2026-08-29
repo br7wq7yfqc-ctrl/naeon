@@ -183,6 +183,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-29 | Occupy HUD: claim_radius 40 m. Dirt 50 m is not PAD occupy. | occupy-hud-dirt |
 | 2026-08-29 | Pad radar: on-foot 400 m. 12 km only when piloting. | pad-radar-dirt |
 | 2026-08-29 | snap_to_pad: lat>16 dirt refuse. Keep 12–16 occupy offset. | snap-dirt |
+| 2026-08-29 | I-hatch after dirt land: beside hull, not nearest pad. | hatch-dirt |
 | 2026-08-28 | ST-G: factory in existing PlayerOrbitalStation cluster. Bench (c) spend Contribution/Biomass → one catalog module. Without factory, (c) refuses. No SITE_*. ST-E stays dock+habitat. | st-g-factory |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |

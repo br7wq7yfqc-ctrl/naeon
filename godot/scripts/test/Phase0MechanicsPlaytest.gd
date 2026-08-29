@@ -2927,6 +2927,27 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 	if os.has_method("try_enter_ship"):
 		os.try_enter_ship()
 	await get_tree().create_timer(0.35).timeout
+	if os.has_method("_leave_seat_to_pocket"):
+		os._leave_seat_to_pocket()
+	await get_tree().create_timer(0.4).timeout
+	var d: Node = os.get("_interior") if os else null
+	if d != null and d.has_method("is_inside") and bool(d.is_inside()) and d.has_method("exit_interior"):
+		d.exit_interior()
+	await get_tree().create_timer(0.4).timeout
+	walker = os.get("player") as Node3D if os else null
+	if walker == null or not is_instance_valid(walker) or not walker.is_inside_tree():
+		fails.append("hatch dirt: no walker beside hull")
+	else:
+		var hd_ship: float = walker.global_position.distance_to(ship.global_position)
+		var hd_pad: float = walker.global_position.distance_to(deck.global_position)
+		print("[Playtest] hatch dirt d_ship=", snapped(hd_ship, 0.1), " d_pad=", snapped(hd_pad, 0.1))
+		if hd_ship > 22.0:
+			fails.append("hatch dirt teleported away from hull (%s)" % snapped(hd_ship, 0.1))
+		if hd_pad < 60.0:
+			fails.append("hatch dirt snapped to pad (%s)" % snapped(hd_pad, 0.1))
+	if os.has_method("try_enter_ship"):
+		os.try_enter_ship()
+	await get_tree().create_timer(0.3).timeout
 	if ship.has_method("_do_launch"):
 		ship.set("_land_lock_t", 0.0)
 		ship._do_launch()
