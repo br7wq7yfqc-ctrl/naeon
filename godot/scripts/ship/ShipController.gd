@@ -611,12 +611,7 @@ func _physics_process(delta: float) -> void:
 					var hpad: Node3D = _open_space.nearest_pad(global_position)
 					if hpad and is_instance_valid(hpad):
 						pad_d = hpad.global_position.distance_to(global_position)
-						if pad_d < 52.0 and _open_space.has_method("nearest_planet"):
-							var plp: Node3D = _open_space.nearest_planet(hpad.global_position)
-							if plp and plp.has_method("altitude_of"):
-								var deck: float = float(plp.altitude_of(hpad.global_position)) + 8.0
-								if _hover_hold_alt < deck:
-									_hover_hold_alt = move_toward(_hover_hold_alt, deck, delta * 10.0)
+				# Ground-effect cushions sink. Do not rewrite hold alt (pad autopilot).
 				accel += _Flight.ground_effect_accel(g, _altitude_now(), pad_d, v_up)
 		elif flight_mode == FlightMode.SCM:
 			# Partial gravity in atmo; almost free in vacuum
