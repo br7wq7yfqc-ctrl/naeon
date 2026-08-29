@@ -2355,7 +2355,39 @@ func _assert_eva_from_landed_on_deck(os: Node, walker: Node3D, pad: Node3D, nex:
 	print("[Playtest] EVA from LANDED on pad deck pad=", pad.name,
 		" lat=", snapped(lat, 0.1), " deck=", snapped(deck, 0.01),
 		" (not ship pocket)")
+	_assert_eva_facing(os, walker, pad, fails)
 	return true
+
+
+func _assert_eva_facing(os: Node, walker: Node3D, pad: Node3D, fails: PackedStringArray) -> void:
+	## OS-H leftover: W after land-EVA must be hull-forward on the plate,
+	## not a world-XZ yaw twisted 90° around pad_up.
+	if walker == null or not is_instance_valid(walker) or pad == null:
+		return
+	var up2 := Vector3.UP
+	if pad.has_meta("pad_up"):
+		var raw: Vector3 = pad.get_meta("pad_up")
+		if raw.length_squared() > 0.01:
+			up2 = raw.normalized()
+	var body_fwd: Vector3 = -walker.global_transform.basis.z
+	body_fwd = body_fwd - up2 * body_fwd.dot(up2)
+	if body_fwd.length_squared() < 0.04:
+		fails.append("EVA facing not tangent to pad")
+		return
+	body_fwd = body_fwd.normalized()
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var want := body_fwd
+	if ship != null and is_instance_valid(ship):
+		want = -ship.global_transform.basis.z
+		want = want - up2 * want.dot(up2)
+		if want.length_squared() < 0.04:
+			want = body_fwd
+		else:
+			want = want.normalized()
+	var align: float = body_fwd.dot(want)
+	print("[Playtest] EVA facing align=", snapped(align, 0.01), " tangent=", snapped(1.0 - absf(body_fwd.dot(up2)), 0.01))
+	if align < 0.55:
+		fails.append("EVA facing sideways vs hull nose (%s)" % snapped(align, 0.01))
 
 
 func _osh_eva_on_pad(walker: Node3D, pad: Node3D, nex: Node, eva_agl: float, fails: PackedStringArray) -> bool:

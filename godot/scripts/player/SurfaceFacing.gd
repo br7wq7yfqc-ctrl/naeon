@@ -60,3 +60,9 @@ static func transport_ref(up: Vector3, ref_fwd: Vector3) -> Vector3:
 	if f.length_squared() < 1e-8:
 		return Vector3(0, 0, -1)
 	return f.normalized()
+
+
+static func tangent_nose(up: Vector3, nose: Vector3) -> Vector3:
+	## Hull/camera forward on a pad: project world nose onto the plate.
+	## World-XZ yaw (atan2) is the wrong frame once pad_up ≠ +Y.
+	return transport_ref(up, nose)

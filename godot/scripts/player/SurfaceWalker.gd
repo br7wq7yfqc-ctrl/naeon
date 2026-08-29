@@ -477,9 +477,18 @@ func safe_unground() -> void:
 
 
 func set_spawn_basis(up: Vector3, yaw: float) -> void:
+	## `yaw` is the historic world-XZ camera angle (atan2(-nose.x, -nose.z)).
+	## Store the matching world nose as the tangent reference — do not rotate
+	## that angle around pad_up (that is the 90° sideways walk on a sphere).
+	var world_fwd := Vector3(-sin(yaw), 0.0, -cos(yaw))
+	set_spawn_facing(up, world_fwd)
+
+
+func set_spawn_facing(up: Vector3, nose: Vector3) -> void:
 	_up = up.normalized()
-	_yaw = yaw
 	up_direction = _up
+	_ref_fwd = _Facing.tangent_nose(_up, nose)
+	_yaw = 0.0
 	_apply_body_basis()
 
 
