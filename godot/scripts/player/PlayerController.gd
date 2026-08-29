@@ -49,6 +49,10 @@ var _jump_buf_t: float = 0.0
 var _jump_cut: bool = false
 var _jumped: bool = false
 var _down_t: float = 0.0
+var _air_v_y: float = 0.0
+var _was_on_floor: bool = false
+var _land_absorb_t: float = 0.0
+var last_land_impact: float = 0.0
 var _spawn_pos: Vector3 = Vector3(0, 1.2, 6)
 var _ots_active: bool = false
 var clash_module_id: String = ""
@@ -246,6 +250,10 @@ func _physics_process(delta: float) -> void:
 
 	var accel := 28.0 if is_on_floor() else 12.0
 	var decel := 36.0 if is_on_floor() else 6.0
+	if _land_absorb_t > 0.0:
+		speed *= 0.58
+		accel = 18.0
+		decel = 48.0
 	if direction != Vector3.ZERO:
 		velocity.x = move_toward(velocity.x, direction.x * speed, accel * delta)
 		velocity.z = move_toward(velocity.z, direction.z * speed, accel * delta)
@@ -253,7 +261,25 @@ func _physics_process(delta: float) -> void:
 		velocity.x = move_toward(velocity.x, 0.0, decel * delta)
 		velocity.z = move_toward(velocity.z, 0.0, decel * delta)
 
+	if not is_on_floor():
+		_air_v_y = velocity.y
 	move_and_slide()
+	if is_on_floor() and not _was_on_floor:
+		var impact: float = -_air_v_y
+		if impact > 5.5:
+			velocity.x *= clampf(1.0 - (impact - 5.5) * 0.07, 0.38, 0.88)
+			velocity.z *= clampf(1.0 - (impact - 5.5) * 0.07, 0.38, 0.88)
+			_land_absorb_t = clampf(0.10 + (impact - 5.5) * 0.028, 0.10, 0.32)
+			last_land_impact = impact
+			if CombatJuice and impact > 8.5:
+				CombatJuice.hit_feedback(4.0, global_position, false)
+	_was_on_floor = is_on_floor()
+	if is_on_floor():
+		if _land_absorb_t > 0.0:
+			_land_absorb_t = maxf(0.0, _land_absorb_t - delta)
+		_air_v_y = 0.0
+	else:
+		_land_absorb_t = 0.0
 	if last_move_input.length_squared() > 0.01 and SessionObjectives:
 		SessionObjectives.on_moved()
 	if _form_skel:
