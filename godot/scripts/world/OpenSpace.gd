@@ -1861,6 +1861,10 @@ func place_from_ship_pocket(walker: Node3D) -> void:
 				_schedule_surface_settle()
 			_apply_dirt_exit_facing()
 			walker.set("_spawn_grace_t", 0.0)
+			if walker.has_method("_update_up"):
+				walker._update_up()
+			if walker.has_method("_relief_slope_rad") and "last_slope_ang" in walker:
+				walker.set("last_slope_ang", float(walker.call("_relief_slope_rad")))
 			if walker.has_method("_bind_hud"):
 				walker._bind_hud()
 			print("[OpenSpace] hatch dirt exit at ", walker.global_position, " up=", pad_up)
