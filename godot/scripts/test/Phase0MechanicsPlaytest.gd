@@ -3236,6 +3236,82 @@ func _assert_ship_ramp_hover(fails: PackedStringArray) -> void:
 		if ship.get("_cargo_ramp") == ramp:
 			ship.set("_cargo_ramp", null)
 		ramp.queue_free()
+	await _assert_ramp_dirt_agl(fails)
+
+
+func _assert_ramp_dirt_agl(fails: PackedStringArray) -> void:
+	## Off-plate HOVER uses Relief AGL. Hangar layout_to_deck must not
+	## stretch 40 m toward the nearest pad.
+	var os: Node = get_parent()
+	var ship: Node = os.get("ship") if os else null
+	var deck: Node3D = _osh_unnamed_deck()
+	if ship == null or deck == null:
+		fails.append("ramp dirt: no ship/pad")
+		return
+	var up: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+	if up.length_squared() > 0.01:
+		up = up.normalized()
+	var side: Vector3 = up.cross(Vector3.RIGHT)
+	if side.length_squared() < 0.04:
+		side = up.cross(Vector3.FORWARD)
+	side = side.normalized()
+	if bool(ship.get("is_landed")) and ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	var ramp: Node = ship.get_node_or_null("CargoRamp")
+	var spawned := false
+	if ramp == null:
+		ramp = Node3D.new()
+		ramp.set_script(load("res://scripts/ship/CargoRamp.gd"))
+		ramp.name = "CargoRamp"
+		ship.add_child(ramp)
+		spawned = true
+	ship.global_position = deck.global_position + side * 40.0 + up * 6.0
+	var agl := 99.0
+	if ship.has_method("altitude_agl"):
+		agl = float(ship.altitude_agl())
+	var result := str(ramp.try_deploy()) if ramp.has_method("try_deploy") else "BLOCKED"
+	var reason := str(ramp.get("last_block_reason"))
+	print("[Playtest] ramp dirt hover agl=", snapped(agl, 0.01), " result=", result, " reason=", reason)
+	if agl < 0.2 or agl > 8.0:
+		fails.append("ramp dirt hover AGL not Relief (%s)" % snapped(agl, 0.01))
+	if result == "BLOCKED":
+		fails.append("ramp dirt hover blocked (%s)" % reason)
+	if ramp.has_method("stow_immediate"):
+		ramp.stow_immediate()
+	ship.global_position = deck.global_position + side * 40.0 + up * 40.0
+	agl = float(ship.altitude_agl()) if ship.has_method("altitude_agl") else 0.0
+	result = str(ramp.try_deploy()) if ramp.has_method("try_deploy") else ""
+	reason = str(ramp.get("last_block_reason"))
+	print("[Playtest] ramp dirt high agl=", snapped(agl, 0.1), " result=", result, " reason=", reason)
+	if result != "BLOCKED" or reason != "too high":
+		fails.append("ramp dirt high not blocked too high (%s/%s)" % [result, reason])
+	if ramp.has_method("stow_immediate"):
+		ramp.stow_immediate()
+	if spawned and is_instance_valid(ramp):
+		ramp.queue_free()
+	var carrier: Node = os.catalog_carrier() if os.has_method("catalog_carrier") else null
+	if carrier == null or not carrier.has_method("try_deploy_ramp"):
+		return
+	var cramp: Node = carrier.cargo_ramp() if carrier.has_method("cargo_ramp") else null
+	if cramp == null:
+		return
+	if carrier.has_method("set_pose_landed"):
+		carrier.set_pose_landed(deck)
+	carrier.global_position = deck.global_position + side * 40.0 + up * 2.0
+	carrier.set("_landed", true)
+	var len0: float = float(cramp.get("ramp_length"))
+	carrier.try_deploy_ramp()
+	var len1: float = float(cramp.get("ramp_length"))
+	print("[Playtest] ramp dirt land len ", snapped(len0, 0.1), "→", snapped(len1, 0.1))
+	if len1 > 12.0:
+		fails.append("ramp dirt land stretched to pad (%s)" % snapped(len1, 0.1))
+	if cramp.has_method("stow_immediate"):
+		cramp.stow_immediate()
 
 
 func _pad_traffic_present(fails: PackedStringArray) -> void:
