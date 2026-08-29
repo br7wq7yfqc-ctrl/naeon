@@ -1,3 +1,5 @@
+**2026-08-30 — F-board after F-EVA dirt (post HOVER+S): occupy origin is hull, layer Space**
+
 **2026-08-30 — OS-stack after F-EVA dirt (post HOVER+S) is TPS, walker energy, not 0G**
 
 **2026-08-30 — Pad radar after F-EVA dirt (post HOVER+S) is 400 m on-foot, origin _up**

@@ -3347,6 +3347,25 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 		if os.has_method("try_enter_ship"):
 			os.try_enter_ship()
 		await get_tree().create_timer(0.3).timeout
+		if not bool(os.get("_in_ship")):
+			fails.append("F-board after F-EVA dirt sink refused")
+		var hud_b2: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+		if hud_b2 != null and hud_b2.has_method("bind_player"):
+			hud_b2.bind_player(ship)
+		if hud_b2 != null and hud_b2.has_method("_refresh"):
+			hud_b2._refresh()
+		var origin_b2: Node3D = null
+		if hud_b2 != null and hud_b2.has_method("_occupy_origin"):
+			origin_b2 = hud_b2.call("_occupy_origin") as Node3D
+		var ly_b2 := ""
+		if LayerContext:
+			ly_b2 = str(LayerContext.current_layer)
+		print("[Playtest] F-board after F-EVA dirt sink in_ship=", os.get("_in_ship"),
+			" origin=", origin_b2.name if origin_b2 else "null", " layer=", ly_b2)
+		if origin_b2 != null and origin_b2 != ship:
+			fails.append("occupy HUD origin still walker after F-EVA dirt sink F-board")
+		if ly_b2.to_upper().find("SPACE") < 0:
+			fails.append("layer not Space after F-EVA dirt sink F-board (%s)" % ly_b2)
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:

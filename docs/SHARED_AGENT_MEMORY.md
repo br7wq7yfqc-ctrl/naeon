@@ -204,6 +204,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-30 | Occupy HUD after F-EVA dirt (post sink): walker, not hull. | occupy-hud-eva-dirt-sink |
 | 2026-08-30 | Pad radar after F-EVA dirt (post sink): 400 m, origin _up. | pad-radar-eva-dirt-sink |
 | 2026-08-30 | OS-stack after F-EVA dirt: TPS, occupy origin, not 0G. | os-stack-eva-dirt-sink |
+| 2026-08-30 | F-board after F-EVA dirt: occupy hull, layer Space. | board-after-eva-dirt-sink |
 | 2026-08-28 | ST-G: factory in existing PlayerOrbitalStation cluster. Bench (c) spend Contribution/Biomass → one catalog module. Without factory, (c) refuses. No SITE_*. ST-E stays dock+habitat. | st-g-factory |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
