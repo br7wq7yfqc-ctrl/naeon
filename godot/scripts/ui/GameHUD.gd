@@ -946,7 +946,8 @@ func _refresh_pad_radar(origin: Vector3) -> void:
 		var p: Node3D = pads[i]
 		var off: Vector3 = p.global_position - origin
 		var up := Vector3.UP
-		var up_val = _player.get("_up") if _player else null
+		var up_src: Node = origin_n if origin_n else _player
+		var up_val = up_src.get("_up") if up_src else null
 		if up_val != null and typeof(up_val) == TYPE_VECTOR3:
 			up = up_val
 		elif p.has_meta("pad_up"):
