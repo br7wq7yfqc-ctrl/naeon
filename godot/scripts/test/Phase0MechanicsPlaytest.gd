@@ -2958,6 +2958,35 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 				" tangent=", snapped(1.0 - absf(body_fwd_h.normalized().dot(rad_up_h)), 0.01))
 			if align_h < 0.55:
 				fails.append("hatch dirt facing sideways vs hull nose (%s)" % snapped(align_h, 0.01))
+		var hud: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+		if hud != null and hud.has_method("bind_player"):
+			hud.bind_player(walker)
+		if hud != null and hud.has_method("_refresh"):
+			hud._refresh()
+		var origin: Node3D = null
+		if hud != null and hud.has_method("_occupy_origin"):
+			origin = hud.call("_occupy_origin") as Node3D
+		print("[Playtest] occupy HUD hatch dirt origin=", origin.name if origin else "null",
+			" walker=", walker.name)
+		if origin == null:
+			fails.append("occupy HUD lost origin after hatch dirt")
+		elif origin == ship:
+			fails.append("occupy HUD origin still hull after hatch dirt")
+		elif origin != walker:
+			fails.append("occupy HUD origin not walker after hatch dirt")
+		var otxt := ""
+		if hud != null:
+			var lab: Variant = hud.get("_owner_label")
+			if lab is Label:
+				otxt = (lab as Label).text
+			var ilab: Variant = hud.get("_interior_label")
+			if ilab is Label and (ilab as Label).visible:
+				otxt += " " + (ilab as Label).text
+		print("[Playtest] occupy HUD hatch dirt '", otxt.replace("\n", " / ").substr(0, 120), "'")
+		if otxt.to_upper().find("PAD") >= 0:
+			fails.append("occupy HUD offered PAD after hatch dirt")
+		if otxt.to_lower().find("hatch") >= 0:
+			fails.append("occupy HUD still pocket hatch after dirt exit")
 	if os.has_method("try_enter_ship"):
 		os.try_enter_ship()
 	await get_tree().create_timer(0.3).timeout

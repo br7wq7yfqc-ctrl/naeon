@@ -1,3 +1,5 @@
+**2026-08-29 — Occupy HUD after dirt I-hatch follows the walker, not the hull**
+
 **2026-08-29 — I-hatch dirt facing is hull-tangent after exterior place**
 
 **2026-08-29 — I-hatch after dirt land is beside the hull, not the nearest pad**
