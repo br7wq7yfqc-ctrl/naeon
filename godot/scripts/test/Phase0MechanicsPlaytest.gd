@@ -3143,6 +3143,14 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 		fails.append("hatch dirt HOVER PD sank (%s → %s)" % [snapped(agl1, 0.1), snapped(agl_pd, 0.1)])
 	if agl_pd > hold_pd + 3.0:
 		fails.append("hatch dirt HOVER PD overshoot (%s vs hold %s)" % [snapped(agl_pd, 0.1), snapped(hold_pd, 0.1)])
+	var ge_up: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+	if ge_up.length_squared() > 0.01:
+		ge_up = ge_up.normalized()
+	var ge_rel: Vector3 = ship.global_position - deck.global_position
+	var ge_lat: float = (ge_rel - ge_up * ge_rel.dot(ge_up)).length()
+	print("[Playtest] hatch dirt GE lat=", snapped(ge_lat, 0.1), " agl=", snapped(agl_pd, 0.1))
+	if ge_lat < 60.0:
+		fails.append("hatch dirt GE drifted onto plate (%s)" % snapped(ge_lat, 0.1))
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
