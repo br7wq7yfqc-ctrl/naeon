@@ -3525,6 +3525,44 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 				fails.append("occupy HUD origin not walker after second I-hatch dirt")
 			if otxt_pk.to_upper().find("PAD") >= 0 and otxt_pk.to_upper().find("OCCUPY") >= 0:
 				fails.append("occupy HUD PAD after second I-hatch dirt 110m")
+			var radar_pk: Variant = hud_pk.get("_radar") if hud_pk else null
+			if radar_pk is CanvasItem:
+				(radar_pk as CanvasItem).visible = true
+			if hud_pk != null and hud_pk.has_method("_refresh"):
+				hud_pk._refresh()
+			var rng_pk: float = float(hud_pk.get("_radar_range_m")) if hud_pk else 0.0
+			var near_pkn := 0
+			if hud_pk != null and hud_pk.has_method("radar_pad_contacts"):
+				near_pkn = hud_pk.radar_pad_contacts().size()
+			print("[Playtest] pad radar second I-hatch dirt 110m n=", near_pkn,
+				" range=", snapped(rng_pk, 1.0), " vis=",
+				(radar_pk as CanvasItem).visible if radar_pk is CanvasItem else "?")
+			if rng_pk > 1000.0:
+				fails.append("pad radar used 12km after second I-hatch dirt (%s)" % snapped(rng_pk, 1.0))
+			if near_pkn < 1:
+				fails.append("pad radar missed pad after second I-hatch dirt")
+			var saved_pk: Vector3 = w_pk.global_position
+			var up_pkr: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+			if up_pkr.length_squared() > 0.01:
+				up_pkr = up_pkr.normalized()
+			var side_pkr: Vector3 = up_pkr.cross(Vector3.RIGHT)
+			if side_pkr.length_squared() < 0.04:
+				side_pkr = up_pkr.cross(Vector3.FORWARD)
+			side_pkr = side_pkr.normalized()
+			w_pk.global_position = deck.global_position + side_pkr * 600.0 + up_pkr * 2.0
+			if hud_pk != null and hud_pk.has_method("_refresh"):
+				hud_pk._refresh()
+			var far_pk := false
+			var far_pkn := 0
+			if hud_pk != null and hud_pk.has_method("radar_pad_contacts"):
+				for c in hud_pk.radar_pad_contacts():
+					far_pkn += 1
+					if c is Node3D and (c as Node3D).global_position.distance_to(deck.global_position) < 30.0:
+						far_pk = true
+			print("[Playtest] pad radar second I-hatch dirt 600m n=", far_pkn, " pad=", far_pk)
+			if far_pk:
+				fails.append("pad radar used 12km approach after second I-hatch dirt")
+			w_pk.global_position = saved_pk
 			if os.has_method("try_enter_ship"):
 				os.try_enter_ship()
 			await get_tree().create_timer(0.3).timeout
