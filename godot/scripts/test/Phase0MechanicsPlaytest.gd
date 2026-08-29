@@ -3180,6 +3180,62 @@ func _assert_ship_agl_plate(fails: PackedStringArray) -> void:
 		fails.append("ship AGL dirt not Relief (%s)" % snapped(dirt_agl, 0.01))
 	if absf(dirt_agl - 40.0) < 2.0:
 		fails.append("ship AGL dirt used 3D pad dist")
+	await _assert_ship_ramp_hover(fails)
+
+
+func _assert_ship_ramp_hover(fails: PackedStringArray) -> void:
+	## Player-ship ramp ignored pose (hangar_host only). 7 m HOVER on the
+	## plate must deploy; 40 m overflight must BLOCKED too high.
+	var os: Node = get_parent()
+	var ship: Node = os.get("ship") if os else null
+	var deck: Node3D = _osh_unnamed_deck()
+	if ship == null or deck == null:
+		fails.append("ship ramp: no ship/pad")
+		return
+	var up: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+	if up.length_squared() > 0.01:
+		up = up.normalized()
+	if bool(ship.get("is_landed")) and ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	var ramp: Node = ship.get_node_or_null("CargoRamp")
+	var spawned := false
+	if ramp == null:
+		ramp = Node3D.new()
+		ramp.set_script(load("res://scripts/ship/CargoRamp.gd"))
+		ramp.name = "CargoRamp"
+		ship.add_child(ramp)
+		spawned = true
+		if ship.get("_cargo_ramp") == null:
+			ship.set("_cargo_ramp", ramp)
+	ship.global_position = deck.global_position + up * 7.0
+	var result := "BLOCKED"
+	if ramp.has_method("try_deploy"):
+		result = str(ramp.try_deploy())
+	var reason := str(ramp.get("last_block_reason")) if ramp != null else ""
+	print("[Playtest] ship ramp 7m hover result=", result, " reason=", reason)
+	if result == "BLOCKED":
+		fails.append("ship ramp blocked at 7m HOVER (%s)" % reason)
+	if ramp.has_method("stow_immediate"):
+		ramp.stow_immediate()
+	ship.global_position = deck.global_position + up * 40.0
+	result = str(ramp.try_deploy()) if ramp.has_method("try_deploy") else ""
+	reason = str(ramp.get("last_block_reason")) if ramp != null else ""
+	print("[Playtest] ship ramp 40m overflight result=", result, " reason=", reason)
+	if result != "BLOCKED":
+		fails.append("ship ramp deployed at 40m overflight")
+	if reason != "too high":
+		fails.append("ship ramp 40m reason=%s want too high" % reason)
+	if ramp.has_method("stow_immediate"):
+		ramp.stow_immediate()
+	if spawned and is_instance_valid(ramp):
+		if ship.get("_cargo_ramp") == ramp:
+			ship.set("_cargo_ramp", null)
+		ramp.queue_free()
 
 
 func _pad_traffic_present(fails: PackedStringArray) -> void:

@@ -1,3 +1,5 @@
+**2026-08-29 — Player-ship ramp deploys at 7 m HOVER, blocks 40 m overflight**
+
 **2026-08-29 — Ship altitude_agl is deck height on the plate, Relief off-plate**
 
 **2026-08-29 — Ramp HOVER AGL is deck height on the plate, not dirt+pad**

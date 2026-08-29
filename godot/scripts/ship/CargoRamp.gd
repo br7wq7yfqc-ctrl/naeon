@@ -148,7 +148,7 @@ func try_deploy() -> String:
 
 
 func block_reason() -> String:
-	var host: Node = _hangar_host()
+	var host: Node = _pose_host()
 	if host == null:
 		return ""
 	var speed := 0.0
@@ -180,7 +180,7 @@ func block_reason() -> String:
 
 func toggle() -> void:
 	if state == State.STOWED or state == State.STOWING:
-		if _hangar_host() != null:
+		if _pose_host() != null:
 			try_deploy()
 		else:
 			deploy()
@@ -287,7 +287,29 @@ func sample_walk(t: float) -> Vector3:
 
 
 func _is_hangar_ramp() -> bool:
-	return _hangar_host() != null or (get_parent() != null and get_parent().is_in_group("hangar_bays"))
+	## Hangar plates only on CatalogCarrier / HangarBay. Player-ship belly
+	## ramp must not flip to hangar plates just because the hull has AGL.
+	var p: Node = get_parent()
+	if p != null and p.is_in_group("hangar_bays"):
+		return true
+	var n: Node = p
+	while n != null:
+		if n.has_method("hangar_bay") and n.has_method("try_deploy_rover"):
+			return true
+		n = n.get_parent()
+	return false
+
+
+func _pose_host() -> Node:
+	## Landed / HOVER AGL / speed. Player ship or catalog carrier.
+	var n: Node = get_parent()
+	while n != null:
+		if n.has_method("altitude_agl"):
+			return n
+		if n.has_method("hangar_bay") and n.has_method("cargo_hold"):
+			return n
+		n = n.get_parent()
+	return null
 
 
 func _hangar_host() -> Node:

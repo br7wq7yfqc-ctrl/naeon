@@ -1605,6 +1605,22 @@ func _ensure_cargo_systems() -> void:
 	print("[Ship] CargoHold + Ramp scaffold")
 
 
+func cargo_ramp() -> Node:
+	return _cargo_ramp
+
+
+func hull_speed() -> float:
+	return velocity.length()
+
+
+func try_deploy_ramp() -> String:
+	if _cargo_ramp == null or not is_instance_valid(_cargo_ramp):
+		return "NO_RAMP"
+	if _cargo_ramp.has_method("try_deploy"):
+		return str(_cargo_ramp.try_deploy())
+	return "BLOCKED"
+
+
 func _ensure_morph_and_hatch() -> void:
 	if get_node_or_null("HatchPoint") == null:
 		var h := Marker3D.new()
