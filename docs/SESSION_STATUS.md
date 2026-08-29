@@ -1,3 +1,5 @@
+**2026-08-30 — Ground-effect after second dirt launch: pad term only on plate (lat≤28)**
+
 **2026-08-30 — Launch after second dirt F-board: dirt AGL hold, HOVER PD, not pad**
 
 **2026-08-30 — HOVER chase after second I-hatch F-board reclaims hull cam**
