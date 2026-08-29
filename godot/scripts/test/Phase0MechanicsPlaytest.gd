@@ -3020,6 +3020,31 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 		if far_hit:
 			fails.append("pad radar used 12km approach after hatch dirt")
 		walker.global_position = saved_h
+		var ly := ""
+		if LayerContext:
+			ly = str(LayerContext.current_layer)
+		var stack := ""
+		var stack_on := false
+		if hud != null:
+			var sl: Variant = hud.get("_os_stack")
+			if sl is Label:
+				stack = (sl as Label).text
+				stack_on = (sl as Label).visible
+			var ll: Variant = hud.get("_layer_label")
+			if ll is Label:
+				ly = ly if ly != "" else (ll as Label).text
+		print("[Playtest] os stack hatch dirt layer=", ly, " vis=", stack_on, " '", stack.replace("\n", " / ").substr(0, 140), "'")
+		if ly.to_upper().find("SPACE") >= 0:
+			fails.append("os stack layer still SPACE after hatch dirt")
+		if ly.to_upper().find("TPS") < 0 and ly.to_upper().find("SURFACE") < 0:
+			fails.append("os stack layer not TPS after hatch dirt (%s)" % ly)
+		if not stack_on:
+			fails.append("os stack hidden after hatch dirt")
+		var st_up := stack.to_upper()
+		if st_up.find("OCCUPY") >= 0:
+			fails.append("os stack occupy after hatch dirt 110m")
+		if st_up.find("0G") >= 0:
+			fails.append("os stack EVA 0G after grounded hatch dirt")
 	if os.has_method("try_enter_ship"):
 		os.try_enter_ship()
 	await get_tree().create_timer(0.3).timeout

@@ -1770,7 +1770,7 @@ func place_from_ship_pocket(walker: Node3D) -> void:
 	var landed := bool(ship.get("is_landed"))
 	_eva_mode = not landed
 	if LayerContext:
-		LayerContext.set_layer("TPS")
+		LayerContext.set_layer("TPS" if landed else "Space")
 	if walker.has_method("set_planet_gravity_provider"):
 		walker.set_planet_gravity_provider(self)
 	if landed:

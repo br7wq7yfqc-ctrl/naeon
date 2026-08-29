@@ -471,6 +471,8 @@ func _apply_interior_chrome(pocket: bool) -> void:
 			_lead_pip.visible = true
 		if _obj_label:
 			_obj_label.visible = true
+		if _os_stack:
+			_os_stack.visible = _os_stack_should_show(false)
 		return
 	if _radar:
 		_radar.visible = false
