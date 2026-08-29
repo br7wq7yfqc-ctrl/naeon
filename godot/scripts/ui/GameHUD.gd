@@ -764,46 +764,50 @@ func _refresh() -> void:
 	var tree := get_tree()
 	var origin: Node3D = _occupy_origin()
 	if not pocket and tree and origin != null:
-		var best_d := 80.0
+		var best_d := 40.0
 		var best_txt := ""
 		for n in (SoftScanCache.get_pads() if SoftScanCache else tree.get_nodes_in_group("pad_bases")):
 			if n is Node3D and n.has_method("get_faction"):
 				var d: float = origin.global_position.distance_to((n as Node3D).global_position)
-				if d < best_d:
-					best_d = d
-					nearest_pad = n
-					var need := 1.75
-					if n.has_method("get_claim_need"):
-						need = float(n.get_claim_need())
-					var st := ""
-					if n.has_method("get_claim_status"):
-						st = str(n.get_claim_status())
-					elif "_status" in n:
-						st = str(n.get("_status"))
-					var cs := 0.0
-					if "ownership" in n and n.ownership:
-						cs = float(n.ownership.claim_strength)
-					claim_ratio = clampf(cs / maxf(need, 0.01), 0.0, 1.0)
-					var side := ""
-					if n.has_method("get_contest_side"):
-						side = str(n.get_contest_side())
-					if side != "" and st == "contested":
-						best_txt = "PAD %s  occupy→%s %d%%  (%.0fm)" % [n.get_faction(), side, int(claim_ratio * 100.0), d]
-					elif st == "extracting" and n.has_method("harvest_hud_line"):
-						var hl := str(n.harvest_hud_line())
-						best_txt = "PAD %s  %s  (%.0fm)" % [n.get_faction(), hl, d] if hl != "" else "PAD %s  extracting  (%.0fm)" % [n.get_faction(), d]
-						if n.has_method("pad_restock_hud_line"):
-							var rl := str(n.pad_restock_hud_line())
-							if rl != "":
-								best_txt += "  ·  %s" % rl
-					else:
-						best_txt = "PAD %s  %s  claim %.0f%%  (%.0fm)" % [n.get_faction(), st, claim_ratio * 100.0, d]
-						if n.has_method("pad_restock_hud_line"):
-							var rl2 := str(n.pad_restock_hud_line())
-							if rl2 != "":
-								best_txt += "  ·  %s" % rl2
-					if st == "contested" or str(n.get_faction()) == "Contested":
-						contested_near = true
+				var reach := 40.0
+				if "claim_radius" in n:
+					reach = float(n.claim_radius)
+				if d >= reach or d >= best_d:
+					continue
+				best_d = d
+				nearest_pad = n
+				var need := 1.75
+				if n.has_method("get_claim_need"):
+					need = float(n.get_claim_need())
+				var st := ""
+				if n.has_method("get_claim_status"):
+					st = str(n.get_claim_status())
+				elif "_status" in n:
+					st = str(n.get("_status"))
+				var cs := 0.0
+				if "ownership" in n and n.ownership:
+					cs = float(n.ownership.claim_strength)
+				claim_ratio = clampf(cs / maxf(need, 0.01), 0.0, 1.0)
+				var side := ""
+				if n.has_method("get_contest_side"):
+					side = str(n.get_contest_side())
+				if side != "" and st == "contested":
+					best_txt = "PAD %s  occupy→%s %d%%  (%.0fm)" % [n.get_faction(), side, int(claim_ratio * 100.0), d]
+				elif st == "extracting" and n.has_method("harvest_hud_line"):
+					var hl := str(n.harvest_hud_line())
+					best_txt = "PAD %s  %s  (%.0fm)" % [n.get_faction(), hl, d] if hl != "" else "PAD %s  extracting  (%.0fm)" % [n.get_faction(), d]
+					if n.has_method("pad_restock_hud_line"):
+						var rl := str(n.pad_restock_hud_line())
+						if rl != "":
+							best_txt += "  ·  %s" % rl
+				else:
+					best_txt = "PAD %s  %s  claim %.0f%%  (%.0fm)" % [n.get_faction(), st, claim_ratio * 100.0, d]
+					if n.has_method("pad_restock_hud_line"):
+						var rl2 := str(n.pad_restock_hud_line())
+						if rl2 != "":
+							best_txt += "  ·  %s" % rl2
+				if st == "contested" or str(n.get_faction()) == "Contested":
+					contested_near = true
 		nearest = best_txt
 
 	# Terrain budget

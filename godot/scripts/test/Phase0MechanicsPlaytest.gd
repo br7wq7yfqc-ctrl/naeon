@@ -2923,6 +2923,7 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 				" tangent=", snapped(1.0 - absf(body_fwd.normalized().dot(rad_up)), 0.01))
 			if align < 0.55:
 				fails.append("EVA dirt facing sideways vs hull nose (%s)" % snapped(align, 0.01))
+		await _assert_occupy_hud_dirt(os, walker, deck, fails)
 	if os.has_method("try_enter_ship"):
 		os.try_enter_ship()
 	await get_tree().create_timer(0.35).timeout
@@ -8167,6 +8168,47 @@ func _assert_occupy_hud_after_board(os: Node, pad: Node3D, fails: PackedStringAr
 	var up := txt.to_upper()
 	if pad != null and up.find("PAD") < 0 and up.find("OCCUPY") < 0 and up.find("LANDED") < 0:
 		fails.append("occupy HUD empty after F-board")
+
+
+func _assert_occupy_hud_dirt(os: Node, walker: Node3D, pad: Node3D, fails: PackedStringArray) -> void:
+	## Occupy HUD used 80 m. Claim radius is 40 m. Dirt EVA must not offer PAD.
+	if walker == null or not is_instance_valid(walker) or pad == null:
+		return
+	var hud: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+	if hud == null:
+		fails.append("occupy HUD dirt: no GameHUD")
+		return
+	if hud.has_method("bind_player"):
+		hud.bind_player(walker)
+	var up: Vector3 = pad.get_meta("pad_up") if pad.has_meta("pad_up") else Vector3.UP
+	if up.length_squared() > 0.01:
+		up = up.normalized()
+	var side: Vector3 = up.cross(Vector3.RIGHT)
+	if side.length_squared() < 0.04:
+		side = up.cross(Vector3.FORWARD)
+	side = side.normalized()
+	var saved: Vector3 = walker.global_position
+	walker.global_position = pad.global_position + side * 50.0 + up * 2.0
+	if hud.has_method("_refresh"):
+		hud._refresh()
+	var txt := ""
+	var lab: Variant = hud.get("_owner_label")
+	if lab is Label:
+		txt = (lab as Label).text
+	print("[Playtest] occupy HUD dirt 50m '", txt.replace("\n", " / ").substr(0, 120), "'")
+	var upt := txt.to_upper()
+	if upt.find("PAD") >= 0:
+		fails.append("occupy HUD offered PAD at 50m dirt")
+	walker.global_position = pad.global_position + side * 11.0 + up * 1.4
+	if hud.has_method("_refresh"):
+		hud._refresh()
+	txt = ""
+	if lab is Label:
+		txt = (lab as Label).text
+	print("[Playtest] occupy HUD plate 11m '", txt.replace("\n", " / ").substr(0, 120), "'")
+	if txt.to_upper().find("PAD") < 0:
+		fails.append("occupy HUD empty on plate")
+	walker.global_position = saved
 
 
 func _assert_scan_cache_live(fails: PackedStringArray) -> void:
