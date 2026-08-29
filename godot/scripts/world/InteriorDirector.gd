@@ -558,10 +558,13 @@ func exit_interior() -> void:
 			var shv: Variant = _open_space.get("ship")
 			if shv is Node and is_instance_valid(shv):
 				landed = bool((shv as Node).get("is_landed"))
-		if was_ship and not landed:
-			LayerContext.current_layer = "space"
+		if LayerContext.has_method("set_layer"):
+			if was_ship and not landed:
+				LayerContext.set_layer("Space")
+			else:
+				LayerContext.set_layer("TPS")
 		else:
-			LayerContext.current_layer = "surface"
+			LayerContext.current_layer = "Space" if (was_ship and not landed) else "TPS"
 		if "seamless_stage" in LayerContext:
 			LayerContext.seamless_stage = "world"
 	if was_ship and _open_space != null and _open_space.has_method("place_from_ship_pocket") and _player != null and is_instance_valid(_player):
