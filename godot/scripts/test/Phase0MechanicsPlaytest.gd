@@ -3128,6 +3128,21 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 		fails.append("hatch dirt launch did not lift (%s → %s)" % [snapped(agl0, 0.1), snapped(agl1, 0.1)])
 	if absf(hold_l - (agl0 + 12.0)) > 4.0:
 		fails.append("hatch dirt launch hold not dirt AGL (%s vs %s)" % [snapped(hold_l, 0.1), snapped(agl0 + 12.0, 0.1)])
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	await get_tree().create_timer(0.55).timeout
+	var hold_pd: float = float(ship.get("_hover_hold_alt"))
+	var agl_pd: float = agl1
+	if nex.has_method("altitude_of"):
+		agl_pd = float(nex.altitude_of(ship.global_position))
+	print("[Playtest] hatch dirt HOVER PD hold ", snapped(hold_l, 0.1), "→", snapped(hold_pd, 0.1),
+		" AGL ", snapped(agl1, 0.1), "→", snapped(agl_pd, 0.1))
+	if absf(hold_pd - hold_l) > 1.5:
+		fails.append("hatch dirt HOVER PD rewrote hold (%s → %s)" % [snapped(hold_l, 0.1), snapped(hold_pd, 0.1)])
+	if agl_pd + 0.3 < agl1:
+		fails.append("hatch dirt HOVER PD sank (%s → %s)" % [snapped(agl1, 0.1), snapped(agl_pd, 0.1)])
+	if agl_pd > hold_pd + 3.0:
+		fails.append("hatch dirt HOVER PD overshoot (%s vs hold %s)" % [snapped(agl_pd, 0.1), snapped(hold_pd, 0.1)])
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
