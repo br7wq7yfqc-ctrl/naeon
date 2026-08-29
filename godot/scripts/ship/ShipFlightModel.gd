@@ -200,7 +200,7 @@ static func ground_effect_accel(g: Vector3, height_agl: float, pad_dist: float, 
 		var t := 1.0 - h / 22.0
 		ge = t * t
 	var pad_n := 0.0
-	var on_plate := pad_lat < 0.0 or pad_lat <= 28.0
+	var on_plate := pad_lat >= 0.0 and pad_lat <= 28.0
 	if on_plate and pad_dist >= 0.0 and pad_dist < 55.0:
 		pad_n = 1.0 - pad_dist / 55.0
 	var lift: float = g.length() * (ge * 0.38 + pad_n * ge * 0.32)
