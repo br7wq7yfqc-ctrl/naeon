@@ -1,3 +1,5 @@
+**2026-08-30 — F-EVA dirt slope after HOVER+S land is PlanetRelief, not pocket-Y cliff**
+
 **2026-08-30 — F-EVA dirt coyote after HOVER+S land: grace cleared, jump live**
 
 **2026-08-30 — F-EVA dirt facing after HOVER+S land is hull-nose tangent post-settle**

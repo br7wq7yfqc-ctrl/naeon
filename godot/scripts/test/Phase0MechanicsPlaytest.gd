@@ -3250,6 +3250,18 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 			print("[Playtest] F-EVA after dirt sink land jump v_up ", snapped(ev0, 0.1), "→", snapped(ev1, 0.1))
 			if ev1 < ev0 + 3.0:
 				fails.append("F-EVA after dirt sink land jump died (%s → %s)" % [snapped(ev0, 0.1), snapped(ev1, 0.1)])
+		var last_e2: float = float(eva2.get("last_slope_ang"))
+		var rel_e2: float = 0.0
+		if eva2.has_method("_relief_slope_rad"):
+			rel_e2 = float(eva2.call("_relief_slope_rad"))
+		print("[Playtest] F-EVA after dirt sink land slope last=", snapped(rad_to_deg(last_e2), 0.1),
+			" deg rel=", snapped(rad_to_deg(rel_e2), 0.1))
+		if last_e2 < 0.0 or last_e2 > 1.4:
+			fails.append("F-EVA after dirt sink land slope last out of range (%s)" % snapped(last_e2, 0.01))
+		if rel_e2 > 0.05 and last_e2 + 0.08 < rel_e2:
+			fails.append("F-EVA after dirt sink land slope not Relief")
+		if last_e2 > rel_e2 + 0.25:
+			fails.append("F-EVA after dirt sink land slope is pocket-Y cliff")
 		if os.has_method("try_enter_ship"):
 			os.try_enter_ship()
 		await get_tree().create_timer(0.3).timeout

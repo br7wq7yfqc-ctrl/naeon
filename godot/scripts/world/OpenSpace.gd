@@ -2207,6 +2207,8 @@ func _apply_dirt_exit_facing() -> void:
 	nose = nose.normalized()
 	if player.has_method("set_spawn_facing"):
 		player.set_spawn_facing(pad_up, nose)
+	if player.has_method("_update_up"):
+		player._update_up()
 
 
 
