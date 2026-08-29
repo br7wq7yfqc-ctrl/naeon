@@ -402,6 +402,7 @@ func _check_ar_e(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	if player.has_method("cycle_form"):
 		player.cycle_form()
 	var form1 := str(player.current_form) if "current_form" in player else ""
+	print("[Playtest] Form Cycle ", form0, " → ", form1)
 	if form1 == "" or form1 == form0:
 		fails.append("Form Cycle did not change identity")
 	if absf(float(player.max_health) - hp0) > 0.01:

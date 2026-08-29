@@ -88,6 +88,7 @@ func _ready() -> void:
 	print("[Player] Ready form=", current_form, " faction=", faction)
 	if SoftSession:
 		SoftSession.apply_to_player(self)
+	_sync_form_index()
 	_loco = _ProcLoco.new()
 	if SoftNetSession:
 		SoftNetSession.bind_player(self)
@@ -322,14 +323,30 @@ func _just_ability(n: int) -> bool:
 
 func cycle_form() -> void:
 	var forms: PackedStringArray = _HeroForms.forms_for_faction(faction)
-	_form_index = (_form_index + 1) % forms.size()
+	var cur: int = 0
+	if forms.is_empty():
+		return
+	# SoftSession may restore current_form without _form_index. Advance from
+	# the live identity, not a stale slot (AR-E: Feline+index0 → Feline again).
+	cur = forms.find(current_form)
+	if cur < 0:
+		cur = _form_index
+	_form_index = (cur + 1) % forms.size()
 	switch_form(forms[_form_index])
 	_form_switch_fx()
 
 func switch_form(new_form: String) -> void:
 	current_form = new_form
+	_sync_form_index()
 	_apply_form_stats()
 	print("[Player] Form → ", current_form)
+
+
+func _sync_form_index() -> void:
+	var forms: PackedStringArray = _HeroForms.forms_for_faction(faction)
+	var i: int = forms.find(current_form)
+	if i >= 0:
+		_form_index = i
 
 func _apply_form_stats() -> void:
 	var prof: Dictionary = _HeroForms.apply_soft_mobility(current_form)

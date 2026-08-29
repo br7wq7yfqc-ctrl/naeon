@@ -1,3 +1,5 @@
+**2026-08-29 — AR-E Form Cycle identity (SoftSession index sync)**
+
 **2026-08-28 — IN-F: hangar SoftNet visual (ramp + rover/stored ghost)**
 
 **2026-08-28 — SE-A: live power / cool / life buses on the player hull**
