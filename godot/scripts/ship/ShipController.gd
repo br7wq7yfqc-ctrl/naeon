@@ -381,6 +381,16 @@ func _pad_envelope(pad: Node3D) -> Dictionary:
 	var plate := lat <= 28.0 and h > 0.5 and h < 22.0
 	return {"ok": true, "lat": lat, "h": h, "plate": plate}
 
+
+func altitude_agl() -> float:
+	## Plate: height above the deck (CargoRamp HOVER gate). Dirt: Relief.
+	if _open_space and _open_space.has_method("nearest_pad"):
+		var pad: Node3D = _open_space.nearest_pad(global_position)
+		var envp: Dictionary = _pad_envelope(pad)
+		if bool(envp.get("ok", false)) and float(envp.get("lat", 999.0)) <= 28.0:
+			return float(envp.get("h", 0.0))
+	return _altitude_now()
+
 func _ship_axis() -> Vector3:
 	if _npc_driven:
 		return _npc_axes
