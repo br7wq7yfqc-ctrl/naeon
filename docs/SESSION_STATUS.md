@@ -1,3 +1,5 @@
+**2026-08-29 — HOVER ground-effect after dirt launch is Relief AGL, pad term 28 m plate only**
+
 **2026-08-29 — HOVER PD after dirt launch tracks Relief AGL, does not rewrite hold**
 
 **2026-08-29 — Launch after dirt I-hatch holds Relief AGL, not pad 110 m away**

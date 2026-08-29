@@ -647,8 +647,9 @@ func _physics_process(delta: float) -> void:
 								pup = raw.normalized()
 						var rel: Vector3 = global_position - hpad.global_position
 						pad_lat = (rel - pup * rel.dot(pup)).length()
-				# Ground-effect cushions sink. Pad term only on the plate.
-				accel += _Flight.ground_effect_accel(g, _altitude_now(), pad_d, v_up, pad_lat)
+				# Ground-effect cushions sink. Pad term only on the plate (28 m).
+				# Height is altitude_agl (deck on plate, Relief on dirt).
+				accel += _Flight.ground_effect_accel(g, altitude_agl(), pad_d, v_up, pad_lat)
 		elif flight_mode == FlightMode.SCM:
 			# Partial gravity in atmo; almost free in vacuum
 			accel += g * lerpf(0.08, 0.45, atmo)
