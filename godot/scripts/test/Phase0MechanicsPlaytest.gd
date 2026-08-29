@@ -2945,6 +2945,12 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 			fails.append("hatch dirt teleported away from hull (%s)" % snapped(hd_ship, 0.1))
 		if hd_pad < 60.0:
 			fails.append("hatch dirt snapped to pad (%s)" % snapped(hd_pad, 0.1))
+		var h_agl := 99.0
+		if nex.has_method("altitude_of"):
+			h_agl = float(nex.altitude_of(walker.global_position))
+		print("[Playtest] hatch dirt agl=", snapped(h_agl, 0.01))
+		if h_agl < 0.2 or h_agl > 5.0:
+			fails.append("hatch dirt walker not on Relief (%s)" % snapped(h_agl, 0.01))
 		var rad_up_h: Vector3 = (walker.global_position - (nex as Node3D).global_position).normalized()
 		var body_fwd_h: Vector3 = -walker.global_transform.basis.z
 		body_fwd_h = body_fwd_h - rad_up_h * body_fwd_h.dot(rad_up_h)

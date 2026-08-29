@@ -1790,6 +1790,8 @@ func place_from_ship_pocket(walker: Node3D) -> void:
 			if side.length_squared() > 0.01:
 				side = side.normalized()
 			walker.global_position = ship.global_position + pad_up * 3.2 + side * 11.0
+			if walker is CharacterBody3D:
+				(walker as CharacterBody3D).velocity = Vector3.ZERO
 			if walker.has_method("set_eva_profile"):
 				walker.set_eva_profile(false)
 			var nose_p: Vector3 = -ship.global_transform.basis.z
