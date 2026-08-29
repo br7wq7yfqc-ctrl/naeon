@@ -1,3 +1,5 @@
+**2026-08-30 — Slope after second dirt F-EVA is PlanetRelief, not pocket-Y cliff**
+
 **2026-08-30 — Coyote after second dirt F-EVA: spawn grace cleared, jump live**
 
 **2026-08-30 — Facing after second dirt F-EVA: hull-nose tangent, not pad up**
