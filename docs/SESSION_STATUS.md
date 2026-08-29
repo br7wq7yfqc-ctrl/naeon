@@ -1,3 +1,5 @@
+**2026-08-29 — F-board after dirt I-hatch is 28 m hull-side, not 16 m pad**
+
 **2026-08-29 — I-hatch dirt slope grip is PlanetRelief, not pocket-Y cliff**
 
 **2026-08-29 — I-hatch dirt coyote/jump live; not EVA/pocket**
