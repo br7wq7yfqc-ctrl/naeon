@@ -3721,6 +3721,39 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 						fails.append("second dirt land after sink drifted to plate (%s)" % snapped(land2_lat, 0.1))
 					if land2_agl < 1.5 or land2_agl > 8.0:
 						fails.append("second dirt land after sink not on Relief (%s)" % snapped(land2_agl, 0.1))
+					if os.has_method("try_exit_ship"):
+						os.try_exit_ship()
+					await get_tree().create_timer(0.4).timeout
+					var eva3: Node3D = os.get("player") as Node3D if os else null
+					if eva3 == null or not is_instance_valid(eva3) or not eva3.is_inside_tree():
+						fails.append("F-EVA after second dirt land: no walker")
+					else:
+						var e3_ship: float = eva3.global_position.distance_to(ship.global_position)
+						var e3_pad: float = eva3.global_position.distance_to(deck.global_position)
+						var e3_agl := 99.0
+						if nex.has_method("altitude_of"):
+							e3_agl = float(nex.altitude_of(eva3.global_position))
+						var ly_e3 := ""
+						if LayerContext:
+							ly_e3 = str(LayerContext.current_layer)
+						print("[Playtest] F-EVA after second dirt land d_ship=", snapped(e3_ship, 0.1),
+							" d_pad=", snapped(e3_pad, 0.1), " agl=", snapped(e3_agl, 0.01),
+							" eva=", eva3.get("eva_mode"), " layer=", ly_e3)
+						if e3_ship > 22.0:
+							fails.append("F-EVA after second dirt land teleported (%s)" % snapped(e3_ship, 0.1))
+						if e3_pad < 60.0:
+							fails.append("F-EVA after second dirt land snapped to pad (%s)" % snapped(e3_pad, 0.1))
+						if e3_agl < 0.2 or e3_agl > 5.0:
+							fails.append("F-EVA after second dirt land not on Relief (%s)" % snapped(e3_agl, 0.01))
+						if bool(eva3.get("eva_mode")) or bool(eva3.get("zero_g")):
+							fails.append("F-EVA after second dirt land still EVA 0G")
+						if ly_e3.to_upper().find("TPS") < 0:
+							fails.append("F-EVA after second dirt land layer not TPS (%s)" % ly_e3)
+					if os.has_method("try_enter_ship"):
+						os.try_enter_ship()
+					await get_tree().create_timer(0.3).timeout
+					if not bool(os.get("_in_ship")):
+						fails.append("reboard after F-EVA second dirt land refused")
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
