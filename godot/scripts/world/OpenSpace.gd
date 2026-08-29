@@ -846,7 +846,8 @@ func _hand_view_to_ship() -> void:
 		walker_cam = player.get_node_or_null("CamPivot/Camera3D") as Camera3D
 		if walker_cam == null and "camera" in player:
 			walker_cam = player.camera as Camera3D
-	if walker_cam != null and walker_cam.current:
+	if walker_cam != null:
+		walker_cam.current = false
 		walker_cam.clear_current(false)
 	var cam: Camera3D = null
 	if ship != null and is_instance_valid(ship):
