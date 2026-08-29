@@ -656,7 +656,7 @@ func _refresh() -> void:
 			elif director.has_method("is_near_legal_seat") and _player and director.is_near_legal_seat(_player):
 				ctx = "F seat · I"
 			elif director.has_method("is_near_hatch") and _player and director.is_near_hatch(_player):
-				ctx = "I hatch · F seat"
+				ctx = "F/I hatch"
 			elif director.has_method("is_near_console") and _player and director.is_near_console(_player):
 				ctx = "E ops · I"
 			var ls := ""
