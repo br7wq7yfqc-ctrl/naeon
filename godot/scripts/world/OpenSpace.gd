@@ -1118,6 +1118,14 @@ func _spawn_player_near_ship() -> void:
 			player.set_spawn_basis(pad_up, atan2(-nose.x, -nose.z))
 		if player.has_method("snap_to_surface"):
 			player.snap_to_surface()
+		if player.has_method("set_eva_profile"):
+			player.set_eva_profile(false)
+		if player.has_method("set_interior_mode"):
+			player.set_interior_mode(false)
+		elif "interior_mode" in player:
+			player.interior_mode = false
+		if player.has_method("_update_up"):
+			player._update_up()
 		if player.has_method("set_spawn_facing") and nose.length_squared() > 0.01:
 			player.set_spawn_facing(pad_up, nose)
 		print("[OpenSpace] TPS dirt exit at ", player.global_position, " up=", pad_up)
