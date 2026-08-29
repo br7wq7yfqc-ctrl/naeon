@@ -1,3 +1,5 @@
+**2026-08-30 — Facing after second dirt F-EVA: hull-nose tangent, not pad up**
+
 **2026-08-30 — F-EVA after second dirt land: hull-side Relief, TPS, not pad**
 
 **2026-08-30 — Dirt LAND after second sink: Relief, pad none, lat 110 m**

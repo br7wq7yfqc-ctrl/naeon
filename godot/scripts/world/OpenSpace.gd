@@ -2205,6 +2205,8 @@ func _apply_dirt_exit_facing() -> void:
 	## Deferred snap can twist the body. Dirt F-EVA stays hull-nose tangent.
 	if player == null or not is_instance_valid(player) or ship == null or not is_instance_valid(ship):
 		return
+	if _in_ship:
+		return
 	if _land_eva_pad() != null:
 		return
 	var pl = nearest_planet(player.global_position)

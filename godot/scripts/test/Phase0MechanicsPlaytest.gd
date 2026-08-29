@@ -3749,6 +3749,21 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 							fails.append("F-EVA after second dirt land still EVA 0G")
 						if ly_e3.to_upper().find("TPS") < 0:
 							fails.append("F-EVA after second dirt land layer not TPS (%s)" % ly_e3)
+						if os.has_method("_apply_dirt_exit_facing"):
+							os._apply_dirt_exit_facing()
+						var rad_e3: Vector3 = (eva3.global_position - (nex as Node3D).global_position).normalized()
+						var fwd_e3: Vector3 = -eva3.global_transform.basis.z
+						fwd_e3 = fwd_e3 - rad_e3 * fwd_e3.dot(rad_e3)
+						var want_e3: Vector3 = -ship.global_transform.basis.z
+						want_e3 = want_e3 - rad_e3 * want_e3.dot(rad_e3)
+						if fwd_e3.length_squared() < 0.04 or want_e3.length_squared() < 0.04:
+							fails.append("F-EVA after second dirt land facing not tangent")
+						else:
+							var align_e3: float = fwd_e3.normalized().dot(want_e3.normalized())
+							print("[Playtest] F-EVA after second dirt land facing align=", snapped(align_e3, 0.01),
+								" tangent=", snapped(1.0 - absf(fwd_e3.normalized().dot(rad_e3)), 0.01))
+							if align_e3 < 0.55:
+								fails.append("F-EVA after second dirt land facing sideways (%s)" % snapped(align_e3, 0.01))
 					if os.has_method("try_enter_ship"):
 						os.try_enter_ship()
 					await get_tree().create_timer(0.3).timeout
