@@ -3601,6 +3601,27 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 			await get_tree().create_timer(0.3).timeout
 			if not bool(os.get("_in_ship")):
 				fails.append("reboard after I-hatch dirt F-board refused")
+			else:
+				if hud_pk != null and hud_pk.has_method("bind_player"):
+					hud_pk.bind_player(ship)
+				if hud_pk != null and hud_pk.has_method("_refresh"):
+					hud_pk._refresh()
+				var origin_rb: Node3D = null
+				if hud_pk != null and hud_pk.has_method("_occupy_origin"):
+					origin_rb = hud_pk.call("_occupy_origin") as Node3D
+				var ly_rb := ""
+				if LayerContext:
+					ly_rb = str(LayerContext.current_layer)
+				var rng_rb: float = float(hud_pk.get("_radar_range_m")) if hud_pk else 0.0
+				print("[Playtest] F-board after second I-hatch dirt origin=",
+					origin_rb.name if origin_rb else "null", " layer=", ly_rb,
+					" radar=", snapped(rng_rb, 1.0))
+				if origin_rb != null and origin_rb != ship:
+					fails.append("occupy HUD origin still walker after second I-hatch F-board")
+				if ly_rb.to_upper().find("SPACE") < 0:
+					fails.append("layer not Space after second I-hatch F-board (%s)" % ly_rb)
+				if rng_rb < 1000.0:
+					fails.append("pad radar still 400m after second I-hatch F-board (%s)" % snapped(rng_rb, 1.0))
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
