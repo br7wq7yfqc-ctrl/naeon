@@ -465,6 +465,12 @@ func _apply_interior_chrome(pocket: bool) -> void:
 			_owner_label.visible = true
 		if _layer_label:
 			_layer_label.visible = true
+		if _radar and not _in_clash_arena():
+			_radar.visible = true
+		if _lead_pip:
+			_lead_pip.visible = true
+		if _obj_label:
+			_obj_label.visible = true
 		return
 	if _radar:
 		_radar.visible = false
@@ -865,14 +871,14 @@ func _refresh() -> void:
 	elif _owner_label:
 		_owner_label.add_theme_color_override("font_color", Color(0.95, 0.9, 0.55))
 
-	# Pad radar — skip in pocket (no pads at y=9200)
+	# Pad radar after chrome restore — pocket hid it; hatch dirt same tick.
+	_refresh_os_stack(pocket, nearest_pad)
+	_apply_interior_chrome(pocket)
+	_apply_clash_chrome()
 	if not pocket and _radar and _radar.visible and origin != null and get_tree():
 		_refresh_pad_radar(origin.global_position)
 	else:
 		_radar_contacts.clear()
-	_refresh_os_stack(pocket, nearest_pad)
-	_apply_interior_chrome(pocket)
-	_apply_clash_chrome()
 
 
 func radar_pad_contacts() -> Array:

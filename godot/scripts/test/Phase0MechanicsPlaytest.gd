@@ -2987,6 +2987,39 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 			fails.append("occupy HUD offered PAD after hatch dirt")
 		if otxt.to_lower().find("hatch") >= 0:
 			fails.append("occupy HUD still pocket hatch after dirt exit")
+		var radar = hud.get("_radar") if hud else null
+		if radar is CanvasItem:
+			(radar as CanvasItem).visible = true
+		if hud != null and hud.has_method("_refresh"):
+			hud._refresh()
+		var near_n := 0
+		if hud != null and hud.has_method("radar_pad_contacts"):
+			near_n = hud.radar_pad_contacts().size()
+		print("[Playtest] pad radar hatch dirt 110m n=", near_n)
+		if near_n < 1:
+			fails.append("pad radar missed pad after hatch dirt")
+		var up_h: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+		if up_h.length_squared() > 0.01:
+			up_h = up_h.normalized()
+		var side_h: Vector3 = up_h.cross(Vector3.RIGHT)
+		if side_h.length_squared() < 0.04:
+			side_h = up_h.cross(Vector3.FORWARD)
+		side_h = side_h.normalized()
+		var saved_h: Vector3 = walker.global_position
+		walker.global_position = deck.global_position + side_h * 600.0 + up_h * 2.0
+		if hud != null and hud.has_method("_refresh"):
+			hud._refresh()
+		var far_hit := false
+		var far_n := 0
+		if hud != null and hud.has_method("radar_pad_contacts"):
+			for c in hud.radar_pad_contacts():
+				far_n += 1
+				if c is Node3D and (c as Node3D).global_position.distance_to(deck.global_position) < 30.0:
+					far_hit = true
+		print("[Playtest] pad radar hatch dirt 600m n=", far_n, " pad=", far_hit)
+		if far_hit:
+			fails.append("pad radar used 12km approach after hatch dirt")
+		walker.global_position = saved_h
 	if os.has_method("try_enter_ship"):
 		os.try_enter_ship()
 	await get_tree().create_timer(0.3).timeout

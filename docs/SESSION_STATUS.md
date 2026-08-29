@@ -1,3 +1,5 @@
+**2026-08-29 — Pad radar after dirt I-hatch is 400 m on-foot, same tick**
+
 **2026-08-29 — Occupy HUD after dirt I-hatch follows the walker, not the hull**
 
 **2026-08-29 — I-hatch dirt facing is hull-tangent after exterior place**
