@@ -1,3 +1,5 @@
+**2026-08-30 — Pad radar after second dirt F-EVA is 400 m on-foot, not hull 12 km**
+
 **2026-08-30 — Occupy HUD after second dirt F-EVA follows walker, not hull/0G**
 
 **2026-08-30 — Slope after second dirt F-EVA is PlanetRelief, not pocket-Y cliff**
