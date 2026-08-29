@@ -1778,38 +1778,39 @@ func place_from_ship_pocket(walker: Node3D) -> void:
 		if walker.has_method("set_meta"):
 			walker.set_meta("skip_ready_snap", true)
 		if not _place_walker_on_land_deck(walker):
+			## Dirt land has no occupied pad. Same as F-EVA: beside hull, not nearest pad.
 			var pad_up := Vector3.UP
-			var pad: Node3D = nearest_pad(ship.global_position)
-			if pad and is_instance_valid(pad) and pad.has_meta("pad_up"):
-				pad_up = pad.get_meta("pad_up")
-			else:
-				var pl = nearest_planet(ship.global_position)
-				if pl and is_instance_valid(pl):
-					pad_up = (ship.global_position - pl.global_position).normalized()
+			var pl = nearest_planet(ship.global_position)
+			if pl and is_instance_valid(pl):
+				pad_up = (ship.global_position - pl.global_position).normalized()
 			var side: Vector3 = ship.global_transform.basis.x
 			side = (side - pad_up * side.dot(pad_up))
 			if side.length_squared() < 0.01:
 				side = pad_up.cross(Vector3.RIGHT)
 			if side.length_squared() > 0.01:
 				side = side.normalized()
-			if pad != null:
-				walker.global_position = pad.global_position + pad_up * 1.35 + side * 11.0
-			else:
-				walker.global_position = ship.global_position + pad_up * 3.2 + side * 11.0
+			walker.global_position = ship.global_position + pad_up * 3.2 + side * 11.0
 			if walker.has_method("set_eva_profile"):
 				walker.set_eva_profile(false)
-			var nose_p := Vector3(0, 0, -1)
-			if ship != null and is_instance_valid(ship):
-				nose_p = -ship.global_transform.basis.z
+			var nose_p: Vector3 = -ship.global_transform.basis.z
+			nose_p = nose_p - pad_up * nose_p.dot(pad_up)
+			if nose_p.length_squared() < 0.01:
+				nose_p = -ship.global_transform.basis.x
+				nose_p = nose_p - pad_up * nose_p.dot(pad_up)
+			if nose_p.length_squared() > 0.01:
+				nose_p = nose_p.normalized()
 			if walker.has_method("set_spawn_facing"):
 				walker.set_spawn_facing(pad_up, nose_p)
 			elif walker.has_method("set_spawn_basis"):
 				walker.set_spawn_basis(pad_up, atan2(-nose_p.x, -nose_p.z))
-			if pad != null and walker.has_method("snap_to_pad"):
-				walker.snap_to_pad(pad)
-			elif walker.has_method("snap_to_surface"):
-				walker.call_deferred("snap_to_surface")
-		_toast_hud("Hatch → pad")
+			if walker.has_method("snap_to_surface"):
+				walker.snap_to_surface()
+			if walker.has_method("set_spawn_facing") and nose_p.length_squared() > 0.01:
+				walker.set_spawn_facing(pad_up, nose_p)
+			print("[OpenSpace] hatch dirt exit at ", walker.global_position, " up=", pad_up)
+			_toast_hud("Hatch → EVA")
+		else:
+			_toast_hud("Hatch → pad")
 	else:
 		var hatch: Node3D = ship.get_node_or_null("HatchPoint") as Node3D
 		var side_e: Vector3 = ship.global_transform.basis.x
