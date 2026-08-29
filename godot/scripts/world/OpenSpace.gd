@@ -1133,6 +1133,8 @@ func _spawn_player_near_ship() -> void:
 		_schedule_surface_settle()
 	if is_instance_valid(ship) and ship.has_method("set_pilot_active"):
 		ship.set_pilot_active(false)
+	if player != null and is_instance_valid(player) and player.has_method("_bind_hud"):
+		player._bind_hud()
 	_bind_soft_net_actor(player)
 
 
