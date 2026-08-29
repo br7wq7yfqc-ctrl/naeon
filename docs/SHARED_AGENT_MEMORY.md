@@ -211,6 +211,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-30 | I-hatch after dirt F-board: ship_int, hull-side Relief. | ihatch-after-dirt-board |
 | 2026-08-30 | Second I-hatch dirt facing: hull-nose + _update_up. | facing-after-second-hatch |
 | 2026-08-30 | Second I-hatch dirt coyote: grace 0, jump. | coyote-after-second-hatch |
+| 2026-08-30 | Second I-hatch dirt slope: Relief, not Y-cliff. | slope-after-second-hatch |
 | 2026-08-28 | ST-G: factory in existing PlayerOrbitalStation cluster. Bench (c) spend Contribution/Biomass → one catalog module. Without factory, (c) refuses. No SITE_*. ST-E stays dock+habitat. | st-g-factory |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
