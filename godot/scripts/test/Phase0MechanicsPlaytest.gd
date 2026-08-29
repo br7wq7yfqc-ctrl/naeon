@@ -3633,6 +3633,36 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 					fails.append("HOVER view after second I-hatch F-board stole (%s)" % (live_rb.name if live_rb else "none"))
 				elif not chase_rb.current:
 					fails.append("HOVER view after second I-hatch F-board chase not current")
+				if not bool(ship.get("is_landed")):
+					fails.append("second dirt F-board launch: ship already flying")
+				else:
+					var agl_rb0: float = 0.0
+					if nex.has_method("altitude_of"):
+						agl_rb0 = float(nex.altitude_of(ship.global_position))
+					if ship.has_method("_do_launch"):
+						ship.set("_land_lock_t", 0.0)
+						ship._do_launch()
+					await get_tree().create_timer(0.4).timeout
+					var agl_rb1: float = agl_rb0
+					if nex.has_method("altitude_of"):
+						agl_rb1 = float(nex.altitude_of(ship.global_position))
+					var hold_rb: float = float(ship.get("_hover_hold_alt"))
+					print("[Playtest] second dirt F-board launch agl ", snapped(agl_rb0, 0.1), "→",
+						snapped(agl_rb1, 0.1), " hold=", snapped(hold_rb, 0.1),
+						" landed=", ship.get("is_landed"))
+					if bool(ship.get("is_landed")):
+						fails.append("second dirt F-board launch still landed")
+					if agl_rb1 + 0.2 < agl_rb0 + 0.8:
+						fails.append("second dirt F-board launch did not lift (%s → %s)" % [snapped(agl_rb0, 0.1), snapped(agl_rb1, 0.1)])
+					if absf(hold_rb - (agl_rb0 + 12.0)) > 4.0:
+						fails.append("second dirt F-board launch hold not dirt AGL (%s vs %s)" % [snapped(hold_rb, 0.1), snapped(agl_rb0 + 12.0, 0.1)])
+					if ship.has_method("_set_mode"):
+						ship._set_mode(2)
+					await get_tree().create_timer(0.45).timeout
+					var hold_rb2: float = float(ship.get("_hover_hold_alt"))
+					print("[Playtest] second dirt F-board HOVER PD hold=", snapped(hold_rb2, 0.1))
+					if absf(hold_rb2 - hold_rb) > 3.0:
+						fails.append("second dirt F-board HOVER PD rewrote hold (%s → %s)" % [snapped(hold_rb, 0.1), snapped(hold_rb2, 0.1)])
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
