@@ -1,3 +1,5 @@
+**2026-08-30 — HOVER+S after dirt launch uses Relief AGL, hold floor 4 m not 8 m**
+
 **2026-08-29 — HOVER ground-effect after dirt launch is Relief AGL, pad term 28 m plate only**
 
 **2026-08-29 — HOVER PD after dirt launch tracks Relief AGL, does not rewrite hold**

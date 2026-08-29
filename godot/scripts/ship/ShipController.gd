@@ -619,7 +619,7 @@ func _physics_process(delta: float) -> void:
 				# (P0.5 3090: 3 HOVER + S kept climbing until SCM).
 				accel -= g
 				accel -= lift_cmd
-				_hover_hold_alt = maxf(8.0, _altitude_now() - 80.0)
+				_hover_hold_alt = maxf(4.0, altitude_agl() - 80.0)
 				var climb_v: float = velocity.dot(-inward)
 				if climb_v > 0.0:
 					velocity += inward * climb_v
@@ -660,7 +660,7 @@ func _physics_process(delta: float) -> void:
 	var sink_max: float = _max_speed()
 	var sink_damp: float = _damp_mult()
 	if sink_held:
-		var alt_now := _altitude_now()
+		var alt_now := altitude_agl()
 		var sink_acc := 28.0
 		if flight_mode == FlightMode.HOVER:
 			# HOVER 2.2 damp + 22 m/s cap cancelled S (8000→7999 / tap).
