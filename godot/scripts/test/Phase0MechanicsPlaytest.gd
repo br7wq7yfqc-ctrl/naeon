@@ -3285,6 +3285,40 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 			fails.append("occupy HUD origin not walker after F-EVA dirt sink")
 		if otxt_e2.to_upper().find("PAD") >= 0 and otxt_e2.to_upper().find("OCCUPY") >= 0:
 			fails.append("occupy HUD PAD after F-EVA dirt 110m")
+		var radar_e2: Variant = hud_e2.get("_radar") if hud_e2 else null
+		if radar_e2 is CanvasItem:
+			(radar_e2 as CanvasItem).visible = true
+		if hud_e2 != null and hud_e2.has_method("_refresh"):
+			hud_e2._refresh()
+		var near_e2n := 0
+		if hud_e2 != null and hud_e2.has_method("radar_pad_contacts"):
+			near_e2n = hud_e2.radar_pad_contacts().size()
+		print("[Playtest] pad radar F-EVA dirt sink 110m n=", near_e2n, " vis=",
+			(radar_e2 as CanvasItem).visible if radar_e2 is CanvasItem else "?")
+		if near_e2n < 1:
+			fails.append("pad radar missed pad after F-EVA dirt sink")
+		var saved_e2: Vector3 = eva2.global_position
+		var up_e2r: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+		if up_e2r.length_squared() > 0.01:
+			up_e2r = up_e2r.normalized()
+		var side_e2r: Vector3 = up_e2r.cross(Vector3.RIGHT)
+		if side_e2r.length_squared() < 0.04:
+			side_e2r = up_e2r.cross(Vector3.FORWARD)
+		side_e2r = side_e2r.normalized()
+		eva2.global_position = deck.global_position + side_e2r * 600.0 + up_e2r * 2.0
+		if hud_e2 != null and hud_e2.has_method("_refresh"):
+			hud_e2._refresh()
+		var far_e2 := false
+		var far_e2n := 0
+		if hud_e2 != null and hud_e2.has_method("radar_pad_contacts"):
+			for c in hud_e2.radar_pad_contacts():
+				far_e2n += 1
+				if c is Node3D and (c as Node3D).global_position.distance_to(deck.global_position) < 30.0:
+					far_e2 = true
+		print("[Playtest] pad radar F-EVA dirt sink 600m n=", far_e2n, " pad=", far_e2)
+		if far_e2:
+			fails.append("pad radar used 12km approach after F-EVA dirt sink")
+		eva2.global_position = saved_e2
 		if os.has_method("try_enter_ship"):
 			os.try_enter_ship()
 		await get_tree().create_timer(0.3).timeout

@@ -1,3 +1,5 @@
+**2026-08-30 — Pad radar after F-EVA dirt (post HOVER+S) is 400 m on-foot, origin _up**
+
 **2026-08-30 — Occupy HUD after F-EVA dirt (post HOVER+S) follows walker, not hull**
 
 **2026-08-30 — F-EVA dirt slope after HOVER+S land is PlanetRelief, not pocket-Y cliff**
