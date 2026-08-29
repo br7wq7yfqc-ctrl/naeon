@@ -164,6 +164,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-29 | HOVER hold: pad no longer rewrites `_hover_hold_alt` to deck+8 (autopilot). Ground-effect still cushions. | hover-hold-pd |
 | 2026-08-29 | Walker dirt slope: PlanetRelief.slope_rad finite-diff. Grip uses max(floor, relief) off-pad. | walker-dirt-slope |
 | 2026-08-29 | Rover dirt slope: same PlanetRelief.slope_rad off plate/ramp. Pad/ramp stay floor-only. | rover-dirt-slope |
+| 2026-08-29 | Walker coyote on dirt: near relief refreshes coyote; request_jump playtest. | walker-dirt-coyote |
 | 2026-08-28 | ST-G: factory in existing PlayerOrbitalStation cluster. Bench (c) spend Contribution/Biomass → one catalog module. Without factory, (c) refuses. No SITE_*. ST-E stays dock+habitat. | st-g-factory |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |

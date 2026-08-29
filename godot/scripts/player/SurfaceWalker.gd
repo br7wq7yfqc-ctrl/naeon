@@ -679,8 +679,12 @@ func _physics_process(delta: float) -> void:
 
 	# Gravity integrate along radial up
 	var v_up := velocity.dot(_up)
-	if is_on_floor():
+	var dirt_floor: bool = (not interior_mode) and (not eva_mode) and (not zero_g) and _near_dirt_floor()
+	if is_on_floor() or dirt_floor:
 		_coyote_t = 0.14
+		if dirt_floor and not is_on_floor():
+			# Headless / GPU hole: stay on the relief, don't fall into the void.
+			v_up = minf(v_up, -0.15)
 	else:
 		_coyote_t = maxf(0.0, _coyote_t - delta)
 		v_up += g_vec.dot(_up) * delta
@@ -1113,6 +1117,22 @@ func _relief_slope_rad() -> float:
 	var pid: String = str(pl.get("planet_name")) if "planet_name" in pl else "Nex-Prime"
 	var seed: int = int(pl.body_seed()) if pl.has_method("body_seed") else int(absi(pid.hash()) % 10000)
 	return float(_Relief.slope_rad(dir.normalized(), seed, _Relief.profile_for_planet(pid)))
+
+
+func _near_dirt_floor() -> bool:
+	var pl: Node3D = _nearest_planet_body()
+	if pl == null or not ("radius" in pl):
+		return false
+	var dir: Vector3 = global_position - pl.global_position
+	if dir.length_squared() < 1e-8:
+		return false
+	var target: float = float(pl.radius) + _visual_relief_metres(pl) + 0.9
+	return absf(target - dir.length()) < 1.6
+
+
+func request_jump() -> void:
+	## Headless / playtest. Keyboard still wins in _physics_process.
+	_jump_buf_t = 0.12
 
 
 func _force_dirt_chunks() -> void:

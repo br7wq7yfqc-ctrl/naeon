@@ -1,3 +1,5 @@
+**2026-08-29 — Walker coyote lives on dirt (jump without trimesh)**
+
 **2026-08-29 — Rover dirt slope from PlanetRelief (same as walker)**
 
 **2026-08-29 — Walker dirt slope from PlanetRelief (not a billiard)**
