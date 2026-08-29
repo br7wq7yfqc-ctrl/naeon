@@ -155,6 +155,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-27 | ST-F: CX↔GR owner swap on one occupied unnamed pad. Theme + services change. Harvest / print / hangar numbers stay. Not SITE_*. Not arena-flip. | st-f-owner |
 | 2026-08-29 | AR-E leftover: cycle_form advances from live current_form, not stale _form_index after SoftSession restore (Feline+0 → Feline). Identity only; no HP/DPS. |
 | 2026-08-29 | OS-H leftover: F-board frees the pad walker; occupy / HUD / dummy no longer read `global_transform` on a node that is valid but off-tree. ST-F playtest `get_meta("site_pin")` uses a default. | os-h-freed-actor |
+| 2026-08-29 | OS-H leftover: SoftScanCache get_player/pads/ships/enemies require `is_inside_tree`; Pulse hurtbox skips off-tree; F-interact same. | os-h-scan-cache |
 | 2026-08-28 | ST-G: factory in existing PlayerOrbitalStation cluster. Bench (c) spend Contribution/Biomass → one catalog module. Without factory, (c) refuses. No SITE_*. ST-E stays dock+habitat. | st-g-factory |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |

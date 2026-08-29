@@ -1,3 +1,5 @@
+**2026-08-29 — OS-H leftover: SoftScanCache only returns in-tree actors**
+
 **2026-08-29 — OS-H leftover: occupy/HUD/dummy skip freed EVA walker**
 
 **2026-08-29 — AR-E Form Cycle identity (SoftSession index sync)**

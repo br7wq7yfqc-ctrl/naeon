@@ -63,6 +63,7 @@ func _go() -> void:
 	await _assert_ar_g(os, fails)
 	_assert_se_a(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
+	_assert_scan_cache_live(fails)
 
 	# --- stall math (no scene) ---
 	if _Flight.stall_amount(0.0, 4.0, 20.0) > 0.01:
@@ -513,6 +514,7 @@ func _go() -> void:
 						fails.append("not piloting after seat→pilot")
 					else:
 						print("[Playtest] seat→pilot OK")
+					_assert_scan_cache_live(fails)
 
 	await _seat_pocket_seat(fails)
 
@@ -7221,6 +7223,22 @@ func _osh_report_skips(fails: PackedStringArray, done: Dictionary, required: Pac
 			if not already:
 				fails.append(msg)
 			print("[Playtest] OS-H FAIL skipped ", step)
+
+
+func _assert_scan_cache_live(fails: PackedStringArray) -> void:
+	## OS-H leftover: F-board / seat→pilot frees the walker. Cache must not
+	## hand an off-tree node to occupy / HUD / Pulse.
+	if SoftScanCache == null:
+		return
+	var p: Node3D = SoftScanCache.get_player()
+	if p != null and not p.is_inside_tree():
+		fails.append("SoftScanCache.get_player off-tree")
+		return
+	for n in SoftScanCache.get_ships():
+		if n is Node and not (n as Node).is_inside_tree():
+			fails.append("SoftScanCache.get_ships has off-tree hull")
+			return
+	print("[Playtest] SoftScanCache live player=", p != null, " ships=", SoftScanCache.get_ships().size())
 
 
 func _finish(fails: PackedStringArray, code: int) -> void:
