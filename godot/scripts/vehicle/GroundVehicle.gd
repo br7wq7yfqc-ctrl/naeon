@@ -2,6 +2,7 @@ extends CharacterBody3D
 class_name GroundVehicle
 const _Facing = preload("res://scripts/player/SurfaceFacing.gd")
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
+const _Relief = preload("res://scripts/world/PlanetRelief.gd")
 ## Surface rover — radial gravity drive, nose = −Z, board/exit F.
 ## Knowledge may relabel. It never writes speed / HP.
 
@@ -31,6 +32,7 @@ var _cmd_brake: bool = false
 var _use_cmd: bool = false
 var _pad_deck: Node3D = null
 var _hangar_ramp: Node3D = null
+var last_slope_ang: float = 0.0
 
 
 func _ready() -> void:
@@ -264,9 +266,16 @@ func _physics_process(delta: float) -> void:
 	_yaw += turn * turn_speed * turn_scale * delta
 
 	var grip := 1.0
+	var slope_ang := 0.0
 	if is_on_floor():
 		# Radial up, not world +Y — otherwise flat ground pins grip at the floor.
-		var slope_ang: float = get_floor_angle(_up)
+		slope_ang = get_floor_angle(_up)
+	if not _on_pad_plate() and not _on_ramp_span():
+		var rel_s: float = _relief_slope_rad()
+		if rel_s > slope_ang:
+			slope_ang = rel_s
+	last_slope_ang = slope_ang
+	if slope_ang > 0.01:
 		grip = clampf(1.0 - slope_ang / deg_to_rad(52.0), 0.38, 1.0)
 		floor_snap_length = 0.55 if slope_ang > deg_to_rad(38.0) else 0.4
 		floor_max_angle = deg_to_rad(68.0) if slope_ang > deg_to_rad(38.0) else deg_to_rad(55.0)
@@ -352,6 +361,18 @@ func _visual_relief_metres(pl: Node3D) -> float:
 	if pl.has_method("relief_height_at"):
 		h = float(pl.relief_height_at(global_position))
 	return h
+
+
+func _relief_slope_rad() -> float:
+	var pl: Node3D = _nearest_planet()
+	if pl == null:
+		return 0.0
+	var dir: Vector3 = global_position - pl.global_position
+	if dir.length_squared() < 1e-8:
+		return 0.0
+	var pid: String = str(pl.get("planet_name")) if "planet_name" in pl else "Nex-Prime"
+	var seed: int = int(pl.body_seed()) if pl.has_method("body_seed") else int(absi(pid.hash()) % 10000)
+	return float(_Relief.slope_rad(dir.normalized(), seed, _Relief.profile_for_planet(pid)))
 
 
 func _relief_floor_assist(delta: float) -> void:

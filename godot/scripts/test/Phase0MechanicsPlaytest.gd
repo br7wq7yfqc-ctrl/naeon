@@ -6125,6 +6125,12 @@ func _assert_rover_brake_and_dirt(rover: Node3D, pad: Node3D, fails: PackedStrin
 	print("[Playtest] rover left plate on_plate=", on_plate, " on_ramp=", on_ramp, " pad_deck_cleared=", deck_left)
 	if on_plate or on_ramp or not deck_left:
 		fails.append("rover stayed on infinite pad plane off-plate")
+	if rover.has_method("_physics_process"):
+		rover._physics_process(0.016)
+	var ang: float = float(rover.get("last_slope_ang"))
+	print("[Playtest] rover dirt slope last=", snapped(rad_to_deg(ang), 0.1), " deg")
+	if ang < 0.0 or ang > 1.4:
+		fails.append("rover dirt slope last out of range (%s)" % snapped(ang, 0.01))
 	rover.global_position = stay
 	rover.set("_pad_deck", pad)
 
