@@ -3107,9 +3107,27 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 		print("[Playtest] occupy HUD hatch dirt board origin=", origin_b.name if origin_b else "null")
 		if origin_b != null and origin_b != ship and origin_b.has_method("set_spawn_facing"):
 			fails.append("occupy HUD origin still walker after hatch dirt F-board")
+	if not bool(ship.get("is_landed")):
+		fails.append("hatch dirt launch: ship already flying")
+	var agl0: float = 0.0
+	if nex.has_method("altitude_of"):
+		agl0 = float(nex.altitude_of(ship.global_position))
 	if ship.has_method("_do_launch"):
 		ship.set("_land_lock_t", 0.0)
 		ship._do_launch()
+	await get_tree().create_timer(0.4).timeout
+	var agl1: float = agl0
+	if nex.has_method("altitude_of"):
+		agl1 = float(nex.altitude_of(ship.global_position))
+	var hold_l: float = float(ship.get("_hover_hold_alt"))
+	print("[Playtest] hatch dirt launch agl ", snapped(agl0, 0.1), "→", snapped(agl1, 0.1),
+		" hold=", snapped(hold_l, 0.1), " landed=", ship.get("is_landed"))
+	if bool(ship.get("is_landed")):
+		fails.append("hatch dirt launch still landed")
+	if agl1 + 0.2 < agl0 + 0.8:
+		fails.append("hatch dirt launch did not lift (%s → %s)" % [snapped(agl0, 0.1), snapped(agl1, 0.1)])
+	if absf(hold_l - (agl0 + 12.0)) > 4.0:
+		fails.append("hatch dirt launch hold not dirt AGL (%s vs %s)" % [snapped(hold_l, 0.1), snapped(agl0 + 12.0, 0.1)])
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
