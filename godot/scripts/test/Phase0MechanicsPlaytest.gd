@@ -8233,7 +8233,30 @@ func _assert_occupy_hud_dirt(os: Node, walker: Node3D, pad: Node3D, fails: Packe
 	print("[Playtest] pad radar dirt 600m n=", far_n, " pad=", far_hit)
 	if far_hit:
 		fails.append("pad radar used 12km approach on-foot")
+	await _assert_snap_dirt_no_steal(walker, pad, up, side, fails)
 	walker.global_position = saved
+
+
+func _assert_snap_dirt_no_steal(walker: Node3D, pad: Node3D, up: Vector3, side: Vector3, fails: PackedStringArray) -> void:
+	## snap_to_pad rewrote lat 12–16 m to 5.5 and stole dirt occupy.
+	if walker == null or not walker.has_method("snap_to_surface"):
+		fails.append("snap dirt: no walker snap_to_surface")
+		return
+	walker.global_position = pad.global_position + side * 14.0 + up * 2.0
+	walker.snap_to_surface()
+	var d14: float = walker.global_position.distance_to(pad.global_position)
+	print("[Playtest] snap dirt 14m → ", snapped(d14, 0.1))
+	if d14 < 8.0:
+		fails.append("snap_to_surface stole 14m onto pad (%s)" % snapped(d14, 0.1))
+	if d14 > 22.0:
+		fails.append("snap_to_surface lost 14m walker (%s)" % snapped(d14, 0.1))
+	walker.global_position = pad.global_position + side * 40.0 + up * 2.0
+	var d0: float = walker.global_position.distance_to(pad.global_position)
+	walker.snap_to_surface()
+	var d40: float = walker.global_position.distance_to(pad.global_position)
+	print("[Playtest] snap dirt 40m ", snapped(d0, 0.1), "→", snapped(d40, 0.1))
+	if d40 < 28.0:
+		fails.append("snap_to_surface stole dirt 40m onto plate (%s)" % snapped(d40, 0.1))
 
 
 func _assert_scan_cache_live(fails: PackedStringArray) -> void:
