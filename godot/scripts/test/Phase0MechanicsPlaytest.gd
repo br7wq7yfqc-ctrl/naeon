@@ -3465,6 +3465,30 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 					" tangent=", snapped(1.0 - absf(fwd_pk.normalized().dot(rad_pk)), 0.01))
 				if align_pk < 0.55:
 					fails.append("I-hatch after dirt F-board facing sideways (%s)" % snapped(align_pk, 0.01))
+			w_pk.set("_spawn_grace_t", 0.0)
+			if w_pk is CharacterBody3D:
+				(w_pk as CharacterBody3D).velocity = Vector3.ZERO
+			if w_pk.has_method("_physics_process"):
+				w_pk._physics_process(0.016)
+			var coy_pk: float = float(w_pk.get("_coyote_t"))
+			var near_pk: Variant = w_pk.call("_near_dirt_floor") if w_pk.has_method("_near_dirt_floor") else false
+			print("[Playtest] I-hatch after dirt F-board coyote t=", snapped(coy_pk, 0.01), " near=", near_pk)
+			if coy_pk <= 0.0:
+				fails.append("I-hatch after dirt F-board coyote dead")
+			else:
+				var pv0: float = 0.0
+				if w_pk is CharacterBody3D:
+					pv0 = (w_pk as CharacterBody3D).velocity.dot(rad_pk)
+				if w_pk.has_method("request_jump"):
+					w_pk.request_jump()
+				if w_pk.has_method("_physics_process"):
+					w_pk._physics_process(0.016)
+				var pv1: float = pv0
+				if w_pk is CharacterBody3D:
+					pv1 = (w_pk as CharacterBody3D).velocity.dot(rad_pk)
+				print("[Playtest] I-hatch after dirt F-board jump v_up ", snapped(pv0, 0.1), "→", snapped(pv1, 0.1))
+				if pv1 < pv0 + 3.0:
+					fails.append("I-hatch after dirt F-board jump died (%s → %s)" % [snapped(pv0, 0.1), snapped(pv1, 0.1)])
 			if os.has_method("try_enter_ship"):
 				os.try_enter_ship()
 			await get_tree().create_timer(0.3).timeout
