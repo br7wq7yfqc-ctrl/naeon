@@ -1,3 +1,5 @@
+**2026-08-30 — HOVER view after F-board (post F-EVA dirt) reclaims chase cam**
+
 **2026-08-30 — OS-stack after F-board (post F-EVA dirt) is Space, HUD bound to hull**
 
 **2026-08-30 — Pad radar after F-board (post F-EVA dirt) is hull 12 km, not 400 m on-foot**
