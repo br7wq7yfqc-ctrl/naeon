@@ -24,6 +24,20 @@ static func height_at_dir(dir: Vector3, seed: int, profile: Dictionary = {}) -> 
 	return height_at(c.x, c.y, seed, profile)
 
 
+static func slope_rad(dir: Vector3, seed: int, profile: Dictionary = {}, step_m: float = 1.6) -> float:
+	## Finite-difference slope of the dirt field (chart metres). Walker grip.
+	if dir.length_squared() < 1e-8:
+		return 0.0
+	var s: float = maxf(step_m, 0.4)
+	var c: Vector2 = dir_to_chart(dir.normalized())
+	var h0: float = height_at(c.x, c.y, seed, profile)
+	var hx: float = height_at(c.x + s, c.y, seed, profile)
+	var hz: float = height_at(c.x, c.y + s, seed, profile)
+	var gx: float = (hx - h0) / s
+	var gz: float = (hz - h0) / s
+	return atan(sqrt(gx * gx + gz * gz))
+
+
 static func sphere_xz(dir: Vector3, radius: float) -> Vector2:
 	var n := dir.normalized()
 	var lat := asin(clampf(n.y, -1.0, 1.0))

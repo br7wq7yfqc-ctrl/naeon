@@ -1,3 +1,5 @@
+**2026-08-29 — Walker dirt slope from PlanetRelief (not a billiard)**
+
 **2026-08-29 — HOVER hold is PD; pad does not rewrite hold alt**
 
 **2026-08-29 — Ship pad land settles from approach height, not +4 m snap**
