@@ -3622,6 +3622,17 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 					fails.append("layer not Space after second I-hatch F-board (%s)" % ly_rb)
 				if rng_rb < 1000.0:
 					fails.append("pad radar still 400m after second I-hatch F-board (%s)" % snapped(rng_rb, 1.0))
+				var chase_rb: Camera3D = ship.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+				var live_rb: Camera3D = get_viewport().get_camera_3d() if get_viewport() else null
+				print("[Playtest] HOVER view after second I-hatch F-board chase=",
+					chase_rb.name if chase_rb else "none", " live=", live_rb.name if live_rb else "none",
+					" current=", chase_rb.current if chase_rb else false)
+				if chase_rb == null:
+					fails.append("HOVER view after second I-hatch F-board: no chase cam")
+				elif live_rb != chase_rb:
+					fails.append("HOVER view after second I-hatch F-board stole (%s)" % (live_rb.name if live_rb else "none"))
+				elif not chase_rb.current:
+					fails.append("HOVER view after second I-hatch F-board chase not current")
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
