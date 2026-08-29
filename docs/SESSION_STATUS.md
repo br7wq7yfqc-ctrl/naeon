@@ -1,3 +1,5 @@
+**2026-08-29 — HOVER PD after dirt launch tracks Relief AGL, does not rewrite hold**
+
 **2026-08-29 — Launch after dirt I-hatch holds Relief AGL, not pad 110 m away**
 
 **2026-08-29 — F-board after dirt I-hatch is 28 m hull-side, not 16 m pad**

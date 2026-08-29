@@ -314,7 +314,9 @@ func _set_mode(m: int) -> void:
 		var in_well := false
 		if _open_space and _open_space.has_method("gravity_at"):
 			in_well = _open_space.gravity_at(global_position).length() > 0.01
-		_hover_hold_alt = _altitude_now() if in_well else -1.0
+		# Dirt launch already set hold = AGL+12. Re-tap 3 must not recapture.
+		if prev != FlightMode.HOVER or _hover_hold_alt < 0.0:
+			_hover_hold_alt = altitude_agl() if in_well else -1.0
 		# OS-H / F5 ritual never toggles G — drop gear when HOVER starts on the pad.
 		_maybe_auto_drop_gear()
 	elif prev == FlightMode.HOVER:
@@ -626,12 +628,12 @@ func _physics_process(delta: float) -> void:
 				accel = hh[0]
 				velocity = hh[1]
 				if _hover_hold_alt < 0.0:
-					_hover_hold_alt = _altitude_now()
+					_hover_hold_alt = altitude_agl()
 				if absf(axes.y) > 0.12:
 					_hover_hold_alt = maxf(4.0, _hover_hold_alt + axes.y * 22.0 * delta)
 				accel -= lift_cmd
 				var v_up: float = velocity.dot((-g).normalized())
-				accel += _Flight.hover_alt_accel(g, _altitude_now(), _hover_hold_alt, v_up)
+				accel += _Flight.hover_alt_accel(g, altitude_agl(), _hover_hold_alt, v_up)
 				var pad_d := 999.0
 				var pad_lat := 999.0
 				if _open_space and _open_space.has_method("nearest_pad"):
