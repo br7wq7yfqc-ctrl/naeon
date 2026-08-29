@@ -4260,6 +4260,23 @@ func _cockpit_space_takeoff_view(fails: PackedStringArray) -> void:
 	print("[Playtest] cockpit→Space→HOVER view ok")
 
 
+func _assert_pocket_hatch_hud(fails: PackedStringArray) -> void:
+	## IN leftover: F at hatch is the airlock. HUD must not say "F seat".
+	var hud: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+	if hud != null and hud.has_method("_process"):
+		hud._process(0.05)
+	var txt := ""
+	if hud != null:
+		var lab: Variant = hud.get("_interior_label")
+		if lab is Label:
+			txt = str((lab as Label).text)
+	print("[Playtest] pocket HUD hatch '", txt.replace("\n", " / "), "'")
+	if txt.to_lower().find("hatch") < 0:
+		fails.append("pocket HUD missing hatch prompt")
+	if txt.find("F seat") >= 0:
+		fails.append("pocket HUD still says F seat at hatch")
+
+
 func _assert_landed_hatch_on_pad(os: Node, fails: PackedStringArray) -> void:
 	## Real hatch path: LANDED seat → I pocket → I hatch → pad deck.
 	## Not the playtest snap_to_pad stub. Does not rewrite ST-A…F.
@@ -4331,6 +4348,8 @@ func _assert_landed_hatch_on_pad(os: Node, fails: PackedStringArray) -> void:
 	if hatch != null:
 		walker.global_position = hatch.global_position + Vector3(0, 0.15, 0)
 		await get_tree().process_frame
+		await get_tree().process_frame
+		_assert_pocket_hatch_hud(fails)
 	if d.has_method("exit_interior"):
 		d.exit_interior()
 	await get_tree().create_timer(0.45).timeout

@@ -1,3 +1,5 @@
+**2026-08-29 — IN leftover: pocket HUD says F/I hatch, not F seat**
+
 **2026-08-29 — IN leftover: hatch onto pad is hull-tangent facing**
 
 **2026-08-29 — Walker coyote lives on dirt (jump without trimesh)**
