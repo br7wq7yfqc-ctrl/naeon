@@ -607,6 +607,7 @@ func _go() -> void:
 	_osg_outpost_silhouette(fails)
 	_assert_gear_before_land(fails)
 	await _assert_ship_land_settle(fails)
+	await _assert_surface_land_dirt(fails)
 	await _assert_hover_alt_hold(fails)
 	_pad_traffic_present(fails)
 	_assert_imported_camera_cannot_steal(fails)
@@ -2830,6 +2831,64 @@ func _assert_ship_land_settle(fails: PackedStringArray) -> void:
 	print("[Playtest] land settle end h=", snapped(h1, 0.01), " hold=", snapped(hold, 0.01))
 	if absf(h1 - hold) > 1.0:
 		fails.append("land settle missed hold height (%s vs %s)" % [snapped(h1, 0.01), snapped(hold, 0.01)])
+	if ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+
+
+func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
+	## OS-I leftover: surface land holds on PlanetRelief, not the sphere.
+	var os: Node = get_parent()
+	var ship: Node = os.get("ship") if os else null
+	var nex: Node = _osh_nex()
+	if ship == null or nex == null or not (nex is Node3D):
+		fails.append("surface land dirt: no ship/Nex-Prime")
+		return
+	var deck: Node3D = _osh_unnamed_deck()
+	if deck == null:
+		fails.append("surface land dirt: no unnamed pad")
+		return
+	var up: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+	if up.length_squared() > 0.01:
+		up = up.normalized()
+	var side: Vector3 = up.cross(Vector3.RIGHT)
+	if side.length_squared() < 0.04:
+		side = up.cross(Vector3.FORWARD)
+	side = side.normalized()
+	if bool(ship.get("is_landed")) and ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	ship.set("_gear_down", true)
+	if ship.has_method("_sync_landing_gear"):
+		ship._sync_landing_gear()
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	var dirt_pos: Vector3 = deck.global_position + side * 110.0 + up * 7.0
+	ship.global_position = dirt_pos
+	if ship.has_method("_do_land"):
+		ship._do_land()
+	if not bool(ship.get("is_landed")):
+		fails.append("surface land dirt: LAND refused")
+		return
+	if ship.get("_landed_pad") != null:
+		fails.append("surface land dirt snapped to pad")
+		if ship.has_method("_do_launch"):
+			ship.set("_land_lock_t", 0.0)
+			ship._do_launch()
+		return
+	await get_tree().create_timer(0.45).timeout
+	if ship == null or not is_instance_valid(ship):
+		fails.append("surface land dirt: ship gone")
+		return
+	var agl := 99.0
+	if nex.has_method("altitude_of"):
+		agl = float(nex.altitude_of(ship.global_position))
+	var hold: float = float(ship.get("_land_hold_h"))
+	print("[Playtest] surface land dirt agl=", snapped(agl, 0.01), " hold=", snapped(hold, 0.01))
+	if absf(agl - hold) > 1.6:
+		fails.append("surface land dirt hold is not Relief (%s vs %s)" % [snapped(agl, 0.01), snapped(hold, 0.01)])
 	if ship.has_method("_do_launch"):
 		ship.set("_land_lock_t", 0.0)
 		ship._do_launch()
