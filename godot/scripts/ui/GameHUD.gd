@@ -410,7 +410,7 @@ func _process(d: float) -> void:
 	_refresh()
 
 func _alive_player() -> Node:
-	if _player != null and is_instance_valid(_player):
+	if _player != null and is_instance_valid(_player) and _player.is_inside_tree():
 		return _player
 	_player = null
 	_ability_sys = null

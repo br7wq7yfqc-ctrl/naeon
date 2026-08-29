@@ -190,7 +190,8 @@ func _find_actor() -> Node3D:
 		_actor_cache_t = 0.15
 		return in_zone
 	_actor_cache_t -= get_process_delta_time() if is_inside_tree() else 0.0
-	if _actor_cache != null and is_instance_valid(_actor_cache) and _actor_cache_t > 0.0:
+	if _actor_cache != null and is_instance_valid(_actor_cache) \
+			and _actor_cache.is_inside_tree() and _actor_cache_t > 0.0:
 		return _actor_cache
 	_actor_cache_t = 0.4
 	if SoftScanCache:
@@ -279,6 +280,7 @@ func _tick_occupy(delta: float) -> void:
 		return
 	var actor := _find_actor()
 	var in_zone := actor != null and is_instance_valid(actor) \
+		and actor.is_inside_tree() \
 		and actor.global_position.distance_to(global_position) <= claim_radius
 	var pfac := "Cybernex"
 	if in_zone:
@@ -1044,7 +1046,7 @@ func _owner_in_zone() -> bool:
 
 func _actor_holds_zone(own_fac: String) -> bool:
 	var actor := _find_actor()
-	if actor == null or not is_instance_valid(actor):
+	if actor == null or not is_instance_valid(actor) or not actor.is_inside_tree():
 		return false
 	if actor.global_position.distance_to(global_position) > claim_radius:
 		return false

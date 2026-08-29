@@ -1,3 +1,5 @@
+**2026-08-29 — OS-H leftover: occupy/HUD/dummy skip freed EVA walker**
+
 **2026-08-29 — AR-E Form Cycle identity (SoftSession index sync)**
 
 **2026-08-28 — IN-F: hangar SoftNet visual (ramp + rover/stored ghost)**
@@ -91,6 +93,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | Track | Status |
 |-------|--------|
 | P0.6 runtime (HUD, descend, EVA, HOVER S) | **built** на 3090 — не регрессить |
+| OS-H leftover occupy/HUD after F-board | **this slice** — skip freed walker `global_transform`; ST-F site_pin get_meta default |
 | OPEN SPACE SC bar | **OS-A…OS-H built** — 60 FPS / 5 мин = 3090 human gate |
 | ST-A strategy overlay | **built** — один habitat на unnamed паде |
 | ST-B extractor / Contribution | **built** — occupy → harvest → HUD number |

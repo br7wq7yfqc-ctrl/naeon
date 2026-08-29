@@ -3,7 +3,7 @@
 **Authority:** `DEVELOPMENT_PLAN.md` v2.4 (длинный план) + `docs/design/BASE_STATION_STRATEGY.md` (текущий бар).  
 Этот файл — статус, не склад фич.
 
-## Current focus: ST-F owner swap (OS-A…OS-H / ST-A…ST-E built)
+## Current focus: OS-H leftover (occupy/HUD after F-board) — OS-A…OS-J / ST-A…ST-G / AR-A…AR-G built
 
 SC roles → NAEON: `docs/design/SC_FEATURE_MAP.md`.  
 Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md`.  
