@@ -3971,6 +3971,21 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 								fails.append("I-hatch after second dirt F-EVA F-board not on Relief (%s)" % snapped(h3_agl, 0.01))
 							if bool(hatch3.get("interior_mode")) or bool(hatch3.get("eva_mode")) or bool(hatch3.get("zero_g")):
 								fails.append("I-hatch after second dirt F-EVA F-board still pocket/0G")
+							if os.has_method("_apply_dirt_exit_facing"):
+								os._apply_dirt_exit_facing()
+							var rad_h3: Vector3 = (hatch3.global_position - (nex as Node3D).global_position).normalized()
+							var fwd_h3: Vector3 = -hatch3.global_transform.basis.z
+							fwd_h3 = fwd_h3 - rad_h3 * fwd_h3.dot(rad_h3)
+							var want_h3: Vector3 = -ship.global_transform.basis.z
+							want_h3 = want_h3 - rad_h3 * want_h3.dot(rad_h3)
+							if fwd_h3.length_squared() < 0.04 or want_h3.length_squared() < 0.04:
+								fails.append("I-hatch after second dirt F-EVA F-board facing not tangent")
+							else:
+								var align_h3: float = fwd_h3.normalized().dot(want_h3.normalized())
+								print("[Playtest] I-hatch after second dirt F-EVA F-board facing align=", snapped(align_h3, 0.01),
+									" tangent=", snapped(1.0 - absf(fwd_h3.normalized().dot(rad_h3)), 0.01))
+								if align_h3 < 0.55:
+									fails.append("I-hatch after second dirt F-EVA F-board facing sideways (%s)" % snapped(align_h3, 0.01))
 						if os.has_method("try_enter_ship"):
 							os.try_enter_ship()
 						await get_tree().create_timer(0.3).timeout
