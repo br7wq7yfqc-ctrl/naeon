@@ -1079,14 +1079,11 @@ func _spawn_player_near_ship() -> void:
 	player.set_meta("skip_ready_snap", true)
 	world_root.add_child(player)
 	if not _place_walker_on_land_deck(player):
+		## Dirt EVA: local radial up + hull nose. Not nearest-pad up (sideways W).
 		var pad_up := Vector3.UP
-		var pad: Node3D = nearest_pad(ship.global_position)
-		if pad and is_instance_valid(pad) and pad.has_meta("pad_up"):
-			pad_up = pad.get_meta("pad_up")
-		else:
-			var pl = nearest_planet(ship.global_position)
-			if pl and is_instance_valid(pl):
-				pad_up = (ship.global_position - pl.global_position).normalized()
+		var pl = nearest_planet(ship.global_position)
+		if pl and is_instance_valid(pl):
+			pad_up = (ship.global_position - pl.global_position).normalized()
 		var side: Vector3 = ship.global_transform.basis.x
 		side = (side - pad_up * side.dot(pad_up))
 		if side.length_squared() < 0.01:
@@ -1100,13 +1097,20 @@ func _spawn_player_near_ship() -> void:
 		if player.has_method("set_eva_profile"):
 			player.set_eva_profile(false)
 		var nose: Vector3 = -ship.global_transform.basis.z
-		nose = (nose - pad_up * nose.dot(pad_up)).normalized()
+		nose = nose - pad_up * nose.dot(pad_up)
+		if nose.length_squared() < 0.01:
+			nose = -ship.global_transform.basis.x
+			nose = nose - pad_up * nose.dot(pad_up)
+		if nose.length_squared() > 0.01:
+			nose = nose.normalized()
 		if player.has_method("set_spawn_facing"):
 			player.set_spawn_facing(pad_up, nose)
 		elif player.has_method("set_spawn_basis"):
 			player.set_spawn_basis(pad_up, atan2(-nose.x, -nose.z))
 		if player.has_method("snap_to_surface"):
 			player.snap_to_surface()
+		if player.has_method("set_spawn_facing") and nose.length_squared() > 0.01:
+			player.set_spawn_facing(pad_up, nose)
 		print("[OpenSpace] TPS dirt exit at ", player.global_position, " up=", pad_up)
 	if player != null and is_instance_valid(player) and player.has_method("snap_to_surface"):
 		_schedule_surface_settle()

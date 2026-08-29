@@ -1,3 +1,5 @@
+**2026-08-29 — EVA dirt facing is hull-tangent on local radial up**
+
 **2026-08-29 — EVA after surface land is beside the hull, not the nearest pad**
 
 **2026-08-29 — Surface land hold is PlanetRelief, not the sphere**
