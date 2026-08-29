@@ -1,3 +1,5 @@
+**2026-08-30 — F-board after second dirt F-EVA: occupy hull, layer Space, radar 12 km**
+
 **2026-08-30 — OS-stack after second dirt F-EVA is TPS, not SPACE/ship_int/0G**
 
 **2026-08-30 — Pad radar after second dirt F-EVA is 400 m on-foot, not hull 12 km**

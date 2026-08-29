@@ -441,7 +441,8 @@ func _occupy_origin() -> Node3D:
 					return w as Node3D
 	var p: Node = _alive_player()
 	if p is Node3D and (p as Node3D).is_inside_tree():
-		return p as Node3D
+		if not ("_dying" in p and bool((p as Node).get("_dying"))):
+			return p as Node3D
 	var sh: Node = _OsStack.player_ship(tree) if tree else null
 	if sh is Node3D and is_instance_valid(sh) and (sh as Node3D).is_inside_tree():
 		return sh as Node3D
