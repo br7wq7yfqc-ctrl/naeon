@@ -433,7 +433,9 @@ func _occupy_origin() -> Node3D:
 			if w is Node3D and is_instance_valid(w) and (w as Node3D).is_inside_tree() \
 					and (w as Node).has_method("set_spawn_facing"):
 				if ("interior_mode" in w and bool((w as Node).get("interior_mode"))) \
-						or ("_dying" in w and bool((w as Node).get("_dying"))):
+						or ("_dying" in w and bool((w as Node).get("_dying"))) \
+						or ("eva_mode" in w and bool((w as Node).get("eva_mode")) \
+							and "zero_g" in w and bool((w as Node).get("zero_g"))):
 					pass
 				else:
 					return w as Node3D
