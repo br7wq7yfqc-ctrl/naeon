@@ -5640,6 +5640,12 @@ func _assert_in_b(os: Node, fails: PackedStringArray) -> void:
 	pocket = d.get_active_interior() if d.has_method("get_active_interior") else null
 	print("[Playtest] IN-B station/hangar ≠ ship cockpit kind=", kind, " name=",
 		str(pocket.name) if pocket else "")
+	if pocket != null and walker != null and is_instance_valid(walker):
+		await get_tree().create_timer(0.2).timeout
+		var h: float = walker.global_position.y - pocket.global_position.y
+		print("[Playtest] pocket floor h=", snapped(h, 0.01))
+		if h < 0.7 or h > 2.6:
+			fails.append("pocket floor hole (h=%s)" % snapped(h, 0.01))
 	if kind != "station":
 		fails.append("IN-B cluster I opened %s, not station" % kind)
 	if pocket == null:

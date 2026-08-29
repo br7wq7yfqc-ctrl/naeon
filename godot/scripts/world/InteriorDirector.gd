@@ -378,7 +378,7 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	_hatch_fx(true)
 	entered.emit(kind)
 	if kind == "ship":
-		_toast("Ship pocket · F seat · walk to airlock [I]")
+		_toast("Ship pocket · F seat · walk to airlock [F/I]")
 	elif kind == "hangar_bay":
 		_toast("Hangar bay · F carrier seat · E bay · F/I hatch")
 	else:
@@ -407,8 +407,11 @@ func _settle_player_on_floor() -> void:
 	if space == null:
 		_player.global_position = _active.global_position + Vector3(0, 1.2, 0)
 		return
-	var origin: Vector3 = _player.global_position + Vector3(0, 8, 0)
-	var end: Vector3 = _player.global_position + Vector3(0, -20, 0)
+	var floor_y: float = _active.global_position.y
+	if _player.global_position.y > floor_y + 2.2:
+		_player.global_position.y = floor_y + 1.35
+	var origin: Vector3 = _player.global_position + Vector3(0, 0.35, 0)
+	var end: Vector3 = _player.global_position + Vector3(0, -8, 0)
 	var q := PhysicsRayQueryParameters3D.create(origin, end)
 	q.collision_mask = 1
 	q.exclude = [_player.get_rid()]
@@ -866,7 +869,15 @@ func _process(delta: float) -> void:
 	# Keep player from falling out of pocket bounds
 	var anchor: Vector3 = _active.global_position
 	var ppos: Vector3 = _player.global_position
-	if ppos.y < anchor.y - 5.0 or ppos.distance_to(anchor) > 80.0:
+	var vy := 0.0
+	if _player is CharacterBody3D:
+		vy = (_player as CharacterBody3D).velocity.y
+	# Stand-height catch — 5 m of void before rescue was a pocket hole.
+	if not _seated and vy <= 0.6 and ppos.y < anchor.y + 0.85:
+		_player.global_position = Vector3(ppos.x, anchor.y + 1.15, ppos.z)
+		if _player is CharacterBody3D:
+			(_player as CharacterBody3D).velocity.y = 0.0
+	elif ppos.y < anchor.y - 5.0 or ppos.distance_to(anchor) > 80.0:
 		print("[Interior] rescue void fall")
 		_player.global_position = anchor + Vector3(0, 1.2, 0)
 		if _player is CharacterBody3D:
