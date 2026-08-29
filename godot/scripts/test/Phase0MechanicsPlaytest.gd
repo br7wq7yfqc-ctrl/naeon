@@ -606,6 +606,7 @@ func _go() -> void:
 	_osg_outpost_silhouette(fails)
 	_assert_gear_before_land(fails)
 	await _assert_ship_land_settle(fails)
+	await _assert_hover_alt_hold(fails)
 	_pad_traffic_present(fails)
 	_assert_imported_camera_cannot_steal(fails)
 	await _player_pad_land_hover_view(fails)
@@ -2681,6 +2682,51 @@ func _assert_ship_land_settle(fails: PackedStringArray) -> void:
 	if ship.has_method("_do_launch"):
 		ship.set("_land_lock_t", 0.0)
 		ship._do_launch()
+
+
+func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
+	## SESSION_CONTRACT 1 leftover: HOVER PD holds altitude. Pad ground-effect
+	## cushions sink — it must not rewrite `_hover_hold_alt` (autopilot climb).
+	var os: Node = get_parent()
+	var ship: Node = os.get("ship") if os else null
+	var nex: Node = _osh_nex()
+	if ship == null or nex == null:
+		fails.append("HOVER hold: no ship/Nex-Prime")
+		return
+	var deck: Node3D = _osh_unnamed_deck()
+	if deck == null:
+		fails.append("HOVER hold: no unnamed pad")
+		return
+	var up: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+	if up.length_squared() > 0.01:
+		up = up.normalized()
+	if bool(ship.get("is_landed")) and ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	ship.global_position = deck.global_position + up * 6.0
+	var a0: float = 0.0
+	if nex is Node3D and nex.has_method("altitude_of"):
+		a0 = float(nex.altitude_of(ship.global_position))
+	ship.set("_hover_hold_alt", a0)
+	var hold0: float = float(ship.get("_hover_hold_alt"))
+	await get_tree().create_timer(0.55).timeout
+	if ship == null or not is_instance_valid(ship):
+		fails.append("HOVER hold: ship gone")
+		return
+	var hold1: float = float(ship.get("_hover_hold_alt"))
+	var a1: float = a0
+	if nex is Node3D and nex.has_method("altitude_of"):
+		a1 = float(nex.altitude_of(ship.global_position))
+	print("[Playtest] HOVER hold alt ", snapped(hold0, 0.1), "→", snapped(hold1, 0.1),
+		" AGL ", snapped(a0, 0.1), "→", snapped(a1, 0.1))
+	if hold1 > hold0 + 3.0:
+		fails.append("HOVER hold stolen by pad deck (%s → %s)" % [snapped(hold0, 0.1), snapped(hold1, 0.1)])
+	if absf(a1 - a0) > 18.0:
+		fails.append("HOVER hold drifted (%s → %s)" % [snapped(a0, 0.1), snapped(a1, 0.1)])
 
 
 func _pad_traffic_present(fails: PackedStringArray) -> void:
