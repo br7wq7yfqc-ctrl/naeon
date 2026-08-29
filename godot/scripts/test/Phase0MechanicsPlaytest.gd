@@ -3136,6 +3136,50 @@ func _assert_land_ready_overflight(fails: PackedStringArray) -> void:
 	if bool(ship.get("is_landed")) and ship.has_method("_do_launch"):
 		ship.set("_land_lock_t", 0.0)
 		ship._do_launch()
+	await _assert_ship_agl_plate(fails)
+
+
+func _assert_ship_agl_plate(fails: PackedStringArray) -> void:
+	## Player ship CargoRamp reads host.altitude_agl(). Missing → 9999 too high.
+	## Plate must be deck height (same as CatalogCarrier), not dirt+pad.
+	var os: Node = get_parent()
+	var ship: Node = os.get("ship") if os else null
+	var deck: Node3D = _osh_unnamed_deck()
+	if ship == null or deck == null:
+		fails.append("ship AGL: no ship/pad")
+		return
+	if not ship.has_method("altitude_agl"):
+		fails.append("ship AGL: missing altitude_agl")
+		return
+	var up: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+	if up.length_squared() > 0.01:
+		up = up.normalized()
+	var side: Vector3 = up.cross(Vector3.RIGHT)
+	if side.length_squared() < 0.04:
+		side = up.cross(Vector3.FORWARD)
+	side = side.normalized()
+	if bool(ship.get("is_landed")) and ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	ship.global_position = deck.global_position + up * 7.0
+	var plate_agl: float = float(ship.altitude_agl())
+	print("[Playtest] ship AGL plate hover=", snapped(plate_agl, 0.01))
+	if absf(plate_agl - 7.0) > 0.6:
+		fails.append("ship AGL plate is not deck height (%s)" % snapped(plate_agl, 0.01))
+	ship.global_position = deck.global_position + up * 40.0
+	var over_agl: float = float(ship.altitude_agl())
+	print("[Playtest] ship AGL overflight=", snapped(over_agl, 0.1))
+	if absf(over_agl - 40.0) > 2.0:
+		fails.append("ship AGL overflight is not deck height (%s)" % snapped(over_agl, 0.1))
+	ship.global_position = deck.global_position + side * 40.0 + up * 6.0
+	var dirt_agl: float = float(ship.altitude_agl())
+	print("[Playtest] ship AGL dirt=", snapped(dirt_agl, 0.01))
+	if dirt_agl < 0.2 or dirt_agl > 18.0:
+		fails.append("ship AGL dirt not Relief (%s)" % snapped(dirt_agl, 0.01))
+	if absf(dirt_agl - 40.0) < 2.0:
+		fails.append("ship AGL dirt used 3D pad dist")
 
 
 func _pad_traffic_present(fails: PackedStringArray) -> void:

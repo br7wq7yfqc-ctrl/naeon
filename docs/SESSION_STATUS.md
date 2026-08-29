@@ -1,3 +1,5 @@
+**2026-08-29 — Ship altitude_agl is deck height on the plate, Relief off-plate**
+
 **2026-08-29 — Ramp HOVER AGL is deck height on the plate, not dirt+pad**
 
 **2026-08-29 — LAND READY is plate envelope, not 80 m overflight**
