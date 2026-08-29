@@ -1,3 +1,5 @@
+**2026-08-29 — EVA after surface land is beside the hull, not the nearest pad**
+
 **2026-08-29 — Surface land hold is PlanetRelief, not the sphere**
 
 **2026-08-29 — Rover dirt stick: stand-height catch, not 3 m hole**

@@ -1008,9 +1008,8 @@ func _land_eva_pad() -> Node3D:
 	if ship != null and is_instance_valid(ship) and ship.has_method("get_landed_pad"):
 		var landed_pad: Node3D = ship.get_landed_pad() as Node3D
 		if landed_pad != null and is_instance_valid(landed_pad):
-			return landed_pad
-	if ship != null and is_instance_valid(ship):
-		return nearest_pad(ship.global_position)
+			if ship.global_position.distance_to(landed_pad.global_position) <= 16.0:
+				return landed_pad
 	return null
 
 
@@ -1106,9 +1105,9 @@ func _spawn_player_near_ship() -> void:
 			player.set_spawn_facing(pad_up, nose)
 		elif player.has_method("set_spawn_basis"):
 			player.set_spawn_basis(pad_up, atan2(-nose.x, -nose.z))
-		if pad != null and player.has_method("snap_to_pad"):
-			player.snap_to_pad(pad)
-		print("[OpenSpace] TPS exit at ", player.global_position, " up=", pad_up)
+		if player.has_method("snap_to_surface"):
+			player.snap_to_surface()
+		print("[OpenSpace] TPS dirt exit at ", player.global_position, " up=", pad_up)
 	if player != null and is_instance_valid(player) and player.has_method("snap_to_surface"):
 		_schedule_surface_settle()
 	if is_instance_valid(ship) and ship.has_method("set_pilot_active"):
