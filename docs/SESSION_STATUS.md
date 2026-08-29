@@ -1,3 +1,5 @@
+**2026-08-30 — Coyote after second I-hatch dirt: spawn grace cleared, jump live**
+
 **2026-08-30 — Facing after second I-hatch dirt is hull-nose tangent + `_update_up`**
 
 **2026-08-30 — I-hatch after dirt F-board: ship_int pocket, hatch to hull-side Relief**

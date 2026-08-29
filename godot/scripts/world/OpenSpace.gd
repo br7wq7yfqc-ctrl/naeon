@@ -1840,6 +1840,7 @@ func place_from_ship_pocket(walker: Node3D) -> void:
 				walker.set_interior_mode(false)
 			elif "interior_mode" in walker:
 				walker.interior_mode = false
+			walker.set("_spawn_grace_t", 0.0)
 			if walker.has_method("_update_up"):
 				walker._update_up()
 			if walker.has_method("set_spawn_facing") and nose_p.length_squared() > 0.01:
