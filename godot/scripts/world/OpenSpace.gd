@@ -1420,14 +1420,14 @@ func _pad_traffic_node() -> Node:
 
 
 func _handle_f_interact() -> void:
-	# Priority: unboard rover → board rover → seat→pilot (interior) → ship board/exit
+	# Priority: unboard rover → pocket seat / hatch → rover → seat→pilot → ship board/exit
 	if _seat_transition or _rover_transition:
 		return
 	if _in_rover and _rover != null and is_instance_valid(_rover):
 		_unboard_rover()
 		return
 	if not _in_ship and player and is_instance_valid(player) and player.is_inside_tree():
-		if _try_board_pocket_seat():
+		if _pocket_f_interact():
 			return
 		if _try_board_nearby_rover():
 			return
@@ -1437,6 +1437,49 @@ func _handle_f_interact() -> void:
 		try_exit_ship()
 	else:
 		try_enter_ship()
+
+
+func _pocket_f_interact() -> bool:
+	## Interior leftover: F at hatch is the airlock (same as I). F at seat boards.
+	## Do not fall through to try_enter_ship from y=9200 (silent miss).
+	if _interior == null or not is_instance_valid(_interior):
+		return false
+	if not _interior.has_method("is_inside") or not bool(_interior.is_inside()):
+		return false
+	if _interior.has_method("is_seated") and bool(_interior.is_seated()):
+		if _interior.has_method("leave_legal_seat"):
+			_interior.leave_legal_seat()
+		return true
+	if _try_board_pocket_seat():
+		return true
+	if _interior.has_method("get_kind") and str(_interior.get_kind()) == "ship":
+		var near_seat := false
+		if _interior.has_method("is_near_seat") and player != null:
+			near_seat = bool(_interior.is_near_seat(player, 3.8))
+		if near_seat and _try_seat_to_pilot():
+			return true
+	if _try_hatch_exit():
+		return true
+	if _interior.has_method("get_kind") and str(_interior.get_kind()) == "ship":
+		_toast_hud("AIRLOCK · walk to hatch [F/I] · F seat")
+	else:
+		_toast_hud("F seat · F/I hatch")
+	return true
+
+
+func _try_hatch_exit() -> bool:
+	if _interior == null or not is_instance_valid(_interior):
+		return false
+	if not _interior.has_method("is_inside") or not bool(_interior.is_inside()):
+		return false
+	if player == null or not is_instance_valid(player):
+		return false
+	if _interior.has_method("is_near_hatch") and not bool(_interior.is_near_hatch(player)):
+		return false
+	if _interior.has_method("exit_interior"):
+		_interior.exit_interior()
+		return true
+	return false
 
 
 func _try_deploy_hangar_rover() -> bool:
@@ -1711,7 +1754,7 @@ func _leave_seat_to_pocket() -> void:
 	add_child(player)
 	if _interior != null and is_instance_valid(_interior) and _interior.has_method("enter_ship"):
 		_interior.enter_ship(player, ship)
-	_toast_hud("Left seat — pocket · F seat · I airlock")
+	_toast_hud("Left seat — pocket · F seat · F/I airlock")
 	print("[OpenSpace] seat→pocket")
 
 

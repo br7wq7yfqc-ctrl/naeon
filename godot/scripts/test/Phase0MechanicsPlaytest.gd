@@ -143,10 +143,28 @@ func _go() -> void:
 					print("[Playtest] console used=", used, " ls=", d.life_support_line())
 					if not used:
 						fails.append("cockpit console not usable when standing on it")
-		if d.has_method("exit_interior"):
+		# Interior leftover: F at hatch is the airlock (not a silent miss / I-only).
+		var hatch_f: Node3D = null
+		if d != null and d.has_method("get_active_interior"):
+			var pk: Node3D = d.get_active_interior() as Node3D
+			if pk != null:
+				hatch_f = pk.get_node_or_null("ExitVolume") as Node3D
+		if walker != null and is_instance_valid(walker) and hatch_f != null:
+			walker.global_position = hatch_f.global_position + Vector3(0, 0.15, 0)
+			await get_tree().process_frame
+			if os.has_method("_handle_f_interact"):
+				os._handle_f_interact()
+			await get_tree().create_timer(0.45).timeout
+			var still_in := d.has_method("is_inside") and bool(d.is_inside())
+			print("[Playtest] F-at-hatch inside=", still_in, " y=", snapped(walker.global_position.y, 0.1) if walker != null and is_instance_valid(walker) else -1.0)
+			if still_in:
+				fails.append("F at hatch did not exit pocket")
+			if walker != null and is_instance_valid(walker) and walker.global_position.y > 5000.0:
+				fails.append("walker still at pocket after F hatch")
+		elif d != null and d.has_method("exit_interior"):
 			d.exit_interior()
-		await get_tree().create_timer(0.35).timeout
-		if d.has_method("is_inside") and bool(d.is_inside()):
+			await get_tree().create_timer(0.35).timeout
+		if d != null and d.has_method("is_inside") and bool(d.is_inside()):
 			fails.append("interior still inside after exit")
 		if wr and not wr.visible:
 			fails.append("WorldRoot stayed hidden after exit")

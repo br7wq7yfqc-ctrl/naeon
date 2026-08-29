@@ -167,9 +167,9 @@ func try_toggle(player: Node3D, ship: Node3D = null) -> void:
 			return
 		if player != null and is_instance_valid(player) and not is_near_hatch(player):
 			if _kind == "ship":
-				_toast("AIRLOCK · walk to hatch [I] · F seat")
+				_toast("AIRLOCK · walk to hatch [F/I] · F seat")
 			else:
-				_toast("HATCH · walk to door [I]")
+				_toast("HATCH · walk to door [F/I]")
 			return
 		exit_interior()
 		return
@@ -380,9 +380,9 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	if kind == "ship":
 		_toast("Ship pocket · F seat · walk to airlock [I]")
 	elif kind == "hangar_bay":
-		_toast("Hangar bay · F carrier seat · E bay · I hatch")
+		_toast("Hangar bay · F carrier seat · E bay · F/I hatch")
 	else:
-		_toast("Entered station · F ops seat · E console · I hatch")
+		_toast("Entered station · F ops seat · E console · F/I hatch")
 	print("[Interior] entered ", kind, " at ", target, " atmo=", snapped(_atmo, 0.01), " return=", _return_mode)
 	set_process(true)
 
@@ -671,7 +671,7 @@ func try_board_legal_seat(player: Node3D = null) -> bool:
 	if who == null or not is_instance_valid(who):
 		return false
 	if _seated:
-		return true
+		return false
 	if not is_near_legal_seat(who, 3.8):
 		return false
 	var seat: Node3D = _legal_seat_node()
@@ -767,7 +767,7 @@ func try_use_console() -> bool:
 		else:
 			_toast("%s · ATMO %.2f · %s" % [rec, _atmo, board])
 	else:
-		_toast("COCKPIT · %s · F seat · I hatch" % life_support_line())
+		_toast("COCKPIT · %s · F seat · F/I hatch" % life_support_line())
 	if AudioDirector and AudioDirector.has_method("play_ui"):
 		AudioDirector.play_ui()
 	return true
