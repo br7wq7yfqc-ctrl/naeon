@@ -377,9 +377,13 @@ func try_deploy_ramp() -> String:
 	var ramp: Node = cargo_ramp()
 	if ramp == null:
 		return "BLOCKED"
+	# Layout to the pad only on the plate. Dirt land must not stretch 40 m to the deck.
 	if _landed and _pad != null and is_instance_valid(_pad) and ramp.has_method("layout_to_deck"):
 		var up := _up_at(_pad)
-		ramp.layout_to_deck(_pad.global_position + up * 0.15)
+		var rel: Vector3 = global_position - _pad.global_position
+		var lat: float = (rel - up * rel.dot(up)).length()
+		if lat <= 28.0:
+			ramp.layout_to_deck(_pad.global_position + up * 0.15)
 	if ramp.has_method("try_deploy"):
 		var result := str(ramp.try_deploy())
 		_sync_hangar_softnet()
