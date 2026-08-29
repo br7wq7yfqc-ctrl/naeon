@@ -611,6 +611,8 @@ func _apply_hatch_facing() -> void:
 		_player.set_spawn_facing(up, ref)
 	elif _player.has_method("set_spawn_basis"):
 		_player.set_spawn_basis(up, 0.0)
+	if _player.has_method("_update_up"):
+		_player._update_up()
 
 
 func _toast(msg: String) -> void:

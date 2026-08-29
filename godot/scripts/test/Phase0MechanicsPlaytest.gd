@@ -3452,6 +3452,19 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 				fails.append("I-hatch after dirt F-board not on Relief (%s)" % snapped(pk_agl, 0.01))
 			if bool(w_pk.get("eva_mode")) or bool(w_pk.get("zero_g")):
 				fails.append("I-hatch after dirt F-board still EVA 0G")
+			var rad_pk: Vector3 = (w_pk.global_position - (nex as Node3D).global_position).normalized()
+			var fwd_pk: Vector3 = -w_pk.global_transform.basis.z
+			fwd_pk = fwd_pk - rad_pk * fwd_pk.dot(rad_pk)
+			var want_pk: Vector3 = -ship.global_transform.basis.z
+			want_pk = want_pk - rad_pk * want_pk.dot(rad_pk)
+			if fwd_pk.length_squared() < 0.04 or want_pk.length_squared() < 0.04:
+				fails.append("I-hatch after dirt F-board facing not tangent")
+			else:
+				var align_pk: float = fwd_pk.normalized().dot(want_pk.normalized())
+				print("[Playtest] I-hatch after dirt F-board facing align=", snapped(align_pk, 0.01),
+					" tangent=", snapped(1.0 - absf(fwd_pk.normalized().dot(rad_pk)), 0.01))
+				if align_pk < 0.55:
+					fails.append("I-hatch after dirt F-board facing sideways (%s)" % snapped(align_pk, 0.01))
 			if os.has_method("try_enter_ship"):
 				os.try_enter_ship()
 			await get_tree().create_timer(0.3).timeout
