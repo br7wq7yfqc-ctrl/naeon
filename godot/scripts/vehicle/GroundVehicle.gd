@@ -327,10 +327,11 @@ func _apply_velocity(delta: float) -> void:
 		var gv: Vector3 = _provider.gravity_at(global_position)
 		if gv.length() > 0.2:
 			g_mag = clampf(gv.length(), 6.0, 22.0)
-	if not is_on_floor():
-		v_up -= g_mag * delta
+	var dirt_floor: bool = (not _on_pad_plate()) and (not _on_ramp_span()) and _near_dirt_floor()
+	if is_on_floor() or dirt_floor:
+		v_up = minf(v_up, -0.35)
 	else:
-		v_up = minf(v_up, -0.5)
+		v_up -= g_mag * delta
 	velocity = planar + _up * v_up
 	move_and_slide()
 
@@ -375,6 +376,22 @@ func _relief_slope_rad() -> float:
 	return float(_Relief.slope_rad(dir.normalized(), seed, _Relief.profile_for_planet(pid)))
 
 
+func _near_dirt_floor() -> bool:
+	return absf(_dirt_agl()) < 1.6
+
+
+func _dirt_agl() -> float:
+	## Metres above relief stand-height. Negative = sunk into dirt.
+	var pl: Node3D = _nearest_planet()
+	if pl == null or not ("radius" in pl):
+		return 99.0
+	var dir: Vector3 = global_position - pl.global_position
+	if dir.length_squared() < 1e-8:
+		return 99.0
+	var target: float = float(pl.radius) + _visual_relief_metres(pl) + 0.55
+	return dir.length() - target
+
+
 func _relief_floor_assist(delta: float) -> void:
 	## Pad plate wins. Ramp only while on the IN-C span. Else dirt (OS-I).
 	if _pad_deck != null and is_instance_valid(_pad_deck) and _on_pad_plate():
@@ -399,9 +416,10 @@ func _relief_floor_assist(delta: float) -> void:
 	var target_r: float = float(pl.radius) + _visual_relief_metres(pl) + 0.55
 	var cur_r: float = global_position.distance_to(pl.global_position)
 	var err: float = target_r - cur_r
-	if err > 3.0:
+	# Stand-height catch (walker coyote leftover). 3 m was a hole.
+	if err > 0.85:
 		global_position += dir * err
-		velocity = Vector3.ZERO
+		velocity = velocity - dir * velocity.dot(dir)
 
 
 func _on_pad_plate() -> bool:

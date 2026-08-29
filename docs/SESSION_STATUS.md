@@ -1,3 +1,5 @@
+**2026-08-29 — Rover dirt stick: stand-height catch, not 3 m hole**
+
 **2026-08-29 — OS-H leftover: occupy HUD after F-board follows the hull**
 
 **2026-08-29 — IN leftover: pocket floor catch is stand-height, not 5 m void**
