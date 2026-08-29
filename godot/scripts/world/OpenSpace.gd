@@ -917,7 +917,16 @@ func try_enter_ship() -> void:
 		player = null
 		print("[OpenSpace] No walker to board")
 		return
-	var board_r := 28.0 if _eva_mode else 16.0
+	var board_r := 16.0
+	if _eva_mode:
+		board_r = 28.0
+	elif ship != null and bool(ship.get("is_landed")):
+		var lp: Node3D = null
+		if ship.has_method("get_landed_pad"):
+			lp = ship.get_landed_pad() as Node3D
+		if lp == null:
+			# Dirt hull-side spawn is ~11 m + HatchPoint offset. 16 m misses.
+			board_r = 28.0
 	var board_anchor: Vector3 = ship.global_position
 	var hatch_n: Node3D = ship.get_node_or_null("HatchPoint") as Node3D
 	if hatch_n != null and is_instance_valid(hatch_n):

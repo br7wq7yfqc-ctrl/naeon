@@ -3091,7 +3091,22 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 			fails.append("os stack EVA 0G after grounded hatch dirt")
 	if os.has_method("try_enter_ship"):
 		os.try_enter_ship()
-	await get_tree().create_timer(0.3).timeout
+	await get_tree().create_timer(0.35).timeout
+	if not bool(os.get("_in_ship")):
+		fails.append("hatch dirt F-board refused")
+	else:
+		print("[Playtest] hatch dirt F-board in_ship=true")
+		var hud_b: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+		if hud_b != null and hud_b.has_method("bind_player"):
+			hud_b.bind_player(ship)
+		if hud_b != null and hud_b.has_method("_refresh"):
+			hud_b._refresh()
+		var origin_b: Node3D = null
+		if hud_b != null and hud_b.has_method("_occupy_origin"):
+			origin_b = hud_b.call("_occupy_origin") as Node3D
+		print("[Playtest] occupy HUD hatch dirt board origin=", origin_b.name if origin_b else "null")
+		if origin_b != null and origin_b != ship and origin_b.has_method("set_spawn_facing"):
+			fails.append("occupy HUD origin still walker after hatch dirt F-board")
 	if ship.has_method("_do_launch"):
 		ship.set("_land_lock_t", 0.0)
 		ship._do_launch()
