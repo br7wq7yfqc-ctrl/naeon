@@ -498,8 +498,7 @@ func exit_interior() -> void:
 		# Restore exterior gravity + place on pad/ship return
 		if _player != null and is_instance_valid(_player) and _player.has_method("set_planet_gravity_provider") and _open_space:
 			_player.set_planet_gravity_provider(_open_space)
-		if _player != null and is_instance_valid(_player) and _player.has_method("set_spawn_basis"):
-			_player.set_spawn_basis(_return_up, 0.0)
+		_apply_hatch_facing()
 		# Must leave the pocket before queue_free, or the walker is freed with it.
 		_restore_player_parent()
 		var via_hatch := was_ship and _open_space != null and _open_space.has_method("place_from_ship_pocket")
@@ -571,6 +570,21 @@ func exit_interior() -> void:
 	_return_mode = "pad"
 	_hangar_host = null
 	set_process(false)
+
+
+func _apply_hatch_facing() -> void:
+	## Pad-tangent hull nose, same as land-EVA. World-XZ yaw is the wrong frame.
+	if _player == null or not is_instance_valid(_player):
+		return
+	var ref := Vector3(0, 0, -1)
+	if _open_space != null:
+		var sh: Variant = _open_space.get("ship")
+		if sh is Node3D and is_instance_valid(sh):
+			ref = -(sh as Node3D).global_transform.basis.z
+	if _player.has_method("set_spawn_facing"):
+		_player.set_spawn_facing(_return_up, ref)
+	elif _player.has_method("set_spawn_basis"):
+		_player.set_spawn_basis(_return_up, 0.0)
 
 
 func _toast(msg: String) -> void:
@@ -701,7 +715,10 @@ func leave_legal_seat() -> bool:
 	_seat_role = ""
 	if _player != null and is_instance_valid(_player):
 		if seat != null:
-			_player.global_position = seat.global_position + Vector3(0.0, 1.05, 1.2)
+			var along: Vector3 = -seat.global_transform.basis.z
+			if along.length_squared() < 0.04:
+				along = Vector3(0, 0, 1)
+			_player.global_position = seat.global_position + Vector3(0.0, 1.05, 0.0) + along.normalized() * 1.2
 		if _player is CharacterBody3D:
 			(_player as CharacterBody3D).velocity = Vector3.ZERO
 	_toast("Left seat — %s pocket" % _kind)

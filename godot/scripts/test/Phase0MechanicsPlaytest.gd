@@ -2414,6 +2414,37 @@ func _assert_eva_facing(os: Node, walker: Node3D, pad: Node3D, fails: PackedStri
 		fails.append("EVA facing sideways vs hull nose (%s)" % snapped(align, 0.01))
 
 
+func _assert_hatch_pad_facing(os: Node, walker: Node3D, pad: Node3D, fails: PackedStringArray) -> void:
+	## IN leftover: hatch onto the unnamed pad is pad-tangent hull nose,
+	## not world-XZ yaw.
+	if walker == null or not is_instance_valid(walker) or pad == null:
+		return
+	var up2 := Vector3.UP
+	if pad.has_meta("pad_up"):
+		var raw: Vector3 = pad.get_meta("pad_up")
+		if raw.length_squared() > 0.01:
+			up2 = raw.normalized()
+	var body_fwd: Vector3 = -walker.global_transform.basis.z
+	body_fwd = body_fwd - up2 * body_fwd.dot(up2)
+	if body_fwd.length_squared() < 0.04:
+		fails.append("hatch facing not tangent to pad")
+		return
+	body_fwd = body_fwd.normalized()
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var want := body_fwd
+	if ship != null and is_instance_valid(ship):
+		want = -ship.global_transform.basis.z
+		want = want - up2 * want.dot(up2)
+		if want.length_squared() < 0.04:
+			want = body_fwd
+		else:
+			want = want.normalized()
+	var align: float = body_fwd.dot(want)
+	print("[Playtest] hatch facing align=", snapped(align, 0.01), " tangent=", snapped(1.0 - absf(body_fwd.dot(up2)), 0.01))
+	if align < 0.55:
+		fails.append("hatch facing sideways vs hull nose (%s)" % snapped(align, 0.01))
+
+
 func _assert_landing_absorb(walker: Node3D, pad: Node3D, fails: PackedStringArray) -> void:
 	## SESSION_CONTRACT 2: drop onto the unnamed plate must settle, not ice-slide.
 	if walker == null or not is_instance_valid(walker) or pad == null:
@@ -5452,6 +5483,7 @@ func _assert_in_a(os: Node, fails: PackedStringArray) -> void:
 		elif walker != null and is_instance_valid(walker) and walker.global_position.distance_to(pad.global_position) > 45.0:
 			fails.append("IN-A pad hatch missed pad")
 		print("[Playtest] IN-A occupied pad station hatch → pad (not MainMenu)")
+		_assert_hatch_pad_facing(os, walker, pad, fails)
 
 	if os.has_method("catalog_carrier"):
 		carrier = os.catalog_carrier()
