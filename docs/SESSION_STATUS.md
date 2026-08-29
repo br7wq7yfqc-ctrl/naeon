@@ -1,3 +1,5 @@
+**2026-08-29 — I-hatch dirt walker AGL is Relief, pocket velocity cleared**
+
 **2026-08-29 — OS-stack after dirt I-hatch is TPS, not SPACE / occupy / 0G**
 
 **2026-08-29 — Pad radar after dirt I-hatch is 400 m on-foot, same tick**
