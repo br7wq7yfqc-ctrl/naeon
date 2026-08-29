@@ -3862,6 +3862,39 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 						if far_e3:
 							fails.append("pad radar used 12km approach after second dirt F-EVA")
 						eva3.global_position = saved_e3
+						if hud_e3 != null and hud_e3.has_method("_refresh"):
+							hud_e3._refresh()
+						var ly_e3s := ""
+						if LayerContext:
+							ly_e3s = str(LayerContext.current_layer)
+						var stack_e3 := ""
+						var stack_e3_on := false
+						var chip_e3 := ""
+						if hud_e3 != null:
+							var sl_e3: Variant = hud_e3.get("_os_stack")
+							if sl_e3 is Label:
+								stack_e3 = (sl_e3 as Label).text
+								stack_e3_on = (sl_e3 as Label).visible
+							var chip3: Variant = hud_e3.get("_layer_label")
+							if chip3 is Label:
+								chip_e3 = (chip3 as Label).text
+						print("[Playtest] os stack F-EVA after second dirt land layer=", ly_e3s, " vis=", stack_e3_on,
+							" chip='", chip_e3.replace("\n", " / ").substr(0, 40), "' '",
+							stack_e3.replace("\n", " / ").substr(0, 80), "'")
+						if ly_e3s.to_upper().find("SPACE") >= 0:
+							fails.append("os stack layer still SPACE after second dirt F-EVA")
+						if ly_e3s.to_upper().find("SHIP") >= 0:
+							fails.append("os stack layer still ship_int after second dirt F-EVA")
+						if ly_e3s.to_upper().find("TPS") < 0 and ly_e3s.to_upper().find("SURFACE") < 0:
+							fails.append("os stack layer not TPS after second dirt F-EVA (%s)" % ly_e3s)
+						if not stack_e3_on:
+							fails.append("os stack hidden after second dirt F-EVA")
+						if chip_e3.to_upper().find("SHIP") >= 0:
+							fails.append("layer chip still ship_int after second dirt F-EVA")
+						if stack_e3.to_upper().find("OCCUPY") >= 0:
+							fails.append("os stack occupy after second dirt F-EVA 110m")
+						if stack_e3.to_upper().find("0G") >= 0:
+							fails.append("os stack EVA 0G after second dirt F-EVA")
 					if os.has_method("try_enter_ship"):
 						os.try_enter_ship()
 					await get_tree().create_timer(0.3).timeout
