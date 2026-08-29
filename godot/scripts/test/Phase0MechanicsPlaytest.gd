@@ -6252,6 +6252,28 @@ func _assert_rover_brake_and_dirt(rover: Node3D, pad: Node3D, fails: PackedStrin
 	print("[Playtest] rover dirt slope last=", snapped(rad_to_deg(ang), 0.1), " deg")
 	if ang < 0.0 or ang > 1.4:
 		fails.append("rover dirt slope last out of range (%s)" % snapped(ang, 0.01))
+	var pl: Node3D = null
+	if rover.has_method("_nearest_planet"):
+		pl = rover.call("_nearest_planet") as Node3D
+	if pl != null and ("radius" in pl):
+		var dir: Vector3 = (pad.global_position + side * 22.0 - pl.global_position)
+		if dir.length_squared() > 1e-6:
+			dir = dir.normalized()
+			var h := 0.0
+			if pl.has_method("relief_height_at"):
+				h = float(pl.relief_height_at(pl.global_position + dir * float(pl.radius)))
+			rover.global_position = pl.global_position + dir * (float(pl.radius) + h + 0.55)
+			if rover is CharacterBody3D:
+				(rover as CharacterBody3D).velocity = Vector3.ZERO
+			if rover.has_method("_physics_process"):
+				rover._physics_process(0.016)
+			await get_tree().create_timer(0.18).timeout
+			var agl := 99.0
+			if rover.has_method("_dirt_agl"):
+				agl = float(rover.call("_dirt_agl"))
+			print("[Playtest] rover dirt stick agl=", snapped(agl, 0.01))
+			if agl < -0.4 or agl > 1.6:
+				fails.append("rover dirt hole (agl=%s)" % snapped(agl, 0.01))
 	rover.global_position = stay
 	rover.set("_pad_deck", pad)
 
