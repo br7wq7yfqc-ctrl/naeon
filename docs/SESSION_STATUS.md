@@ -1,3 +1,5 @@
+**2026-08-30 — Occupy HUD after second I-hatch dirt follows walker, not hull/pocket**
+
 **2026-08-30 — Slope after second I-hatch dirt is PlanetRelief, not pocket-Y cliff**
 
 **2026-08-30 — Coyote after second I-hatch dirt: spawn grace cleared, jump live**
