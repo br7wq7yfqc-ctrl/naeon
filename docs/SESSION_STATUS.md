@@ -1,3 +1,5 @@
+**2026-08-30 — Coyote after second dirt F-EVA: spawn grace cleared, jump live**
+
 **2026-08-30 — Facing after second dirt F-EVA: hull-nose tangent, not pad up**
 
 **2026-08-30 — F-EVA after second dirt land: hull-side Relief, TPS, not pad**
