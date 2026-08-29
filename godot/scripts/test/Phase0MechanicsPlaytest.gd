@@ -3029,6 +3029,70 @@ func _assert_hover_dirt_hold(fails: PackedStringArray) -> void:
 		fails.append("HOVER dirt drifted (%s → %s)" % [snapped(a0, 0.1), snapped(a1, 0.1)])
 	if lat < 16.0:
 		fails.append("HOVER dirt snapped onto plate (lat=%s)" % snapped(lat, 0.1))
+	await _assert_approach_dirt(fails)
+
+
+func _assert_approach_dirt(fails: PackedStringArray) -> void:
+	## OS-I leftover: 3D pad dist < 90 m stole dirt cruise and overflight.
+	## Assist is the plate envelope only (lat ≤28, deck 0.5…22 m).
+	var os: Node = get_parent()
+	var ship: Node = os.get("ship") if os else null
+	if ship == null or not is_instance_valid(ship):
+		fails.append("approach dirt: no ship")
+		return
+	var deck: Node3D = _osh_unnamed_deck()
+	if deck == null:
+		fails.append("approach dirt: no unnamed pad")
+		return
+	var up: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+	if up.length_squared() > 0.01:
+		up = up.normalized()
+	var side: Vector3 = up.cross(Vector3.RIGHT)
+	if side.length_squared() < 0.04:
+		side = up.cross(Vector3.FORWARD)
+	side = side.normalized()
+	if bool(ship.get("is_landed")) and ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+	if ship.has_method("_set_mode"):
+		ship._set_mode(1)
+	ship.set("_gear_down", false)
+	ship.set("_hover_hold_alt", -1.0)
+	# Overflight: 80 m AGL over the plate, closing. Must not be braked to a hover.
+	ship.global_position = deck.global_position + up * 80.0
+	if "velocity" in ship:
+		ship.velocity = -up * 22.0
+	await get_tree().create_timer(0.32).timeout
+	if ship == null or not is_instance_valid(ship):
+		fails.append("approach dirt: ship gone")
+		return
+	var sink: float = 0.0
+	if "velocity" in ship:
+		sink = (ship.velocity as Vector3).dot(-up)
+	print("[Playtest] approach overflight sink=", snapped(sink, 0.1))
+	if sink < 8.0:
+		fails.append("approach assist stole overflight (%s)" % snapped(sink, 0.1))
+	# Dirt cruise: 40 m off the plate, toward the pad. HOVER hold matches AGL.
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	ship.set("_hover_hold_alt", 8.0)
+	ship.global_position = deck.global_position + side * 40.0 + up * 8.0
+	if "velocity" in ship:
+		ship.velocity = -side * 16.0
+	await get_tree().create_timer(0.32).timeout
+	if ship == null or not is_instance_valid(ship):
+		fails.append("approach dirt cruise: ship gone")
+		return
+	var rel: Vector3 = ship.global_position - deck.global_position
+	var lat: float = (rel - up * rel.dot(up)).length()
+	var spd: float = 0.0
+	if "velocity" in ship:
+		spd = (ship.velocity as Vector3).length()
+	print("[Playtest] approach dirt lat=", snapped(lat, 0.1), " spd=", snapped(spd, 0.1))
+	if lat < 28.0:
+		fails.append("approach assist yanked dirt cruise onto plate (%s)" % snapped(lat, 0.1))
+	if spd < 5.0:
+		fails.append("approach assist braked dirt cruise (%s)" % snapped(spd, 0.1))
 
 
 func _pad_traffic_present(fails: PackedStringArray) -> void:

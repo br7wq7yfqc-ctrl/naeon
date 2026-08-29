@@ -1,3 +1,5 @@
+**2026-08-29 — Approach assist is plate envelope, not dirt cruise / overflight**
+
 **2026-08-29 — HOVER over dirt: pad ground-effect is plate-only**
 
 **2026-08-29 — EVA dirt facing is hull-tangent on local radial up**

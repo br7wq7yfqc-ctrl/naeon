@@ -670,12 +670,22 @@ func _physics_process(delta: float) -> void:
 	if flight_mode != FlightMode.HOVER and not sink_held:
 		accel += _Flight.aero_lift_accel(velocity, up, atmo, _stall)
 
-	# Soft pad approach brake (assist, not autopilot)
+	# Soft pad approach brake — plate envelope only. Dirt cruise / overflight
+	# at 80 m AGL is not a landing (3D dist < 90 used to steal the pass).
 	if _open_space and _open_space.has_method("nearest_pad"):
 		var pad: Node3D = _open_space.nearest_pad(global_position)
 		if pad and is_instance_valid(pad):
-			var dpad: float = pad.global_position.distance_to(global_position)
-			velocity = _Flight.approach_assist(velocity, pad.global_position - global_position, dpad, land_pad_snap_distance, delta)
+			var pup := Vector3.UP
+			if pad.has_meta("pad_up"):
+				var raw: Vector3 = pad.get_meta("pad_up")
+				if raw.length_squared() > 0.01:
+					pup = raw.normalized()
+			var rel: Vector3 = global_position - pad.global_position
+			var pad_h: float = rel.dot(pup)
+			var pad_lat: float = (rel - pup * pad_h).length()
+			if pad_lat <= 28.0 and pad_h > 0.5 and pad_h < 22.0:
+				var dpad: float = pad.global_position.distance_to(global_position)
+				velocity = _Flight.approach_assist(velocity, pad.global_position - global_position, dpad, land_pad_snap_distance, delta)
 
 	var use_damp: float = sink_damp if sink_held else _damp_mult()
 	var use_max: float = sink_max if sink_held else _max_speed()
