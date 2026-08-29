@@ -1,3 +1,5 @@
+**2026-08-29 — Pad radar on-foot is 400 m, not 12 km approach**
+
 **2026-08-29 — Occupy HUD matches claim radius (40 m), no PAD on dirt**
 
 **2026-08-29 — Ramp off-plate: dirt AGL + no layout stretch to pad**

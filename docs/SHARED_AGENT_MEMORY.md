@@ -181,6 +181,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-29 | Player-ship ramp pose host: 7 m HOVER deploy, 40 m too high. | ship-ramp-hover |
 | 2026-08-29 | Ramp dirt: Relief AGL off-plate. layout_to_deck plate-only. | ramp-dirt-agl |
 | 2026-08-29 | Occupy HUD: claim_radius 40 m. Dirt 50 m is not PAD occupy. | occupy-hud-dirt |
+| 2026-08-29 | Pad radar: on-foot 400 m. 12 km only when piloting. | pad-radar-dirt |
 | 2026-08-28 | ST-G: factory in existing PlayerOrbitalStation cluster. Bench (c) spend Contribution/Biomass → one catalog module. Without factory, (c) refuses. No SITE_*. ST-E stays dock+habitat. | st-g-factory |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
