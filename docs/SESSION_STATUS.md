@@ -1,3 +1,5 @@
+**2026-08-30 — Launch after second dirt F-board: dirt AGL hold, HOVER PD, not pad**
+
 **2026-08-30 — HOVER chase after second I-hatch F-board reclaims hull cam**
 
 **2026-08-30 — F-board after second I-hatch dirt: occupy hull, layer Space, radar 12 km**

@@ -937,6 +937,7 @@ func _do_launch() -> void:
 	_sync_landing_gear()
 	# Stay in HOVER (no stall speed): SCM stalls at 16 m/s and launch starts at ~4.
 	# Plate: deck AGL. Dirt: Relief. Not sphere vs a pad 110 m away.
+	_set_mode(FlightMode.HOVER)
 	_hover_hold_alt = altitude_agl() + 12.0
 	# Gentle lift — user then applies thrust (no sky rocket)
 	velocity = up_boost * 3.5 + nose * 1.5
