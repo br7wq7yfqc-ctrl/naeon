@@ -3093,6 +3093,49 @@ func _assert_approach_dirt(fails: PackedStringArray) -> void:
 		fails.append("approach assist yanked dirt cruise onto plate (%s)" % snapped(lat, 0.1))
 	if spd < 5.0:
 		fails.append("approach assist braked dirt cruise (%s)" % snapped(spd, 0.1))
+	await _assert_land_ready_overflight(fails)
+
+
+func _assert_land_ready_overflight(fails: PackedStringArray) -> void:
+	## OS-I leftover: 3D pad dist < 90 m said LAND READY at 80 m AGL
+	## and snapped onto the plate. Overflight is "deck →22", not a pad land.
+	var os: Node = get_parent()
+	var ship: Node = os.get("ship") if os else null
+	var deck: Node3D = _osh_unnamed_deck()
+	if ship == null or deck == null:
+		fails.append("land ready overflight: no ship/pad")
+		return
+	var up: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+	if up.length_squared() > 0.01:
+		up = up.normalized()
+	if bool(ship.get("is_landed")) and ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	ship.set("_gear_down", true)
+	if ship.has_method("_sync_landing_gear"):
+		ship._sync_landing_gear()
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	ship.global_position = deck.global_position + up * 80.0
+	var line := ""
+	if ship.has_method("land_readiness_line"):
+		line = str(ship.land_readiness_line())
+	print("[Playtest] land ready overflight '", line, "'")
+	if line.find("LAND READY") >= 0:
+		fails.append("overflight said LAND READY")
+	if line.to_upper().find("DECK") < 0:
+		fails.append("overflight HUD missing deck envelope")
+	if ship.has_method("_do_land"):
+		ship._do_land()
+	if ship.get("_landed_pad") != null:
+		fails.append("overflight pad-snapped from 80 m AGL")
+	if bool(ship.get("is_landed")):
+		fails.append("overflight surface-landed from 80 m AGL")
+	if bool(ship.get("is_landed")) and ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
 
 
 func _pad_traffic_present(fails: PackedStringArray) -> void:

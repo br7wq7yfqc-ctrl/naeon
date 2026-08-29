@@ -1,3 +1,5 @@
+**2026-08-29 — LAND READY is plate envelope, not 80 m overflight**
+
 **2026-08-29 — Approach assist is plate envelope, not dirt cruise / overflight**
 
 **2026-08-29 — HOVER over dirt: pad ground-effect is plate-only**
