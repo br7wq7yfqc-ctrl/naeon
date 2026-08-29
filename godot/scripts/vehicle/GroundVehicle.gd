@@ -27,6 +27,7 @@ var _cam_pitch: float = -0.18
 var _label: Label3D = null
 var _cmd_throttle: float = 0.0
 var _cmd_turn: float = 0.0
+var _cmd_brake: bool = false
 var _use_cmd: bool = false
 var _pad_deck: Node3D = null
 var _hangar_ramp: Node3D = null
@@ -121,17 +122,19 @@ func refresh_label() -> void:
 	_label.text = label_text()
 
 
-func set_drive_command(throttle: float, turn: float) -> void:
+func set_drive_command(throttle: float, turn: float, braking: bool = false) -> void:
 	## Headless / playtest steer. Keyboard still wins when a pilot is aboard.
 	_use_cmd = true
 	_cmd_throttle = clampf(throttle, -1.0, 1.0)
 	_cmd_turn = clampf(turn, -1.0, 1.0)
+	_cmd_brake = braking
 
 
 func clear_drive_command() -> void:
 	_use_cmd = false
 	_cmd_throttle = 0.0
 	_cmd_turn = 0.0
+	_cmd_brake = false
 
 
 func align_to_surface() -> void:
@@ -263,11 +266,14 @@ func _physics_process(delta: float) -> void:
 	var grip := 1.0
 	if is_on_floor():
 		# Radial up, not world +Y — otherwise flat ground pins grip at the floor.
-		grip = clampf(1.0 - get_floor_angle(_up) / deg_to_rad(52.0), 0.38, 1.0)
+		var slope_ang: float = get_floor_angle(_up)
+		grip = clampf(1.0 - slope_ang / deg_to_rad(52.0), 0.38, 1.0)
+		floor_snap_length = 0.55 if slope_ang > deg_to_rad(38.0) else 0.4
+		floor_max_angle = deg_to_rad(68.0) if slope_ang > deg_to_rad(38.0) else deg_to_rad(55.0)
 	var max_spd := speed * grip
 
-	# Space = brake (rover envelope)
-	var braking := (not _use_cmd) and Input.is_physical_key_pressed(KEY_SPACE)
+	# Space = brake (rover envelope). Playtest uses set_drive_command(..., true).
+	var braking := _cmd_brake if _use_cmd else Input.is_physical_key_pressed(KEY_SPACE)
 	if braking:
 		_speed_along = move_toward(_speed_along, 0.0, brake * 1.85 * delta)
 	else:
@@ -349,14 +355,19 @@ func _visual_relief_metres(pl: Node3D) -> float:
 
 
 func _relief_floor_assist(delta: float) -> void:
-	## Hangar ramp / pad deck first. Relief only when not on IN-D plates.
-	if _hangar_ramp != null and is_instance_valid(_hangar_ramp) and _hangar_ramp.has_method("sample_walk"):
-		_ramp_floor_assist(delta)
-		return
-	if _pad_deck != null and is_instance_valid(_pad_deck):
+	## Pad plate wins. Ramp only while on the IN-C span. Else dirt (OS-I).
+	if _pad_deck != null and is_instance_valid(_pad_deck) and _on_pad_plate():
 		_pad_floor_assist(delta)
 		return
-	## Collision is the bare sphere + pad plate. Drive on PlanetRelief like the walker.
+	if _hangar_ramp != null and is_instance_valid(_hangar_ramp) and _on_ramp_span():
+		_ramp_floor_assist(delta)
+		return
+	if _pad_deck != null:
+		_pad_deck = null
+		_force_dirt_chunks()
+	if _hangar_ramp != null:
+		_hangar_ramp = null
+	## OS-I: trimesh is the floor. Analytic lift only as a core-fall catch.
 	var pl: Node3D = _nearest_planet()
 	if pl == null or not ("radius" in pl):
 		return
@@ -367,10 +378,45 @@ func _relief_floor_assist(delta: float) -> void:
 	var target_r: float = float(pl.radius) + _visual_relief_metres(pl) + 0.55
 	var cur_r: float = global_position.distance_to(pl.global_position)
 	var err: float = target_r - cur_r
-	if err > 0.25:
-		global_position += dir * err * clampf(delta * 8.0, 0.0, 1.0)
-	elif not is_on_floor() and err < -0.3 and err > -4.0:
-		global_position += dir * err * clampf(delta * 6.0, 0.0, 1.0)
+	if err > 3.0:
+		global_position += dir * err
+		velocity = Vector3.ZERO
+
+
+func _on_pad_plate() -> bool:
+	if _pad_deck == null or not is_instance_valid(_pad_deck):
+		return false
+	var up := _pad_up()
+	var rel: Vector3 = global_position - _pad_deck.global_position
+	var lat: float = (rel - up * rel.dot(up)).length()
+	return lat <= 14.0
+
+
+func _on_ramp_span() -> bool:
+	if _hangar_ramp == null or not is_instance_valid(_hangar_ramp):
+		return false
+	if not _hangar_ramp.has_method("walk_mouth_global") or not _hangar_ramp.has_method("walk_foot_global"):
+		return false
+	var mouth: Vector3 = _hangar_ramp.walk_mouth_global()
+	var foot: Vector3 = _hangar_ramp.walk_foot_global()
+	var along: Vector3 = foot - mouth
+	var span: float = along.length()
+	if span < 0.2:
+		return false
+	var nalong: Vector3 = along / span
+	var t: float = (global_position - mouth).dot(nalong) / span
+	if t < -0.2 or t > 1.2:
+		return false
+	var closest: Vector3 = mouth + nalong * clampf((global_position - mouth).dot(nalong), 0.0, span)
+	return global_position.distance_to(closest) <= 4.0
+
+
+func _force_dirt_chunks() -> void:
+	var pl: Node3D = _nearest_planet()
+	if pl == null:
+		return
+	if pl.has_method("force_surface_collision_at"):
+		pl.force_surface_collision_at(global_position)
 
 
 func _ramp_floor_assist(delta: float) -> void:

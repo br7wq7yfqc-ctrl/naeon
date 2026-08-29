@@ -5896,6 +5896,7 @@ func _assert_in_d(os: Node, fails: PackedStringArray) -> void:
 		fails.append("IN-D rover stayed in hangar_bay pocket")
 	if str(pad.get_meta("site_pin", "")) != "" or str(carrier.get_meta("site_pin", "")) != "":
 		fails.append("IN-D drive minted SITE_*")
+	await _assert_rover_brake_and_dirt(rover, pad, fails)
 
 	if os.has_method("_unboard_rover"):
 		os._unboard_rover()
@@ -5910,6 +5911,64 @@ func _assert_in_d(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] IN-D no SITE_*")
 	_in_d_restore(os, carrier, ship, was_piloting)
 	await get_tree().create_timer(0.25).timeout
+
+
+func _assert_rover_brake_and_dirt(rover: Node3D, pad: Node3D, fails: PackedStringArray) -> void:
+	## SESSION_CONTRACT 3 + OS-I: Space brake stronger than coast; off-plate
+	## is dirt (trimesh/core-catch), not an infinite pad plane.
+	if rover == null or not is_instance_valid(rover) or pad == null:
+		fails.append("rover brake/dirt: no rover/pad")
+		return
+	rover.set("_speed_along", 12.0)
+	if rover.has_method("set_drive_command"):
+		rover.set_drive_command(0.0, 0.0, true)
+	await get_tree().create_timer(0.18).timeout
+	var braked: float = absf(float(rover.get("_speed_along")))
+	rover.set("_speed_along", 12.0)
+	if rover.has_method("set_drive_command"):
+		rover.set_drive_command(0.0, 0.0, false)
+	await get_tree().create_timer(0.18).timeout
+	var coast: float = absf(float(rover.get("_speed_along")))
+	print("[Playtest] rover Space-brake ", snapped(braked, 0.1), " vs coast ", snapped(coast, 0.1))
+	if braked >= coast * 0.92:
+		fails.append("rover Space brake no stronger than coast (%s vs %s)" % [
+			snapped(braked, 0.1), snapped(coast, 0.1)
+		])
+	if rover.has_method("clear_drive_command"):
+		rover.clear_drive_command()
+	var up := Vector3.UP
+	if pad.has_meta("pad_up"):
+		var raw: Vector3 = pad.get_meta("pad_up")
+		if raw.length_squared() > 0.01:
+			up = raw.normalized()
+	var side: Vector3 = rover.global_transform.basis.x
+	side = side - up * side.dot(up)
+	if side.length_squared() < 0.04:
+		side = up.cross(Vector3.RIGHT)
+	side = side.normalized()
+	var stay: Vector3 = rover.global_position
+	rover.global_position = pad.global_position + side * 22.0 + up * 2.2
+	rover.set("_pad_deck", pad)
+	if rover is CharacterBody3D:
+		(rover as CharacterBody3D).velocity = Vector3.ZERO
+	if rover.has_method("_relief_floor_assist"):
+		rover.call("_relief_floor_assist", 0.016)
+	await get_tree().physics_frame
+	if rover == null or not is_instance_valid(rover):
+		fails.append("rover dirt: rover gone")
+		return
+	var on_plate := true
+	var on_ramp := false
+	if rover.has_method("_on_pad_plate"):
+		on_plate = bool(rover.call("_on_pad_plate"))
+	if rover.has_method("_on_ramp_span"):
+		on_ramp = bool(rover.call("_on_ramp_span"))
+	var deck_left: bool = rover.get("_pad_deck") == null
+	print("[Playtest] rover left plate on_plate=", on_plate, " on_ramp=", on_ramp, " pad_deck_cleared=", deck_left)
+	if on_plate or on_ramp or not deck_left:
+		fails.append("rover stayed on infinite pad plane off-plate")
+	rover.global_position = stay
+	rover.set("_pad_deck", pad)
 
 
 func _in_d_restore(os: Node, carrier: Node3D, ship: Node3D, was_piloting: bool) -> void:
