@@ -1,3 +1,5 @@
+**2026-08-30 — F-EVA after dirt land (post HOVER+S) is hull-side Relief, not pad / 0G**
+
 **2026-08-30 — Dirt LAND after HOVER+S uses Relief AGL, does not steal the pad**
 
 **2026-08-30 — HOVER+S after dirt launch uses Relief AGL, hold floor 4 m not 8 m**

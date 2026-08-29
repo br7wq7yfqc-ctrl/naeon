@@ -197,6 +197,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-29 | HOVER GE after dirt launch: altitude_agl, pad term lat≤28. | hover-ge-dirt-launch |
 | 2026-08-30 | HOVER+S dirt launch: altitude_agl, hold floor 4 m not 8. | hover-sink-dirt-launch |
 | 2026-08-30 | Dirt LAND after HOVER+S: altitude_agl, no pad steal. | dirt-land-after-sink |
+| 2026-08-30 | F-EVA after dirt land (post sink): hull-side Relief, not 0G. | eva-after-dirt-sink-land |
 | 2026-08-28 | ST-G: factory in existing PlayerOrbitalStation cluster. Bench (c) spend Contribution/Biomass → one catalog module. Without factory, (c) refuses. No SITE_*. ST-E stays dock+habitat. | st-g-factory |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
