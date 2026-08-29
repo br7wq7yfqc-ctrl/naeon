@@ -986,9 +986,12 @@ func _spawn_eva_near_ship() -> void:
 		player.set_planet_gravity_provider(self)
 	if player != null and is_instance_valid(player) and player.has_method("set_eva_profile"):
 		player.set_eva_profile(true)
-	if player != null and is_instance_valid(player) and player.has_method("set_spawn_basis"):
+	if player != null and is_instance_valid(player):
 		var nose: Vector3 = -ship.global_transform.basis.z
-		player.set_spawn_basis(up, atan2(-nose.x, -nose.z))
+		if player.has_method("set_spawn_facing"):
+			player.set_spawn_facing(up, nose)
+		elif player.has_method("set_spawn_basis"):
+			player.set_spawn_basis(up, atan2(-nose.x, -nose.z))
 	# Match ship velocity so no instant relative slam
 	if player is CharacterBody3D and "velocity" in ship and ship.velocity is Vector3:
 		(player as CharacterBody3D).velocity = (ship.velocity as Vector3) * 0.9
@@ -1057,9 +1060,10 @@ func _place_walker_on_land_deck(walker: Node3D) -> bool:
 		nose = nose - pad_up * nose.dot(pad_up)
 	if nose.length_squared() > 0.01:
 		nose = nose.normalized()
-	var yaw := atan2(-nose.x, -nose.z)
-	if walker.has_method("set_spawn_basis"):
-		walker.set_spawn_basis(pad_up, yaw)
+	if walker.has_method("set_spawn_facing"):
+		walker.set_spawn_facing(pad_up, nose)
+	elif walker.has_method("set_spawn_basis"):
+		walker.set_spawn_basis(pad_up, atan2(-nose.x, -nose.z))
 	if walker.has_method("snap_to_pad"):
 		walker.snap_to_pad(pad)
 	print("[OpenSpace] land EVA on pad deck ", pad.name, " at ", walker.global_position)
@@ -1098,9 +1102,10 @@ func _spawn_player_near_ship() -> void:
 			player.set_eva_profile(false)
 		var nose: Vector3 = -ship.global_transform.basis.z
 		nose = (nose - pad_up * nose.dot(pad_up)).normalized()
-		var yaw := atan2(-nose.x, -nose.z)
-		if player.has_method("set_spawn_basis"):
-			player.set_spawn_basis(pad_up, yaw)
+		if player.has_method("set_spawn_facing"):
+			player.set_spawn_facing(pad_up, nose)
+		elif player.has_method("set_spawn_basis"):
+			player.set_spawn_basis(pad_up, atan2(-nose.x, -nose.z))
 		if pad != null and player.has_method("snap_to_pad"):
 			player.snap_to_pad(pad)
 		print("[OpenSpace] TPS exit at ", player.global_position, " up=", pad_up)
@@ -1747,8 +1752,13 @@ func place_from_ship_pocket(walker: Node3D) -> void:
 				walker.global_position = ship.global_position + pad_up * 3.2 + side * 11.0
 			if walker.has_method("set_eva_profile"):
 				walker.set_eva_profile(false)
-			if walker.has_method("set_spawn_basis"):
-				walker.set_spawn_basis(pad_up, 0.0)
+			var nose_p := Vector3(0, 0, -1)
+			if ship != null and is_instance_valid(ship):
+				nose_p = -ship.global_transform.basis.z
+			if walker.has_method("set_spawn_facing"):
+				walker.set_spawn_facing(pad_up, nose_p)
+			elif walker.has_method("set_spawn_basis"):
+				walker.set_spawn_basis(pad_up, atan2(-nose_p.x, -nose_p.z))
 			if pad != null and walker.has_method("snap_to_pad"):
 				walker.snap_to_pad(pad)
 			elif walker.has_method("snap_to_surface"):
@@ -1767,9 +1777,11 @@ func place_from_ship_pocket(walker: Node3D) -> void:
 		walker.set("zero_g", true)
 		if walker.has_method("set_eva_profile"):
 			walker.set_eva_profile(true)
-		if walker.has_method("set_spawn_basis"):
-			var nose: Vector3 = -ship.global_transform.basis.z
-			walker.set_spawn_basis(up_e, atan2(-nose.x, -nose.z))
+		var nose_e: Vector3 = -ship.global_transform.basis.z
+		if walker.has_method("set_spawn_facing"):
+			walker.set_spawn_facing(up_e, nose_e)
+		elif walker.has_method("set_spawn_basis"):
+			walker.set_spawn_basis(up_e, atan2(-nose_e.x, -nose_e.z))
 		if walker is CharacterBody3D and "velocity" in ship and ship.velocity is Vector3:
 			(walker as CharacterBody3D).velocity = (ship.velocity as Vector3) * 0.9
 		if ship.has_method("set_hatch_open"):

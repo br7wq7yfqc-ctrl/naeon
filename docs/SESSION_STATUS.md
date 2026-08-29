@@ -1,3 +1,5 @@
+**2026-08-29 — OS-H leftover: EVA snap facing is pad-tangent hull nose**
+
 **2026-08-29 — OS-H leftover: SoftScanCache only returns in-tree actors**
 
 **2026-08-29 — OS-H leftover: occupy/HUD/dummy skip freed EVA walker**

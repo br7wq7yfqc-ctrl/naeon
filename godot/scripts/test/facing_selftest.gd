@@ -31,5 +31,16 @@ func _init() -> void:
 		ok = false
 	else:
 		print("OK basis det ", b.determinant())
+	var up2: Vector3 = Vector3(0.18, 0.96, 0.22).normalized()
+	var nose: Vector3 = Vector3(1, 0, 0)
+	var tn: Vector3 = SF.tangent_nose(up2, nose)
+	var b2: Basis = SF.basis_from_up_ref(up2, 0.0, tn)
+	var fwd: Vector3 = -b2.z
+	fwd = (fwd - up2 * fwd.dot(up2)).normalized()
+	if fwd.dot(tn) < 0.9:
+		print("FAIL tilted pad W vs hull nose ", fwd, " want ", tn)
+		ok = false
+	else:
+		print("OK tilted pad facing")
 	print("FACING_SELFTEST ", "PASS" if ok else "FAIL")
 	quit(0 if ok else 1)
