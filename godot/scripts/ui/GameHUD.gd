@@ -48,6 +48,7 @@ var _radar_dots: Array = []
 var _radar_contacts: Array = []
 const PAD_RADAR_LOCAL_M := 400.0
 const PAD_RADAR_APPROACH_M := 12000.0
+var _radar_range_m: float = 400.0
 var _debug_overlay: bool = false
 var _hp_bar: ProgressBar
 var _en_bar: ProgressBar
@@ -940,6 +941,7 @@ func _refresh_pad_radar(origin: Vector3) -> void:
 	var origin_n: Node = _occupy_origin()
 	if _in_openspace() and origin_n != null and origin_n.has_method("flight_mode_name"):
 		range_m = PAD_RADAR_APPROACH_M
+	_radar_range_m = range_m
 	var title_n := _radar.get_node_or_null("PadTitle") as Label
 	var shown: Array = []
 	for i in _radar_dots.size():
