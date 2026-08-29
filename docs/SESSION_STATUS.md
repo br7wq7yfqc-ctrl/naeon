@@ -1,3 +1,5 @@
+**2026-08-29 — I-hatch dirt slope grip is PlanetRelief, not pocket-Y cliff**
+
 **2026-08-29 — I-hatch dirt coyote/jump live; not EVA/pocket**
 
 **2026-08-29 — I-hatch dirt walker AGL is Relief, pocket velocity cleared**
