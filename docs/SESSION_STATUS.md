@@ -1,3 +1,5 @@
+**2026-08-29 — Ship pad land settles from approach height, not +4 m snap**
+
 **2026-08-29 — Rover OS-I: dirt owns off-plate, Space brake stronger than coast**
 
 **2026-08-29 — Walker landing absorb (settle + crouch, not ice)**
