@@ -607,12 +607,20 @@ func _physics_process(delta: float) -> void:
 				var v_up: float = velocity.dot((-g).normalized())
 				accel += _Flight.hover_alt_accel(g, _altitude_now(), _hover_hold_alt, v_up)
 				var pad_d := 999.0
+				var pad_lat := 999.0
 				if _open_space and _open_space.has_method("nearest_pad"):
 					var hpad: Node3D = _open_space.nearest_pad(global_position)
 					if hpad and is_instance_valid(hpad):
 						pad_d = hpad.global_position.distance_to(global_position)
-				# Ground-effect cushions sink. Do not rewrite hold alt (pad autopilot).
-				accel += _Flight.ground_effect_accel(g, _altitude_now(), pad_d, v_up)
+						var pup := Vector3.UP
+						if hpad.has_meta("pad_up"):
+							var raw: Vector3 = hpad.get_meta("pad_up")
+							if raw.length_squared() > 0.01:
+								pup = raw.normalized()
+						var rel: Vector3 = global_position - hpad.global_position
+						pad_lat = (rel - pup * rel.dot(pup)).length()
+				# Ground-effect cushions sink. Pad term only on the plate.
+				accel += _Flight.ground_effect_accel(g, _altitude_now(), pad_d, v_up, pad_lat)
 		elif flight_mode == FlightMode.SCM:
 			# Partial gravity in atmo; almost free in vacuum
 			accel += g * lerpf(0.08, 0.45, atmo)

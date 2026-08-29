@@ -188,8 +188,9 @@ static func hover_alt_accel(g: Vector3, alt: float, hold_alt: float, v_up: float
 	return up_dir * (spring + damp)
 
 
-static func ground_effect_accel(g: Vector3, height_agl: float, pad_dist: float, v_up: float) -> Vector3:
+static func ground_effect_accel(g: Vector3, height_agl: float, pad_dist: float, v_up: float, pad_lat: float = -1.0) -> Vector3:
 	## Extra lift near terrain / pads — cushion, not an autopilot.
+	## Pad term is on the plate only. Dirt hills 40 m away are not the deck.
 	if g.length() < 0.01:
 		return Vector3.ZERO
 	var up_dir := (-g).normalized()
@@ -199,7 +200,8 @@ static func ground_effect_accel(g: Vector3, height_agl: float, pad_dist: float, 
 		var t := 1.0 - h / 22.0
 		ge = t * t
 	var pad_n := 0.0
-	if pad_dist >= 0.0 and pad_dist < 55.0:
+	var on_plate := pad_lat < 0.0 or pad_lat <= 16.0
+	if on_plate and pad_dist >= 0.0 and pad_dist < 55.0:
 		pad_n = 1.0 - pad_dist / 55.0
 	var lift: float = g.length() * (ge * 0.38 + pad_n * ge * 0.32)
 	if v_up < -1.0 and ge > 0.04:

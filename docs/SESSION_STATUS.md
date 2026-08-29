@@ -1,3 +1,5 @@
+**2026-08-29 — HOVER over dirt: pad ground-effect is plate-only**
+
 **2026-08-29 — EVA dirt facing is hull-tangent on local radial up**
 
 **2026-08-29 — EVA after surface land is beside the hull, not the nearest pad**

@@ -2974,6 +2974,61 @@ func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
 		fails.append("HOVER hold stolen by pad deck (%s → %s)" % [snapped(hold0, 0.1), snapped(hold1, 0.1)])
 	if absf(a1 - a0) > 18.0:
 		fails.append("HOVER hold drifted (%s → %s)" % [snapped(a0, 0.1), snapped(a1, 0.1)])
+	await _assert_hover_dirt_hold(fails)
+
+
+func _assert_hover_dirt_hold(fails: PackedStringArray) -> void:
+	## OS-I leftover: HOVER over dirt is Relief AGL. Pad ground-effect
+	## must not lift the hull off a hill 40 m from the plate.
+	var os: Node = get_parent()
+	var ship: Node = os.get("ship") if os else null
+	var nex: Node = _osh_nex()
+	if ship == null or nex == null or not (nex is Node3D):
+		fails.append("HOVER dirt: no ship/Nex-Prime")
+		return
+	var deck: Node3D = _osh_unnamed_deck()
+	if deck == null:
+		fails.append("HOVER dirt: no unnamed pad")
+		return
+	var up: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+	if up.length_squared() > 0.01:
+		up = up.normalized()
+	var side: Vector3 = up.cross(Vector3.RIGHT)
+	if side.length_squared() < 0.04:
+		side = up.cross(Vector3.FORWARD)
+	side = side.normalized()
+	if bool(ship.get("is_landed")) and ship.has_method("_do_launch"):
+		ship.set("_land_lock_t", 0.0)
+		ship._do_launch()
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	ship.global_position = deck.global_position + side * 40.0 + up * 6.0
+	var a0: float = 0.0
+	if nex.has_method("altitude_of"):
+		a0 = float(nex.altitude_of(ship.global_position))
+	ship.set("_hover_hold_alt", a0)
+	var hold0: float = float(ship.get("_hover_hold_alt"))
+	await get_tree().create_timer(0.55).timeout
+	if ship == null or not is_instance_valid(ship):
+		fails.append("HOVER dirt: ship gone")
+		return
+	var hold1: float = float(ship.get("_hover_hold_alt"))
+	var a1: float = a0
+	if nex.has_method("altitude_of"):
+		a1 = float(nex.altitude_of(ship.global_position))
+	var lat: float = 0.0
+	var rel: Vector3 = ship.global_position - deck.global_position
+	lat = (rel - up * rel.dot(up)).length()
+	print("[Playtest] HOVER dirt hold ", snapped(hold0, 0.1), "→", snapped(hold1, 0.1),
+		" AGL ", snapped(a0, 0.1), "→", snapped(a1, 0.1), " lat=", snapped(lat, 0.1))
+	if hold1 > hold0 + 3.0:
+		fails.append("HOVER dirt hold stolen by pad GE (%s → %s)" % [snapped(hold0, 0.1), snapped(hold1, 0.1)])
+	if absf(a1 - a0) > 18.0:
+		fails.append("HOVER dirt drifted (%s → %s)" % [snapped(a0, 0.1), snapped(a1, 0.1)])
+	if lat < 16.0:
+		fails.append("HOVER dirt snapped onto plate (lat=%s)" % snapped(lat, 0.1))
 
 
 func _pad_traffic_present(fails: PackedStringArray) -> void:
@@ -6359,11 +6414,11 @@ func _assert_rover_brake_and_dirt(rover: Node3D, pad: Node3D, fails: PackedStrin
 			if pl.has_method("relief_height_at"):
 				h = float(pl.relief_height_at(pl.global_position + dir * float(pl.radius)))
 			rover.global_position = pl.global_position + dir * (float(pl.radius) + h + 0.55)
+			rover.set("_speed_along", 0.0)
 			if rover is CharacterBody3D:
 				(rover as CharacterBody3D).velocity = Vector3.ZERO
-			if rover.has_method("_physics_process"):
-				rover._physics_process(0.016)
-			await get_tree().create_timer(0.18).timeout
+			if rover.has_method("_relief_floor_assist"):
+				rover.call("_relief_floor_assist", 0.016)
 			var agl := 99.0
 			if rover.has_method("_dirt_agl"):
 				agl = float(rover.call("_dirt_agl"))
