@@ -2176,6 +2176,7 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 		return
 	await _assert_landing_absorb(walker, pad_eva, fails)
 	await _assert_walker_dirt_slope(walker, pad_eva, fails)
+	await _assert_walker_dirt_coyote(walker, pad_eva, fails)
 	if bool(os.get("_in_ship")):
 		fails.append("OS-H EVA skipped — still piloting")
 		fails.append("OS-H skipped takeoff (no eva)")
@@ -2500,6 +2501,66 @@ func _assert_walker_dirt_slope(walker: Node3D, pad: Node3D, fails: PackedStringA
 	print("[Playtest] walker dirt slope last=", snapped(rad_to_deg(ang), 0.1), " deg")
 	if ang < 0.0 or ang > 1.4:
 		fails.append("walker dirt slope last out of range (%s)" % snapped(ang, 0.01))
+	if walker.has_method("snap_to_pad"):
+		walker.global_position = stay
+		walker.call("snap_to_pad", pad)
+
+
+func _assert_walker_dirt_coyote(walker: Node3D, pad: Node3D, fails: PackedStringArray) -> void:
+	## SESSION_CONTRACT 2 leftover: coyote lives on dirt even without trimesh.
+	if walker == null or not is_instance_valid(walker) or pad == null:
+		fails.append("dirt coyote: no walker/pad")
+		return
+	var up := Vector3.UP
+	if pad.has_meta("pad_up"):
+		var raw: Vector3 = pad.get_meta("pad_up")
+		if raw.length_squared() > 0.01:
+			up = raw.normalized()
+	var stay: Vector3 = walker.global_position
+	var side: Vector3 = walker.global_transform.basis.x
+	side = side - up * side.dot(up)
+	if side.length_squared() < 0.04:
+		side = up.cross(Vector3.RIGHT)
+	side = side.normalized()
+	var pl: Node3D = null
+	if walker.has_method("_nearest_planet_body"):
+		pl = walker.call("_nearest_planet_body") as Node3D
+	if pl != null and ("radius" in pl):
+		var dir: Vector3 = (pad.global_position + side * 22.0 - pl.global_position)
+		if dir.length_squared() > 1e-6:
+			dir = dir.normalized()
+			var h := 0.0
+			if pl.has_method("relief_height_at"):
+				h = float(pl.relief_height_at(pl.global_position + dir * float(pl.radius)))
+			walker.global_position = pl.global_position + dir * (float(pl.radius) + h + 0.9)
+	else:
+		walker.global_position = pad.global_position + side * 22.0 + up * 0.9
+	walker.set("_spawn_grace_t", 0.0)
+	if walker is CharacterBody3D:
+		(walker as CharacterBody3D).velocity = Vector3.ZERO
+	if walker.has_method("_physics_process"):
+		walker._physics_process(0.016)
+	var coy: float = float(walker.get("_coyote_t"))
+	print("[Playtest] dirt coyote t=", snapped(coy, 0.01), " near=", walker.call("_near_dirt_floor") if walker.has_method("_near_dirt_floor") else "?")
+	if coy <= 0.0:
+		fails.append("dirt coyote dead off-plate")
+		if walker.has_method("snap_to_pad"):
+			walker.global_position = stay
+			walker.call("snap_to_pad", pad)
+		return
+	var v0: float = 0.0
+	if walker is CharacterBody3D:
+		v0 = (walker as CharacterBody3D).velocity.dot(up)
+	if walker.has_method("request_jump"):
+		walker.request_jump()
+	if walker.has_method("_physics_process"):
+		walker._physics_process(0.016)
+	var v1: float = v0
+	if walker is CharacterBody3D:
+		v1 = (walker as CharacterBody3D).velocity.dot(up)
+	print("[Playtest] dirt jump v_up ", snapped(v0, 0.1), "→", snapped(v1, 0.1))
+	if v1 < v0 + 3.0:
+		fails.append("dirt jump died (%s → %s)" % [snapped(v0, 0.1), snapped(v1, 0.1)])
 	if walker.has_method("snap_to_pad"):
 		walker.global_position = stay
 		walker.call("snap_to_pad", pad)
