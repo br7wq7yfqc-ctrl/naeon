@@ -3213,6 +3213,19 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 			fails.append("F-EVA after dirt sink land not on Relief (%s)" % snapped(e2_agl, 0.01))
 		if bool(eva2.get("eva_mode")) or bool(eva2.get("zero_g")):
 			fails.append("F-EVA after dirt sink land still EVA 0G")
+		var rad_e2: Vector3 = (eva2.global_position - (nex as Node3D).global_position).normalized()
+		var fwd_e2: Vector3 = -eva2.global_transform.basis.z
+		fwd_e2 = fwd_e2 - rad_e2 * fwd_e2.dot(rad_e2)
+		var want_e2: Vector3 = -ship.global_transform.basis.z
+		want_e2 = want_e2 - rad_e2 * want_e2.dot(rad_e2)
+		if fwd_e2.length_squared() < 0.04 or want_e2.length_squared() < 0.04:
+			fails.append("F-EVA after dirt sink land facing not tangent")
+		else:
+			var align_e2: float = fwd_e2.normalized().dot(want_e2.normalized())
+			print("[Playtest] F-EVA after dirt sink land facing align=", snapped(align_e2, 0.01),
+				" tangent=", snapped(1.0 - absf(fwd_e2.normalized().dot(rad_e2)), 0.01))
+			if align_e2 < 0.55:
+				fails.append("F-EVA after dirt sink land facing sideways (%s)" % snapped(align_e2, 0.01))
 		if os.has_method("try_enter_ship"):
 			os.try_enter_ship()
 		await get_tree().create_timer(0.3).timeout

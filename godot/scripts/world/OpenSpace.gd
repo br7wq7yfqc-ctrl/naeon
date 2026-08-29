@@ -2182,6 +2182,29 @@ func _surface_settle_tick(stage: int) -> void:
 		_call_if(player, &"snap_to_surface")
 	else:
 		_call_if(player, &"safe_unground")
+	_apply_dirt_exit_facing()
+
+
+func _apply_dirt_exit_facing() -> void:
+	## Deferred snap can twist the body. Dirt F-EVA stays hull-nose tangent.
+	if player == null or not is_instance_valid(player) or ship == null or not is_instance_valid(ship):
+		return
+	if _land_eva_pad() != null:
+		return
+	var pl = nearest_planet(player.global_position)
+	if pl == null or not is_instance_valid(pl):
+		return
+	var pad_up: Vector3 = (player.global_position - pl.global_position).normalized()
+	var nose: Vector3 = -ship.global_transform.basis.z
+	nose = nose - pad_up * nose.dot(pad_up)
+	if nose.length_squared() < 0.01:
+		nose = -ship.global_transform.basis.x
+		nose = nose - pad_up * nose.dot(pad_up)
+	if nose.length_squared() < 0.01:
+		return
+	nose = nose.normalized()
+	if player.has_method("set_spawn_facing"):
+		player.set_spawn_facing(pad_up, nose)
 
 
 
