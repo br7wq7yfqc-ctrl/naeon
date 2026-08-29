@@ -432,7 +432,8 @@ func _occupy_origin() -> Node3D:
 			var w: Variant = os.get("player")
 			if w is Node3D and is_instance_valid(w) and (w as Node3D).is_inside_tree() \
 					and (w as Node).has_method("set_spawn_facing"):
-				return w as Node3D
+				if not ("interior_mode" in w and bool((w as Node).get("interior_mode"))):
+					return w as Node3D
 	var p: Node = _alive_player()
 	if p is Node3D and (p as Node3D).is_inside_tree():
 		return p as Node3D

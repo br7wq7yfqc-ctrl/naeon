@@ -3501,6 +3501,30 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 				fails.append("I-hatch after dirt F-board slope not Relief")
 			if last_pk > rel_pk + 0.25:
 				fails.append("I-hatch after dirt F-board slope is pocket-Y cliff")
+			var hud_pk: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+			if hud_pk != null and hud_pk.has_method("bind_player"):
+				hud_pk.bind_player(w_pk)
+			if hud_pk != null and hud_pk.has_method("_refresh"):
+				hud_pk._refresh()
+			var origin_pk: Node3D = null
+			if hud_pk != null and hud_pk.has_method("_occupy_origin"):
+				origin_pk = hud_pk.call("_occupy_origin") as Node3D
+			var otxt_pk := ""
+			if hud_pk != null:
+				var lab_pk: Variant = hud_pk.get("_owner_label")
+				if lab_pk is Label:
+					otxt_pk = (lab_pk as Label).text
+			print("[Playtest] occupy HUD I-hatch after dirt F-board origin=",
+				origin_pk.name if origin_pk else "null",
+				" '", otxt_pk.replace("\n", " / ").substr(0, 80), "'")
+			if origin_pk == null:
+				fails.append("occupy HUD lost origin after second I-hatch dirt")
+			elif origin_pk == ship:
+				fails.append("occupy HUD origin still hull after second I-hatch dirt")
+			elif origin_pk != w_pk:
+				fails.append("occupy HUD origin not walker after second I-hatch dirt")
+			if otxt_pk.to_upper().find("PAD") >= 0 and otxt_pk.to_upper().find("OCCUPY") >= 0:
+				fails.append("occupy HUD PAD after second I-hatch dirt 110m")
 			if os.has_method("try_enter_ship"):
 				os.try_enter_ship()
 			await get_tree().create_timer(0.3).timeout
