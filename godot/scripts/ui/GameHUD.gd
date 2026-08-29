@@ -1005,7 +1005,7 @@ func _refresh_os_stack(pocket: bool, pad: Node) -> void:
 	if not show:
 		return
 	var ship_n: Node = _OsStack.player_ship(get_tree())
-	var snap: Dictionary = _OsStack.snapshot(ship_n, _alive_player(), pad)
+	var snap: Dictionary = _OsStack.snapshot(ship_n, _occupy_origin(), pad)
 	var body := str(_OsStack.stack_text(snap))
 	var ally_line := alliance_hud_text()
 	if ally_line != "":
