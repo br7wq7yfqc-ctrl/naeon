@@ -1,3 +1,5 @@
+**2026-08-29 — Walker landing absorb (settle + crouch, not ice)**
+
 **2026-08-29 — IN leftover: F at pocket hatch is the airlock**
 
 **2026-08-29 — OS-H leftover: EVA snap facing is pad-tangent hull nose**

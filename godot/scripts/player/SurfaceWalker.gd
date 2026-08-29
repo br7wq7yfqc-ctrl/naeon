@@ -72,6 +72,9 @@ var _down_t: float = 0.0
 var _air_v_up: float = 0.0
 var _jump_fx: GPUParticles3D = null
 var _was_on_floor: bool = false
+var _land_absorb_t: float = 0.0
+var _land_crouch: float = 0.0
+var last_land_impact: float = 0.0
 
 const DOWN_TIME := 2.2
 var _space_held: bool = false
@@ -654,6 +657,8 @@ func _physics_process(delta: float) -> void:
 		# Radial up, not world +Y — otherwise flat ground reads as a cliff on a sphere.
 		slope_ang = get_floor_angle(_up)
 		sp *= clampf(1.0 - (slope_ang / deg_to_rad(58.0)) * 0.38, 0.52, 1.0)
+	if _land_absorb_t > 0.0:
+		sp *= 0.58
 	var target_planar := wish * sp
 	# Smooth accel on ground, weaker air control (not ice-skating)
 	var planar := velocity - _up * velocity.dot(_up)
@@ -699,14 +704,29 @@ func _physics_process(delta: float) -> void:
 
 	# Landing absorb (radial). move_and_slide already flattened v_up on the
 	# touchdown frame, so judge the impact by the last airborne value.
-	if is_on_floor() and not _was_on_floor and _air_v_up < -7.5:
-		planar *= 0.72
-		if CombatJuice:
-			CombatJuice.hit_feedback(4.0, global_position, false)
+	if is_on_floor() and not _was_on_floor:
+		var impact: float = -_air_v_up
+		if impact > 5.5:
+			var k: float = clampf(1.0 - (impact - 5.5) * 0.07, 0.38, 0.88)
+			planar *= k
+			_land_absorb_t = clampf(0.10 + (impact - 5.5) * 0.028, 0.10, 0.32)
+			last_land_impact = impact
+			if CombatJuice and impact > 8.5:
+				CombatJuice.hit_feedback(4.0, global_position, false)
+			if AudioDirector and impact > 7.0 and AudioDirector.has_method("play_ui"):
+				AudioDirector.play_ui()
 	if is_on_floor():
 		_air_v_up = 0.0
+		if _land_absorb_t > 0.0:
+			_land_absorb_t = maxf(0.0, _land_absorb_t - delta)
+			planar = planar.move_toward(Vector3.ZERO, 28.0 * delta)
+			_land_crouch = move_toward(_land_crouch, 0.22, 4.0 * delta)
+		else:
+			_land_crouch = move_toward(_land_crouch, 0.0, 5.0 * delta)
 	else:
 		_air_v_up = v_up
+		_land_absorb_t = 0.0
+		_land_crouch = move_toward(_land_crouch, 0.0, 6.0 * delta)
 	_was_on_floor = is_on_floor()
 
 	velocity = planar + _up * v_up
@@ -795,9 +815,7 @@ func _apply_body_basis() -> void:
 	global_transform = Transform3D(b.orthonormalized(), global_position)
 	# Camera yaw is body; pitch on pivot
 	if cam_pivot:
-		cam_pivot.position = _up * 1.55  # local after transform? pivot is child so local Y
-		# After parent basis applied, local +Y is planet up
-		cam_pivot.position = Vector3(0, 1.55, 0)
+		cam_pivot.position = Vector3(0, 1.55 - _land_crouch, 0)
 		cam_pivot.rotation.x = _pitch
 
 func _update_anim(delta: float) -> void:
@@ -813,7 +831,7 @@ func _update_anim(delta: float) -> void:
 	var bob := sin(_anim_time * TAU) * 0.06 * clampf(_move_amount, 0.0, 1.5)
 	var sway := sin(_anim_time * TAU * 0.5) * 0.04
 	var lean := clampf(_move_amount, 0.0, 1.0) * 0.12
-	_visual.position = Vector3(sway * 0.15, bob, 0.0)
+	_visual.position = Vector3(sway * 0.15, bob - _land_crouch, 0.0)
 	_visual.rotation = Vector3(-lean, 0.0, sway * 0.35)  # no Y spin — body yaw owns facing
 	# Idle breathe when still
 	if _move_amount < 0.08:

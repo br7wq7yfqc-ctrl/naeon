@@ -2171,6 +2171,7 @@ func _osh_ritual(fails: PackedStringArray) -> void:
 		fails.append("OS-H skipped space_out (no takeoff)")
 		_osh_report_skips(fails, done, required)
 		return
+	await _assert_landing_absorb(walker, pad_eva, fails)
 	if bool(os.get("_in_ship")):
 		fails.append("OS-H EVA skipped — still piloting")
 		fails.append("OS-H skipped takeoff (no eva)")
@@ -2406,6 +2407,42 @@ func _assert_eva_facing(os: Node, walker: Node3D, pad: Node3D, fails: PackedStri
 	print("[Playtest] EVA facing align=", snapped(align, 0.01), " tangent=", snapped(1.0 - absf(body_fwd.dot(up2)), 0.01))
 	if align < 0.55:
 		fails.append("EVA facing sideways vs hull nose (%s)" % snapped(align, 0.01))
+
+
+func _assert_landing_absorb(walker: Node3D, pad: Node3D, fails: PackedStringArray) -> void:
+	## SESSION_CONTRACT 2: drop onto the unnamed plate must settle, not ice-slide.
+	if walker == null or not is_instance_valid(walker) or pad == null:
+		fails.append("landing absorb: no walker/pad")
+		return
+	var up := Vector3.UP
+	if pad.has_meta("pad_up"):
+		var raw: Vector3 = pad.get_meta("pad_up")
+		if raw.length_squared() > 0.01:
+			up = raw.normalized()
+	var stay: Vector3 = walker.global_position
+	walker.set("_spawn_grace_t", 0.0)
+	walker.set("last_land_impact", 0.0)
+	walker.set("_land_absorb_t", 0.0)
+	walker.set("_was_on_floor", false)
+	walker.global_position = pad.global_position + up * 5.2
+	if walker is CharacterBody3D:
+		(walker as CharacterBody3D).velocity = -up * 14.0
+	await get_tree().create_timer(0.55).timeout
+	if walker == null or not is_instance_valid(walker):
+		fails.append("landing absorb: walker gone")
+		return
+	var impact: float = float(walker.get("last_land_impact"))
+	var absorb_t: float = float(walker.get("_land_absorb_t"))
+	var rel: Vector3 = walker.global_position - pad.global_position
+	var deck: float = rel.dot(up)
+	print("[Playtest] landing absorb impact=", snapped(impact, 0.1), " t=", snapped(absorb_t, 0.01), " deck=", snapped(deck, 0.01))
+	if impact < 5.5:
+		fails.append("landing absorb did not fire (%s)" % snapped(impact, 0.1))
+	if deck < 0.2 or deck > 8.0:
+		fails.append("landing absorb left walker off pad (deck=%s)" % snapped(deck, 0.01))
+	if walker.has_method("snap_to_pad"):
+		walker.global_position = stay
+		walker.call("snap_to_pad", pad)
 
 
 func _osh_eva_on_pad(walker: Node3D, pad: Node3D, nex: Node, eva_agl: float, fails: PackedStringArray) -> bool:
