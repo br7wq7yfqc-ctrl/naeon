@@ -1,3 +1,5 @@
+**2026-08-29 — I-hatch dirt facing is hull-tangent after exterior place**
+
 **2026-08-29 — I-hatch after dirt land is beside the hull, not the nearest pad**
 
 **2026-08-29 — snap_to_surface does not steal dirt occupy onto the plate**

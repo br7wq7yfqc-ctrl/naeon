@@ -1807,6 +1807,8 @@ func place_from_ship_pocket(walker: Node3D) -> void:
 				walker.snap_to_surface()
 			if walker.has_method("set_spawn_facing") and nose_p.length_squared() > 0.01:
 				walker.set_spawn_facing(pad_up, nose_p)
+			if has_method("_schedule_surface_settle"):
+				_schedule_surface_settle()
 			print("[OpenSpace] hatch dirt exit at ", walker.global_position, " up=", pad_up)
 			_toast_hud("Hatch → EVA")
 		else:

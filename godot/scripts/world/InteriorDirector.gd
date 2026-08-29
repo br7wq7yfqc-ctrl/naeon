@@ -501,7 +501,6 @@ func exit_interior() -> void:
 		# Restore exterior gravity + place on pad/ship return
 		if _player != null and is_instance_valid(_player) and _player.has_method("set_planet_gravity_provider") and _open_space:
 			_player.set_planet_gravity_provider(_open_space)
-		_apply_hatch_facing()
 		# Must leave the pocket before queue_free, or the walker is freed with it.
 		_restore_player_parent()
 		var via_hatch := was_ship and _open_space != null and _open_space.has_method("place_from_ship_pocket")
@@ -559,6 +558,7 @@ func exit_interior() -> void:
 			LayerContext.seamless_stage = "world"
 	if was_ship and _open_space != null and _open_space.has_method("place_from_ship_pocket") and _player != null and is_instance_valid(_player):
 		_open_space.place_from_ship_pocket(_player)
+	_apply_hatch_facing()
 	exited.emit(_kind)
 	if was_ship:
 		_toast("Hatch → EVA")
@@ -576,18 +576,30 @@ func exit_interior() -> void:
 
 
 func _apply_hatch_facing() -> void:
-	## Pad-tangent hull nose, same as land-EVA. World-XZ yaw is the wrong frame.
+	## After exterior place. Dirt land: live radial up, not pocket Y / pad 110 m away.
 	if _player == null or not is_instance_valid(_player):
 		return
+	var up: Vector3 = _return_up
 	var ref := Vector3(0, 0, -1)
 	if _open_space != null:
 		var sh: Variant = _open_space.get("ship")
 		if sh is Node3D and is_instance_valid(sh):
 			ref = -(sh as Node3D).global_transform.basis.z
+			var pad: Node3D = null
+			if (sh as Node).has_method("get_landed_pad"):
+				pad = (sh as Node).call("get_landed_pad") as Node3D
+			if pad != null and is_instance_valid(pad) and pad.has_meta("pad_up"):
+				var raw: Vector3 = pad.get_meta("pad_up")
+				if raw.length_squared() > 0.01:
+					up = raw.normalized()
+			elif _open_space.has_method("nearest_planet"):
+				var pl: Node3D = _open_space.nearest_planet((sh as Node3D).global_position)
+				if pl != null and is_instance_valid(pl):
+					up = ((sh as Node3D).global_position - pl.global_position).normalized()
 	if _player.has_method("set_spawn_facing"):
-		_player.set_spawn_facing(_return_up, ref)
+		_player.set_spawn_facing(up, ref)
 	elif _player.has_method("set_spawn_basis"):
-		_player.set_spawn_basis(_return_up, 0.0)
+		_player.set_spawn_basis(up, 0.0)
 
 
 func _toast(msg: String) -> void:
