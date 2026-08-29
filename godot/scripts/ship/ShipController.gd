@@ -365,6 +365,22 @@ func _altitude_now() -> float:
 			return float(pl.altitude_of(global_position))
 	return 0.0
 
+
+func _pad_envelope(pad: Node3D) -> Dictionary:
+	## Plate land: on-deck lateral ≤28 m and height 0.5…22 m. Not 3D dist.
+	if pad == null or not is_instance_valid(pad):
+		return {"ok": false, "lat": 999.0, "h": 999.0, "plate": false}
+	var pup := Vector3.UP
+	if pad.has_meta("pad_up"):
+		var raw: Vector3 = pad.get_meta("pad_up")
+		if raw.length_squared() > 0.01:
+			pup = raw.normalized()
+	var rel: Vector3 = global_position - pad.global_position
+	var h: float = rel.dot(pup)
+	var lat: float = (rel - pup * h).length()
+	var plate := lat <= 28.0 and h > 0.5 and h < 22.0
+	return {"ok": true, "lat": lat, "h": h, "plate": plate}
+
 func _ship_axis() -> Vector3:
 	if _npc_driven:
 		return _npc_axes
@@ -785,15 +801,16 @@ func _do_land() -> void:
 	var pad: Node3D = null
 	if _open_space and _open_space.has_method("nearest_pad"):
 		pad = _open_space.nearest_pad(global_position)
-	if pad and is_instance_valid(pad) and pad.global_position.distance_to(global_position) <= land_pad_snap_distance:
+	var envp: Dictionary = _pad_envelope(pad)
+	if bool(envp.get("plate", false)):
 		_commit_land(pad)
 		return
-	if _open_space and _open_space.has_method("nearest_planet"):
-		var pl: Node3D = _open_space.nearest_planet(global_position)
-		if pl and pl.has_method("altitude_of") and float(pl.altitude_of(global_position)) < surface_land_alt:
-			_commit_land(null)
-			print("[Ship] Surface land near ", pl.get("planet_name"))
-			return
+	var alt_dirt: float = _altitude_now()
+	# Dirt land is off the plate. Overflight (lat ≤28, deck >22) is not a snap.
+	if alt_dirt < surface_land_alt and (not bool(envp.get("ok", false)) or float(envp.get("lat", 0.0)) > 28.0):
+		_commit_land(null)
+		print("[Ship] Surface land near dirt")
+		return
 	# Say which condition failed instead of restating the rule.
 	var alt_now: float = _altitude_now()
 	_toast_ship("Land denied — %s" % land_readiness_line().trim_prefix("LAND: "))
@@ -1461,8 +1478,11 @@ func _toggle_gear() -> void:
 func _near_land_zone() -> bool:
 	if _open_space and _open_space.has_method("nearest_pad"):
 		var pad: Node3D = _open_space.nearest_pad(global_position)
-		if pad and is_instance_valid(pad) and pad.global_position.distance_to(global_position) <= land_pad_snap_distance:
+		var envp: Dictionary = _pad_envelope(pad)
+		if bool(envp.get("plate", false)):
 			return true
+		if float(envp.get("lat", 999.0)) <= 28.0:
+			return false
 	if _open_space and _open_space.has_method("nearest_planet"):
 		var pl: Node3D = _open_space.nearest_planet(global_position)
 		if pl and pl.has_method("altitude_of"):
@@ -2114,20 +2134,26 @@ func land_readiness_line() -> String:
 		if gg.length() > 0.01:
 			sink = velocity.dot(gg.normalized())
 	var pad_d := -1.0
+	var envp := {"ok": false, "lat": 999.0, "h": 999.0, "plate": false}
 	if _open_space and _open_space.has_method("nearest_pad"):
 		var pad: Node3D = _open_space.nearest_pad(global_position)
-		if pad and is_instance_valid(pad):
-			pad_d = pad.global_position.distance_to(global_position)
+		envp = _pad_envelope(pad)
+		if bool(envp.get("ok", false)):
+			pad_d = float(envp.get("lat", -1.0))
 	var need: PackedStringArray = PackedStringArray()
 	# One decimal on the current value: rounding both sides printed "slow 12→12".
 	if spd > max_spd:
 		need.append("slow %.1f→%d" % [spd, int(max_spd)])
 	if absf(sink) > max_sink:
 		need.append("sink %.1f→%d" % [absf(sink), int(max_sink)])
-	var in_reach := (pad_d >= 0.0 and pad_d <= land_pad_snap_distance) or alt < surface_land_alt
+	var plate := bool(envp.get("plate", false))
+	var dirt := alt < surface_land_alt and (not bool(envp.get("ok", false)) or float(envp.get("lat", 0.0)) > 28.0)
+	var in_reach := plate or dirt
 	if not in_reach:
-		if pad_d >= 0.0:
-			need.append("pad %dm→%dm" % [int(pad_d), int(land_pad_snap_distance)])
+		if bool(envp.get("ok", false)) and float(envp.get("h", 0.0)) >= 22.0 and float(envp.get("lat", 999.0)) <= 28.0:
+			need.append("deck %dm→22" % int(envp.get("h", 0.0)))
+		elif pad_d >= 0.0:
+			need.append("pad %dm→28m" % int(pad_d))
 		else:
 			need.append("alt %d→%d" % [int(alt), int(surface_land_alt)])
 	if not _gear_down:

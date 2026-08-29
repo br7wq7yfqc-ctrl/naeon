@@ -175,6 +175,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-29 | EVA dirt facing: local radial up + hull nose (not nearest-pad up). | eva-dirt-facing |
 | 2026-08-29 | HOVER dirt: pad ground-effect only on the plate (lat ≤16 m). | hover-dirt-hold |
 | 2026-08-29 | Approach assist: plate envelope only (lat ≤28, deck 0.5…22 m). | approach-plate |
+| 2026-08-29 | LAND READY / pad snap: plate envelope. Overflight is deck→22. | land-ready-plate |
 | 2026-08-28 | ST-G: factory in existing PlayerOrbitalStation cluster. Bench (c) spend Contribution/Biomass → one catalog module. Without factory, (c) refuses. No SITE_*. ST-E stays dock+habitat. | st-g-factory |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
