@@ -3676,6 +3676,26 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 						" agl=", snapped(agl_ge, 0.1))
 					if lat_ge < 60.0:
 						fails.append("second dirt launch GE pulled onto plate (lat=%s)" % snapped(lat_ge, 0.1))
+					ship.set_meta("playtest_sink", true)
+					await get_tree().create_timer(0.45).timeout
+					ship.set_meta("playtest_sink", false)
+					var hold_sk2: float = float(ship.get("_hover_hold_alt"))
+					var agl_sk2: float = agl_ge
+					if nex.has_method("altitude_of"):
+						agl_sk2 = float(nex.altitude_of(ship.global_position))
+					var lat_sk: float = 0.0
+					var rel_sk: Vector3 = ship.global_position - deck.global_position
+					lat_sk = (rel_sk - up_ge * rel_sk.dot(up_ge)).length()
+					print("[Playtest] second dirt HOVER sink hold ", snapped(hold_rb2, 0.1), "→", snapped(hold_sk2, 0.1),
+						" AGL ", snapped(agl_ge, 0.1), "→", snapped(agl_sk2, 0.1), " lat=", snapped(lat_sk, 0.1))
+					if hold_sk2 > 6.5:
+						fails.append("second dirt HOVER sink hold still 8m floor (%s)" % snapped(hold_sk2, 0.1))
+					if hold_sk2 + 0.2 < 3.5:
+						fails.append("second dirt HOVER sink hold buried (%s)" % snapped(hold_sk2, 0.1))
+					if agl_sk2 > agl_ge + 1.5:
+						fails.append("second dirt HOVER sink climbed (%s → %s)" % [snapped(agl_ge, 0.1), snapped(agl_sk2, 0.1)])
+					if lat_sk < 60.0:
+						fails.append("second dirt HOVER sink pulled onto plate (lat=%s)" % snapped(lat_sk, 0.1))
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
