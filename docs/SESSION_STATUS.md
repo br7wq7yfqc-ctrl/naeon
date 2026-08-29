@@ -1,3 +1,5 @@
+**2026-08-30 — F-EVA after second dirt land: hull-side Relief, TPS, not pad**
+
 **2026-08-30 — Dirt LAND after second sink: Relief, pad none, lat 110 m**
 
 **2026-08-30 — HOVER sink after second dirt launch: 4 m floor, no plate steal**
