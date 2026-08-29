@@ -1,3 +1,5 @@
+**2026-08-29 — snap_to_surface does not steal dirt occupy onto the plate**
+
 **2026-08-29 — Pad radar on-foot is 400 m, not 12 km approach**
 
 **2026-08-29 — Occupy HUD matches claim radius (40 m), no PAD on dirt**

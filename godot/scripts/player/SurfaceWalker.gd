@@ -1176,17 +1176,16 @@ func snap_to_pad(pad: Node3D) -> bool:
 	var rel: Vector3 = global_position - pad.global_position
 	var lat: Vector3 = rel - up * rel.dot(up)
 	var lat_len: float = lat.length()
+	# Off-plate is dirt. Do not yank occupy/harvest or 14 m dirt onto 5.5 m.
+	if lat_len > 16.0:
+		return false
 	# Keep a given on-plate offset (land EVA places at ~11 m, hull-clear).
-	# Only rewrite empty / off-plate snaps — do not shove occupy/harvest in.
-	if lat_len > 12.0 or lat_len < 1.2:
-		if lat_len > 0.2:
-			lat = lat.normalized() * 5.5
-		else:
-			var side: Vector3 = pad.global_transform.basis.x
-			side = side - up * side.dot(up)
-			if side.length_squared() < 0.01:
-				side = up.cross(Vector3.RIGHT)
-			lat = side.normalized() * 5.5
+	if lat_len < 1.2:
+		var side: Vector3 = pad.global_transform.basis.x
+		side = side - up * side.dot(up)
+		if side.length_squared() < 0.01:
+			side = up.cross(Vector3.RIGHT)
+		lat = side.normalized() * 5.5
 	global_position = pad.global_position + up * 1.35 + lat
 	velocity = Vector3.ZERO
 	_spawn_grace_t = 0.45
