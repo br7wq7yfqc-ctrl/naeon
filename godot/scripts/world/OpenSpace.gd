@@ -1813,6 +1813,8 @@ func place_from_ship_pocket(walker: Node3D) -> void:
 				walker.set_interior_mode(false)
 			elif "interior_mode" in walker:
 				walker.interior_mode = false
+			if walker.has_method("_update_up"):
+				walker._update_up()
 			if walker.has_method("set_spawn_facing") and nose_p.length_squared() > 0.01:
 				walker.set_spawn_facing(pad_up, nose_p)
 			if has_method("_schedule_surface_settle"):

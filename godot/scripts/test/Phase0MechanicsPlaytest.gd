@@ -2978,6 +2978,18 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 			print("[Playtest] hatch dirt jump v_up ", snapped(hv0, 0.1), "→", snapped(hv1, 0.1))
 			if hv1 < hv0 + 3.0:
 				fails.append("hatch dirt jump died (%s → %s)" % [snapped(hv0, 0.1), snapped(hv1, 0.1)])
+		var last_s: float = float(walker.get("last_slope_ang"))
+		var rel_s: float = 0.0
+		if walker.has_method("_relief_slope_rad"):
+			rel_s = float(walker.call("_relief_slope_rad"))
+		print("[Playtest] hatch dirt slope last=", snapped(rad_to_deg(last_s), 0.1),
+			" deg rel=", snapped(rad_to_deg(rel_s), 0.1))
+		if last_s < 0.0 or last_s > 1.4:
+			fails.append("hatch dirt slope last out of range (%s)" % snapped(last_s, 0.01))
+		if rel_s > 0.05 and last_s + 0.08 < rel_s:
+			fails.append("hatch dirt slope not Relief (%s vs %s)" % [snapped(last_s, 0.01), snapped(rel_s, 0.01)])
+		if last_s > rel_s + 0.25:
+			fails.append("hatch dirt slope is pocket-Y cliff (%s vs %s)" % [snapped(last_s, 0.01), snapped(rel_s, 0.01)])
 		var body_fwd_h: Vector3 = -walker.global_transform.basis.z
 		body_fwd_h = body_fwd_h - rad_up_h * body_fwd_h.dot(rad_up_h)
 		var want_h: Vector3 = -ship.global_transform.basis.z
