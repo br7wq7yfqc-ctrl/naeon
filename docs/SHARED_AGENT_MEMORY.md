@@ -172,6 +172,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-29 | Rover dirt stick: near relief, catch at 0.85 m (not 3 m). | rover-dirt-stick |
 | 2026-08-29 | Surface land: hold is radius+relief+gear, not sphere+3.5. | ship-dirt-land |
 | 2026-08-29 | EVA after surface land: beside hull on Relief, not nearest pad. | eva-dirt-hull |
+| 2026-08-29 | EVA dirt facing: local radial up + hull nose (not nearest-pad up). | eva-dirt-facing |
 | 2026-08-28 | ST-G: factory in existing PlayerOrbitalStation cluster. Bench (c) spend Contribution/Biomass → one catalog module. Without factory, (c) refuses. No SITE_*. ST-E stays dock+habitat. | st-g-factory |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |

@@ -2909,6 +2909,20 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 			fails.append("EVA dirt snapped to pad (%s)" % snapped(d_pad, 0.1))
 		if w_agl < 0.2 or w_agl > 5.0:
 			fails.append("EVA dirt walker not on Relief (%s)" % snapped(w_agl, 0.01))
+		var rad_up: Vector3 = (walker.global_position - (nex as Node3D).global_position).normalized()
+		var body_fwd: Vector3 = -walker.global_transform.basis.z
+		body_fwd = body_fwd - rad_up * body_fwd.dot(rad_up)
+		var want: Vector3 = -ship.global_transform.basis.z
+		want = want - rad_up * want.dot(rad_up)
+		var align := 0.0
+		if body_fwd.length_squared() < 0.04 or want.length_squared() < 0.04:
+			fails.append("EVA dirt facing not tangent")
+		else:
+			align = body_fwd.normalized().dot(want.normalized())
+			print("[Playtest] EVA dirt facing align=", snapped(align, 0.01),
+				" tangent=", snapped(1.0 - absf(body_fwd.normalized().dot(rad_up)), 0.01))
+			if align < 0.55:
+				fails.append("EVA dirt facing sideways vs hull nose (%s)" % snapped(align, 0.01))
 	if os.has_method("try_enter_ship"):
 		os.try_enter_ship()
 	await get_tree().create_timer(0.35).timeout
