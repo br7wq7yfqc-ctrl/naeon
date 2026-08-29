@@ -1778,6 +1778,10 @@ func _leave_seat_to_pocket() -> void:
 	player = _make_fallback_player()
 	player.set("interior_mode", true)
 	add_child(player)
+	if LayerContext:
+		LayerContext.set_layer("ship_int")
+	if player.has_method("_bind_hud"):
+		player._bind_hud()
 	if _interior != null and is_instance_valid(_interior) and _interior.has_method("enter_ship"):
 		_interior.enter_ship(player, ship)
 	_toast_hud("Left seat — pocket · F seat · F/I airlock")

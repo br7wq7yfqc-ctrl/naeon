@@ -1,3 +1,5 @@
+**2026-08-30 — I-hatch after dirt F-board: ship_int pocket, hatch to hull-side Relief**
+
 **2026-08-30 — HOVER view after F-board (post F-EVA dirt) reclaims chase cam**
 
 **2026-08-30 — OS-stack after F-board (post F-EVA dirt) is Space, HUD bound to hull**
