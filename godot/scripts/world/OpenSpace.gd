@@ -2182,6 +2182,8 @@ func _surface_settle_tick(stage: int) -> void:
 		_call_if(player, &"snap_to_surface")
 	else:
 		_call_if(player, &"safe_unground")
+		if "interior_mode" in player and not bool(player.interior_mode):
+			player.set("_spawn_grace_t", 0.0)
 	_apply_dirt_exit_facing()
 
 
