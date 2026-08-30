@@ -1,3 +1,5 @@
+**2026-08-30 — Facing after F-EVA fourth dirt land is hull-nose tangent**
+
 **2026-08-30 — F-EVA after fourth dirt land: hull-side Relief, not pad / 0G**
 
 **2026-08-30 — Dirt land after F-EVA third dirt I-hatch F-board sink: Relief, pad none, hull-side**
