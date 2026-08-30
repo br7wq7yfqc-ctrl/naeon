@@ -2225,6 +2225,8 @@ func _apply_dirt_exit_facing() -> void:
 		return
 	if _in_ship:
 		return
+	if "interior_mode" in player and bool(player.interior_mode):
+		return
 	if _land_eva_pad() != null:
 		return
 	var pl = nearest_planet(player.global_position)
