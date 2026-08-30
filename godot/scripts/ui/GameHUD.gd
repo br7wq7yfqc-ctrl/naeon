@@ -580,6 +580,9 @@ func _os_stack_should_show(pocket: bool) -> bool:
 	var origin: Node3D = _occupy_origin()
 	if origin != null and "interior_mode" in origin and bool(origin.get("interior_mode")):
 		return false
+	if origin != null and "eva_mode" in origin and bool(origin.get("eva_mode")) \
+			and "zero_g" in origin and bool(origin.get("zero_g")):
+		return false
 	return _in_openspace()
 
 
