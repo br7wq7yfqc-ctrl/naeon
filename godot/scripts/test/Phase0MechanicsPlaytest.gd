@@ -4375,6 +4375,39 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 								if far_e4:
 									fails.append("pad radar used 12km approach after F-EVA third dirt I-hatch land")
 								eva4.global_position = saved_e4
+								if hud_e4 != null and hud_e4.has_method("_refresh"):
+									hud_e4._refresh()
+								var ly_e4s := ""
+								if LayerContext:
+									ly_e4s = str(LayerContext.current_layer)
+								var stack_e4 := ""
+								var stack_e4_on := false
+								var chip_e4 := ""
+								if hud_e4 != null:
+									var sl_e4: Variant = hud_e4.get("_os_stack")
+									if sl_e4 is Label:
+										stack_e4 = (sl_e4 as Label).text
+										stack_e4_on = (sl_e4 as Label).visible
+									var chip4: Variant = hud_e4.get("_layer_label")
+									if chip4 is Label:
+										chip_e4 = (chip4 as Label).text
+								print("[Playtest] os stack F-EVA after third dirt I-hatch land layer=", ly_e4s,
+									" vis=", stack_e4_on, " chip='", chip_e4.replace("\n", " / ").substr(0, 40),
+									"' '", stack_e4.replace("\n", " / ").substr(0, 80), "'")
+								if ly_e4s.to_upper().find("SPACE") >= 0:
+									fails.append("os stack layer still SPACE after F-EVA third dirt I-hatch land")
+								if ly_e4s.to_upper().find("SHIP") >= 0:
+									fails.append("os stack layer still ship_int after F-EVA third dirt I-hatch land")
+								if ly_e4s.to_upper().find("TPS") < 0 and ly_e4s.to_upper().find("SURFACE") < 0:
+									fails.append("os stack layer not TPS after F-EVA third dirt I-hatch land (%s)" % ly_e4s)
+								if not stack_e4_on:
+									fails.append("os stack hidden after F-EVA third dirt I-hatch land")
+								if chip_e4.to_upper().find("SHIP") >= 0:
+									fails.append("layer chip still ship_int after F-EVA third dirt I-hatch land")
+								if stack_e4.to_upper().find("OCCUPY") >= 0:
+									fails.append("os stack occupy after F-EVA third dirt I-hatch land 110m")
+								if stack_e4.to_upper().find("0G") >= 0:
+									fails.append("os stack EVA 0G after F-EVA third dirt I-hatch land")
 							if os.has_method("try_enter_ship"):
 								os.try_enter_ship()
 							await get_tree().create_timer(0.3).timeout
