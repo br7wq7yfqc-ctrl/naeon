@@ -2246,6 +2246,8 @@ func _apply_dirt_exit_facing() -> void:
 	if player.has_method("_update_up"):
 		player._update_up()
 	player.set("_spawn_grace_t", 0.0)
+	if player.has_method("_relief_slope_rad") and "last_slope_ang" in player:
+		player.set("last_slope_ang", float(player.call("_relief_slope_rad")))
 
 
 
