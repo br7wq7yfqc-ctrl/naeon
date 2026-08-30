@@ -442,7 +442,9 @@ func _occupy_origin() -> Node3D:
 	var p: Node = _alive_player()
 	if p is Node3D and (p as Node3D).is_inside_tree():
 		if not ("_dying" in p and bool((p as Node).get("_dying"))) \
-				and not ("interior_mode" in p and bool((p as Node).get("interior_mode"))):
+				and not ("interior_mode" in p and bool((p as Node).get("interior_mode"))) \
+				and not ("eva_mode" in p and bool((p as Node).get("eva_mode")) \
+					and "zero_g" in p and bool((p as Node).get("zero_g"))):
 			return p as Node3D
 	var sh: Node = _OsStack.player_ship(tree) if tree else null
 	if sh is Node3D and is_instance_valid(sh) and (sh as Node3D).is_inside_tree():

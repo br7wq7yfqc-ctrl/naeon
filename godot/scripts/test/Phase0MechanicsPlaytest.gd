@@ -4313,6 +4313,30 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 									fails.append("F-EVA after third dirt I-hatch land slope not Relief")
 								if last_e4 > rel_e4 + 0.25:
 									fails.append("F-EVA after third dirt I-hatch land slope is pocket-Y cliff")
+								var hud_e4: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+								if hud_e4 != null and hud_e4.has_method("bind_player"):
+									hud_e4.bind_player(eva4)
+								if hud_e4 != null and hud_e4.has_method("_refresh"):
+									hud_e4._refresh()
+								var origin_e4: Node3D = null
+								if hud_e4 != null and hud_e4.has_method("_occupy_origin"):
+									origin_e4 = hud_e4.call("_occupy_origin") as Node3D
+								var otxt_e4 := ""
+								if hud_e4 != null:
+									var lab_e4: Variant = hud_e4.get("_owner_label")
+									if lab_e4 is Label:
+										otxt_e4 = (lab_e4 as Label).text
+								print("[Playtest] occupy HUD F-EVA after third dirt I-hatch land origin=",
+									origin_e4.name if origin_e4 else "null",
+									" '", otxt_e4.replace("\n", " / ").substr(0, 80), "'")
+								if origin_e4 == null:
+									fails.append("occupy HUD lost origin after F-EVA third dirt I-hatch land")
+								elif origin_e4 == ship:
+									fails.append("occupy HUD origin still hull after F-EVA third dirt I-hatch land")
+								elif origin_e4 != eva4:
+									fails.append("occupy HUD origin not walker after F-EVA third dirt I-hatch land")
+								if otxt_e4.to_upper().find("PAD") >= 0 and otxt_e4.to_upper().find("OCCUPY") >= 0:
+									fails.append("occupy HUD PAD after F-EVA third dirt I-hatch land 110m")
 							if os.has_method("try_enter_ship"):
 								os.try_enter_ship()
 							await get_tree().create_timer(0.3).timeout
