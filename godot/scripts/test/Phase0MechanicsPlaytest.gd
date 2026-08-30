@@ -4084,6 +4084,39 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 							if far_h3:
 								fails.append("pad radar used 12km approach after third dirt I-hatch")
 							hatch3.global_position = saved_h3
+							if hud_h3 != null and hud_h3.has_method("_refresh"):
+								hud_h3._refresh()
+							var ly_h3s := ""
+							if LayerContext:
+								ly_h3s = str(LayerContext.current_layer)
+							var stack_h3 := ""
+							var stack_h3_on := false
+							var chip_h3 := ""
+							if hud_h3 != null:
+								var sl_h3: Variant = hud_h3.get("_os_stack")
+								if sl_h3 is Label:
+									stack_h3 = (sl_h3 as Label).text
+									stack_h3_on = (sl_h3 as Label).visible
+								var chip3: Variant = hud_h3.get("_layer_label")
+								if chip3 is Label:
+									chip_h3 = (chip3 as Label).text
+							print("[Playtest] os stack I-hatch after second dirt F-EVA F-board layer=", ly_h3s,
+								" vis=", stack_h3_on, " chip='", chip_h3.replace("\n", " / ").substr(0, 40),
+								"' '", stack_h3.replace("\n", " / ").substr(0, 80), "'")
+							if ly_h3s.to_upper().find("SPACE") >= 0:
+								fails.append("os stack layer still SPACE after third dirt I-hatch")
+							if ly_h3s.to_upper().find("SHIP") >= 0:
+								fails.append("os stack layer still ship_int after third dirt I-hatch")
+							if ly_h3s.to_upper().find("TPS") < 0 and ly_h3s.to_upper().find("SURFACE") < 0:
+								fails.append("os stack layer not TPS after third dirt I-hatch (%s)" % ly_h3s)
+							if not stack_h3_on:
+								fails.append("os stack hidden after third dirt I-hatch")
+							if chip_h3.to_upper().find("SHIP") >= 0:
+								fails.append("layer chip still ship_int after third dirt I-hatch")
+							if stack_h3.to_upper().find("OCCUPY") >= 0:
+								fails.append("os stack occupy after third dirt I-hatch 110m")
+							if stack_h3.to_upper().find("0G") >= 0:
+								fails.append("os stack EVA 0G after third dirt I-hatch")
 						if os.has_method("try_enter_ship"):
 							os.try_enter_ship()
 						await get_tree().create_timer(0.3).timeout
