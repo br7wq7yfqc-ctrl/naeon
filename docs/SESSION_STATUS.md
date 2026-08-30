@@ -1,3 +1,5 @@
+**2026-08-30 — Occupy HUD after third dirt I-hatch follows walker, not hull/pocket**
+
 **2026-08-30 — Slope after third dirt I-hatch is PlanetRelief after facing snap**
 
 **2026-08-30 — Coyote after third dirt I-hatch: spawn grace cleared after facing snap**
