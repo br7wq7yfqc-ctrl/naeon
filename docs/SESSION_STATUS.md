@@ -1,3 +1,5 @@
+**2026-08-30 — OS-stack after F-EVA fourth dirt land occupy walker is TPS, not SPACE/ship_int/0G**
+
 **2026-08-30 — Pad radar after F-EVA fourth dirt land occupy walker is 400 m TPS, not 12 km**
 
 **2026-08-30 — Occupy HUD after F-EVA fourth dirt land follows walker, not hull**
