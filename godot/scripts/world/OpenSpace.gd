@@ -860,6 +860,7 @@ func _hand_view_to_ship() -> void:
 			live.clear_current(false)
 	if cam:
 		cam.current = true
+	reclaim_pilot_camera()
 
 
 func reclaim_pilot_camera() -> void:
