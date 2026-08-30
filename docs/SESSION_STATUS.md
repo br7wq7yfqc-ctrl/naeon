@@ -1,3 +1,5 @@
+**2026-08-30 — Occupy HUD after F-EVA fourth dirt land follows walker, not hull**
+
 **2026-08-30 — Facing after F-EVA fourth dirt land is hull-nose tangent**
 
 **2026-08-30 — F-EVA after fourth dirt land: hull-side Relief, not pad / 0G**
