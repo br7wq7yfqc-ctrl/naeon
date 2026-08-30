@@ -877,8 +877,11 @@ func reclaim_pilot_camera() -> void:
 	if cam == null:
 		return
 	var vp := get_viewport()
-	if vp != null and vp.get_camera_3d() == cam:
-		return
+	if vp != null:
+		var live: Camera3D = vp.get_camera_3d()
+		if live != null and live != cam:
+			live.current = false
+			live.clear_current(false)
 	cam.current = true
 
 func try_exit_ship() -> void:
