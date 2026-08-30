@@ -1,3 +1,5 @@
+**2026-08-30 — Ground-effect after third dirt I-hatch launch stays hull-side, not plate**
+
 **2026-08-30 — HOVER launch after third dirt I-hatch F-board: hold AGL+12, retap 3 keeps it**
 
 **2026-08-30 — HOVER chase after third dirt I-hatch F-board reclaims hull cam**
