@@ -4155,6 +4155,28 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 								fails.append("HOVER view after third dirt I-hatch F-board stole (%s)" % (live_rb3.name if live_rb3 else "none"))
 							elif not chase_rb3.current:
 								fails.append("HOVER view after third dirt I-hatch F-board chase not current")
+							ship.set("_land_lock_t", 0.0)
+							if bool(ship.get("is_landed")) and ship.has_method("_do_launch"):
+								ship._do_launch()
+							await get_tree().create_timer(0.35).timeout
+							var agl_l3: float = float(ship.altitude_agl()) if ship.has_method("altitude_agl") else -1.0
+							var hold_l3: float = float(ship.get("_hover_hold_alt"))
+							print("[Playtest] HOVER launch after third dirt I-hatch F-board landed=",
+								ship.get("is_landed"), " hold=", snapped(hold_l3, 0.1),
+								" agl=", snapped(agl_l3, 0.1))
+							if bool(ship.get("is_landed")):
+								fails.append("HOVER launch after third dirt I-hatch F-board still landed")
+							if hold_l3 < 4.0:
+								fails.append("HOVER launch after third dirt I-hatch F-board hold dead (%s)" % snapped(hold_l3, 0.1))
+							if agl_l3 >= 0.0 and (hold_l3 < agl_l3 - 2.0 or hold_l3 > agl_l3 + 20.0):
+								fails.append("HOVER launch after third dirt I-hatch F-board hold not AGL+12 (%s vs %s)" % [
+									snapped(hold_l3, 0.1), snapped(agl_l3, 0.1)])
+							if ship.has_method("_set_mode"):
+								ship._set_mode(2)
+							var hold_l3b: float = float(ship.get("_hover_hold_alt"))
+							print("[Playtest] HOVER launch after third dirt I-hatch F-board retap hold=", snapped(hold_l3b, 0.1))
+							if absf(hold_l3b - hold_l3) > 1.5:
+								fails.append("HOVER launch after third dirt I-hatch F-board retap rewrote hold")
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
