@@ -1,3 +1,5 @@
+**2026-08-30 — F-board after third dirt I-hatch: occupy hull, layer Space, radar 12 km**
+
 **2026-08-30 — OS-stack after third dirt I-hatch is TPS, not SPACE/ship_int/0G**
 
 **2026-08-30 — Pad radar after third dirt I-hatch is 400 m TPS, not hull 12 km**
