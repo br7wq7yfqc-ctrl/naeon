@@ -4724,6 +4724,30 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 												" tangent=", snapped(1.0 - absf(fwd_h4.normalized().dot(rad_h4)), 0.01))
 											if align_h4 < 0.55:
 												fails.append("I-hatch after F-EVA fourth dirt F-board facing sideways (%s)" % snapped(align_h4, 0.01))
+										hatch4.set("_spawn_grace_t", 0.0)
+										if hatch4 is CharacterBody3D:
+											(hatch4 as CharacterBody3D).velocity = Vector3.ZERO
+										if hatch4.has_method("_physics_process"):
+											hatch4._physics_process(0.016)
+										var coy_h4: float = float(hatch4.get("_coyote_t"))
+										var near_h4: Variant = hatch4.call("_near_dirt_floor") if hatch4.has_method("_near_dirt_floor") else false
+										print("[Playtest] I-hatch after F-EVA fourth dirt F-board coyote t=", snapped(coy_h4, 0.01), " near=", near_h4)
+										if coy_h4 <= 0.0:
+											fails.append("I-hatch after F-EVA fourth dirt F-board coyote dead")
+										else:
+											var hv40h: float = 0.0
+											if hatch4 is CharacterBody3D:
+												hv40h = (hatch4 as CharacterBody3D).velocity.dot(rad_h4)
+											if hatch4.has_method("request_jump"):
+												hatch4.request_jump()
+											if hatch4.has_method("_physics_process"):
+												hatch4._physics_process(0.016)
+											var hv41h: float = hv40h
+											if hatch4 is CharacterBody3D:
+												hv41h = (hatch4 as CharacterBody3D).velocity.dot(rad_h4)
+											print("[Playtest] I-hatch after F-EVA fourth dirt F-board jump v_up ", snapped(hv40h, 0.1), "→", snapped(hv41h, 0.1))
+											if hv41h < hv40h + 3.0:
+												fails.append("I-hatch after F-EVA fourth dirt F-board jump died (%s → %s)" % [snapped(hv40h, 0.1), snapped(hv41h, 0.1)])
 									if os.has_method("try_enter_ship"):
 										os.try_enter_ship()
 									await get_tree().create_timer(0.3).timeout
