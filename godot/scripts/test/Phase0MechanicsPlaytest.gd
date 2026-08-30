@@ -4046,6 +4046,44 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 								fails.append("occupy HUD origin not walker after third dirt I-hatch")
 							if otxt_h3.to_upper().find("PAD") >= 0 and otxt_h3.to_upper().find("OCCUPY") >= 0:
 								fails.append("occupy HUD PAD after third dirt I-hatch 110m")
+							var radar_h3: Variant = hud_h3.get("_radar") if hud_h3 else null
+							if radar_h3 is CanvasItem:
+								(radar_h3 as CanvasItem).visible = true
+							if hud_h3 != null and hud_h3.has_method("_refresh"):
+								hud_h3._refresh()
+							var rng_h3: float = float(hud_h3.get("_radar_range_m")) if hud_h3 else 0.0
+							var near_h3n := 0
+							if hud_h3 != null and hud_h3.has_method("radar_pad_contacts"):
+								near_h3n = hud_h3.radar_pad_contacts().size()
+							print("[Playtest] pad radar I-hatch after second dirt F-EVA F-board 110m n=", near_h3n,
+								" range=", snapped(rng_h3, 1.0), " vis=",
+								(radar_h3 as CanvasItem).visible if radar_h3 is CanvasItem else "?")
+							if rng_h3 > 1000.0:
+								fails.append("pad radar used 12km after third dirt I-hatch (%s)" % snapped(rng_h3, 1.0))
+							if near_h3n < 1:
+								fails.append("pad radar missed pad after third dirt I-hatch")
+							var saved_h3: Vector3 = hatch3.global_position
+							var up_h3r: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+							if up_h3r.length_squared() > 0.01:
+								up_h3r = up_h3r.normalized()
+							var side_h3r: Vector3 = up_h3r.cross(Vector3.RIGHT)
+							if side_h3r.length_squared() < 0.04:
+								side_h3r = up_h3r.cross(Vector3.FORWARD)
+							side_h3r = side_h3r.normalized()
+							hatch3.global_position = deck.global_position + side_h3r * 600.0 + up_h3r * 2.0
+							if hud_h3 != null and hud_h3.has_method("_refresh"):
+								hud_h3._refresh()
+							var far_h3 := false
+							var far_h3n := 0
+							if hud_h3 != null and hud_h3.has_method("radar_pad_contacts"):
+								for c in hud_h3.radar_pad_contacts():
+									far_h3n += 1
+									if c is Node3D and (c as Node3D).global_position.distance_to(deck.global_position) < 30.0:
+										far_h3 = true
+							print("[Playtest] pad radar I-hatch after second dirt F-EVA F-board 600m n=", far_h3n, " pad=", far_h3)
+							if far_h3:
+								fails.append("pad radar used 12km approach after third dirt I-hatch")
+							hatch3.global_position = saved_h3
 						if os.has_method("try_enter_ship"):
 							os.try_enter_ship()
 						await get_tree().create_timer(0.3).timeout

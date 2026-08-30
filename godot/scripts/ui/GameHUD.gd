@@ -955,6 +955,10 @@ func _refresh_pad_radar(origin: Vector3) -> void:
 		var os_r: Node = get_tree().get_first_node_in_group("open_space") if get_tree() else null
 		if os_r != null and bool(os_r.get("_in_ship")) and origin_n == os_r.get("ship"):
 			range_m = PAD_RADAR_APPROACH_M
+	if LayerContext:
+		var ly_r := str(LayerContext.current_layer).to_upper()
+		if ly_r.find("TPS") >= 0 or ly_r.find("SURFACE") >= 0:
+			range_m = PAD_RADAR_LOCAL_M
 	_radar_range_m = range_m
 	var title_n := _radar.get_node_or_null("PadTitle") as Label
 	var shown: Array = []
