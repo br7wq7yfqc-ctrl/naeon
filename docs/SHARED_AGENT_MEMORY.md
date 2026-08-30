@@ -241,6 +241,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-30 | HOVER chase after third dirt I-hatch F-board: hull cam. | hover-chase-after-third-dirt-ihatch |
 | 2026-08-30 | HOVER launch after third dirt I-hatch F-board: AGL+12 hold. | hover-launch-after-third-dirt-ihatch |
 | 2026-08-30 | GE after third dirt I-hatch launch: hull-side, not plate. | ge-after-third-dirt-ihatch-launch |
+| 2026-08-30 | Sink after third dirt I-hatch launch: hold floor 4 m. | sink-after-third-dirt-ihatch-launch |
 | 2026-08-28 | ST-G: factory in existing PlayerOrbitalStation cluster. Bench (c) spend Contribution/Biomass → one catalog module. Without factory, (c) refuses. No SITE_*. ST-E stays dock+habitat. | st-g-factory |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
