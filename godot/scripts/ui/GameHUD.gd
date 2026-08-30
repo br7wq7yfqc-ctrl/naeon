@@ -575,6 +575,9 @@ func _os_stack_should_show(pocket: bool) -> bool:
 		var ly := str(LayerContext.current_layer).to_lower()
 		if ly in ["ship_int", "station", "interior"]:
 			return false
+	var origin: Node3D = _occupy_origin()
+	if origin != null and "interior_mode" in origin and bool(origin.get("interior_mode")):
+		return false
 	return _in_openspace()
 
 
