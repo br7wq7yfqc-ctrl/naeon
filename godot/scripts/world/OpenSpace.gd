@@ -2245,6 +2245,7 @@ func _apply_dirt_exit_facing() -> void:
 		player.set_spawn_facing(pad_up, nose)
 	if player.has_method("_update_up"):
 		player._update_up()
+	player.set("_spawn_grace_t", 0.0)
 
 
 
