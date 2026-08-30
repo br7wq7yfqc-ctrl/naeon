@@ -1,3 +1,5 @@
+**2026-08-30 — Pad radar after F-EVA fourth dirt land occupy walker is 400 m TPS, not 12 km**
+
 **2026-08-30 — Occupy HUD after F-EVA fourth dirt land follows walker, not hull**
 
 **2026-08-30 — Facing after F-EVA fourth dirt land is hull-nose tangent**
