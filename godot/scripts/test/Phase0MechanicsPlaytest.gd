@@ -8875,6 +8875,18 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																																							fails.append("coyote after I-hatch F-EVA seventeenth dirt F-board not near dirt")
 																																						if coy_h17 <= 0.0:
 																																							fails.append("coyote after I-hatch F-EVA seventeenth dirt F-board dead")
+																																						var last_h17: float = float(hatch17.get("last_slope_ang"))
+																																						var rel_h17: float = 0.0
+																																						if hatch17.has_method("_relief_slope_rad"):
+																																							rel_h17 = float(hatch17.call("_relief_slope_rad"))
+																																						print("[Playtest] slope after I-hatch F-EVA seventeenth dirt F-board last=", snapped(rad_to_deg(last_h17), 0.1),
+																																							" deg rel=", snapped(rad_to_deg(rel_h17), 0.1))
+																																						if last_h17 < 0.0 or last_h17 > 1.4:
+																																							fails.append("slope after I-hatch F-EVA seventeenth dirt F-board last out of range (%s)" % snapped(last_h17, 0.01))
+																																						if rel_h17 > 0.05 and last_h17 + 0.08 < rel_h17:
+																																							fails.append("slope after I-hatch F-EVA seventeenth dirt F-board not Relief")
+																																						if last_h17 > rel_h17 + 0.25:
+																																							fails.append("slope after I-hatch F-EVA seventeenth dirt F-board is pocket-Y cliff")
 																																						if os.has_method("try_enter_ship"):
 																																							os.try_enter_ship()
 																																						await get_tree().create_timer(0.3).timeout
