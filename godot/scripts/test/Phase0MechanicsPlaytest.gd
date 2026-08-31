@@ -5213,6 +5213,18 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 													print("[Playtest] I-hatch after F-EVA fifth dirt F-board jump v_up ", snapped(hv50h, 0.1), "→", snapped(hv51h, 0.1))
 													if hv51h < hv50h + 3.0:
 														fails.append("I-hatch after F-EVA fifth dirt F-board jump died (%s → %s)" % [snapped(hv50h, 0.1), snapped(hv51h, 0.1)])
+												var last_h5: float = float(hatch5.get("last_slope_ang"))
+												var rel_h5: float = 0.0
+												if hatch5.has_method("_relief_slope_rad"):
+													rel_h5 = float(hatch5.call("_relief_slope_rad"))
+												print("[Playtest] I-hatch after F-EVA fifth dirt F-board slope last=", snapped(rad_to_deg(last_h5), 0.1),
+													" deg rel=", snapped(rad_to_deg(rel_h5), 0.1))
+												if last_h5 < 0.0 or last_h5 > 1.4:
+													fails.append("I-hatch after F-EVA fifth dirt F-board slope last out of range (%s)" % snapped(last_h5, 0.01))
+												if rel_h5 > 0.05 and last_h5 + 0.08 < rel_h5:
+													fails.append("I-hatch after F-EVA fifth dirt F-board slope not Relief")
+												if last_h5 > rel_h5 + 0.25:
+													fails.append("I-hatch after F-EVA fifth dirt F-board slope is pocket-Y cliff")
 											if os.has_method("try_enter_ship"):
 												os.try_enter_ship()
 											await get_tree().create_timer(0.3).timeout
