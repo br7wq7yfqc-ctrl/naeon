@@ -1,3 +1,5 @@
+**2026-08-31 — HOVER launch after I-hatch F-EVA seventh dirt F-board: hold AGL+12, retap keeps it**
+
 **2026-08-31 — Slope after I-hatch F-EVA seventh dirt F-board is PlanetRelief, not pocket-Y**
 
 **2026-08-31 — Coyote after I-hatch F-EVA seventh dirt F-board: near ground, not leftover spawn grace**
