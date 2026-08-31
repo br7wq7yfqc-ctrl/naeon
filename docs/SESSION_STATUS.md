@@ -1,3 +1,5 @@
+**2026-08-31 — Occupy HUD after F-EVA eighth dirt land is walker, not leftover hull**
+
 **2026-08-31 — F-EVA after eighth dirt land is hull-side Relief TPS, not leftover 0G**
 
 **2026-08-31 — Dirt land after I-hatch F-EVA seventh dirt F-board sink: Relief, pad none**
