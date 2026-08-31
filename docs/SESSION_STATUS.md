@@ -1,3 +1,5 @@
+**2026-08-31 — F-EVA after seventh dirt land: hull-side Relief, not pad / 0G**
+
 **2026-08-31 — Dirt land after I-hatch F-EVA sixth dirt F-board sink: Relief, pad none, hull-side**
 
 **2026-08-31 — HOVER sink after I-hatch F-EVA sixth dirt F-board launch: hold floor 4 m, not 8 m plate**
