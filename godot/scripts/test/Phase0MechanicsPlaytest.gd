@@ -6255,6 +6255,25 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																			" agl=", snapped(agl_ge9, 0.1))
 																		if lat_ge9 < 60.0:
 																			fails.append("I-hatch F-EVA eighth dirt F-board launch GE pulled onto plate (lat=%s)" % snapped(lat_ge9, 0.1))
+																		ship.set_meta("playtest_sink", true)
+																		await get_tree().create_timer(0.45).timeout
+																		ship.set_meta("playtest_sink", false)
+																		var hold_sk9: float = float(ship.get("_hover_hold_alt"))
+																		var agl_sk9: float = agl_ge9
+																		if nex.has_method("altitude_of"):
+																			agl_sk9 = float(nex.altitude_of(ship.global_position))
+																		var rel_sk9: Vector3 = ship.global_position - deck.global_position
+																		var lat_sk9: float = (rel_sk9 - up_ge9 * rel_sk9.dot(up_ge9)).length()
+																		print("[Playtest] I-hatch F-EVA eighth dirt F-board HOVER sink hold ",
+																			snapped(hold_l9b, 0.1), "→", snapped(hold_sk9, 0.1),
+																			" AGL ", snapped(agl_ge9, 0.1), "→", snapped(agl_sk9, 0.1),
+																			" lat=", snapped(lat_sk9, 0.1))
+																		if hold_sk9 > 6.5:
+																			fails.append("I-hatch F-EVA eighth dirt F-board HOVER sink hold still 8m floor (%s)" % snapped(hold_sk9, 0.1))
+																		if hold_sk9 + 0.2 < 3.5:
+																			fails.append("I-hatch F-EVA eighth dirt F-board HOVER sink hold buried (%s)" % snapped(hold_sk9, 0.1))
+																		if lat_sk9 < 60.0:
+																			fails.append("I-hatch F-EVA eighth dirt F-board HOVER sink drifted onto plate (%s)" % snapped(lat_sk9, 0.1))
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
