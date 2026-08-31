@@ -268,6 +268,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-30 | Occupy HUD after I-hatch F-EVA fourth dirt F-board: walker. | occupy-after-fourth-dirt-ihatch |
 | 2026-08-30 | Pad radar after I-hatch F-EVA fourth dirt F-board: 400 m. | pad-radar-after-fourth-dirt-ihatch |
 | 2026-08-30 | OS-stack after I-hatch F-EVA fourth dirt F-board occupy: TPS. | os-stack-after-fourth-dirt-ihatch |
+| 2026-08-30 | HOVER chase after I-hatch F-EVA fourth dirt F-board: hull 12 km. | hover-chase-after-fourth-dirt-ihatch |
 | 2026-08-28 | ST-G: factory in existing PlayerOrbitalStation cluster. Bench (c) spend Contribution/Biomass → one catalog module. Without factory, (c) refuses. No SITE_*. ST-E stays dock+habitat. | st-g-factory |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
