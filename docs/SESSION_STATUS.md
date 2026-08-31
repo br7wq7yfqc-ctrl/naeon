@@ -1,3 +1,5 @@
+**2026-08-31 — Coyote after I-hatch F-EVA fifth dirt F-board: spawn grace after facing snap**
+
 **2026-08-31 — Facing after I-hatch F-EVA fifth dirt F-board is hull-nose tangent**
 
 **2026-08-31 — I-hatch after F-EVA fifth dirt F-board: hull-side Relief, not pocket/0G**
