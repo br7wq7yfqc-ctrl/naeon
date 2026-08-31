@@ -1,3 +1,5 @@
+**2026-08-31 — Pad radar after F-EVA seventh dirt land occupy walker is 400 m TPS, not 12 km**
+
 **2026-08-31 — Occupy HUD after F-EVA seventh dirt land follows walker, not hull**
 
 **2026-08-31 — F-EVA after seventh dirt land: hull-side Relief, not pad / 0G**
