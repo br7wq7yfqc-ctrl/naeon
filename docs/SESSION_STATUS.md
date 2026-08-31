@@ -1,3 +1,5 @@
+**2026-08-31 — Occupy HUD after F-EVA fifth dirt land follows walker, not hull**
+
 **2026-08-31 — F-EVA after fifth dirt land: hull-side Relief, not pad / 0G**
 
 **2026-08-31 — Dirt land after I-hatch F-EVA fourth dirt F-board sink: Relief, pad none, hull-side**
