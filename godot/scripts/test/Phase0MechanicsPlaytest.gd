@@ -8154,6 +8154,24 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																																	fails.append("occupy HUD origin not walker after F-EVA fifteenth dirt land")
 																																if otxt_e16.to_upper().find("PAD") >= 0 and otxt_e16.to_upper().find("OCCUPY") >= 0:
 																																	fails.append("occupy HUD PAD after F-EVA fifteenth dirt land")
+																																var radar_e16: Variant = hud_e16.get("_radar") if hud_e16 else null
+																																if radar_e16 is CanvasItem:
+																																	(radar_e16 as CanvasItem).visible = true
+																																if hud_e16 != null and hud_e16.has_method("_refresh"):
+																																	hud_e16._refresh()
+																																var rng_e16: float = float(hud_e16.get("_radar_range_m")) if hud_e16 else 0.0
+																																var near_e16n := 0
+																																if hud_e16 != null and hud_e16.has_method("radar_pad_contacts"):
+																																	near_e16n = hud_e16.radar_pad_contacts().size()
+																																print("[Playtest] pad radar F-EVA after fifteenth dirt land 400m n=", near_e16n,
+																																	" range=", snapped(rng_e16, 1.0), " vis=",
+																																	(radar_e16 as CanvasItem).visible if radar_e16 is CanvasItem else "?")
+																																if rng_e16 > 1000.0:
+																																	fails.append("pad radar used 12km after F-EVA fifteenth dirt land occupy (%s)" % snapped(rng_e16, 1.0))
+																																if rng_e16 > 0.0 and rng_e16 < 200.0:
+																																	fails.append("pad radar not 400m TPS after F-EVA fifteenth dirt land occupy (%s)" % snapped(rng_e16, 1.0))
+																																if near_e16n < 1:
+																																	fails.append("pad radar missed pad after F-EVA fifteenth dirt land occupy")
 																															if os.has_method("try_enter_ship"):
 																																os.try_enter_ship()
 																															await get_tree().create_timer(0.3).timeout
