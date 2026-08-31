@@ -7290,6 +7290,24 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																										fails.append("occupy HUD origin not walker after F-EVA twelfth dirt land")
 																									if otxt_e13.to_upper().find("PAD") >= 0 and otxt_e13.to_upper().find("OCCUPY") >= 0:
 																										fails.append("occupy HUD PAD after F-EVA twelfth dirt land")
+																									var radar_e13: Variant = hud_e13.get("_radar") if hud_e13 else null
+																									if radar_e13 is CanvasItem:
+																										(radar_e13 as CanvasItem).visible = true
+																									if hud_e13 != null and hud_e13.has_method("_refresh"):
+																										hud_e13._refresh()
+																									var rng_e13: float = float(hud_e13.get("_radar_range_m")) if hud_e13 else 0.0
+																									var near_e13n := 0
+																									if hud_e13 != null and hud_e13.has_method("radar_pad_contacts"):
+																										near_e13n = hud_e13.radar_pad_contacts().size()
+																									print("[Playtest] pad radar F-EVA after twelfth dirt land 400m n=", near_e13n,
+																										" range=", snapped(rng_e13, 1.0), " vis=",
+																										(radar_e13 as CanvasItem).visible if radar_e13 is CanvasItem else "?")
+																									if rng_e13 > 1000.0:
+																										fails.append("pad radar used 12km after F-EVA twelfth dirt land occupy (%s)" % snapped(rng_e13, 1.0))
+																									if rng_e13 > 0.0 and rng_e13 < 200.0:
+																										fails.append("pad radar not 400m TPS after F-EVA twelfth dirt land occupy (%s)" % snapped(rng_e13, 1.0))
+																									if near_e13n < 1:
+																										fails.append("pad radar missed pad after F-EVA twelfth dirt land occupy")
 																								if os.has_method("try_enter_ship"):
 																									os.try_enter_ship()
 																								await get_tree().create_timer(0.3).timeout
