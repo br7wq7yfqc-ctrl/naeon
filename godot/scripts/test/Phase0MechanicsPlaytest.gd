@@ -5437,6 +5437,41 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 												await get_tree().create_timer(0.3).timeout
 												if not bool(os.get("_in_ship")):
 													fails.append("reboard after F-EVA sixth dirt land refused")
+												else:
+													if os.has_method("reclaim_pilot_camera"):
+														os.reclaim_pilot_camera()
+													var hud_rb7: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+													if hud_rb7 != null and hud_rb7.has_method("bind_player"):
+														hud_rb7.bind_player(ship)
+													if hud_rb7 != null and hud_rb7.has_method("_refresh"):
+														hud_rb7._refresh()
+													var origin_rb7: Node3D = null
+													if hud_rb7 != null and hud_rb7.has_method("_occupy_origin"):
+														origin_rb7 = hud_rb7.call("_occupy_origin") as Node3D
+													var ly_rb7 := ""
+													if LayerContext:
+														ly_rb7 = str(LayerContext.current_layer)
+													var rng_rb7: float = float(hud_rb7.get("_radar_range_m")) if hud_rb7 else 0.0
+													print("[Playtest] F-board after F-EVA sixth dirt occupy origin=",
+														origin_rb7.name if origin_rb7 else "null", " layer=", ly_rb7,
+														" radar=", snapped(rng_rb7, 1.0))
+													if origin_rb7 != null and origin_rb7 != ship:
+														fails.append("occupy HUD origin still walker after F-EVA sixth dirt F-board")
+													if ly_rb7.to_upper().find("SPACE") < 0:
+														fails.append("layer not Space after F-EVA sixth dirt F-board (%s)" % ly_rb7)
+													if rng_rb7 < 1000.0:
+														fails.append("pad radar still 400m after F-EVA sixth dirt F-board (%s)" % snapped(rng_rb7, 1.0))
+													var chase_rb7: Camera3D = ship.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+													var live_rb7: Camera3D = get_viewport().get_camera_3d() if get_viewport() else null
+													print("[Playtest] HOVER view after F-EVA sixth dirt F-board chase=",
+														chase_rb7.name if chase_rb7 else "none", " live=", live_rb7.name if live_rb7 else "none",
+														" current=", chase_rb7.current if chase_rb7 else false)
+													if chase_rb7 == null:
+														fails.append("HOVER view after F-EVA sixth dirt F-board: no chase cam")
+													elif live_rb7 != chase_rb7:
+														fails.append("HOVER view after F-EVA sixth dirt F-board stole (%s)" % (live_rb7.name if live_rb7 else "none"))
+													elif not chase_rb7.current:
+														fails.append("HOVER view after F-EVA sixth dirt F-board chase not current")
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
