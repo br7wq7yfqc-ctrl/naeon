@@ -8460,6 +8460,37 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																																			fails.append("pad radar not 400m TPS after F-EVA sixteenth dirt land occupy (%s)" % snapped(rng_e17, 1.0))
 																																		if near_e17n < 1:
 																																			fails.append("pad radar missed pad after F-EVA sixteenth dirt land occupy")
+																																		var ly_e17s := ""
+																																		if LayerContext:
+																																			ly_e17s = str(LayerContext.current_layer)
+																																		var stack_e17 := ""
+																																		var stack_e17_on := false
+																																		var chip_e17 := ""
+																																		if hud_e17 != null:
+																																			var sl_e17: Variant = hud_e17.get("_os_stack")
+																																			if sl_e17 is Label:
+																																				stack_e17 = (sl_e17 as Label).text
+																																				stack_e17_on = (sl_e17 as Label).visible
+																																			var chip17: Variant = hud_e17.get("_layer_label")
+																																			if chip17 is Label:
+																																				chip_e17 = (chip17 as Label).text
+																																		print("[Playtest] os stack F-EVA after sixteenth dirt land occupy layer=", ly_e17s,
+																																			" vis=", stack_e17_on, " chip='", chip_e17.replace("\n", " / ").substr(0, 40),
+																																			"' '", stack_e17.replace("\n", " / ").substr(0, 80), "'")
+																																		if ly_e17s.to_upper().find("SPACE") >= 0:
+																																			fails.append("os stack layer still SPACE after F-EVA sixteenth dirt land occupy")
+																																		if ly_e17s.to_upper().find("SHIP") >= 0:
+																																			fails.append("os stack layer still ship_int after F-EVA sixteenth dirt land occupy")
+																																		if ly_e17s.to_upper().find("TPS") < 0 and ly_e17s.to_upper().find("SURFACE") < 0:
+																																			fails.append("os stack layer not TPS after F-EVA sixteenth dirt land occupy (%s)" % ly_e17s)
+																																		if not stack_e17_on:
+																																			fails.append("os stack hidden after F-EVA sixteenth dirt land occupy")
+																																		if chip_e17.to_upper().find("SHIP") >= 0:
+																																			fails.append("layer chip still ship_int after F-EVA sixteenth dirt land occupy")
+																																		if stack_e17.to_upper().find("OCCUPY") >= 0:
+																																			fails.append("os stack occupy after F-EVA sixteenth dirt land occupy")
+																																		if stack_e17.to_upper().find("0G") >= 0:
+																																			fails.append("os stack EVA 0G after F-EVA sixteenth dirt land occupy")
 																																	if os.has_method("try_enter_ship"):
 																																		os.try_enter_ship()
 																																	await get_tree().create_timer(0.3).timeout
