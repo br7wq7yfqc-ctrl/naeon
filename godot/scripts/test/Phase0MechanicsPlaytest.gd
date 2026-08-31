@@ -5284,6 +5284,31 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 													fails.append("I-hatch F-EVA fifth dirt F-board HOVER sink hold buried (%s)" % snapped(hold_sk6, 0.1))
 												if lat_sk6 < 60.0:
 													fails.append("I-hatch F-EVA fifth dirt F-board HOVER sink drifted onto plate (%s)" % snapped(lat_sk6, 0.1))
+												if "velocity" in ship:
+													ship.velocity = Vector3.ZERO
+												ship.set("_gear_down", true)
+												if ship.has_method("_do_land"):
+													ship._do_land()
+												await get_tree().create_timer(0.4).timeout
+												var land6_agl: float = agl_sk6
+												if nex.has_method("altitude_of"):
+													land6_agl = float(nex.altitude_of(ship.global_position))
+												var land6_pad: Node3D = null
+												if ship.has_method("get_landed_pad"):
+													land6_pad = ship.get_landed_pad() as Node3D
+												var land6_rel: Vector3 = ship.global_position - deck.global_position
+												var land6_lat: float = (land6_rel - up_ge6 * land6_rel.dot(up_ge6)).length()
+												print("[Playtest] I-hatch F-EVA fifth dirt F-board land after sink landed=", ship.get("is_landed"),
+													" pad=", land6_pad.name if land6_pad else "none",
+													" agl=", snapped(land6_agl, 0.1), " lat=", snapped(land6_lat, 0.1))
+												if not bool(ship.get("is_landed")):
+													fails.append("I-hatch F-EVA fifth dirt F-board land after sink refused")
+												if land6_pad != null:
+													fails.append("I-hatch F-EVA fifth dirt F-board land after sink stole pad")
+												if land6_lat < 60.0:
+													fails.append("I-hatch F-EVA fifth dirt F-board land after sink drifted to plate (%s)" % snapped(land6_lat, 0.1))
+												if land6_agl < 1.5 or land6_agl > 8.0:
+													fails.append("I-hatch F-EVA fifth dirt F-board land after sink not on Relief (%s)" % snapped(land6_agl, 0.1))
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
