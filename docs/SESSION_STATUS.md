@@ -1,3 +1,5 @@
+**2026-08-31 — GE after I-hatch F-EVA tenth dirt F-board launch is hull-side, not pad plate**
+
 **2026-08-31 — HOVER launch after I-hatch F-EVA tenth dirt F-board hold AGL+12, not leftover land lock**
 
 **2026-08-31 — Slope after I-hatch F-EVA tenth dirt F-board is PlanetRelief, not pocket-Y cliff**
