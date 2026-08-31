@@ -4822,6 +4822,39 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 										if far_h4:
 											fails.append("pad radar used 12km approach after I-hatch F-EVA fourth dirt F-board")
 										hatch4.global_position = saved_h4
+										if hud_h4 != null and hud_h4.has_method("_refresh"):
+											hud_h4._refresh()
+										var ly_h4s := ""
+										if LayerContext:
+											ly_h4s = str(LayerContext.current_layer)
+										var stack_h4 := ""
+										var stack_h4_on := false
+										var chip_h4 := ""
+										if hud_h4 != null:
+											var sl_h4: Variant = hud_h4.get("_os_stack")
+											if sl_h4 is Label:
+												stack_h4 = (sl_h4 as Label).text
+												stack_h4_on = (sl_h4 as Label).visible
+											var chip4: Variant = hud_h4.get("_layer_label")
+											if chip4 is Label:
+												chip_h4 = (chip4 as Label).text
+										print("[Playtest] os stack I-hatch after F-EVA fourth dirt F-board occupy layer=", ly_h4s,
+											" vis=", stack_h4_on, " chip='", chip_h4.replace("\n", " / ").substr(0, 40),
+											"' '", stack_h4.replace("\n", " / ").substr(0, 80), "'")
+										if ly_h4s.to_upper().find("SPACE") >= 0:
+											fails.append("os stack layer still SPACE after I-hatch F-EVA fourth dirt F-board occupy")
+										if ly_h4s.to_upper().find("SHIP") >= 0:
+											fails.append("os stack layer still ship_int after I-hatch F-EVA fourth dirt F-board occupy")
+										if ly_h4s.to_upper().find("TPS") < 0 and ly_h4s.to_upper().find("SURFACE") < 0:
+											fails.append("os stack layer not TPS after I-hatch F-EVA fourth dirt F-board occupy (%s)" % ly_h4s)
+										if not stack_h4_on:
+											fails.append("os stack hidden after I-hatch F-EVA fourth dirt F-board occupy")
+										if chip_h4.to_upper().find("SHIP") >= 0:
+											fails.append("layer chip still ship_int after I-hatch F-EVA fourth dirt F-board occupy")
+										if stack_h4.to_upper().find("OCCUPY") >= 0:
+											fails.append("os stack occupy after I-hatch F-EVA fourth dirt F-board occupy 110m")
+										if stack_h4.to_upper().find("0G") >= 0:
+											fails.append("os stack EVA 0G after I-hatch F-EVA fourth dirt F-board occupy")
 									if os.has_method("try_enter_ship"):
 										os.try_enter_ship()
 									await get_tree().create_timer(0.3).timeout

@@ -1,3 +1,5 @@
+**2026-08-30 — OS-stack after I-hatch F-EVA fourth dirt F-board occupy walker is TPS, not SPACE/ship_int/0G**
+
 **2026-08-30 — Pad radar after I-hatch F-EVA fourth dirt F-board occupy walker is 400 m TPS**
 
 **2026-08-30 — Occupy HUD after I-hatch F-EVA fourth dirt F-board follows walker, not hull**
