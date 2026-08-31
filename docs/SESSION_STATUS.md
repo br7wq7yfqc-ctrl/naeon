@@ -1,3 +1,5 @@
+**2026-08-31 — F-EVA after thirteenth dirt land is hull-side Relief TPS, not leftover EVA 0G**
+
 **2026-08-31 — Dirt land after I-hatch F-EVA twelfth dirt F-board sink is Relief, pad none**
 
 **2026-08-31 — HOVER sink after I-hatch F-EVA twelfth dirt F-board launch floor 4m, not leftover 8m**
