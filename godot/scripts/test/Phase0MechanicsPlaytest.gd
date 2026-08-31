@@ -6957,6 +6957,26 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																								fails.append("F-EVA after eleventh dirt land still EVA 0G")
 																							if ly_e12.to_upper().find("TPS") < 0:
 																								fails.append("F-EVA after eleventh dirt land layer not TPS (%s)" % ly_e12)
+																							var hud_e12: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+																							if hud_e12 != null and hud_e12.has_method("bind_player"):
+																								hud_e12.bind_player(eva12)
+																							if hud_e12 != null and hud_e12.has_method("_refresh"):
+																								hud_e12._refresh()
+																							var origin_e12: Node3D = null
+																							if hud_e12 != null and hud_e12.has_method("_occupy_origin"):
+																								origin_e12 = hud_e12.call("_occupy_origin") as Node3D
+																							var otxt_e12 := ""
+																							if hud_e12 != null:
+																								var lab_e12: Variant = hud_e12.get("_owner_label")
+																								if lab_e12 is Label:
+																									otxt_e12 = (lab_e12 as Label).text
+																							print("[Playtest] occupy HUD F-EVA after eleventh dirt land origin=",
+																								origin_e12.name if origin_e12 else "null",
+																								" '", otxt_e12.replace("\n", " / ").substr(0, 80), "'")
+																							if origin_e12 == null:
+																								fails.append("occupy HUD lost origin after F-EVA eleventh dirt land")
+																							elif origin_e12 == ship:
+																								fails.append("occupy HUD origin still hull after F-EVA eleventh dirt land")
 																						if os.has_method("try_enter_ship"):
 																							os.try_enter_ship()
 																						await get_tree().create_timer(0.3).timeout
