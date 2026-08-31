@@ -6929,6 +6929,39 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																							fails.append("I-hatch F-EVA tenth dirt F-board land after sink drifted to plate (%s)" % snapped(land11_lat, 0.1))
 																						if land11_agl < 1.5 or land11_agl > 8.0:
 																							fails.append("I-hatch F-EVA tenth dirt F-board land after sink not on Relief (%s)" % snapped(land11_agl, 0.1))
+																						if os.has_method("try_exit_ship"):
+																							os.try_exit_ship()
+																						await get_tree().create_timer(0.4).timeout
+																						var eva12: Node3D = os.get("player") as Node3D if os else null
+																						if eva12 == null or not is_instance_valid(eva12) or not eva12.is_inside_tree():
+																							fails.append("F-EVA after eleventh dirt land: no walker")
+																						else:
+																							var e12_ship: float = eva12.global_position.distance_to(ship.global_position)
+																							var e12_pad: float = eva12.global_position.distance_to(deck.global_position)
+																							var e12_agl := 99.0
+																							if nex.has_method("altitude_of"):
+																								e12_agl = float(nex.altitude_of(eva12.global_position))
+																							var ly_e12 := ""
+																							if LayerContext:
+																								ly_e12 = str(LayerContext.current_layer)
+																							print("[Playtest] F-EVA after eleventh dirt land d_ship=", snapped(e12_ship, 0.1),
+																								" d_pad=", snapped(e12_pad, 0.1), " agl=", snapped(e12_agl, 0.01),
+																								" eva=", eva12.get("eva_mode"), " layer=", ly_e12)
+																							if e12_ship > 22.0:
+																								fails.append("F-EVA after eleventh dirt land teleported (%s)" % snapped(e12_ship, 0.1))
+																							if e12_pad < 60.0:
+																								fails.append("F-EVA after eleventh dirt land snapped to pad (%s)" % snapped(e12_pad, 0.1))
+																							if e12_agl < 0.2 or e12_agl > 5.0:
+																								fails.append("F-EVA after eleventh dirt land not on Relief (%s)" % snapped(e12_agl, 0.01))
+																							if bool(eva12.get("eva_mode")) or bool(eva12.get("zero_g")):
+																								fails.append("F-EVA after eleventh dirt land still EVA 0G")
+																							if ly_e12.to_upper().find("TPS") < 0:
+																								fails.append("F-EVA after eleventh dirt land layer not TPS (%s)" % ly_e12)
+																						if os.has_method("try_enter_ship"):
+																							os.try_enter_ship()
+																						await get_tree().create_timer(0.3).timeout
+																						if not bool(os.get("_in_ship")):
+																							fails.append("reboard after F-EVA eleventh dirt land refused")
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
