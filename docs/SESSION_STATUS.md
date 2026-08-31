@@ -1,3 +1,5 @@
+**2026-08-31 — HOVER launch after I-hatch F-EVA fourth dirt F-board: hold AGL+12, retap 3 keeps it**
+
 **2026-08-30 — HOVER chase after I-hatch F-EVA fourth dirt F-board: hull 12 km, not leftover walker**
 
 **2026-08-30 — OS-stack after I-hatch F-EVA fourth dirt F-board occupy walker is TPS, not SPACE/ship_int/0G**
