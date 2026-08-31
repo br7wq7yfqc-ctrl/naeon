@@ -6177,6 +6177,32 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																			" nose=", snapped(nose8, 0.01))
 																		if align8 < 0.92:
 																			fails.append("facing after I-hatch F-EVA eighth dirt F-board not hull-nose (%s)" % snapped(align8, 0.01))
+																		hatch8.set("_spawn_grace_t", 0.0)
+																		if hatch8 is CharacterBody3D:
+																			(hatch8 as CharacterBody3D).velocity = Vector3.ZERO
+																		if hatch8.has_method("_physics_process"):
+																			hatch8._physics_process(0.016)
+																		var coy_h8: float = float(hatch8.get("_coyote_t"))
+																		var near_h8: Variant = hatch8.call("_near_dirt_floor") if hatch8.has_method("_near_dirt_floor") else false
+																		print("[Playtest] coyote after I-hatch F-EVA eighth dirt F-board t=", snapped(coy_h8, 0.01), " near=", near_h8)
+																		if coy_h8 <= 0.0:
+																			fails.append("coyote after I-hatch F-EVA eighth dirt F-board dead")
+																		else:
+																			var hv80: float = 0.0
+																			if hatch8 is CharacterBody3D:
+																				hv80 = (hatch8 as CharacterBody3D).velocity.dot(rad8)
+																			if hatch8.has_method("request_jump"):
+																				hatch8.request_jump()
+																			if hatch8.has_method("_physics_process"):
+																				hatch8._physics_process(0.016)
+																			var hv81: float = hv80
+																			if hatch8 is CharacterBody3D:
+																				hv81 = (hatch8 as CharacterBody3D).velocity.dot(rad8)
+																			print("[Playtest] coyote after I-hatch F-EVA eighth dirt F-board jump v_up ",
+																				snapped(hv80, 0.1), "→", snapped(hv81, 0.1))
+																			if hv81 < hv80 + 3.0:
+																				fails.append("coyote after I-hatch F-EVA eighth dirt F-board jump died (%s → %s)" % [
+																					snapped(hv80, 0.1), snapped(hv81, 0.1)])
 																	if os.has_method("try_enter_ship"):
 																		os.try_enter_ship()
 																	await get_tree().create_timer(0.3).timeout
