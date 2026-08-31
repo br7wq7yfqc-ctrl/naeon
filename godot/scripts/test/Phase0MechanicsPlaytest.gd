@@ -6643,6 +6643,30 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																						fails.append("F-EVA after tenth dirt land still EVA 0G")
 																					if ly_e11.to_upper().find("TPS") < 0:
 																						fails.append("F-EVA after tenth dirt land layer not TPS (%s)" % ly_e11)
+																					var hud_e11: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+																					if hud_e11 != null and hud_e11.has_method("bind_player"):
+																						hud_e11.bind_player(eva11)
+																					if hud_e11 != null and hud_e11.has_method("_refresh"):
+																						hud_e11._refresh()
+																					var origin_e11: Node3D = null
+																					if hud_e11 != null and hud_e11.has_method("_occupy_origin"):
+																						origin_e11 = hud_e11.call("_occupy_origin") as Node3D
+																					var otxt_e11 := ""
+																					if hud_e11 != null:
+																						var lab_e11: Variant = hud_e11.get("_owner_label")
+																						if lab_e11 is Label:
+																							otxt_e11 = (lab_e11 as Label).text
+																					print("[Playtest] occupy HUD F-EVA after tenth dirt land origin=",
+																						origin_e11.name if origin_e11 else "null",
+																						" '", otxt_e11.replace("\n", " / ").substr(0, 80), "'")
+																					if origin_e11 == null:
+																						fails.append("occupy HUD lost origin after F-EVA tenth dirt land")
+																					elif origin_e11 == ship:
+																						fails.append("occupy HUD origin still hull after F-EVA tenth dirt land")
+																					elif origin_e11 != eva11:
+																						fails.append("occupy HUD origin not walker after F-EVA tenth dirt land")
+																					if otxt_e11.to_upper().find("PAD") >= 0 and otxt_e11.to_upper().find("OCCUPY") >= 0:
+																						fails.append("occupy HUD PAD after F-EVA tenth dirt land")
 																				if os.has_method("try_enter_ship"):
 																					os.try_enter_ship()
 																				await get_tree().create_timer(0.3).timeout
