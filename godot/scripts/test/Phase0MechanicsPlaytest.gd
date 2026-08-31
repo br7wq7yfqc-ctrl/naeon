@@ -5025,6 +5025,44 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 												fails.append("occupy HUD origin not walker after F-EVA fifth dirt land")
 											if otxt_e6.to_upper().find("PAD") >= 0 and otxt_e6.to_upper().find("OCCUPY") >= 0:
 												fails.append("occupy HUD PAD after F-EVA fifth dirt land 110m")
+											var radar_e6: Variant = hud_e6.get("_radar") if hud_e6 else null
+											if radar_e6 is CanvasItem:
+												(radar_e6 as CanvasItem).visible = true
+											if hud_e6 != null and hud_e6.has_method("_refresh"):
+												hud_e6._refresh()
+											var rng_e6: float = float(hud_e6.get("_radar_range_m")) if hud_e6 else 0.0
+											var near_e6n := 0
+											if hud_e6 != null and hud_e6.has_method("radar_pad_contacts"):
+												near_e6n = hud_e6.radar_pad_contacts().size()
+											print("[Playtest] pad radar F-EVA after fifth dirt land 110m n=", near_e6n,
+												" range=", snapped(rng_e6, 1.0), " vis=",
+												(radar_e6 as CanvasItem).visible if radar_e6 is CanvasItem else "?")
+											if rng_e6 > 1000.0:
+												fails.append("pad radar used 12km after F-EVA fifth dirt land occupy (%s)" % snapped(rng_e6, 1.0))
+											if near_e6n < 1:
+												fails.append("pad radar missed pad after F-EVA fifth dirt land occupy")
+											var saved_e6: Vector3 = eva6.global_position
+											var up_e6r: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+											if up_e6r.length_squared() > 0.01:
+												up_e6r = up_e6r.normalized()
+											var side_e6r: Vector3 = up_e6r.cross(Vector3.RIGHT)
+											if side_e6r.length_squared() < 0.04:
+												side_e6r = up_e6r.cross(Vector3.FORWARD)
+											side_e6r = side_e6r.normalized()
+											eva6.global_position = deck.global_position + side_e6r * 600.0 + up_e6r * 2.0
+											if hud_e6 != null and hud_e6.has_method("_refresh"):
+												hud_e6._refresh()
+											var far_e6 := false
+											var far_e6n := 0
+											if hud_e6 != null and hud_e6.has_method("radar_pad_contacts"):
+												for c in hud_e6.radar_pad_contacts():
+													far_e6n += 1
+													if c is Node3D and (c as Node3D).global_position.distance_to(deck.global_position) < 30.0:
+														far_e6 = true
+											print("[Playtest] pad radar F-EVA after fifth dirt land 600m n=", far_e6n, " pad=", far_e6)
+											if far_e6:
+												fails.append("pad radar used 12km approach after F-EVA fifth dirt land occupy")
+											eva6.global_position = saved_e6
 										if os.has_method("try_enter_ship"):
 											os.try_enter_ship()
 										await get_tree().create_timer(0.3).timeout
