@@ -5861,6 +5861,32 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																	" nose=", snapped(nose7, 0.01))
 																if align7 < 0.92:
 																	fails.append("facing after I-hatch F-EVA seventh dirt F-board not hull-nose (%s)" % snapped(align7, 0.01))
+																hatch7.set("_spawn_grace_t", 0.0)
+																if hatch7 is CharacterBody3D:
+																	(hatch7 as CharacterBody3D).velocity = Vector3.ZERO
+																if hatch7.has_method("_physics_process"):
+																	hatch7._physics_process(0.016)
+																var coy_h7: float = float(hatch7.get("_coyote_t"))
+																var near_h7: Variant = hatch7.call("_near_dirt_floor") if hatch7.has_method("_near_dirt_floor") else false
+																print("[Playtest] coyote after I-hatch F-EVA seventh dirt F-board t=", snapped(coy_h7, 0.01), " near=", near_h7)
+																if coy_h7 <= 0.0:
+																	fails.append("coyote after I-hatch F-EVA seventh dirt F-board dead")
+																else:
+																	var hv70: float = 0.0
+																	if hatch7 is CharacterBody3D:
+																		hv70 = (hatch7 as CharacterBody3D).velocity.dot(rad7)
+																	if hatch7.has_method("request_jump"):
+																		hatch7.request_jump()
+																	if hatch7.has_method("_physics_process"):
+																		hatch7._physics_process(0.016)
+																	var hv71: float = hv70
+																	if hatch7 is CharacterBody3D:
+																		hv71 = (hatch7 as CharacterBody3D).velocity.dot(rad7)
+																	print("[Playtest] coyote after I-hatch F-EVA seventh dirt F-board jump v_up ",
+																		snapped(hv70, 0.1), "→", snapped(hv71, 0.1))
+																	if hv71 < hv70 + 3.0:
+																		fails.append("coyote after I-hatch F-EVA seventh dirt F-board jump died (%s → %s)" % [
+																			snapped(hv70, 0.1), snapped(hv71, 0.1)])
 															if os.has_method("try_enter_ship"):
 																os.try_enter_ship()
 															await get_tree().create_timer(0.3).timeout
