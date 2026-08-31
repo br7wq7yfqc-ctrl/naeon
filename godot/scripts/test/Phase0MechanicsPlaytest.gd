@@ -6243,6 +6243,18 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																		print("[Playtest] HOVER launch after I-hatch F-EVA eighth dirt F-board retap hold=", snapped(hold_l9b, 0.1))
 																		if absf(hold_l9b - hold_l9) > 1.5:
 																			fails.append("HOVER launch after I-hatch F-EVA eighth dirt F-board retap rewrote hold")
+																		var up_ge9: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+																		if up_ge9.length_squared() > 0.01:
+																			up_ge9 = up_ge9.normalized()
+																		var rel_ge9: Vector3 = ship.global_position - deck.global_position
+																		var lat_ge9: float = (rel_ge9 - up_ge9 * rel_ge9.dot(up_ge9)).length()
+																		var agl_ge9: float = agl_l9
+																		if nex.has_method("altitude_of"):
+																			agl_ge9 = float(nex.altitude_of(ship.global_position))
+																		print("[Playtest] I-hatch F-EVA eighth dirt F-board launch GE lat=", snapped(lat_ge9, 0.1),
+																			" agl=", snapped(agl_ge9, 0.1))
+																		if lat_ge9 < 60.0:
+																			fails.append("I-hatch F-EVA eighth dirt F-board launch GE pulled onto plate (lat=%s)" % snapped(lat_ge9, 0.1))
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
