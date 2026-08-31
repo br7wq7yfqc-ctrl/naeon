@@ -8287,6 +8287,18 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																																		" nose=", snapped(nose15, 0.01))
 																																	if align15 < 0.92:
 																																		fails.append("facing after I-hatch F-EVA fifteenth dirt F-board not hull-nose (%s)" % snapped(align15, 0.01))
+																																	hatch15.set("_spawn_grace_t", 0.0)
+																																	if hatch15 is CharacterBody3D:
+																																		(hatch15 as CharacterBody3D).velocity = Vector3.ZERO
+																																	await get_tree().create_timer(0.05).timeout
+																																	var coy_h15: float = float(hatch15.get("_coyote_t"))
+																																	var near_h15: Variant = hatch15.call("_near_dirt_floor") if hatch15.has_method("_near_dirt_floor") else false
+																																	print("[Playtest] coyote after I-hatch F-EVA fifteenth dirt F-board t=", snapped(coy_h15, 0.01),
+																																		" near=", near_h15, " floor=", hatch15.is_on_floor() if hatch15 is CharacterBody3D else "?")
+																																	if not bool(near_h15) and not (hatch15 is CharacterBody3D and hatch15.is_on_floor()):
+																																		fails.append("coyote after I-hatch F-EVA fifteenth dirt F-board not near dirt")
+																																	if coy_h15 <= 0.0:
+																																		fails.append("coyote after I-hatch F-EVA fifteenth dirt F-board dead")
 																																if os.has_method("try_enter_ship"):
 																																	os.try_enter_ship()
 																																await get_tree().create_timer(0.3).timeout

@@ -1,3 +1,5 @@
+**2026-08-31 — Coyote after I-hatch F-EVA fifteenth dirt F-board is near dirt, not leftover spawn-grace**
+
 **2026-08-31 — Facing after I-hatch F-EVA fifteenth dirt F-board is hull-nose tangent**
 
 **2026-08-31 — I-hatch after F-EVA fifteenth dirt F-board is hull-side Relief, not leftover pocket**
