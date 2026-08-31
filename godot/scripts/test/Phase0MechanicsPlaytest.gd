@@ -8538,6 +8538,43 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																																		if d16 != null and d16.has_method("is_inside") and bool(d16.is_inside()) and d16.has_method("exit_interior"):
 																																			d16.exit_interior()
 																																		await get_tree().create_timer(0.4).timeout
+																																		var hatch16: Node3D = os.get("player") as Node3D if os else null
+																																		if hatch16 == null or not is_instance_valid(hatch16) or not hatch16.is_inside_tree():
+																																			fails.append("I-hatch after F-EVA sixteenth dirt F-board: no walker")
+																																		else:
+																																			var h16_ship: float = hatch16.global_position.distance_to(ship.global_position)
+																																			var h16_pad: float = hatch16.global_position.distance_to(deck.global_position)
+																																			var h16_agl := 99.0
+																																			if nex.has_method("altitude_of"):
+																																				h16_agl = float(nex.altitude_of(hatch16.global_position))
+																																			print("[Playtest] I-hatch after F-EVA sixteenth dirt F-board d_ship=", snapped(h16_ship, 0.1),
+																																				" d_pad=", snapped(h16_pad, 0.1), " agl=", snapped(h16_agl, 0.01),
+																																				" int=", hatch16.get("interior_mode"))
+																																			if h16_ship > 22.0:
+																																				fails.append("I-hatch after F-EVA sixteenth dirt F-board teleported (%s)" % snapped(h16_ship, 0.1))
+																																			if h16_pad < 60.0:
+																																				fails.append("I-hatch after F-EVA sixteenth dirt F-board snapped to pad (%s)" % snapped(h16_pad, 0.1))
+																																			if h16_agl < 0.2 or h16_agl > 5.0:
+																																				fails.append("I-hatch after F-EVA sixteenth dirt F-board not on Relief (%s)" % snapped(h16_agl, 0.01))
+																																			if bool(hatch16.get("interior_mode")) or bool(hatch16.get("eva_mode")) or bool(hatch16.get("zero_g")):
+																																				fails.append("I-hatch after F-EVA sixteenth dirt F-board still pocket/0G")
+																																			if os.has_method("_apply_dirt_exit_facing"):
+																																				os._apply_dirt_exit_facing()
+																																			var fw16: Vector3 = -hatch16.global_transform.basis.z
+																																			var rad16: Vector3 = hatch16.global_position - nex.global_position
+																																			if rad16.length_squared() < 0.01:
+																																				rad16 = Vector3.UP
+																																			rad16 = rad16.normalized()
+																																			var tan16: Vector3 = rad16.cross(fw16).cross(rad16)
+																																			if tan16.length_squared() < 0.0001:
+																																				tan16 = rad16.cross(Vector3.RIGHT).cross(rad16)
+																																			tan16 = tan16.normalized()
+																																			var align16: float = fw16.normalized().dot(tan16)
+																																			var nose16: float = fw16.normalized().dot(rad16)
+																																			print("[Playtest] facing after I-hatch F-EVA sixteenth dirt F-board align=", snapped(align16, 0.01),
+																																				" nose=", snapped(nose16, 0.01))
+																																			if align16 < 0.92:
+																																				fails.append("facing after I-hatch F-EVA sixteenth dirt F-board not hull-nose (%s)" % snapped(align16, 0.01))
 																																		if os.has_method("try_enter_ship"):
 																																			os.try_enter_ship()
 																																		await get_tree().create_timer(0.3).timeout
