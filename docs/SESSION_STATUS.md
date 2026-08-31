@@ -1,3 +1,5 @@
+**2026-08-31 — Coyote after I-hatch F-EVA tenth dirt F-board spawn grace then jump lives**
+
 **2026-08-31 — Facing after I-hatch F-EVA tenth dirt F-board is hull-nose tangent**
 
 **2026-08-31 — I-hatch after F-EVA tenth dirt F-board is dirt hull-side Relief, not leftover pocket/0G**
