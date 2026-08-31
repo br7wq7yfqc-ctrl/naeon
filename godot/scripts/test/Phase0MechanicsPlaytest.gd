@@ -8994,6 +8994,30 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																																									fails.append("F-EVA after eighteenth dirt land still EVA 0G")
 																																								if ly_e19.to_upper().find("TPS") < 0:
 																																									fails.append("F-EVA after eighteenth dirt land layer not TPS (%s)" % ly_e19)
+																																								var hud_e19: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+																																								if hud_e19 != null and hud_e19.has_method("bind_player"):
+																																									hud_e19.bind_player(eva19)
+																																								if hud_e19 != null and hud_e19.has_method("_refresh"):
+																																									hud_e19._refresh()
+																																								var origin_e19: Node3D = null
+																																								if hud_e19 != null and hud_e19.has_method("_occupy_origin"):
+																																									origin_e19 = hud_e19.call("_occupy_origin") as Node3D
+																																								var otxt_e19 := ""
+																																								if hud_e19 != null:
+																																									var lab_e19: Variant = hud_e19.get("_owner_label")
+																																									if lab_e19 is Label:
+																																										otxt_e19 = (lab_e19 as Label).text
+																																								print("[Playtest] occupy HUD F-EVA after eighteenth dirt land origin=",
+																																									origin_e19.name if origin_e19 else "null",
+																																									" '", otxt_e19.replace("\n", " / ").substr(0, 80), "'")
+																																								if origin_e19 == null:
+																																									fails.append("occupy HUD lost origin after F-EVA eighteenth dirt land")
+																																								elif origin_e19 == ship:
+																																									fails.append("occupy HUD origin still hull after F-EVA eighteenth dirt land")
+																																								elif origin_e19 != eva19:
+																																									fails.append("occupy HUD origin not walker after F-EVA eighteenth dirt land")
+																																								if otxt_e19.to_upper().find("PAD") >= 0 and otxt_e19.to_upper().find("OCCUPY") >= 0:
+																																									fails.append("occupy HUD PAD after F-EVA eighteenth dirt land")
 																																								if os.has_method("try_enter_ship"):
 																																									os.try_enter_ship()
 																																								await get_tree().create_timer(0.3).timeout
