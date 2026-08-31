@@ -5063,6 +5063,39 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 											if far_e6:
 												fails.append("pad radar used 12km approach after F-EVA fifth dirt land occupy")
 											eva6.global_position = saved_e6
+											if hud_e6 != null and hud_e6.has_method("_refresh"):
+												hud_e6._refresh()
+											var ly_e6s := ""
+											if LayerContext:
+												ly_e6s = str(LayerContext.current_layer)
+											var stack_e6 := ""
+											var stack_e6_on := false
+											var chip_e6 := ""
+											if hud_e6 != null:
+												var sl_e6: Variant = hud_e6.get("_os_stack")
+												if sl_e6 is Label:
+													stack_e6 = (sl_e6 as Label).text
+													stack_e6_on = (sl_e6 as Label).visible
+												var chip6: Variant = hud_e6.get("_layer_label")
+												if chip6 is Label:
+													chip_e6 = (chip6 as Label).text
+											print("[Playtest] os stack F-EVA after fifth dirt land occupy layer=", ly_e6s,
+												" vis=", stack_e6_on, " chip='", chip_e6.replace("\n", " / ").substr(0, 40),
+												"' '", stack_e6.replace("\n", " / ").substr(0, 80), "'")
+											if ly_e6s.to_upper().find("SPACE") >= 0:
+												fails.append("os stack layer still SPACE after F-EVA fifth dirt land occupy")
+											if ly_e6s.to_upper().find("SHIP") >= 0:
+												fails.append("os stack layer still ship_int after F-EVA fifth dirt land occupy")
+											if ly_e6s.to_upper().find("TPS") < 0 and ly_e6s.to_upper().find("SURFACE") < 0:
+												fails.append("os stack layer not TPS after F-EVA fifth dirt land occupy (%s)" % ly_e6s)
+											if not stack_e6_on:
+												fails.append("os stack hidden after F-EVA fifth dirt land occupy")
+											if chip_e6.to_upper().find("SHIP") >= 0:
+												fails.append("layer chip still ship_int after F-EVA fifth dirt land occupy")
+											if stack_e6.to_upper().find("OCCUPY") >= 0:
+												fails.append("os stack occupy after F-EVA fifth dirt land occupy 110m")
+											if stack_e6.to_upper().find("0G") >= 0:
+												fails.append("os stack EVA 0G after F-EVA fifth dirt land occupy")
 										if os.has_method("try_enter_ship"):
 											os.try_enter_ship()
 										await get_tree().create_timer(0.3).timeout
