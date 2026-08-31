@@ -6977,6 +6977,24 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																								fails.append("occupy HUD lost origin after F-EVA eleventh dirt land")
 																							elif origin_e12 == ship:
 																								fails.append("occupy HUD origin still hull after F-EVA eleventh dirt land")
+																							var radar_e12: Variant = hud_e12.get("_radar") if hud_e12 else null
+																							if radar_e12 is CanvasItem:
+																								(radar_e12 as CanvasItem).visible = true
+																							if hud_e12 != null and hud_e12.has_method("_refresh"):
+																								hud_e12._refresh()
+																							var rng_e12: float = float(hud_e12.get("_radar_range_m")) if hud_e12 else 0.0
+																							var near_e12n := 0
+																							if hud_e12 != null and hud_e12.has_method("radar_pad_contacts"):
+																								near_e12n = hud_e12.radar_pad_contacts().size()
+																							print("[Playtest] pad radar F-EVA after eleventh dirt land 400m n=", near_e12n,
+																								" range=", snapped(rng_e12, 1.0), " vis=",
+																								(radar_e12 as CanvasItem).visible if radar_e12 is CanvasItem else "?")
+																							if rng_e12 > 1000.0:
+																								fails.append("pad radar used 12km after F-EVA eleventh dirt land occupy (%s)" % snapped(rng_e12, 1.0))
+																							if rng_e12 > 0.0 and rng_e12 < 200.0:
+																								fails.append("pad radar not 400m TPS after F-EVA eleventh dirt land occupy (%s)" % snapped(rng_e12, 1.0))
+																							if near_e12n < 1:
+																								fails.append("pad radar missed pad after F-EVA eleventh dirt land occupy")
 																						if os.has_method("try_enter_ship"):
 																							os.try_enter_ship()
 																						await get_tree().create_timer(0.3).timeout
