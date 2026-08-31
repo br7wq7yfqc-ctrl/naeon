@@ -300,6 +300,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-31 | Sink after I-hatch F-EVA sixth dirt F-board launch: hold 4 m. | sink-after-sixth-dirt-ihatch-launch |
 | 2026-08-31 | Land after I-hatch F-EVA sixth dirt F-board sink: Relief. | land-after-sixth-dirt-ihatch-sink |
 | 2026-08-31 | F-EVA after seventh dirt land: hull-side Relief. | feva-after-seventh-dirt-land |
+| 2026-08-31 | Occupy HUD after F-EVA seventh dirt land: walker. | occupy-after-seventh-dirt-feva |
 | 2026-08-28 | ST-G: factory in existing PlayerOrbitalStation cluster. Bench (c) spend Contribution/Biomass → one catalog module. Without factory, (c) refuses. No SITE_*. ST-E stays dock+habitat. | st-g-factory |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
