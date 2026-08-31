@@ -342,6 +342,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-31 | Occupy HUD after F-EVA tenth dirt land: walker. | occupy-after-tenth-dirt-feva |
 | 2026-08-31 | Pad-radar after F-EVA tenth dirt land occupy: 400m TPS. | pad-radar-after-tenth-dirt-feva |
 | 2026-08-31 | OS-stack after F-EVA tenth dirt land occupy: TPS. | os-stack-after-tenth-dirt-feva |
+| 2026-08-31 | F-board after F-EVA tenth dirt land occupy: hull 12km chase. | fboard-after-tenth-dirt-feva |
 | 2026-08-28 | ST-G: factory in existing PlayerOrbitalStation cluster. Bench (c) spend Contribution/Biomass → one catalog module. Without factory, (c) refuses. No SITE_*. ST-E stays dock+habitat. | st-g-factory |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
