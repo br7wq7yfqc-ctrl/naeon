@@ -9096,6 +9096,47 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																																										fails.append("layer not Space after F-EVA eighteenth dirt F-board (%s)" % ly_rb19)
 																																									if rng_rb19 < 1000.0:
 																																										fails.append("pad radar still 400m after F-EVA eighteenth dirt F-board (%s)" % snapped(rng_rb19, 1.0))
+																																									if os.has_method("_leave_seat_to_pocket"):
+																																										os._leave_seat_to_pocket()
+																																									await get_tree().create_timer(0.35).timeout
+																																									var ly_pk18 := ""
+																																									if LayerContext:
+																																										ly_pk18 = str(LayerContext.current_layer)
+																																									var pk18: Node3D = os.get("player") as Node3D if os else null
+																																									print("[Playtest] I-hatch after F-EVA eighteenth dirt F-board pocket layer=", ly_pk18,
+																																										" int=", pk18.get("interior_mode") if pk18 else "none",
+																																										" in_ship=", os.get("_in_ship"))
+																																									if ly_pk18.to_upper().find("SHIP") < 0:
+																																										fails.append("I-hatch after F-EVA eighteenth dirt F-board not ship_int (%s)" % ly_pk18)
+																																									if pk18 == null or not bool(pk18.get("interior_mode")):
+																																										fails.append("I-hatch after F-EVA eighteenth dirt F-board not pocket walker")
+																																									var d18: Node = os.get("_interior") if os else null
+																																									if d18 != null and d18.has_method("is_inside") and bool(d18.is_inside()) and d18.has_method("exit_interior"):
+																																										d18.exit_interior()
+																																									await get_tree().create_timer(0.4).timeout
+																																									var hatch18: Node3D = os.get("player") as Node3D if os else null
+																																									if hatch18 == null or not is_instance_valid(hatch18) or not hatch18.is_inside_tree():
+																																										fails.append("I-hatch after F-EVA eighteenth dirt F-board: no walker")
+																																									else:
+																																										var h18_ship: float = hatch18.global_position.distance_to(ship.global_position)
+																																										var h18_pad: float = hatch18.global_position.distance_to(deck.global_position)
+																																										var h18_agl := 99.0
+																																										if nex.has_method("altitude_of"):
+																																											h18_agl = float(nex.altitude_of(hatch18.global_position))
+																																										print("[Playtest] I-hatch after F-EVA eighteenth dirt F-board d_ship=", snapped(h18_ship, 0.1),
+																																											" d_pad=", snapped(h18_pad, 0.1), " agl=", snapped(h18_agl, 0.01),
+																																											" int=", hatch18.get("interior_mode"))
+																																										if h18_ship > 22.0:
+																																											fails.append("I-hatch after F-EVA eighteenth dirt F-board teleported (%s)" % snapped(h18_ship, 0.1))
+																																										if h18_pad < 60.0:
+																																											fails.append("I-hatch after F-EVA eighteenth dirt F-board snapped to pad (%s)" % snapped(h18_pad, 0.1))
+																																										if h18_agl < 0.2 or h18_agl > 5.0:
+																																											fails.append("I-hatch after F-EVA eighteenth dirt F-board not on Relief (%s)" % snapped(h18_agl, 0.01))
+																																										if bool(hatch18.get("interior_mode")) or bool(hatch18.get("eva_mode")) or bool(hatch18.get("zero_g")):
+																																											fails.append("I-hatch after F-EVA eighteenth dirt F-board still pocket/0G")
+																																										if os.has_method("try_enter_ship"):
+																																											os.try_enter_ship()
+																																										await get_tree().create_timer(0.3).timeout
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
