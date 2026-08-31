@@ -1,3 +1,5 @@
+**2026-08-31 — HOVER chase after F-EVA ninth dirt F-board: hull 12 km, not leftover walker**
+
 **2026-08-31 — OS-stack after F-EVA ninth dirt land occupy walker is TPS, not SPACE/ship_int/0G**
 
 **2026-08-31 — Pad-radar after F-EVA ninth dirt land occupy is 400 m TPS, not 12 km**
