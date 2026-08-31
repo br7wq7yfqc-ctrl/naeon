@@ -6495,6 +6495,34 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																					" nose=", snapped(nose9, 0.01))
 																				if align9 < 0.92:
 																					fails.append("facing after I-hatch F-EVA ninth dirt F-board not hull-nose (%s)" % snapped(align9, 0.01))
+																				hatch9.set("_spawn_grace_t", 0.0)
+																				if hatch9 is CharacterBody3D:
+																					(hatch9 as CharacterBody3D).velocity = Vector3.ZERO
+																				await get_tree().create_timer(0.05).timeout
+																				var coy_h9: float = float(hatch9.get("_coyote_t"))
+																				var near_h9: Variant = hatch9.call("_near_dirt_floor") if hatch9.has_method("_near_dirt_floor") else false
+																				print("[Playtest] coyote after I-hatch F-EVA ninth dirt F-board t=", snapped(coy_h9, 0.01),
+																					" near=", near_h9, " floor=", hatch9.is_on_floor() if hatch9 is CharacterBody3D else "?")
+																				if not bool(near_h9) and not (hatch9 is CharacterBody3D and hatch9.is_on_floor()):
+																					fails.append("coyote after I-hatch F-EVA ninth dirt F-board not near dirt")
+																				if coy_h9 <= 0.0:
+																					fails.append("coyote after I-hatch F-EVA ninth dirt F-board dead")
+																				else:
+																					var hv90: float = 0.0
+																					if hatch9 is CharacterBody3D:
+																						hv90 = (hatch9 as CharacterBody3D).velocity.dot(rad9)
+																					if hatch9.has_method("request_jump"):
+																						hatch9.request_jump()
+																					if hatch9.has_method("_physics_process"):
+																						hatch9._physics_process(0.016)
+																					var hv91: float = hv90
+																					if hatch9 is CharacterBody3D:
+																						hv91 = (hatch9 as CharacterBody3D).velocity.dot(rad9)
+																					print("[Playtest] coyote after I-hatch F-EVA ninth dirt F-board jump v_up ",
+																						snapped(hv90, 0.1), "→", snapped(hv91, 0.1))
+																					if hv91 < hv90 + 3.0:
+																						fails.append("coyote after I-hatch F-EVA ninth dirt F-board jump died (%s → %s)" % [
+																							snapped(hv90, 0.1), snapped(hv91, 0.1)])
 																			if os.has_method("try_enter_ship"):
 																				os.try_enter_ship()
 																			await get_tree().create_timer(0.3).timeout
