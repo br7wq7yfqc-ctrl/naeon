@@ -1,3 +1,5 @@
+**2026-08-31 — Ground-effect after I-hatch F-EVA fifth dirt F-board launch stays hull-side, not plate**
+
 **2026-08-31 — HOVER launch after I-hatch F-EVA fifth dirt F-board: hold AGL+12, retap 3 keeps it**
 
 **2026-08-31 — Slope after I-hatch F-EVA fifth dirt F-board is PlanetRelief after facing**
