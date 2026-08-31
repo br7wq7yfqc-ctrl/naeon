@@ -8808,6 +8808,47 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																																						fails.append("layer not Space after F-EVA seventeenth dirt F-board (%s)" % ly_rb18)
 																																					if rng_rb18 < 1000.0:
 																																						fails.append("pad radar still 400m after F-EVA seventeenth dirt F-board (%s)" % snapped(rng_rb18, 1.0))
+																																					if os.has_method("_leave_seat_to_pocket"):
+																																						os._leave_seat_to_pocket()
+																																					await get_tree().create_timer(0.35).timeout
+																																					var ly_pk17 := ""
+																																					if LayerContext:
+																																						ly_pk17 = str(LayerContext.current_layer)
+																																					var pk17: Node3D = os.get("player") as Node3D if os else null
+																																					print("[Playtest] I-hatch after F-EVA seventeenth dirt F-board pocket layer=", ly_pk17,
+																																						" int=", pk17.get("interior_mode") if pk17 else "none",
+																																						" in_ship=", os.get("_in_ship"))
+																																					if ly_pk17.to_upper().find("SHIP") < 0:
+																																						fails.append("I-hatch after F-EVA seventeenth dirt F-board not ship_int (%s)" % ly_pk17)
+																																					if pk17 == null or not bool(pk17.get("interior_mode")):
+																																						fails.append("I-hatch after F-EVA seventeenth dirt F-board not pocket walker")
+																																					var d17: Node = os.get("_interior") if os else null
+																																					if d17 != null and d17.has_method("is_inside") and bool(d17.is_inside()) and d17.has_method("exit_interior"):
+																																						d17.exit_interior()
+																																					await get_tree().create_timer(0.4).timeout
+																																					var hatch17: Node3D = os.get("player") as Node3D if os else null
+																																					if hatch17 == null or not is_instance_valid(hatch17) or not hatch17.is_inside_tree():
+																																						fails.append("I-hatch after F-EVA seventeenth dirt F-board: no walker")
+																																					else:
+																																						var h17_ship: float = hatch17.global_position.distance_to(ship.global_position)
+																																						var h17_pad: float = hatch17.global_position.distance_to(deck.global_position)
+																																						var h17_agl := 99.0
+																																						if nex.has_method("altitude_of"):
+																																							h17_agl = float(nex.altitude_of(hatch17.global_position))
+																																						print("[Playtest] I-hatch after F-EVA seventeenth dirt F-board d_ship=", snapped(h17_ship, 0.1),
+																																							" d_pad=", snapped(h17_pad, 0.1), " agl=", snapped(h17_agl, 0.01),
+																																							" int=", hatch17.get("interior_mode"))
+																																						if h17_ship > 22.0:
+																																							fails.append("I-hatch after F-EVA seventeenth dirt F-board teleported (%s)" % snapped(h17_ship, 0.1))
+																																						if h17_pad < 60.0:
+																																							fails.append("I-hatch after F-EVA seventeenth dirt F-board snapped to pad (%s)" % snapped(h17_pad, 0.1))
+																																						if h17_agl < 0.2 or h17_agl > 5.0:
+																																							fails.append("I-hatch after F-EVA seventeenth dirt F-board not on Relief (%s)" % snapped(h17_agl, 0.01))
+																																						if bool(hatch17.get("interior_mode")) or bool(hatch17.get("eva_mode")) or bool(hatch17.get("zero_g")):
+																																							fails.append("I-hatch after F-EVA seventeenth dirt F-board still pocket/0G")
+																																						if os.has_method("try_enter_ship"):
+																																							os.try_enter_ship()
+																																						await get_tree().create_timer(0.3).timeout
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
