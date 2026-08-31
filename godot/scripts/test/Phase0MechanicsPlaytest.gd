@@ -8232,6 +8232,47 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																																	fails.append("layer not Space after F-EVA fifteenth dirt F-board (%s)" % ly_rb16)
 																																if rng_rb16 < 1000.0:
 																																	fails.append("pad radar still 400m after F-EVA fifteenth dirt F-board (%s)" % snapped(rng_rb16, 1.0))
+																																if os.has_method("_leave_seat_to_pocket"):
+																																	os._leave_seat_to_pocket()
+																																await get_tree().create_timer(0.35).timeout
+																																var ly_pk15 := ""
+																																if LayerContext:
+																																	ly_pk15 = str(LayerContext.current_layer)
+																																var pk15: Node3D = os.get("player") as Node3D if os else null
+																																print("[Playtest] I-hatch after F-EVA fifteenth dirt F-board pocket layer=", ly_pk15,
+																																	" int=", pk15.get("interior_mode") if pk15 else "none",
+																																	" in_ship=", os.get("_in_ship"))
+																																if ly_pk15.to_upper().find("SHIP") < 0:
+																																	fails.append("I-hatch after F-EVA fifteenth dirt F-board not ship_int (%s)" % ly_pk15)
+																																if pk15 == null or not bool(pk15.get("interior_mode")):
+																																	fails.append("I-hatch after F-EVA fifteenth dirt F-board not pocket walker")
+																																var d15: Node = os.get("_interior") if os else null
+																																if d15 != null and d15.has_method("is_inside") and bool(d15.is_inside()) and d15.has_method("exit_interior"):
+																																	d15.exit_interior()
+																																await get_tree().create_timer(0.4).timeout
+																																var hatch15: Node3D = os.get("player") as Node3D if os else null
+																																if hatch15 == null or not is_instance_valid(hatch15) or not hatch15.is_inside_tree():
+																																	fails.append("I-hatch after F-EVA fifteenth dirt F-board: no walker")
+																																else:
+																																	var h15_ship: float = hatch15.global_position.distance_to(ship.global_position)
+																																	var h15_pad: float = hatch15.global_position.distance_to(deck.global_position)
+																																	var h15_agl := 99.0
+																																	if nex.has_method("altitude_of"):
+																																		h15_agl = float(nex.altitude_of(hatch15.global_position))
+																																	print("[Playtest] I-hatch after F-EVA fifteenth dirt F-board d_ship=", snapped(h15_ship, 0.1),
+																																		" d_pad=", snapped(h15_pad, 0.1), " agl=", snapped(h15_agl, 0.01),
+																																		" int=", hatch15.get("interior_mode"))
+																																	if h15_ship > 22.0:
+																																		fails.append("I-hatch after F-EVA fifteenth dirt F-board teleported (%s)" % snapped(h15_ship, 0.1))
+																																	if h15_pad < 60.0:
+																																		fails.append("I-hatch after F-EVA fifteenth dirt F-board snapped to pad (%s)" % snapped(h15_pad, 0.1))
+																																	if h15_agl < 0.2 or h15_agl > 5.0:
+																																		fails.append("I-hatch after F-EVA fifteenth dirt F-board not on Relief (%s)" % snapped(h15_agl, 0.01))
+																																	if bool(hatch15.get("interior_mode")) or bool(hatch15.get("eva_mode")) or bool(hatch15.get("zero_g")):
+																																		fails.append("I-hatch after F-EVA fifteenth dirt F-board still pocket/0G")
+																																if os.has_method("try_enter_ship"):
+																																	os.try_enter_ship()
+																																await get_tree().create_timer(0.3).timeout
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
