@@ -6540,6 +6540,25 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																			await get_tree().create_timer(0.3).timeout
 																			if not bool(os.get("_in_ship")):
 																				fails.append("reboard after I-hatch F-EVA ninth dirt F-board refused")
+																			else:
+																				ship.set("_land_lock_t", 0.0)
+																				if bool(ship.get("is_landed")) and ship.has_method("_do_launch"):
+																					ship._do_launch()
+																				await get_tree().create_timer(0.35).timeout
+																				var hold_l10: float = float(ship.get("_hover_hold_alt"))
+																				var agl_l10: float = 0.0
+																				if nex.has_method("altitude_of"):
+																					agl_l10 = float(nex.altitude_of(ship.global_position))
+																				elif ship.has_method("altitude_agl"):
+																					agl_l10 = float(ship.altitude_agl())
+																				var hold_l10b: float = hold_l10
+																				print("[Playtest] I-hatch F-EVA ninth dirt F-board HOVER launch hold=", snapped(hold_l10, 0.1),
+																					" agl=", snapped(agl_l10, 0.1), " landed=", ship.get("is_landed"))
+																				if bool(ship.get("is_landed")):
+																					fails.append("I-hatch F-EVA ninth dirt F-board launch still landed")
+																				if hold_l10 < agl_l10 - 2.0 or hold_l10 > agl_l10 + 20.0:
+																					fails.append("I-hatch F-EVA ninth dirt F-board launch hold not AGL+12 (%s vs %s)" % [
+																						snapped(hold_l10, 0.1), snapped(agl_l10, 0.1)])
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
