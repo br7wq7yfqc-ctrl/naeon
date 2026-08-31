@@ -4973,6 +4973,39 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 											fails.append("I-hatch F-EVA fourth dirt F-board land after sink drifted to plate (%s)" % snapped(land5_lat, 0.1))
 										if land5_agl < 1.5 or land5_agl > 8.0:
 											fails.append("I-hatch F-EVA fourth dirt F-board land after sink not on Relief (%s)" % snapped(land5_agl, 0.1))
+										if os.has_method("try_exit_ship"):
+											os.try_exit_ship()
+										await get_tree().create_timer(0.4).timeout
+										var eva6: Node3D = os.get("player") as Node3D if os else null
+										if eva6 == null or not is_instance_valid(eva6) or not eva6.is_inside_tree():
+											fails.append("F-EVA after fifth dirt land: no walker")
+										else:
+											var e6_ship: float = eva6.global_position.distance_to(ship.global_position)
+											var e6_pad: float = eva6.global_position.distance_to(deck.global_position)
+											var e6_agl := 99.0
+											if nex.has_method("altitude_of"):
+												e6_agl = float(nex.altitude_of(eva6.global_position))
+											var ly_e6 := ""
+											if LayerContext:
+												ly_e6 = str(LayerContext.current_layer)
+											print("[Playtest] F-EVA after fifth dirt land d_ship=", snapped(e6_ship, 0.1),
+												" d_pad=", snapped(e6_pad, 0.1), " agl=", snapped(e6_agl, 0.01),
+												" eva=", eva6.get("eva_mode"), " layer=", ly_e6)
+											if e6_ship > 22.0:
+												fails.append("F-EVA after fifth dirt land teleported (%s)" % snapped(e6_ship, 0.1))
+											if e6_pad < 60.0:
+												fails.append("F-EVA after fifth dirt land snapped to pad (%s)" % snapped(e6_pad, 0.1))
+											if e6_agl < 0.2 or e6_agl > 5.0:
+												fails.append("F-EVA after fifth dirt land not on Relief (%s)" % snapped(e6_agl, 0.01))
+											if bool(eva6.get("eva_mode")) or bool(eva6.get("zero_g")):
+												fails.append("F-EVA after fifth dirt land still EVA 0G")
+											if ly_e6.to_upper().find("TPS") < 0:
+												fails.append("F-EVA after fifth dirt land layer not TPS (%s)" % ly_e6)
+										if os.has_method("try_enter_ship"):
+											os.try_enter_ship()
+										await get_tree().create_timer(0.3).timeout
+										if not bool(os.get("_in_ship")):
+											fails.append("reboard after F-EVA fifth dirt land refused")
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
