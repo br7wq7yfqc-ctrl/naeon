@@ -7501,6 +7501,31 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																												fails.append("I-hatch F-EVA twelfth dirt F-board HOVER sink hold buried (%s)" % snapped(hold_sk13, 0.1))
 																											if lat_sk13 < 60.0:
 																												fails.append("I-hatch F-EVA twelfth dirt F-board HOVER sink drifted onto plate (%s)" % snapped(lat_sk13, 0.1))
+																											if "velocity" in ship:
+																												ship.velocity = Vector3.ZERO
+																											ship.set("_gear_down", true)
+																											if ship.has_method("_do_land"):
+																												ship._do_land()
+																											await get_tree().create_timer(0.4).timeout
+																											var land13_agl: float = agl_sk13
+																											if nex.has_method("altitude_of"):
+																												land13_agl = float(nex.altitude_of(ship.global_position))
+																											var land13_pad: Node3D = null
+																											if ship.has_method("get_landed_pad"):
+																												land13_pad = ship.get_landed_pad() as Node3D
+																											var land13_rel: Vector3 = ship.global_position - deck.global_position
+																											var land13_lat: float = (land13_rel - up_ge13 * land13_rel.dot(up_ge13)).length()
+																											print("[Playtest] I-hatch F-EVA twelfth dirt F-board land after sink landed=", ship.get("is_landed"),
+																												" pad=", land13_pad.name if land13_pad else "none",
+																												" agl=", snapped(land13_agl, 0.1), " lat=", snapped(land13_lat, 0.1))
+																											if not bool(ship.get("is_landed")):
+																												fails.append("I-hatch F-EVA twelfth dirt F-board land after sink refused")
+																											if land13_pad != null:
+																												fails.append("I-hatch F-EVA twelfth dirt F-board land after sink stole pad")
+																											if land13_lat < 60.0:
+																												fails.append("I-hatch F-EVA twelfth dirt F-board land after sink drifted to plate (%s)" % snapped(land13_lat, 0.1))
+																											if land13_agl < 1.5 or land13_agl > 8.0:
+																												fails.append("I-hatch F-EVA twelfth dirt F-board land after sink not on Relief (%s)" % snapped(land13_agl, 0.1))
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
