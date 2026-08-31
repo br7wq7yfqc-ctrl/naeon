@@ -6369,6 +6369,37 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																				fails.append("pad radar not 400m TPS after F-EVA ninth dirt land occupy (%s)" % snapped(rng_e10, 1.0))
 																			if near_e10n < 1:
 																				fails.append("pad radar missed pad after F-EVA ninth dirt land occupy")
+																			var ly_e10s := ""
+																			if LayerContext:
+																				ly_e10s = str(LayerContext.current_layer)
+																			var stack_e10 := ""
+																			var stack_e10_on := false
+																			var chip_e10 := ""
+																			if hud_e10 != null:
+																				var sl_e10: Variant = hud_e10.get("_os_stack")
+																				if sl_e10 is Label:
+																					stack_e10 = (sl_e10 as Label).text
+																					stack_e10_on = (sl_e10 as Label).visible
+																				var chip10: Variant = hud_e10.get("_layer_label")
+																				if chip10 is Label:
+																					chip_e10 = (chip10 as Label).text
+																			print("[Playtest] os stack F-EVA after ninth dirt land occupy layer=", ly_e10s,
+																				" vis=", stack_e10_on, " chip='", chip_e10.replace("\n", " / ").substr(0, 40),
+																				"' '", stack_e10.replace("\n", " / ").substr(0, 80), "'")
+																			if ly_e10s.to_upper().find("SPACE") >= 0:
+																				fails.append("os stack layer still SPACE after F-EVA ninth dirt land occupy")
+																			if ly_e10s.to_upper().find("SHIP") >= 0:
+																				fails.append("os stack layer still ship_int after F-EVA ninth dirt land occupy")
+																			if ly_e10s.to_upper().find("TPS") < 0 and ly_e10s.to_upper().find("SURFACE") < 0:
+																				fails.append("os stack layer not TPS after F-EVA ninth dirt land occupy (%s)" % ly_e10s)
+																			if not stack_e10_on:
+																				fails.append("os stack hidden after F-EVA ninth dirt land occupy")
+																			if chip_e10.to_upper().find("SHIP") >= 0:
+																				fails.append("layer chip still ship_int after F-EVA ninth dirt land occupy")
+																			if stack_e10.to_upper().find("OCCUPY") >= 0:
+																				fails.append("os stack occupy after F-EVA ninth dirt land occupy")
+																			if stack_e10.to_upper().find("0G") >= 0:
+																				fails.append("os stack EVA 0G after F-EVA ninth dirt land occupy")
 																		if os.has_method("try_enter_ship"):
 																			os.try_enter_ship()
 																		await get_tree().create_timer(0.3).timeout
