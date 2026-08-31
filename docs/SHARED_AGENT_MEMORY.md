@@ -418,6 +418,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-31 | Dirt land after I-hatch F-EVA fifteenth dirt F-board sink: Relief pad none. | dirt-land-after-fifteenth-dirt-ihatch-sink |
 | 2026-08-31 | F-EVA after sixteenth dirt land: hull-side Relief TPS. | feva-after-sixteenth-dirt-land |
 | 2026-08-31 | Occupy HUD walker after F-EVA sixteenth dirt land. | occupy-after-sixteenth-dirt-land |
+| 2026-08-31 | Pad-radar after F-EVA sixteenth dirt land occupy: 400m TPS. | pad-radar-after-sixteenth-dirt-land |
 | 2026-08-28 | ST-G: factory in existing PlayerOrbitalStation cluster. Bench (c) spend Contribution/Biomass → one catalog module. Without factory, (c) refuses. No SITE_*. ST-E stays dock+habitat. | st-g-factory |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
