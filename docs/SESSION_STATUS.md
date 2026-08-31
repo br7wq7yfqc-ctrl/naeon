@@ -1,3 +1,5 @@
+**2026-08-31 — Pad-radar after F-EVA tenth dirt land occupy is 400m TPS, not leftover 12km**
+
 **2026-08-31 — Occupy HUD after F-EVA tenth dirt land is walker, not leftover hull**
 
 **2026-08-31 — F-EVA after tenth dirt land is hull-side Relief TPS, not leftover 0G**
