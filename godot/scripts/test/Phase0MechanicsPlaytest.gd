@@ -8270,6 +8270,23 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																																		fails.append("I-hatch after F-EVA fifteenth dirt F-board not on Relief (%s)" % snapped(h15_agl, 0.01))
 																																	if bool(hatch15.get("interior_mode")) or bool(hatch15.get("eva_mode")) or bool(hatch15.get("zero_g")):
 																																		fails.append("I-hatch after F-EVA fifteenth dirt F-board still pocket/0G")
+																																	if os.has_method("_apply_dirt_exit_facing"):
+																																		os._apply_dirt_exit_facing()
+																																	var fw15: Vector3 = -hatch15.global_transform.basis.z
+																																	var rad15: Vector3 = hatch15.global_position - nex.global_position
+																																	if rad15.length_squared() < 0.01:
+																																		rad15 = Vector3.UP
+																																	rad15 = rad15.normalized()
+																																	var tan15: Vector3 = rad15.cross(fw15).cross(rad15)
+																																	if tan15.length_squared() < 0.0001:
+																																		tan15 = rad15.cross(Vector3.RIGHT).cross(rad15)
+																																	tan15 = tan15.normalized()
+																																	var align15: float = fw15.normalized().dot(tan15)
+																																	var nose15: float = fw15.normalized().dot(rad15)
+																																	print("[Playtest] facing after I-hatch F-EVA fifteenth dirt F-board align=", snapped(align15, 0.01),
+																																		" nose=", snapped(nose15, 0.01))
+																																	if align15 < 0.92:
+																																		fails.append("facing after I-hatch F-EVA fifteenth dirt F-board not hull-nose (%s)" % snapped(align15, 0.01))
 																																if os.has_method("try_enter_ship"):
 																																	os.try_enter_ship()
 																																await get_tree().create_timer(0.3).timeout
