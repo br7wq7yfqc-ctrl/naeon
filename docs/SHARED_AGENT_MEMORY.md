@@ -317,6 +317,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-31 | Pad-radar after F-EVA eighth dirt land occupy: 400 m TPS. | pad-radar-after-eighth-dirt-feva |
 | 2026-08-31 | OS-stack after F-EVA eighth dirt land occupy: TPS. | os-stack-after-eighth-dirt-feva |
 | 2026-08-31 | HOVER chase after F-EVA eighth dirt F-board: hull 12 km. | hover-chase-after-eighth-dirt-feva |
+| 2026-08-31 | I-hatch after F-EVA eighth dirt F-board: hull-side Relief. | ihatch-after-eighth-dirt-feva-board |
 | 2026-08-28 | ST-G: factory in existing PlayerOrbitalStation cluster. Bench (c) spend Contribution/Biomass → one catalog module. Without factory, (c) refuses. No SITE_*. ST-E stays dock+habitat. | st-g-factory |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
