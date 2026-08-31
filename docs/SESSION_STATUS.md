@@ -1,3 +1,5 @@
+**2026-08-31 — Coyote after I-hatch F-EVA thirteenth dirt F-board is near dirt, not leftover dead**
+
 **2026-08-31 — Facing after I-hatch F-EVA thirteenth dirt F-board is hull-nose tangent, not leftover radial**
 
 **2026-08-31 — I-hatch after F-EVA thirteenth dirt F-board is pocket ship_int then dirt hull-side Relief**
