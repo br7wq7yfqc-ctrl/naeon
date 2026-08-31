@@ -1,3 +1,5 @@
+**2026-08-31 — I-hatch after F-EVA seventh dirt F-board: hull-side Relief, not pocket/0G**
+
 **2026-08-31 — HOVER chase after F-EVA seventh dirt F-board: hull 12 km, not leftover walker**
 
 **2026-08-31 — OS-stack after F-EVA seventh dirt land occupy walker is TPS, not SPACE/ship_int/0G**
