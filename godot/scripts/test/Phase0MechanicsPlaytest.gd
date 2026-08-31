@@ -8730,6 +8730,24 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																																					fails.append("occupy HUD origin not walker after F-EVA seventeenth dirt land")
 																																				if otxt_e18.to_upper().find("PAD") >= 0 and otxt_e18.to_upper().find("OCCUPY") >= 0:
 																																					fails.append("occupy HUD PAD after F-EVA seventeenth dirt land")
+																																				var radar_e18: Variant = hud_e18.get("_radar") if hud_e18 else null
+																																				if radar_e18 is CanvasItem:
+																																					(radar_e18 as CanvasItem).visible = true
+																																				if hud_e18 != null and hud_e18.has_method("_refresh"):
+																																					hud_e18._refresh()
+																																				var rng_e18: float = float(hud_e18.get("_radar_range_m")) if hud_e18 else 0.0
+																																				var near_e18n := 0
+																																				if hud_e18 != null and hud_e18.has_method("radar_pad_contacts"):
+																																					near_e18n = hud_e18.radar_pad_contacts().size()
+																																				print("[Playtest] pad radar F-EVA after seventeenth dirt land 400m n=", near_e18n,
+																																					" range=", snapped(rng_e18, 1.0), " vis=",
+																																					(radar_e18 as CanvasItem).visible if radar_e18 is CanvasItem else "?")
+																																				if rng_e18 > 1000.0:
+																																					fails.append("pad radar used 12km after F-EVA seventeenth dirt land occupy (%s)" % snapped(rng_e18, 1.0))
+																																				if rng_e18 > 0.0 and rng_e18 < 200.0:
+																																					fails.append("pad radar not 400m TPS after F-EVA seventeenth dirt land occupy (%s)" % snapped(rng_e18, 1.0))
+																																				if near_e18n < 1:
+																																					fails.append("pad radar missed pad after F-EVA seventeenth dirt land occupy")
 																																				if os.has_method("try_enter_ship"):
 																																					os.try_enter_ship()
 																																				await get_tree().create_timer(0.3).timeout
