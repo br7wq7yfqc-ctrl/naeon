@@ -8846,6 +8846,23 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																																							fails.append("I-hatch after F-EVA seventeenth dirt F-board not on Relief (%s)" % snapped(h17_agl, 0.01))
 																																						if bool(hatch17.get("interior_mode")) or bool(hatch17.get("eva_mode")) or bool(hatch17.get("zero_g")):
 																																							fails.append("I-hatch after F-EVA seventeenth dirt F-board still pocket/0G")
+																																						if os.has_method("_apply_dirt_exit_facing"):
+																																							os._apply_dirt_exit_facing()
+																																						var fw17: Vector3 = -hatch17.global_transform.basis.z
+																																						var rad17: Vector3 = hatch17.global_position - nex.global_position
+																																						if rad17.length_squared() < 0.01:
+																																							rad17 = Vector3.UP
+																																						rad17 = rad17.normalized()
+																																						var tan17: Vector3 = rad17.cross(fw17).cross(rad17)
+																																						if tan17.length_squared() < 0.0001:
+																																							tan17 = rad17.cross(Vector3.RIGHT).cross(rad17)
+																																						tan17 = tan17.normalized()
+																																						var align17: float = fw17.normalized().dot(tan17)
+																																						var nose17: float = fw17.normalized().dot(rad17)
+																																						print("[Playtest] facing after I-hatch F-EVA seventeenth dirt F-board align=", snapped(align17, 0.01),
+																																							" nose=", snapped(nose17, 0.01))
+																																						if align17 < 0.92:
+																																							fails.append("facing after I-hatch F-EVA seventeenth dirt F-board not hull-nose (%s)" % snapped(align17, 0.01))
 																																						if os.has_method("try_enter_ship"):
 																																							os.try_enter_ship()
 																																						await get_tree().create_timer(0.3).timeout
