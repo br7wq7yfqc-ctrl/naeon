@@ -1,3 +1,5 @@
+**2026-08-31 — Ground-effect after I-hatch F-EVA fourth dirt F-board launch stays hull-side, not plate**
+
 **2026-08-31 — HOVER launch after I-hatch F-EVA fourth dirt F-board: hold AGL+12, retap 3 keeps it**
 
 **2026-08-30 — HOVER chase after I-hatch F-EVA fourth dirt F-board: hull 12 km, not leftover walker**
