@@ -336,6 +336,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-31 | Slope after I-hatch F-EVA ninth dirt F-board: PlanetRelief. | slope-after-ninth-dirt-ihatch |
 | 2026-08-31 | HOVER launch after I-hatch F-EVA ninth dirt F-board: AGL+12. | hover-launch-after-ninth-dirt-ihatch |
 | 2026-08-31 | GE after I-hatch F-EVA ninth dirt F-board launch: hull-side. | ge-after-ninth-dirt-ihatch-launch |
+| 2026-08-31 | HOVER sink after I-hatch F-EVA ninth dirt F-board launch: floor 4m. | hover-sink-after-ninth-dirt-ihatch |
 | 2026-08-28 | ST-G: factory in existing PlayerOrbitalStation cluster. Bench (c) spend Contribution/Biomass → one catalog module. Without factory, (c) refuses. No SITE_*. ST-E stays dock+habitat. | st-g-factory |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
