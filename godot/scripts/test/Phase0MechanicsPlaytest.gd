@@ -7918,6 +7918,32 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																													if os.has_method("try_enter_ship"):
 																														os.try_enter_ship()
 																													await get_tree().create_timer(0.3).timeout
+																													if not bool(os.get("_in_ship")):
+																														fails.append("reboard after F-EVA fourteenth dirt land refused")
+																													else:
+																														if os.has_method("reclaim_pilot_camera"):
+																															os.reclaim_pilot_camera()
+																														var hud_rb15: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+																														if hud_rb15 != null and hud_rb15.has_method("bind_player"):
+																															hud_rb15.bind_player(ship)
+																														if hud_rb15 != null and hud_rb15.has_method("_refresh"):
+																															hud_rb15._refresh()
+																														var origin_rb15: Node3D = null
+																														if hud_rb15 != null and hud_rb15.has_method("_occupy_origin"):
+																															origin_rb15 = hud_rb15.call("_occupy_origin") as Node3D
+																														var ly_rb15 := ""
+																														if LayerContext:
+																															ly_rb15 = str(LayerContext.current_layer)
+																														var rng_rb15: float = float(hud_rb15.get("_radar_range_m")) if hud_rb15 else 0.0
+																														print("[Playtest] F-board after F-EVA fourteenth dirt occupy origin=",
+																															origin_rb15.name if origin_rb15 else "null", " layer=", ly_rb15,
+																															" radar=", snapped(rng_rb15, 1.0))
+																														if origin_rb15 != null and origin_rb15 != ship:
+																															fails.append("occupy HUD origin still walker after F-EVA fourteenth dirt F-board")
+																														if ly_rb15.to_upper().find("SPACE") < 0:
+																															fails.append("layer not Space after F-EVA fourteenth dirt F-board (%s)" % ly_rb15)
+																														if rng_rb15 < 1000.0:
+																															fails.append("pad radar still 400m after F-EVA fourteenth dirt F-board (%s)" % snapped(rng_rb15, 1.0))
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
