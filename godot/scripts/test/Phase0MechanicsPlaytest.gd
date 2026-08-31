@@ -7842,6 +7842,30 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																															fails.append("F-EVA after fourteenth dirt land still EVA 0G")
 																														if ly_e15.to_upper().find("TPS") < 0:
 																															fails.append("F-EVA after fourteenth dirt land layer not TPS (%s)" % ly_e15)
+																														var hud_e15: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+																														if hud_e15 != null and hud_e15.has_method("bind_player"):
+																															hud_e15.bind_player(eva15)
+																														if hud_e15 != null and hud_e15.has_method("_refresh"):
+																															hud_e15._refresh()
+																														var origin_e15: Node3D = null
+																														if hud_e15 != null and hud_e15.has_method("_occupy_origin"):
+																															origin_e15 = hud_e15.call("_occupy_origin") as Node3D
+																														var otxt_e15 := ""
+																														if hud_e15 != null:
+																															var lab_e15: Variant = hud_e15.get("_owner_label")
+																															if lab_e15 is Label:
+																																otxt_e15 = (lab_e15 as Label).text
+																														print("[Playtest] occupy HUD F-EVA after fourteenth dirt land origin=",
+																															origin_e15.name if origin_e15 else "null",
+																															" '", otxt_e15.replace("\n", " / ").substr(0, 80), "'")
+																														if origin_e15 == null:
+																															fails.append("occupy HUD lost origin after F-EVA fourteenth dirt land")
+																														elif origin_e15 == ship:
+																															fails.append("occupy HUD origin still hull after F-EVA fourteenth dirt land")
+																														elif origin_e15 != eva15:
+																															fails.append("occupy HUD origin not walker after F-EVA fourteenth dirt land")
+																														if otxt_e15.to_upper().find("PAD") >= 0 and otxt_e15.to_upper().find("OCCUPY") >= 0:
+																															fails.append("occupy HUD PAD after F-EVA fourteenth dirt land")
 																													if os.has_method("try_enter_ship"):
 																														os.try_enter_ship()
 																													await get_tree().create_timer(0.3).timeout
