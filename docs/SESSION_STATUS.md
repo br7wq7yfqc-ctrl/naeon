@@ -1,3 +1,5 @@
+**2026-08-31 — HOVER sink after I-hatch F-EVA sixth dirt F-board launch: hold floor 4 m, not 8 m plate**
+
 **2026-08-31 — Ground-effect after I-hatch F-EVA sixth dirt F-board launch stays hull-side, not plate**
 
 **2026-08-31 — HOVER launch after I-hatch F-EVA sixth dirt F-board: hold AGL+12, retap 3 keeps it**
