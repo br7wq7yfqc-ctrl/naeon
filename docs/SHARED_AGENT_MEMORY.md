@@ -295,6 +295,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-31 | Facing after I-hatch F-EVA sixth dirt F-board: hull-nose. | facing-after-sixth-dirt-ihatch |
 | 2026-08-31 | Coyote after I-hatch F-EVA sixth dirt F-board: grace 0. | coyote-after-sixth-dirt-ihatch |
 | 2026-08-31 | Slope after I-hatch F-EVA sixth dirt F-board: Relief. | slope-after-sixth-dirt-ihatch |
+| 2026-08-31 | HOVER launch after I-hatch F-EVA sixth dirt F-board: AGL+12. | hover-launch-after-sixth-dirt-ihatch |
 | 2026-08-28 | ST-G: factory in existing PlayerOrbitalStation cluster. Bench (c) spend Contribution/Biomass → one catalog module. Without factory, (c) refuses. No SITE_*. ST-E stays dock+habitat. | st-g-factory |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
