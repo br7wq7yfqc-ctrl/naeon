@@ -7104,6 +7104,23 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																									fails.append("I-hatch after F-EVA eleventh dirt F-board not on Relief (%s)" % snapped(h11_agl, 0.01))
 																								if bool(hatch11.get("interior_mode")) or bool(hatch11.get("eva_mode")) or bool(hatch11.get("zero_g")):
 																									fails.append("I-hatch after F-EVA eleventh dirt F-board still pocket/0G")
+																								if os.has_method("_apply_dirt_exit_facing"):
+																									os._apply_dirt_exit_facing()
+																								var fw11: Vector3 = -hatch11.global_transform.basis.z
+																								var rad11: Vector3 = hatch11.global_position - nex.global_position
+																								if rad11.length_squared() < 0.01:
+																									rad11 = Vector3.UP
+																								rad11 = rad11.normalized()
+																								var tan11: Vector3 = rad11.cross(fw11).cross(rad11)
+																								if tan11.length_squared() < 0.0001:
+																									tan11 = rad11.cross(Vector3.RIGHT).cross(rad11)
+																								tan11 = tan11.normalized()
+																								var align11: float = fw11.normalized().dot(tan11)
+																								var nose11: float = fw11.normalized().dot(rad11)
+																								print("[Playtest] facing after I-hatch F-EVA eleventh dirt F-board align=", snapped(align11, 0.01),
+																									" nose=", snapped(nose11, 0.01))
+																								if align11 < 0.92:
+																									fails.append("facing after I-hatch F-EVA eleventh dirt F-board not hull-nose (%s)" % snapped(align11, 0.01))
 																							if os.has_method("try_enter_ship"):
 																								os.try_enter_ship()
 																							await get_tree().create_timer(0.3).timeout
