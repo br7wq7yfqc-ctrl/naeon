@@ -7344,6 +7344,30 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																								await get_tree().create_timer(0.3).timeout
 																								if not bool(os.get("_in_ship")):
 																									fails.append("reboard after F-EVA twelfth dirt land refused")
+																								else:
+																									if os.has_method("reclaim_pilot_camera"):
+																										os.reclaim_pilot_camera()
+																									var hud_rb13: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+																									if hud_rb13 != null and hud_rb13.has_method("bind_player"):
+																										hud_rb13.bind_player(ship)
+																									if hud_rb13 != null and hud_rb13.has_method("_refresh"):
+																										hud_rb13._refresh()
+																									var origin_rb13: Node3D = null
+																									if hud_rb13 != null and hud_rb13.has_method("_occupy_origin"):
+																										origin_rb13 = hud_rb13.call("_occupy_origin") as Node3D
+																									var ly_rb13 := ""
+																									if LayerContext:
+																										ly_rb13 = str(LayerContext.current_layer)
+																									var rng_rb13: float = float(hud_rb13.get("_radar_range_m")) if hud_rb13 else 0.0
+																									print("[Playtest] F-board after F-EVA twelfth dirt occupy origin=",
+																										origin_rb13.name if origin_rb13 else "null", " layer=", ly_rb13,
+																										" radar=", snapped(rng_rb13, 1.0))
+																									if origin_rb13 != null and origin_rb13 != ship:
+																										fails.append("occupy HUD origin still walker after F-EVA twelfth dirt F-board")
+																									if ly_rb13.to_upper().find("SPACE") < 0:
+																										fails.append("layer not Space after F-EVA twelfth dirt F-board (%s)" % ly_rb13)
+																									if rng_rb13 < 1000.0:
+																										fails.append("pad radar still 400m after F-EVA twelfth dirt F-board (%s)" % snapped(rng_rb13, 1.0))
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
