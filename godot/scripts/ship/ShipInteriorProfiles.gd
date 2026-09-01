@@ -1,6 +1,6 @@
 extends RefCounted
 class_name ShipInteriorProfiles
-## Catalog of interior room graphs per hull — pilot + one MC-A crew seat.
+## Catalog of interior room graphs per hull — pilot + one MC-A crew seat (MC-B gunner label).
 
 static func profile(id: String) -> Dictionary:
 	match id:

@@ -259,6 +259,17 @@ static func crew_label() -> String:
 	return "CREW"
 
 
+## MC-B: name the crew station role. Never Pulse / Hack / thrust / DPS / yield.
+static func crew_role_label(role: String = "gunner") -> String:
+	if str(role) != "gunner":
+		return ""
+	var combat := mastery("combat")
+	var logi := mastery("logistics")
+	if combat >= 15.0 or logi >= 15.0 or rank() >= 5:
+		return "GUNNER STATION"
+	return "GUNNER"
+
+
 ## Q-D: name the pad visitor as a giver. Never yield / DPS / exclusive modules.
 static func quest_giver_label() -> String:
 	var intel := mastery("quest_intel")

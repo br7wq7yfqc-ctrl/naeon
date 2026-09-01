@@ -92,6 +92,7 @@ func sync_from_host() -> void:
 		_puppet.visible = not host_in_crew
 	_pose = {
 		"seat_role": "crew",
+		"station_role": "gunner",
 		"puppet_in_seat": puppet_in_seat(),
 		"authority": "host",
 		"second_hull": false,
@@ -144,7 +145,7 @@ func _ensure_viewer() -> void:
 		mi.position = Vector3(0, 0.8, 0)
 		_viewer.add_child(mi)
 		var lab := Label3D.new()
-		lab.text = "CREW VIEWER (soft net)"
+		lab.text = "GUNNER VIEWER (soft net)"
 		lab.font_size = 20
 		lab.modulate = Color(0.7, 0.95, 1.0, 0.8)
 		lab.position = Vector3(0, 1.9, 0)
@@ -186,7 +187,7 @@ func _ensure_puppet() -> void:
 		_puppet.add_child(body)
 		var lab := Label3D.new()
 		lab.name = "PuppetLabel"
-		lab.text = "CREW PUPPET (soft net)"
+		lab.text = "GUNNER PUPPET (soft net)"
 		lab.font_size = 18
 		lab.modulate = Color(0.65, 0.95, 1.0, 0.75)
 		lab.position = Vector3(0, 2.0, 0)

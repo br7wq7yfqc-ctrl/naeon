@@ -7,6 +7,7 @@
 - **AR-F / AR-G:** `bind_visual_puppet` tags Clash bot slots (3v3 or 5v5). Host keeps combat. Do not `enable()` the 20Hz loop for those slots.
 - **IN-F:** same tag on hangar viewer + rover / stored-ghost puppet. Host keeps rover drive. Not a netcode cluster.
 - **MC-A:** same tag on ship-pocket viewer + crew-seat puppet. Host keeps hull / combat. No second physical hull. No passenger combat.
+- **MC-B:** same puppet. Station role `gunner` is a SoftKnowledge / HUD label. Host keeps combat. No passenger DPS.
 - **PV-A:** same tag on the pad rival `CombatDummy` + optional viewer. Host keeps Pulse combat. Not Clash. G5 stays closed.
 - **PV-B:** same tag / same rival. Seated hull Pulse is host-authority. SoftNet visual bind only. Not Clash. G5 stays closed.
 

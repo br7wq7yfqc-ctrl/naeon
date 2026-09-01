@@ -86,6 +86,17 @@ func get_seat_role() -> String:
 	return _seat_role if _seated else ""
 
 
+func crew_station_role() -> String:
+	## MC-B: named station on the MC-A crew seat. F/I role stays crew.
+	if _active != null and is_instance_valid(_active):
+		var seat: Node = _active.get_node_or_null("CrewSeat")
+		if seat != null:
+			var named := str(seat.get_meta("station_role", "gunner"))
+			if named != "":
+				return named
+	return "gunner"
+
+
 func crew_softnet() -> Node:
 	return _crew_net if _crew_net != null and is_instance_valid(_crew_net) else null
 
@@ -102,12 +113,23 @@ func crew_occupancy() -> Dictionary:
 		if bool(_crew_net.puppet_in_seat()):
 			crew = 1
 	var total := mini(pilot + crew, 2)
-	return {"pilot": pilot, "crew": crew, "total": total, "max": 2}
+	return {
+		"pilot": pilot,
+		"crew": crew,
+		"total": total,
+		"max": 2,
+		"role": crew_station_role(),
+	}
 
 
 func crew_hud_line() -> String:
 	var o: Dictionary = crew_occupancy()
-	return "%s %d/%d" % [_SoftK.crew_label(), int(o.get("total", 0)), int(o.get("max", 2))]
+	return "%s %d/%d · %s" % [
+		_SoftK.crew_label(),
+		int(o.get("total", 0)),
+		int(o.get("max", 2)),
+		_SoftK.crew_role_label(str(o.get("role", "gunner"))),
+	]
 
 
 func last_console_action() -> Dictionary:
@@ -783,7 +805,7 @@ func try_board_legal_seat(player: Node3D = null) -> bool:
 	elif _kind == "hangar_bay":
 		_toast("CARRIER PILOT · I leave · same pocket")
 	else:
-		_toast("CREW SEAT · I leave · same pocket")
+		_toast("CREW SEAT · %s · I leave · same pocket" % _SoftK.crew_role_label(crew_station_role()))
 	if _crew_net != null and is_instance_valid(_crew_net) and _crew_net.has_method("sync_from_host"):
 		_crew_net.sync_from_host()
 	print("[Interior] boarded legal seat role=", _seat_role, " kind=", _kind)
@@ -993,7 +1015,13 @@ func _process(delta: float) -> void:
 			elif lnm == "HangarSeatLabel":
 				(sl as Label3D).text = "CARRIER PILOT · I" if _seated else ("CARRIER PILOT · F" if near_legal else "CARRIER PILOT")
 			else:
-				(sl as Label3D).text = "CREW SEAT · I" if _seated and _seat_role == "crew" else ("CREW SEAT · F" if near_legal else "CREW SEAT")
+				var gun := _SoftK.crew_role_label(crew_station_role())
+				if _seated and _seat_role == "crew":
+					(sl as Label3D).text = "CREW SEAT · %s · I" % gun
+				elif near_legal:
+					(sl as Label3D).text = "CREW SEAT · %s · F" % gun
+				else:
+					(sl as Label3D).text = "CREW SEAT · %s" % gun
 	var hlab = _active.get_node_or_null("HatchLabel")
 	if hlab is Label3D:
 		var near_h := is_near_hatch(_player)
@@ -1355,6 +1383,14 @@ func _ensure_crew_softnet() -> void:
 	## Optional IN-F-style local viewer + crew-seat puppet. Host keeps authority.
 	if _kind != "ship" or _active == null or not is_instance_valid(_active):
 		return
+	var seat: Node = _active.get_node_or_null("CrewSeat")
+	if seat != null:
+		seat.set_meta("station_role", "gunner")
+		seat.set_meta("crew_role", "gunner")
+	var vol: Node = _active.get_node_or_null("CrewSeatVolume")
+	if vol != null:
+		vol.set_meta("station_role", "gunner")
+		vol.set_meta("crew_role", "gunner")
 	if _crew_net != null and is_instance_valid(_crew_net):
 		if _crew_net.get_parent() != _active:
 			_crew_net.reparent(_active, true)

@@ -72,6 +72,10 @@
     HUD CREW n/2 is a label only — Knowledge does not change thrust /
     DPS / yield. Host authority. Optional SoftNet visual puppet.
     No second hull. No passenger combat. No SITE_* (this pass).
+28. MC-B: that crew seat is named gunner (SoftKnowledge / HUD GUNNER).
+    HUD CREW n/2 plus role. Knowledge does not change Pulse / Hack /
+    thrust / DPS / yield. F/I role stays crew. Host authority.
+    No second hull. Not Clash. No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

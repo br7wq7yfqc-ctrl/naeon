@@ -104,7 +104,7 @@ PV-B: first Space PvP from the seated player hull — same host-authority pad ri
 
 ### Задачи
 - Seamless / loading transition (ship → TPS)
-- Multi-crew (2–4 игрока, роли) — **MC-A built:** one extra `CrewSeat` on the player hull pocket (local-first, host authority; HUD CREW label only)
+- Multi-crew (2–4 игрока, роли) — **MC-A + MC-B built:** one extra `CrewSeat` on the player hull pocket; station role `gunner` is a SoftKnowledge / HUD label only (local-first, host authority; CREW n/2 stays)
 - AI-bots (Cybernex animal-robots + gROT swarms) — BehaviorTree / Navigation — **BT-A built:** one pad-guard on an occupied unnamed pad (tiny 3-state GDScript BT: patrol / engage Pulse / return-to-pad; host authority; Pulse 11; Knowledge labels only; PV-A rival stays distinct; G5 closed; not Clash waves). **BT-B built:** one visitor `NpcPilot` (approach / hold / leave; hold keeps NP-B occupy/harvest; host authority; Pulse 11; BT-A stays; G5 closed; not Clash waves; not 10k CCU)
 - Basic Strategy / Space / TPS PvP — **PV-A built** (TPS on occupied unnamed pad) + **PV-B built** (seated hull on OpenSpace): same host-authority rival `CombatDummy` / SoftNet visual; Pulse 11 both ways; win = rival HP → 0; no permadeath; Infection cap 5; Knowledge labels only; G5 closed; no `SITE_*`
 - RBE / Biomass pools + Contribution / Biomass Rank
