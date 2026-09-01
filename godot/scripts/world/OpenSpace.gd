@@ -921,6 +921,10 @@ func commit_presence(kind: String) -> void:
 				if player.has_method("_near_dirt_floor") and bool(player.call("_near_dirt_floor")):
 					player.set("_coyote_t", 0.14)
 					player.set("_spawn_grace_t", 0.0)
+					if player.has_method("_update_up"):
+						player._update_up()
+					if player.has_method("_relief_slope_rad") and "last_slope_ang" in player:
+						player.set("last_slope_ang", float(player.call("_relief_slope_rad")))
 			if LayerContext:
 				LayerContext.set_layer("TPS")
 				LayerContext.seamless_stage = "surface"
