@@ -1712,14 +1712,14 @@ func _unboard_rover() -> void:
 
 
 func _try_board_pocket_seat() -> bool:
-	## Station ops / hangar carrier seat. Stays in the same pocket. Not ship pilot.
+	## Station ops / hangar carrier / MC-A ship crew. Stays in the same pocket. Not ship pilot.
 	if _interior == null or not is_instance_valid(_interior):
 		return false
 	if not _interior.has_method("is_inside") or not bool(_interior.is_inside()):
 		return false
 	if _interior.has_method("get_kind"):
 		var k := str(_interior.get_kind())
-		if k != "station" and k != "hangar_bay":
+		if k != "station" and k != "hangar_bay" and k != "ship":
 			return false
 	if player == null or not is_instance_valid(player):
 		return false

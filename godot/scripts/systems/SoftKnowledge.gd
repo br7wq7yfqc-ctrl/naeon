@@ -241,6 +241,14 @@ static func life_bus_label() -> String:
 	return "LS"
 
 
+## MC-A: name the hull crew count. Never changes thrust / DPS / yield.
+static func crew_label() -> String:
+	var logi := mastery("logistics")
+	if logi >= 15.0 or rank() >= 5:
+		return "CREW MANIFEST"
+	return "CREW"
+
+
 ## Q-C: Learning Node subject label. story ≠ power. Never yield / DPS / modules.
 static func field_intel_label() -> String:
 	var intel := mastery("field_intel")

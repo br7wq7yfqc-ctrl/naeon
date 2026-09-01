@@ -1,6 +1,6 @@
 extends RefCounted
 class_name ShipInteriorProfiles
-## Catalog of interior room graphs per hull — single-seat included.
+## Catalog of interior room graphs per hull — pilot + one MC-A crew seat.
 
 static func profile(id: String) -> Dictionary:
 	match id:
@@ -18,6 +18,7 @@ static func profile(id: String) -> Dictionary:
 					{"rel": "props/control_console/control_console_%s_lod1.glb", "pos": Vector3(1.5, 0, 9), "s": 0.8},
 				],
 				"seat": Vector3(0, 1.0, 0.5),
+				"crew_seat": Vector3(-1.4, 1.0, 1.85),
 				"hatch": Vector3(0, 1.2, 16.5),
 			}
 		"hauler_cargo":
@@ -34,6 +35,7 @@ static func profile(id: String) -> Dictionary:
 					{"rel": "props/sci_fi_crate/sci_fi_crate_%s_lod2.glb", "pos": Vector3(-2, 0, 14), "s": 0.8},
 				],
 				"seat": Vector3(0, 1.0, 0.5),
+				"crew_seat": Vector3(-1.5, 1.0, 1.9),
 				"hatch": Vector3(0, 1.2, 23.5),
 			}
 		_:
@@ -49,6 +51,7 @@ static func profile(id: String) -> Dictionary:
 					{"rel": "props/storage_barrel/storage_barrel_%s_lod2.glb", "pos": Vector3(-1.1, 0, 5.5), "s": 0.45},
 				],
 				"seat": Vector3(0, 0.95, 0.4),
+				"crew_seat": Vector3(-1.35, 0.95, 1.7),
 				"hatch": Vector3(0, 1.1, 7.2),
 			}
 
