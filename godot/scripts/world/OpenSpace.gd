@@ -887,7 +887,7 @@ func reclaim_pilot_camera() -> void:
 
 
 func commit_presence(kind: String) -> void:
-	## Atomic seat/hatch/board. Layer + HUD + radar follow `_in_ship`, not leftovers.
+	## Atomic seat/hatch/board. Layer + HUD + radar + camera follow `_in_ship`.
 	## kind: pilot | pocket | walker | eva
 	match kind:
 		"pilot":
@@ -896,7 +896,7 @@ func commit_presence(kind: String) -> void:
 			if LayerContext:
 				LayerContext.set_layer("Space")
 				LayerContext.seamless_stage = "world"
-			reclaim_pilot_camera()
+			_bind_presence_camera("pilot")
 			_bind_presence_hud(ship)
 		"pocket":
 			_in_ship = false
@@ -904,6 +904,7 @@ func commit_presence(kind: String) -> void:
 			if LayerContext:
 				LayerContext.set_layer("ship_int")
 				LayerContext.seamless_stage = "pocket"
+			_bind_presence_camera("pocket")
 			_bind_presence_hud(player)
 		"walker":
 			_in_ship = false
@@ -920,16 +921,39 @@ func commit_presence(kind: String) -> void:
 			if LayerContext:
 				LayerContext.set_layer("TPS")
 				LayerContext.seamless_stage = "surface"
+			_bind_presence_camera("walker")
 			_bind_presence_hud(player)
 		"eva":
 			_in_ship = false
 			_eva_mode = true
+			if player != null and is_instance_valid(player) and "interior_mode" in player:
+				player.interior_mode = false
 			if LayerContext:
 				LayerContext.set_layer("TPS")
 				LayerContext.seamless_stage = "eva"
+			_bind_presence_camera("eva")
 			_bind_presence_hud(player)
 		_:
 			return
+
+
+func _bind_presence_camera(kind: String) -> void:
+	## Hatch must not leave the hull chase cam current; board must not leave TPS.
+	if kind == "pilot":
+		reclaim_pilot_camera()
+		return
+	if ship != null and is_instance_valid(ship):
+		var scam: Camera3D = ship.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+		if scam != null:
+			scam.current = false
+			scam.clear_current(false)
+	if player == null or not is_instance_valid(player):
+		return
+	var wcam: Camera3D = player.get_node_or_null("CamPivot/Camera3D") as Camera3D
+	if wcam == null and "camera" in player:
+		wcam = player.camera as Camera3D
+	if wcam != null:
+		wcam.current = true
 
 
 func _bind_presence_hud(actor: Node) -> void:
@@ -1848,8 +1872,6 @@ func _leave_seat_to_pocket() -> void:
 	player = _make_fallback_player()
 	player.set("interior_mode", true)
 	add_child(player)
-	if LayerContext:
-		LayerContext.set_layer("ship_int")
 	if player.has_method("_bind_hud"):
 		player._bind_hud()
 	if _interior != null and is_instance_valid(_interior) and _interior.has_method("enter_ship"):
@@ -1867,8 +1889,6 @@ func place_from_ship_pocket(walker: Node3D) -> void:
 	_in_ship = false
 	var landed := bool(ship.get("is_landed"))
 	_eva_mode = not landed
-	if LayerContext:
-		LayerContext.set_layer("TPS" if landed else "Space")
 	if walker.has_method("set_planet_gravity_provider"):
 		walker.set_planet_gravity_provider(self)
 	if landed:

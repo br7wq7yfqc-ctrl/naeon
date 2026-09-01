@@ -9422,24 +9422,24 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																																											fails.append("I-hatch after F-EVA nineteenth dirt F-board not on Relief (%s)" % snapped(h19_agl, 0.01))
 																																										if bool(hatch19.get("interior_mode")) or bool(hatch19.get("eva_mode")) or bool(hatch19.get("zero_g")):
 																																											fails.append("I-hatch after F-EVA nineteenth dirt F-board still pocket/0G")
-																																											var ly_root := str(LayerContext.current_layer) if LayerContext else ""
-																																											var hud_root: Node = get_tree().get_first_node_in_group("game_hud")
-																																											if hud_root != null and hud_root.has_method("_refresh"):
-																																												hud_root._refresh()
-																																											var rng_root: float = float(hud_root.get("_radar_range_m")) if hud_root else 0.0
-																																											var orig_root: Node = hud_root.call("_occupy_origin") if hud_root != null and hud_root.has_method("_occupy_origin") else null
-																																											print("[Playtest] presence root after I-hatch 19 layer=", ly_root,
-																																												" radar=", snapped(rng_root, 1.0),
-																																												" origin_walker=", orig_root != null and orig_root.has_method("set_spawn_facing"),
-																																												" in_ship=", os.get("_in_ship"))
-																																											if ly_root.to_upper().find("TPS") < 0:
-																																												fails.append("presence root after I-hatch 19 not TPS (%s)" % ly_root)
-																																											if rng_root > 500.0:
-																																												fails.append("presence root after I-hatch 19 radar leftover 12km (%s)" % snapped(rng_root, 1.0))
-																																											if orig_root == null or orig_root == ship or not orig_root.has_method("set_spawn_facing"):
-																																												fails.append("presence root after I-hatch 19 occupy origin not walker")
-																																											if bool(os.get("_in_ship")):
-																																												fails.append("presence root after I-hatch 19 still in_ship")
+																																										var ly_root := str(LayerContext.current_layer) if LayerContext else ""
+																																										var hud_root: Node = get_tree().get_first_node_in_group("game_hud")
+																																										if hud_root != null and hud_root.has_method("_refresh"):
+																																											hud_root._refresh()
+																																										var rng_root: float = float(hud_root.get("_radar_range_m")) if hud_root else 0.0
+																																										var orig_root: Node = hud_root.call("_occupy_origin") if hud_root != null and hud_root.has_method("_occupy_origin") else null
+																																										print("[Playtest] presence root after I-hatch 19 layer=", ly_root,
+																																											" radar=", snapped(rng_root, 1.0),
+																																											" origin_walker=", orig_root != null and orig_root.has_method("set_spawn_facing"),
+																																											" in_ship=", os.get("_in_ship"))
+																																										if ly_root.to_upper().find("TPS") < 0:
+																																											fails.append("presence root after I-hatch 19 not TPS (%s)" % ly_root)
+																																										if rng_root > 500.0:
+																																											fails.append("presence root after I-hatch 19 radar leftover 12km (%s)" % snapped(rng_root, 1.0))
+																																										if orig_root == null or orig_root == ship or not orig_root.has_method("set_spawn_facing"):
+																																											fails.append("presence root after I-hatch 19 occupy origin not walker")
+																																										if bool(os.get("_in_ship")):
+																																											fails.append("presence root after I-hatch 19 still in_ship")
 																																										if os.has_method("try_enter_ship"):
 																																											os.try_enter_ship()
 																																										await get_tree().create_timer(0.3).timeout
