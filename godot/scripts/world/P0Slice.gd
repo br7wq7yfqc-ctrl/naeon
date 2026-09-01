@@ -70,6 +70,10 @@ const HF_A_HACK := true
 ## HF-B: same Hack / Firewall from the seated player hull (OpenSpace, not Clash).
 ## Targets a pad-guard CombatDummy or visiting NpcPilot hull. Same cap / refuse.
 const HF_B_HULL := true
+## HF-C: same Hack / Firewall from ST-A Strategy overlay (key B) on an occupied
+## unnamed pad. Pad-guard dummy or pad InfectionStatus. Same cap / refuse.
+## Not a second ability system. Not G2. Not Voice.
+const HF_C_OVERLAY := true
 ## PV-A: first TPS PvP on an occupied unnamed pad. One host-authority rival
 ## CombatDummy takes Pulse and deals Pulse back (DPS 11). Win = rival HP → 0.
 ## No permadeath. Infection cap 5. Knowledge labels only. G5 stays closed.

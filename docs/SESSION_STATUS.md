@@ -1,3 +1,5 @@
+**2026-09-01 — HF-C: Strategy overlay (B) Hack / Firewall on occupied unnamed pad (same AbilitySystem; +1 / cap 5 refuse / Firewall −1; ST-A still opens)**
+
 **2026-09-01 — Q-E: one extra ContractBoard template scan_extractor (ST-B extractor SoftKnowledge; quest_intel; numbers stay)**
 
 **2026-09-01 — SN-A: second local viewer on occupied unnamed pad sees SoftNet visual SurfaceWalker puppet (host Pulse/occupy; no second walker; G5 closed)**
@@ -734,6 +736,7 @@ NP-H: after NP-B occupy/harvest the visitor queues **one** catalog module on the
 NP-I: after NP-B occupy/harvest the visitor spends Contribution/Biomass at the player-cluster factory bench (c) (same ST-G path) → **one** catalog module. Without factory → refuse. Without spend → refuse. No cash-shop skip. Knowledge labels the factory only. Not hangar (b). Not pad bench (a). Not a second NP-C habitat. Not a mobile `SITE_*`. NP-G / NP-H stay.  
 HF-A: after EVA/occupy on an unnamed pad (same OpenSpace), gROT Hack applies **+1** Infection stack to a CombatDummy / pad-guard. Cap 5 stays; refuse at 5 with `Infection cap 5`. Cybernex Firewall removes **1** stack (never below 0). Knowledge labels the stack only. DPS / yield / thrust stay. No unique weapon. No cash-shop cleanse. Not a minigame. Not Voice. Not G2.  
 HF-B: from the seated player hull (OpenSpace, not Clash), the same AbilitySystem Hack / Firewall hits a nearby pad-guard CombatDummy or visiting NpcPilot hull. +1 / cap 5 refuse / Firewall −1. Knowledge labels only. DPS / yield / thrust stay. TPS HF-A still works after EVA. No second ability system. No cash-shop cleanse. Not Voice. Not G2.  
+HF-C: while ST-A Strategy overlay is open (key B) on an occupied unnamed pad, the same AbilitySystem Hack / Firewall hits the pad-guard dummy or pad InfectionStatus. +1 / cap 5 refuse / Firewall −1. Knowledge labels only. Esc/B leaves; ship + TPS stay. TPS HF-A and hull HF-B still work after leaving. No second ability system. No `SITE_*`. Not Voice. Not G2.  
 PV-A: on an occupied unnamed pad (`Pad_North` / `Pad_Approach` / `Pad_Flank`), one host-authority rival `CombatDummy` takes Pulse from the player walker and deals Pulse back (DPS 11). Win = rival HP → 0. No permadeath. Infection cap 5. Knowledge labels only. Clash HUD / TestArena unchanged. G5 stays closed. No `SITE_*`.  
 PV-B: from the seated player hull (OpenSpace, not Clash), the same host-authority pad rival takes Pulse and deals Pulse back (DPS 11). Win = rival HP → 0. No permadeath. Infection cap 5. Knowledge labels only. TPS PV-A still works after EVA. SoftNet visual bind only. G5 stays closed. No `SITE_*`.  
 BT-A: one occupied unnamed-pad guard (`PadGuardDummy`) walks a tiny 3-state GDScript BT — patrol near the plate, engage the player `SurfaceWalker` with Pulse (DPS 11), return-to-pad when the walker leaves. Host authority. Knowledge labels only. PV-A `PadRivalDummy` stays a distinct actor. Not Clash waves. Not 10k CCU. G5 stays closed. No `SITE_*`.  
@@ -784,6 +787,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | Q-E scan_extractor | **built** — same board rolls scan_extractor; ST-B extractor SoftKnowledge; quest_intel only; numbers stay |
 | HF-A Hack / Firewall | **built** — +1 stack on dummy/guard; cap 5 refuse; Firewall −1; Knowledge label only |
 | HF-B hull Hack / Firewall | **built** — seated hull +1 / cap 5 refuse / Firewall −1; dummy or visitor; TPS HF-A stays |
+| HF-C overlay Hack / Firewall | **built** — ST-A Strategy overlay +1 / cap 5 refuse / Firewall −1; pad-guard or pad InfectionStatus; HF-A/B stay |
 | PV-A pad TPS PvP | **built** — occupied unnamed pad; host-authority rival dummy; Pulse 11 both ways; win HP 0; G5 closed |
 | PV-B hull Space PvP | **built** — seated hull Pulse 11 vs same PadPvp rival; rival Pulse back; win HP 0; TPS PV-A stays |
 | BT-A pad-guard BT | **built** — patrol / engage Pulse / return-to-pad; host authority; Pulse 11; PV-A rival distinct; G5 closed |

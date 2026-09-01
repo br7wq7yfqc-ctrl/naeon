@@ -1327,7 +1327,7 @@ func _update_hud() -> void:
 	if strategy_overlay_active() and _strategy.has_method("readiness_line"):
 		var ov := str(_strategy.readiness_line())
 		hud_label.visible = true
-		hud_label.text = ov + "  ·  Esc leave"
+		hud_label.text = ov + "  ·  Q hack  E firewall  ·  Esc leave"
 		return
 	var pl: Node3D = nearest_planet(ship.global_position)
 	var alt := 0.0
