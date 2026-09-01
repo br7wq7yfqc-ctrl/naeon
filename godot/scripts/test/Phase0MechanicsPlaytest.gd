@@ -44,6 +44,7 @@ func _go() -> void:
 	if _ritual_only:
 		await _npc_hangar_queue(fails)
 		await _npc_factory_print(fails)
+		await _assert_q_d(os, fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
 
@@ -62,6 +63,7 @@ func _go() -> void:
 	await _assert_q_a(os, fails)
 	await _assert_q_b(os, fails)
 	await _assert_q_c(os, fails)
+	await _assert_q_d(os, fails)
 	await _assert_ar_f(os, fails)
 	await _assert_ar_g(os, fails)
 	_assert_se_a(os, fails)
@@ -15227,6 +15229,202 @@ func _assert_q_c(os: Node, fails: PackedStringArray) -> void:
 		if absf(float(guard.get("max_health")) - hp0) > 0.01:
 			fails.append("Q-C changed guard HP")
 	print("[Playtest] Q-C learning node · Knowledge label only · no P2W")
+
+
+func _assert_q_d(os: Node, fails: PackedStringArray) -> void:
+	## Q-D: pad visitor offers the same Q-A ContractBoard id.
+	## Player accepts from the NPC. Complete → quest_intel. Numbers stay.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var Board = load("res://scripts/systems/ContractBoard.gd")
+	var nex: Node = _osh_nex()
+	var pad: Node = _in_a_occupied_pad(os)
+	var traffic: Node = null
+	var pilot: Node = null
+	var offer: Dictionary = {}
+	var board_offer: Dictionary = {}
+	var done: Dictionary = {}
+	var tmpl := ""
+	var cid := ""
+	var npc_id := ""
+	var host := ""
+	var lab0 := ""
+	var lab1 := ""
+	var harvest0 := 0.0
+	var harvest1 := 0.0
+	var print0 := 0.0
+	var print1 := 0.0
+	var hangar_m0 := 0.0
+	var hangar_m1 := 0.0
+	var hangar_p0 := 0.0
+	var hangar_p1 := 0.0
+	var rate0 := 0.0
+	var rate1 := 0.0
+	var bench: Node = null
+	var qb0: Dictionary = {}
+	var qb1: Dictionary = {}
+	var field0 := 0.0
+	var field1 := 0.0
+	var field_lab0 := ""
+	var field_lab1 := ""
+	var paid := true
+	var skip_ok := true
+	var modu := true
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	if P0 == null or not bool(P0.Q_D_GIVER) or not bool(P0.Q_A_CONTRACT):
+		fails.append("Q-D P0Slice flag missing")
+		return
+	if Board == null or not Board.has_method("offer_one"):
+		fails.append("Q-D ContractBoard missing")
+		return
+	if nex != null and nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.2).timeout
+	if nex != null and nex.has_method("pad_traffic"):
+		traffic = nex.call("pad_traffic")
+	if traffic == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("pad_traffic")
+		if not listed.is_empty():
+			traffic = listed[0]
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("Q-D pad traffic missing")
+		return
+	pilot = traffic.get_npc_pilot() if traffic.has_method("get_npc_pilot") else null
+	if pilot == null or not pilot.has_method("offer_player_contract"):
+		fails.append("Q-D pad visitor cannot offer the board")
+		return
+	if not pilot.has_method("accept_player_contract"):
+		fails.append("Q-D player cannot accept from the NPC")
+		return
+	if not pilot.has_method("print_one_catalog_module"):
+		fails.append("Q-D broke NP-G bench print")
+	if not pilot.has_method("queue_one_hangar_module"):
+		fails.append("Q-D broke NP-H hangar queue")
+	if not pilot.has_method("print_one_factory_module"):
+		fails.append("Q-D broke NP-I factory print")
+	if pad == null and traffic.get_parent() is Node3D:
+		pad = traffic.get_parent()
+	if pad != null and pad.has_method("print_bench"):
+		bench = pad.print_bench()
+	if pad != null and pad.has_method("tier_budget"):
+		var bud: Dictionary = pad.tier_budget()
+		harvest0 = float(bud.get("harvest", 0.0))
+		print0 = float(bud.get("print_cost", 0.0))
+		hangar_m0 = float(bud.get("hangar_mass", 0.0))
+		hangar_p0 = float(bud.get("hangar_power", 0.0))
+	if pad != null and "extract_rate" in pad:
+		rate0 = float(pad.get("extract_rate"))
+	if bench != null and bench.has_method("print_cost"):
+		print0 = float(bench.print_cost())
+	qb0 = Board.alliance_snapshot()
+	if GameManager:
+		field0 = float(GameManager.subject_mastery.get("field_intel", 0.0))
+		GameManager.subject_mastery["quest_intel"] = 0.0
+	field_lab0 = SoftKnowledge.field_intel_label()
+	lab0 = SoftKnowledge.contract_intel_label()
+	if Board.has_method("reset_slice"):
+		Board.reset_slice()
+	host = str(pad.name) if pad != null else "Pad_North"
+	offer = pilot.offer_player_contract()
+	board_offer = Board.offer_one(host, "Nex-Prime")
+	cid = str(offer.get("id", ""))
+	npc_id = str(pilot.offered_player_contract_id()) if pilot.has_method("offered_player_contract_id") else cid
+	tmpl = str(offer.get("template", ""))
+	print("[Playtest] Q-D NPC offers same board id=", cid, " npc=", npc_id,
+		" board=", board_offer.get("id", ""), " template=", tmpl)
+	if offer.is_empty() or cid == "":
+		fails.append("Q-D NPC did not offer a contract")
+		return
+	if cid != str(board_offer.get("id", "")) or cid != npc_id:
+		fails.append("Q-D NPC id is not the Q-A board (%s / %s / %s)" % [
+			cid, npc_id, board_offer.get("id", "")
+		])
+	if not cid.begins_with("QA-"):
+		fails.append("Q-D invented a second quest id (%s)" % cid)
+	if cid.begins_with("QB-") or cid.begins_with("QD-") or cid.begins_with("SITE_"):
+		fails.append("Q-D used alliance/second/SITE id (%s)" % cid)
+	if not Board.templates().has(tmpl):
+		fails.append("Q-D unknown template (%s)" % tmpl)
+	if str(offer.get("body", "")) != "Nex-Prime":
+		fails.append("Q-D contract left the ARK body")
+	if Board.cash_shop_skip_possible() or bool(Board.try_cash_skip()):
+		fails.append("Q-D cash-shop skip possible")
+	skip_ok = bool(Board.try_cash_skip())
+	paid = bool(Board.try_pay_complete(999.0))
+	if not pilot.accept_player_contract(999.0).is_empty():
+		fails.append("Q-D pay-to-complete accepted on NPC")
+	modu = bool(Board.try_unlock_exclusive_module("extractor"))
+	if skip_ok or paid or modu or SoftKnowledge.exclusive_module_unlocked("extractor"):
+		fails.append("Q-D cash-shop skip / pay-to-complete / exclusive module")
+	offer = pilot.accept_player_contract()
+	if str(offer.get("status", "")) != "accepted":
+		fails.append("Q-D did not accept from the NPC")
+	match tmpl:
+		"occupy":
+			if pad != null and pad.has_method("claim"):
+				pad.claim("Cybernex", 0.55)
+		"harvest":
+			if pad != null and "crystal_reserves" in pad:
+				pad.crystal_reserves = maxf(float(pad.crystal_reserves), 8.0)
+			if pad != null and pad.has_method("_tick_harvest"):
+				pad._tick_harvest(0.5)
+		"deliver_crate":
+			if ship != null:
+				var hold: Node = ship.get_node_or_null("CargoHold")
+				if hold != null and hold.has_method("store_unit"):
+					hold.store_unit(CargoHold.make_crate("qd_crate"))
+			if pad != null and pad.has_method("ensure_pad_cargo"):
+				pad.ensure_pad_cargo(1)
+		_:
+			fails.append("Q-D cannot complete template (%s)" % tmpl)
+	await get_tree().process_frame
+	if Board.has_method("note_progress"):
+		Board.note_progress(tmpl)
+	if pilot.has_method("try_complete_player_contract"):
+		done = pilot.try_complete_player_contract()
+	else:
+		done = Board.try_complete()
+	lab1 = SoftKnowledge.contract_intel_label()
+	print("[Playtest] Q-D complete template=", tmpl, " status=", done.get("status", ""),
+		" Knowledge ", lab0, " → ", lab1)
+	if str(done.get("status", "")) != "complete":
+		fails.append("Q-D did not complete template (%s)" % tmpl)
+	if lab1 == lab0 or lab1 != "PAD INTEL":
+		fails.append("Q-D Knowledge label did not change (%s → %s)" % [lab0, lab1])
+	if pad != null and pad.has_method("tier_budget"):
+		var bud1: Dictionary = pad.tier_budget()
+		harvest1 = float(bud1.get("harvest", -1.0))
+		print1 = float(bud1.get("print_cost", -1.0))
+		hangar_m1 = float(bud1.get("hangar_mass", -1.0))
+		hangar_p1 = float(bud1.get("hangar_power", -1.0))
+	if pad != null and "extract_rate" in pad:
+		rate1 = float(pad.get("extract_rate"))
+	if bench != null and bench.has_method("print_cost"):
+		print1 = float(bench.print_cost())
+	qb1 = Board.alliance_snapshot()
+	if GameManager:
+		field1 = float(GameManager.subject_mastery.get("field_intel", 0.0))
+	field_lab1 = SoftKnowledge.field_intel_label()
+	print("[Playtest] Q-D harvest/print/hangar/Q-A/Q-B/Q-C ", snapped(harvest0, 0.01), "/",
+		snapped(print0, 0.01), "/", snapped(hangar_m0, 0.01), " → ",
+		snapped(harvest1, 0.01), "/", snapped(print1, 0.01), "/", snapped(hangar_m1, 0.01))
+	if harvest0 > 0.0 and absf(harvest1 - harvest0) > 0.0001:
+		fails.append("Q-D harvest number changed (%s → %s)" % [harvest0, harvest1])
+	if print0 > 0.0 and absf(print1 - print0) > 0.0001:
+		fails.append("Q-D print number changed (%s → %s)" % [print0, print1])
+	if hangar_m0 > 0.0 and (absf(hangar_m1 - hangar_m0) > 0.0001 or absf(hangar_p1 - hangar_p0) > 0.0001):
+		fails.append("Q-D hangar numbers changed")
+	if absf(rate1 - rate0) > 0.0001:
+		fails.append("Q-D extract_rate changed")
+	if str(qb1.get("id", "")) != str(qb0.get("id", "")) \
+			or str(qb1.get("status", "")) != str(qb0.get("status", "")):
+		fails.append("Q-D overwrote Q-B contract (%s/%s → %s/%s)" % [
+			qb0.get("id", ""), qb0.get("status", ""), qb1.get("id", ""), qb1.get("status", "")
+		])
+	if absf(field1 - field0) > 0.0001 or field_lab1 != field_lab0:
+		fails.append("Q-D changed Q-C Knowledge (%s/%s → %s/%s)" % [
+			field0, field_lab0, field1, field_lab1
+		])
+	print("[Playtest] Q-D NPC same board id · quest_intel · no P2W")
 
 
 func _assert_ar_f(os: Node, fails: PackedStringArray) -> void:

@@ -1,3 +1,5 @@
+**2026-09-01 — Q-D: pad visitor offers the same Q-A ContractBoard id (accept from NPC; quest_intel; numbers stay)**
+
 **2026-09-01 — NP-I: NPC prints one catalog module at player-cluster factory bench (c) (ST-G spend; refuse without factory)**
 
 **2026-09-01 — NP-H: NPC queues one catalog module on ST-D hangar (mass/power refuse; no SITE_*)**
@@ -702,6 +704,7 @@ WF-A: denser crate/debris on the three unnamed Nex-Prime pads from existing ledg
 Q-A: IN-B station ops console on an occupied unnamed pad offers **one** generated contract (`occupy` / `harvest` / `deliver_crate`) on Nex-Prime. Complete → SoftKnowledge `quest_intel` label (`CONTRACT` → `PAD INTEL`). Harvest / print / hangar numbers stay. No cash-shop skip. No pay-to-complete. No Knowledge-gated exclusive weapons/modules. Not a campaign. Not a second knowledge system.  
 Q-B: one alliance-shared `occupy` / `logistics` contract on the same unnamed pad / ARK body. The two NP-E NPCs see the **same** ContractBoard id. Complete → SoftKnowledge `alliance_intel` label (`ALLY` → `ALLY INTEL`). Harvest / print / hangar / Q-A numbers stay. No pay-to-complete. No pay-to-rank. No Knowledge-gated exclusive modules. Intent ≠ siege. Not a second quest or knowledge system.  
 Q-C: one optional Learning Node on a Q-A `harvest` / `deliver_crate` contract. Interact reads pad / extractor / crate via SoftKnowledge. Complete → `field_intel` label (`FIELD` → `FIELD INTEL`). Harvest / print / hangar / Q-A / Q-B numbers stay. No exclusive modules. Not a second knowledge system.  
+Q-D: the existing pad visitor (`NpcPilot`) offers the **same** Q-A ContractBoard id (`occupy` / `harvest` / `deliver_crate` on Nex-Prime). Player accepts from that NPC. Complete → SoftKnowledge `quest_intel` label (`CONTRACT` → `PAD INTEL`). Harvest / print / hangar / Q-A / Q-B / Q-C numbers stay. No pay-to-complete. No Knowledge-gated exclusive modules. Not a second quest system. Not a campaign.  
 AR-F: 3v3 local host authority on the existing TestArena / Clash 60×60. Six actors on TOP/MID/BOT (player + five SoftNet visual `CombatDummy` puppets, or 3+3 isolated). G5 stays closed. No new `SITE_*`. Knowledge does not change DPS. Still startable.  
 AR-G: 5v5 local host authority on the same 60×60 (TOP/MID/BOT + AR-D jungle). Ten actors (player Cybernex MID + nine SoftNet visual `CombatDummy` puppets, or 5+5 isolated). Host process owns combat. G5 stays closed. No new `SITE_*`. Knowledge does not change DPS.  
 SE-A: live power / cool / life buses on the player hull. Fitted `ShipModule.power_draw` sums into power/cool. Overdraw / overheat = soft thrust/weapon sag (not a hard lock). Hull LS readout matches IN-B (soft warn, no HP cut). HUD shows the three buses. Knowledge labels only. No P2W repair skip. ST-D hangar mass/power refuse still holds.  
@@ -750,6 +753,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | Q-A contract / Knowledge | **built** — one ops-board contract; SoftKnowledge label only; numbers stay |
 | Q-B alliance constructor | **built** — one shared occupy/logistics contract; two NPCs same id; alliance intel label only |
 | Q-C learning node | **built** — optional node on harvest/deliver; field intel label only; numbers stay |
+| Q-D NPC quest giver | **built** — pad visitor offers same Q-A board id; accept from NPC; quest_intel only |
 | AR-F 3v3 local | **built** — 6 actors on existing lanes; host authority; SoftNet visual; G5 closed; still startable |
 | AR-G 5v5 local | **built** — 10 actors on existing lanes + jungle; host authority; SoftNet visual; G5 closed |
 | SE-A hull buses | **built** — power/cool/life live; overdraw/overheat sag; IN-B LS soft; no P2W skip |

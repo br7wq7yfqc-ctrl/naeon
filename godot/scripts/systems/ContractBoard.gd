@@ -1,6 +1,7 @@
 extends RefCounted
 class_name ContractBoard
 ## Q-A: one generated contract from a template on the same ARK body.
+## Q-D: the pad visitor offers this same board id. Not a second quest system.
 ## Completing grants SoftKnowledge rank/label only. Never yield / DPS / modules.
 ## No cash-shop skip. No pay-to-complete. story ≠ power.
 

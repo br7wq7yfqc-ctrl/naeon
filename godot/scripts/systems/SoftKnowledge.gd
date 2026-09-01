@@ -249,6 +249,14 @@ static func crew_label() -> String:
 	return "CREW"
 
 
+## Q-D: name the pad visitor as a giver. Never yield / DPS / exclusive modules.
+static func quest_giver_label() -> String:
+	var intel := mastery("quest_intel")
+	if intel >= 10.0:
+		return "LIAISON"
+	return "GIVER"
+
+
 ## Q-C: Learning Node subject label. story ≠ power. Never yield / DPS / modules.
 static func field_intel_label() -> String:
 	var intel := mastery("field_intel")

@@ -11,10 +11,10 @@
 **Каталог — дыры (очередь, не новый catalog):** `docs/design/WORLD_FILL.md` §6. Ready-made fill → locked plates без GLB → пластины только на титульную дыру. Не mint SITE_*. Не capital-ship wave. OS-H harness built; не G2.  
 **NPC agency + MMO HOLD:** `docs/design/NPC_AGENCY.md` (NP-A…NP-F + NP-C + NP-G ST-C print + NP-H ST-D hangar + **NP-I** ST-G factory built) · `docs/design/MMO_SERVERS.md` (Phase 3 HOLD; 10k CCU / ≥100 на шард без instance-split; нет netcode сейчас; не G5 / G2–G6).
 
-**2026-08-28 — текущий бар Q-C (не кампании, не галактика):**  
+**2026-09-01 — текущий бар Q-D (не кампании, не галактика):**  
 OS-A…OS-H built. G2–G6 закрыты. G1 CRUISE не открыт.  
-ST-A…ST-G / IN-A…E / WF-A / Q-A / Q-B built.  
-Q-C: один optional Learning Node на Q-A `harvest` / `deliver_crate`. Interact читает pad / extractor / crate через SoftKnowledge. Complete → `field_intel` (`FIELD` → `FIELD INTEL`). Harvest / print / hangar / Q-A / Q-B numbers stay. Нет exclusive modules.  
+ST-A…ST-G / IN-A…E / WF-A / Q-A / Q-B / Q-C built.  
+Q-D: pad visitor предлагает тот же Q-A ContractBoard id (`occupy` / `harvest` / `deliver_crate` на Nex-Prime). Игрок принимает у NPC. Complete → `quest_intel` (`CONTRACT` → `PAD INTEL`). Harvest / print / hangar / Q-A / Q-B / Q-C numbers stay. Нет второго quest system.  
 Петля P0.6 на RTX 3090 жива — не ломать. llvmpipe ≠ FPS PASS.
 
 ---
@@ -132,9 +132,9 @@ Q-C: один optional Learning Node на Q-A `harvest` / `deliver_crate`. Inter
 - Fleet system (до 10–15 кораблей, flagship overlay)
 - Carriers seed (hangar + drones/fighters) — очередь печати модуля: `docs/design/BASE_STATION_STRATEGY.md` ST-D **built**
 - **Dynamic Ownership Transformation** (prototype): visual + mechanical swap Cybernex (Venus Project) ↔ gROT (biomass industrial) на 1–2 объектах
-- Advanced AI-bots + NPC quest givers skeleton
-- **Quest system foundation**: Contract Board, generated quests (templates), basic Alliance Quest Constructor — **Q-A + Q-B + Q-C built** (one board, one pad template, one shared alliance occupy/logistics contract, one optional Learning Node; not campaigns)
-- **Knowledge & Skills foundation**: Knowledge Rank / Subject Mastery, optional Learning Nodes в квестах, soft combat integration (informational) — **Q-A + Q-B + Q-C built** (`SoftKnowledge` `quest_intel` / `alliance_intel` / `field_intel` labels only; never DPS / yield / exclusive modules)
+- Advanced AI-bots + NPC quest givers skeleton — **Q-D built** (same Q-A ContractBoard id on the pad visitor; not a second quest system)
+- **Quest system foundation**: Contract Board, generated quests (templates), basic Alliance Quest Constructor — **Q-A + Q-B + Q-C + Q-D built** (one board, one pad template, one shared alliance occupy/logistics contract, one optional Learning Node, one NPC giver on the same board; not campaigns)
+- **Knowledge & Skills foundation**: Knowledge Rank / Subject Mastery, optional Learning Nodes в квестах, soft combat integration (informational) — **Q-A + Q-B + Q-C + Q-D built** (`SoftKnowledge` `quest_intel` / `alliance_intel` / `field_intel` labels only; never DPS / yield / exclusive modules)
 - **MOBA Full Prototype**: 5v5/3v3, 6–8 heroes, lanes + jungle, items, objectives, rewards pipeline, basic matchmaking
 - aiNEX basic (colony planner + MOBA builds + simple educational puzzle generation)
 - Voice foundation (open-source STT/TTS path first)

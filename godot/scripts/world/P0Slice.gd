@@ -51,7 +51,8 @@ const NP_H_HANGAR := true
 ## NP-I: after NP-B harvest, visitor spends at player-cluster factory bench (c) → one catalog module.
 ## Same ST-G path. Without factory → refuse. Not hangar (b). Not pad bench (a). Not a second NP-C habitat.
 const NP_I_FACTORY := true
-## Q-A: one Contract Board + one generated template. SoftKnowledge label only.
+## Q-A / Q-D: one Contract Board + one generated template. SoftKnowledge label only.
+## Q-D reuses this board — the pad visitor offers the same id.
 const Q_A_CONTRACT := true
 ## Q-B: one alliance-shared occupy/logistics contract on the same unnamed pad.
 ## SoftKnowledge alliance intel only. Reuses ContractBoard / SoftSession. Not siege.
@@ -59,6 +60,9 @@ const Q_B_ALLIANCE := true
 ## Q-C: one optional Learning Node on a Q-A harvest / deliver contract.
 ## Interact reads pad / extractor / crate via SoftKnowledge. Subject label only.
 const Q_C_LEARNING := true
+## Q-D: pad visitor offers the same Q-A ContractBoard id. Player accepts from the NPC.
+## Complete still grants SoftKnowledge quest_intel only. Not a second quest system.
+const Q_D_GIVER := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6
