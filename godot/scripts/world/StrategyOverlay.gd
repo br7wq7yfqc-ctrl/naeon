@@ -88,6 +88,103 @@ func exit_overlay() -> void:
 	print("[StrategyOverlay] exit layer=", LayerContext.current_layer if LayerContext else "?")
 
 
+func overlay_caster() -> Node3D:
+	return _actor()
+
+
+func infection_target() -> Node:
+	if not _active or _pad == null or not is_instance_valid(_pad):
+		return null
+	var guard := _pad_guard()
+	if guard != null:
+		return guard
+	return _pad_infection_host()
+
+
+func try_hack(target = null) -> bool:
+	return _try_kit("hack", target)
+
+
+func try_firewall(target = null) -> bool:
+	return _try_kit("firewall", target)
+
+
+func _try_kit(kind: String, target) -> bool:
+	## HF-C: reuse walker / hull AbilitySystem. Overlay is not a second kit.
+	if not _active:
+		return false
+	var caster := overlay_caster()
+	if caster == null or not is_instance_valid(caster):
+		return false
+	if caster.has_method("_ensure_ability_kit"):
+		caster._ensure_ability_kit()
+	var hint: Node = target as Node if target is Node else null
+	if hint == null or not is_instance_valid(hint):
+		hint = infection_target()
+	if kind == "hack" and caster.has_method("try_hack"):
+		return bool(caster.try_hack(hint))
+	if kind == "firewall" and caster.has_method("try_firewall"):
+		return bool(caster.try_firewall(hint))
+	return false
+
+
+func _pad_guard() -> Node:
+	if _pad == null or not is_instance_valid(_pad):
+		return null
+	if _pad.has_method("get_guard"):
+		var g: Node = _pad.get_guard()
+		if _is_infection_host(g):
+			return g
+	var traffic := _pad_traffic()
+	if traffic == null:
+		return null
+	if traffic.has_method("get_guard"):
+		var g2: Node = traffic.get_guard()
+		if _is_infection_host(g2):
+			return g2
+	if traffic.has_method("get_surface_dummy"):
+		var d: Node = traffic.get_surface_dummy()
+		if _is_infection_host(d):
+			return d
+	if traffic.has_method("pulse_target"):
+		var p: Node = traffic.pulse_target()
+		if _is_infection_host(p):
+			return p
+	return null
+
+
+func _pad_infection_host() -> Node:
+	if _pad == null or not is_instance_valid(_pad):
+		return null
+	if _is_infection_host(_pad):
+		return _pad
+	return null
+
+
+func _is_infection_host(node: Node) -> bool:
+	if node == null or not is_instance_valid(node):
+		return false
+	return node.has_method("apply_infection") or node.has_method("purge_infection") \
+			or node.get_node_or_null("InfectionStatus") != null
+
+
+func _pad_traffic() -> Node:
+	if _pad == null or not is_instance_valid(_pad):
+		return null
+	var t: Node = _pad.get_node_or_null("PadTraffic")
+	if t != null and is_instance_valid(t):
+		return t
+	var tree := get_tree()
+	if tree == null:
+		return null
+	for n in tree.get_nodes_in_group("pad_traffic"):
+		if n == null or not is_instance_valid(n):
+			continue
+		if n.get_parent() == _pad:
+			return n
+	return null
+
+
 func place_module() -> Node3D:
 	if not _active or _pad == null or not is_instance_valid(_pad):
 		_toast("STRATEGY: overlay closed")
@@ -124,6 +221,12 @@ func _input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 			elif k == KEY_ENTER or k == KEY_KP_ENTER:
 				place_module()
+				get_viewport().set_input_as_handled()
+			elif k == KEY_Q:
+				try_hack()
+				get_viewport().set_input_as_handled()
+			elif k == KEY_E:
+				try_firewall()
 				get_viewport().set_input_as_handled()
 			elif k == KEY_I or k == KEY_F or k == KEY_M or k == KEY_TAB:
 				get_viewport().set_input_as_handled()
