@@ -15982,8 +15982,8 @@ func _assert_pv_a(os: Node, fails: PackedStringArray) -> void:
 	if rival.has_meta("site_pin") and str(rival.get_meta("site_pin")).begins_with("SITE_"):
 		fails.append("PV-A rival minted SITE_*")
 		return
-	if LayerContext and str(LayerContext.site_pin_id).begins_with("SITE_"):
-		fails.append("PV-A LayerContext SITE_* (%s)" % LayerContext.site_pin_id)
+	if pvp.has_meta("site_pin") and str(pvp.get_meta("site_pin")).begins_with("SITE_"):
+		fails.append("PV-A PadPvp minted SITE_*")
 		return
 	if pvp.has_method("is_g5_closed") and not bool(pvp.is_g5_closed()):
 		fails.append("PV-A G5 Clash-from-world is open")
