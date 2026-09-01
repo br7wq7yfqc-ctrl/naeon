@@ -1,7 +1,8 @@
 extends Node3D
 class_name PadPrintBench
-## ST-C §6(a): print one catalog module at an unnamed pad / NPC bench.
+## ST-C §6(a) / NP-G: print one catalog module at an unnamed pad / NPC bench.
 ## Spends Contribution (CX) or Biomass (GR). Never cash. Knowledge labels only.
+## NP-G uses print_one_module — not factory (c), not hangar (b), not NP-C habitat.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 const _Builder = preload("res://scripts/world/BaseBuilder.gd")

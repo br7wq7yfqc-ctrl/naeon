@@ -31,6 +31,7 @@ Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md`.
 | **ST-E** | **built** | Своя орбитальная станция: два catalog-модуля (dock + habitat) в одном кластере у Nex-Prime. Не город. Не SITE_*. |
 | **ST-F** | **built** | CX↔GR на occupied unnamed pad; theme + services; harvest/print/hangar numbers stay. Не SITE_*, не арена-флип. |
 | **NP-C** | **built** | NPC ставит один habitat на пустой unnamed пад (тот же BaseBuilder). Не SITE_*. |
+| **NP-G** | **built** | После NP-B: NPC тратит Contribution/Biomass на PadPrintBench (ST-C §6(a)) → один catalog-модуль. Нет cash skip. Не habitat hack / factory / hangar. |
 | **G1 CRUISE** | later | Не нужен для 5–15 км; mass lock только вместе с CRUISE |
 | **G2–G6** | **locked** | Пока петля OPEN SPACE не честна. В коде 404 |
 

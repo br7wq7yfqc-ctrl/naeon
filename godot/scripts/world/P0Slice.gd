@@ -42,6 +42,9 @@ const ST_F_OWNERSHIP := true
 const ST_G_FACTORY := true
 ## NP-C: visitor places one habitat on an empty unnamed pad. Same BaseBuilder. Not SITE_*.
 const NP_C_MODULE := true
+## NP-G: after NP-B harvest, visitor spends at PadPrintBench §6(a) → one catalog module.
+## Same ST-C path. Not a second NP-C habitat. Not factory (c). Not hangar (b).
+const NP_G_PRINT := true
 ## Q-A: one Contract Board + one generated template. SoftKnowledge label only.
 const Q_A_CONTRACT := true
 ## Q-B: one alliance-shared occupy/logistics contract on the same unnamed pad.

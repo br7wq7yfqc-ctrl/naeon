@@ -5,6 +5,7 @@ extends Node
 ## NP-E: this hull + pad-guard share AllianceRanks and a visible raid/logistics intent.
 ## NP-F: after the player leaves, one short pad occupy/harvest or follow cycle.
 ## NP-C: after ST-A, place one habitat on an empty unnamed pad (same BaseBuilder).
+## NP-G: after NP-B harvest, spend at PadPrintBench §6(a) (same ST-C path).
 ## Not a second IFCS, not G1, not a private yield table, not a damage aura.
 
 
@@ -33,6 +34,7 @@ var _squad_seated: bool = false
 var _companion: Node3D = null
 var _offline_ran: bool = false
 var _placed_mod: Node3D = null
+var _printed_mod: Node3D = null
 var _offline_step: String = ""
 var _offline_busy: bool = false
 
@@ -115,6 +117,62 @@ func placed_module() -> Node3D:
 
 func saw_place_module() -> bool:
 	return placed_module() != null
+
+
+func printed_catalog_module() -> Node3D:
+	if _printed_mod != null and is_instance_valid(_printed_mod):
+		return _printed_mod
+	return null
+
+
+func saw_print_module() -> bool:
+	return printed_catalog_module() != null
+
+
+func print_one_catalog_module(kind: String = "", cash: float = 0.0) -> Node3D:
+	## NP-G: ST-C §6(a) spend at PadPrintBench. Not NP-C habitat. Not factory. Not hangar.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var pad: Node3D = null
+	var bench: Node = null
+	var mod: Node3D = null
+	if P0 == null or not bool(P0.NP_G_PRINT) or not bool(P0.ST_C_PRINT):
+		return null
+	if cash > 0.0:
+		print("[NpcPilot] NP-G cash-shop skip refused")
+		return null
+	if printed_catalog_module() != null:
+		print("[NpcPilot] NP-G already printed one catalog module")
+		return null
+	pad = _print_target_pad()
+	bench = _print_bench_on(pad)
+	if bench == null or not bench.has_method("print_one_module"):
+		print("[NpcPilot] NP-G no PadPrintBench")
+		return null
+	if bench.has_method("cash_shop_skip_possible") and bool(bench.cash_shop_skip_possible()):
+		return null
+	mod = bench.print_one_module(kind, 0.0)
+	if mod == null or not is_instance_valid(mod):
+		return null
+	if str(mod.get_meta("site_pin", "x")) != "":
+		push_error("[NpcPilot] NP-G minted a site_pin")
+		mod.queue_free()
+		return null
+	if bool(mod.get_meta("npc_module", false)):
+		push_error("[NpcPilot] NP-G used habitat hack")
+		mod.queue_free()
+		return null
+	if bool(mod.get_meta("factory_printed", false)) or bool(mod.get_meta("hangar_queued", false)):
+		push_error("[NpcPilot] NP-G used factory/hangar")
+		mod.queue_free()
+		return null
+	if not bool(mod.get_meta("printed_module", false)):
+		push_error("[NpcPilot] NP-G module not marked printed_module")
+		mod.queue_free()
+		return null
+	_printed_mod = mod
+	_sign_print_label()
+	print("[NpcPilot] NP-G printed ", mod.name, " on ", pad.name if pad else "?", " cash_skip=false")
+	return mod
 
 
 func place_one_module() -> Node3D:
@@ -479,6 +537,8 @@ func _on_pad_harvested(amount: float, _total: float) -> void:
 		return
 	_saw_harvest = true
 	_harvest_got += amount
+	if _auto:
+		_try_auto_print()
 
 
 func _ensure_companion() -> Node3D:
@@ -591,6 +651,64 @@ func _run_offline_follow() -> void:
 	_squad_seated = false
 	_squad_follow = true
 	_ensure_companion()
+
+
+func _print_target_pad() -> Node3D:
+	## Prefer the harvest pad. If that bench already granted (player ST-C), next unnamed.
+	var legal: Array = ["Pad_North", "Pad_Approach", "Pad_Flank"]
+	var cands: Array = []
+	if _pad != null and is_instance_valid(_pad) and str(_pad.name) in legal:
+		cands.append(_pad)
+	var tree := get_tree()
+	if tree:
+		for n in tree.get_nodes_in_group("landing_pads"):
+			if n is Node3D and str(n.name) in legal and n not in cands:
+				cands.append(n)
+	for n in cands:
+		var pad: Node3D = n as Node3D
+		if pad == null:
+			continue
+		if BaseBuilder.printed_module_on(pad) != null:
+			continue
+		var bench := _print_bench_on(pad)
+		if bench == null:
+			continue
+		if bench.has_method("granted_module") and bench.granted_module() != null:
+			continue
+		return pad
+	return null
+
+
+func _print_bench_on(pad: Node3D) -> Node:
+	var ctrl: Node = null
+	if pad == null or not is_instance_valid(pad):
+		return null
+	var named: Node = pad.get_node_or_null("PadPrintBench")
+	if named != null:
+		return named
+	ctrl = pad.get_node_or_null("BaseCluster/PadBaseController")
+	if ctrl == null:
+		ctrl = pad.find_child("PadBaseController", true, false)
+	if ctrl != null and ctrl.has_method("print_bench"):
+		return ctrl.print_bench()
+	return pad.find_child("PadPrintBench", true, false)
+
+
+func _try_auto_print() -> void:
+	if printed_catalog_module() != null:
+		return
+	print_one_catalog_module()
+
+
+func _sign_print_label() -> void:
+	## Knowledge names the bench only. Does not cheapen rules/15.
+	if _ship == null or not is_instance_valid(_ship):
+		return
+	var lab: Label3D = _ship.get_node_or_null("Label") as Label3D
+	if lab == null:
+		lab = _ship.get_node_or_null("StatusLabel") as Label3D
+	if lab:
+		lab.text = "%s · %s" % [_SoftK.traffic_label("visitor"), _SoftK.print_bench_label()]
 
 
 func _sign_harvest_label() -> void:

@@ -618,6 +618,7 @@ func _go() -> void:
 	await _npc_takeoff_land(fails)
 	await _npc_occupy_harvest(fails)
 	await _npc_place_module(fails)
+	await _npc_print_catalog(fails)
 	await _npc_squad_invite(fails)
 	await _npc_offline_cycle(fails)
 	await _npc_soft_alliance(fails)
@@ -10222,6 +10223,182 @@ func _npc_place_module(fails: PackedStringArray) -> void:
 	if after != before + 1:
 		fails.append("NP-C want exactly one npc module, got %s (was %s)" % [after, before])
 	print("[Playtest] NP-C overlay pad=", pname, " pin=", LayerContext.site_pin_id if LayerContext else "")
+
+
+func _npc_print_catalog(fails: PackedStringArray) -> void:
+	## NP-G: after NP-B harvest, visitor spends at PadPrintBench §6(a) → one catalog module.
+	## Same refuse as ST-C. Not NP-C habitat. Not factory. Not hangar. No SITE_*.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var nex: Node = _osh_nex()
+	var traffic: Node = null
+	var pilot: Node = null
+	var visitor: Node = null
+	var bench: Node = null
+	var cost := 0.0
+	var cost_after := 0.0
+	var harvest0 := 0.0
+	var print0 := 0.0
+	var hangar0 := 0.0
+	var wallet0 := 0.0
+	var before := 0.0
+	var after := 0.0
+	var skip_ok := true
+	var cash_mod: Node3D = null
+	var broke: Node3D = null
+	var mod: Node3D = null
+	var again: Node3D = null
+	var pad: Node = null
+	var pname := ""
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var pin := ""
+	var kind := ""
+	var slug := ""
+	var extras0 := 0
+	var extras1 := 0
+	var tree: SceneTree = get_tree()
+	if P0 == null or not bool(P0.NP_G_PRINT) or not bool(P0.ST_C_PRINT):
+		fails.append("NP-G P0Slice flag missing")
+		return
+	if nex != null and nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.2).timeout
+	traffic = nex.call("pad_traffic") if nex != null and nex.has_method("pad_traffic") else null
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("NP-G: pad traffic missing")
+		return
+	pilot = traffic.get_npc_pilot() if traffic.has_method("get_npc_pilot") else null
+	visitor = traffic.get_visitor() if traffic.has_method("get_visitor") else null
+	if pilot == null or not pilot.has_method("print_one_catalog_module"):
+		fails.append("NP-G: NpcPilot print_one_catalog_module missing")
+		return
+	var buses: Node = visitor.get_node_or_null("SoftShipSystems") if visitor != null else null
+	if buses != null and buses.has_method("try_cash_repair_skip") and bool(buses.try_cash_repair_skip(999.0)):
+		fails.append("NP-G try_cash_repair_skip stayed true")
+	if buses != null and buses.has_method("cash_shop_skip_possible") and bool(buses.cash_shop_skip_possible()):
+		fails.append("NP-G hull cash-shop skip possible")
+	if pilot.has_method("infection_cap") and int(pilot.infection_cap()) != 5:
+		fails.append("NP-G Infection cap is not 5")
+	if tree:
+		extras0 = tree.get_nodes_in_group("printed_base_modules").size()
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("colony_ops", 20.0)
+		GameManager.add_mastery("biomass_ops", 20.0)
+	var host: Node = traffic.get_parent()
+	if host != null:
+		var ctrl: Node = host.get_node_or_null("BaseCluster/PadBaseController")
+		if ctrl == null:
+			ctrl = host.find_child("PadBaseController", true, false)
+		if ctrl != null:
+			if "extract_rate" in ctrl:
+				harvest0 = float(ctrl.get("extract_rate"))
+			if ctrl.has_method("print_bench"):
+				bench = ctrl.print_bench()
+			if ctrl.has_method("tier_budget"):
+				var bud: Dictionary = ctrl.tier_budget()
+				print0 = float(bud.get("print_cost", 0.0))
+				hangar0 = float(bud.get("hangar_mass", 0.0))
+	if bench == null and tree:
+		var benches: Array = tree.get_nodes_in_group("print_benches")
+		if not benches.is_empty():
+			bench = benches[0]
+	if bench != null and bench.has_method("print_cost"):
+		cost = float(bench.print_cost())
+		if GameManager and GameManager.has_method("add_mastery"):
+			GameManager.add_mastery("colony_ops", 20.0)
+		cost_after = float(bench.print_cost())
+		if absf(cost_after - cost) > 0.001:
+			fails.append("NP-G Knowledge cheapened print tables")
+		if bench.has_method("cash_shop_skip_possible") and bool(bench.cash_shop_skip_possible()):
+			fails.append("NP-G cash-shop skip possible")
+		if bench.has_method("try_cash_skip_print"):
+			skip_ok = bool(bench.try_cash_skip_print(999.0))
+		if skip_ok:
+			fails.append("NP-G cash-shop skip printed a module")
+	if cost <= 0.0:
+		fails.append("NP-G print cost is not a rules/15 sink")
+		return
+	if GameManager:
+		wallet0 = float(GameManager.contribution)
+		GameManager.contribution = 0.0
+	cash_mod = pilot.print_one_catalog_module("", 50.0)
+	if cash_mod != null:
+		fails.append("NP-G accepted cash instead of Contribution")
+		if is_instance_valid(cash_mod):
+			cash_mod.queue_free()
+	broke = pilot.print_one_catalog_module()
+	if broke != null:
+		fails.append("NP-G printed without spend")
+		if is_instance_valid(broke):
+			broke.queue_free()
+	if GameManager:
+		if wallet0 < cost:
+			GameManager.contribution = cost
+		else:
+			GameManager.contribution = wallet0
+		if GameManager.has_method("add_contribution") and GameManager.contribution < cost:
+			GameManager.add_contribution(cost - GameManager.contribution)
+		before = float(GameManager.contribution)
+	mod = pilot.print_one_catalog_module()
+	if GameManager:
+		after = float(GameManager.contribution)
+	if mod == null or not is_instance_valid(mod):
+		fails.append("NP-G: NPC spend did not grant a catalog module")
+		return
+	if after > before - cost + 0.001:
+		fails.append("NP-G did not spend Contribution (%s → %s, cost=%s)" % [
+			str(snapped(before, 0.01)), str(snapped(after, 0.01)), str(snapped(cost, 0.01))
+		])
+	pad = mod.get_parent()
+	pname = str(pad.name) if pad else "?"
+	if pname != "Pad_North" and pname != "Pad_Approach" and pname != "Pad_Flank":
+		fails.append("NP-G: unknown pad (%s)" % pname)
+	pin = str(mod.get_meta("site_pin", "missing"))
+	kind = str(mod.get_meta("module_type", ""))
+	slug = str(mod.get_meta("ledger_slug", ""))
+	print("[Playtest] NP-G spend → one catalog module ", snapped(before, 0.01), " -> ", snapped(after, 0.01),
+		" cost=", snapped(cost, 0.01), " module=", mod.name, " kind=", kind,
+		" pad=", pname, " cash_skip=false")
+	if pin != "":
+		fails.append("NP-G module minted site_pin (%s)" % pin)
+	if kind != "habitat" and kind != "extractor":
+		fails.append("NP-G granted an unknown module (%s)" % kind)
+	if kind == "extractor" and slug != "" and slug != "t1_resource_extractor":
+		fails.append("NP-G invented slug (%s)" % slug)
+	if bool(mod.get_meta("player_module", false)):
+		fails.append("NP-G stole the ST-A player_module slot")
+	if bool(mod.get_meta("npc_module", false)):
+		fails.append("NP-G used NP-C habitat hack")
+	if bool(mod.get_meta("factory_printed", false)):
+		fails.append("NP-G used factory (c) print")
+	if bool(mod.get_meta("hangar_queued", false)):
+		fails.append("NP-G used hangar (b) queue")
+	if not bool(mod.get_meta("printed_module", false)):
+		fails.append("NP-G module not marked printed_module")
+	again = pilot.print_one_catalog_module()
+	if again != null:
+		fails.append("NP-G granted a second catalog module")
+	if LayerContext and str(LayerContext.site_pin_id) != pin0:
+		fails.append("NP-G changed site_pin (%s → %s)" % [pin0, LayerContext.site_pin_id])
+	if tree:
+		extras1 = tree.get_nodes_in_group("printed_base_modules").size()
+	if extras1 != extras0 + 1:
+		fails.append("NP-G want exactly one new printed module, got %s (was %s)" % [extras1, extras0])
+	if host != null:
+		var ctrl1: Node = host.get_node_or_null("BaseCluster/PadBaseController")
+		if ctrl1 == null:
+			ctrl1 = host.find_child("PadBaseController", true, false)
+		if ctrl1 != null:
+			if harvest0 > 0.0 and "extract_rate" in ctrl1 \
+					and absf(float(ctrl1.get("extract_rate")) - harvest0) > 0.0001:
+				fails.append("NP-G changed harvest numbers")
+			if ctrl1.has_method("tier_budget"):
+				var bud1: Dictionary = ctrl1.tier_budget()
+				if print0 > 0.0 and absf(float(bud1.get("print_cost", -1.0)) - print0) > 0.0001:
+					fails.append("NP-G changed print numbers")
+				if hangar0 > 0.0 and absf(float(bud1.get("hangar_mass", -1.0)) - hangar0) > 0.0001:
+					fails.append("NP-G changed hangar numbers")
+	print("[Playtest] NP-G refuse without spend · no cash skip · no SITE_* · pad=", pname)
 
 
 func _npc_squad_invite(fails: PackedStringArray) -> void:

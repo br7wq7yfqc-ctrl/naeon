@@ -474,6 +474,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-21 | OS-J: orbit-read FarPlate/FarMast/outpost hide below ~400 m. Near hull metal. Cyan 96 m slab was the blue monolith next to the ship. |
 | 2026-08-23 | ST-A: B overlay on unnamed pad (Pad_North class); one catalog habitat, 0 combat, no SITE_*. Esc leaves ship/TPS. |
 | 2026-08-28 | NP-C: visitor places one catalog habitat on an empty unnamed pad (not Pad_North if ST-A already used it). 0 combat. No SITE_*. One per hull. |
+| 2026-09-01 | NP-G: after NP-B harvest, visitor spends Contribution/Biomass at PadPrintBench §6(a) (same ST-C path) → one catalog module. No cash skip. Not habitat/factory/hangar. | np-g-print |
 | 2026-08-27 | OS-E PBR leftover on current main: drop unshaded, bind CC0/fallback, chart UV. ST-A overlay/habitat kept. OS-I physics not this slice. | os-e-pbr |
 
 ## Full code audit + hardening — 2026-08-15
