@@ -99,20 +99,18 @@ func tick(delta: float = 0.1) -> String:
 	_pulse_cd = maxf(0.0, _pulse_cd - delta)
 	var walker := _find_walker()
 	var dist := 999.0
+	var near_home := _planar_dist(_guard_pos(), _home) <= HOME_ARRIVE
 	if walker != null:
 		dist = _planar_dist(_guard_pos(), walker.global_position)
-	if walker != null and dist <= PULSE_RANGE and not _walker_downed(walker):
+	var in_pulse := walker != null and dist <= PULSE_RANGE and not _walker_downed(walker)
+	var hold_engage := _state == ST_ENGAGE and walker != null \
+			and dist <= LEAVE_RANGE and not _walker_downed(walker)
+	if in_pulse or hold_engage:
 		_state = ST_ENGAGE
-	elif _state == ST_ENGAGE and (walker == null or dist > LEAVE_RANGE or _walker_downed(walker)):
+	elif near_home:
+		_state = ST_PATROL
+	else:
 		_state = ST_RETURN
-	elif _state == ST_RETURN:
-		if _planar_dist(_guard_pos(), _home) <= HOME_ARRIVE:
-			_state = ST_PATROL
-	elif walker == null or dist > LEAVE_RANGE:
-		if _planar_dist(_guard_pos(), _home) > HOME_ARRIVE:
-			_state = ST_RETURN
-		else:
-			_state = ST_PATROL
 	return _state
 
 
@@ -234,15 +232,14 @@ func _build_patrol(guard: CharacterBody3D) -> void:
 
 func _find_walker() -> Node3D:
 	var tree := get_tree()
+	if tree:
+		for n in tree.get_nodes_in_group("player"):
+			if _is_walker(n):
+				return n as Node3D
 	if SoftScanCache and SoftScanCache.has_method("get_player"):
 		var sp = SoftScanCache.get_player()
 		if _is_walker(sp):
 			return sp as Node3D
-	if tree == null:
-		return null
-	for n in tree.get_nodes_in_group("player"):
-		if _is_walker(n):
-			return n as Node3D
 	return null
 
 
@@ -251,7 +248,10 @@ func _is_walker(n: Node) -> bool:
 		return false
 	if n == _guard:
 		return false
-	if n is CharacterBody3D and n.has_method("try_pulse") and n.has_method("take_damage"):
+	## Hulls also have try_pulse — BT-A is the SurfaceWalker only.
+	if n.has_method("set_pilot_active") or n.has_method("set_npc_driven"):
+		return false
+	if n is CharacterBody3D and n.has_method("try_pulse") and n.has_method("set_eva_profile"):
 		return true
 	return false
 
