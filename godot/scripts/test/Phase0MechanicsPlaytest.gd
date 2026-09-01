@@ -16174,18 +16174,15 @@ func _assert_pv_b(os: Node, fails: PackedStringArray) -> void:
 			or ResourceLoader.exists("res://scripts/world/ClashBeacon.gd"):
 		fails.append("PV-B opened G5 world-to-arena")
 	print("[Playtest] PV-B seated hull Pulse hit · rival Pulse back · HP 0 win · G5 closed · no SITE_*")
-	## Revive the same rival so TPS PV-A still has an enemy-group dummy.
-	if rival.has_method("_respawn"):
-		rival.call("_respawn")
-	else:
-		rival.set("_alive", true)
-		if "health" in rival:
-			rival.set("health", float(rival.get("max_health")))
-		if not rival.is_in_group("enemy"):
-			rival.add_to_group("enemy")
-		if "collision_layer" in rival:
-			rival.set("collision_layer", 4)
-		rival.visible = true
+	## Revive in place (do not _respawn — that teleports to a stale world _spawn_pos).
+	rival.set("_alive", true)
+	if "health" in rival:
+		rival.set("health", float(rival.get("max_health")))
+	if not rival.is_in_group("enemy"):
+		rival.add_to_group("enemy")
+	if "collision_layer" in rival:
+		rival.set("collision_layer", 4)
+	rival.visible = true
 	if pvp != null:
 		pvp.set("_won", false)
 	if SoftScanCache:
