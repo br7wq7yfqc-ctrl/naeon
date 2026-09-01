@@ -16615,7 +16615,7 @@ func _assert_bt_a(os: Node, fails: PackedStringArray) -> void:
 		SoftScanCache.invalidate_player()
 		SoftScanCache.invalidate_enemies()
 	if bt.has_method("tick"):
-		bt.tick(0.1)
+		bt.tick(0.1, walker)
 	var st0 := str(traffic.guard_bt_state()) if traffic.has_method("guard_bt_state") else str(bt.bt_state())
 	print("[Playtest] BT-A patrol state=", st0, " pad=", pname, " guard=", guard.name)
 	if st0 != "patrol":
@@ -16641,7 +16641,7 @@ func _assert_bt_a(os: Node, fails: PackedStringArray) -> void:
 	if "_pulse_cd" in bt:
 		bt.set("_pulse_cd", 0.0)
 	if bt.has_method("tick"):
-		bt.tick(0.1)
+		bt.tick(0.1, walker)
 	var st1 := str(bt.bt_state()) if bt.has_method("bt_state") else ""
 	print("[Playtest] BT-A engage state=", st1, " label=", glabel)
 	if st1 != "engage":
@@ -16671,7 +16671,7 @@ func _assert_bt_a(os: Node, fails: PackedStringArray) -> void:
 	if SoftScanCache:
 		SoftScanCache.invalidate_player()
 	if bt.has_method("tick"):
-		bt.tick(0.1)
+		bt.tick(0.1, walker)
 	var st2 := str(bt.bt_state()) if bt.has_method("bt_state") else ""
 	print("[Playtest] BT-A return-to-pad state=", st2)
 	if st2 != "return":

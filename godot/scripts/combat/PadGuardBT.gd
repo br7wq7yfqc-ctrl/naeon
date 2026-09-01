@@ -10,6 +10,7 @@ const LEAVE_RANGE := 22.0
 const PATROL_RADIUS := 5.5
 const ARRIVE := 1.2
 const HOME_ARRIVE := 1.6
+const LEASH := 12.0
 
 const ST_PATROL := "patrol"
 const ST_ENGAGE := "engage"
@@ -95,17 +96,23 @@ func is_g5_closed() -> bool:
 	return true
 
 
-func tick(delta: float = 0.1) -> String:
+func tick(delta: float = 0.1, target: Node = null) -> String:
 	_pulse_cd = maxf(0.0, _pulse_cd - delta)
-	var walker := _find_walker()
+	var walker: Node3D = target as Node3D if target != null else _find_walker()
+	if walker != null and not _is_walker(walker):
+		walker = _find_walker()
 	var dist := 999.0
-	var near_home := _planar_dist(_guard_pos(), _home) <= HOME_ARRIVE
+	var from_home := _planar_dist(_guard_pos(), _home)
+	var near_home := from_home <= HOME_ARRIVE
+	var leashed := from_home > LEASH
 	if walker != null:
 		dist = _planar_dist(_guard_pos(), walker.global_position)
 	var in_pulse := walker != null and dist <= PULSE_RANGE and not _walker_downed(walker)
 	var hold_engage := _state == ST_ENGAGE and walker != null \
 			and dist <= LEAVE_RANGE and not _walker_downed(walker)
-	if in_pulse or hold_engage:
+	if leashed:
+		_state = ST_RETURN
+	elif in_pulse or hold_engage:
 		_state = ST_ENGAGE
 	elif near_home:
 		_state = ST_PATROL
@@ -159,6 +166,9 @@ func try_engage_pulse(target: Node = null) -> bool:
 
 
 func _drive_engage(_delta: float) -> void:
+	if _planar_dist(_guard_pos(), _home) >= LEASH:
+		_drive_toward(_home, _delta)
+		return
 	var walker := _find_walker()
 	if walker == null:
 		_halt_xz()
@@ -167,7 +177,8 @@ func _drive_engage(_delta: float) -> void:
 	var dist := to.length()
 	if dist > 0.0001:
 		_look(to.normalized())
-	if dist > 3.4:
+	var next: Vector3 = _guard_pos() + to.normalized() * minf(dist, 1.0)
+	if dist > 3.4 and _planar_dist(next, _home) <= LEASH:
 		var dir := to.normalized()
 		var spd: float = float(_guard.move_speed)
 		_guard.velocity.x = dir.x * spd
