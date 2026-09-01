@@ -536,6 +536,35 @@ func try_pulse() -> bool:
 		return false
 	return bool(ab.try_activate(0))
 
+
+func try_hack(target = null) -> bool:
+	return _try_kit_kind("hack", target)
+
+
+func try_firewall(target = null) -> bool:
+	return _try_kit_kind("firewall", target)
+
+
+func _try_kit_kind(kind: String, target = null) -> bool:
+	var ab = get_node_or_null("AbilitySystem")
+	if ab == null or not ab.has_method("try_activate") or not ("abilities" in ab):
+		return false
+	var idx := -1
+	var i := 0
+	for a in ab.abilities:
+		if a != null:
+			if kind == "hack" and bool(a.is_hacking) \
+					and int(a.faction_restriction) == Ability.FactionRestriction.GROT_ONLY:
+				idx = i
+				break
+			if kind == "firewall" and bool(a.is_firewall):
+				idx = i
+				break
+		i += 1
+	if idx < 0:
+		return false
+	return bool(ab.try_activate(idx, target))
+
 func _update_up() -> void:
 	if _provider and _provider.has_method("gravity_at"):
 		var g: Vector3 = _provider.gravity_at(global_position)

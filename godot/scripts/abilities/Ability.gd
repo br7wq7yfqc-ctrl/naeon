@@ -85,6 +85,9 @@ enum FactionRestriction { ANY, CYBERNEX_ONLY, GROT_ONLY }
 @export var force: float = 0.0
 @export var effect_color: Color = Color(0.0, 0.9, 1.0, 1.0)
 
+## HF-A: last apply refuse (e.g. Infection cap 5). Empty on success.
+var last_refuse: String = ""
+
 func can_activate(caster: Node) -> bool:
 	if caster == null:
 		return false
@@ -113,6 +116,7 @@ func activate(caster: Node, target = null) -> void:
 		VFX.cast_flash(caster, effect_color if effect_color.a > 0.0 else Color(0.3, 0.9, 1.0))
 	if biomass_cost > 0.0 and caster != null and caster.has_method("spend_biomass"):
 		caster.spend_biomass(biomass_cost)
+	last_refuse = ""
 	if is_channeled and channel_time > 0.0:
 		# ChannelController on caster completes → _apply_effect
 		print("[Ability] ", ability_name, " channeling…")
@@ -124,7 +128,8 @@ func finish_channel(caster: Node, target = null) -> void:
 	_apply_effect(caster, target)
 	print("[Ability] ", ability_name, " channel complete")
 
-func _apply_effect(caster: Node, _target) -> void:
+func _apply_effect(caster: Node, target = null) -> void:
+	last_refuse = ""
 	if ability_name == "Form Cycle":
 		if caster and caster.has_method("_cycle_form"):
 			caster._cycle_form()
@@ -132,9 +137,9 @@ func _apply_effect(caster: Node, _target) -> void:
 			caster.cycle_form()
 		return
 	if is_hacking:
-		_apply_hacking(caster)
+		_apply_hacking(caster, target)
 	elif is_firewall:
-		_apply_firewall(caster)
+		_apply_firewall(caster, target)
 	elif damage > 0.0 and aoe_radius > 0.05:
 		_apply_aoe_burst(caster)
 	elif damage > 0.0:
@@ -188,11 +193,12 @@ func _apply_aoe_burst(caster: Node) -> void:
 		VFX.cast_flash(caster, effect_color, 3.2)
 
 
-func _apply_hacking(caster: Node) -> void:
+func _apply_hacking(caster: Node, hint = null) -> void:
+	last_refuse = ""
 	var hit: Dictionary = _ray_query(caster, range)
-	var target: Node = null
+	var target: Node = _usable_infection_host(caster, hint)
 	var hit_pos: Vector3 = caster.global_position if caster is Node3D else Vector3.ZERO
-	if not hit.is_empty():
+	if target == null and not hit.is_empty():
 		var col_v: Variant = hit.get("collider")
 		var col: Node = col_v as Node
 		target = _find_hackable(col)
@@ -202,7 +208,16 @@ func _apply_hacking(caster: Node) -> void:
 	if target == null:
 		target = _nearest_hack_pad(caster)
 	if target:
-		target.on_hacked(caster, damage)
+		if target.has_method("apply_infection"):
+			last_refuse = str(target.apply_infection(1))
+			if last_refuse != "":
+				print("[Hacking] ", last_refuse)
+			elif target is Node3D:
+				hit_pos = (target as Node3D).global_position
+		elif target.has_method("on_hacked"):
+			target.on_hacked(caster, damage)
+			if target is Node3D:
+				hit_pos = (target as Node3D).global_position
 	else:
 		print("[Hacking] No target in range")
 	if caster is Node3D:
@@ -260,10 +275,81 @@ func _find_hackable(node: Node) -> Node:
 				return c
 	return null
 
-func _apply_firewall(caster: Node) -> void:
+func _apply_firewall(caster: Node, hint = null) -> void:
+	last_refuse = ""
+	var host: Node = _usable_infection_host(caster, hint, true)
+	if host == null:
+		host = _nearest_infected_host(caster)
+	if host != null:
+		if host.has_method("purge_infection"):
+			host.purge_infection(1)
+		else:
+			var inf: Node = host.get_node_or_null("InfectionStatus")
+			if inf != null and inf.has_method("remove_one"):
+				inf.remove_one()
+			elif inf != null and inf.has_method("remove_stacks"):
+				inf.remove_stacks(1)
 	if caster.has_method("apply_firewall"):
 		caster.apply_firewall(duration, heal)
 	_spawn_shield_fx(caster, effect_color if effect_color.a > 0.0 else Color(0.2, 1.0, 0.7))
+
+
+func _usable_infection_host(caster: Node, hint, allow_zero: bool = false) -> Node:
+	if hint == null or not (hint is Node) or not is_instance_valid(hint):
+		return null
+	var host: Node = hint as Node
+	if not host.has_method("apply_infection") and not host.has_method("on_hacked") \
+			and host.get_node_or_null("InfectionStatus") == null:
+		return null
+	if caster is Node3D and host is Node3D:
+		var reach := maxf(range, 18.0)
+		if (caster as Node3D).global_position.distance_to((host as Node3D).global_position) > reach:
+			return null
+	if _same_side(caster, host) and not allow_zero:
+		return null
+	return host
+
+
+func _nearest_infected_host(caster: Node) -> Node:
+	if caster == null or not (caster is Node3D) or caster.get_tree() == null:
+		return null
+	var origin: Vector3 = (caster as Node3D).global_position
+	var best: Node = null
+	var best_d := maxf(range, 18.0)
+	for g in ["hackable", "enemy", "player"]:
+		for n in caster.get_tree().get_nodes_in_group(g):
+			if n == null or not is_instance_valid(n) or n == caster or not (n is Node3D):
+				continue
+			var stacks := 0
+			if n.has_method("infection_stacks"):
+				stacks = int(n.infection_stacks())
+			else:
+				var inf: Node = n.get_node_or_null("InfectionStatus")
+				if inf != null:
+					stacks = int(inf.get("stacks"))
+			if stacks <= 0:
+				continue
+			var d: float = origin.distance_to((n as Node3D).global_position)
+			if d < best_d:
+				best = n
+				best_d = d
+	return best
+
+
+func _same_side(caster: Node, other: Node) -> bool:
+	if caster == null or other == null:
+		return false
+	var a := ""
+	var b := ""
+	if caster.has_method("get_faction"):
+		a = str(caster.get_faction())
+	elif "faction" in caster:
+		a = str(caster.faction)
+	if other.has_method("get_faction"):
+		b = str(other.get_faction())
+	elif "faction" in other:
+		b = str(other.faction)
+	return a != "" and a == b
 
 func _spawn_projectile(caster: Node, dmg: float, color: Color) -> void:
 	if caster == null or not caster.is_inside_tree():

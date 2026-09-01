@@ -63,6 +63,9 @@ const Q_C_LEARNING := true
 ## Q-D: pad visitor offers the same Q-A ContractBoard id. Player accepts from the NPC.
 ## Complete still grants SoftKnowledge quest_intel only. Not a second quest system.
 const Q_D_GIVER := true
+## HF-A: first Hack / Firewall on unnamed-pad TPS. +1 stack, cap 5 refuse, Firewall −1.
+## Knowledge labels the stack only. Not a minigame. Not Voice. Not G2.
+const HF_A_HACK := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6

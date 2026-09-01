@@ -11,10 +11,10 @@
 **Каталог — дыры (очередь, не новый catalog):** `docs/design/WORLD_FILL.md` §6. Ready-made fill → locked plates без GLB → пластины только на титульную дыру. Не mint SITE_*. Не capital-ship wave. OS-H harness built; не G2.  
 **NPC agency + MMO HOLD:** `docs/design/NPC_AGENCY.md` (NP-A…NP-F + NP-C + NP-G ST-C print + NP-H ST-D hangar + **NP-I** ST-G factory built) · `docs/design/MMO_SERVERS.md` (Phase 3 HOLD; 10k CCU / ≥100 на шард без instance-split; нет netcode сейчас; не G5 / G2–G6).
 
-**2026-09-01 — текущий бар Q-D (не кампании, не галактика):**  
+**2026-09-01 — текущий бар HF-A (не Voice, не G2):**  
 OS-A…OS-H built. G2–G6 закрыты. G1 CRUISE не открыт.  
-ST-A…ST-G / IN-A…E / WF-A / Q-A / Q-B / Q-C built.  
-Q-D: pad visitor предлагает тот же Q-A ContractBoard id (`occupy` / `harvest` / `deliver_crate` на Nex-Prime). Игрок принимает у NPC. Complete → `quest_intel` (`CONTRACT` → `PAD INTEL`). Harvest / print / hangar / Q-A / Q-B / Q-C numbers stay. Нет второго quest system.  
+ST-A…ST-G / IN-A…E / WF-A / Q-A / Q-B / Q-C / Q-D built.  
+HF-A: gROT Hack +1 Infection на CombatDummy / pad-guard (cap 5 refuse). Cybernex Firewall −1 (never below 0). Knowledge labels the stack only. DPS / yield / thrust stay.  
 Петля P0.6 на RTX 3090 жива — не ломать. llvmpipe ≠ FPS PASS.
 
 ---
@@ -108,7 +108,7 @@ Q-D: pad visitor предлагает тот же Q-A ContractBoard id (`occupy`
 - AI-bots (Cybernex animal-robots + gROT swarms) — BehaviorTree / Navigation
 - Basic Strategy / Space / TPS PvP
 - RBE / Biomass pools + Contribution / Biomass Rank
-- **Hacking / Infection (gROT) + Nex-Firewall (Cybernex)** — первые версии abilities (TPS + simple Strategy)
+- **Hacking / Infection (gROT) + Nex-Firewall (Cybernex)** — первые версии abilities (TPS + simple Strategy) — **HF-A built:** +1 stack / cap 5 refuse / Firewall −1 on unnamed-pad TPS (AbilitySystem; Knowledge labels only)
 - **MOBA Seed**: arena, 4 heroes (kits на ability system), minion waves, XP/leveling, basic items, win condition
 - Networking: server authority + prediction
 

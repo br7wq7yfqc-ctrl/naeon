@@ -73,6 +73,7 @@ func try_activate(index: int, target = null) -> bool:
 	ability.activate(owner_character, target)
 	current_cooldowns[ability] = ability.cooldown
 	ability_activated.emit(ability)
+	_note_refuse(ability)
 	return true
 
 func _ensure_channel() -> Node:
@@ -100,6 +101,27 @@ func _complete_channel(ability: Ability, target) -> void:
 		ability._apply_effect(owner_character, target)
 	current_cooldowns[ability] = ability.cooldown
 	print("[AbilitySystem] channel finished ", ability.ability_name)
+	_note_refuse(ability)
+
+
+func complete_channel_now() -> bool:
+	var ch := _ensure_channel()
+	if ch == null or not ch.has_method("is_channeling") or not ch.is_channeling():
+		return false
+	if ch.has_method("complete_now"):
+		ch.complete_now()
+		return true
+	return false
+
+
+func _note_refuse(ability: Ability) -> void:
+	if ability == null:
+		return
+	var why := ""
+	if "last_refuse" in ability:
+		why = str(ability.last_refuse)
+	if why != "":
+		ability_failed.emit(ability, why)
 
 func get_channel_ratio() -> float:
 	var ch := _ensure_channel()

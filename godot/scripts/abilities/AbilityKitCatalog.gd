@@ -86,6 +86,7 @@ static func _firewall() -> Ability:
 	a.energy_cost = EE.NEX_FIREWALL
 	a.duration = 2.5
 	a.heal = 12.0
+	a.range = 18.0
 	a.is_firewall = true
 	a.faction_restriction = Ability.FactionRestriction.CYBERNEX_ONLY
 	a.effect_color = Color(0.2, 1.0, 0.65)
@@ -100,6 +101,7 @@ static func _nex_latch() -> Ability:
 	a.energy_cost = EE.NEX_FIREWALL
 	a.duration = 2.5
 	a.heal = 12.0
+	a.range = 18.0
 	a.is_firewall = true
 	a.faction_restriction = Ability.FactionRestriction.CYBERNEX_ONLY
 	a.effect_color = Color(0.35, 0.95, 0.85)

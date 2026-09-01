@@ -57,6 +57,13 @@ func start_channel(p_name: String, p_duration: float, on_complete: Callable, cas
 	return true
 
 
+func complete_now() -> void:
+	if not active:
+		return
+	elapsed = duration
+	_finish()
+
+
 func interrupt(reason: String = "interrupt") -> void:
 	if not active:
 		return
