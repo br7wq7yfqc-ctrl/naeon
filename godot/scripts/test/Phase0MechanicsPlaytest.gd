@@ -15639,7 +15639,24 @@ func _assert_hf_a(os: Node, fails: PackedStringArray) -> void:
 	if absf(thrust1 - thrust0) > 0.01:
 		fails.append("HF-A thrust changed")
 	dummy.set("faction", "gROT")
+	while dummy.has_method("infection_stacks") and int(dummy.infection_stacks()) > 0:
+		if dummy.has_method("purge_infection"):
+			dummy.purge_infection(1)
+		else:
+			break
 	_hf_a_ready_kit(walker, ab, "Cybernex")
+	if ship != null and is_instance_valid(ship):
+		if "velocity" in ship:
+			ship.velocity = Vector3.ZERO
+		ship.global_position = host.global_position + pad_up * 80.0
+		if "is_landed" in ship:
+			ship.set("is_landed", false)
+		if ship.has_method("_set_mode"):
+			ship._set_mode(1)
+	if walker != null and is_instance_valid(walker) and ship != null and is_instance_valid(ship):
+		walker.global_position = ship.global_position + pad_up * 2.0
+		if os.has_method("try_enter_ship"):
+			os.try_enter_ship()
 	print("[Playtest] HF-A +1 stack · cap 5 refuse · Firewall -1 · Knowledge label only")
 
 
