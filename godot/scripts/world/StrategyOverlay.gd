@@ -121,11 +121,24 @@ func _try_kit(kind: String, target) -> bool:
 	var hint: Node = target as Node if target is Node else null
 	if hint == null or not is_instance_valid(hint):
 		hint = infection_target()
+	_pin_caster_for_pad(caster, hint)
 	if kind == "hack" and caster.has_method("try_hack"):
 		return bool(caster.try_hack(hint))
 	if kind == "firewall" and caster.has_method("try_firewall"):
 		return bool(caster.try_firewall(hint))
 	return false
+
+
+func _pin_caster_for_pad(caster: Node3D, hint: Node) -> void:
+	## Overlay is pad-scoped. Frozen leftover dirt pose must not miss the guard.
+	if caster == null or not is_instance_valid(caster) or hint == null:
+		return
+	if not (hint is Node3D) or not is_instance_valid(hint):
+		return
+	var dest: Vector3 = (hint as Node3D).global_position
+	if caster.global_position.distance_to(dest) <= 16.0:
+		return
+	caster.global_position = dest + _pad_up() * 4.0
 
 
 func _pad_guard() -> Node:

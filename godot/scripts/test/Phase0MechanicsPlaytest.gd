@@ -15968,6 +15968,8 @@ func _assert_hf_c(os: Node, fails: PackedStringArray) -> void:
 	var pad_up: Vector3 = host.get_meta("pad_up")
 	if "velocity" in ship:
 		ship.velocity = Vector3.ZERO
+	if walker != null and is_instance_valid(walker):
+		walker.global_position = dummy.global_position - pad_up * 0.0 + pad_up * 2.0
 	ship.global_position = dummy.global_position + pad_up * 6.0
 	if ship.has_method("_set_mode"):
 		ship._set_mode(2)
@@ -15977,7 +15979,7 @@ func _assert_hf_c(os: Node, fails: PackedStringArray) -> void:
 			await get_tree().create_timer(0.2).timeout
 			walker = os.get("player") as Node3D
 		if walker != null and is_instance_valid(walker):
-			walker.global_position = ship.global_position + pad_up * 2.0
+			walker.global_position = dummy.global_position + pad_up * 2.0
 			if os.has_method("try_enter_ship"):
 				os.try_enter_ship()
 			await get_tree().create_timer(0.2).timeout
@@ -15988,8 +15990,15 @@ func _assert_hf_c(os: Node, fails: PackedStringArray) -> void:
 			ship.set_pilot_active(true)
 		if LayerContext:
 			LayerContext.set_layer("Space")
+	## Boarding can steal the hull back to a leftover dirt walker. Pin both again.
+	ship.global_position = dummy.global_position + pad_up * 6.0
+	if walker != null and is_instance_valid(walker):
+		walker.global_position = dummy.global_position + pad_up * 2.0
 	if ship.has_method("_ensure_ability_kit"):
 		ship._ensure_ability_kit()
+	_hf_c_interrupt_channel(ship)
+	_hf_c_interrupt_channel(walker)
+	_hf_c_purge_pad_infection(traffic, dummy)
 	if not bool(ov.try_enter()):
 		fails.append("HF-C ST-A overlay did not open (%s)" % str(ov.readiness_line() if ov.has_method("readiness_line") else ""))
 		return
@@ -17806,6 +17815,37 @@ func _assert_sn_a(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] SN-A no SITE_*")
 	print("[Playtest] SN-A G5 closed")
 	print("[Playtest] SN-A walker puppet on occupied pad · host Pulse/occupy · no second walker · G5 closed · no SITE_*")
+
+
+func _hf_c_interrupt_channel(host: Node) -> void:
+	if host == null or not is_instance_valid(host):
+		return
+	var ch: Node = host.get_node_or_null("ChannelController")
+	if ch != null and ch.has_method("interrupt"):
+		ch.interrupt("hf-c")
+
+
+func _hf_c_purge_pad_infection(traffic: Node, dummy: Node) -> void:
+	var hosts: Array = []
+	if dummy != null:
+		hosts.append(dummy)
+	if traffic != null:
+		for meth in ["get_guard", "get_surface_dummy", "pulse_target", "get_rival"]:
+			if traffic.has_method(meth):
+				var n: Node = traffic.call(meth)
+				if n != null and is_instance_valid(n) and not hosts.has(n):
+					hosts.append(n)
+	for h in hosts:
+		if h == null or not is_instance_valid(h):
+			continue
+		var inf: Node = h.get_node_or_null("InfectionStatus") if h.has_method("get_node_or_null") else null
+		if inf != null:
+			inf.set("stacks", 0)
+			inf.set("glitch_timer", 0.0)
+			inf.set("in_combat", true)
+		elif h.has_method("purge_infection"):
+			while h.has_method("infection_stacks") and int(h.infection_stacks()) > 0:
+				h.purge_infection(1)
 
 
 func _hf_a_ready_kit(walker: Node, ab: Node, fac: String) -> void:
