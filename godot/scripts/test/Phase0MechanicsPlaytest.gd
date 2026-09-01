@@ -16609,10 +16609,8 @@ func _assert_bt_a(os: Node, fails: PackedStringArray) -> void:
 	if away.length_squared() < 0.01:
 		away = host.global_transform.basis.x
 	away = away.normalized()
-	## Far walker + guard at home → patrol.
+	## Far walker + guard at home → patrol. No Relief snap (it can steal the pose).
 	walker.global_position = host.global_position + away * 40.0 + pad_up * 2.0
-	if walker.has_method("_relief_snap_fallback"):
-		walker.call("_relief_snap_fallback")
 	if SoftScanCache:
 		SoftScanCache.invalidate_player()
 		SoftScanCache.invalidate_enemies()
@@ -16634,10 +16632,8 @@ func _assert_bt_a(os: Node, fails: PackedStringArray) -> void:
 	var glabel := str(traffic.guard_label()) if traffic.has_method("guard_label") else ""
 	if glabel == "":
 		fails.append("BT-A Knowledge guard label empty")
-	## In-range walker → engage Pulse.
+	## In-range walker → engage Pulse. Keep the posed range; no Relief snap.
 	walker.global_position = guard.global_position - away * 8.0 + pad_up * 2.0
-	if walker.has_method("_relief_snap_fallback"):
-		walker.call("_relief_snap_fallback")
 	if walker.has_method("face_world_point"):
 		walker.face_world_point(guard.global_position)
 	if SoftScanCache:
@@ -16672,8 +16668,6 @@ func _assert_bt_a(os: Node, fails: PackedStringArray) -> void:
 	## Off-range walker + guard off home → return-to-pad.
 	guard.global_position = home + away * 8.0 + pad_up * 0.2
 	walker.global_position = host.global_position + away * 45.0 + pad_up * 2.0
-	if walker.has_method("_relief_snap_fallback"):
-		walker.call("_relief_snap_fallback")
 	if SoftScanCache:
 		SoftScanCache.invalidate_player()
 	if bt.has_method("tick"):
