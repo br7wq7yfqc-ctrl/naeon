@@ -66,6 +66,9 @@ const Q_D_GIVER := true
 ## HF-A: first Hack / Firewall on unnamed-pad TPS. +1 stack, cap 5 refuse, Firewall −1.
 ## Knowledge labels the stack only. Not a minigame. Not Voice. Not G2.
 const HF_A_HACK := true
+## HF-B: same Hack / Firewall from the seated player hull (OpenSpace, not Clash).
+## Targets a pad-guard CombatDummy or visiting NpcPilot hull. Same cap / refuse.
+const HF_B_HULL := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6

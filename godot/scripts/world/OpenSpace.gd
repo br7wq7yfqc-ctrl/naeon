@@ -2043,9 +2043,13 @@ func _cycle_faction_demo() -> void:
 					break
 		if absys and absys.has_method("setup_default_loadout"):
 			absys.setup_default_loadout(GameManager.get_faction_name())
-	# Dual-theme ship modules
+	# Dual-theme ship modules + the same HF-A kit on the seated hull (HF-B).
 	if ship and ship.has_method("apply_faction_modules"):
 		ship.apply_faction_modules(GameManager.get_faction_name())
+	if ship:
+		var ship_ab = ship.get_node_or_null("AbilitySystem")
+		if ship_ab != null and ship_ab.has_method("setup_default_loadout"):
+			ship_ab.setup_default_loadout(GameManager.get_faction_name())
 	print("[OpenSpace] faction demo → ", GameManager.get_faction_name())
 
 func _ensure_edu_on_player() -> Node:

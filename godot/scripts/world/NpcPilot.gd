@@ -488,6 +488,47 @@ func infection_cap() -> int:
 	return 5
 
 
+func hull() -> Node3D:
+	## Visiting hull in OpenSpace. Ability range is measured here, not on this Node.
+	if _ship != null and is_instance_valid(_ship):
+		return _ship
+	var p := get_parent()
+	return p as Node3D if p is Node3D else null
+
+
+## HF-B: +1 Infection on the visitor. Cap 5 named refuse. Knowledge never writes this.
+func apply_infection(_n: int = 1) -> String:
+	_ensure_infection()
+	var inf := get_node_or_null("InfectionStatus")
+	if inf == null:
+		return "No InfectionStatus"
+	if inf.has_method("try_add_one"):
+		return str(inf.try_add_one())
+	if infection_stacks() >= infection_cap():
+		return "Infection cap 5"
+	if inf.has_method("add_stacks"):
+		inf.add_stacks(1)
+	return ""
+
+
+## HF-B: Firewall −1. Never below 0. No cash-shop cleanse.
+func purge_infection(_n: int = 1) -> int:
+	var inf := get_node_or_null("InfectionStatus")
+	if inf != null:
+		if inf.has_method("remove_one"):
+			inf.remove_one()
+		elif inf.has_method("remove_stacks"):
+			inf.remove_stacks(1)
+	return infection_stacks()
+
+
+func try_cash_cleanse(_paid: float = 0.0) -> bool:
+	var inf := get_node_or_null("InfectionStatus")
+	if inf != null and inf.has_method("try_cash_cleanse"):
+		return bool(inf.try_cash_cleanse(_paid))
+	return false
+
+
 func run_offline_cycle() -> String:
 	## Player gone. One short legal step: pad occupy/harvest or follow.
 	## Last player actions pick the step. They do not change combat stats.

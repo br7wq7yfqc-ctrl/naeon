@@ -39,7 +39,7 @@ Likeness — **вся** фантазия SC (лететь, стыковатьс�
 | 18 | Map / nav | in-system pad pip (`GameHUD` radar) | пип пада жив | **G2 закрыт** | галактическая карта сейчас |
 | 19 | Ground vehicles | `GroundVehicle.gd` rover | деплой с occupied unnamed пада, петля на Relief, обратно в CargoHold | hangar later | отдельный планетарный гараж-клон |
 | 20 | Character / forms | формы NAEON = идентичность | Canine/Feline/Avian/Human; dual-theme | косметика only | форма = статы |
-| 21 | Hacking / Infection | NAEON-native; `InfectionStatus` / Firewall / `ChannelController` | кап 5; Knowledge не множит урон; **HF-A** +1 / −1 on unnamed-pad TPS | кап держать | Infection > 5; P2W hack |
+| 21 | Hacking / Infection | NAEON-native; `InfectionStatus` / Firewall / `ChannelController` | кап 5; Knowledge не множит урон; **HF-A** TPS + **HF-B** hull +1 / −1 | кап держать | Infection > 5; P2W hack |
 | 22 | Tech budget | `FloatingOrigin`; chunk budget; одна система; 60 FPS MED | origin rebase 2.5 км; LOD/park far planets; MED target | OS-A дешёвый macro FBM; без второй noise-планеты | вторая система; voxel shell; 2-й шум-мир |
 
 ---

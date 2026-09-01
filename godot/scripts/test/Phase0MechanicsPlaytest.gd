@@ -45,6 +45,7 @@ func _go() -> void:
 		await _npc_hangar_queue(fails)
 		await _npc_factory_print(fails)
 		await _assert_q_d(os, fails)
+		await _assert_hf_b(os, fails)
 		await _assert_hf_a(os, fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
@@ -630,6 +631,7 @@ func _go() -> void:
 	await _npc_offline_cycle(fails)
 	await _npc_soft_alliance(fails)
 	await _eva_snap_pulse(fails)
+	await _assert_hf_b(os, fails)
 	await _assert_hf_a(os, fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
@@ -15427,6 +15429,252 @@ func _assert_q_d(os: Node, fails: PackedStringArray) -> void:
 			field0, field_lab0, field1, field_lab1
 		])
 	print("[Playtest] Q-D NPC same board id · quest_intel · no P2W")
+
+
+func _assert_hf_b(os: Node, fails: PackedStringArray) -> void:
+	## HF-B: seated hull in OpenSpace (not Clash). Same AbilitySystem Hack / Firewall
+	## as HF-A. +1 on dummy or visitor hull, cap 5 refuse, Firewall −1. Numbers stay.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var nex: Node = _osh_nex()
+	var traffic: Node = null
+	var dummy: Node3D = null
+	var host: Node3D = null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var walker: Node3D = os.get("player") as Node3D if os else null
+	var ab: Node = null
+	var pad: Node = _in_a_occupied_pad(os)
+	var harvest0 := 0.0
+	var harvest1 := 0.0
+	var rate0 := 0.0
+	var rate1 := 0.0
+	var pulse0 := 11.0
+	var pulse1 := 11.0
+	var dmg0 := 0.0
+	var dmg1 := 0.0
+	var thrust0 := 0.0
+	var thrust1 := 0.0
+	var stacks := -1
+	var refuse := ""
+	var lab1 := ""
+	var lab5 := ""
+	var lab4 := ""
+	var cash := true
+	var layer := str(LayerContext.current_layer) if LayerContext else ""
+	if P0 == null or not bool(P0.HF_B_HULL) or not bool(P0.HF_A_HACK):
+		fails.append("HF-B P0Slice flag missing")
+		return
+	if os == null or nex == null:
+		fails.append("HF-B no OpenSpace/Nex-Prime")
+		return
+	if layer == "Arena":
+		fails.append("HF-B must not run on Clash")
+		return
+	if LayerContext:
+		LayerContext.set_layer("Space")
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.2).timeout
+	if nex.has_method("pad_traffic"):
+		traffic = nex.call("pad_traffic")
+	if traffic == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("pad_traffic")
+		if not listed.is_empty():
+			traffic = listed[0]
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("HF-B pad traffic missing")
+		return
+	if traffic.has_method("get_surface_dummy"):
+		dummy = traffic.get_surface_dummy()
+	if dummy == null and traffic.has_method("pulse_target"):
+		dummy = traffic.pulse_target()
+	if dummy == null and traffic.has_method("get_guard"):
+		dummy = traffic.get_guard()
+	if dummy == null or not is_instance_valid(dummy):
+		fails.append("HF-B no CombatDummy / pad-guard")
+		return
+	if not dummy.has_method("apply_infection") or not dummy.has_method("purge_infection"):
+		fails.append("HF-B dummy missing infection apply/purge")
+		return
+	if dummy.has_method("infection_cap") and int(dummy.infection_cap()) != 5:
+		fails.append("HF-B infection cap drifted (%s)" % dummy.infection_cap())
+	host = traffic.get_parent() as Node3D
+	if host == null or not host.has_meta("pad_up"):
+		fails.append("HF-B dummy not on a pad")
+		return
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("HF-B minted SITE_* (%s)" % pin)
+		return
+	if ship == null or not is_instance_valid(ship):
+		fails.append("HF-B no ship")
+		return
+	if not bool(os.get("_in_ship")):
+		if (walker == null or not is_instance_valid(walker)) and os.has_method("_spawn_player_near_ship"):
+			os.call("_spawn_player_near_ship")
+			await get_tree().create_timer(0.2).timeout
+			walker = os.get("player") as Node3D
+		if walker != null and is_instance_valid(walker):
+			walker.global_position = ship.global_position + Vector3(0.0, 2.0, 0.0)
+			if os.has_method("try_enter_ship"):
+				os.try_enter_ship()
+			await get_tree().create_timer(0.25).timeout
+	if not bool(os.get("_in_ship")):
+		os.set("_in_ship", true)
+		os.set("_eva_mode", false)
+		if ship.has_method("set_pilot_active"):
+			ship.set_pilot_active(true)
+		if LayerContext:
+			LayerContext.set_layer("Space")
+	if LayerContext and str(LayerContext.current_layer) == "Arena":
+		fails.append("HF-B layer is Clash")
+		return
+	if pad != null and pad.has_method("tier_budget"):
+		harvest0 = float(pad.tier_budget().get("harvest", 0.0))
+	if pad != null and "extract_rate" in pad:
+		rate0 = float(pad.get("extract_rate"))
+	if "attack_damage" in dummy:
+		dmg0 = float(dummy.get("attack_damage"))
+	if "base_thrust" in ship:
+		thrust0 = float(ship.get("base_thrust"))
+	elif "thrust" in ship:
+		thrust0 = float(ship.get("thrust"))
+	dummy.set("faction", "Cybernex")
+	dummy.set("_alive", true)
+	if float(dummy.get("health")) < 20.0:
+		dummy.set("health", float(dummy.get("max_health")))
+	var inf0: Node = dummy.get_node_or_null("InfectionStatus")
+	if inf0 != null:
+		inf0.set("stacks", 0)
+		inf0.set("glitch_timer", 0.0)
+		inf0.set("in_combat", true)
+	var pad_up: Vector3 = host.get_meta("pad_up")
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	if "is_landed" in ship:
+		ship.set("is_landed", false)
+	var away: Vector3 = dummy.global_position - host.global_position
+	away = away - pad_up * away.dot(pad_up)
+	if away.length_squared() < 0.01:
+		away = host.global_transform.basis.x
+	away = away.normalized()
+	ship.global_position = dummy.global_position - away * 10.0 + pad_up * 6.0
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	if ship.has_method("_ensure_ability_kit"):
+		ship._ensure_ability_kit()
+	ab = ship.get_node_or_null("AbilitySystem")
+	if ab == null:
+		fails.append("HF-B no hull AbilitySystem")
+		return
+	_hf_a_ready_kit(ship, ab, "gROT")
+	if ab.get("abilities") != null and (ab.abilities as Array).size() > 0 and ab.abilities[0]:
+		pulse0 = float(ab.abilities[0].damage)
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("biology", 20.0)
+		GameManager.add_mastery("combat", 20.0)
+	if ab.get("abilities") != null and (ab.abilities as Array).size() > 0 and ab.abilities[0]:
+		pulse1 = float(ab.abilities[0].damage)
+		if absf(pulse1 - pulse0) > 0.01:
+			fails.append("HF-B Knowledge changed Pulse DPS")
+	if not ship.has_method("try_hack"):
+		fails.append("HF-B hull try_hack missing")
+		return
+	for i in range(5):
+		refuse = _hf_a_cast(ship, ab, dummy, "hack")
+		stacks = int(dummy.infection_stacks()) if dummy.has_method("infection_stacks") else -1
+		print("[Playtest] HF-B hull Hack +1 tick=", i + 1, " stacks=", stacks, " refuse=", refuse)
+		if stacks != i + 1:
+			fails.append("HF-B hull Hack did not apply +1 (tick %s got %s)" % [i + 1, stacks])
+			break
+		if refuse != "":
+			fails.append("HF-B hull Hack refused before cap (%s)" % refuse)
+			break
+	stacks = int(dummy.infection_stacks()) if dummy.has_method("infection_stacks") else -1
+	if stacks != 5:
+		fails.append("HF-B hull Infection not at cap 5 (got %s)" % stacks)
+	lab5 = SoftKnowledge.infection_label(stacks)
+	refuse = _hf_a_cast(ship, ab, dummy, "hack")
+	var stacks_cap := int(dummy.infection_stacks()) if dummy.has_method("infection_stacks") else -1
+	print("[Playtest] HF-B hull cap refuse stacks=", stacks_cap, " reason=", refuse)
+	if stacks_cap != 5:
+		fails.append("HF-B hull cap 5 did not hold (got %s)" % stacks_cap)
+	if refuse != "Infection cap 5":
+		fails.append("HF-B hull cap refuse reason=%s want Infection cap 5" % refuse)
+	cash = bool(dummy.try_cash_cleanse(999.0)) if dummy.has_method("try_cash_cleanse") else true
+	if cash or int(dummy.infection_stacks()) != 5:
+		fails.append("HF-B hull cash-shop cleanse")
+	_hf_a_ready_kit(ship, ab, "Cybernex")
+	if not ship.has_method("try_firewall"):
+		fails.append("HF-B hull try_firewall missing")
+		return
+	refuse = _hf_a_cast(ship, ab, dummy, "firewall")
+	stacks = int(dummy.infection_stacks()) if dummy.has_method("infection_stacks") else -1
+	print("[Playtest] HF-B hull Firewall -1 stacks=", stacks, " refuse=", refuse)
+	if stacks != 4:
+		fails.append("HF-B hull Firewall did not remove 1 (got %s)" % stacks)
+	if stacks < 0:
+		fails.append("HF-B hull Firewall went below 0")
+	lab4 = SoftKnowledge.infection_label(stacks)
+	lab1 = SoftKnowledge.infection_label(1)
+	if lab5 == "" or lab4 == "" or lab1 == "":
+		fails.append("HF-B Knowledge infection label empty")
+	if lab5 == lab4:
+		fails.append("HF-B Knowledge label did not follow stacks (%s / %s)" % [lab5, lab4])
+	var visitor: Node3D = traffic.get_visitor() if traffic.has_method("get_visitor") else null
+	var pilot: Node = traffic.get_npc_pilot() if traffic.has_method("get_npc_pilot") else null
+	var visit_host: Node = null
+	if visitor != null and is_instance_valid(visitor) and visitor.has_method("apply_infection"):
+		visit_host = visitor
+	elif pilot != null and is_instance_valid(pilot) and pilot.has_method("apply_infection"):
+		visit_host = pilot
+	if visit_host != null:
+		if visit_host.has_method("purge_infection"):
+			while visit_host.has_method("infection_stacks") and int(visit_host.infection_stacks()) > 0:
+				visit_host.purge_infection(1)
+		if visitor != null and is_instance_valid(visitor):
+			ship.global_position = visitor.global_position + pad_up * 6.0 \
+					+ visitor.global_transform.basis.x * 8.0
+		_hf_a_ready_kit(ship, ab, "gROT")
+		refuse = _hf_a_cast(ship, ab, visit_host, "hack")
+		var vst := int(visit_host.infection_stacks()) if visit_host.has_method("infection_stacks") else -1
+		print("[Playtest] HF-B visitor hull Hack stacks=", vst, " refuse=", refuse)
+		if vst != 1:
+			fails.append("HF-B visitor hull Hack did not apply +1 (got %s)" % vst)
+		if visit_host.has_method("purge_infection"):
+			visit_host.purge_infection(1)
+	if pad != null and pad.has_method("tier_budget"):
+		harvest1 = float(pad.tier_budget().get("harvest", -1.0))
+	if pad != null and "extract_rate" in pad:
+		rate1 = float(pad.get("extract_rate"))
+	if "attack_damage" in dummy:
+		dmg1 = float(dummy.get("attack_damage"))
+	if "base_thrust" in ship:
+		thrust1 = float(ship.get("base_thrust"))
+	elif "thrust" in ship:
+		thrust1 = float(ship.get("thrust"))
+	if ab.get("abilities") != null and (ab.abilities as Array).size() > 0 and ab.abilities[0]:
+		pulse1 = float(ab.abilities[0].damage)
+	print("[Playtest] HF-B harvest/pulse/dps/thrust ", snapped(harvest0, 0.01), "/",
+		snapped(pulse0, 0.01), "/", snapped(dmg0, 0.01), "/", snapped(thrust0, 0.01), " → ",
+		snapped(harvest1, 0.01), "/", snapped(pulse1, 0.01), "/", snapped(dmg1, 0.01), "/",
+		snapped(thrust1, 0.01), " label=", lab4)
+	if harvest0 > 0.0 and absf(harvest1 - harvest0) > 0.0001:
+		fails.append("HF-B harvest number changed (%s → %s)" % [harvest0, harvest1])
+	if absf(rate1 - rate0) > 0.0001:
+		fails.append("HF-B extract_rate changed")
+	if absf(pulse1 - pulse0) > 0.01 or absf(pulse1 - 11.0) > 0.01:
+		fails.append("HF-B Pulse DPS changed (%s → %s)" % [pulse0, pulse1])
+	if absf(dmg1 - dmg0) > 0.01:
+		fails.append("HF-B dummy DPS changed")
+	if absf(thrust1 - thrust0) > 0.01:
+		fails.append("HF-B thrust changed")
+	dummy.set("faction", "gROT")
+	while dummy.has_method("infection_stacks") and int(dummy.infection_stacks()) > 0:
+		if dummy.has_method("purge_infection"):
+			dummy.purge_infection(1)
+		else:
+			break
+	print("[Playtest] HF-B hull +1 stack · cap 5 refuse · Firewall -1 · TPS HF-A still next")
 
 
 func _assert_hf_a(os: Node, fails: PackedStringArray) -> void:
