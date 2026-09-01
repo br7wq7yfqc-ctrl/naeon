@@ -8,6 +8,7 @@ extends Node3D
 ## NP-G: after NP-B harvest, visitor spends at PadPrintBench §6(a) (same ST-C path).
 ## NP-H: after NP-B harvest, visitor queues one catalog module on the ST-D hangar.
 ## NP-I: after NP-B harvest, visitor spends at player-cluster factory bench (c) (same ST-G path).
+## Q-D: visitor offers the same Q-A ContractBoard id. Player accepts from this NPC.
 ## Knowledge labels only — never yield.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
@@ -34,6 +35,7 @@ func setup(host_pad: Node3D) -> void:
 	_spawn_surface_dummy()
 	_spawn_visitor()
 	_setup_alliance()
+	_offer_player_contract()
 	refresh_labels()
 	set_process(true)
 	print("[PadTraffic] host=", _host_name, " guard=1 visitor=1 surface=1")
@@ -163,6 +165,16 @@ func _offer_alliance_contract(ally: Node) -> void:
 	if ally.has_method("see_contract"):
 		ally.see_contract(str(offer.get("id", "")))
 	refresh_labels()
+
+
+func _offer_player_contract() -> void:
+	## Q-D: same Q-A board the ops console uses. Not a second quest system.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var p: Node = get_npc_pilot()
+	if P0 == null or not bool(P0.Q_D_GIVER) or not bool(P0.Q_A_CONTRACT):
+		return
+	if p != null and p.has_method("offer_player_contract"):
+		p.offer_player_contract()
 
 
 func _alliance_tag() -> String:

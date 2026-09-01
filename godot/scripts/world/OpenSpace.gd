@@ -1480,6 +1480,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				_try_deploy_hangar_rover()
 		KEY_N:
 			invite_nearby_npc()
+		KEY_J:
+			accept_nearby_npc_contract()
 		KEY_7:
 			_try_store_rover()
 		KEY_F1:
@@ -1529,6 +1531,39 @@ func invite_nearby_npc() -> bool:
 		SoftSession.note_player_action("invite")
 	_toast_hud("Squad 2/5 · visitor · no power")
 	return true
+
+
+func accept_nearby_npc_contract() -> Dictionary:
+	## Q-D: accept the same Q-A ContractBoard from the pad visitor. Not a second board.
+	var traffic: Node = _pad_traffic_node()
+	var pilot: Node = null
+	var visitor: Node3D = null
+	var actor: Node3D = player if player != null and is_instance_valid(player) else ship
+	var cur: Dictionary = {}
+	if traffic == null:
+		_toast_hud("No NPC nearby")
+		return {}
+	pilot = traffic.get_npc_pilot() if traffic.has_method("get_npc_pilot") else null
+	visitor = traffic.get_visitor() if traffic.has_method("get_visitor") else null
+	if pilot == null or visitor == null or not is_instance_valid(visitor):
+		_toast_hud("No NPC nearby")
+		return {}
+	if actor == null or not is_instance_valid(actor):
+		_toast_hud("No NPC nearby")
+		return {}
+	if actor.global_position.distance_to(visitor.global_position) > 90.0:
+		_toast_hud("Closer to the giver")
+		return {}
+	if not pilot.has_method("accept_player_contract"):
+		return {}
+	if pilot.has_method("offer_player_contract") and str(pilot.offered_player_contract_id() if pilot.has_method("offered_player_contract_id") else "") == "":
+		pilot.offer_player_contract()
+	cur = pilot.accept_player_contract()
+	if cur.is_empty() or str(cur.get("status", "")) == "":
+		_toast_hud("No contract on this giver")
+		return {}
+	_toast_hud("Contract %s · %s" % [str(cur.get("id", "")), str(cur.get("status", ""))])
+	return cur
 
 
 func _pad_traffic_node() -> Node:

@@ -8,6 +8,7 @@ extends Node
 ## NP-G: after NP-B harvest, spend at PadPrintBench §6(a) (same ST-C path).
 ## NP-H: after NP-B harvest, queue one catalog module on the ST-D hangar (same enqueue).
 ## NP-I: after NP-B harvest, spend at player-cluster factory bench (c) (same ST-G path).
+## Q-D: offer the same Q-A ContractBoard id. Player accepts from this visitor.
 ## Not a second IFCS, not G1, not a private yield table, not a damage aura.
 
 
@@ -99,6 +100,73 @@ func seen_contract_id() -> String:
 	if hull != null and hull.has_meta("alliance_contract_id"):
 		return str(hull.get_meta("alliance_contract_id"))
 	return ""
+
+
+func offered_player_contract_id() -> String:
+	## Q-D: same Q-A ContractBoard id the ops console uses. Not a second board.
+	if has_meta("player_contract_id"):
+		return str(get_meta("player_contract_id"))
+	var hull := get_parent()
+	if hull != null and hull.has_meta("player_contract_id"):
+		return str(hull.get_meta("player_contract_id"))
+	return ""
+
+
+func offer_player_contract() -> Dictionary:
+	## Q-D: same offer_one as the IN-B ops console. Not a campaign. Not Q-B.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var Board = load("res://scripts/systems/ContractBoard.gd")
+	var host := _contract_host_id()
+	var offer: Dictionary = {}
+	var cid := ""
+	if P0 == null or not bool(P0.Q_D_GIVER) or not bool(P0.Q_A_CONTRACT):
+		return {}
+	if Board == null or not Board.has_method("offer_one"):
+		return {}
+	offer = Board.offer_one(host, "Nex-Prime")
+	if offer.is_empty():
+		return {}
+	cid = str(offer.get("id", ""))
+	if cid == "" or cid.begins_with("SITE_") or not cid.begins_with("QA-"):
+		return {}
+	if str(offer.get("body", "")) != "Nex-Prime":
+		return {}
+	set_meta("player_contract_id", cid)
+	set_meta("quest_role", "CX_PILOT_LIAISON")
+	if _ship != null and is_instance_valid(_ship):
+		_ship.set_meta("player_contract_id", cid)
+		_ship.set_meta("quest_role", "CX_PILOT_LIAISON")
+	_sign_giver_label()
+	print("[NpcPilot] Q-D offered ", cid, " template=", offer.get("template", ""))
+	return offer.duplicate(true)
+
+
+func accept_player_contract(cash: float = 0.0) -> Dictionary:
+	## Player accepts the offered Q-A board from this NPC. Same ContractBoard.accept.
+	var Board = load("res://scripts/systems/ContractBoard.gd")
+	var cur: Dictionary = {}
+	if cash > 0.0:
+		print("[NpcPilot] Q-D pay-to-complete refused")
+		return {}
+	if Board == null or not Board.has_method("accept"):
+		return {}
+	if offered_player_contract_id() == "":
+		offer_player_contract()
+	cur = Board.accept()
+	if not cur.is_empty():
+		print("[NpcPilot] Q-D accepted ", cur.get("id", ""))
+	return cur.duplicate(true)
+
+
+func try_complete_player_contract(cash: float = 0.0) -> Dictionary:
+	## Same Q-A complete. SoftKnowledge quest_intel only.
+	var Board = load("res://scripts/systems/ContractBoard.gd")
+	if cash > 0.0:
+		print("[NpcPilot] Q-D pay-to-complete refused")
+		return {}
+	if Board == null or not Board.has_method("try_complete"):
+		return {}
+	return Board.try_complete()
 
 
 func is_harvesting() -> bool:
@@ -950,6 +1018,28 @@ func _sign_print_label() -> void:
 		lab = _ship.get_node_or_null("StatusLabel") as Label3D
 	if lab:
 		lab.text = "%s · %s" % [_SoftK.traffic_label("visitor"), _SoftK.print_bench_label()]
+
+
+func _contract_host_id() -> String:
+	var n: Node = _pad
+	while n:
+		if n is Node3D and str(n.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+			return str(n.name)
+		n = n.get_parent()
+	if _pad != null and is_instance_valid(_pad):
+		return str(_pad.name)
+	return "unnamed_pad"
+
+
+func _sign_giver_label() -> void:
+	## Knowledge names the giver only. Does not change yield / DPS / modules.
+	if _ship == null or not is_instance_valid(_ship):
+		return
+	var lab: Label3D = _ship.get_node_or_null("Label") as Label3D
+	if lab == null:
+		lab = _ship.get_node_or_null("StatusLabel") as Label3D
+	if lab:
+		lab.text = "%s · %s" % [_SoftK.traffic_label("visitor"), _SoftK.quest_giver_label()]
 
 
 func _sign_harvest_label() -> void:

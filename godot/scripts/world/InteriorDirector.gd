@@ -116,6 +116,7 @@ func last_console_action() -> Dictionary:
 
 func try_accept_contract() -> Dictionary:
 	## Q-A: accept the offered ops contract. Does not occupy / print / mint SITE_*.
+	## Q-D uses the same ContractBoard.accept from the pad visitor.
 	var cur: Dictionary = _Board.accept()
 	_console_board["contract"] = cur
 	_console_board["contract_status"] = str(cur.get("status", ""))

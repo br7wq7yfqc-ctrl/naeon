@@ -3,8 +3,8 @@
 **Версия:** 1.0  
 **Дата:** 2026-08-18  
 **Движок:** Godot 4.7.2  
-**Статус:** NP-A…NP-F + NP-C + NP-G + NP-H built. **NP-I this pass** (ST-G factory print of one catalog module).  
-**Код срезов:** NP-A flight · NP-B occupy/harvest · NP-C habitat · NP-D invite · NP-E soft alliance · NP-F offline · NP-G print · NP-H hangar · **NP-I factory**. Не G2–G6. Не 10k CCU.
+**Статус:** NP-A…NP-F + NP-C + NP-G + NP-H + NP-I built. **Q-D this pass** (pad visitor offers the same Q-A ContractBoard id).  
+**Код срезов:** NP-A flight · NP-B occupy/harvest · NP-C habitat · NP-D invite · NP-E soft alliance · NP-F offline · NP-G print · NP-H hangar · NP-I factory · **Q-D same board giver**. Не G2–G6. Не 10k CCU.
 
 Запрос владельца (в план): NPC должны **полностью закрывать петлю живого игрока**, пока MMO-кластер не запущен — летать, делать все playable-действия, прогрессировать, ставить базы, собирать альянсы и рейды. Живые: отвечают игроку, меняются под его влияние, работают offline и в coop с друзьями. Игрок берёт NPC в отряд и сообщество. **ИИ NPC — подписка AI Agency:** платят за инициативу и диалог, **никогда** за HP / DPS / yield / уникальное оружие (это P2W, отказ). Кластер: [`MMO_SERVERS.md`](MMO_SERVERS.md) — HOLD до Phase 3.
 
@@ -33,7 +33,7 @@ Clash: [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md).
 
 | Узел | Факт репо | Это не |
 |------|-----------|--------|
-| `PadTraffic.gd` | 1 pad-guard `CombatDummy` + visitor `ShipController`/`NpcPilot` (NP-A flight, NP-B occupy/harvest, NP-C habitat, NP-G ST-C print, NP-H ST-D hangar, NP-I ST-G factory, NP-D squad invite, NP-F short offline pad/follow, NP-E soft alliance / raid-or-logistics intent) + surface dummy под Pulse | mobile SITE_* |
+| `PadTraffic.gd` | 1 pad-guard `CombatDummy` + visitor `ShipController`/`NpcPilot` (NP-A flight, NP-B occupy/harvest, NP-C habitat, NP-G ST-C print, NP-H ST-D hangar, NP-I ST-G factory, NP-D squad invite, NP-F short offline pad/follow, NP-E soft alliance / raid-or-logistics intent, **Q-D same Q-A ContractBoard id**) + surface dummy под Pulse | mobile SITE_*; second quest board |
 | `PadAmbientLife.gd` | GLB-пропы, bob/wander, **0 боя** | агент, квест, альянс |
 | `ClashWaves.gd` | timed `CombatDummy` march по `ClashLanes` | герой Clash, драфт, agency |
 | `CombatDummy.gd` | HP, optional aggro/lane; цель и миньон | корабль, база, Contribution |
@@ -41,7 +41,7 @@ Clash: [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md).
 | `SoftNetSession.gd` | loopback/ENet visual; default OFF | MMO, 10k CCU |
 | `AllianceRanks.gd` | ранги 0–4, soft perms; **не** сила / claim; NP-E два NPC + видимый intent | siege (`rules/23`); pay-to-rank |
 | `rules/24` | отряд 2–5; invite одного NPC (NP-D follow/seat) | NP-E два NPC; pay-slot; аура урона |
-| `rules/07` | role_id квестодателей (`CX_PILOT_LIAISON`…) | полёт / стройка |
+| `rules/07` | role_id квестодателей (`CX_PILOT_LIAISON`…) — **Q-D** visitor stamps this on the same Q-A board | второй quest system; кампания |
 | `rules/11`, `rules/23` | иерархия; NP-E intent ≠ siege | pay-to-war; structure siege |
 | `SoftSession.gd` | `user://` form / faction / layer + last action; NP-F short offline cycle | кластер; вторая галактика |
 | `BaseBuilder.gd` | P0 controller-only; ST-A `place_player_habitat`; NP-C `place_npc_habitat`; ST-C/NP-G `print_catalog_module`; ST-G/NP-I `print_factory_catalog_module` | mint SITE_* |
@@ -89,8 +89,9 @@ OS-G силуэт и ambient life — WorldFill / плотность, не жи�
 | **NP-D** | Отряд: игрок зовёт **одного** NPC | `rules/24` (2–5); seat/F в `InteriorDirector` | invite; NPC следует / садится; coop: visual SoftNet, без combat authority | аура урона от группы; pay-slot |
 | **NP-E** | Два NPC: soft-альянс / raid intent | `AllianceRanks` 0–4; `rules/11`; intent ≠ `rules/23` siege | оба с рангом и perm; intent виден (рейд/логистика); без бонуса HP/DPS/claim | P2W-ранг; pay-to-war |
 | **NP-F** | Offline: короткая петля без игрока | `SoftSession` (`user://`); влияние **последних** действий игрока | игрок ушёл — NPC доигрывает короткий цикл (пад / follow); не кластер | серверный 10k sim; вторая галактика «под NPC» |
+| **Q-D** | Квестодатель на том же Q-A board | `ContractBoard.offer_one`; pad visitor `NpcPilot` | тот же `QA-*` id; accept у NPC; complete → `quest_intel` | второй quest system; кампания; pay-to-complete |
 
-Порядок: A → B → D → F → C (habitat) → E → G (ST-C print) → H (ST-D hangar) → **I (ST-G factory)**. Не открывать G2 «чтобы было больше миров NPC».
+Порядок: A → B → D → F → C (habitat) → E → G (ST-C print) → H (ST-D hangar) → I (ST-G factory) · **Q-D same board**. Не открывать G2 «чтобы было больше миров NPC».
 
 ---
 
@@ -154,7 +155,7 @@ OS-G силуэт и ambient life — WorldFill / плотность, не жи�
 
 | Сейчас | Дальше |
 |--------|--------|
-| NP-A…F + NP-C habitat + NP-G ST-C print + NP-H ST-D hangar + **NP-I** ST-G factory (one catalog module) | следующий NP-срез |
+| NP-A…F + NP-C habitat + NP-G ST-C print + NP-H ST-D hangar + NP-I ST-G factory + **Q-D** same Q-A board giver | следующий NP-срез |
 | Стратегия — ST-A…ST-G built; NPC print = (a)/(b)/(c) | не mint `SITE_*` |
 | SoftNet — visual | authority later; не 10k |
 | G2–G6 | закрыты |
