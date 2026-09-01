@@ -18,6 +18,7 @@ const ST_RETURN := "return"
 
 var _guard: CharacterBody3D = null
 var _home: Vector3 = Vector3.ZERO
+var _home_local: Vector3 = Vector3.ZERO
 var _pad_up: Vector3 = Vector3.UP
 var _state: String = ST_PATROL
 var _pts: Array[Vector3] = []
@@ -43,6 +44,7 @@ func bind(guard: CharacterBody3D, pad: Node3D = null) -> void:
 			_pad_up = (up as Vector3).normalized()
 	if guard != null:
 		_home = guard.global_position
+		_home_local = guard.position
 		guard.set("bt_driven", true)
 		guard.set("can_move", true)
 		guard.set("attack_damage", PULSE_DPS)
@@ -135,6 +137,7 @@ func physics_tick(delta: float) -> void:
 		_:
 			_drive_patrol(delta)
 	_guard.move_and_slide()
+	_stick_to_pad()
 
 
 func try_engage_pulse(target: Node = null) -> bool:
@@ -212,6 +215,18 @@ func _drive_toward(dest: Vector3, _delta: float) -> void:
 	_guard.velocity.x = dir.x * spd
 	_guard.velocity.z = dir.z * spd
 	_look(dir)
+
+
+func _stick_to_pad() -> void:
+	## Stay on the plate (parent-local). Gravity must not drop the dummy into dirt.
+	if _guard == null or not is_instance_valid(_guard):
+		return
+	var local: Vector3 = _guard.position
+	var planar: Vector3 = Vector3(local.x - _home_local.x, 0.0, local.z - _home_local.z)
+	if planar.length() > LEASH:
+		planar = planar.normalized() * LEASH
+	_guard.position = Vector3(_home_local.x + planar.x, _home_local.y, _home_local.z + planar.z)
+	_guard.velocity.y = 0.0
 
 
 func _halt_xz() -> void:
