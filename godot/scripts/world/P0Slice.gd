@@ -82,6 +82,10 @@ const BT_A_GUARD := true
 ## BT-B: one visitor NpcPilot. Tiny 3-state BT (approach / hold / leave).
 ## Hold keeps NP-B occupy/harvest. Host authority. Pulse 11. BT-A stays. G5 closed.
 const BT_B_VISITOR := true
+## SN-A: second local viewer on the occupied unnamed pad sees a SoftNet visual
+## SurfaceWalker puppet (optional PV-A rival pose). Host keeps Pulse / occupy.
+## Not ENet cluster. Not 10k CCU. G5 closed. No SITE_*.
+const SN_A_PAD := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6

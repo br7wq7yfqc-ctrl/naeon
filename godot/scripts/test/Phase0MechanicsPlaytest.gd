@@ -53,6 +53,7 @@ func _go() -> void:
 		await _assert_bt_b(os, fails)
 		await _assert_mc_a(os, fails)
 		await _assert_mc_b(os, fails)
+		await _assert_sn_a(os, fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
 
@@ -644,6 +645,7 @@ func _go() -> void:
 	await _assert_pv_a(os, fails)
 	await _assert_bt_a(os, fails)
 	await _assert_bt_b(os, fails)
+	await _assert_sn_a(os, fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
@@ -17155,6 +17157,178 @@ func _assert_bt_b(os: Node, fails: PackedStringArray) -> void:
 		pilot._seat_on_pad()
 	if bt.has_method("request_hold"):
 		bt.request_hold()
+
+
+func _assert_sn_a(os: Node, fails: PackedStringArray) -> void:
+	## SN-A: second local viewer sees SoftNet visual SurfaceWalker puppet
+	## on the occupied unnamed pad. No second physical walker. Host Pulse /
+	## occupy. G5 closed. No SITE_*. Clash unchanged.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var nex: Node = _osh_nex()
+	var traffic: Node = null
+	var soft: Node = null
+	var pvp: Node = null
+	var host: Node3D = null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var walker: Node3D = null
+	var viewer: Node3D = null
+	var puppet: Node3D = null
+	var pose: Dictionary = {}
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	if P0 == null or not bool(P0.SN_A_PAD):
+		fails.append("SN-A P0Slice flag missing")
+		return
+	if os == null or nex == null:
+		fails.append("SN-A no OpenSpace/Nex-Prime")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("SN-A must not run on TestArena")
+		return
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.2).timeout
+	if nex.has_method("pad_traffic"):
+		traffic = nex.call("pad_traffic")
+	if traffic == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("pad_traffic")
+		if not listed.is_empty():
+			traffic = listed[0]
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("SN-A pad traffic missing")
+		return
+	if traffic.has_method("get_softnet"):
+		soft = traffic.get_softnet()
+	if soft == null:
+		soft = traffic.get_node_or_null("PadSoftNet")
+	if soft == null:
+		fails.append("SN-A PadSoftNet missing")
+		return
+	if traffic.has_method("get_pvp"):
+		pvp = traffic.get_pvp()
+	if pvp == null:
+		pvp = traffic.get_node_or_null("PadPvp")
+	host = traffic.get_parent() as Node3D
+	if host == null or not host.has_meta("pad_up"):
+		fails.append("SN-A softnet not on a pad")
+		return
+	var pname := str(host.name)
+	if pname != "Pad_North" and pname != "Pad_Approach" and pname != "Pad_Flank":
+		fails.append("SN-A unknown pad (%s)" % pname)
+		return
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("SN-A minted SITE_* (%s)" % pin)
+		return
+	if soft.has_meta("site_pin") and str(soft.get_meta("site_pin")).begins_with("SITE_"):
+		fails.append("SN-A PadSoftNet minted SITE_*")
+		return
+	if soft.has_method("is_g5_closed") and not bool(soft.is_g5_closed()):
+		fails.append("SN-A G5 Clash-from-world is open")
+		return
+	if pvp != null and pvp.has_method("is_g5_closed") and not bool(pvp.is_g5_closed()):
+		fails.append("SN-A PadPvp G5 is open")
+		return
+	if traffic.has_method("is_g5_closed") and not bool(traffic.is_g5_closed()):
+		fails.append("SN-A traffic G5 is open")
+		return
+	if host.has_method("claim"):
+		host.claim("Cybernex", 2.0)
+	var pad_up: Vector3 = host.get_meta("pad_up")
+	if ship == null or not is_instance_valid(ship):
+		fails.append("SN-A no ship")
+		return
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	ship.global_position = host.global_position + pad_up * 8.0
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	if ship.has_method("_do_land"):
+		ship._do_land()
+	if os.has_method("try_exit_ship"):
+		os.try_exit_ship()
+	await get_tree().create_timer(0.4).timeout
+	walker = os.get("player") as Node3D
+	if (walker == null or not is_instance_valid(walker)) and os.has_method("_spawn_player_near_ship"):
+		os.call("_spawn_player_near_ship")
+		await get_tree().create_timer(0.25).timeout
+		walker = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("SN-A no walker after EVA")
+		return
+	if walker.has_method("set_eva_profile"):
+		walker.set_eva_profile(false)
+	os.set("_eva_mode", false)
+	walker.global_position = host.global_position + pad_up * 2.0
+	if walker.has_method("_relief_snap_fallback"):
+		walker.call("_relief_snap_fallback")
+	elif walker.has_method("snap_to_surface"):
+		walker.call("snap_to_surface")
+	if soft.has_method("bind"):
+		soft.bind(traffic)
+	if soft.has_method("sync_from_host"):
+		soft.sync_from_host()
+	await get_tree().process_frame
+	if soft.has_method("is_host_authority") and not bool(soft.is_host_authority()):
+		fails.append("SN-A SoftNet stole host authority")
+	if soft.has_method("combat_authority") and str(soft.combat_authority()) != "host":
+		fails.append("SN-A SoftNet combat authority left host")
+	if soft.has_method("occupy_authority") and str(soft.occupy_authority()) != "host":
+		fails.append("SN-A SoftNet occupy authority left host")
+	if SoftNetSession and SoftNetSession.has_method("combat_authority") and str(SoftNetSession.combat_authority()) != "host":
+		fails.append("SN-A SoftNet combat authority left host")
+	if SoftNetSession and SoftNetSession.get("enabled") == true:
+		fails.append("SN-A enabled SoftNet 20Hz loop")
+	viewer = soft.viewer() if soft.has_method("viewer") else null
+	puppet = soft.walker_puppet() if soft.has_method("walker_puppet") else null
+	pose = soft.observed_pose() if soft.has_method("observed_pose") else {}
+	if viewer == null or not is_instance_valid(viewer):
+		fails.append("SN-A second local viewer missing")
+	elif not bool(viewer.get_meta("softnet_visual", false)):
+		fails.append("SN-A viewer is not a SoftNet visual puppet")
+	if puppet == null or not is_instance_valid(puppet) or not puppet.visible:
+		fails.append("SN-A walker puppet missing")
+	elif not bool(puppet.get_meta("softnet_visual", false)):
+		fails.append("SN-A walker puppet is not SoftNet visual")
+	if puppet != null and puppet.is_in_group("player") and puppet is CharacterBody3D:
+		fails.append("SN-A walker puppet joined physical player")
+	if puppet is CharacterBody3D:
+		fails.append("SN-A walker puppet is a physical body")
+	if puppet != null and puppet.has_method("try_pulse"):
+		fails.append("SN-A walker puppet has combat Pulse")
+	if puppet != null and puppet.has_method("claim"):
+		fails.append("SN-A walker puppet has occupy claim")
+	if str(pose.get("authority", "")) != "host":
+		fails.append("SN-A SoftNet pose authority left host")
+	if str(pose.get("occupy_authority", "")) != "host":
+		fails.append("SN-A SoftNet pose occupy left host")
+	if str(pose.get("walker_mode", "")) != "world":
+		fails.append("SN-A viewer missed walker puppet (mode=%s)" % str(pose.get("walker_mode", "")))
+	if soft.has_method("viewer_sees_walker_puppet") and not bool(soft.viewer_sees_walker_puppet()):
+		fails.append("SN-A second actor does not see walker puppet")
+	var phys := int(soft.physical_walker_count()) if soft.has_method("physical_walker_count") else 0
+	if phys != 1:
+		fails.append("SN-A want 1 physical walker, got %s" % phys)
+	if soft.has_method("has_second_physical_walker") and bool(soft.has_second_physical_walker()):
+		fails.append("SN-A spawned a second physical walker")
+	print("[Playtest] SN-A visual puppet present")
+	print("[Playtest] SN-A no second physical walker")
+	print("[Playtest] SN-A host authority")
+	var pin1 := str(LayerContext.site_pin_id) if LayerContext else ""
+	if pin1 != pin0 and pin1.begins_with("SITE_"):
+		fails.append("SN-A minted SITE_* (%s)" % pin1)
+	if str(host.get_meta("site_pin", "")) != "":
+		fails.append("SN-A minted SITE_* on pad")
+	if SoftNetSession and SoftNetSession.get("enabled") == true:
+		fails.append("SN-A enabled SoftNet netcode after sync")
+	var scene_name := str(get_tree().current_scene.name) if get_tree() and get_tree().current_scene else ""
+	if scene_name.find("TestArena") >= 0:
+		fails.append("SN-A entered TestArena from OpenSpace (G5)")
+	if ResourceLoader.exists("res://scripts/world/ClashFromWorld.gd") \
+			or ResourceLoader.exists("res://scripts/world/ClashBeacon.gd"):
+		fails.append("SN-A opened G5 world-to-arena")
+	print("[Playtest] SN-A no SITE_*")
+	print("[Playtest] SN-A G5 closed")
+	print("[Playtest] SN-A walker puppet on occupied pad · host Pulse/occupy · no second walker · G5 closed · no SITE_*")
 
 
 func _hf_a_ready_kit(walker: Node, ab: Node, fac: String) -> void:
