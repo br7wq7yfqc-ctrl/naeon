@@ -64,7 +64,14 @@ func is_host_authority() -> bool:
 
 
 func has_second_physical_walker() -> bool:
-	return physical_walker_count() > 1
+	## SN-A never instantiates a SurfaceWalker. Leftover playtest bodies elsewhere
+	## are not a second pad walker spawned by this node.
+	if _puppet is CharacterBody3D:
+		return true
+	for c in get_children():
+		if c is CharacterBody3D and not bool(c.get_meta("softnet_visual", false)):
+			return true
+	return false
 
 
 func observed_pose() -> Dictionary:

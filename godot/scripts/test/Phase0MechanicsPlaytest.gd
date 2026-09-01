@@ -17263,6 +17263,7 @@ func _assert_sn_a(os: Node, fails: PackedStringArray) -> void:
 		walker.call("_relief_snap_fallback")
 	elif walker.has_method("snap_to_surface"):
 		walker.call("snap_to_surface")
+	var phys0 := int(soft.physical_walker_count()) if soft.has_method("physical_walker_count") else 0
 	if soft.has_method("bind"):
 		soft.bind(traffic)
 	if soft.has_method("sync_from_host"):
@@ -17305,9 +17306,14 @@ func _assert_sn_a(os: Node, fails: PackedStringArray) -> void:
 		fails.append("SN-A viewer missed walker puppet (mode=%s)" % str(pose.get("walker_mode", "")))
 	if soft.has_method("viewer_sees_walker_puppet") and not bool(soft.viewer_sees_walker_puppet()):
 		fails.append("SN-A second actor does not see walker puppet")
-	var phys := int(soft.physical_walker_count()) if soft.has_method("physical_walker_count") else 0
-	if phys != 1:
-		fails.append("SN-A want 1 physical walker, got %s" % phys)
+	var host_w: Node3D = soft.host_walker() if soft.has_method("host_walker") else walker
+	if host_w != walker:
+		fails.append("SN-A host walker is not OpenSpace.player")
+	if walker is CharacterBody3D and bool(walker.get_meta("softnet_visual", false)):
+		fails.append("SN-A tagged the host walker as SoftNet visual")
+	var phys1 := int(soft.physical_walker_count()) if soft.has_method("physical_walker_count") else 0
+	if phys1 > phys0:
+		fails.append("SN-A spawned a physical walker (%s → %s)" % [phys0, phys1])
 	if soft.has_method("has_second_physical_walker") and bool(soft.has_second_physical_walker()):
 		fails.append("SN-A spawned a second physical walker")
 	print("[Playtest] SN-A visual puppet present")
