@@ -60,7 +60,7 @@ func scan_intel() -> Dictionary:
 	var intel := _SoftK.extractor_label()
 	var out := {}
 	set_meta("last_scan_intel", intel)
-	if Board != null and Board.has_method("interact_scan_extractor"):
+	if Board != null:
 		out = Board.interact_scan_extractor()
 	if typeof(out) != TYPE_DICTIONARY or out.is_empty():
 		out = {"intel": intel}
