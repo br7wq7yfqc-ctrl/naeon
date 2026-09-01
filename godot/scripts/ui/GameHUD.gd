@@ -419,36 +419,26 @@ func _alive_player() -> Node:
 
 
 func _occupy_origin() -> Node3D:
-	## After I-hatch the live walker is OpenSpace.player. After F-board
-	## `_in_ship` — hull, even if the dying walker is still in the tree.
+	## Presence is OpenSpace._in_ship. Never fall back to the hull while on foot
+	## (that leftover is why occupy/radar/OS-stack needed a 19-lap playtest).
 	var tree := get_tree()
-	if tree != null:
-		var os: Node = tree.get_first_node_in_group("open_space")
-		if os != null:
-			if bool(os.get("_in_ship")):
-				var sh_os: Variant = os.get("ship")
-				if sh_os is Node3D and is_instance_valid(sh_os) and (sh_os as Node3D).is_inside_tree():
-					return sh_os as Node3D
-			var w: Variant = os.get("player")
-			if w is Node3D and is_instance_valid(w) and (w as Node3D).is_inside_tree() \
-					and (w as Node).has_method("set_spawn_facing"):
-				if ("interior_mode" in w and bool((w as Node).get("interior_mode"))) \
-						or ("_dying" in w and bool((w as Node).get("_dying"))) \
-						or ("eva_mode" in w and bool((w as Node).get("eva_mode")) \
-							and "zero_g" in w and bool((w as Node).get("zero_g"))):
-					pass
-				else:
-					return w as Node3D
+	if tree == null:
+		return null
+	var os: Node = tree.get_first_node_in_group("open_space")
+	if os != null:
+		if bool(os.get("_in_ship")):
+			var sh_os: Variant = os.get("ship")
+			if sh_os is Node3D and is_instance_valid(sh_os) and (sh_os as Node3D).is_inside_tree():
+				return sh_os as Node3D
+			return null
+		var w: Variant = os.get("player")
+		if w is Node3D and is_instance_valid(w) and (w as Node3D).is_inside_tree() \
+				and (w as Node).has_method("set_spawn_facing"):
+			return w as Node3D
+		return null
 	var p: Node = _alive_player()
 	if p is Node3D and (p as Node3D).is_inside_tree():
-		if not ("_dying" in p and bool((p as Node).get("_dying"))) \
-				and not ("interior_mode" in p and bool((p as Node).get("interior_mode"))) \
-				and not ("eva_mode" in p and bool((p as Node).get("eva_mode")) \
-					and "zero_g" in p and bool((p as Node).get("zero_g"))):
-			return p as Node3D
-	var sh: Node = _OsStack.player_ship(tree) if tree else null
-	if sh is Node3D and is_instance_valid(sh) and (sh as Node3D).is_inside_tree():
-		return sh as Node3D
+		return p as Node3D
 	return null
 
 
@@ -956,21 +946,12 @@ func _refresh_pad_radar(origin: Vector3) -> void:
 	# distances per comparison, eight times a second.
 	pads.sort_custom(func(a, b): return a.global_position.distance_squared_to(origin) \
 		< b.global_position.distance_squared_to(origin))
-	var range_m := PAD_RADAR_LOCAL_M
-	# Approach 12 km is the hull (OS-C 8 km spawn). On-foot dirt EVA is 400 m.
 	var origin_n: Node = _occupy_origin()
-	if _in_openspace() and origin_n != null and origin_n.has_method("flight_mode_name"):
-		var os_r: Node = get_tree().get_first_node_in_group("open_space") if get_tree() else null
-		if os_r != null and bool(os_r.get("_in_ship")) and origin_n == os_r.get("ship"):
-			range_m = PAD_RADAR_APPROACH_M
-	if origin_n != null and origin_n.has_method("set_spawn_facing"):
-		range_m = PAD_RADAR_LOCAL_M
-	if LayerContext:
-		var os_t: Node = get_tree().get_first_node_in_group("open_space") if get_tree() else null
-		if os_t == null or not bool(os_t.get("_in_ship")):
-			var ly_r := str(LayerContext.current_layer).to_upper()
-			if ly_r.find("TPS") >= 0 or ly_r.find("SURFACE") >= 0:
-				range_m = PAD_RADAR_LOCAL_M
+	# One bit: hull 12 km iff seated. On-foot leftover SPACE/layer must not win.
+	var range_m := PAD_RADAR_LOCAL_M
+	var os_r: Node = get_tree().get_first_node_in_group("open_space") if get_tree() else null
+	if os_r != null and bool(os_r.get("_in_ship")):
+		range_m = PAD_RADAR_APPROACH_M
 	_radar_range_m = range_m
 	var title_n := _radar.get_node_or_null("PadTitle") as Label
 	var shown: Array = []

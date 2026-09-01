@@ -837,7 +837,7 @@ func _finish_flight_view() -> void:
 		if hud and hud.has_method("bind_player") and ship:
 			hud.bind_player(ship)
 	if _in_ship:
-		reclaim_pilot_camera()
+		commit_presence("pilot")
 
 
 func _hand_view_to_ship() -> void:
@@ -885,6 +885,90 @@ func reclaim_pilot_camera() -> void:
 			live.clear_current(false)
 	cam.current = true
 
+
+func commit_presence(kind: String) -> void:
+	## Atomic seat/hatch/board. Layer + HUD + radar + camera follow `_in_ship`.
+	## kind: pilot | pocket | walker | eva
+	match kind:
+		"pilot":
+			_in_ship = true
+			_eva_mode = false
+			if LayerContext:
+				LayerContext.set_layer("Space")
+				LayerContext.seamless_stage = "world"
+			_bind_presence_camera("pilot")
+			_bind_presence_hud(ship)
+		"pocket":
+			_in_ship = false
+			_eva_mode = false
+			if LayerContext:
+				LayerContext.set_layer("ship_int")
+				LayerContext.seamless_stage = "pocket"
+			_bind_presence_camera("pocket")
+			_bind_presence_hud(player)
+		"walker":
+			_in_ship = false
+			_eva_mode = false
+			if player != null and is_instance_valid(player):
+				if player.has_method("set_interior_mode"):
+					player.set_interior_mode(false)
+				elif "interior_mode" in player:
+					player.interior_mode = false
+				if player.has_method("set_eva_profile"):
+					player.set_eva_profile(false)
+				if "zero_g" in player:
+					player.zero_g = false
+			if LayerContext:
+				LayerContext.set_layer("TPS")
+				LayerContext.seamless_stage = "surface"
+			_bind_presence_camera("walker")
+			_bind_presence_hud(player)
+		"eva":
+			_in_ship = false
+			_eva_mode = true
+			if player != null and is_instance_valid(player) and "interior_mode" in player:
+				player.interior_mode = false
+			if LayerContext:
+				LayerContext.set_layer("TPS")
+				LayerContext.seamless_stage = "eva"
+			_bind_presence_camera("eva")
+			_bind_presence_hud(player)
+		_:
+			return
+
+
+func _bind_presence_camera(kind: String) -> void:
+	## Hatch must not leave the hull chase cam current; board must not leave TPS.
+	if kind == "pilot":
+		reclaim_pilot_camera()
+		return
+	if ship != null and is_instance_valid(ship):
+		var scam: Camera3D = ship.get_node_or_null("CameraPivot/Camera3D") as Camera3D
+		if scam != null:
+			scam.current = false
+			scam.clear_current(false)
+	if player == null or not is_instance_valid(player):
+		return
+	var wcam: Camera3D = player.get_node_or_null("CamPivot/Camera3D") as Camera3D
+	if wcam == null and "camera" in player:
+		wcam = player.camera as Camera3D
+	if wcam != null:
+		wcam.current = true
+
+
+func _bind_presence_hud(actor: Node) -> void:
+	var tree := get_tree()
+	if tree == null:
+		return
+	var hud: Node = tree.get_first_node_in_group("game_hud")
+	if hud == null:
+		return
+	if actor != null and is_instance_valid(actor) and hud.has_method("bind_player"):
+		hud.bind_player(actor)
+	if hud.has_method("_refresh"):
+		hud._refresh()
+
+
 func try_exit_ship() -> void:
 	if not _in_ship or ship == null or not is_instance_valid(ship):
 		return
@@ -900,8 +984,6 @@ func try_exit_ship() -> void:
 		return
 	_in_ship = false
 	_eva_mode = not landed
-	if LayerContext:
-		LayerContext.set_layer("TPS")
 	if landed:
 		_spawn_player_near_ship()
 	else:
@@ -915,6 +997,7 @@ func try_exit_ship() -> void:
 			pl.set_observer(player)
 		_set_planet_observers(player)
 	_bind_soft_net_actor(player)
+	commit_presence("walker" if landed else "eva")
 	_toast_hud("EVA suit" if _eva_mode else "Debarked — clear of hull")
 	print("[OpenSpace] exited ship  eva=", _eva_mode)
 
@@ -972,10 +1055,7 @@ func _finish_board_ship() -> void:
 	if ship != null and is_instance_valid(ship) and ship.has_method("set_pilot_active"):
 		ship.set_pilot_active(true)
 	_seat_transition = false
-	reclaim_pilot_camera()
-	var hud: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
-	if hud != null and hud.has_method("bind_player") and ship != null and is_instance_valid(ship):
-		hud.bind_player(ship)
+	commit_presence("pilot")
 	print("[OpenSpace] boarded ship OK")
 
 
@@ -1792,12 +1872,11 @@ func _leave_seat_to_pocket() -> void:
 	player = _make_fallback_player()
 	player.set("interior_mode", true)
 	add_child(player)
-	if LayerContext:
-		LayerContext.set_layer("ship_int")
 	if player.has_method("_bind_hud"):
 		player._bind_hud()
 	if _interior != null and is_instance_valid(_interior) and _interior.has_method("enter_ship"):
 		_interior.enter_ship(player, ship)
+	commit_presence("pocket")
 	_toast_hud("Left seat — pocket · F seat · F/I airlock")
 	print("[OpenSpace] seat→pocket")
 
@@ -1810,8 +1889,6 @@ func place_from_ship_pocket(walker: Node3D) -> void:
 	_in_ship = false
 	var landed := bool(ship.get("is_landed"))
 	_eva_mode = not landed
-	if LayerContext:
-		LayerContext.set_layer("TPS" if landed else "Space")
 	if walker.has_method("set_planet_gravity_provider"):
 		walker.set_planet_gravity_provider(self)
 	if landed:
@@ -1905,6 +1982,7 @@ func place_from_ship_pocket(walker: Node3D) -> void:
 			pl2.set_observer(walker)
 	_set_planet_observers(walker)
 	_bind_soft_net_actor(walker)
+	commit_presence("walker" if landed else "eva")
 	print("[OpenSpace] pocket→", "EVA 0G" if not landed else "pad")
 
 

@@ -1,3 +1,5 @@
+**2026-09-01 — OS-H presence commit: layer/HUD/radar/camera follow `_in_ship` (no Space stamp on EVA hatch)**
+
 **2026-08-31 — I-hatch after F-EVA nineteenth dirt F-board is pocket then hull-side Relief**
 
 **2026-08-31 — F-board after F-EVA nineteenth dirt land occupy is hull 12km Space**

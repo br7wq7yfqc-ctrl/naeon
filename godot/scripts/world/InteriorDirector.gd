@@ -552,23 +552,17 @@ func exit_interior() -> void:
 				if tgt:
 					fo.set_target(tgt)
 
-	if LayerContext:
-		var landed := false
-		if was_ship and _open_space != null:
-			var shv: Variant = _open_space.get("ship")
-			if shv is Node and is_instance_valid(shv):
-				landed = bool((shv as Node).get("is_landed"))
+	if was_ship and _open_space != null and _open_space.has_method("place_from_ship_pocket") and _player != null and is_instance_valid(_player):
+		## OpenSpace.commit_presence owns hatch layer (walker/eva). Do not stamp
+		## Space onto in-flight EVA — that leftover is the 12 km radar.
+		_open_space.place_from_ship_pocket(_player)
+	elif LayerContext:
 		if LayerContext.has_method("set_layer"):
-			if was_ship and not landed:
-				LayerContext.set_layer("Space")
-			else:
-				LayerContext.set_layer("TPS")
+			LayerContext.set_layer("TPS")
 		else:
-			LayerContext.current_layer = "Space" if (was_ship and not landed) else "TPS"
+			LayerContext.current_layer = "TPS"
 		if "seamless_stage" in LayerContext:
 			LayerContext.seamless_stage = "world"
-	if was_ship and _open_space != null and _open_space.has_method("place_from_ship_pocket") and _player != null and is_instance_valid(_player):
-		_open_space.place_from_ship_pocket(_player)
 	_apply_hatch_facing()
 	exited.emit(_kind)
 	if was_ship:
