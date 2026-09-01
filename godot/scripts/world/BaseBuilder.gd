@@ -116,7 +116,7 @@ static func printed_module_on(pad: Node3D) -> Node3D:
 
 
 static func print_catalog_module(pad: Node3D, faction: String, kind: String = "extractor") -> Node3D:
-	## ST-C: one catalog habitat or extractor after a wallet spend. Not SITE_*.
+	## ST-C / NP-G: one catalog habitat or extractor after a wallet spend. Not SITE_*.
 	var n: Node3D = null
 	var k := kind
 	if pad == null or not is_instance_valid(pad):

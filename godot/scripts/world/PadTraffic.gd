@@ -5,6 +5,7 @@ extends Node3D
 ## NP-D may invite that pilot into a local squad. NP-F: short offline pad/follow.
 ## NP-E: guard + visitor share AllianceRanks and a visible raid/logistics intent.
 ## NP-C: visitor may place one habitat on an empty unnamed pad. Not siege. Not pay-to-rank.
+## NP-G: after NP-B harvest, visitor spends at PadPrintBench §6(a) (same ST-C path).
 ## Knowledge labels only — never yield.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
