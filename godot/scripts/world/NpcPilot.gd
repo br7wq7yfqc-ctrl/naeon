@@ -6,6 +6,7 @@ extends Node
 ## NP-F: after the player leaves, one short pad occupy/harvest or follow cycle.
 ## NP-C: after ST-A, place one habitat on an empty unnamed pad (same BaseBuilder).
 ## NP-G: after NP-B harvest, spend at PadPrintBench §6(a) (same ST-C path).
+## NP-H: after NP-B harvest, queue one catalog module on the ST-D hangar (same enqueue).
 ## Not a second IFCS, not G1, not a private yield table, not a damage aura.
 
 
@@ -35,6 +36,7 @@ var _companion: Node3D = null
 var _offline_ran: bool = false
 var _placed_mod: Node3D = null
 var _printed_mod: Node3D = null
+var _queued_hangar: Node3D = null
 var _offline_step: String = ""
 var _offline_busy: bool = false
 
@@ -172,6 +174,67 @@ func print_one_catalog_module(kind: String = "", cash: float = 0.0) -> Node3D:
 	_printed_mod = mod
 	_sign_print_label()
 	print("[NpcPilot] NP-G printed ", mod.name, " on ", pad.name if pad else "?", " cash_skip=false")
+	return mod
+
+
+func queued_hangar_module() -> Node3D:
+	if _queued_hangar != null and is_instance_valid(_queued_hangar):
+		return _queued_hangar
+	return null
+
+
+func saw_hangar_queue() -> bool:
+	return queued_hangar_module() != null
+
+
+func hangar_last_refuse() -> String:
+	var q := _hangar_queue()
+	if q != null and q.has_method("last_refuse"):
+		return str(q.last_refuse())
+	return ""
+
+
+func queue_one_hangar_module(kind: String = "", cash: float = 0.0) -> Node3D:
+	## NP-H: ST-D §6(b) enqueue on catalog carrier. Not NP-C habitat. Not factory. Not bench (a).
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var queue: Node = null
+	var mod: Node3D = null
+	if P0 == null or not bool(P0.NP_H_HANGAR) or not bool(P0.ST_D_HANGAR):
+		return null
+	queue = _hangar_queue()
+	if queue == null or not queue.has_method("enqueue_module"):
+		print("[NpcPilot] NP-H no CarrierHangarQueue")
+		return null
+	if cash > 0.0:
+		print("[NpcPilot] NP-H cash-shop skip refused")
+		return queue.enqueue_module(kind, cash)
+	if queued_hangar_module() != null:
+		print("[NpcPilot] NP-H already queued one hangar module")
+		return null
+	if queue.has_method("cash_shop_skip_possible") and bool(queue.cash_shop_skip_possible()):
+		return null
+	mod = queue.enqueue_module(kind, 0.0)
+	if mod == null or not is_instance_valid(mod):
+		return null
+	if str(mod.get_meta("site_pin", "x")) != "":
+		push_error("[NpcPilot] NP-H minted a site_pin")
+		mod.queue_free()
+		return null
+	if bool(mod.get_meta("npc_module", false)):
+		push_error("[NpcPilot] NP-H used habitat hack")
+		mod.queue_free()
+		return null
+	if bool(mod.get_meta("factory_printed", false)) or bool(mod.get_meta("printed_module", false)):
+		push_error("[NpcPilot] NP-H used factory/bench")
+		mod.queue_free()
+		return null
+	if not bool(mod.get_meta("hangar_queued", false)):
+		push_error("[NpcPilot] NP-H module not marked hangar_queued")
+		mod.queue_free()
+		return null
+	_queued_hangar = mod
+	_sign_hangar_label()
+	print("[NpcPilot] NP-H queued ", mod.name, " hull hangar cash_skip=false")
 	return mod
 
 
@@ -539,6 +602,7 @@ func _on_pad_harvested(amount: float, _total: float) -> void:
 	_harvest_got += amount
 	if _auto:
 		_try_auto_print()
+		_try_auto_queue()
 
 
 func _ensure_companion() -> Node3D:
@@ -712,10 +776,49 @@ func _print_bench_on(pad: Node3D) -> Node:
 	return pad.find_child("PadPrintBench", true, false)
 
 
+func _hangar_queue() -> Node:
+	## Same CarrierHangarQueue as ST-D. Does not mint a hull or SITE_*.
+	var os := _open_space()
+	var hull: Node = null
+	var q: Node = null
+	var tree := get_tree()
+	if os != null and os.has_method("hangar_queue"):
+		q = os.hangar_queue()
+		if q != null:
+			return q
+	if os != null and os.has_method("catalog_carrier"):
+		hull = os.catalog_carrier()
+	if hull != null and hull.has_method("hangar_queue"):
+		return hull.hangar_queue()
+	if tree:
+		var queues: Array = tree.get_nodes_in_group("hangar_queues")
+		if not queues.is_empty():
+			return queues[0]
+	return null
+
+
 func _try_auto_print() -> void:
 	if printed_catalog_module() != null:
 		return
 	print_one_catalog_module()
+
+
+func _try_auto_queue() -> void:
+	## NP-H after harvest. Does not replace NP-G bench print.
+	if queued_hangar_module() != null:
+		return
+	queue_one_hangar_module()
+
+
+func _sign_hangar_label() -> void:
+	## Knowledge names the hangar only. Does not change mass/power caps.
+	if _ship == null or not is_instance_valid(_ship):
+		return
+	var lab: Label3D = _ship.get_node_or_null("Label") as Label3D
+	if lab == null:
+		lab = _ship.get_node_or_null("StatusLabel") as Label3D
+	if lab:
+		lab.text = "%s · %s" % [_SoftK.traffic_label("visitor"), _SoftK.hangar_queue_label()]
 
 
 func _sign_print_label() -> void:
