@@ -1,3 +1,5 @@
+**2026-09-01 — HOVER sink after I-hatch F-EVA nineteenth dirt F-board launch is floor 4m, not leftover 8m**
+
 **2026-09-01 — GE after I-hatch F-EVA nineteenth dirt F-board launch is hull-side, not leftover plate**
 
 **2026-09-01 — HOVER launch after I-hatch F-EVA nineteenth dirt F-board is AGL+12, not leftover landed**
