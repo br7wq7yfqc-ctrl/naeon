@@ -15760,7 +15760,13 @@ func _assert_q_e(os: Node, fails: PackedStringArray) -> void:
 	lab0 = SoftKnowledge.contract_intel_label()
 	if Board.has_method("reset_slice"):
 		Board.reset_slice()
-	host = str(pad.name) if pad != null else "Pad_North"
+	host = "Pad_North"
+	var plate: Node = pad
+	while plate:
+		if plate is Node3D and str(plate.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+			host = str(plate.name)
+			break
+		plate = plate.get_parent()
 	offer = Board.offer_one(host, "Nex-Prime", "scan_extractor")
 	tmpl = str(offer.get("template", ""))
 	cid = str(offer.get("id", ""))
