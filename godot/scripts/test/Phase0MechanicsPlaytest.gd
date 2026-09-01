@@ -16383,9 +16383,9 @@ func _assert_pv_a(os: Node, fails: PackedStringArray) -> void:
 	var walker_hp0: float = float(walker.get("health")) if "health" in walker else 100.0
 	var fired := false
 	if walker.has_method("try_pulse"):
-		fired = bool(walker.try_pulse())
+		fired = bool(walker.try_pulse(rival))
 	elif ab.has_method("try_activate"):
-		fired = bool(ab.try_activate(0))
+		fired = bool(ab.try_activate(0, rival))
 	var hp1: float = float(rival.get("health"))
 	var drop: float = hp0 - hp1
 	print("[Playtest] PV-A rival present pad=", pname, " hp ", snapped(hp0, 0.1), " → ",
