@@ -461,6 +461,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-31 | OS-stack after F-EVA nineteenth dirt land occupy: TPS. | os-stack-after-nineteenth-dirt-feva |
 | 2026-08-31 | F-board after F-EVA nineteenth dirt land occupy: hull 12km Space. | fboard-after-nineteenth-dirt-feva |
 | 2026-08-31 | I-hatch after F-EVA nineteenth dirt F-board: pocket then hull-side Relief. | ihatch-after-nineteenth-dirt-fboard |
+| 2026-09-01 | Dirt land after I-hatch F-EVA nineteenth dirt F-board sink is Relief, pad none. | dirt-land-after-nineteenth-dirt-ihatch |
 | 2026-09-01 | HOVER sink after I-hatch F-EVA nineteenth dirt F-board launch is floor 4m, not leftover 8m. | hover-sink-after-nineteenth-dirt-ihatch |
 | 2026-09-01 | GE after I-hatch F-EVA nineteenth dirt F-board launch is hull-side, not leftover pad plate. | ge-after-nineteenth-dirt-ihatch |
 | 2026-09-01 | HOVER launch after I-hatch F-EVA nineteenth dirt F-board holds AGL+12, not leftover landed. | hover-launch-after-nineteenth-dirt-ihatch |
