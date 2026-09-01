@@ -553,10 +553,11 @@ static func _seat_glow(root: Node3D, seat_pos: Vector3, neon: Color) -> void:
 
 static func _ensure_crew_seat(root: Node3D, pos: Vector3, neon: Color) -> void:
 	## MC-A: one extra legal seat in the ship pocket. Never named Seat/SeatVolume.
+	## MC-B: that seat is named gunner — label only. F/I role stays crew.
 	if root == null:
 		return
 	if root.get_node_or_null("CrewSeat") == null:
-		_legal_seat(root, pos, neon, "CrewSeat", "CrewSeatVolume", "CrewSeatLabel", "CREW SEAT", "crew")
+		_legal_seat(root, pos, neon, "CrewSeat", "CrewSeatVolume", "CrewSeatLabel", "CREW SEAT · GUNNER", "crew")
 	var occ: Node = root.get_node_or_null("CrewSeatOccupied")
 	if occ == null:
 		occ = Marker3D.new()
@@ -566,6 +567,7 @@ static func _ensure_crew_seat(root: Node3D, pos: Vector3, neon: Color) -> void:
 		occ.set_meta("legal_seat", true)
 		occ.visible = false
 		root.add_child(occ)
+	_stamp_crew_gunner(root)
 	if DisplayServer.get_name() == "headless":
 		return
 	if root.get_node_or_null("CrewSeatPillar") != null:
@@ -606,6 +608,21 @@ static func _ensure_crew_seat(root: Node3D, pos: Vector3, neon: Color) -> void:
 	ring.position = pos + Vector3(0, 0.05, 0)
 	ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(ring)
+
+
+static func _stamp_crew_gunner(root: Node3D) -> void:
+	## MC-B: station_role is a SoftKnowledge / HUD name. Does not change F/I.
+	if root == null:
+		return
+	for nm in ["CrewSeat", "CrewSeatVolume", "CrewSeatOccupied"]:
+		var n: Node = root.get_node_or_null(nm)
+		if n == null:
+			continue
+		n.set_meta("station_role", "gunner")
+		n.set_meta("crew_role", "gunner")
+	var lab: Node = root.get_node_or_null("CrewSeatLabel")
+	if lab is Label3D and str((lab as Label3D).text).find("GUNNER") < 0:
+		(lab as Label3D).text = "CREW SEAT · GUNNER"
 
 
 static func _legal_seat(root: Node3D, pos: Vector3, neon: Color, seat_name: String, vol_name: String, label_name: String, label: String, role: String) -> void:

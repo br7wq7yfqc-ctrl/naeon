@@ -11,7 +11,7 @@ const FIELDS := [
 	"econ", "econ_rate", "econ_grot",
 	"energy", "energy_max",
 	"power_draw", "power_supply", "cool_load", "cool_cap", "life",
-	"crew", "crew_max",
+	"crew", "crew_max", "crew_role",
 ]
 
 
@@ -56,6 +56,7 @@ static func snapshot(ship: Node = null, player: Node = null, pad: Node = null) -
 		"life": "",
 		"crew": 0,
 		"crew_max": 2,
+		"crew_role": "gunner",
 	}
 	if ship != null and is_instance_valid(ship):
 		if "fuel" in ship:
@@ -129,11 +130,13 @@ static func _fill_crew(snap: Dictionary, ship: Node, player: Node) -> void:
 			var o: Dictionary = n.crew_occupancy()
 			snap["crew"] = int(o.get("total", 0))
 			snap["crew_max"] = int(o.get("max", 2))
+			snap["crew_role"] = str(o.get("role", "gunner"))
 			return
 	var os: Node = tree.get_first_node_in_group("open_space")
 	if os != null and is_instance_valid(os) and bool(os.get("_in_ship")):
 		snap["crew"] = 1
 		snap["crew_max"] = 2
+		snap["crew_role"] = "gunner"
 
 
 static func has_fields(snap: Dictionary) -> bool:
@@ -190,10 +193,11 @@ static func stack_text(snap: Dictionary) -> String:
 	var ls_s := "%s —" % _SoftK.life_bus_label()
 	if life_raw != "":
 		ls_s = "%s %s" % [_SoftK.life_bus_label(), life_raw]
-	var crew_s := "%s %d/%d" % [
+	var crew_s := "%s %d/%d · %s" % [
 		_SoftK.crew_label(),
 		int(snap.get("crew", 0)),
 		int(snap.get("crew_max", 2)),
+		_SoftK.crew_role_label(str(snap.get("crew_role", "gunner"))),
 	]
 	return "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s" % [
 		econ_s, fuel_s, cargo_s, mod_s, pwr_s, cool_s, ls_s, land_s, eva, en_s, crew_s,

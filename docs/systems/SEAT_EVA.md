@@ -8,11 +8,12 @@
 - I from pilot leaves the seat **into the pocket** (no exterior hop)
 - I at airlock/hatch leaves to EVA (zero-G if not landed) or the pad. Doors lead to pocket or EVA — never a locked prop.
 
-## Crew seat [F] (MC-A)
+## Crew seat [F] (MC-A + MC-B)
 - Same ship_int pocket. Nearer-seat wins: `CrewSeat` is not the pilot `Seat`.
 - **F** boards (`try_board_legal_seat` role=`crew`). Walker stays. Occupied marker visible.
 - **I** / **F** while seated returns to the same pocket (IN-B pattern). No exterior hop.
 - HUD `CREW n/2` is a label only. Knowledge does not change thrust / DPS / yield.
+- **MC-B:** station role `gunner` is a SoftKnowledge / HUD label (`GUNNER`). Does not change Pulse / Hack / DPS / thrust / yield or unlock exclusive modules. F/I role stays `crew`.
 - Optional SoftNet visual puppet when a second local viewer exists. Host authority. No second hull. No passenger combat.
 
 ## EVA
