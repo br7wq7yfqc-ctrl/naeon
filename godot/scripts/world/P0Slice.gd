@@ -69,6 +69,10 @@ const HF_A_HACK := true
 ## HF-B: same Hack / Firewall from the seated player hull (OpenSpace, not Clash).
 ## Targets a pad-guard CombatDummy or visiting NpcPilot hull. Same cap / refuse.
 const HF_B_HULL := true
+## PV-A: first TPS PvP on an occupied unnamed pad. One host-authority rival
+## CombatDummy takes Pulse and deals Pulse back (DPS 11). Win = rival HP → 0.
+## No permadeath. Infection cap 5. Knowledge labels only. G5 stays closed.
+const PV_A_PVP := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6

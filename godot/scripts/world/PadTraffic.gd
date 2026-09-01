@@ -9,12 +9,15 @@ extends Node3D
 ## NP-H: after NP-B harvest, visitor queues one catalog module on the ST-D hangar.
 ## NP-I: after NP-B harvest, visitor spends at player-cluster factory bench (c) (same ST-G path).
 ## Q-D: visitor offers the same Q-A ContractBoard id. Player accepts from this NPC.
+## PV-A: one host-authority rival CombatDummy on this occupied unnamed pad.
+## Pulse 11 both ways. Win = rival HP → 0. No permadeath. G5 stays closed.
 ## Knowledge labels only — never yield.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 const _DUMMY := preload("res://scenes/combat/CombatDummy.tscn")
 const _SHIP := preload("res://scenes/ship/Ship.tscn")
 const _Pilot := preload("res://scripts/world/NpcPilot.gd")
+const _Pvp := preload("res://scripts/world/PadPvp.gd")
 
 var _host_name: String = ""
 var _guard: Node3D = null
@@ -23,6 +26,7 @@ var _visitor: Node3D = null
 var _visitor_base: Vector3 = Vector3(16.0, 6.5, -12.0)
 var _life_accum: float = 0.0
 var _alliance: Node = null
+var _pvp: Node = null
 
 
 func setup(host_pad: Node3D) -> void:
@@ -35,10 +39,11 @@ func setup(host_pad: Node3D) -> void:
 	_spawn_surface_dummy()
 	_spawn_visitor()
 	_setup_alliance()
+	_setup_pvp()
 	_offer_player_contract()
 	refresh_labels()
 	set_process(true)
-	print("[PadTraffic] host=", _host_name, " guard=1 visitor=1 surface=1")
+	print("[PadTraffic] host=", _host_name, " guard=1 visitor=1 surface=1 rival=1")
 
 
 func host_pad_name() -> String:
@@ -76,6 +81,33 @@ func get_alliance() -> Node:
 	return get_node_or_null("SoftAlliance")
 
 
+func get_pvp() -> Node:
+	if _pvp != null and is_instance_valid(_pvp):
+		return _pvp
+	return get_node_or_null("PadPvp")
+
+
+func get_rival() -> Node3D:
+	var p := get_pvp()
+	if p != null and p.has_method("get_rival"):
+		return p.get_rival()
+	return null
+
+
+func combat_authority() -> String:
+	var p := get_pvp()
+	if p != null and p.has_method("combat_authority"):
+		return str(p.combat_authority())
+	return "host"
+
+
+func is_g5_closed() -> bool:
+	var p := get_pvp()
+	if p != null and p.has_method("is_g5_closed"):
+		return bool(p.is_g5_closed())
+	return true
+
+
 func pulse_target() -> Node3D:
 	## Hostile dummy for surface Pulse. Pad-guard stays host-faction traffic.
 	var d := get_surface_dummy()
@@ -105,6 +137,13 @@ func surface_dummy_label() -> String:
 	return _SoftK.surface_dummy_label()
 
 
+func rival_label() -> String:
+	var p := get_pvp()
+	if p != null and p.has_method("rival_label"):
+		return str(p.rival_label())
+	return _SoftK.rival_label()
+
+
 func refresh_labels() -> void:
 	var extra := _alliance_tag()
 	var gname := guard_label()
@@ -119,6 +158,9 @@ func refresh_labels() -> void:
 		_surface_dummy.set("intel_name", dname)
 		if _surface_dummy.has_method("_update_labels"):
 			_surface_dummy._update_labels()
+	var pvp := get_pvp()
+	if pvp != null and pvp.has_method("refresh_label"):
+		pvp.refresh_label()
 	var vname := visitor_label()
 	if extra != "":
 		vname = "%s · %s" % [vname, extra]
@@ -165,6 +207,25 @@ func _offer_alliance_contract(ally: Node) -> void:
 	if ally.has_method("see_contract"):
 		ally.see_contract(str(offer.get("id", "")))
 	refresh_labels()
+
+
+func _setup_pvp() -> void:
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.PV_A_PVP):
+		return
+	var existing: Node = get_node_or_null("PadPvp")
+	if existing != null:
+		_pvp = existing
+		if _pvp.has_method("bind"):
+			_pvp.bind(self)
+		return
+	var p: Node3D = Node3D.new()
+	p.set_script(_Pvp)
+	p.name = "PadPvp"
+	add_child(p)
+	_pvp = p
+	if p.has_method("bind"):
+		p.bind(self)
 
 
 func _offer_player_contract() -> void:

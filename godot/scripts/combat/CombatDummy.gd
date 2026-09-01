@@ -372,6 +372,26 @@ func get_faction() -> String:
 	return faction
 
 
+func is_alive() -> bool:
+	return _alive
+
+
+## PV-A / host Pulse: same 11 DPS bolt the walker uses. No Knowledge multiply.
+func try_pulse(target = null) -> bool:
+	if not _alive:
+		return false
+	var t: Node = target as Node if target != null else _find_player()
+	if t == null or not is_instance_valid(t):
+		return false
+	if _same_faction(t):
+		return false
+	var saved := attack_damage
+	attack_damage = 11.0
+	_fire_at(t)
+	attack_damage = saved
+	return true
+
+
 func hurtbox_center() -> Vector3:
 	return global_position + Vector3(0, 0.85, 0)
 
