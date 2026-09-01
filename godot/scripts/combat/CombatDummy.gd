@@ -51,6 +51,7 @@ func _ready() -> void:
 	collision_mask = 3   # World + Player
 	add_to_group("enemy")
 	add_to_group("hackable")
+	_ensure_infection()
 	if lane_march:
 		add_to_group("clash_minion")
 	_mat = StandardMaterial3D.new()
@@ -289,6 +290,72 @@ func take_damage(amount: float, _source_faction: String = "") -> void:
 	if health <= 0.0:
 		_die()
 
+func _ensure_infection() -> void:
+	## Same InfectionStatus as the walker. Cap 5. Knowledge never writes stacks.
+	if get_node_or_null("InfectionStatus") != null:
+		return
+	var n := Node.new()
+	n.set_script(preload("res://scripts/abilities/InfectionStatus.gd"))
+	n.name = "InfectionStatus"
+	add_child(n)
+
+
+func infection_stacks() -> int:
+	var inf := get_node_or_null("InfectionStatus")
+	if inf == null:
+		return 0
+	return int(inf.stacks)
+
+
+func infection_cap() -> int:
+	return 5
+
+
+## HF-A: +1 Infection. Cap 5 returns a named refuse. Never a damage multiply.
+func apply_infection(_n: int = 1) -> String:
+	_ensure_infection()
+	var inf := get_node_or_null("InfectionStatus")
+	if inf == null:
+		return "No InfectionStatus"
+	var why := ""
+	if inf.has_method("try_add_one"):
+		why = str(inf.try_add_one())
+	elif inf.has_method("add_stacks"):
+		if infection_stacks() >= infection_cap():
+			why = "Infection cap 5"
+		else:
+			inf.add_stacks(1)
+	_tint_infection()
+	_update_labels()
+	return why
+
+
+## HF-A: Firewall −1. Never below 0. No cash-shop cleanse.
+func purge_infection(_n: int = 1) -> int:
+	var inf := get_node_or_null("InfectionStatus")
+	if inf != null:
+		if inf.has_method("remove_one"):
+			inf.remove_one()
+		elif inf.has_method("remove_stacks"):
+			inf.remove_stacks(1)
+	_update_labels()
+	return infection_stacks()
+
+
+func try_cash_cleanse(_paid: float = 0.0) -> bool:
+	var inf := get_node_or_null("InfectionStatus")
+	if inf != null and inf.has_method("try_cash_cleanse"):
+		return bool(inf.try_cash_cleanse(_paid))
+	return false
+
+
+func _tint_infection() -> void:
+	if _mat == null:
+		return
+	var t := clampf(float(infection_stacks()) / 5.0, 0.0, 1.0)
+	_mat.emission = Color(0.9, 0.1, 0.35).lerp(Color(1.0, 0.35, 0.12), t)
+
+
 func on_hacked(caster: Node, amount: float = 1.0) -> void:
 	if _same_faction(caster):
 		return
@@ -440,10 +507,15 @@ func _flash() -> void:
 
 func _update_labels() -> void:
 	if label:
-		if intel_name != "":
-			label.text = intel_name
-		else:
-			label.text = ("%s WAVE" % faction) if lane_march else str(faction)
+		var base := intel_name if intel_name != "" else (("%s WAVE" % faction) if lane_march else str(faction))
+		var stacks := infection_stacks()
+		if stacks > 0:
+			var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+			var inf_lab := str(SoftK.infection_label(stacks)) if SoftK else ""
+			if inf_lab == "":
+				inf_lab = "INF ×%d" % stacks
+			base = "%s  %s" % [base, inf_lab]
+		label.text = base
 		label.modulate = Color(0.95, 0.25, 0.5) if faction == "gROT" else Color(0.3, 0.9, 1.0)
 	if health_bar:
 		health_bar.text = "%d" % int(health)

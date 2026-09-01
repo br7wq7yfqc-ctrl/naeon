@@ -6,6 +6,7 @@ class_name InfectionStatus
 signal stacks_changed(stacks: int)
 
 const MAX_STACKS := 5
+const REFUSE_CAP := "Infection cap 5"
 const DECAY_OOC := 3.5
 const DECAY_COMBAT := 7.0
 
@@ -37,6 +38,25 @@ func add_stacks(n: int = 1) -> void:
 	if stacks != prev:
 		stacks_changed.emit(stacks)
 		print("[Infection] stacks=", stacks)
+
+
+## HF-A: +1 stack or a named refuse. Never exceeds 5. Knowledge never writes this.
+func try_add_one() -> String:
+	if stacks >= MAX_STACKS:
+		return REFUSE_CAP
+	add_stacks(1)
+	return ""
+
+
+## HF-A: Firewall −1. Never below 0.
+func remove_one() -> int:
+	remove_stacks(1)
+	return stacks
+
+
+## No cash-shop cleanse. story ≠ power.
+func try_cash_cleanse(_paid: float = 0.0) -> bool:
+	return false
 
 func remove_stacks(n: int = 1) -> void:
 	var prev := stacks

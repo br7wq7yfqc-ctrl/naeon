@@ -1,3 +1,5 @@
+**2026-09-01 — HF-A: first Hack / Firewall on unnamed-pad TPS (+1 stack, cap 5 refuse, Firewall −1; Knowledge label only)**
+
 **2026-09-01 — Q-D: pad visitor offers the same Q-A ContractBoard id (accept from NPC; quest_intel; numbers stay)**
 
 **2026-09-01 — NP-I: NPC prints one catalog module at player-cluster factory bench (c) (ST-G spend; refuse without factory)**
@@ -711,7 +713,8 @@ SE-A: live power / cool / life buses on the player hull. Fitted `ShipModule.powe
 MC-A: one extra `CrewSeat` in the player `ship_int` pocket. **F** boards crew (walker stays); **I** returns to the same pocket. Pilot **F** / **I** unchanged. Occupied marker is visible. HUD `CREW n/2` is a label only. Optional SoftNet visual puppet when a second local viewer exists. Host authority. No second hull. No passenger combat. No `SITE_*`. 0 Tripo.  
 NP-G: after NP-B occupy/harvest the visitor spends Contribution/Biomass at `PadPrintBench` §6(a) (same ST-C path) → **one** catalog module on an unnamed pad. Without spend → refuse. No cash-shop skip. Knowledge labels the bench only. Not a second NP-C habitat. Not factory (c). Not hangar (b). No `SITE_*`.  
 NP-H: after NP-B occupy/harvest the visitor queues **one** catalog module on the ST-D catalog carrier hangar (`CarrierHangarQueue.enqueue_module`). Same mass/power refuse as the player. Knowledge labels the hangar only. Not a mobile `SITE_*`. Not factory (c). Not a second NP-C habitat. NP-G bench print stays.  
-NP-I: after NP-B occupy/harvest the visitor spends Contribution/Biomass at the player-cluster factory bench (c) (same ST-G path) → **one** catalog module. Without factory → refuse. Without spend → refuse. No cash-shop skip. Knowledge labels the factory only. Not hangar (b). Not pad bench (a). Not a second NP-C habitat. Not a mobile `SITE_*`. NP-G / NP-H stay.
+NP-I: after NP-B occupy/harvest the visitor spends Contribution/Biomass at the player-cluster factory bench (c) (same ST-G path) → **one** catalog module. Without factory → refuse. Without spend → refuse. No cash-shop skip. Knowledge labels the factory only. Not hangar (b). Not pad bench (a). Not a second NP-C habitat. Not a mobile `SITE_*`. NP-G / NP-H stay.  
+HF-A: after EVA/occupy on an unnamed pad (same OpenSpace), gROT Hack applies **+1** Infection stack to a CombatDummy / pad-guard. Cap 5 stays; refuse at 5 with `Infection cap 5`. Cybernex Firewall removes **1** stack (never below 0). Knowledge labels the stack only. DPS / yield / thrust stay. No unique weapon. No cash-shop cleanse. Not a minigame. Not Voice. Not G2.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -754,6 +757,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | Q-B alliance constructor | **built** — one shared occupy/logistics contract; two NPCs same id; alliance intel label only |
 | Q-C learning node | **built** — optional node on harvest/deliver; field intel label only; numbers stay |
 | Q-D NPC quest giver | **built** — pad visitor offers same Q-A board id; accept from NPC; quest_intel only |
+| HF-A Hack / Firewall | **built** — +1 stack on dummy/guard; cap 5 refuse; Firewall −1; Knowledge label only |
 | AR-F 3v3 local | **built** — 6 actors on existing lanes; host authority; SoftNet visual; G5 closed; still startable |
 | AR-G 5v5 local | **built** — 10 actors on existing lanes + jungle; host authority; SoftNet visual; G5 closed |
 | SE-A hull buses | **built** — power/cool/life live; overdraw/overheat sag; IN-B LS soft; no P2W skip |

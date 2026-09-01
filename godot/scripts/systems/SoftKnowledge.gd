@@ -15,7 +15,8 @@ static func rank() -> int:
 		return 0
 	return int(GameManager.knowledge_rank)
 
-## Biology/Genetics: earlier infection stage labels (info only)
+## Biology/Genetics: earlier infection stage labels (info only).
+## HF-A: names the stack only — never DPS / yield / thrust.
 static func infection_label(stacks: int) -> String:
 	var bio := mastery("biology")
 	if stacks <= 0:
