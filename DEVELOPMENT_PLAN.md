@@ -11,11 +11,10 @@
 **Каталог — дыры (очередь, не новый catalog):** `docs/design/WORLD_FILL.md` §6. Ready-made fill → locked plates без GLB → пластины только на титульную дыру. Не mint SITE_*. Не capital-ship wave. OS-H harness built; не G2.  
 **NPC agency + MMO HOLD:** `docs/design/NPC_AGENCY.md` (NP-A…NP-F + NP-C + NP-G ST-C print + NP-H ST-D hangar + **NP-I** ST-G factory built) · `docs/design/MMO_SERVERS.md` (Phase 3 HOLD; 10k CCU / ≥100 на шард без instance-split; нет netcode сейчас; не G5 / G2–G6).
 
-**2026-09-01 — текущий бар HF-B (не Voice, не G2):**  
+**2026-09-01 — текущий бар PV-A (не Voice, не G2, не G5):**  
 OS-A…OS-H built. G2–G6 закрыты. G1 CRUISE не открыт.  
-ST-A…ST-G / IN-A…E / WF-A / Q-A / Q-B / Q-C / Q-D built.  
-HF-A: gROT Hack +1 Infection на CombatDummy / pad-guard (cap 5 refuse). Cybernex Firewall −1 (never below 0). Knowledge labels the stack only. DPS / yield / thrust stay.  
-HF-B: тот же AbilitySystem с сиденья / корпуса (OpenSpace, не Clash) по dummy или visiting NpcPilot hull. +1 / cap 5 refuse / Firewall −1. TPS HF-A после EVA жив.  
+ST-A…ST-G / IN-A…E / WF-A / Q-A / Q-B / Q-C / Q-D / HF-A / HF-B built.  
+PV-A: first TPS PvP on an occupied unnamed pad — host-authority rival `CombatDummy`, Pulse 11 both ways, win HP → 0, Infection cap 5, Knowledge labels only.  
 Петля P0.6 на RTX 3090 жива — не ломать. llvmpipe ≠ FPS PASS.
 
 ---
@@ -107,7 +106,7 @@ HF-B: тот же AbilitySystem с сиденья / корпуса (OpenSpace, �
 - Seamless / loading transition (ship → TPS)
 - Multi-crew (2–4 игрока, роли) — **MC-A built:** one extra `CrewSeat` on the player hull pocket (local-first, host authority; HUD CREW label only)
 - AI-bots (Cybernex animal-robots + gROT swarms) — BehaviorTree / Navigation
-- Basic Strategy / Space / TPS PvP
+- Basic Strategy / Space / TPS PvP — **PV-A built:** first TPS PvP on an occupied unnamed Nex-Prime pad (host-authority rival `CombatDummy` / SoftNet visual; Pulse 11 both ways; win = rival HP → 0; no permadeath; Infection cap 5; Knowledge labels only; G5 closed; no `SITE_*`)
 - RBE / Biomass pools + Contribution / Biomass Rank
 - **Hacking / Infection (gROT) + Nex-Firewall (Cybernex)** — первые версии abilities (TPS + simple Strategy) — **HF-A built** (unnamed-pad TPS) + **HF-B built** (seated hull / OpenSpace): +1 stack / cap 5 refuse / Firewall −1 (same AbilitySystem; Knowledge labels only)
 - **MOBA Seed**: arena, 4 heroes (kits на ability system), minion waves, XP/leveling, basic items, win condition

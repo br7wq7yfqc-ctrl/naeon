@@ -107,6 +107,15 @@ static func surface_dummy_label() -> String:
 	return "DUMMY"
 
 
+## History/combat: pad rival name only — never Pulse DPS / HP.
+static func rival_label() -> String:
+	var hist := mastery("history")
+	var combat := mastery("combat")
+	if hist >= 10.0 or combat >= 10.0 or rank() >= 5:
+		return "PAD RIVAL"
+	return "RIVAL"
+
+
 ## History/Lore: structure weakness tip (info only)
 static func structure_tip(faction: String) -> String:
 	var lore := mastery("history")

@@ -47,6 +47,7 @@ func _go() -> void:
 		await _assert_q_d(os, fails)
 		await _assert_hf_b(os, fails)
 		await _assert_hf_a(os, fails)
+		await _assert_pv_a(os, fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
 
@@ -633,6 +634,7 @@ func _go() -> void:
 	await _eva_snap_pulse(fails)
 	await _assert_hf_b(os, fails)
 	await _assert_hf_a(os, fails)
+	await _assert_pv_a(os, fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
@@ -15906,6 +15908,256 @@ func _assert_hf_a(os: Node, fails: PackedStringArray) -> void:
 		if os.has_method("try_enter_ship"):
 			os.try_enter_ship()
 	print("[Playtest] HF-A +1 stack · cap 5 refuse · Firewall -1 · Knowledge label only")
+
+
+func _assert_pv_a(os: Node, fails: PackedStringArray) -> void:
+	## PV-A: occupied unnamed pad. One host-authority rival CombatDummy.
+	## Player Pulse reduces rival HP. Rival Pulse hits the walker. Win = HP → 0.
+	## No permadeath. Infection cap 5. Pulse stays 11. G5 closed. No SITE_*.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var nex: Node = _osh_nex()
+	var traffic: Node = null
+	var pvp: Node = null
+	var rival: Node3D = null
+	var host: Node3D = null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var walker: Node3D = null
+	var ab: Node = null
+	var pad: Node = _in_a_occupied_pad(os)
+	var pulse0 := 11.0
+	var pulse1 := 11.0
+	var dmg0 := 11.0
+	var dmg1 := 11.0
+	var hp_max0 := 80.0
+	var hp_max1 := 80.0
+	var harvest0 := 0.0
+	var harvest1 := 0.0
+	if P0 == null or not bool(P0.PV_A_PVP):
+		fails.append("PV-A P0Slice flag missing")
+		return
+	if os == null or nex == null:
+		fails.append("PV-A no OpenSpace/Nex-Prime")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("PV-A must not run on TestArena")
+		return
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.2).timeout
+	if nex.has_method("pad_traffic"):
+		traffic = nex.call("pad_traffic")
+	if traffic == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("pad_traffic")
+		if not listed.is_empty():
+			traffic = listed[0]
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("PV-A pad traffic missing")
+		return
+	if traffic.has_method("get_pvp"):
+		pvp = traffic.get_pvp()
+	if pvp == null:
+		pvp = traffic.get_node_or_null("PadPvp")
+	if pvp == null:
+		fails.append("PV-A PadPvp missing")
+		return
+	if traffic.has_method("get_rival"):
+		rival = traffic.get_rival()
+	if rival == null and pvp.has_method("get_rival"):
+		rival = pvp.get_rival()
+	if rival == null or not is_instance_valid(rival):
+		fails.append("PV-A rival missing on occupied pad")
+		return
+	host = traffic.get_parent() as Node3D
+	if host == null or not host.has_meta("pad_up"):
+		fails.append("PV-A rival not on a pad")
+		return
+	var pname := str(host.name)
+	if pname != "Pad_North" and pname != "Pad_Approach" and pname != "Pad_Flank":
+		fails.append("PV-A unknown pad (%s)" % pname)
+		return
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("PV-A minted SITE_* (%s)" % pin)
+		return
+	if rival.has_meta("site_pin") and str(rival.get_meta("site_pin")).begins_with("SITE_"):
+		fails.append("PV-A rival minted SITE_*")
+		return
+	if pvp.has_meta("site_pin") and str(pvp.get_meta("site_pin")).begins_with("SITE_"):
+		fails.append("PV-A PadPvp minted SITE_*")
+		return
+	if pvp.has_method("is_g5_closed") and not bool(pvp.is_g5_closed()):
+		fails.append("PV-A G5 Clash-from-world is open")
+		return
+	if traffic.has_method("is_g5_closed") and not bool(traffic.is_g5_closed()):
+		fails.append("PV-A traffic G5 is open")
+	var auth := str(pvp.combat_authority()) if pvp.has_method("combat_authority") else ""
+	if auth != "host":
+		fails.append("PV-A combat authority is not host (%s)" % auth)
+	if pvp.has_method("has_p2w_hp") and bool(pvp.has_p2w_hp()):
+		fails.append("PV-A pay-to-win HP")
+	if rival.has_method("infection_cap") and int(rival.infection_cap()) != 5:
+		fails.append("PV-A Infection cap drifted (%s)" % rival.infection_cap())
+	if "attack_damage" in rival:
+		dmg0 = float(rival.get("attack_damage"))
+	if "max_health" in rival:
+		hp_max0 = float(rival.get("max_health"))
+	if pad != null and pad.has_method("claim"):
+		pad.claim("Cybernex", 2.0)
+	elif host.has_method("claim"):
+		host.claim("Cybernex", 2.0)
+	if pad != null and pad.has_method("tier_budget"):
+		harvest0 = float(pad.tier_budget().get("harvest", 0.0))
+	var pad_up: Vector3 = host.get_meta("pad_up")
+	if ship == null or not is_instance_valid(ship):
+		fails.append("PV-A no ship")
+		return
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	ship.global_position = host.global_position + pad_up * 8.0
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	if ship.has_method("_do_land"):
+		ship._do_land()
+	if os.has_method("try_exit_ship"):
+		os.try_exit_ship()
+	await get_tree().create_timer(0.4).timeout
+	walker = os.get("player") as Node3D
+	if (walker == null or not is_instance_valid(walker)) and os.has_method("_spawn_player_near_ship"):
+		os.call("_spawn_player_near_ship")
+		await get_tree().create_timer(0.25).timeout
+		walker = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("PV-A no walker after EVA")
+		return
+	if walker.has_method("set_eva_profile"):
+		walker.set_eva_profile(false)
+	os.set("_eva_mode", false)
+	walker.set("faction", "Cybernex")
+	rival.set("faction", "gROT")
+	rival.set("_alive", true)
+	if float(rival.get("health")) < 20.0:
+		rival.set("health", float(rival.get("max_health")))
+	var aim: Vector3 = rival.hurtbox_center() if rival.has_method("hurtbox_center") else rival.global_position
+	var away: Vector3 = rival.global_position - host.global_position
+	away = away - pad_up * away.dot(pad_up)
+	if away.length_squared() < 0.01:
+		away = host.global_transform.basis.x
+	away = away.normalized()
+	walker.global_position = rival.global_position - away * 8.0 + pad_up * 2.0
+	if walker.has_method("_relief_snap_fallback"):
+		walker.call("_relief_snap_fallback")
+	elif walker.has_method("snap_to_surface"):
+		walker.call("snap_to_surface")
+	if walker.has_method("face_world_point"):
+		walker.face_world_point(aim)
+	ab = walker.get_node_or_null("AbilitySystem")
+	if ab == null:
+		fails.append("PV-A no AbilitySystem")
+		return
+	if "energy" in walker:
+		walker.set("energy", 100.0)
+	if ab.has_method("setup_default_loadout"):
+		ab.setup_default_loadout("Cybernex")
+	if ab.get("abilities") != null and (ab.abilities as Array).size() > 0 and ab.abilities[0]:
+		pulse0 = float(ab.abilities[0].damage)
+		ab.current_cooldowns[ab.abilities[0]] = 0.0
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("combat", 20.0)
+	if traffic.has_method("refresh_labels"):
+		traffic.refresh_labels()
+	if ab.get("abilities") != null and (ab.abilities as Array).size() > 0 and ab.abilities[0]:
+		pulse1 = float(ab.abilities[0].damage)
+		if absf(pulse1 - pulse0) > 0.01 or absf(pulse1 - 11.0) > 0.01:
+			fails.append("PV-A Knowledge changed Pulse DPS (%s → %s)" % [pulse0, pulse1])
+	if "attack_damage" in rival:
+		dmg1 = float(rival.get("attack_damage"))
+	if "max_health" in rival:
+		hp_max1 = float(rival.get("max_health"))
+	if absf(dmg1 - dmg0) > 0.01 or absf(dmg1 - 11.0) > 0.01:
+		fails.append("PV-A Knowledge changed rival Pulse DPS (%s → %s)" % [dmg0, dmg1])
+	if absf(hp_max1 - hp_max0) > 0.01:
+		fails.append("PV-A Knowledge changed rival HP")
+	var rlabel := str(traffic.rival_label()) if traffic.has_method("rival_label") else ""
+	if rlabel == "":
+		fails.append("PV-A Knowledge rival label empty")
+	if SoftScanCache:
+		SoftScanCache.invalidate_enemies()
+		SoftScanCache.invalidate_player()
+	var hp0: float = float(rival.get("health"))
+	var walker_hp0: float = float(walker.get("health")) if "health" in walker else 100.0
+	var fired := false
+	if walker.has_method("try_pulse"):
+		fired = bool(walker.try_pulse())
+	elif ab.has_method("try_activate"):
+		fired = bool(ab.try_activate(0))
+	var hp1: float = float(rival.get("health"))
+	var drop: float = hp0 - hp1
+	print("[Playtest] PV-A rival present pad=", pname, " hp ", snapped(hp0, 0.1), " → ",
+		snapped(hp1, 0.1), " drop=", snapped(drop, 0.1), " label=", rlabel)
+	if not fired:
+		fails.append("PV-A Pulse did not fire")
+	elif drop < 10.0:
+		fails.append("PV-A Pulse did not hit rival (%s → %s)" % [snapped(hp0, 0.1), snapped(hp1, 0.1)])
+	elif drop > 12.5:
+		fails.append("PV-A Pulse DPS drifted (drop=%s)" % snapped(drop, 0.1))
+	var back := false
+	if pvp.has_method("try_rival_pulse"):
+		back = bool(pvp.try_rival_pulse(walker))
+	elif rival.has_method("try_pulse"):
+		back = bool(rival.try_pulse(walker))
+	var walker_hp1: float = float(walker.get("health")) if "health" in walker else walker_hp0
+	var back_drop: float = walker_hp0 - walker_hp1
+	print("[Playtest] PV-A rival Pulse back hit=", back, " walker hp ",
+		snapped(walker_hp0, 0.1), " → ", snapped(walker_hp1, 0.1), " drop=", snapped(back_drop, 0.1))
+	if not back:
+		fails.append("PV-A rival Pulse did not fire")
+	elif back_drop < 10.0:
+		fails.append("PV-A rival Pulse did not hit walker (%s → %s)" % [
+			snapped(walker_hp0, 0.1), snapped(walker_hp1, 0.1)])
+	elif back_drop > 12.5:
+		fails.append("PV-A rival Pulse DPS drifted (drop=%s)" % snapped(back_drop, 0.1))
+	if rival.has_method("take_damage"):
+		rival.take_damage(float(rival.get("health")) + 1.0, "Cybernex")
+	var hp_win: float = float(rival.get("health"))
+	var alive := true
+	if rival.has_method("is_alive"):
+		alive = bool(rival.is_alive())
+	elif "_alive" in rival:
+		alive = bool(rival.get("_alive"))
+	var won := bool(pvp.win_reached()) if pvp.has_method("win_reached") else (hp_win <= 0.0)
+	print("[Playtest] PV-A win rival hp=", snapped(hp_win, 0.1), " alive=", alive, " won=", won)
+	if hp_win > 0.0 and alive:
+		fails.append("PV-A rival HP did not reach 0")
+	if not won:
+		fails.append("PV-A win condition missing")
+	if rival == null or not is_instance_valid(rival):
+		fails.append("PV-A permadeath (rival freed)")
+	if rival.has_method("infection_cap") and int(rival.infection_cap()) != 5:
+		fails.append("PV-A Infection cap after win is not 5")
+	if pad != null and pad.has_method("tier_budget"):
+		harvest1 = float(pad.tier_budget().get("harvest", -1.0))
+	if harvest0 > 0.0 and absf(harvest1 - harvest0) > 0.0001:
+		fails.append("PV-A harvest number changed (%s → %s)" % [harvest0, harvest1])
+	var scene_name := str(get_tree().current_scene.name) if get_tree() and get_tree().current_scene else ""
+	if scene_name.find("TestArena") >= 0:
+		fails.append("PV-A entered TestArena from OpenSpace (G5)")
+	if ResourceLoader.exists("res://scripts/world/ClashFromWorld.gd") \
+			or ResourceLoader.exists("res://scripts/world/ClashBeacon.gd"):
+		fails.append("PV-A opened G5 world-to-arena")
+	print("[Playtest] PV-A rival on occupied pad · Pulse hit · rival Pulse back · HP 0 win · G5 closed · no SITE_*")
+	if ship != null and is_instance_valid(ship):
+		if "velocity" in ship:
+			ship.velocity = Vector3.ZERO
+		ship.global_position = host.global_position + pad_up * 80.0
+		if "is_landed" in ship:
+			ship.set("is_landed", false)
+		if ship.has_method("_set_mode"):
+			ship._set_mode(1)
+	if walker != null and is_instance_valid(walker) and ship != null and is_instance_valid(ship):
+		walker.global_position = ship.global_position + pad_up * 2.0
+		if os.has_method("try_enter_ship"):
+			os.try_enter_ship()
 
 
 func _hf_a_ready_kit(walker: Node, ab: Node, fac: String) -> void:
