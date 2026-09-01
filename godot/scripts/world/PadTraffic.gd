@@ -12,6 +12,8 @@ extends Node3D
 ## PV-A / PV-B: one host-authority rival CombatDummy on this occupied unnamed pad.
 ## TPS walker and seated hull share that rival. Pulse 11 both ways.
 ## Win = rival HP → 0. No permadeath. G5 stays closed.
+## BT-A: the existing pad-guard walks a tiny 3-state BT (patrol / engage / return).
+## Distinct from the PV-A rival. Host authority. Pulse 11. Not Clash waves.
 ## Knowledge labels only — never yield.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
@@ -19,6 +21,7 @@ const _DUMMY := preload("res://scenes/combat/CombatDummy.tscn")
 const _SHIP := preload("res://scenes/ship/Ship.tscn")
 const _Pilot := preload("res://scripts/world/NpcPilot.gd")
 const _Pvp := preload("res://scripts/world/PadPvp.gd")
+const _GuardBT := preload("res://scripts/combat/PadGuardBT.gd")
 
 var _host_name: String = ""
 var _guard: Node3D = null
@@ -55,6 +58,30 @@ func get_guard() -> Node3D:
 	if _guard != null and is_instance_valid(_guard):
 		return _guard
 	return null
+
+
+func get_guard_bt() -> Node:
+	var g := get_guard()
+	if g == null:
+		return null
+	return g.get_node_or_null("PadGuardBT")
+
+
+func guard_bt_state() -> String:
+	var bt := get_guard_bt()
+	if bt != null and bt.has_method("bt_state"):
+		return str(bt.bt_state())
+	return ""
+
+
+func try_guard_pulse(target: Node = null) -> bool:
+	var bt := get_guard_bt()
+	if bt != null and bt.has_method("try_engage_pulse"):
+		return bool(bt.try_engage_pulse(target))
+	var g := get_guard()
+	if g != null and g.has_method("try_pulse_walker"):
+		return bool(g.try_pulse_walker(target))
+	return false
 
 
 func get_visitor() -> Node3D:
@@ -255,18 +282,40 @@ func _spawn_guard() -> void:
 	var d: Node = _DUMMY.instantiate()
 	d.name = "PadGuardDummy"
 	d.set("faction", _host_faction())
-	d.set("can_move", false)
-	d.set("aggro_range", 0.0)
-	d.set("attack_range", 0.0)
+	d.set("can_move", true)
+	d.set("bt_driven", true)
+	d.set("aggro_range", 16.0)
+	d.set("attack_range", 16.0)
+	d.set("attack_damage", 11.0)
 	d.set("grant_economy", false)
 	d.set("intel_name", guard_label())
 	d.set_meta("pad_traffic_role", "guard")
+	d.set_meta("combat_authority", "host")
 	d.set_meta("site_pin", "")
 	add_child(d)
 	if d is Node3D:
 		(d as Node3D).position = Vector3(-8.0, 1.2, 8.0)
 		d.set("_spawn_pos", (d as Node3D).global_position)
 		_guard = d as Node3D
+	_bind_guard_bt(d)
+
+
+func _bind_guard_bt(d: Node) -> void:
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 != null and not bool(P0.BT_A_GUARD):
+		return
+	if d == null or _GuardBT == null:
+		return
+	var existing: Node = d.get_node_or_null("PadGuardBT")
+	var bt: Node = existing
+	if bt == null:
+		bt = Node.new()
+		bt.set_script(_GuardBT)
+		bt.name = "PadGuardBT"
+		d.add_child(bt)
+	var pad: Node3D = get_parent() as Node3D
+	if bt.has_method("bind"):
+		bt.bind(d, pad)
 
 
 func _spawn_surface_dummy() -> void:
