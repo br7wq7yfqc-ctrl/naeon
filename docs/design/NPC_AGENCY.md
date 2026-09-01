@@ -3,8 +3,8 @@
 **Версия:** 1.0  
 **Дата:** 2026-08-18  
 **Движок:** Godot 4.7.2  
-**Статус:** NP-A…NP-F + NP-C + NP-G + NP-H + NP-I built. **Q-D this pass** (pad visitor offers the same Q-A ContractBoard id).  
-**Код срезов:** NP-A flight · NP-B occupy/harvest · NP-C habitat · NP-D invite · NP-E soft alliance · NP-F offline · NP-G print · NP-H hangar · NP-I factory · **Q-D same board giver**. Не G2–G6. Не 10k CCU.
+**Статус:** NP-A…NP-F + NP-C + NP-G + NP-H + NP-I + Q-D + BT-A built. **BT-B this pass** (visitor 3-state approach / hold / leave).  
+**Код срезов:** NP-A flight · NP-B occupy/harvest · NP-C habitat · NP-D invite · NP-E soft alliance · NP-F offline · NP-G print · NP-H hangar · NP-I factory · Q-D same board giver · BT-A pad-guard · **BT-B visitor BT**. Не G2–G6. Не 10k CCU.
 
 Запрос владельца (в план): NPC должны **полностью закрывать петлю живого игрока**, пока MMO-кластер не запущен — летать, делать все playable-действия, прогрессировать, ставить базы, собирать альянсы и рейды. Живые: отвечают игроку, меняются под его влияние, работают offline и в coop с друзьями. Игрок берёт NPC в отряд и сообщество. **ИИ NPC — подписка AI Agency:** платят за инициативу и диалог, **никогда** за HP / DPS / yield / уникальное оружие (это P2W, отказ). Кластер: [`MMO_SERVERS.md`](MMO_SERVERS.md) — HOLD до Phase 3.
 
@@ -29,11 +29,11 @@ Clash: [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md).
 
 ## 2. Честный статус (2026-08-18)
 
-**Боты есть. Полной замены игрока нет.** Phase 2 «BehaviorTree / Navigation» — **BT-A built** (one pad-guard, 3-state patrol / engage / return). Not 10k CCU. Not Clash waves.
+**Боты есть. Полной замены игрока нет.** Phase 2 «BehaviorTree / Navigation» — **BT-A built** (pad-guard patrol / engage / return) + **BT-B built** (visitor approach / hold / leave). Not 10k CCU. Not Clash waves.
 
 | Узел | Факт репо | Это не |
 |------|-----------|--------|
-| `PadTraffic.gd` | 1 pad-guard `CombatDummy` + visitor `ShipController`/`NpcPilot` (NP-A flight, NP-B occupy/harvest, NP-C habitat, NP-G ST-C print, NP-H ST-D hangar, NP-I ST-G factory, NP-D squad invite, NP-F short offline pad/follow, NP-E soft alliance / raid-or-logistics intent, **Q-D same Q-A ContractBoard id**) + surface dummy под Pulse + **PV-A / PV-B** host-authority rival dummy (Pulse 11 both ways; TPS + seated hull) + **BT-A** tiny 3-state BT on the existing pad-guard (patrol / engage Pulse / return; rival stays distinct) | mobile SITE_*; second quest board; G5 Clash |
+| `PadTraffic.gd` | 1 pad-guard `CombatDummy` + visitor `ShipController`/`NpcPilot` (NP-A flight, NP-B occupy/harvest, NP-C habitat, NP-G ST-C print, NP-H ST-D hangar, NP-I ST-G factory, NP-D squad invite, NP-F short offline pad/follow, NP-E soft alliance / raid-or-logistics intent, **Q-D same Q-A ContractBoard id**) + surface dummy под Pulse + **PV-A / PV-B** host-authority rival dummy (Pulse 11 both ways; TPS + seated hull) + **BT-A** tiny 3-state BT on the existing pad-guard (patrol / engage Pulse / return; rival stays distinct) + **BT-B** sibling 3-state BT on the visitor (approach / hold / leave; NP-B harvest stays) | mobile SITE_*; second quest board; G5 Clash |
 | `PadAmbientLife.gd` | GLB-пропы, bob/wander, **0 боя** | агент, квест, альянс |
 | `ClashWaves.gd` | timed `CombatDummy` march по `ClashLanes` | герой Clash, драфт, agency |
 | `CombatDummy.gd` | HP, optional aggro/lane; цель и миньон | корабль, база, Contribution |
@@ -155,7 +155,7 @@ OS-G силуэт и ambient life — WorldFill / плотность, не жи�
 
 | Сейчас | Дальше |
 |--------|--------|
-| NP-A…F + NP-C habitat + NP-G ST-C print + NP-H ST-D hangar + NP-I ST-G factory + **Q-D** same Q-A board giver | следующий NP-срез |
+| NP-A…F + NP-C habitat + NP-G ST-C print + NP-H ST-D hangar + NP-I ST-G factory + **Q-D** same Q-A board giver + **BT-A** pad-guard + **BT-B** visitor 3-state BT | следующий NP-срез |
 | Стратегия — ST-A…ST-G built; NPC print = (a)/(b)/(c) | не mint `SITE_*` |
 | SoftNet — visual | authority later; не 10k |
 | G2–G6 | закрыты |

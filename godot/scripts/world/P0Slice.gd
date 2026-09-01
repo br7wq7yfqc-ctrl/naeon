@@ -79,6 +79,9 @@ const PV_B_SPACE := true
 ## BT-A: one occupied-pad guard. Tiny 3-state BT (patrol / engage Pulse / return).
 ## Host authority. Pulse 11. PV-A rival stays distinct. G5 closed. Not Clash waves.
 const BT_A_GUARD := true
+## BT-B: one visitor NpcPilot. Tiny 3-state BT (approach / hold / leave).
+## Hold keeps NP-B occupy/harvest. Host authority. Pulse 11. BT-A stays. G5 closed.
+const BT_B_VISITOR := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6

@@ -14,6 +14,8 @@ extends Node3D
 ## Win = rival HP → 0. No permadeath. G5 stays closed.
 ## BT-A: the existing pad-guard walks a tiny 3-state BT (patrol / engage / return).
 ## Distinct from the PV-A rival. Host authority. Pulse 11. Not Clash waves.
+## BT-B: the visitor NpcPilot walks a sibling 3-state BT (approach / hold / leave).
+## Hold keeps NP-B occupy/harvest. Host authority. Pulse 11. Not Clash waves.
 ## Knowledge labels only — never yield.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
@@ -22,6 +24,7 @@ const _SHIP := preload("res://scenes/ship/Ship.tscn")
 const _Pilot := preload("res://scripts/world/NpcPilot.gd")
 const _Pvp := preload("res://scripts/world/PadPvp.gd")
 const _GuardBT := preload("res://scripts/combat/PadGuardBT.gd")
+const _VisitorBT := preload("res://scripts/world/VisitorBT.gd")
 
 var _host_name: String = ""
 var _guard: Node3D = null
@@ -95,6 +98,20 @@ func get_npc_pilot() -> Node:
 	if v == null:
 		return null
 	return v.get_node_or_null("NpcPilot")
+
+
+func get_visitor_bt() -> Node:
+	var p := get_npc_pilot()
+	if p == null:
+		return null
+	return p.get_node_or_null("VisitorBT")
+
+
+func visitor_bt_state() -> String:
+	var bt := get_visitor_bt()
+	if bt != null and bt.has_method("bt_state"):
+		return str(bt.bt_state())
+	return ""
 
 
 func get_surface_dummy() -> Node3D:
@@ -318,6 +335,23 @@ func _bind_guard_bt(d: Node) -> void:
 		bt.bind(d, pad)
 
 
+func _bind_visitor_bt(pilot: Node, ship: Node, pad: Node3D) -> void:
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 != null and not bool(P0.BT_B_VISITOR):
+		return
+	if pilot == null or _VisitorBT == null:
+		return
+	var existing: Node = pilot.get_node_or_null("VisitorBT")
+	var bt: Node = existing
+	if bt == null:
+		bt = Node.new()
+		bt.set_script(_VisitorBT)
+		bt.name = "VisitorBT"
+		pilot.add_child(bt)
+	if bt.has_method("bind"):
+		bt.bind(pilot, ship as Node3D, pad)
+
+
 func _spawn_surface_dummy() -> void:
 	## Pillar 6: existing CombatDummy, gROT so Cybernex Pulse can hit. No new weapon.
 	if _DUMMY == null:
@@ -369,6 +403,7 @@ func _spawn_visitor() -> void:
 	var host := get_parent() as Node3D
 	if pilot.has_method("setup"):
 		pilot.call("setup", s, host)
+	_bind_visitor_bt(pilot, s, host)
 	if DisplayServer.get_name() == "headless":
 		return
 	var lab := Label3D.new()

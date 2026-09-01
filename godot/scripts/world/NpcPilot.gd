@@ -9,6 +9,7 @@ extends Node
 ## NP-H: after NP-B harvest, queue one catalog module on the ST-D hangar (same enqueue).
 ## NP-I: after NP-B harvest, spend at player-cluster factory bench (c) (same ST-G path).
 ## Q-D: offer the same Q-A ContractBoard id. Player accepts from this visitor.
+## BT-B: sibling 3-state BT (approach / hold / leave). Hold keeps occupy/harvest.
 ## Not a second IFCS, not G1, not a private yield table, not a damage aura.
 
 
@@ -621,6 +622,7 @@ func _pad_up() -> Vector3:
 func _physics_process(delta: float) -> void:
 	if _ship == null or not is_instance_valid(_ship) or _pad == null:
 		return
+	_note_visitor_bt(delta)
 	_note_mode()
 	if _phase == Phase.IDLE:
 		if _ship.has_method("set_npc_axes"):
@@ -746,6 +748,12 @@ func _height_over_pad() -> float:
 func _note_mode() -> void:
 	if _ship != null and _ship.has_method("flight_mode_name"):
 		_modes[str(_ship.flight_mode_name())] = true
+
+
+func _note_visitor_bt(delta: float) -> void:
+	var bt := get_node_or_null("VisitorBT")
+	if bt != null and bt.has_method("tick"):
+		bt.tick(delta)
 
 
 func _pad_controller() -> Node:
