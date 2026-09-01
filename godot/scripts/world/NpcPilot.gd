@@ -655,6 +655,7 @@ func _run_offline_follow() -> void:
 
 func _print_target_pad() -> Node3D:
 	## Prefer the harvest pad. If that bench already granted (player ST-C), next unnamed.
+	## ONE_PAD streams one controller; other unnamed plates still take a §6(a) bench.
 	var legal: Array = ["Pad_North", "Pad_Approach", "Pad_Flank"]
 	var cands: Array = []
 	if _pad != null and is_instance_valid(_pad) and str(_pad.name) in legal:
@@ -670,13 +671,30 @@ func _print_target_pad() -> Node3D:
 			continue
 		if BaseBuilder.printed_module_on(pad) != null:
 			continue
-		var bench := _print_bench_on(pad)
+		var bench := _ensure_print_bench_on(pad)
 		if bench == null:
 			continue
 		if bench.has_method("granted_module") and bench.granted_module() != null:
 			continue
 		return pad
 	return null
+
+
+func _ensure_print_bench_on(pad: Node3D) -> Node:
+	## Same PadPrintBench as ST-C. Does not add a PadBaseController or habitat.
+	var bench := _print_bench_on(pad)
+	var n: Node3D = null
+	if bench != null:
+		return bench
+	if pad == null or not is_instance_valid(pad):
+		return null
+	n = Node3D.new()
+	n.set_script(preload("res://scripts/world/PadPrintBench.gd"))
+	n.name = "PadPrintBench"
+	n.set_meta("site_pin", "")
+	pad.add_child(n)
+	n.position = Vector3(0.0, 0.35, 12.0)
+	return n
 
 
 func _print_bench_on(pad: Node3D) -> Node:
