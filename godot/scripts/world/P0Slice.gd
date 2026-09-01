@@ -76,6 +76,9 @@ const PV_A_PVP := true
 ## PV-B: first Space PvP from the seated player hull (OpenSpace, not Clash).
 ## Same PadPvp rival. Pulse 11 both ways. Win = rival HP → 0. No permadeath.
 const PV_B_SPACE := true
+## BT-A: one occupied-pad guard. Tiny 3-state BT (patrol / engage Pulse / return).
+## Host authority. Pulse 11. PV-A rival stays distinct. G5 closed. Not Clash waves.
+const BT_A_GUARD := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6

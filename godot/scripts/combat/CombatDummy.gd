@@ -23,6 +23,8 @@ signal damaged(amount: float, health_left: float)
 @export var one_shot: bool = false
 @export var grant_economy: bool = true
 @export var intel_name: String = ""
+## BT-A: PadGuardBT drives xz. Default chase / lane AI stays off.
+@export var bt_driven: bool = false
 var lane_waypoints: Array = []
 var _wp_i: int = 0
 var _hostile_cache: Node3D = null
@@ -98,6 +100,17 @@ func _physics_process(delta: float) -> void:
 		_ai_accum = 0.0
 	if lane_march:
 		_lane_ai(delta, do_ai)
+		move_and_slide()
+		return
+	if bt_driven:
+		var bt: Node = get_node_or_null("PadGuardBT")
+		if bt != null and bt.has_method("physics_tick"):
+			bt.physics_tick(delta)
+			return
+		if not is_on_floor():
+			velocity.y -= gravity * delta
+		velocity.x = 0.0
+		velocity.z = 0.0
 		move_and_slide()
 		return
 	var player := _find_player()
@@ -378,16 +391,25 @@ func is_alive() -> bool:
 
 ## PV-A / host Pulse: same 11 DPS bolt the walker uses. No Knowledge multiply.
 func try_pulse(target = null) -> bool:
+	return _try_pulse_at(target, false)
+
+
+## BT-A: pad-guard Pulse vs the player walker. Faction does not skip.
+func try_pulse_walker(target = null) -> bool:
+	return _try_pulse_at(target, true)
+
+
+func _try_pulse_at(target, ignore_faction: bool) -> bool:
 	if not _alive:
 		return false
 	var t: Node = target as Node if target != null else _find_player()
 	if t == null or not is_instance_valid(t):
 		return false
-	if _same_faction(t):
+	if not ignore_faction and _same_faction(t):
 		return false
 	var saved := attack_damage
 	attack_damage = 11.0
-	_fire_at(t)
+	_fire_at(t, ignore_faction)
 	attack_damage = saved
 	return true
 
@@ -458,8 +480,8 @@ func _respawn() -> void:
 		SoftScanCache.invalidate_enemies()
 	print("[CombatDummy] Respawned")
 
-func _fire_at(player: Node) -> void:
-	if _same_faction(player):
+func _fire_at(player: Node, ignore_faction: bool = false) -> void:
+	if not ignore_faction and _same_faction(player):
 		return
 	if player.has_method("take_damage"):
 		player.take_damage(attack_damage, str(faction))

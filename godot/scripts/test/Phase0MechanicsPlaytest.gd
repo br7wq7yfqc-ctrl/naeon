@@ -49,6 +49,7 @@ func _go() -> void:
 		await _assert_hf_a(os, fails)
 		await _assert_pv_b(os, fails)
 		await _assert_pv_a(os, fails)
+		await _assert_bt_a(os, fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
 
@@ -637,6 +638,7 @@ func _go() -> void:
 	await _assert_hf_a(os, fails)
 	await _assert_pv_b(os, fails)
 	await _assert_pv_a(os, fails)
+	await _assert_bt_a(os, fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
@@ -16438,6 +16440,253 @@ func _assert_pv_a(os: Node, fails: PackedStringArray) -> void:
 			or ResourceLoader.exists("res://scripts/world/ClashBeacon.gd"):
 		fails.append("PV-A opened G5 world-to-arena")
 	print("[Playtest] PV-A rival on occupied pad · Pulse hit · rival Pulse back · HP 0 win · G5 closed · no SITE_*")
+	if ship != null and is_instance_valid(ship):
+		if "velocity" in ship:
+			ship.velocity = Vector3.ZERO
+		ship.global_position = host.global_position + pad_up * 80.0
+		if "is_landed" in ship:
+			ship.set("is_landed", false)
+		if ship.has_method("_set_mode"):
+			ship._set_mode(1)
+	if walker != null and is_instance_valid(walker) and ship != null and is_instance_valid(ship):
+		walker.global_position = ship.global_position + pad_up * 2.0
+		if os.has_method("try_enter_ship"):
+			os.try_enter_ship()
+
+
+func _assert_bt_a(os: Node, fails: PackedStringArray) -> void:
+	## BT-A: one occupied-pad guard. Tiny BT patrol → engage Pulse → return.
+	## Distinct from the PV-A rival. Pulse 11. Host authority. G5 closed. No SITE_*.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var nex: Node = _osh_nex()
+	var traffic: Node = null
+	var pvp: Node = null
+	var guard: Node3D = null
+	var rival: Node3D = null
+	var bt: Node = null
+	var host: Node3D = null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var walker: Node3D = null
+	var pad: Node = _in_a_occupied_pad(os)
+	var dmg0 := 11.0
+	var dmg1 := 11.0
+	var harvest0 := 0.0
+	var harvest1 := 0.0
+	if P0 == null or not bool(P0.BT_A_GUARD):
+		fails.append("BT-A P0Slice flag missing")
+		return
+	if os == null or nex == null:
+		fails.append("BT-A no OpenSpace/Nex-Prime")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("BT-A must not run on TestArena")
+		return
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.2).timeout
+	if nex.has_method("pad_traffic"):
+		traffic = nex.call("pad_traffic")
+	if traffic == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("pad_traffic")
+		if not listed.is_empty():
+			traffic = listed[0]
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("BT-A pad traffic missing")
+		return
+	if traffic.has_method("get_guard"):
+		guard = traffic.get_guard()
+	if guard == null or not is_instance_valid(guard):
+		fails.append("BT-A pad-guard missing")
+		return
+	if traffic.has_method("get_pvp"):
+		pvp = traffic.get_pvp()
+	if pvp == null:
+		pvp = traffic.get_node_or_null("PadPvp")
+	if traffic.has_method("get_rival"):
+		rival = traffic.get_rival()
+	if rival == null and pvp != null and pvp.has_method("get_rival"):
+		rival = pvp.get_rival()
+	if rival != null and is_instance_valid(rival) and rival == guard:
+		fails.append("BT-A merged pad-guard with PV-A rival")
+		return
+	if rival != null and is_instance_valid(rival) and str(rival.name) == str(guard.name):
+		fails.append("BT-A guard and rival share a name (%s)" % guard.name)
+		return
+	if traffic.has_method("get_guard_bt"):
+		bt = traffic.get_guard_bt()
+	if bt == null:
+		bt = guard.get_node_or_null("PadGuardBT")
+	if bt == null:
+		fails.append("BT-A PadGuardBT missing")
+		return
+	host = traffic.get_parent() as Node3D
+	if host == null or not host.has_meta("pad_up"):
+		fails.append("BT-A guard not on a pad")
+		return
+	var pname := str(host.name)
+	if pname != "Pad_North" and pname != "Pad_Approach" and pname != "Pad_Flank":
+		fails.append("BT-A unknown pad (%s)" % pname)
+		return
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("BT-A minted SITE_* (%s)" % pin)
+		return
+	if guard.has_meta("site_pin") and str(guard.get_meta("site_pin")).begins_with("SITE_"):
+		fails.append("BT-A guard minted SITE_*")
+		return
+	if bt.has_meta("site_pin") and str(bt.get_meta("site_pin")).begins_with("SITE_"):
+		fails.append("BT-A BT minted SITE_*")
+		return
+	if bt.has_method("is_g5_closed") and not bool(bt.is_g5_closed()):
+		fails.append("BT-A G5 Clash-from-world is open")
+		return
+	if traffic.has_method("is_g5_closed") and not bool(traffic.is_g5_closed()):
+		fails.append("BT-A traffic G5 is open")
+	var auth := ""
+	if bt.has_method("combat_authority"):
+		auth = str(bt.combat_authority())
+	elif traffic.has_method("combat_authority"):
+		auth = str(traffic.combat_authority())
+	if auth != "host":
+		fails.append("BT-A combat authority is not host (%s)" % auth)
+	if "attack_damage" in guard:
+		dmg0 = float(guard.get("attack_damage"))
+	if pad != null and pad.has_method("claim"):
+		pad.claim("Cybernex", 2.0)
+	elif host.has_method("claim"):
+		host.claim("Cybernex", 2.0)
+	if pad != null and pad.has_method("tier_budget"):
+		harvest0 = float(pad.tier_budget().get("harvest", 0.0))
+	var pad_up: Vector3 = host.get_meta("pad_up")
+	if ship == null or not is_instance_valid(ship):
+		fails.append("BT-A no ship")
+		return
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	ship.global_position = host.global_position + pad_up * 8.0
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	if ship.has_method("_do_land"):
+		ship._do_land()
+	if os.has_method("try_exit_ship"):
+		os.try_exit_ship()
+	await get_tree().create_timer(0.4).timeout
+	walker = os.get("player") as Node3D
+	if (walker == null or not is_instance_valid(walker)) and os.has_method("_spawn_player_near_ship"):
+		os.call("_spawn_player_near_ship")
+		await get_tree().create_timer(0.25).timeout
+		walker = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("BT-A no walker after EVA")
+		return
+	if walker.has_method("set_eva_profile"):
+		walker.set_eva_profile(false)
+	os.set("_eva_mode", false)
+	if "firewall_timer" in walker:
+		walker.set("firewall_timer", 0.0)
+	if walker.has_method("purge_infection"):
+		for _i in range(5):
+			walker.purge_infection()
+	if "health" in walker:
+		walker.set("health", float(walker.get("max_health")) if "max_health" in walker else 100.0)
+	if "_down_t" in walker:
+		walker.set("_down_t", 0.0)
+	guard.set("_alive", true)
+	if float(guard.get("health")) < 20.0:
+		guard.set("health", float(guard.get("max_health")))
+	var home: Vector3 = guard.global_position
+	if bt.has_method("home_position"):
+		home = bt.home_position()
+	var away: Vector3 = guard.global_position - host.global_position
+	away = away - pad_up * away.dot(pad_up)
+	if away.length_squared() < 0.01:
+		away = host.global_transform.basis.x
+	away = away.normalized()
+	## Far walker → patrol (guard at home).
+	walker.global_position = host.global_position + away * 40.0 + pad_up * 2.0
+	if walker.has_method("_relief_snap_fallback"):
+		walker.call("_relief_snap_fallback")
+	if SoftScanCache:
+		SoftScanCache.invalidate_player()
+		SoftScanCache.invalidate_enemies()
+	if bt.has_method("tick"):
+		bt.tick(0.1)
+	var st0 := str(traffic.guard_bt_state()) if traffic.has_method("guard_bt_state") else str(bt.bt_state())
+	print("[Playtest] BT-A patrol state=", st0, " pad=", pname, " guard=", guard.name)
+	if st0 != "patrol":
+		fails.append("BT-A patrol state missing (got %s)" % st0)
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("combat", 20.0)
+	if traffic.has_method("refresh_labels"):
+		traffic.refresh_labels()
+	if "attack_damage" in guard:
+		dmg1 = float(guard.get("attack_damage"))
+	if absf(dmg1 - dmg0) > 0.01 or absf(dmg1 - 11.0) > 0.01:
+		fails.append("BT-A Knowledge changed Pulse DPS (%s → %s)" % [dmg0, dmg1])
+	var glabel := str(traffic.guard_label()) if traffic.has_method("guard_label") else ""
+	if glabel == "":
+		fails.append("BT-A Knowledge guard label empty")
+	## In-range walker → engage Pulse.
+	walker.global_position = guard.global_position - away * 8.0 + pad_up * 2.0
+	if walker.has_method("_relief_snap_fallback"):
+		walker.call("_relief_snap_fallback")
+	if walker.has_method("face_world_point"):
+		walker.face_world_point(guard.global_position)
+	if SoftScanCache:
+		SoftScanCache.invalidate_player()
+	if bt.has_method("tick"):
+		bt.tick(0.1)
+	var st1 := str(bt.bt_state()) if bt.has_method("bt_state") else ""
+	print("[Playtest] BT-A engage state=", st1, " label=", glabel)
+	if st1 != "engage":
+		fails.append("BT-A engage state missing (got %s)" % st1)
+	var hp0: float = float(walker.get("health")) if "health" in walker else 100.0
+	var fired := false
+	if traffic.has_method("try_guard_pulse"):
+		fired = bool(traffic.try_guard_pulse(walker))
+	elif bt.has_method("try_engage_pulse"):
+		fired = bool(bt.try_engage_pulse(walker))
+	var hp1: float = float(walker.get("health")) if "health" in walker else hp0
+	var drop: float = hp0 - hp1
+	print("[Playtest] BT-A engage Pulse hit=", fired, " walker hp ",
+		snapped(hp0, 0.1), " → ", snapped(hp1, 0.1), " drop=", snapped(drop, 0.1))
+	if not fired:
+		fails.append("BT-A engage Pulse did not fire")
+	elif drop < 10.0:
+		fails.append("BT-A engage Pulse did not hit walker (%s → %s)" % [
+			snapped(hp0, 0.1), snapped(hp1, 0.1)])
+	elif drop > 12.5:
+		fails.append("BT-A Pulse DPS drifted (drop=%s)" % snapped(drop, 0.1))
+	## Off-range walker + guard off home → return-to-pad.
+	guard.global_position = home + away * 8.0 + pad_up * 0.2
+	walker.global_position = host.global_position + away * 45.0 + pad_up * 2.0
+	if walker.has_method("_relief_snap_fallback"):
+		walker.call("_relief_snap_fallback")
+	if SoftScanCache:
+		SoftScanCache.invalidate_player()
+	if bt.has_method("tick"):
+		bt.tick(0.1)
+	var st2 := str(bt.bt_state()) if bt.has_method("bt_state") else ""
+	print("[Playtest] BT-A return-to-pad state=", st2)
+	if st2 != "return":
+		fails.append("BT-A return-to-pad state missing (got %s)" % st2)
+	if pad != null and pad.has_method("tier_budget"):
+		harvest1 = float(pad.tier_budget().get("harvest", -1.0))
+	if harvest0 > 0.0 and absf(harvest1 - harvest0) > 0.0001:
+		fails.append("BT-A harvest number changed (%s → %s)" % [harvest0, harvest1])
+	var scene_name := str(get_tree().current_scene.name) if get_tree() and get_tree().current_scene else ""
+	if scene_name.find("TestArena") >= 0:
+		fails.append("BT-A entered TestArena from OpenSpace (G5)")
+	if ResourceLoader.exists("res://scripts/world/ClashFromWorld.gd") \
+			or ResourceLoader.exists("res://scripts/world/ClashBeacon.gd"):
+		fails.append("BT-A opened G5 world-to-arena")
+	print("[Playtest] BT-A patrol · engage Pulse · return-to-pad · G5 closed · no SITE_*")
+	guard.global_position = home
+	if "velocity" in guard:
+		guard.velocity = Vector3.ZERO
+	if "health" in walker:
+		walker.set("health", float(walker.get("max_health")) if "max_health" in walker else 100.0)
 	if ship != null and is_instance_valid(ship):
 		if "velocity" in ship:
 			ship.velocity = Vector3.ZERO
