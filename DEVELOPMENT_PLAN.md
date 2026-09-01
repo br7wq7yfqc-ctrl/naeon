@@ -13,7 +13,7 @@
 
 **2026-09-01 — текущий бар PV-B (не Voice, не G2, не G5):**  
 OS-A…OS-H built. G2–G6 закрыты. G1 CRUISE не открыт.  
-ST-A…ST-G / IN-A…E / WF-A / Q-A / Q-B / Q-C / Q-D / HF-A / HF-B / PV-A built.  
+ST-A…ST-G / IN-A…E / WF-A / Q-A / Q-B / Q-C / Q-D / Q-E / HF-A / HF-B / PV-A built.  
 PV-B: first Space PvP from the seated player hull — same host-authority pad rival `CombatDummy`, Pulse 11 both ways, win HP → 0, Infection cap 5, Knowledge labels only. TPS PV-A stays.  
 Петля P0.6 на RTX 3090 жива — не ломать. llvmpipe ≠ FPS PASS.
 
@@ -133,8 +133,8 @@ PV-B: first Space PvP from the seated player hull — same host-authority pad ri
 - Carriers seed (hangar + drones/fighters) — очередь печати модуля: `docs/design/BASE_STATION_STRATEGY.md` ST-D **built**
 - **Dynamic Ownership Transformation** (prototype): visual + mechanical swap Cybernex (Venus Project) ↔ gROT (biomass industrial) на 1–2 объектах
 - Advanced AI-bots + NPC quest givers skeleton — **Q-D built** (same Q-A ContractBoard id on the pad visitor; not a second quest system)
-- **Quest system foundation**: Contract Board, generated quests (templates), basic Alliance Quest Constructor — **Q-A + Q-B + Q-C + Q-D built** (one board, one pad template, one shared alliance occupy/logistics contract, one optional Learning Node, one NPC giver on the same board; not campaigns)
-- **Knowledge & Skills foundation**: Knowledge Rank / Subject Mastery, optional Learning Nodes в квестах, soft combat integration (informational) — **Q-A + Q-B + Q-C + Q-D built** (`SoftKnowledge` `quest_intel` / `alliance_intel` / `field_intel` labels only; never DPS / yield / exclusive modules)
+- **Quest system foundation**: Contract Board, generated quests (templates), basic Alliance Quest Constructor — **Q-A + Q-B + Q-C + Q-D + Q-E built** (one board, occupy/harvest/deliver_crate/scan_extractor, one shared alliance occupy/logistics contract, one optional Learning Node, one NPC giver on the same board; not campaigns)
+- **Knowledge & Skills foundation**: Knowledge Rank / Subject Mastery, optional Learning Nodes в квестах, soft combat integration (informational) — **Q-A + Q-B + Q-C + Q-D + Q-E built** (`SoftKnowledge` `quest_intel` / `alliance_intel` / `field_intel` labels only; never DPS / yield / exclusive modules)
 - **MOBA Full Prototype**: 5v5/3v3, 6–8 heroes, lanes + jungle, items, objectives, rewards pipeline, basic matchmaking
 - aiNEX basic (colony planner + MOBA builds + simple educational puzzle generation)
 - Voice foundation (open-source STT/TTS path first)

@@ -1,6 +1,7 @@
 extends RefCounted
 class_name ContractBoard
 ## Q-A: one generated contract from a template on the same ARK body.
+## Q-E: the same board can also roll scan_extractor (ST-B PadHarvestExtractor).
 ## Q-D: the pad visitor offers this same board id. Not a second quest system.
 ## Completing grants SoftKnowledge rank/label only. Never yield / DPS / modules.
 ## No cash-shop skip. No pay-to-complete. story ≠ power.
@@ -11,7 +12,7 @@ const BODY := "Nex-Prime"
 
 
 static func templates() -> PackedStringArray:
-	return PackedStringArray(["occupy", "harvest", "deliver_crate"])
+	return PackedStringArray(["occupy", "harvest", "deliver_crate", "scan_extractor"])
 
 
 static func reset_slice() -> void:
@@ -145,6 +146,38 @@ static func try_unlock_exclusive_weapon(_id: String = "") -> bool:
 static func try_unlock_exclusive_module(_id: String = "") -> bool:
 	print("[ContractBoard] Knowledge-gated exclusive module refused")
 	return false
+
+
+static func interact_scan_extractor() -> Dictionary:
+	## Q-E: read ST-B PadHarvestExtractor via SoftKnowledge. Never harvest / yield.
+	var cur := _state()
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var intel := ""
+	if cur.is_empty() or str(cur.get("template", "")) != "scan_extractor":
+		return {}
+	if str(cur.get("status", "")) == "":
+		return {}
+	if SoftK == null:
+		return {}
+	intel = str(SoftK.read_node_intel("extractor"))
+	if intel == "":
+		return {}
+	cur["scan_intel"] = intel
+	cur["scan_read"] = true
+	if str(cur.get("status", "")) == "accepted":
+		cur["progress"] = true
+	_write(cur)
+	if GameManager:
+		GameManager.toast_requested.emit(
+			"Extractor scan — %s (soft intel only, no yield)" % intel
+		)
+	print("[ContractBoard] scan extractor ", cur.get("id", ""), " intel=", intel)
+	return {
+		"id": str(cur.get("id", "")),
+		"intel": intel,
+		"status": str(cur.get("status", "")),
+		"progress": bool(cur.get("progress", false)),
+	}
 
 
 static func learning_node() -> Dictionary:
