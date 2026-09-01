@@ -65,7 +65,6 @@ func _go() -> void:
 	await _assert_q_b(os, fails)
 	await _assert_q_c(os, fails)
 	await _assert_q_d(os, fails)
-	await _assert_hf_a(os, fails)
 	await _assert_ar_f(os, fails)
 	await _assert_ar_g(os, fails)
 	_assert_se_a(os, fails)
@@ -631,6 +630,7 @@ func _go() -> void:
 	await _npc_offline_cycle(fails)
 	await _npc_soft_alliance(fails)
 	await _eva_snap_pulse(fails)
+	await _assert_hf_a(os, fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
