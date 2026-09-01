@@ -173,6 +173,43 @@ static func factory_printed_on(cluster: Node3D) -> Node3D:
 	return cluster.find_child("FactoryPrintedExtractor", true, false) as Node3D
 
 
+static func pad_turret_on(pad: Node3D) -> Node3D:
+	if pad == null or not is_instance_valid(pad):
+		return null
+	var existing: Node = pad.get_node_or_null("PadDefenseTurret")
+	if existing is Node3D:
+		return existing as Node3D
+	for c in pad.get_children():
+		if c is Node3D and c.has_meta("pad_turret") and bool(c.get_meta("pad_turret")):
+			return c as Node3D
+	return pad.find_child("PadDefenseTurret", true, false) as Node3D
+
+
+static func place_pad_turret(pad: Node3D, faction: String) -> Node3D:
+	## ST-H: one defense turret after occupy. Not Clash Turret.gd / OUTER 160.
+	var n: Node3D = null
+	if pad == null or not is_instance_valid(pad):
+		return null
+	if not is_unnamed_pad(pad):
+		return null
+	n = pad_turret_on(pad)
+	if n != null:
+		return n
+	n = Node3D.new()
+	n.set_script(preload("res://scripts/world/PadDefenseTurret.gd"))
+	n.name = "PadDefenseTurret"
+	n.set_meta("site_pin", "")
+	n.set_meta("player_module", false)
+	pad.add_child(n)
+	# Off ST-A habitat (8, 2.6, 6), NP-C (-8, 2.6, 6), ST-B extractor (10, 1.2, -8),
+	# ST-C bench (0, 0.35, 12). Matches the HQ cluster turret slot.
+	n.position = Vector3(-12.0, 1.2, 4.0)
+	if n.has_method("setup"):
+		n.setup(faction)
+	print("[BaseBuilder] pad turret on ", pad.name, " faction=", faction)
+	return n
+
+
 static func place_player_habitat(pad: Node3D, faction: String) -> Node3D:
 	## ST-A: one habitat, code-first. Not a SITE_*, not the OS-G silhouette.
 	return _place_habitat(pad, faction, false)
