@@ -9484,6 +9484,26 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																																										if os.has_method("try_enter_ship"):
 																																											os.try_enter_ship()
 																																										await get_tree().create_timer(0.3).timeout
+																																										if not bool(os.get("_in_ship")):
+																																											fails.append("reboard after I-hatch F-EVA nineteenth dirt F-board refused")
+																																										else:
+																																											ship.set("_land_lock_t", 0.0)
+																																											if bool(ship.get("is_landed")) and ship.has_method("_do_launch"):
+																																												ship._do_launch()
+																																											await get_tree().create_timer(0.35).timeout
+																																											var hold_ln19: float = float(ship.get("_hover_hold_alt"))
+																																											var agl_ln19: float = 0.0
+																																											if nex.has_method("altitude_of"):
+																																												agl_ln19 = float(nex.altitude_of(ship.global_position))
+																																											elif ship.has_method("altitude_agl"):
+																																												agl_ln19 = float(ship.altitude_agl())
+																																											print("[Playtest] I-hatch F-EVA nineteenth dirt F-board HOVER launch hold=", snapped(hold_ln19, 0.1),
+																																												" agl=", snapped(agl_ln19, 0.1), " landed=", ship.get("is_landed"))
+																																											if bool(ship.get("is_landed")):
+																																												fails.append("I-hatch F-EVA nineteenth dirt F-board launch still landed")
+																																											if hold_ln19 < agl_ln19 - 2.0 or hold_ln19 > agl_ln19 + 20.0:
+																																												fails.append("I-hatch F-EVA nineteenth dirt F-board launch hold not AGL+12 (%s vs %s)" % [
+																																												snapped(hold_ln19, 0.1), snapped(agl_ln19, 0.1)])
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:

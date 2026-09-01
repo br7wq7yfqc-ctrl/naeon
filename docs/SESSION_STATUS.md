@@ -1,3 +1,5 @@
+**2026-09-01 — HOVER launch after I-hatch F-EVA nineteenth dirt F-board is AGL+12, not leftover landed**
+
 **2026-09-01 — Slope after I-hatch F-EVA nineteenth dirt F-board is PlanetRelief, not pocket-Y**
 
 **2026-09-01 — Coyote after I-hatch F-EVA nineteenth dirt F-board is near dirt**
