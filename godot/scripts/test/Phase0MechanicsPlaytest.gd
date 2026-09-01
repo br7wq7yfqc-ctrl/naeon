@@ -42,6 +42,7 @@ func _go() -> void:
 	await _osh_ritual(fails)
 	_assert_hud_stack(os, fails)
 	if _ritual_only:
+		await _npc_hangar_queue(fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
 
@@ -619,6 +620,7 @@ func _go() -> void:
 	await _npc_occupy_harvest(fails)
 	await _npc_place_module(fails)
 	await _npc_print_catalog(fails)
+	await _npc_hangar_queue(fails)
 	await _npc_squad_invite(fails)
 	await _npc_offline_cycle(fails)
 	await _npc_soft_alliance(fails)
@@ -10399,6 +10401,216 @@ func _npc_print_catalog(fails: PackedStringArray) -> void:
 				if hangar0 > 0.0 and absf(float(bud1.get("hangar_mass", -1.0)) - hangar0) > 0.0001:
 					fails.append("NP-G changed hangar numbers")
 	print("[Playtest] NP-G refuse without spend · no cash skip · no SITE_* · pad=", pname)
+
+
+func _npc_hangar_queue(fails: PackedStringArray) -> void:
+	## NP-H: after NP-B harvest, visitor queues one catalog module on the ST-D hangar.
+	## Same refuse as ST-D (mass/power). Not NP-C habitat. Not factory. Not bench (a). No SITE_*.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var os: Node = get_parent()
+	var nex: Node = _osh_nex()
+	var traffic: Node = null
+	var pilot: Node = null
+	var hull: Node = null
+	var queue: Node = null
+	var slug := ""
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var pin1 := ""
+	var mass_cap := 0.0
+	var power_cap := 0.0
+	var mass_after := 0.0
+	var power_after := 0.0
+	var harvest0 := 0.0
+	var print0 := 0.0
+	var hangar0 := 0.0
+	var printed: Node3D = null
+	var stale: Node3D = null
+	var cash: Node3D = null
+	var heavy: Node3D = null
+	var hot: Node3D = null
+	var mod: Node3D = null
+	var again: Node3D = null
+	var refuse := ""
+	var refuse_power := ""
+	var kind := ""
+	var mpin := ""
+	var extras0 := 0
+	var extras1 := 0
+	var tree: SceneTree = get_tree()
+	if P0 == null or not bool(P0.NP_H_HANGAR) or not bool(P0.ST_D_HANGAR):
+		fails.append("NP-H P0Slice flag missing")
+		return
+	if nex != null and nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.2).timeout
+	traffic = nex.call("pad_traffic") if nex != null and nex.has_method("pad_traffic") else null
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("NP-H: pad traffic missing")
+		return
+	pilot = traffic.get_npc_pilot() if traffic.has_method("get_npc_pilot") else null
+	if pilot == null or not pilot.has_method("queue_one_hangar_module"):
+		fails.append("NP-H: NpcPilot queue_one_hangar_module missing")
+		return
+	if not pilot.has_method("print_one_catalog_module"):
+		fails.append("NP-H broke NP-G bench print")
+		return
+	if pilot.has_method("printed_catalog_module"):
+		printed = pilot.printed_catalog_module()
+	if printed != null and is_instance_valid(printed):
+		if bool(printed.get_meta("hangar_queued", false)):
+			fails.append("NP-H rewrote NP-G onto hangar (b)")
+		if not bool(printed.get_meta("printed_module", false)):
+			fails.append("NP-H stripped NP-G printed_module")
+	if tree:
+		extras0 = tree.get_nodes_in_group("hangar_queued_modules").size()
+	if os != null and os.has_method("catalog_carrier"):
+		hull = os.catalog_carrier()
+	if hull == null and tree:
+		var hulls: Array = tree.get_nodes_in_group("catalog_carriers")
+		if not hulls.is_empty():
+			hull = hulls[0]
+	if hull == null:
+		fails.append("NP-H catalog carrier missing")
+		return
+	if hull.has_method("hull_slug"):
+		slug = str(hull.hull_slug())
+	elif hull.has_meta("catalog_hull"):
+		slug = str(hull.get_meta("catalog_hull"))
+	if slug != "cybernex_capital_carrier" and slug != "grot_capital_carrier" \
+			and slug != "grot_drone_carrier" and slug != "cybernex_mothership" \
+			and slug != "grot_mothership":
+		fails.append("NP-H invented hull slug (%s)" % slug)
+	if str(hull.get_meta("site_pin", "missing")) != "":
+		fails.append("NP-H carrier minted site_pin (%s)" % str(hull.get_meta("site_pin")))
+	if bool(hull.get_meta("mobile_site", true)):
+		fails.append("NP-H carrier marked mobile SITE_*")
+	if hull.has_method("hangar_queue"):
+		queue = hull.hangar_queue()
+	if queue == null and os != null and os.has_method("hangar_queue"):
+		queue = os.hangar_queue()
+	if queue == null or not queue.has_method("enqueue_module"):
+		fails.append("NP-H hangar queue missing")
+		return
+	if hull.has_method("mass_remaining"):
+		mass_cap = float(hull.mass_remaining())
+	if hull.has_method("power_remaining"):
+		power_cap = float(hull.power_remaining())
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("colony_ops", 20.0)
+	if hull.has_method("mass_remaining"):
+		mass_after = float(hull.mass_remaining())
+	if hull.has_method("power_remaining"):
+		power_after = float(hull.power_remaining())
+	if absf(mass_after - mass_cap) > 0.001 or absf(power_after - power_cap) > 0.001:
+		fails.append("NP-H Knowledge cheapened hangar mass/power")
+	var host: Node = traffic.get_parent()
+	if host != null:
+		var ctrl: Node = host.get_node_or_null("BaseCluster/PadBaseController")
+		if ctrl == null:
+			ctrl = host.find_child("PadBaseController", true, false)
+		if ctrl != null:
+			if "extract_rate" in ctrl:
+				harvest0 = float(ctrl.get("extract_rate"))
+			if ctrl.has_method("tier_budget"):
+				var bud: Dictionary = ctrl.tier_budget()
+				print0 = float(bud.get("print_cost", 0.0))
+				hangar0 = float(bud.get("hangar_mass", 0.0))
+	if queue.has_method("cash_shop_skip_possible") and bool(queue.cash_shop_skip_possible()):
+		fails.append("NP-H cash-shop skip possible")
+	if queue.has_method("try_cash_skip_queue"):
+		if bool(queue.try_cash_skip_queue(999.0)):
+			fails.append("NP-H cash-shop skip queued a module")
+	stale = queue.queued_module() if queue.has_method("queued_module") else null
+	if stale != null and is_instance_valid(stale):
+		var parent: Node = stale.get_parent()
+		if parent != null:
+			parent.remove_child(stale)
+		stale.free()
+		await get_tree().process_frame
+	cash = pilot.queue_one_hangar_module("sensor", 50.0)
+	if cash != null:
+		fails.append("NP-H accepted cash instead of hangar budget")
+		if is_instance_valid(cash):
+			cash.queue_free()
+	heavy = pilot.queue_one_hangar_module("extractor")
+	if pilot.has_method("hangar_last_refuse"):
+		refuse = str(pilot.hangar_last_refuse())
+	elif queue.has_method("last_refuse"):
+		refuse = str(queue.last_refuse())
+	if heavy != null:
+		fails.append("NP-H queued a module that exceeds mass")
+		if is_instance_valid(heavy):
+			heavy.queue_free()
+	if refuse != "mass":
+		fails.append("NP-H mass refuse missing (%s)" % refuse)
+	hot = pilot.queue_one_hangar_module("engine")
+	if pilot.has_method("hangar_last_refuse"):
+		refuse_power = str(pilot.hangar_last_refuse())
+	elif queue.has_method("last_refuse"):
+		refuse_power = str(queue.last_refuse())
+	if hot != null:
+		fails.append("NP-H queued a module that exceeds power")
+		if is_instance_valid(hot):
+			hot.queue_free()
+	if refuse_power != "power":
+		fails.append("NP-H power refuse missing (%s)" % refuse_power)
+	mod = pilot.queue_one_hangar_module("sensor")
+	if mod == null or not is_instance_valid(mod):
+		fails.append("NP-H: NPC did not queue one hangar module")
+		print("[Playtest] NP-H hangar queue missing module hull=", slug, " refuse=", refuse)
+		return
+	kind = str(mod.get_meta("module_type", ""))
+	mpin = str(mod.get_meta("site_pin", "missing"))
+	if kind != "sensor":
+		fails.append("NP-H queued an unknown module (%s)" % kind)
+	if mpin != "":
+		fails.append("NP-H queued module minted site_pin (%s)" % mpin)
+	if bool(mod.get_meta("printed_module", false)):
+		fails.append("NP-H used bench (a) print")
+	if bool(mod.get_meta("factory_printed", false)):
+		fails.append("NP-H used factory (c) print")
+	if bool(mod.get_meta("player_module", false)):
+		fails.append("NP-H stole the ST-A player_module slot")
+	if bool(mod.get_meta("npc_module", false)):
+		fails.append("NP-H used NP-C habitat hack")
+	if not bool(mod.get_meta("hangar_queued", false)):
+		fails.append("NP-H module not marked hangar_queued")
+	again = pilot.queue_one_hangar_module("sensor")
+	if again != null:
+		fails.append("NP-H queued a second hangar module")
+	if LayerContext:
+		pin1 = str(LayerContext.site_pin_id)
+	if pin1 != pin0:
+		fails.append("NP-H changed site_pin (%s → %s)" % [pin0, pin1])
+	if tree:
+		extras1 = tree.get_nodes_in_group("hangar_queued_modules").size()
+	if extras1 != 1:
+		fails.append("NP-H want hangar queue of one module, got %s (was %s)" % [extras1, extras0])
+	if printed != null and is_instance_valid(printed):
+		if not bool(printed.get_meta("printed_module", false)):
+			fails.append("NP-H broke NP-G printed module")
+		if bool(printed.get_meta("hangar_queued", false)):
+			fails.append("NP-H moved NP-G onto hangar")
+	elif not _ritual_only:
+		fails.append("NP-H lost NP-G bench print")
+	if host != null:
+		var ctrl1: Node = host.get_node_or_null("BaseCluster/PadBaseController")
+		if ctrl1 == null:
+			ctrl1 = host.find_child("PadBaseController", true, false)
+		if ctrl1 != null:
+			if harvest0 > 0.0 and "extract_rate" in ctrl1 \
+					and absf(float(ctrl1.get("extract_rate")) - harvest0) > 0.0001:
+				fails.append("NP-H changed harvest numbers")
+			if ctrl1.has_method("tier_budget"):
+				var bud1: Dictionary = ctrl1.tier_budget()
+				if print0 > 0.0 and absf(float(bud1.get("print_cost", -1.0)) - print0) > 0.0001:
+					fails.append("NP-H changed print numbers")
+				if hangar0 > 0.0 and absf(float(bud1.get("hangar_mass", -1.0)) - hangar0) > 0.0001:
+					fails.append("NP-H changed hangar numbers")
+	print("[Playtest] NP-H queue one module hull=", slug, " module=", kind,
+		" slots=1 refuse=mass/", refuse_power, " pin=", pin1, " mobile_site=false")
+	print("[Playtest] NP-H refuse mass/power · no SITE_* · no factory · NP-G bench intact")
 
 
 func _npc_squad_invite(fails: PackedStringArray) -> void:

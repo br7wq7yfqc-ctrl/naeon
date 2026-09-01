@@ -1,3 +1,5 @@
+**2026-09-01 — NP-H: NPC queues one catalog module on ST-D hangar (mass/power refuse; no SITE_*)**
+
 **2026-09-01 — NP-G: NPC prints one catalog module at PadPrintBench (ST-C spend; no cash skip)**
 
 **2026-09-01 — MC-A: first multi-crew seat on the player hull (F crew / I same ship_int; HUD CREW label; SoftNet puppet optional)**
@@ -702,7 +704,8 @@ AR-F: 3v3 local host authority on the existing TestArena / Clash 60×60. Six act
 AR-G: 5v5 local host authority on the same 60×60 (TOP/MID/BOT + AR-D jungle). Ten actors (player Cybernex MID + nine SoftNet visual `CombatDummy` puppets, or 5+5 isolated). Host process owns combat. G5 stays closed. No new `SITE_*`. Knowledge does not change DPS.  
 SE-A: live power / cool / life buses on the player hull. Fitted `ShipModule.power_draw` sums into power/cool. Overdraw / overheat = soft thrust/weapon sag (not a hard lock). Hull LS readout matches IN-B (soft warn, no HP cut). HUD shows the three buses. Knowledge labels only. No P2W repair skip. ST-D hangar mass/power refuse still holds.  
 MC-A: one extra `CrewSeat` in the player `ship_int` pocket. **F** boards crew (walker stays); **I** returns to the same pocket. Pilot **F** / **I** unchanged. Occupied marker is visible. HUD `CREW n/2` is a label only. Optional SoftNet visual puppet when a second local viewer exists. Host authority. No second hull. No passenger combat. No `SITE_*`. 0 Tripo.  
-NP-G: after NP-B occupy/harvest the visitor spends Contribution/Biomass at `PadPrintBench` §6(a) (same ST-C path) → **one** catalog module on an unnamed pad. Without spend → refuse. No cash-shop skip. Knowledge labels the bench only. Not a second NP-C habitat. Not factory (c). Not hangar (b). No `SITE_*`.
+NP-G: after NP-B occupy/harvest the visitor spends Contribution/Biomass at `PadPrintBench` §6(a) (same ST-C path) → **one** catalog module on an unnamed pad. Without spend → refuse. No cash-shop skip. Knowledge labels the bench only. Not a second NP-C habitat. Not factory (c). Not hangar (b). No `SITE_*`.  
+NP-H: after NP-B occupy/harvest the visitor queues **one** catalog module on the ST-D catalog carrier hangar (`CarrierHangarQueue.enqueue_module`). Same mass/power refuse as the player. Knowledge labels the hangar only. Not a mobile `SITE_*`. Not factory (c). Not a second NP-C habitat. NP-G bench print stays.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -750,6 +753,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | MC-A ship crew seat | **built** — CrewSeat in ship_int; F/I same pocket; HUD CREW label; SoftNet puppet optional; pilot unchanged |
 | NP-C | **built** — NPC habitat on empty unnamed pad |
 | NP-G | **built** — NPC ST-C print: spend Contribution/Biomass → one catalog module; no cash skip |
+| NP-H | **built** — NPC ST-D hangar: queue one catalog module; mass/power refuse; no SITE_* |
 | Galaxy G2–G6 | **locked** |
 | G1 CRUISE | **in-scope only for OS-C scale** |
 
