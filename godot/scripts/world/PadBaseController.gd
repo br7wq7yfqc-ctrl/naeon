@@ -704,9 +704,7 @@ func scan_extractor() -> Dictionary:
 		return {}
 	if ext.has_method("scan_intel"):
 		return ext.scan_intel()
-	if _Board.has_method("interact_scan_extractor"):
-		return _Board.interact_scan_extractor()
-	return {}
+	return _Board.interact_scan_extractor()
 
 
 func harvest_hud_line() -> String:
@@ -1534,11 +1532,10 @@ func soft_scan() -> String:
 	_notify_hud(line)
 	if AudioDirector and AudioDirector.has_method("play_ui"):
 		AudioDirector.play_ui()
-	if _Board.has_method("snapshot"):
-		var q: Dictionary = _Board.snapshot()
-		if str(q.get("template", "")) == "scan_extractor" \
-				and str(q.get("status", "")) == "accepted":
-			scan_extractor()
+	var q: Dictionary = _Board.snapshot()
+	if str(q.get("template", "")) == "scan_extractor" \
+			and str(q.get("status", "")) == "accepted":
+		scan_extractor()
 	return line
 
 
