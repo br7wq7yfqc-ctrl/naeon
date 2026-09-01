@@ -9504,6 +9504,18 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																																											if hold_ln19 < agl_ln19 - 2.0 or hold_ln19 > agl_ln19 + 20.0:
 																																												fails.append("I-hatch F-EVA nineteenth dirt F-board launch hold not AGL+12 (%s vs %s)" % [
 																																												snapped(hold_ln19, 0.1), snapped(agl_ln19, 0.1)])
+																																											var up_geh19: Vector3 = deck.get_meta("pad_up") if deck.has_meta("pad_up") else Vector3.UP
+																																											if up_geh19.length_squared() > 0.01:
+																																												up_geh19 = up_geh19.normalized()
+																																											var rel_geh19: Vector3 = ship.global_position - deck.global_position
+																																											var lat_geh19: float = (rel_geh19 - up_geh19 * rel_geh19.dot(up_geh19)).length()
+																																											var agl_geh19: float = agl_ln19
+																																											if nex.has_method("altitude_of"):
+																																												agl_geh19 = float(nex.altitude_of(ship.global_position))
+																																											print("[Playtest] I-hatch F-EVA nineteenth dirt F-board launch GE lat=", snapped(lat_geh19, 0.1),
+																																												" agl=", snapped(agl_geh19, 0.1))
+																																											if lat_geh19 < 60.0:
+																																												fails.append("I-hatch F-EVA nineteenth dirt F-board launch GE pulled onto plate (lat=%s)" % snapped(lat_geh19, 0.1))
 
 
 func _assert_hover_alt_hold(fails: PackedStringArray) -> void:
