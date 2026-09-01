@@ -45,6 +45,7 @@ func _go() -> void:
 		await _npc_hangar_queue(fails)
 		await _npc_factory_print(fails)
 		await _assert_q_d(os, fails)
+		await _assert_q_e(os, fails)
 		await _assert_hf_b(os, fails)
 		await _assert_hf_a(os, fails)
 		await _assert_pv_b(os, fails)
@@ -74,6 +75,7 @@ func _go() -> void:
 	await _assert_q_b(os, fails)
 	await _assert_q_c(os, fails)
 	await _assert_q_d(os, fails)
+	await _assert_q_e(os, fails)
 	await _assert_ar_f(os, fails)
 	await _assert_ar_g(os, fails)
 	_assert_se_a(os, fails)
@@ -15046,6 +15048,11 @@ func _assert_q_a(os: Node, fails: PackedStringArray) -> void:
 					hold.store_unit(CargoHold.make_crate("qa_crate"))
 			if pad.has_method("ensure_pad_cargo"):
 				pad.ensure_pad_cargo(1)
+		"scan_extractor":
+			if pad.has_method("scan_extractor"):
+				pad.scan_extractor()
+			elif Board.has_method("interact_scan_extractor"):
+				Board.interact_scan_extractor()
 		_:
 			fails.append("Q-A cannot complete template (%s)" % tmpl)
 	await get_tree().process_frame
@@ -15595,6 +15602,11 @@ func _assert_q_d(os: Node, fails: PackedStringArray) -> void:
 					hold.store_unit(CargoHold.make_crate("qd_crate"))
 			if pad != null and pad.has_method("ensure_pad_cargo"):
 				pad.ensure_pad_cargo(1)
+		"scan_extractor":
+			if pad != null and pad.has_method("scan_extractor"):
+				pad.scan_extractor()
+			elif Board.has_method("interact_scan_extractor"):
+				Board.interact_scan_extractor()
 		_:
 			fails.append("Q-D cannot complete template (%s)" % tmpl)
 	await get_tree().process_frame
@@ -15646,6 +15658,204 @@ func _assert_q_d(os: Node, fails: PackedStringArray) -> void:
 			field0, field_lab0, field1, field_lab1
 		])
 	print("[Playtest] Q-D NPC same board id · quest_intel · no P2W")
+
+
+func _assert_q_e(os: Node, fails: PackedStringArray) -> void:
+	## Q-E: same ContractBoard can roll scan_extractor.
+	## Interact with ST-B PadHarvestExtractor via SoftKnowledge.
+	## Complete → quest_intel. Harvest / print / hangar stay. No SITE_*.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var Board = load("res://scripts/systems/ContractBoard.gd")
+	var nex: Node = _osh_nex()
+	var pad: Node = _in_a_occupied_pad(os)
+	var traffic: Node = null
+	var pilot: Node = null
+	var ext: Node3D = null
+	var offer: Dictionary = {}
+	var scan: Dictionary = {}
+	var done: Dictionary = {}
+	var npc_offer: Dictionary = {}
+	var tmpl := ""
+	var cid := ""
+	var npc_id := ""
+	var host := ""
+	var intel := ""
+	var lab0 := ""
+	var lab1 := ""
+	var harvest0 := 0.0
+	var harvest1 := 0.0
+	var print0 := 0.0
+	var print1 := 0.0
+	var hangar_m0 := 0.0
+	var hangar_m1 := 0.0
+	var hangar_p0 := 0.0
+	var hangar_p1 := 0.0
+	var rate0 := 0.0
+	var rate1 := 0.0
+	var bench: Node = null
+	var qb0: Dictionary = {}
+	var qb1: Dictionary = {}
+	var field0 := 0.0
+	var field1 := 0.0
+	var field_lab0 := ""
+	var field_lab1 := ""
+	var paid := true
+	var skip_ok := true
+	var modu := true
+	if P0 == null or not bool(P0.Q_A_CONTRACT):
+		fails.append("Q-E P0Slice flag missing")
+		return
+	if Board == null or not Board.has_method("offer_one"):
+		fails.append("Q-E ContractBoard missing")
+		return
+	if not Board.templates().has("scan_extractor"):
+		fails.append("Q-E scan_extractor template missing")
+		return
+	if not Board.templates().has("occupy") or not Board.templates().has("harvest") \
+			or not Board.templates().has("deliver_crate"):
+		fails.append("Q-E dropped Q-A templates")
+		return
+	if nex != null and nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.2).timeout
+	if pad == null:
+		fails.append("Q-E occupied unnamed pad missing")
+		return
+	if pad.has_method("claim"):
+		pad.claim("Cybernex", 2.0)
+	if "ownership" in pad and pad.ownership and pad.ownership.has_method("advance_transition"):
+		pad.ownership.advance_transition(8.0, 5.0)
+	if pad.has_method("visible_extractor"):
+		ext = pad.visible_extractor()
+	if ext == null and pad is Node:
+		ext = pad.get_node_or_null("PadHarvestExtractor") as Node3D
+	if ext == null:
+		fails.append("Q-E ST-B PadHarvestExtractor missing")
+		return
+	if pad.has_method("print_bench"):
+		bench = pad.print_bench()
+	if pad.has_method("tier_budget"):
+		var bud: Dictionary = pad.tier_budget()
+		harvest0 = float(bud.get("harvest", 0.0))
+		print0 = float(bud.get("print_cost", 0.0))
+		hangar_m0 = float(bud.get("hangar_mass", 0.0))
+		hangar_p0 = float(bud.get("hangar_power", 0.0))
+	if "extract_rate" in pad:
+		rate0 = float(pad.get("extract_rate"))
+	if bench != null and bench.has_method("print_cost"):
+		print0 = float(bench.print_cost())
+	if nex != null and nex.has_method("pad_traffic"):
+		traffic = nex.call("pad_traffic")
+	if traffic == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("pad_traffic")
+		if not listed.is_empty():
+			traffic = listed[0]
+	if traffic != null and traffic.has_method("get_npc_pilot"):
+		pilot = traffic.get_npc_pilot()
+	qb0 = Board.alliance_snapshot()
+	if GameManager:
+		field0 = float(GameManager.subject_mastery.get("field_intel", 0.0))
+		GameManager.subject_mastery["quest_intel"] = 0.0
+	field_lab0 = SoftKnowledge.field_intel_label()
+	lab0 = SoftKnowledge.contract_intel_label()
+	if Board.has_method("reset_slice"):
+		Board.reset_slice()
+	host = "Pad_North"
+	var plate: Node = pad
+	while plate:
+		if plate is Node3D and str(plate.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+			host = str(plate.name)
+			break
+		plate = plate.get_parent()
+	offer = Board.offer_one(host, "Nex-Prime", "scan_extractor")
+	tmpl = str(offer.get("template", ""))
+	cid = str(offer.get("id", ""))
+	print("[Playtest] Q-E board offers template=", tmpl, " id=", cid,
+		" status=", offer.get("status", ""))
+	if offer.is_empty() or tmpl != "scan_extractor":
+		fails.append("Q-E scan_extractor not offered (%s)" % tmpl)
+		return
+	if cid != "QA-scan_extractor-%s" % host:
+		fails.append("Q-E id is not QA-* (%s)" % cid)
+	if cid.begins_with("QD-") or cid.begins_with("QB-") or cid.begins_with("SITE_"):
+		fails.append("Q-E invented a second board / SITE id (%s)" % cid)
+	if str(offer.get("body", "")) != "Nex-Prime":
+		fails.append("Q-E contract left the ARK body")
+	if Board.cash_shop_skip_possible() or bool(Board.try_cash_skip()):
+		fails.append("Q-E cash-shop skip possible")
+	skip_ok = bool(Board.try_cash_skip())
+	paid = bool(Board.try_pay_complete(999.0))
+	modu = bool(Board.try_unlock_exclusive_module("extractor"))
+	if skip_ok or paid or modu or SoftKnowledge.exclusive_module_unlocked("extractor"):
+		fails.append("Q-E cash-shop skip / pay-to-complete / exclusive module")
+	if pilot != null and pilot.has_method("offer_player_contract"):
+		npc_offer = pilot.offer_player_contract()
+		npc_id = str(pilot.offered_player_contract_id()) if pilot.has_method("offered_player_contract_id") else ""
+		print("[Playtest] Q-E Q-D NPC same board id=", npc_offer.get("id", ""), " npc=", npc_id)
+		if str(npc_offer.get("id", "")) != cid or npc_id != cid:
+			fails.append("Q-E Q-D NPC id is not the same board (%s / %s vs %s)" % [
+				npc_offer.get("id", ""), npc_id, cid
+			])
+	offer = Board.accept()
+	if str(offer.get("status", "")) != "accepted":
+		fails.append("Q-E did not accept scan_extractor")
+	if pad.has_method("scan_extractor"):
+		scan = pad.scan_extractor()
+	elif ext.has_method("scan_intel"):
+		scan = ext.scan_intel()
+	elif Board.has_method("interact_scan_extractor"):
+		scan = Board.interact_scan_extractor()
+	intel = str(scan.get("intel", ""))
+	print("[Playtest] Q-E scan extractor intel=", intel, " progress=", scan.get("progress", false))
+	if intel == "" or intel != str(SoftKnowledge.read_node_intel("extractor")):
+		fails.append("Q-E complete did not read extractor via SoftKnowledge")
+	if Board.has_method("note_progress"):
+		Board.note_progress("scan_extractor")
+	done = Board.try_complete()
+	lab1 = SoftKnowledge.contract_intel_label()
+	print("[Playtest] Q-E complete template=", tmpl, " status=", done.get("status", ""),
+		" Knowledge ", lab0, " → ", lab1)
+	if str(done.get("status", "")) != "complete":
+		fails.append("Q-E did not complete scan_extractor")
+	if lab1 == lab0 or lab1 != "PAD INTEL":
+		fails.append("Q-E Knowledge label did not change (%s → %s)" % [lab0, lab1])
+	if pad.has_method("tier_budget"):
+		var bud1: Dictionary = pad.tier_budget()
+		harvest1 = float(bud1.get("harvest", -1.0))
+		print1 = float(bud1.get("print_cost", -1.0))
+		hangar_m1 = float(bud1.get("hangar_mass", -1.0))
+		hangar_p1 = float(bud1.get("hangar_power", -1.0))
+	if "extract_rate" in pad:
+		rate1 = float(pad.get("extract_rate"))
+	if bench != null and bench.has_method("print_cost"):
+		print1 = float(bench.print_cost())
+	qb1 = Board.alliance_snapshot()
+	if GameManager:
+		field1 = float(GameManager.subject_mastery.get("field_intel", 0.0))
+	field_lab1 = SoftKnowledge.field_intel_label()
+	print("[Playtest] Q-E harvest/print/hangar ", snapped(harvest0, 0.01), "/",
+		snapped(print0, 0.01), "/", snapped(hangar_m0, 0.01), " → ",
+		snapped(harvest1, 0.01), "/", snapped(print1, 0.01), "/", snapped(hangar_m1, 0.01))
+	if harvest0 > 0.0 and absf(harvest1 - harvest0) > 0.0001:
+		fails.append("Q-E harvest number changed (%s → %s)" % [harvest0, harvest1])
+	if print0 > 0.0 and absf(print1 - print0) > 0.0001:
+		fails.append("Q-E print number changed (%s → %s)" % [print0, print1])
+	if hangar_m0 > 0.0 and (absf(hangar_m1 - hangar_m0) > 0.0001 or absf(hangar_p1 - hangar_p0) > 0.0001):
+		fails.append("Q-E hangar numbers changed")
+	if absf(rate1 - rate0) > 0.0001:
+		fails.append("Q-E extract_rate changed")
+	if str(qb1.get("id", "")) != str(qb0.get("id", "")) \
+			or str(qb1.get("status", "")) != str(qb0.get("status", "")):
+		fails.append("Q-E overwrote Q-B contract (%s/%s → %s/%s)" % [
+			qb0.get("id", ""), qb0.get("status", ""), qb1.get("id", ""), qb1.get("status", "")
+		])
+	if absf(field1 - field0) > 0.0001 or field_lab1 != field_lab0:
+		fails.append("Q-E changed Q-C Knowledge (%s/%s → %s/%s)" % [
+			field0, field_lab0, field1, field_lab1
+		])
+	if cid.begins_with("SITE_"):
+		fails.append("Q-E minted SITE_*")
+	print("[Playtest] Q-E scan_extractor · quest_intel · no P2W")
 
 
 func _assert_hf_b(os: Node, fails: PackedStringArray) -> void:

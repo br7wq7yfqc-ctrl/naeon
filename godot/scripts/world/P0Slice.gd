@@ -51,7 +51,8 @@ const NP_H_HANGAR := true
 ## NP-I: after NP-B harvest, visitor spends at player-cluster factory bench (c) → one catalog module.
 ## Same ST-G path. Without factory → refuse. Not hangar (b). Not pad bench (a). Not a second NP-C habitat.
 const NP_I_FACTORY := true
-## Q-A / Q-D: one Contract Board + one generated template. SoftKnowledge label only.
+## Q-A / Q-D / Q-E: one Contract Board + generated templates. SoftKnowledge label only.
+## Templates: occupy / harvest / deliver_crate / scan_extractor. Same QA-* id scheme.
 ## Q-D reuses this board — the pad visitor offers the same id.
 const Q_A_CONTRACT := true
 ## Q-B: one alliance-shared occupy/logistics contract on the same unnamed pad.

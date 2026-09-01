@@ -692,6 +692,21 @@ func get_claim_status() -> String:
 	return _status
 
 
+func scan_extractor() -> Dictionary:
+	## Q-E: interact with the ST-B PadHarvestExtractor. SoftKnowledge only.
+	var ext := visible_extractor()
+	var fac := ""
+	if ext == null:
+		return {}
+	if ownership and ownership.has_method("faction_name"):
+		fac = str(ownership.faction_name())
+	if fac == "" or fac == "Neutral":
+		return {}
+	if ext.has_method("scan_intel"):
+		return ext.scan_intel()
+	return _Board.interact_scan_extractor()
+
+
 func harvest_hud_line() -> String:
 	if _status != "extracting":
 		return ""
@@ -1517,6 +1532,10 @@ func soft_scan() -> String:
 	_notify_hud(line)
 	if AudioDirector and AudioDirector.has_method("play_ui"):
 		AudioDirector.play_ui()
+	var q: Dictionary = _Board.snapshot()
+	if str(q.get("template", "")) == "scan_extractor" \
+			and str(q.get("status", "")) == "accepted":
+		scan_extractor()
 	return line
 
 

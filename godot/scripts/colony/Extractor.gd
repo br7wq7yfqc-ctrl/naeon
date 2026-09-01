@@ -54,6 +54,21 @@ func is_pad_driven() -> bool:
 	return _pad != null and is_instance_valid(_pad)
 
 
+func scan_intel() -> Dictionary:
+	## Q-E: SoftKnowledge extractor label only. Does not harvest / change yield.
+	var Board = load("res://scripts/systems/ContractBoard.gd")
+	var intel := _SoftK.extractor_label()
+	var out := {}
+	set_meta("last_scan_intel", intel)
+	if Board != null:
+		out = Board.interact_scan_extractor()
+	if typeof(out) != TYPE_DICTIONARY or out.is_empty():
+		out = {"intel": intel}
+	elif str(out.get("intel", "")) == "":
+		out["intel"] = intel
+	return out
+
+
 func reload_for_faction(faction_name: String) -> void:
 	## ST-F mesh theme only. Does not touch extract_rate / contribution_per_unit.
 	var mesh: Node = get_node_or_null("ExtractorMesh")
