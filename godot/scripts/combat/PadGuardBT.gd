@@ -131,12 +131,17 @@ func physics_tick(delta: float) -> void:
 
 
 func try_engage_pulse(target: Node = null) -> bool:
-	tick(0.0)
-	if _state != ST_ENGAGE:
-		return false
 	var walker: Node = target
 	if walker == null:
 		walker = _find_walker()
+	if walker != null and is_instance_valid(walker) \
+			and _planar_dist(_guard_pos(), walker.global_position) <= PULSE_RANGE \
+			and not _walker_downed(walker):
+		_state = ST_ENGAGE
+	else:
+		tick(0.0)
+	if _state != ST_ENGAGE:
+		return false
 	if walker == null or not is_instance_valid(walker):
 		return false
 	if _guard == null or not is_instance_valid(_guard):

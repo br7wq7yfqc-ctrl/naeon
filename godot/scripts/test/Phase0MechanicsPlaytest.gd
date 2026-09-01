@@ -16600,6 +16600,8 @@ func _assert_bt_a(os: Node, fails: PackedStringArray) -> void:
 	guard.global_position = home
 	if "velocity" in guard:
 		guard.velocity = Vector3.ZERO
+	if bt.has_method("bind"):
+		bt.bind(guard, host)
 	if "_pulse_cd" in bt:
 		bt.set("_pulse_cd", 0.0)
 	var away: Vector3 = home - host.global_position
