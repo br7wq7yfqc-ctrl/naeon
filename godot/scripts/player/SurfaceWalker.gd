@@ -530,11 +530,11 @@ func face_world_point(target: Vector3) -> void:
 			camera.look_at(target, cup)
 
 
-func try_pulse() -> bool:
+func try_pulse(target = null) -> bool:
 	var ab = get_node_or_null("AbilitySystem")
 	if ab == null or not ab.has_method("try_activate"):
 		return false
-	return bool(ab.try_activate(0))
+	return bool(ab.try_activate(0, target))
 
 
 func try_hack(target = null) -> bool:

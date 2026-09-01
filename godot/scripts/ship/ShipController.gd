@@ -2008,6 +2008,17 @@ func _clash_layer() -> bool:
 	return LayerContext != null and str(LayerContext.current_layer) == "Arena"
 
 
+func try_pulse(target = null) -> bool:
+	## PV-B: same AbilitySystem Pulse 11 as TPS. Clash stays closed.
+	if _clash_layer():
+		return false
+	_ensure_ability_kit()
+	var ab = get_node_or_null("AbilitySystem")
+	if ab == null or not ab.has_method("try_activate"):
+		return false
+	return bool(ab.try_activate(0, target))
+
+
 func try_hack(target = null) -> bool:
 	if _clash_layer():
 		return false

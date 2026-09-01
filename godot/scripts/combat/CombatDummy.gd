@@ -484,6 +484,11 @@ func _same_faction(other: Node) -> bool:
 
 
 func _find_player() -> Node3D:
+	## PV-B: seated player hull is the combat body. Walker is freed on board.
+	var hull := _find_piloted_hull()
+	if hull != null:
+		_player_cache = hull
+		return _player_cache
 	if _player_cache != null and is_instance_valid(_player_cache) and _player_cache.is_inside_tree():
 		return _player_cache
 	_player_cache = null
@@ -512,6 +517,22 @@ func _find_player() -> Node3D:
 			if c is CharacterBody3D and c != self and c.is_inside_tree() and c.has_method("take_damage"):
 				_player_cache = c
 				return _player_cache
+	return null
+
+
+func _find_piloted_hull() -> Node3D:
+	var tree := get_tree()
+	if tree == null:
+		return null
+	for n in tree.get_nodes_in_group("ship"):
+		if n == null or not is_instance_valid(n) or not (n is Node3D):
+			continue
+		if not n.is_inside_tree() or _same_faction(n):
+			continue
+		if n.has_method("is_npc_pilot") and bool(n.is_npc_pilot()):
+			continue
+		if "pilot_active" in n and bool(n.get("pilot_active")):
+			return n as Node3D
 	return null
 
 

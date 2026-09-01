@@ -8,6 +8,7 @@
 - **IN-F:** same tag on hangar viewer + rover / stored-ghost puppet. Host keeps rover drive. Not a netcode cluster.
 - **MC-A:** same tag on ship-pocket viewer + crew-seat puppet. Host keeps hull / combat. No second physical hull. No passenger combat.
 - **PV-A:** same tag on the pad rival `CombatDummy` + optional viewer. Host keeps Pulse combat. Not Clash. G5 stays closed.
+- **PV-B:** same tag / same rival. Seated hull Pulse is host-authority. SoftNet visual bind only. Not Clash. G5 stays closed.
 
 ## Continuum fields (UDP STATE)
 
