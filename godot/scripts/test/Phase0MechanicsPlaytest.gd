@@ -50,6 +50,7 @@ func _go() -> void:
 		await _assert_pv_b(os, fails)
 		await _assert_pv_a(os, fails)
 		await _assert_bt_a(os, fails)
+		await _assert_bt_b(os, fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
 
@@ -639,6 +640,7 @@ func _go() -> void:
 	await _assert_pv_b(os, fails)
 	await _assert_pv_a(os, fails)
 	await _assert_bt_a(os, fails)
+	await _assert_bt_b(os, fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
@@ -16704,6 +16706,248 @@ func _assert_bt_a(os: Node, fails: PackedStringArray) -> void:
 		walker.global_position = ship.global_position + pad_up * 2.0
 		if os.has_method("try_enter_ship"):
 			os.try_enter_ship()
+
+
+func _assert_bt_b(os: Node, fails: PackedStringArray) -> void:
+	## BT-B: one visitor NpcPilot. Tiny BT approach → hold (NP-B harvest) → leave.
+	## Host authority. Pulse 11. BT-A stays. G5 closed. No SITE_*.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var nex: Node = _osh_nex()
+	var traffic: Node = null
+	var visitor: Node3D = null
+	var pilot: Node = null
+	var bt: Node = null
+	var guard: Node3D = null
+	var guard_bt: Node = null
+	var host: Node3D = null
+	var pad: Node = _in_a_occupied_pad(os)
+	var dmg0 := 11.0
+	var dmg1 := 11.0
+	var harvest0 := 0.0
+	var harvest1 := 0.0
+	if P0 == null or not bool(P0.BT_B_VISITOR):
+		fails.append("BT-B P0Slice flag missing")
+		return
+	if os == null or nex == null:
+		fails.append("BT-B no OpenSpace/Nex-Prime")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("BT-B must not run on TestArena")
+		return
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.2).timeout
+	if nex.has_method("pad_traffic"):
+		traffic = nex.call("pad_traffic")
+	if traffic == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("pad_traffic")
+		if not listed.is_empty():
+			traffic = listed[0]
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("BT-B pad traffic missing")
+		return
+	if traffic.has_method("get_visitor"):
+		visitor = traffic.get_visitor()
+	if visitor == null or not is_instance_valid(visitor):
+		fails.append("BT-B visitor missing")
+		return
+	if traffic.has_method("get_npc_pilot"):
+		pilot = traffic.get_npc_pilot()
+	if pilot == null:
+		pilot = visitor.get_node_or_null("NpcPilot")
+	if pilot == null:
+		fails.append("BT-B NpcPilot missing")
+		return
+	if traffic.has_method("get_visitor_bt"):
+		bt = traffic.get_visitor_bt()
+	if bt == null:
+		bt = pilot.get_node_or_null("VisitorBT")
+	if bt == null:
+		fails.append("BT-B VisitorBT missing")
+		return
+	if traffic.has_method("get_guard"):
+		guard = traffic.get_guard()
+	if traffic.has_method("get_guard_bt"):
+		guard_bt = traffic.get_guard_bt()
+	if guard == null or not is_instance_valid(guard):
+		fails.append("BT-B pad-guard missing (BT-A must stay)")
+		return
+	if guard_bt == null:
+		guard_bt = guard.get_node_or_null("PadGuardBT")
+	if guard_bt == null:
+		fails.append("BT-B dropped PadGuardBT (BT-A)")
+		return
+	host = traffic.get_parent() as Node3D
+	if host == null or not host.has_meta("pad_up"):
+		fails.append("BT-B visitor not on a pad")
+		return
+	var pname := str(host.name)
+	if pname != "Pad_North" and pname != "Pad_Approach" and pname != "Pad_Flank":
+		fails.append("BT-B unknown pad (%s)" % pname)
+		return
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("BT-B minted SITE_* (%s)" % pin)
+		return
+	if visitor.has_meta("site_pin") and str(visitor.get_meta("site_pin")).begins_with("SITE_"):
+		fails.append("BT-B visitor minted SITE_*")
+		return
+	if bt.has_meta("site_pin") and str(bt.get_meta("site_pin")).begins_with("SITE_"):
+		fails.append("BT-B BT minted SITE_*")
+		return
+	if bt.has_method("is_g5_closed") and not bool(bt.is_g5_closed()):
+		fails.append("BT-B G5 Clash-from-world is open")
+		return
+	if traffic.has_method("is_g5_closed") and not bool(traffic.is_g5_closed()):
+		fails.append("BT-B traffic G5 is open")
+	var auth := ""
+	if bt.has_method("combat_authority"):
+		auth = str(bt.combat_authority())
+	elif traffic.has_method("combat_authority"):
+		auth = str(traffic.combat_authority())
+	if auth != "host":
+		fails.append("BT-B combat authority is not host (%s)" % auth)
+	if guard != null and "attack_damage" in guard:
+		dmg0 = float(guard.get("attack_damage"))
+	if pad != null and pad.has_method("tier_budget"):
+		harvest0 = float(pad.tier_budget().get("harvest", 0.0))
+	var pad_up: Vector3 = host.get_meta("pad_up")
+	if bt.has_method("bind"):
+		bt.bind(pilot, visitor, host)
+	if "_phase" in pilot:
+		pilot.set("_phase", 0)
+	if pilot.has_method("stop_harvest"):
+		pilot.stop_harvest()
+	## Far, not landed → approach. Same unnamed pad. No Relief snap.
+	if "velocity" in visitor:
+		visitor.velocity = Vector3.ZERO
+	visitor.global_position = host.global_position + pad_up * 40.0 + host.global_transform.basis.x * 50.0
+	if "is_landed" in visitor:
+		visitor.set("is_landed", false)
+	if bt.has_method("request_approach"):
+		bt.request_approach()
+	if bt.has_method("tick"):
+		bt.tick(0.1)
+	var st0 := str(traffic.visitor_bt_state()) if traffic.has_method("visitor_bt_state") else str(bt.bt_state())
+	print("[Playtest] BT-B approach state=", st0, " pad=", pname)
+	if st0 != "approach":
+		fails.append("BT-B approach state missing (got %s)" % st0)
+	## Landed on the plate → hold. Occupy/harvest still legal (NP-B).
+	if pad != null and pad.has_method("claim"):
+		var fac := "Cybernex"
+		if visitor.has_method("get_faction"):
+			fac = str(visitor.get_faction())
+		elif "faction" in visitor:
+			fac = str(visitor.get("faction"))
+		pad.claim(fac, 2.0)
+		var ow = pad.get("ownership")
+		if ow and ow.has_method("advance_transition"):
+			ow.advance_transition(8.0, 5.0)
+		await get_tree().process_frame
+	elif host.has_method("claim"):
+		host.claim("Cybernex", 2.0)
+	if pad == null:
+		pad = host.get_node_or_null("BaseCluster/PadBaseController")
+		if pad == null:
+			pad = host.find_child("PadBaseController", true, false)
+	if pilot.has_method("_seat_on_pad"):
+		pilot._seat_on_pad()
+	if "_phase" in pilot:
+		pilot.set("_phase", 0)
+	if "is_landed" in visitor and not bool(visitor.get("is_landed")):
+		fails.append("BT-B hold pose failed to land")
+	if bt.has_method("request_hold"):
+		bt.request_hold()
+	if bt.has_method("tick"):
+		bt.tick(0.1)
+	var st1 := str(bt.bt_state()) if bt.has_method("bt_state") else ""
+	print("[Playtest] BT-B hold state=", st1)
+	if st1 != "hold":
+		fails.append("BT-B hold state missing (got %s)" % st1)
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("colony_ops", 20.0)
+	if guard != null and "attack_damage" in guard:
+		dmg1 = float(guard.get("attack_damage"))
+	if absf(dmg1 - dmg0) > 0.01 or absf(dmg1 - 11.0) > 0.01:
+		fails.append("BT-B Knowledge changed Pulse DPS (%s → %s)" % [dmg0, dmg1])
+	if bt.has_method("pulse_dps") and absf(float(bt.pulse_dps()) - 11.0) > 0.01:
+		fails.append("BT-B Pulse DPS drifted (%s)" % bt.pulse_dps())
+	var vlabel := str(traffic.visitor_label()) if traffic.has_method("visitor_label") else ""
+	if vlabel == "":
+		fails.append("BT-B Knowledge visitor label empty")
+	if pad != null:
+		if float(pad.get("crystal_reserves")) < 8.0:
+			pad.set("crystal_reserves", float(pad.get("max_reserves")))
+		pad.set("running", true)
+		var rate0: float = float(pad.get("extract_rate"))
+		var cpu0: float = float(pad.get("contribution_per_unit"))
+		if absf(float(pad.get("extract_rate")) - rate0) > 0.001 \
+				or absf(float(pad.get("contribution_per_unit")) - cpu0) > 0.001:
+			fails.append("BT-B Knowledge changed NPC harvest yield")
+		var grot := false
+		if pad.has_method("get_faction"):
+			grot = str(pad.get_faction()) == "gROT"
+		var c0: float = 0.0
+		if GameManager:
+			c0 = float(GameManager.biomass) if grot else float(GameManager.contribution)
+		var t0: float = float(pad.get("total_extracted"))
+		if bt.has_method("try_hold_harvest"):
+			bt.try_hold_harvest()
+		elif pilot.has_method("start_harvest"):
+			pilot.start_harvest()
+		await get_tree().create_timer(0.7).timeout
+		var c1: float = c0
+		if GameManager:
+			c1 = float(GameManager.biomass) if grot else float(GameManager.contribution)
+		var t1: float = float(pad.get("total_extracted"))
+		var tick := bool(pilot.saw_harvest()) if pilot.has_method("saw_harvest") else false
+		print("[Playtest] BT-B hold harvest wallet=", snapped(c0, 0.01), " -> ", snapped(c1, 0.01),
+			" extracted=", snapped(t0, 0.01), " -> ", snapped(t1, 0.01), " tick=", tick)
+		if c1 <= c0 + 0.001 and t1 <= t0 + 0.001 and not tick:
+			fails.append("BT-B: NP-B harvest missing during hold")
+		if absf(float(pad.get("extract_rate")) - rate0) > 0.001 \
+				or absf(float(pad.get("contribution_per_unit")) - cpu0) > 0.001:
+			fails.append("BT-B harvest numbers drifted")
+	## Leave the unnamed pad. BT-A guard stays.
+	if bt.has_method("request_leave"):
+		bt.request_leave()
+	if "_phase" in pilot:
+		pilot.set("_phase", 1)
+	if "is_landed" in visitor:
+		visitor.set("is_landed", false)
+	if "velocity" in visitor:
+		visitor.velocity = Vector3.ZERO
+	visitor.global_position = host.global_position + pad_up * 30.0
+	if bt.has_method("tick"):
+		bt.tick(0.1)
+	var st2 := str(bt.bt_state()) if bt.has_method("bt_state") else ""
+	print("[Playtest] BT-B leave state=", st2, " label=", vlabel)
+	if st2 != "leave":
+		fails.append("BT-B leave state missing (got %s)" % st2)
+	if pad != null and pad.has_method("tier_budget"):
+		harvest1 = float(pad.tier_budget().get("harvest", -1.0))
+	if harvest0 > 0.0 and absf(harvest1 - harvest0) > 0.0001:
+		fails.append("BT-B harvest tier changed (%s → %s)" % [harvest0, harvest1])
+	if guard_bt.has_method("bt_state"):
+		var gst := str(guard_bt.bt_state())
+		if gst != "patrol" and gst != "engage" and gst != "return":
+			fails.append("BT-B broke BT-A guard state (%s)" % gst)
+	var scene_name := str(get_tree().current_scene.name) if get_tree() and get_tree().current_scene else ""
+	if scene_name.find("TestArena") >= 0:
+		fails.append("BT-B entered TestArena from OpenSpace (G5)")
+	if ResourceLoader.exists("res://scripts/world/ClashFromWorld.gd") \
+			or ResourceLoader.exists("res://scripts/world/ClashBeacon.gd"):
+		fails.append("BT-B opened G5 world-to-arena")
+	print("[Playtest] BT-B approach · hold harvest · leave · BT-A stays · G5 closed · no SITE_*")
+	if pilot.has_method("stop_harvest"):
+		pilot.stop_harvest()
+	if "_phase" in pilot:
+		pilot.set("_phase", 0)
+	if pilot.has_method("_seat_on_pad"):
+		pilot._seat_on_pad()
+	if bt.has_method("request_hold"):
+		bt.request_hold()
 
 
 func _hf_a_ready_kit(walker: Node, ab: Node, fac: String) -> void:

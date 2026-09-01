@@ -1,3 +1,5 @@
+**2026-09-01 — BT-B: visitor NpcPilot 3-state BT (approach / hold / leave; NP-B harvest stays; host authority; Pulse 11; BT-A stays)**
+
 **2026-09-01 — BT-A: pad-guard BehaviorTree on occupied unnamed pad (patrol / engage Pulse / return-to-pad; host authority; Pulse 11; PV-A rival stays distinct)**
 
 **2026-09-01 — PV-B: first Space PvP from the seated player hull (same PadPvp rival; Pulse 11 both ways; win HP → 0; G5 closed)**
@@ -726,7 +728,8 @@ HF-A: after EVA/occupy on an unnamed pad (same OpenSpace), gROT Hack applies **+
 HF-B: from the seated player hull (OpenSpace, not Clash), the same AbilitySystem Hack / Firewall hits a nearby pad-guard CombatDummy or visiting NpcPilot hull. +1 / cap 5 refuse / Firewall −1. Knowledge labels only. DPS / yield / thrust stay. TPS HF-A still works after EVA. No second ability system. No cash-shop cleanse. Not Voice. Not G2.  
 PV-A: on an occupied unnamed pad (`Pad_North` / `Pad_Approach` / `Pad_Flank`), one host-authority rival `CombatDummy` takes Pulse from the player walker and deals Pulse back (DPS 11). Win = rival HP → 0. No permadeath. Infection cap 5. Knowledge labels only. Clash HUD / TestArena unchanged. G5 stays closed. No `SITE_*`.  
 PV-B: from the seated player hull (OpenSpace, not Clash), the same host-authority pad rival takes Pulse and deals Pulse back (DPS 11). Win = rival HP → 0. No permadeath. Infection cap 5. Knowledge labels only. TPS PV-A still works after EVA. SoftNet visual bind only. G5 stays closed. No `SITE_*`.  
-BT-A: one occupied unnamed-pad guard (`PadGuardDummy`) walks a tiny 3-state GDScript BT — patrol near the plate, engage the player `SurfaceWalker` with Pulse (DPS 11), return-to-pad when the walker leaves. Host authority. Knowledge labels only. PV-A `PadRivalDummy` stays a distinct actor. Not Clash waves. Not 10k CCU. G5 stays closed. No `SITE_*`.
+BT-A: one occupied unnamed-pad guard (`PadGuardDummy`) walks a tiny 3-state GDScript BT — patrol near the plate, engage the player `SurfaceWalker` with Pulse (DPS 11), return-to-pad when the walker leaves. Host authority. Knowledge labels only. PV-A `PadRivalDummy` stays a distinct actor. Not Clash waves. Not 10k CCU. G5 stays closed. No `SITE_*`.  
+BT-B: one visitor `NpcPilot` on that occupied unnamed pad walks a sibling 3-state GDScript BT — approach the plate, hold (occupy/harvest still legal, NP-B numbers stay), leave. Host authority. Pulse DPS stays 11. Pad-guard BT-A stays. Knowledge labels only. Not Clash waves. Not 10k CCU. G5 stays closed. No `SITE_*`.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -774,6 +777,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | PV-A pad TPS PvP | **built** — occupied unnamed pad; host-authority rival dummy; Pulse 11 both ways; win HP 0; G5 closed |
 | PV-B hull Space PvP | **built** — seated hull Pulse 11 vs same PadPvp rival; rival Pulse back; win HP 0; TPS PV-A stays |
 | BT-A pad-guard BT | **built** — patrol / engage Pulse / return-to-pad; host authority; Pulse 11; PV-A rival distinct; G5 closed |
+| BT-B visitor BT | **built** — approach / hold / leave; NP-B harvest stays; host authority; Pulse 11; BT-A stays; G5 closed |
 | AR-F 3v3 local | **built** — 6 actors on existing lanes; host authority; SoftNet visual; G5 closed; still startable |
 | AR-G 5v5 local | **built** — 10 actors on existing lanes + jungle; host authority; SoftNet visual; G5 closed |
 | SE-A hull buses | **built** — power/cool/life live; overdraw/overheat sag; IN-B LS soft; no P2W skip |
