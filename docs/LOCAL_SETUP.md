@@ -1,6 +1,6 @@
 # NAEON — Local Development Setup
 
-**Last update:** 2026-08-06  
+**Last update:** 2026-09-01  
 **Scope:** Mac (Godot client) + Asset VM (Tripo/Blender pipeline)
 
 ---
@@ -9,13 +9,41 @@
 
 | Role | Host | Access |
 |------|------|--------|
-| Client / Godot | MacBook (`macbook-pro-vlad`, user `vladmann`) | Tailscale / local |
+| Client / Godot | MacBook (`macbook-pro-vlad`, user `vladmann`) | Tailscale `100.101.32.21` |
 | Asset Pipeline VM | `naexos-vm-fixed` **84.201.170.6** (key `~/.ssh/ssh-key-vm-restored`) | SSH from Mac |
 | Object Storage | Yandex bucket `neon` | S3-compatible / rclone |
 
 > Note: IP `89.169.142.255` was listed historically; current authorized VM is **84.201.170.6**. Add your pubkey to `ubuntu@89.169…` if that host is re-enabled.
 
 ---
+
+
+---
+
+## Tailscale autostart (Mac)
+
+Sandbox SSH to the Godot Mac is `vladmann@100.101.32.21`. Tailscale must come
+up at login **and** stay up after logout (unattended), or the Mac disappears
+from the tailnet after reboot.
+
+On the Mac, once:
+
+```bash
+cd ~/Documents/naeon
+./tools/mac/enable_tailscale_autostart.sh
+```
+
+That script:
+
+1. Adds **Tailscale.app** as a hidden login item.
+2. Installs LaunchAgent `com.naeon.tailscale.autostart` (`RunAtLoad` + `KeepAlive`).
+3. Runs `tailscale set --unattended` and `tailscale up`.
+
+Requires Tailscale.app already in `/Applications`. Logs:
+`~/Library/Logs/naeon-tailscale-autostart.log`.
+
+No auth keys are stored in git. If the Mac is offline, run the installer locally
+after the first GUI login; FileVault still needs a person at the keyboard once.
 
 ## Mac (Godot 4.7.2)
 
