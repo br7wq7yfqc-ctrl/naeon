@@ -7,6 +7,7 @@ extends Node
 ## NP-C: after ST-A, place one habitat on an empty unnamed pad (same BaseBuilder).
 ## NP-G: after NP-B harvest, spend at PadPrintBench §6(a) (same ST-C path).
 ## NP-H: after NP-B harvest, queue one catalog module on the ST-D hangar (same enqueue).
+## NP-I: after NP-B harvest, spend at player-cluster factory bench (c) (same ST-G path).
 ## Not a second IFCS, not G1, not a private yield table, not a damage aura.
 
 
@@ -37,6 +38,7 @@ var _offline_ran: bool = false
 var _placed_mod: Node3D = null
 var _printed_mod: Node3D = null
 var _queued_hangar: Node3D = null
+var _factory_printed: Node3D = null
 var _offline_step: String = ""
 var _offline_busy: bool = false
 
@@ -235,6 +237,65 @@ func queue_one_hangar_module(kind: String = "", cash: float = 0.0) -> Node3D:
 	_queued_hangar = mod
 	_sign_hangar_label()
 	print("[NpcPilot] NP-H queued ", mod.name, " hull hangar cash_skip=false")
+	return mod
+
+
+func printed_factory_module() -> Node3D:
+	if _factory_printed != null and is_instance_valid(_factory_printed):
+		return _factory_printed
+	return null
+
+
+func saw_factory_print() -> bool:
+	return printed_factory_module() != null
+
+
+func print_one_factory_module(kind: String = "", cash: float = 0.0) -> Node3D:
+	## NP-I: ST-G §6(c) spend at player-cluster factory. Not NP-C habitat. Not bench (a). Not hangar (b).
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var bench: Node = null
+	var factory: Node3D = null
+	var mod: Node3D = null
+	if P0 == null or not bool(P0.NP_I_FACTORY) or not bool(P0.ST_G_FACTORY):
+		return null
+	if cash > 0.0:
+		print("[NpcPilot] NP-I cash-shop skip refused")
+		return null
+	if printed_factory_module() != null:
+		print("[NpcPilot] NP-I already printed one factory module")
+		return null
+	factory = _factory_in_cluster()
+	if factory == null:
+		print("[NpcPilot] NP-I refuse: no factory")
+		return null
+	bench = _factory_bench()
+	if bench == null or not bench.has_method("print_one_factory_module"):
+		print("[NpcPilot] NP-I no factory bench (c)")
+		return null
+	if bench.has_method("cash_shop_skip_possible") and bool(bench.cash_shop_skip_possible()):
+		return null
+	mod = bench.print_one_factory_module(kind, 0.0)
+	if mod == null or not is_instance_valid(mod):
+		return null
+	if str(mod.get_meta("site_pin", "x")) != "":
+		push_error("[NpcPilot] NP-I minted a site_pin")
+		mod.queue_free()
+		return null
+	if bool(mod.get_meta("npc_module", false)):
+		push_error("[NpcPilot] NP-I used habitat hack")
+		mod.queue_free()
+		return null
+	if bool(mod.get_meta("printed_module", false)) or bool(mod.get_meta("hangar_queued", false)):
+		push_error("[NpcPilot] NP-I used bench/hangar")
+		mod.queue_free()
+		return null
+	if not bool(mod.get_meta("factory_printed", false)):
+		push_error("[NpcPilot] NP-I module not marked factory_printed")
+		mod.queue_free()
+		return null
+	_factory_printed = mod
+	_sign_factory_label()
+	print("[NpcPilot] NP-I printed ", mod.name, " factory=", factory.name, " cash_skip=false")
 	return mod
 
 
@@ -603,6 +664,7 @@ func _on_pad_harvested(amount: float, _total: float) -> void:
 	if _auto:
 		_try_auto_print()
 		_try_auto_queue()
+		_try_auto_factory()
 
 
 func _ensure_companion() -> Node3D:
@@ -808,6 +870,64 @@ func _try_auto_queue() -> void:
 	if queued_hangar_module() != null:
 		return
 	queue_one_hangar_module()
+
+
+func _try_auto_factory() -> void:
+	## NP-I after harvest. Does not replace NP-G bench or NP-H hangar.
+	if printed_factory_module() != null:
+		return
+	print_one_factory_module()
+
+
+func _factory_in_cluster() -> Node3D:
+	## Same ST-G factory. Must already sit in the player cluster.
+	var os := _open_space()
+	var n: Node3D = null
+	var tree := get_tree()
+	if os != null and os.has_method("player_factory"):
+		n = os.player_factory()
+		if n != null and is_instance_valid(n) and n.is_inside_tree():
+			return n
+	if os != null and os.has_method("player_orbital_station"):
+		var cluster: Node = os.player_orbital_station()
+		if cluster != null and cluster.has_method("factory_module"):
+			n = cluster.factory_module()
+			if n != null and is_instance_valid(n) and n.is_inside_tree():
+				return n
+	if tree:
+		for m in tree.get_nodes_in_group("player_factory_modules"):
+			if m is Node3D and (m as Node3D).is_inside_tree():
+				if str(m.get_meta("module_type", "")) == "factory":
+					return m as Node3D
+	return null
+
+
+func _factory_bench() -> Node:
+	## Cluster bench (c): PlayerOrbitalStation or PadPrintBench.print_one_factory_module.
+	## Not pad print_one_module (a). Not hangar enqueue (b).
+	var os := _open_space()
+	var cluster: Node = null
+	var tree := get_tree()
+	if os != null and os.has_method("player_orbital_station"):
+		cluster = os.player_orbital_station()
+	if cluster != null and cluster.has_method("print_one_factory_module"):
+		return cluster
+	if tree:
+		for b in tree.get_nodes_in_group("print_benches"):
+			if b != null and b.has_method("print_one_factory_module"):
+				return b
+	return null
+
+
+func _sign_factory_label() -> void:
+	## Knowledge names the factory only. Does not cheapen rules/15.
+	if _ship == null or not is_instance_valid(_ship):
+		return
+	var lab: Label3D = _ship.get_node_or_null("Label") as Label3D
+	if lab == null:
+		lab = _ship.get_node_or_null("StatusLabel") as Label3D
+	if lab:
+		lab.text = "%s · %s" % [_SoftK.traffic_label("visitor"), _SoftK.factory_label()]
 
 
 func _sign_hangar_label() -> void:

@@ -7,6 +7,7 @@ extends Node3D
 ## NP-C: visitor may place one habitat on an empty unnamed pad. Not siege. Not pay-to-rank.
 ## NP-G: after NP-B harvest, visitor spends at PadPrintBench §6(a) (same ST-C path).
 ## NP-H: after NP-B harvest, visitor queues one catalog module on the ST-D hangar.
+## NP-I: after NP-B harvest, visitor spends at player-cluster factory bench (c) (same ST-G path).
 ## Knowledge labels only — never yield.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")

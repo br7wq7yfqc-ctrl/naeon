@@ -187,7 +187,7 @@ func _spawn_factory(offset: Vector3) -> Node3D:
 
 
 func print_one_factory_module(kind: String = "", cash: float = 0.0) -> Node3D:
-	## ST-G §6(c) via the existing PadPrintBench spend path.
+	## ST-G / NP-I §6(c) via the existing PadPrintBench spend path.
 	var tree := get_tree()
 	if tree:
 		for b in tree.get_nodes_in_group("print_benches"):
