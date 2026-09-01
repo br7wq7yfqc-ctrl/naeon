@@ -15996,8 +15996,10 @@ func _assert_hf_c(os: Node, fails: PackedStringArray) -> void:
 		walker.global_position = dummy.global_position + pad_up * 2.0
 	if ship.has_method("_ensure_ability_kit"):
 		ship._ensure_ability_kit()
-	_hf_c_interrupt_channel(ship)
-	_hf_c_interrupt_channel(walker)
+	if ship != null and is_instance_valid(ship):
+		_hf_c_interrupt_channel(ship)
+	if walker != null and is_instance_valid(walker):
+		_hf_c_interrupt_channel(walker)
 	_hf_c_purge_pad_infection(traffic, dummy)
 	if not bool(ov.try_enter()):
 		fails.append("HF-C ST-A overlay did not open (%s)" % str(ov.readiness_line() if ov.has_method("readiness_line") else ""))
@@ -17817,8 +17819,8 @@ func _assert_sn_a(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] SN-A walker puppet on occupied pad · host Pulse/occupy · no second walker · G5 closed · no SITE_*")
 
 
-func _hf_c_interrupt_channel(host: Node) -> void:
-	if host == null or not is_instance_valid(host):
+func _hf_c_interrupt_channel(host) -> void:
+	if host == null or not (host is Node) or not is_instance_valid(host):
 		return
 	var ch: Node = host.get_node_or_null("ChannelController")
 	if ch != null and ch.has_method("interrupt"):
