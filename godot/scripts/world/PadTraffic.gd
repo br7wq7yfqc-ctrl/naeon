@@ -16,6 +16,8 @@ extends Node3D
 ## Distinct from the PV-A rival. Host authority. Pulse 11. Not Clash waves.
 ## BT-B: the visitor NpcPilot walks a sibling 3-state BT (approach / hold / leave).
 ## Hold keeps NP-B occupy/harvest. Host authority. Pulse 11. Not Clash waves.
+## SN-A: second local viewer sees a SoftNet visual SurfaceWalker puppet.
+## Host keeps Pulse / occupy. No second physical walker. Not ENet cluster.
 ## Knowledge labels only — never yield.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
@@ -23,6 +25,7 @@ const _DUMMY := preload("res://scenes/combat/CombatDummy.tscn")
 const _SHIP := preload("res://scenes/ship/Ship.tscn")
 const _Pilot := preload("res://scripts/world/NpcPilot.gd")
 const _Pvp := preload("res://scripts/world/PadPvp.gd")
+const _SoftNet := preload("res://scripts/world/PadSoftNet.gd")
 const _GuardBT := preload("res://scripts/combat/PadGuardBT.gd")
 const _VisitorBT := preload("res://scripts/world/VisitorBT.gd")
 
@@ -34,6 +37,7 @@ var _visitor_base: Vector3 = Vector3(16.0, 6.5, -12.0)
 var _life_accum: float = 0.0
 var _alliance: Node = null
 var _pvp: Node = null
+var _softnet: Node = null
 
 
 func setup(host_pad: Node3D) -> void:
@@ -47,10 +51,11 @@ func setup(host_pad: Node3D) -> void:
 	_spawn_visitor()
 	_setup_alliance()
 	_setup_pvp()
+	_setup_softnet()
 	_offer_player_contract()
 	refresh_labels()
 	set_process(true)
-	print("[PadTraffic] host=", _host_name, " guard=1 visitor=1 surface=1 rival=1")
+	print("[PadTraffic] host=", _host_name, " guard=1 visitor=1 surface=1 rival=1 softnet=1")
 
 
 func host_pad_name() -> String:
@@ -137,6 +142,16 @@ func get_rival() -> Node3D:
 	if p != null and p.has_method("get_rival"):
 		return p.get_rival()
 	return null
+
+
+func get_softnet() -> Node:
+	if _softnet != null and is_instance_valid(_softnet):
+		return _softnet
+	return get_node_or_null("PadSoftNet")
+
+
+func pad_softnet() -> Node:
+	return get_softnet()
 
 
 func combat_authority() -> String:
@@ -271,6 +286,25 @@ func _setup_pvp() -> void:
 	_pvp = p
 	if p.has_method("bind"):
 		p.bind(self)
+
+
+func _setup_softnet() -> void:
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.SN_A_PAD):
+		return
+	var existing: Node = get_node_or_null("PadSoftNet")
+	if existing != null:
+		_softnet = existing
+		if _softnet.has_method("bind"):
+			_softnet.bind(self)
+		return
+	var n: Node3D = Node3D.new()
+	n.set_script(_SoftNet)
+	n.name = "PadSoftNet"
+	add_child(n)
+	_softnet = n
+	if n.has_method("bind"):
+		n.bind(self)
 
 
 func _offer_player_contract() -> void:

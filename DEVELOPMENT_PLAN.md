@@ -110,7 +110,7 @@ PV-B: first Space PvP from the seated player hull — same host-authority pad ri
 - RBE / Biomass pools + Contribution / Biomass Rank
 - **Hacking / Infection (gROT) + Nex-Firewall (Cybernex)** — первые версии abilities (TPS + simple Strategy) — **HF-A built** (unnamed-pad TPS) + **HF-B built** (seated hull / OpenSpace): +1 stack / cap 5 refuse / Firewall −1 (same AbilitySystem; Knowledge labels only)
 - **MOBA Seed**: arena, 4 heroes (kits на ability system), minion waves, XP/leveling, basic items, win condition
-- Networking: server authority + prediction
+- Networking: server authority + prediction — **SN-A built:** second local viewer on occupied unnamed pad sees SoftNet visual `SurfaceWalker` puppet (optional PV-A rival pose). Host keeps Pulse / occupy. Not ENet cluster. Not 10k CCU. G5 closed.
 
 ### DoD
 - 2–4 игрока: multi-crew → высадка → колония / бой с AI

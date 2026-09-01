@@ -1,3 +1,5 @@
+**2026-09-01 — SN-A: second local viewer on occupied unnamed pad sees SoftNet visual SurfaceWalker puppet (host Pulse/occupy; no second walker; G5 closed)**
+
 **2026-09-01 — MC-B: crew seat role GUNNER (SoftKnowledge / HUD label; CREW n/2 stays; Pulse/Hack numbers stay; host authority)**
 
 **2026-09-01 — BT-B: visitor NpcPilot 3-state BT (approach / hold / leave; NP-B harvest stays; host authority; Pulse 11; BT-A stays)**
@@ -732,7 +734,8 @@ HF-B: from the seated player hull (OpenSpace, not Clash), the same AbilitySystem
 PV-A: on an occupied unnamed pad (`Pad_North` / `Pad_Approach` / `Pad_Flank`), one host-authority rival `CombatDummy` takes Pulse from the player walker and deals Pulse back (DPS 11). Win = rival HP → 0. No permadeath. Infection cap 5. Knowledge labels only. Clash HUD / TestArena unchanged. G5 stays closed. No `SITE_*`.  
 PV-B: from the seated player hull (OpenSpace, not Clash), the same host-authority pad rival takes Pulse and deals Pulse back (DPS 11). Win = rival HP → 0. No permadeath. Infection cap 5. Knowledge labels only. TPS PV-A still works after EVA. SoftNet visual bind only. G5 stays closed. No `SITE_*`.  
 BT-A: one occupied unnamed-pad guard (`PadGuardDummy`) walks a tiny 3-state GDScript BT — patrol near the plate, engage the player `SurfaceWalker` with Pulse (DPS 11), return-to-pad when the walker leaves. Host authority. Knowledge labels only. PV-A `PadRivalDummy` stays a distinct actor. Not Clash waves. Not 10k CCU. G5 stays closed. No `SITE_*`.  
-BT-B: one visitor `NpcPilot` on that occupied unnamed pad walks a sibling 3-state GDScript BT — approach the plate, hold (occupy/harvest still legal, NP-B numbers stay), leave. Host authority. Pulse DPS stays 11. Pad-guard BT-A stays. Knowledge labels only. Not Clash waves. Not 10k CCU. G5 stays closed. No `SITE_*`.
+BT-B: one visitor `NpcPilot` on that occupied unnamed pad walks a sibling 3-state GDScript BT — approach the plate, hold (occupy/harvest still legal, NP-B numbers stay), leave. Host authority. Pulse DPS stays 11. Pad-guard BT-A stays. Knowledge labels only. Not Clash waves. Not 10k CCU. G5 stays closed. No `SITE_*`.  
+SN-A: second local viewer on the occupied unnamed pad sees a SoftNet visual `SurfaceWalker` puppet (optional PV-A rival pose). Host keeps Pulse / occupy. No second physical walker. Knowledge labels only. Clash unchanged. Not ENet cluster. Not 10k CCU. G5 stays closed. No `SITE_*`.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -786,6 +789,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | SE-A hull buses | **built** — power/cool/life live; overdraw/overheat sag; IN-B LS soft; no P2W skip |
 | MC-A ship crew seat | **built** — CrewSeat in ship_int; F/I same pocket; HUD CREW label; SoftNet puppet optional; pilot unchanged |
 | MC-B crew gunner role | **built** — GUNNER SoftKnowledge / HUD label on the MC-A seat; CREW n/2 stays; Pulse/Hack numbers stay; host authority |
+| SN-A pad SoftNet visual | **built** — second local viewer sees host SurfaceWalker puppet on occupied unnamed pad; host Pulse/occupy; no second walker; G5 closed |
 | NP-C | **built** — NPC habitat on empty unnamed pad |
 | NP-G | **built** — NPC ST-C print: spend Contribution/Biomass → one catalog module; no cash skip |
 | NP-H | **built** — NPC ST-D hangar: queue one catalog module; mass/power refuse; no SITE_* |
