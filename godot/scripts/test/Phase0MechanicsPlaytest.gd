@@ -9440,6 +9440,35 @@ func _assert_surface_land_dirt(fails: PackedStringArray) -> void:
 																																											fails.append("presence root after I-hatch 19 occupy origin not walker")
 																																										if bool(os.get("_in_ship")):
 																																											fails.append("presence root after I-hatch 19 still in_ship")
+																																										hatch19.set("_spawn_grace_t", 0.0)
+																																										if hatch19 is CharacterBody3D:
+																																											(hatch19 as CharacterBody3D).velocity = Vector3.ZERO
+																																										if hatch19.has_method("_physics_process"):
+																																											hatch19._physics_process(0.016)
+																																										var coy_h19: float = float(hatch19.get("_coyote_t"))
+																																										var near_h19: Variant = hatch19.call("_near_dirt_floor") if hatch19.has_method("_near_dirt_floor") else false
+																																										print("[Playtest] coyote after I-hatch F-EVA nineteenth dirt F-board t=", snapped(coy_h19, 0.01),
+																																											" near=", near_h19, " floor=", hatch19.is_on_floor() if hatch19 is CharacterBody3D else "?")
+																																										if not bool(near_h19) and not (hatch19 is CharacterBody3D and hatch19.is_on_floor()):
+																																											fails.append("coyote after I-hatch F-EVA nineteenth dirt F-board not near dirt")
+																																										if coy_h19 <= 0.0:
+																																											fails.append("coyote after I-hatch F-EVA nineteenth dirt F-board dead")
+																																										else:
+																																											var hv19a: float = 0.0
+																																											if hatch19 is CharacterBody3D:
+																																												hv19a = (hatch19 as CharacterBody3D).velocity.dot((hatch19.global_position - nex.global_position).normalized())
+																																											if hatch19.has_method("request_jump"):
+																																												hatch19.request_jump()
+																																											if hatch19.has_method("_physics_process"):
+																																												hatch19._physics_process(0.016)
+																																											var hv19b: float = hv19a
+																																											if hatch19 is CharacterBody3D:
+																																												hv19b = (hatch19 as CharacterBody3D).velocity.dot((hatch19.global_position - nex.global_position).normalized())
+																																											print("[Playtest] coyote after I-hatch F-EVA nineteenth dirt F-board jump v_up ",
+																																												snapped(hv19a, 0.1), "→", snapped(hv19b, 0.1))
+																																											if hv19b < hv19a + 3.0:
+																																												fails.append("coyote after I-hatch F-EVA nineteenth dirt F-board jump died (%s → %s)" % [
+																																												snapped(hv19a, 0.1), snapped(hv19b, 0.1)])
 																																										if os.has_method("try_enter_ship"):
 																																											os.try_enter_ship()
 																																										await get_tree().create_timer(0.3).timeout

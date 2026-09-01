@@ -918,6 +918,9 @@ func commit_presence(kind: String) -> void:
 					player.set_eva_profile(false)
 				if "zero_g" in player:
 					player.zero_g = false
+				if player.has_method("_near_dirt_floor") and bool(player.call("_near_dirt_floor")):
+					player.set("_coyote_t", 0.14)
+					player.set("_spawn_grace_t", 0.0)
 			if LayerContext:
 				LayerContext.set_layer("TPS")
 				LayerContext.seamless_stage = "surface"
