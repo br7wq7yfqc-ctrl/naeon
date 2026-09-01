@@ -16141,6 +16141,8 @@ func _assert_pv_b(os: Node, fails: PackedStringArray) -> void:
 			snapped(back_drop, 0.1), snapped(11.0, 0.1)])
 	elif back_drop > 12.5:
 		fails.append("PV-B rival Pulse DPS drifted (drop=%s)" % snapped(back_drop, 0.1))
+	if "respawn_time" in rival:
+		rival.set("respawn_time", 60.0)
 	if rival.has_method("take_damage"):
 		rival.take_damage(float(rival.get("health")) + 1.0, "Cybernex")
 	var hp_win: float = float(rival.get("health"))
@@ -16172,11 +16174,25 @@ func _assert_pv_b(os: Node, fails: PackedStringArray) -> void:
 			or ResourceLoader.exists("res://scripts/world/ClashBeacon.gd"):
 		fails.append("PV-B opened G5 world-to-arena")
 	print("[Playtest] PV-B seated hull Pulse hit · rival Pulse back · HP 0 win · G5 closed · no SITE_*")
-	rival.set("_alive", true)
-	if "health" in rival:
-		rival.set("health", float(rival.get("max_health")))
+	## Revive the same rival so TPS PV-A still has an enemy-group dummy.
+	if rival.has_method("_respawn"):
+		rival.call("_respawn")
+	else:
+		rival.set("_alive", true)
+		if "health" in rival:
+			rival.set("health", float(rival.get("max_health")))
+		if not rival.is_in_group("enemy"):
+			rival.add_to_group("enemy")
+		if "collision_layer" in rival:
+			rival.set("collision_layer", 4)
+		rival.visible = true
 	if pvp != null:
 		pvp.set("_won", false)
+	if SoftScanCache:
+		SoftScanCache.invalidate_enemies()
+		SoftScanCache.invalidate_player()
+	if "respawn_time" in rival:
+		rival.set("respawn_time", 4.0)
 	if ship != null and is_instance_valid(ship):
 		if "velocity" in ship:
 			ship.velocity = Vector3.ZERO
@@ -16312,6 +16328,10 @@ func _assert_pv_a(os: Node, fails: PackedStringArray) -> void:
 	rival.set("_alive", true)
 	if float(rival.get("health")) < 20.0:
 		rival.set("health", float(rival.get("max_health")))
+	if not rival.is_in_group("enemy"):
+		rival.add_to_group("enemy")
+	if SoftScanCache:
+		SoftScanCache.invalidate_enemies()
 	var aim: Vector3 = rival.hurtbox_center() if rival.has_method("hurtbox_center") else rival.global_position
 	var away: Vector3 = rival.global_position - host.global_position
 	away = away - pad_up * away.dot(pad_up)
