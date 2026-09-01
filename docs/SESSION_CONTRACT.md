@@ -67,6 +67,11 @@
     Completing grants a SoftKnowledge alliance intel label only.
     Harvest / print / hangar / Q-A numbers stay. No pay-to-complete,
     pay-to-rank, or Knowledge-gated exclusive modules (this pass).
+27. MC-A: one extra crew seat on the existing player ship pocket.
+    F boards crew; I returns to the same ship_int. Pilot F/I unchanged.
+    HUD CREW n/2 is a label only — Knowledge does not change thrust /
+    DPS / yield. Host authority. Optional SoftNet visual puppet.
+    No second hull. No passenger combat. No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

@@ -11,6 +11,7 @@ const FIELDS := [
 	"econ", "econ_rate", "econ_grot",
 	"energy", "energy_max",
 	"power_draw", "power_supply", "cool_load", "cool_cap", "life",
+	"crew", "crew_max",
 ]
 
 
@@ -53,6 +54,8 @@ static func snapshot(ship: Node = null, player: Node = null, pad: Node = null) -
 		"cool_load": 0.0,
 		"cool_cap": 0.0,
 		"life": "",
+		"crew": 0,
+		"crew_max": 2,
 	}
 	if ship != null and is_instance_valid(ship):
 		if "fuel" in ship:
@@ -108,7 +111,29 @@ static func snapshot(ship: Node = null, player: Node = null, pad: Node = null) -
 				snap["eva_mode"] = "EVA 0G"
 			else:
 				snap["eva_mode"] = "EVA"
+	_fill_crew(snap, ship, player)
 	return snap
+
+
+static func _fill_crew(snap: Dictionary, ship: Node, player: Node) -> void:
+	## Label only. Knowledge may rename the word; numbers stay occupancy.
+	var tree: SceneTree = null
+	if ship != null and is_instance_valid(ship):
+		tree = ship.get_tree()
+	elif player != null and is_instance_valid(player):
+		tree = player.get_tree()
+	if tree == null:
+		return
+	for n in tree.get_nodes_in_group("interior_director"):
+		if n != null and is_instance_valid(n) and n.has_method("crew_occupancy"):
+			var o: Dictionary = n.crew_occupancy()
+			snap["crew"] = int(o.get("total", 0))
+			snap["crew_max"] = int(o.get("max", 2))
+			return
+	var os: Node = tree.get_first_node_in_group("open_space")
+	if os != null and is_instance_valid(os) and bool(os.get("_in_ship")):
+		snap["crew"] = 1
+		snap["crew_max"] = 2
 
 
 static func has_fields(snap: Dictionary) -> bool:
@@ -165,8 +190,13 @@ static func stack_text(snap: Dictionary) -> String:
 	var ls_s := "%s —" % _SoftK.life_bus_label()
 	if life_raw != "":
 		ls_s = "%s %s" % [_SoftK.life_bus_label(), life_raw]
-	return "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s" % [
-		econ_s, fuel_s, cargo_s, mod_s, pwr_s, cool_s, ls_s, land_s, eva, en_s,
+	var crew_s := "%s %d/%d" % [
+		_SoftK.crew_label(),
+		int(snap.get("crew", 0)),
+		int(snap.get("crew_max", 2)),
+	]
+	return "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s" % [
+		econ_s, fuel_s, cargo_s, mod_s, pwr_s, cool_s, ls_s, land_s, eva, en_s, crew_s,
 	]
 
 

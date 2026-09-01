@@ -104,7 +104,7 @@ Q-C: один optional Learning Node на Q-A `harvest` / `deliver_crate`. Inter
 
 ### Задачи
 - Seamless / loading transition (ship → TPS)
-- Multi-crew (2–4 игрока, роли)
+- Multi-crew (2–4 игрока, роли) — **MC-A built:** one extra `CrewSeat` on the player hull pocket (local-first, host authority; HUD CREW label only)
 - AI-bots (Cybernex animal-robots + gROT swarms) — BehaviorTree / Navigation
 - Basic Strategy / Space / TPS PvP
 - RBE / Biomass pools + Contribution / Biomass Rank

@@ -8,6 +8,13 @@
 - I from pilot leaves the seat **into the pocket** (no exterior hop)
 - I at airlock/hatch leaves to EVA (zero-G if not landed) or the pad. Doors lead to pocket or EVA — never a locked prop.
 
+## Crew seat [F] (MC-A)
+- Same ship_int pocket. Nearer-seat wins: `CrewSeat` is not the pilot `Seat`.
+- **F** boards (`try_board_legal_seat` role=`crew`). Walker stays. Occupied marker visible.
+- **I** / **F** while seated returns to the same pocket (IN-B pattern). No exterior hop.
+- HUD `CREW n/2` is a label only. Knowledge does not change thrust / DPS / yield.
+- Optional SoftNet visual puppet when a second local viewer exists. Host authority. No second hull. No passenger combat.
+
 ## EVA
 - Exit ship when not landed and spd ≤ 42
 - Spawn at HatchPoint + side offset; door ajar

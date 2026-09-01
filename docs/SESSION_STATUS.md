@@ -1,3 +1,5 @@
+**2026-09-01 — MC-A: first multi-crew seat on the player hull (F crew / I same ship_int; HUD CREW label; SoftNet puppet optional)**
+
 **2026-09-01 — Dirt land after I-hatch F-EVA nineteenth dirt F-board sink is Relief pad none**
 
 **2026-09-01 — HOVER sink after I-hatch F-EVA nineteenth dirt F-board launch is floor 4m, not leftover 8m**
@@ -696,7 +698,8 @@ Q-B: one alliance-shared `occupy` / `logistics` contract on the same unnamed pad
 Q-C: one optional Learning Node on a Q-A `harvest` / `deliver_crate` contract. Interact reads pad / extractor / crate via SoftKnowledge. Complete → `field_intel` label (`FIELD` → `FIELD INTEL`). Harvest / print / hangar / Q-A / Q-B numbers stay. No exclusive modules. Not a second knowledge system.  
 AR-F: 3v3 local host authority on the existing TestArena / Clash 60×60. Six actors on TOP/MID/BOT (player + five SoftNet visual `CombatDummy` puppets, or 3+3 isolated). G5 stays closed. No new `SITE_*`. Knowledge does not change DPS. Still startable.  
 AR-G: 5v5 local host authority on the same 60×60 (TOP/MID/BOT + AR-D jungle). Ten actors (player Cybernex MID + nine SoftNet visual `CombatDummy` puppets, or 5+5 isolated). Host process owns combat. G5 stays closed. No new `SITE_*`. Knowledge does not change DPS.  
-SE-A: live power / cool / life buses on the player hull. Fitted `ShipModule.power_draw` sums into power/cool. Overdraw / overheat = soft thrust/weapon sag (not a hard lock). Hull LS readout matches IN-B (soft warn, no HP cut). HUD shows the three buses. Knowledge labels only. No P2W repair skip. ST-D hangar mass/power refuse still holds.
+SE-A: live power / cool / life buses on the player hull. Fitted `ShipModule.power_draw` sums into power/cool. Overdraw / overheat = soft thrust/weapon sag (not a hard lock). Hull LS readout matches IN-B (soft warn, no HP cut). HUD shows the three buses. Knowledge labels only. No P2W repair skip. ST-D hangar mass/power refuse still holds.  
+MC-A: one extra `CrewSeat` in the player `ship_int` pocket. **F** boards crew (walker stays); **I** returns to the same pocket. Pilot **F** / **I** unchanged. Occupied marker is visible. HUD `CREW n/2` is a label only. Optional SoftNet visual puppet when a second local viewer exists. Host authority. No second hull. No passenger combat. No `SITE_*`. 0 Tripo.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -741,6 +744,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | AR-F 3v3 local | **built** — 6 actors on existing lanes; host authority; SoftNet visual; G5 closed; still startable |
 | AR-G 5v5 local | **built** — 10 actors on existing lanes + jungle; host authority; SoftNet visual; G5 closed |
 | SE-A hull buses | **built** — power/cool/life live; overdraw/overheat sag; IN-B LS soft; no P2W skip |
+| MC-A ship crew seat | **built** — CrewSeat in ship_int; F/I same pocket; HUD CREW label; SoftNet puppet optional; pilot unchanged |
 | NP-C | **built** — NPC habitat on empty unnamed pad |
 | Galaxy G2–G6 | **locked** |
 | G1 CRUISE | **in-scope only for OS-C scale** |

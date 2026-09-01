@@ -10,6 +10,7 @@ signal exited(kind: String)
 const _Gen = preload("res://scripts/world/InteriorGenerator.gd")
 const _Board = preload("res://scripts/systems/ContractBoard.gd")
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
+const _CrewNet = preload("res://scripts/world/CrewSoftNet.gd")
 ## Pocket is parented under OpenSpace (NOT WorldRoot). Nex-Prime sits at
 ## origin with radius 1400 — y=120 was inside the planet mesh.
 const POCKET_LOCAL := Vector3(0.0, 9200.0, 0.0)
@@ -30,7 +31,8 @@ var _recycler_on: bool = true
 var _console_cd: float = 0.0
 var _door_hold: Dictionary = {}  # portal name -> remain-open seconds
 var _seated: bool = false
-var _seat_role: String = ""  # ops | carrier_pilot — never the ship cockpit
+var _seat_role: String = ""  # ops | carrier_pilot | crew — crew is ship pocket, not cockpit
+var _crew_net: Node = null
 var _console_board: Dictionary = {}
 var _ls_warn_t: float = 0.0
 var _ls_warn_shown: bool = false
@@ -82,6 +84,30 @@ func is_seated() -> bool:
 
 func get_seat_role() -> String:
 	return _seat_role if _seated else ""
+
+
+func crew_softnet() -> Node:
+	return _crew_net if _crew_net != null and is_instance_valid(_crew_net) else null
+
+
+func crew_occupancy() -> Dictionary:
+	## HUD label only. Knowledge never changes these numbers.
+	var pilot := 0
+	var crew := 0
+	if _open_space != null and is_instance_valid(_open_space) and bool(_open_space.get("_in_ship")):
+		pilot = 1
+	if _inside and _seated and _seat_role == "crew":
+		crew = 1
+	elif _crew_net != null and is_instance_valid(_crew_net) and _crew_net.has_method("puppet_in_seat"):
+		if bool(_crew_net.puppet_in_seat()):
+			crew = 1
+	var total := mini(pilot + crew, 2)
+	return {"pilot": pilot, "crew": crew, "total": total, "max": 2}
+
+
+func crew_hud_line() -> String:
+	var o: Dictionary = crew_occupancy()
+	return "%s %d/%d" % [_SoftK.crew_label(), int(o.get("total", 0)), int(o.get("max", 2))]
 
 
 func last_console_action() -> Dictionary:
@@ -300,6 +326,7 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	_ls_warn_shown = false
 	_occupy_host = null
 	_hangar_host = null
+	_clear_crew_softnet()
 	_recycler_on = true
 	_return_mode = "dock" if return_mode == "dock" else "pad"
 	_return_up = ret_up.normalized() if ret_up.length_squared() > 0.01 else Vector3.UP
@@ -378,7 +405,8 @@ func _begin(player: Node3D, kind: String, interior: Node3D, ret_pos: Vector3, re
 	_hatch_fx(true)
 	entered.emit(kind)
 	if kind == "ship":
-		_toast("Ship pocket · F seat · walk to airlock [F/I]")
+		_ensure_crew_softnet()
+		_toast("Ship pocket · F pilot · F crew · walk to airlock [F/I]")
 	elif kind == "hangar_bay":
 		_toast("Hangar bay · F carrier seat · E bay · F/I hatch")
 	else:
@@ -577,6 +605,7 @@ func exit_interior() -> void:
 	_kind = ""
 	_return_mode = "pad"
 	_hangar_host = null
+	_clear_crew_softnet()
 	set_process(false)
 
 
@@ -660,23 +689,14 @@ func seat_companion(body: Node3D) -> bool:
 
 
 func is_near_seat(player: Node3D, max_dist: float = 3.6) -> bool:
-	## Ship cockpit Seat/SeatVolume only. Station/hangar use legal seats.
-	if _kind != "ship":
-		return false
-	if player == null or not is_instance_valid(player) or not _inside or _active == null:
-		return false
-	if not is_instance_valid(_active):
-		return false
-	for nm in ["SeatVolume", "Seat"]:
-		var n: Node = _active.get_node_or_null(nm)
-		if n is Node3D:
-			if player.global_position.distance_to((n as Node3D).global_position) <= max_dist:
-				return true
-	return false
+	## Ship cockpit Seat/SeatVolume only. Nearer-seat wins so F at crew is not pilot.
+	return _nearest_ship_board(player, max_dist) == "pilot"
 
 
 func is_near_legal_seat(player: Node3D, max_dist: float = 3.6) -> bool:
-	## Ops seat (station) or carrier pilot seat (hangar_bay). Not the ship cockpit.
+	## Ops / hangar carrier, or MC-A crew on the ship pocket. Not the pilot Seat.
+	if _kind == "ship":
+		return _nearest_ship_board(player, max_dist) == "crew"
 	if _kind != "station" and _kind != "hangar_bay":
 		return false
 	if player == null or not is_instance_valid(player) or not _inside or _active == null:
@@ -689,10 +709,40 @@ func is_near_legal_seat(player: Node3D, max_dist: float = 3.6) -> bool:
 	return player.global_position.distance_to(seat.global_position) <= max_dist
 
 
+func _nearest_ship_board(player: Node3D, max_dist: float) -> String:
+	## "pilot" | "crew" | "". Ambiguous overlap prefers pilot.
+	if _kind != "ship":
+		return ""
+	if player == null or not is_instance_valid(player) or not _inside or _active == null:
+		return ""
+	if not is_instance_valid(_active):
+		return ""
+	var d_pilot := 9999.0
+	var d_crew := 9999.0
+	for nm in ["SeatVolume", "Seat"]:
+		var n: Node = _active.get_node_or_null(nm)
+		if n is Node3D:
+			d_pilot = minf(d_pilot, player.global_position.distance_to((n as Node3D).global_position))
+	for nm2 in ["CrewSeat", "CrewSeatVolume"]:
+		var n2: Node = _active.get_node_or_null(nm2)
+		if n2 is Node3D:
+			d_crew = minf(d_crew, player.global_position.distance_to((n2 as Node3D).global_position))
+	var p_ok := d_pilot <= max_dist
+	var c_ok := d_crew <= max_dist
+	if c_ok and (not p_ok or d_crew + 0.2 < d_pilot):
+		return "crew"
+	if p_ok:
+		return "pilot"
+	return ""
+
+
 func _legal_seat_node() -> Node3D:
 	if _active == null or not is_instance_valid(_active):
 		return null
-	for nm in ["OpsSeat", "OpsSeatVolume", "HangarSeat", "HangarSeatVolume"]:
+	var names: Array = ["OpsSeat", "OpsSeatVolume", "HangarSeat", "HangarSeatVolume"]
+	if _kind == "ship":
+		names = ["CrewSeat", "CrewSeatVolume"]
+	for nm in names:
 		var n: Node = _active.get_node_or_null(nm)
 		if n is Node3D:
 			return n as Node3D
@@ -700,9 +750,11 @@ func _legal_seat_node() -> Node3D:
 
 
 func try_board_legal_seat(player: Node3D = null) -> bool:
-	## F in station/hangar boards the legal seat. Walker stays in this pocket.
+	## F in station/hangar/ship-crew boards the legal seat. Walker stays in this pocket.
 	var who: Node3D = player if player != null else _player
-	if not _inside or _kind == "ship":
+	if not _inside:
+		return false
+	if _kind != "station" and _kind != "hangar_bay" and _kind != "ship":
 		return false
 	if who == null or not is_instance_valid(who):
 		return false
@@ -715,14 +767,24 @@ func try_board_legal_seat(player: Node3D = null) -> bool:
 		return false
 	_player = who
 	_seated = true
-	_seat_role = "ops" if _kind == "station" else "carrier_pilot"
+	if _kind == "station":
+		_seat_role = "ops"
+	elif _kind == "hangar_bay":
+		_seat_role = "carrier_pilot"
+	else:
+		_seat_role = "crew"
 	who.global_position = seat.global_position + Vector3(0.0, 1.05, 0.0)
 	if who is CharacterBody3D:
 		(who as CharacterBody3D).velocity = Vector3.ZERO
+	_set_crew_occupied(_seat_role == "crew")
 	if _kind == "station":
 		_toast("OPS SEAT · I leave · same pocket")
-	else:
+	elif _kind == "hangar_bay":
 		_toast("CARRIER PILOT · I leave · same pocket")
+	else:
+		_toast("CREW SEAT · I leave · same pocket")
+	if _crew_net != null and is_instance_valid(_crew_net) and _crew_net.has_method("sync_from_host"):
+		_crew_net.sync_from_host()
 	print("[Interior] boarded legal seat role=", _seat_role, " kind=", _kind)
 	return true
 
@@ -735,6 +797,7 @@ func leave_legal_seat() -> bool:
 	var role := _seat_role
 	_seated = false
 	_seat_role = ""
+	_set_crew_occupied(false)
 	if _player != null and is_instance_valid(_player):
 		if seat != null:
 			var along: Vector3 = -seat.global_transform.basis.z
@@ -743,6 +806,8 @@ func leave_legal_seat() -> bool:
 			_player.global_position = seat.global_position + Vector3(0.0, 1.05, 0.0) + along.normalized() * 1.2
 		if _player is CharacterBody3D:
 			(_player as CharacterBody3D).velocity = Vector3.ZERO
+	if _crew_net != null and is_instance_valid(_crew_net) and _crew_net.has_method("sync_from_host"):
+		_crew_net.sync_from_host()
 	_toast("Left seat — %s pocket" % _kind)
 	print("[Interior] left legal seat ", role, " → ", _kind)
 	return true
@@ -851,6 +916,7 @@ func exit_for_pilot() -> void:
 	_kind = ""
 	_return_mode = "pad"
 	_hangar_host = null
+	_clear_crew_softnet()
 	set_process(false)
 
 
@@ -917,14 +983,16 @@ func _process(delta: float) -> void:
 		(clab as Label3D).modulate.a = 1.0 if near_c else 0.5
 		(clab as Label3D).text = "OPS CONSOLE · E" if near_c else "OPS CONSOLE"
 	var near_legal := is_near_legal_seat(_player, 3.6)
-	for lnm in ["OpsSeatLabel", "HangarSeatLabel"]:
+	for lnm in ["OpsSeatLabel", "HangarSeatLabel", "CrewSeatLabel"]:
 		var sl = _active.get_node_or_null(lnm)
 		if sl is Label3D:
 			(sl as Label3D).modulate.a = 1.0 if near_legal or _seated else 0.55
 			if lnm == "OpsSeatLabel":
 				(sl as Label3D).text = "OPS SEAT · I" if _seated else ("OPS SEAT · F" if near_legal else "OPS SEAT")
-			else:
+			elif lnm == "HangarSeatLabel":
 				(sl as Label3D).text = "CARRIER PILOT · I" if _seated else ("CARRIER PILOT · F" if near_legal else "CARRIER PILOT")
+			else:
+				(sl as Label3D).text = "CREW SEAT · I" if _seated and _seat_role == "crew" else ("CREW SEAT · F" if near_legal else "CREW SEAT")
 	var hlab = _active.get_node_or_null("HatchLabel")
 	if hlab is Label3D:
 		var near_h := is_near_hatch(_player)
@@ -1280,6 +1348,41 @@ func _up_from_planet(at: Vector3) -> Vector3:
 			if up.length_squared() > 0.01:
 				return up.normalized()
 	return Vector3.UP
+
+
+func _ensure_crew_softnet() -> void:
+	## Optional IN-F-style local viewer + crew-seat puppet. Host keeps authority.
+	if _kind != "ship" or _active == null or not is_instance_valid(_active):
+		return
+	if _crew_net != null and is_instance_valid(_crew_net):
+		if _crew_net.get_parent() != _active:
+			_crew_net.reparent(_active, true)
+		if _crew_net.has_method("sync_from_host"):
+			_crew_net.sync_from_host()
+		return
+	_crew_net = _CrewNet.new()
+	_active.add_child(_crew_net)
+	if _crew_net.has_method("bind_director"):
+		_crew_net.bind_director(self)
+	elif _crew_net.has_method("sync_from_host"):
+		_crew_net.sync_from_host()
+
+
+func _clear_crew_softnet() -> void:
+	if _crew_net != null and is_instance_valid(_crew_net):
+		_crew_net.queue_free()
+	_crew_net = null
+
+
+func _set_crew_occupied(on: bool) -> void:
+	if _active == null or not is_instance_valid(_active):
+		return
+	var occ: Node = _active.get_node_or_null("CrewSeatOccupied")
+	if occ == null:
+		return
+	occ.set_meta("occupied", on)
+	if occ is Node3D:
+		(occ as Node3D).visible = on
 
 
 func _host_distance(player: Node3D, host: Node3D) -> float:
