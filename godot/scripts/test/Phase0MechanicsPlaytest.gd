@@ -47,6 +47,7 @@ func _go() -> void:
 		await _assert_q_d(os, fails)
 		await _assert_hf_b(os, fails)
 		await _assert_hf_a(os, fails)
+		await _assert_pv_b(os, fails)
 		await _assert_pv_a(os, fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
@@ -634,6 +635,7 @@ func _go() -> void:
 	await _eva_snap_pulse(fails)
 	await _assert_hf_b(os, fails)
 	await _assert_hf_a(os, fails)
+	await _assert_pv_b(os, fails)
 	await _assert_pv_a(os, fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
@@ -15908,6 +15910,279 @@ func _assert_hf_a(os: Node, fails: PackedStringArray) -> void:
 		if os.has_method("try_enter_ship"):
 			os.try_enter_ship()
 	print("[Playtest] HF-A +1 stack · cap 5 refuse · Firewall -1 · Knowledge label only")
+
+
+func _assert_pv_b(os: Node, fails: PackedStringArray) -> void:
+	## PV-B: seated player hull on OpenSpace. Same host-authority PadPvp rival.
+	## Hull Pulse 11 hits rival; rival Pulse hits the hull. Win = HP → 0.
+	## No permadeath. Infection cap 5. Knowledge labels only. G5 closed.
+	## TPS PV-A still runs after this (EVA). Clash / TestArena unchanged.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var nex: Node = _osh_nex()
+	var traffic: Node = null
+	var pvp: Node = null
+	var rival: Node3D = null
+	var host: Node3D = null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var walker: Node3D = os.get("player") as Node3D if os else null
+	var ab: Node = null
+	var pad: Node = _in_a_occupied_pad(os)
+	var pulse0 := 11.0
+	var pulse1 := 11.0
+	var dmg0 := 11.0
+	var dmg1 := 11.0
+	var hp_max0 := 80.0
+	var hp_max1 := 80.0
+	var harvest0 := 0.0
+	var harvest1 := 0.0
+	var layer := str(LayerContext.current_layer) if LayerContext else ""
+	if P0 == null or not bool(P0.PV_B_SPACE) or not bool(P0.PV_A_PVP):
+		fails.append("PV-B P0Slice flag missing")
+		return
+	if os == null or nex == null:
+		fails.append("PV-B no OpenSpace/Nex-Prime")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("PV-B must not run on TestArena")
+		return
+	if layer == "Arena":
+		fails.append("PV-B must not run on Clash")
+		return
+	if LayerContext:
+		LayerContext.set_layer("Space")
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.2).timeout
+	if nex.has_method("pad_traffic"):
+		traffic = nex.call("pad_traffic")
+	if traffic == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("pad_traffic")
+		if not listed.is_empty():
+			traffic = listed[0]
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("PV-B pad traffic missing")
+		return
+	if traffic.has_method("get_pvp"):
+		pvp = traffic.get_pvp()
+	if pvp == null:
+		pvp = traffic.get_node_or_null("PadPvp")
+	if pvp == null:
+		fails.append("PV-B PadPvp missing")
+		return
+	if traffic.has_method("get_rival"):
+		rival = traffic.get_rival()
+	if rival == null and pvp.has_method("get_rival"):
+		rival = pvp.get_rival()
+	if rival == null or not is_instance_valid(rival):
+		fails.append("PV-B rival missing on occupied pad")
+		return
+	host = traffic.get_parent() as Node3D
+	if host == null or not host.has_meta("pad_up"):
+		fails.append("PV-B rival not on a pad")
+		return
+	var pname := str(host.name)
+	if pname != "Pad_North" and pname != "Pad_Approach" and pname != "Pad_Flank":
+		fails.append("PV-B unknown pad (%s)" % pname)
+		return
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("PV-B minted SITE_* (%s)" % pin)
+		return
+	if rival.has_meta("site_pin") and str(rival.get_meta("site_pin")).begins_with("SITE_"):
+		fails.append("PV-B rival minted SITE_*")
+		return
+	if pvp.has_meta("site_pin") and str(pvp.get_meta("site_pin")).begins_with("SITE_"):
+		fails.append("PV-B PadPvp minted SITE_*")
+		return
+	if pvp.has_method("is_g5_closed") and not bool(pvp.is_g5_closed()):
+		fails.append("PV-B G5 Clash-from-world is open")
+		return
+	if traffic.has_method("is_g5_closed") and not bool(traffic.is_g5_closed()):
+		fails.append("PV-B traffic G5 is open")
+	var auth := str(pvp.combat_authority()) if pvp.has_method("combat_authority") else ""
+	if auth != "host":
+		fails.append("PV-B combat authority is not host (%s)" % auth)
+	if pvp.has_method("is_host_authority") and not bool(pvp.is_host_authority()):
+		fails.append("PV-B host authority missing")
+	if pvp.has_method("has_p2w_hp") and bool(pvp.has_p2w_hp()):
+		fails.append("PV-B pay-to-win HP")
+	if rival.has_method("infection_cap") and int(rival.infection_cap()) != 5:
+		fails.append("PV-B Infection cap drifted (%s)" % rival.infection_cap())
+	if "attack_damage" in rival:
+		dmg0 = float(rival.get("attack_damage"))
+	if "max_health" in rival:
+		hp_max0 = float(rival.get("max_health"))
+	if pad != null and pad.has_method("claim"):
+		pad.claim("Cybernex", 2.0)
+	elif host.has_method("claim"):
+		host.claim("Cybernex", 2.0)
+	if pad != null and pad.has_method("tier_budget"):
+		harvest0 = float(pad.tier_budget().get("harvest", 0.0))
+	if ship == null or not is_instance_valid(ship):
+		fails.append("PV-B no ship")
+		return
+	if not bool(os.get("_in_ship")):
+		if (walker == null or not is_instance_valid(walker)) and os.has_method("_spawn_player_near_ship"):
+			os.call("_spawn_player_near_ship")
+			await get_tree().create_timer(0.2).timeout
+			walker = os.get("player") as Node3D
+		if walker != null and is_instance_valid(walker):
+			walker.global_position = ship.global_position + Vector3(0.0, 2.0, 0.0)
+			if os.has_method("try_enter_ship"):
+				os.try_enter_ship()
+			await get_tree().create_timer(0.25).timeout
+	if not bool(os.get("_in_ship")):
+		os.set("_in_ship", true)
+		os.set("_eva_mode", false)
+		if ship.has_method("set_pilot_active"):
+			ship.set_pilot_active(true)
+		if LayerContext:
+			LayerContext.set_layer("Space")
+	if LayerContext and str(LayerContext.current_layer) == "Arena":
+		fails.append("PV-B layer is Clash")
+		return
+	if not bool(os.get("_in_ship")):
+		fails.append("PV-B hull is not seated")
+		return
+	ship.set("faction", "Cybernex")
+	rival.set("faction", "gROT")
+	rival.set("_alive", true)
+	if float(rival.get("health")) < 20.0:
+		rival.set("health", float(rival.get("max_health")))
+	var pad_up: Vector3 = host.get_meta("pad_up")
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	if "is_landed" in ship:
+		ship.set("is_landed", false)
+	var away: Vector3 = rival.global_position - host.global_position
+	away = away - pad_up * away.dot(pad_up)
+	if away.length_squared() < 0.01:
+		away = host.global_transform.basis.x
+	away = away.normalized()
+	ship.global_position = rival.global_position - away * 10.0 + pad_up * 6.0
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	if ship.has_method("look_at"):
+		var aim: Vector3 = rival.hurtbox_center() if rival.has_method("hurtbox_center") else rival.global_position
+		var up: Vector3 = pad_up
+		if absf((aim - ship.global_position).normalized().dot(up)) > 0.98:
+			up = ship.global_transform.basis.y
+		ship.look_at(aim, up)
+	if ship.has_method("_ensure_ability_kit"):
+		ship._ensure_ability_kit()
+	ab = ship.get_node_or_null("AbilitySystem")
+	if ab == null:
+		fails.append("PV-B no hull AbilitySystem")
+		return
+	if "energy" in ship:
+		ship.set("energy", 100.0)
+	if ab.has_method("setup_default_loadout"):
+		ab.setup_default_loadout("Cybernex")
+	if ab.get("abilities") != null and (ab.abilities as Array).size() > 0 and ab.abilities[0]:
+		pulse0 = float(ab.abilities[0].damage)
+		ab.current_cooldowns[ab.abilities[0]] = 0.0
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("combat", 20.0)
+	if traffic.has_method("refresh_labels"):
+		traffic.refresh_labels()
+	if ab.get("abilities") != null and (ab.abilities as Array).size() > 0 and ab.abilities[0]:
+		pulse1 = float(ab.abilities[0].damage)
+		if absf(pulse1 - pulse0) > 0.01 or absf(pulse1 - 11.0) > 0.01:
+			fails.append("PV-B Knowledge changed Pulse DPS (%s → %s)" % [pulse0, pulse1])
+	if "attack_damage" in rival:
+		dmg1 = float(rival.get("attack_damage"))
+	if "max_health" in rival:
+		hp_max1 = float(rival.get("max_health"))
+	if absf(dmg1 - dmg0) > 0.01 or absf(dmg1 - 11.0) > 0.01:
+		fails.append("PV-B Knowledge changed rival Pulse DPS (%s → %s)" % [dmg0, dmg1])
+	if absf(hp_max1 - hp_max0) > 0.01:
+		fails.append("PV-B Knowledge changed rival HP")
+	var rlabel := str(traffic.rival_label()) if traffic.has_method("rival_label") else ""
+	if rlabel == "":
+		fails.append("PV-B Knowledge rival label empty")
+	if SoftScanCache:
+		SoftScanCache.invalidate_enemies()
+		SoftScanCache.invalidate_player()
+		if SoftScanCache.has_method("invalidate_ships"):
+			SoftScanCache.invalidate_ships()
+	if not ship.has_method("try_pulse"):
+		fails.append("PV-B hull try_pulse missing")
+		return
+	var hp0: float = float(rival.get("health"))
+	var hull_hp0: float = float(ship.get("health")) if "health" in ship else 120.0
+	var shield0: float = float(ship.get("shields")) if "shields" in ship else 0.0
+	var fired := bool(ship.try_pulse(rival))
+	var hp1: float = float(rival.get("health"))
+	var drop: float = hp0 - hp1
+	print("[Playtest] PV-B seated hull pad=", pname, " rival hp ", snapped(hp0, 0.1), " → ",
+		snapped(hp1, 0.1), " drop=", snapped(drop, 0.1), " label=", rlabel)
+	if not fired:
+		fails.append("PV-B hull Pulse did not fire")
+	elif drop < 10.0:
+		fails.append("PV-B hull Pulse did not hit rival (%s → %s)" % [snapped(hp0, 0.1), snapped(hp1, 0.1)])
+	elif drop > 12.5:
+		fails.append("PV-B Pulse DPS drifted (drop=%s)" % snapped(drop, 0.1))
+	var back := false
+	if pvp.has_method("try_rival_pulse"):
+		back = bool(pvp.try_rival_pulse(ship))
+	elif rival.has_method("try_pulse"):
+		back = bool(rival.try_pulse(ship))
+	var hull_hp1: float = float(ship.get("health")) if "health" in ship else hull_hp0
+	var shield1: float = float(ship.get("shields")) if "shields" in ship else shield0
+	var back_drop: float = (hull_hp0 - hull_hp1) + (shield0 - shield1)
+	print("[Playtest] PV-B rival Pulse back hit=", back, " hull hp/shield ",
+		snapped(hull_hp0, 0.1), "/", snapped(shield0, 0.1), " → ",
+		snapped(hull_hp1, 0.1), "/", snapped(shield1, 0.1), " drop=", snapped(back_drop, 0.1))
+	if not back:
+		fails.append("PV-B rival Pulse did not fire")
+	elif back_drop < 10.0:
+		fails.append("PV-B rival Pulse did not hit hull (%s → %s)" % [
+			snapped(back_drop, 0.1), snapped(11.0, 0.1)])
+	elif back_drop > 12.5:
+		fails.append("PV-B rival Pulse DPS drifted (drop=%s)" % snapped(back_drop, 0.1))
+	if rival.has_method("take_damage"):
+		rival.take_damage(float(rival.get("health")) + 1.0, "Cybernex")
+	var hp_win: float = float(rival.get("health"))
+	var alive := true
+	if rival.has_method("is_alive"):
+		alive = bool(rival.is_alive())
+	elif "_alive" in rival:
+		alive = bool(rival.get("_alive"))
+	var won := bool(pvp.win_reached()) if pvp.has_method("win_reached") else (hp_win <= 0.0)
+	print("[Playtest] PV-B win rival hp=", snapped(hp_win, 0.1), " alive=", alive, " won=", won)
+	if hp_win > 0.0 and alive:
+		fails.append("PV-B rival HP did not reach 0")
+	if not won:
+		fails.append("PV-B win condition missing")
+	if rival == null or not is_instance_valid(rival):
+		fails.append("PV-B permadeath (rival freed)")
+	if ship == null or not is_instance_valid(ship):
+		fails.append("PV-B permadeath (hull freed)")
+	if rival.has_method("infection_cap") and int(rival.infection_cap()) != 5:
+		fails.append("PV-B Infection cap after win is not 5")
+	if pad != null and pad.has_method("tier_budget"):
+		harvest1 = float(pad.tier_budget().get("harvest", -1.0))
+	if harvest0 > 0.0 and absf(harvest1 - harvest0) > 0.0001:
+		fails.append("PV-B harvest number changed (%s → %s)" % [harvest0, harvest1])
+	var scene_name := str(get_tree().current_scene.name) if get_tree() and get_tree().current_scene else ""
+	if scene_name.find("TestArena") >= 0:
+		fails.append("PV-B entered TestArena from OpenSpace (G5)")
+	if ResourceLoader.exists("res://scripts/world/ClashFromWorld.gd") \
+			or ResourceLoader.exists("res://scripts/world/ClashBeacon.gd"):
+		fails.append("PV-B opened G5 world-to-arena")
+	print("[Playtest] PV-B seated hull Pulse hit · rival Pulse back · HP 0 win · G5 closed · no SITE_*")
+	rival.set("_alive", true)
+	if "health" in rival:
+		rival.set("health", float(rival.get("max_health")))
+	if pvp != null:
+		pvp.set("_won", false)
+	if ship != null and is_instance_valid(ship):
+		if "velocity" in ship:
+			ship.velocity = Vector3.ZERO
+		ship.global_position = host.global_position + pad_up * 80.0
+		if ship.has_method("_set_mode"):
+			ship._set_mode(1)
 
 
 func _assert_pv_a(os: Node, fails: PackedStringArray) -> void:

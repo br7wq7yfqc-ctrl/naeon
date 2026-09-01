@@ -73,6 +73,9 @@ const HF_B_HULL := true
 ## CombatDummy takes Pulse and deals Pulse back (DPS 11). Win = rival HP → 0.
 ## No permadeath. Infection cap 5. Knowledge labels only. G5 stays closed.
 const PV_A_PVP := true
+## PV-B: first Space PvP from the seated player hull (OpenSpace, not Clash).
+## Same PadPvp rival. Pulse 11 both ways. Win = rival HP → 0. No permadeath.
+const PV_B_SPACE := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6

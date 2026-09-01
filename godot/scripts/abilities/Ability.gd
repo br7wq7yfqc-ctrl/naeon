@@ -143,7 +143,10 @@ func _apply_effect(caster: Node, target = null) -> void:
 	elif damage > 0.0 and aoe_radius > 0.05:
 		_apply_aoe_burst(caster)
 	elif damage > 0.0:
-		_spawn_projectile(caster, damage, effect_color)
+		## PV-B / HF-B: explicit hostile hint is host-authority Pulse 11.
+		## Knowledge never multiplies. No hint → existing aim projectile.
+		if not _try_direct_pulse(caster, target):
+			_spawn_projectile(caster, damage, effect_color)
 	elif heal > 0.0 and caster.has_method("heal"):
 		caster.heal(heal)
 
@@ -383,6 +386,37 @@ func _same_side(caster: Node, other: Node) -> bool:
 	elif "faction" in other:
 		b = str(other.faction)
 	return a != "" and a == b
+
+func _try_direct_pulse(caster: Node, hint) -> bool:
+	## Seated hull / playtest: hit the given rival / dummy / visitor hull.
+	## Same 11 DPS as walker Pulse. Same-side refuse. Range is the kit range.
+	if hint == null or not (hint is Node) or not is_instance_valid(hint):
+		return false
+	var t: Node = hint as Node
+	if not t.has_method("take_damage"):
+		return false
+	if _same_side(caster, t):
+		return false
+	if t.has_method("is_alive") and not bool(t.is_alive()):
+		return false
+	if "_alive" in t and not bool(t.get("_alive")):
+		return false
+	if caster is Node3D:
+		var dest := _host_world_pos(t)
+		if dest == Vector3.ZERO and t is Node3D:
+			dest = (t as Node3D).global_position
+		var reach := maxf(range, 24.0)
+		if dest != Vector3.ZERO \
+				and (caster as Node3D).global_position.distance_to(dest) > reach:
+			return false
+	var fac := "Cybernex"
+	if "faction" in caster:
+		fac = str(caster.faction)
+	elif caster.has_method("get_faction"):
+		fac = str(caster.get_faction())
+	t.take_damage(damage, fac)
+	return true
+
 
 func _spawn_projectile(caster: Node, dmg: float, color: Color) -> void:
 	if caster == null or not caster.is_inside_tree():

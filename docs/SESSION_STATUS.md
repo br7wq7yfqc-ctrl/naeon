@@ -1,3 +1,5 @@
+**2026-09-01 — PV-B: first Space PvP from the seated player hull (same PadPvp rival; Pulse 11 both ways; win HP → 0; G5 closed)**
+
 **2026-09-01 — PV-A: first TPS PvP on an occupied unnamed pad (host-authority rival dummy; Pulse 11 both ways; win HP → 0; G5 closed)**
 
 **2026-09-01 — HF-B: hull Hack / Firewall from the seated pilot (OpenSpace; +1 stack, cap 5 refuse, Firewall −1; TPS HF-A still works)**
@@ -720,7 +722,8 @@ NP-H: after NP-B occupy/harvest the visitor queues **one** catalog module on the
 NP-I: after NP-B occupy/harvest the visitor spends Contribution/Biomass at the player-cluster factory bench (c) (same ST-G path) → **one** catalog module. Without factory → refuse. Without spend → refuse. No cash-shop skip. Knowledge labels the factory only. Not hangar (b). Not pad bench (a). Not a second NP-C habitat. Not a mobile `SITE_*`. NP-G / NP-H stay.  
 HF-A: after EVA/occupy on an unnamed pad (same OpenSpace), gROT Hack applies **+1** Infection stack to a CombatDummy / pad-guard. Cap 5 stays; refuse at 5 with `Infection cap 5`. Cybernex Firewall removes **1** stack (never below 0). Knowledge labels the stack only. DPS / yield / thrust stay. No unique weapon. No cash-shop cleanse. Not a minigame. Not Voice. Not G2.  
 HF-B: from the seated player hull (OpenSpace, not Clash), the same AbilitySystem Hack / Firewall hits a nearby pad-guard CombatDummy or visiting NpcPilot hull. +1 / cap 5 refuse / Firewall −1. Knowledge labels only. DPS / yield / thrust stay. TPS HF-A still works after EVA. No second ability system. No cash-shop cleanse. Not Voice. Not G2.  
-PV-A: on an occupied unnamed pad (`Pad_North` / `Pad_Approach` / `Pad_Flank`), one host-authority rival `CombatDummy` takes Pulse from the player walker and deals Pulse back (DPS 11). Win = rival HP → 0. No permadeath. Infection cap 5. Knowledge labels only. Clash HUD / TestArena unchanged. G5 stays closed. No `SITE_*`.
+PV-A: on an occupied unnamed pad (`Pad_North` / `Pad_Approach` / `Pad_Flank`), one host-authority rival `CombatDummy` takes Pulse from the player walker and deals Pulse back (DPS 11). Win = rival HP → 0. No permadeath. Infection cap 5. Knowledge labels only. Clash HUD / TestArena unchanged. G5 stays closed. No `SITE_*`.  
+PV-B: from the seated player hull (OpenSpace, not Clash), the same host-authority pad rival takes Pulse and deals Pulse back (DPS 11). Win = rival HP → 0. No permadeath. Infection cap 5. Knowledge labels only. TPS PV-A still works after EVA. SoftNet visual bind only. G5 stays closed. No `SITE_*`.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -766,6 +769,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | HF-A Hack / Firewall | **built** — +1 stack on dummy/guard; cap 5 refuse; Firewall −1; Knowledge label only |
 | HF-B hull Hack / Firewall | **built** — seated hull +1 / cap 5 refuse / Firewall −1; dummy or visitor; TPS HF-A stays |
 | PV-A pad TPS PvP | **built** — occupied unnamed pad; host-authority rival dummy; Pulse 11 both ways; win HP 0; G5 closed |
+| PV-B hull Space PvP | **built** — seated hull Pulse 11 vs same PadPvp rival; rival Pulse back; win HP 0; TPS PV-A stays |
 | AR-F 3v3 local | **built** — 6 actors on existing lanes; host authority; SoftNet visual; G5 closed; still startable |
 | AR-G 5v5 local | **built** — 10 actors on existing lanes + jungle; host authority; SoftNet visual; G5 closed |
 | SE-A hull buses | **built** — power/cool/life live; overdraw/overheat sag; IN-B LS soft; no P2W skip |

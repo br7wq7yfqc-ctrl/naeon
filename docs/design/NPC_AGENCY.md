@@ -33,7 +33,7 @@ Clash: [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md).
 
 | Узел | Факт репо | Это не |
 |------|-----------|--------|
-| `PadTraffic.gd` | 1 pad-guard `CombatDummy` + visitor `ShipController`/`NpcPilot` (NP-A flight, NP-B occupy/harvest, NP-C habitat, NP-G ST-C print, NP-H ST-D hangar, NP-I ST-G factory, NP-D squad invite, NP-F short offline pad/follow, NP-E soft alliance / raid-or-logistics intent, **Q-D same Q-A ContractBoard id**) + surface dummy под Pulse + **PV-A** host-authority rival dummy (Pulse 11 both ways) | mobile SITE_*; second quest board; G5 Clash |
+| `PadTraffic.gd` | 1 pad-guard `CombatDummy` + visitor `ShipController`/`NpcPilot` (NP-A flight, NP-B occupy/harvest, NP-C habitat, NP-G ST-C print, NP-H ST-D hangar, NP-I ST-G factory, NP-D squad invite, NP-F short offline pad/follow, NP-E soft alliance / raid-or-logistics intent, **Q-D same Q-A ContractBoard id**) + surface dummy под Pulse + **PV-A / PV-B** host-authority rival dummy (Pulse 11 both ways; TPS + seated hull) | mobile SITE_*; second quest board; G5 Clash |
 | `PadAmbientLife.gd` | GLB-пропы, bob/wander, **0 боя** | агент, квест, альянс |
 | `ClashWaves.gd` | timed `CombatDummy` march по `ClashLanes` | герой Clash, драфт, agency |
 | `CombatDummy.gd` | HP, optional aggro/lane; цель и миньон | корабль, база, Contribution |

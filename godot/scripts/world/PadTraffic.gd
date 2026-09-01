@@ -9,8 +9,9 @@ extends Node3D
 ## NP-H: after NP-B harvest, visitor queues one catalog module on the ST-D hangar.
 ## NP-I: after NP-B harvest, visitor spends at player-cluster factory bench (c) (same ST-G path).
 ## Q-D: visitor offers the same Q-A ContractBoard id. Player accepts from this NPC.
-## PV-A: one host-authority rival CombatDummy on this occupied unnamed pad.
-## Pulse 11 both ways. Win = rival HP → 0. No permadeath. G5 stays closed.
+## PV-A / PV-B: one host-authority rival CombatDummy on this occupied unnamed pad.
+## TPS walker and seated hull share that rival. Pulse 11 both ways.
+## Win = rival HP → 0. No permadeath. G5 stays closed.
 ## Knowledge labels only — never yield.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
