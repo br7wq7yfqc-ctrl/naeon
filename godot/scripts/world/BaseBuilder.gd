@@ -140,7 +140,7 @@ static func print_catalog_module(pad: Node3D, faction: String, kind: String = "e
 
 
 static func print_factory_catalog_module(cluster: Node3D, faction: String, kind: String = "extractor") -> Node3D:
-	## ST-G §6(c): one catalog module at the player factory cluster. Not SITE_*.
+	## ST-G / NP-I §6(c): one catalog module at the player factory cluster. Not SITE_*.
 	## Separate slot from ST-C printed_base_modules.
 	var n: Node3D = null
 	var k := kind

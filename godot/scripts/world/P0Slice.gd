@@ -48,6 +48,9 @@ const NP_G_PRINT := true
 ## NP-H: after NP-B harvest, visitor queues one catalog module on the ST-D hangar.
 ## Same CarrierHangarQueue path. Mass/power refuse. Not factory (c). Not a second NP-C habitat.
 const NP_H_HANGAR := true
+## NP-I: after NP-B harvest, visitor spends at player-cluster factory bench (c) → one catalog module.
+## Same ST-G path. Without factory → refuse. Not hangar (b). Not pad bench (a). Not a second NP-C habitat.
+const NP_I_FACTORY := true
 ## Q-A: one Contract Board + one generated template. SoftKnowledge label only.
 const Q_A_CONTRACT := true
 ## Q-B: one alliance-shared occupy/logistics contract on the same unnamed pad.

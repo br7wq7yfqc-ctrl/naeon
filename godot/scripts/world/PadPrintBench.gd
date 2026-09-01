@@ -1,8 +1,10 @@
 extends Node3D
 class_name PadPrintBench
 ## ST-C §6(a) / NP-G: print one catalog module at an unnamed pad / NPC bench.
+## ST-G §6(c) / NP-I: print_one_factory_module at the player-cluster factory.
 ## Spends Contribution (CX) or Biomass (GR). Never cash. Knowledge labels only.
 ## NP-G uses print_one_module — not factory (c), not hangar (b), not NP-C habitat.
+## NP-I uses print_one_factory_module — not pad bench (a), not hangar (b).
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 const _Builder = preload("res://scripts/world/BaseBuilder.gd")
@@ -106,7 +108,7 @@ func factory_in_cluster() -> Node3D:
 
 
 func print_one_factory_module(kind: String = "", cash: float = 0.0) -> Node3D:
-	## ST-G §6(c): same rules/15 spend as ST-C, gated on a factory in-cluster.
+	## ST-G / NP-I §6(c): same rules/15 spend as ST-C, gated on a factory in-cluster.
 	var P0 = load("res://scripts/world/P0Slice.gd")
 	var k := ""
 	var cost := 0.0

@@ -43,6 +43,7 @@ func _go() -> void:
 	_assert_hud_stack(os, fails)
 	if _ritual_only:
 		await _npc_hangar_queue(fails)
+		await _npc_factory_print(fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
 
@@ -621,6 +622,7 @@ func _go() -> void:
 	await _npc_place_module(fails)
 	await _npc_print_catalog(fails)
 	await _npc_hangar_queue(fails)
+	await _npc_factory_print(fails)
 	await _npc_squad_invite(fails)
 	await _npc_offline_cycle(fails)
 	await _npc_soft_alliance(fails)
@@ -10611,6 +10613,260 @@ func _npc_hangar_queue(fails: PackedStringArray) -> void:
 	print("[Playtest] NP-H queue one module hull=", slug, " module=", kind,
 		" slots=1 refuse=mass/", refuse_power, " pin=", pin1, " mobile_site=false")
 	print("[Playtest] NP-H refuse mass/power · no SITE_* · no factory · NP-G bench intact")
+
+
+func _npc_factory_print(fails: PackedStringArray) -> void:
+	## NP-I: after NP-B harvest, visitor spends at player-cluster factory bench (c).
+	## Same refuse as ST-G. Not NP-C habitat. Not bench (a). Not hangar (b). No SITE_*.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var os: Node = get_parent()
+	var nex: Node = _osh_nex()
+	var traffic: Node = null
+	var pilot: Node = null
+	var cluster: Node3D = null
+	var factory: Node3D = null
+	var bench: Node = null
+	var cost := 0.0
+	var cost_after := 0.0
+	var harvest0 := 0.0
+	var print0 := 0.0
+	var hangar0 := 0.0
+	var wallet0 := 0.0
+	var before := 0.0
+	var after := 0.0
+	var skip_ok := true
+	var cash_mod: Node3D = null
+	var broke: Node3D = null
+	var refused: Node3D = null
+	var mod: Node3D = null
+	var again: Node3D = null
+	var printed: Node3D = null
+	var queued: Node3D = null
+	var stale: Node3D = null
+	var parent: Node = null
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var pin1 := ""
+	var pin := ""
+	var kind := ""
+	var slug := ""
+	var extras0 := 0
+	var extras1 := 0
+	var tree: SceneTree = get_tree()
+	if P0 == null or not bool(P0.NP_I_FACTORY) or not bool(P0.ST_G_FACTORY):
+		fails.append("NP-I P0Slice flag missing")
+		return
+	if nex != null and nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.2).timeout
+	traffic = nex.call("pad_traffic") if nex != null and nex.has_method("pad_traffic") else null
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("NP-I: pad traffic missing")
+		return
+	pilot = traffic.get_npc_pilot() if traffic.has_method("get_npc_pilot") else null
+	if pilot == null or not pilot.has_method("print_one_factory_module"):
+		fails.append("NP-I: NpcPilot print_one_factory_module missing")
+		return
+	if not pilot.has_method("print_one_catalog_module"):
+		fails.append("NP-I broke NP-G bench print")
+		return
+	if not pilot.has_method("queue_one_hangar_module"):
+		fails.append("NP-I broke NP-H hangar queue")
+		return
+	if pilot.has_method("printed_catalog_module"):
+		printed = pilot.printed_catalog_module()
+	if printed != null and is_instance_valid(printed):
+		if bool(printed.get_meta("factory_printed", false)):
+			fails.append("NP-I rewrote NP-G onto factory (c)")
+		if not bool(printed.get_meta("printed_module", false)):
+			fails.append("NP-I stripped NP-G printed_module")
+	if pilot.has_method("queued_hangar_module"):
+		queued = pilot.queued_hangar_module()
+	if queued != null and is_instance_valid(queued):
+		if bool(queued.get_meta("factory_printed", false)):
+			fails.append("NP-I rewrote NP-H onto factory (c)")
+		if not bool(queued.get_meta("hangar_queued", false)):
+			fails.append("NP-I stripped NP-H hangar_queued")
+	if os != null and os.has_method("player_orbital_station"):
+		cluster = os.player_orbital_station()
+	if cluster == null and tree:
+		var listed: Array = tree.get_nodes_in_group("player_orbital_stations")
+		if not listed.is_empty() and listed[0] is Node3D:
+			cluster = listed[0] as Node3D
+	if cluster == null:
+		fails.append("NP-I player cluster missing")
+		return
+	if cluster.has_method("factory_module"):
+		factory = cluster.factory_module()
+	if factory == null and os != null and os.has_method("player_factory"):
+		factory = os.player_factory()
+	if factory == null and tree:
+		var facs: Array = tree.get_nodes_in_group("player_factory_modules")
+		if not facs.is_empty() and facs[0] is Node3D:
+			factory = facs[0] as Node3D
+	if factory == null:
+		fails.append("NP-I factory missing from player cluster")
+		return
+	if factory.get_parent() != cluster:
+		fails.append("NP-I factory is not in the player cluster")
+	if tree:
+		for n in tree.get_nodes_in_group("factory_printed_modules"):
+			if n is Node3D and is_instance_valid(n):
+				stale = n as Node3D
+				var stale_parent: Node = stale.get_parent()
+				if stale_parent != null:
+					stale_parent.remove_child(stale)
+				stale.free()
+		await get_tree().process_frame
+		extras0 = tree.get_nodes_in_group("factory_printed_modules").size()
+	if cluster.has_method("print_one_factory_module"):
+		bench = cluster
+	if bench == null and tree:
+		for n in tree.get_nodes_in_group("print_benches"):
+			if n != null and n.has_method("print_one_factory_module"):
+				bench = n
+				break
+	if bench != null and bench.has_method("print_cost"):
+		cost = float(bench.print_cost())
+		if GameManager and GameManager.has_method("add_mastery"):
+			GameManager.add_mastery("history", 20.0)
+			GameManager.add_mastery("colony_ops", 20.0)
+			GameManager.add_mastery("biomass_ops", 20.0)
+		cost_after = float(bench.print_cost())
+		if absf(cost_after - cost) > 0.001:
+			fails.append("NP-I Knowledge cheapened print tables")
+		if bench.has_method("cash_shop_skip_possible") and bool(bench.cash_shop_skip_possible()):
+			fails.append("NP-I cash-shop skip possible")
+		if bench.has_method("try_cash_skip_print"):
+			skip_ok = bool(bench.try_cash_skip_print(999.0))
+		if skip_ok:
+			fails.append("NP-I cash-shop skip printed a module")
+	if cost <= 0.0 and cluster.has_method("print_one_factory_module"):
+		cost = 100.0
+	if cost <= 0.0:
+		fails.append("NP-I print cost is not a rules/15 sink")
+		return
+	var host: Node = traffic.get_parent()
+	if host != null:
+		var ctrl: Node = host.get_node_or_null("BaseCluster/PadBaseController")
+		if ctrl == null:
+			ctrl = host.find_child("PadBaseController", true, false)
+		if ctrl != null:
+			if "extract_rate" in ctrl:
+				harvest0 = float(ctrl.get("extract_rate"))
+			if ctrl.has_method("tier_budget"):
+				var bud: Dictionary = ctrl.tier_budget()
+				print0 = float(bud.get("print_cost", 0.0))
+				hangar0 = float(bud.get("hangar_mass", 0.0))
+	parent = factory.get_parent()
+	if parent != null:
+		parent.remove_child(factory)
+	refused = pilot.print_one_factory_module()
+	if refused != null:
+		fails.append("NP-I printed without a factory")
+		if is_instance_valid(refused):
+			refused.queue_free()
+	if parent != null and factory.get_parent() == null:
+		parent.add_child(factory)
+	if GameManager:
+		wallet0 = float(GameManager.contribution)
+		GameManager.contribution = 0.0
+	cash_mod = pilot.print_one_factory_module("", 50.0)
+	if cash_mod != null:
+		fails.append("NP-I accepted cash instead of Contribution")
+		if is_instance_valid(cash_mod):
+			cash_mod.queue_free()
+	broke = pilot.print_one_factory_module()
+	if broke != null:
+		fails.append("NP-I printed without spend")
+		if is_instance_valid(broke):
+			broke.queue_free()
+	if GameManager:
+		if wallet0 < cost:
+			GameManager.contribution = cost
+		else:
+			GameManager.contribution = wallet0
+		if GameManager.has_method("add_contribution") and GameManager.contribution < cost:
+			GameManager.add_contribution(cost - GameManager.contribution)
+		before = float(GameManager.contribution)
+	mod = pilot.print_one_factory_module()
+	if GameManager:
+		after = float(GameManager.contribution)
+	if mod == null or not is_instance_valid(mod):
+		fails.append("NP-I: NPC spend did not grant a catalog module")
+		print("[Playtest] NP-I factory present but print failed cluster=", cluster.name)
+		return
+	if after > before - cost + 0.001:
+		fails.append("NP-I did not spend Contribution (%s → %s, cost=%s)" % [
+			str(snapped(before, 0.01)), str(snapped(after, 0.01)), str(snapped(cost, 0.01))
+		])
+	pin = str(mod.get_meta("site_pin", "missing"))
+	kind = str(mod.get_meta("module_type", ""))
+	slug = str(mod.get_meta("ledger_slug", ""))
+	print("[Playtest] NP-I spend → one catalog module ", snapped(before, 0.01), " -> ", snapped(after, 0.01),
+		" cost=", snapped(cost, 0.01), " module=", mod.name, " kind=", kind,
+		" factory=", factory.name, " cash_skip=false")
+	if pin != "":
+		fails.append("NP-I module minted site_pin (%s)" % pin)
+	if kind != "habitat" and kind != "extractor":
+		fails.append("NP-I granted an unknown module (%s)" % kind)
+	if kind == "extractor" and slug != "" and slug != "t1_resource_extractor":
+		fails.append("NP-I invented slug (%s)" % slug)
+	if bool(mod.get_meta("player_module", false)):
+		fails.append("NP-I stole the ST-A player_module slot")
+	if bool(mod.get_meta("npc_module", false)):
+		fails.append("NP-I used NP-C habitat hack")
+	if bool(mod.get_meta("printed_module", false)):
+		fails.append("NP-I used bench (a) print")
+	if bool(mod.get_meta("hangar_queued", false)):
+		fails.append("NP-I used hangar (b) queue")
+	if not bool(mod.get_meta("factory_printed", false)):
+		fails.append("NP-I module not marked factory_printed")
+	if mod.get_parent() != cluster:
+		fails.append("NP-I printed module is not in the player cluster")
+	if str(mod.get_meta("site_pin", "")).begins_with("SITE_"):
+		fails.append("NP-I minted SITE_* (%s)" % str(mod.get_meta("site_pin")))
+	again = pilot.print_one_factory_module()
+	if again != null:
+		fails.append("NP-I granted a second catalog module")
+	if LayerContext:
+		pin1 = str(LayerContext.site_pin_id)
+	if pin1 != pin0:
+		fails.append("NP-I changed site_pin (%s → %s)" % [pin0, pin1])
+	if pin1.begins_with("SITE_") and pin1 != "SITE_SPACE_TEST_PAD":
+		fails.append("NP-I minted a new SITE_* (%s)" % pin1)
+	if tree:
+		extras1 = tree.get_nodes_in_group("factory_printed_modules").size()
+	if extras1 != extras0 + 1:
+		fails.append("NP-I want exactly one factory-printed module, got %s (was %s)" % [extras1, extras0])
+	if printed != null and is_instance_valid(printed):
+		if not bool(printed.get_meta("printed_module", false)):
+			fails.append("NP-I broke NP-G printed module")
+		if bool(printed.get_meta("factory_printed", false)):
+			fails.append("NP-I moved NP-G onto factory")
+	elif not _ritual_only:
+		fails.append("NP-I lost NP-G bench print")
+	if queued != null and is_instance_valid(queued):
+		if not bool(queued.get_meta("hangar_queued", false)):
+			fails.append("NP-I broke NP-H hangar module")
+		if bool(queued.get_meta("factory_printed", false)):
+			fails.append("NP-I moved NP-H onto factory")
+	elif not _ritual_only:
+		fails.append("NP-I lost NP-H hangar queue")
+	if host != null:
+		var ctrl1: Node = host.get_node_or_null("BaseCluster/PadBaseController")
+		if ctrl1 == null:
+			ctrl1 = host.find_child("PadBaseController", true, false)
+		if ctrl1 != null:
+			if harvest0 > 0.0 and "extract_rate" in ctrl1 \
+					and absf(float(ctrl1.get("extract_rate")) - harvest0) > 0.0001:
+				fails.append("NP-I changed harvest numbers")
+			if ctrl1.has_method("tier_budget"):
+				var bud1: Dictionary = ctrl1.tier_budget()
+				if print0 > 0.0 and absf(float(bud1.get("print_cost", -1.0)) - print0) > 0.0001:
+					fails.append("NP-I changed print numbers")
+				if hangar0 > 0.0 and absf(float(bud1.get("hangar_mass", -1.0)) - hangar0) > 0.0001:
+					fails.append("NP-I changed hangar numbers")
+	print("[Playtest] NP-I refuse without factory · no cash skip · no SITE_* · NP-G/NP-H intact")
 
 
 func _npc_squad_invite(fails: PackedStringArray) -> void:
