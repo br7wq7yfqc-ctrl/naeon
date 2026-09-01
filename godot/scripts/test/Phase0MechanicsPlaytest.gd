@@ -16597,12 +16597,17 @@ func _assert_bt_a(os: Node, fails: PackedStringArray) -> void:
 	var home: Vector3 = guard.global_position
 	if bt.has_method("home_position"):
 		home = bt.home_position()
-	var away: Vector3 = guard.global_position - host.global_position
+	guard.global_position = home
+	if "velocity" in guard:
+		guard.velocity = Vector3.ZERO
+	if "_pulse_cd" in bt:
+		bt.set("_pulse_cd", 0.0)
+	var away: Vector3 = home - host.global_position
 	away = away - pad_up * away.dot(pad_up)
 	if away.length_squared() < 0.01:
 		away = host.global_transform.basis.x
 	away = away.normalized()
-	## Far walker → patrol (guard at home).
+	## Far walker + guard at home → patrol.
 	walker.global_position = host.global_position + away * 40.0 + pad_up * 2.0
 	if walker.has_method("_relief_snap_fallback"):
 		walker.call("_relief_snap_fallback")
@@ -16635,12 +16640,16 @@ func _assert_bt_a(os: Node, fails: PackedStringArray) -> void:
 		walker.face_world_point(guard.global_position)
 	if SoftScanCache:
 		SoftScanCache.invalidate_player()
+	if "_pulse_cd" in bt:
+		bt.set("_pulse_cd", 0.0)
 	if bt.has_method("tick"):
 		bt.tick(0.1)
 	var st1 := str(bt.bt_state()) if bt.has_method("bt_state") else ""
 	print("[Playtest] BT-A engage state=", st1, " label=", glabel)
 	if st1 != "engage":
 		fails.append("BT-A engage state missing (got %s)" % st1)
+	if "_pulse_cd" in bt:
+		bt.set("_pulse_cd", 0.0)
 	var hp0: float = float(walker.get("health")) if "health" in walker else 100.0
 	var fired := false
 	if traffic.has_method("try_guard_pulse"):
