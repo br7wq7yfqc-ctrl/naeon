@@ -258,20 +258,27 @@ func _nearest_hack_pad(caster: Node) -> Node:
 			best_d = d2
 	return best
 
+func _is_infection_host(node: Node) -> bool:
+	if node == null:
+		return false
+	return node.has_method("apply_infection") or node.has_method("on_hacked") \
+			or node.get_node_or_null("InfectionStatus") != null
+
+
 func _find_hackable(node: Node) -> Node:
 	if node == null:
 		return null
-	if node.has_method("on_hacked"):
+	if _is_infection_host(node):
 		return node
 	for c in node.get_children():
-		if c.has_method("on_hacked"):
+		if _is_infection_host(c):
 			return c
 	var p: Node = node.get_parent()
-	if p and p.has_method("on_hacked"):
+	if p and _is_infection_host(p):
 		return p
 	if p:
 		for c in p.get_children():
-			if c.has_method("on_hacked"):
+			if _is_infection_host(c):
 				return c
 	return null
 
@@ -294,16 +301,32 @@ func _apply_firewall(caster: Node, hint = null) -> void:
 	_spawn_shield_fx(caster, effect_color if effect_color.a > 0.0 else Color(0.2, 1.0, 0.7))
 
 
+func _host_world_pos(host: Node) -> Vector3:
+	if host == null:
+		return Vector3.ZERO
+	if host is Node3D:
+		return (host as Node3D).global_position
+	if host.has_method("hull"):
+		var h: Variant = host.call("hull")
+		if h is Node3D and is_instance_valid(h):
+			return (h as Node3D).global_position
+	var p := host.get_parent()
+	if p is Node3D:
+		return (p as Node3D).global_position
+	return Vector3.ZERO
+
+
 func _usable_infection_host(caster: Node, hint, allow_zero: bool = false) -> Node:
 	if hint == null or not (hint is Node) or not is_instance_valid(hint):
 		return null
 	var host: Node = hint as Node
-	if not host.has_method("apply_infection") and not host.has_method("on_hacked") \
-			and host.get_node_or_null("InfectionStatus") == null:
+	if not _is_infection_host(host):
 		return null
-	if caster is Node3D and host is Node3D:
+	if caster is Node3D:
 		var reach := maxf(range, 18.0)
-		if (caster as Node3D).global_position.distance_to((host as Node3D).global_position) > reach:
+		var dest := _host_world_pos(host)
+		if dest != Vector3.ZERO \
+				and (caster as Node3D).global_position.distance_to(dest) > reach:
 			return null
 	if _same_side(caster, host) and not allow_zero:
 		return null
@@ -316,22 +339,32 @@ func _nearest_infected_host(caster: Node) -> Node:
 	var origin: Vector3 = (caster as Node3D).global_position
 	var best: Node = null
 	var best_d := maxf(range, 18.0)
-	for g in ["hackable", "enemy", "player"]:
+	for g in ["hackable", "enemy", "player", "ship"]:
 		for n in caster.get_tree().get_nodes_in_group(g):
-			if n == null or not is_instance_valid(n) or n == caster or not (n is Node3D):
+			if n == null or not is_instance_valid(n) or n == caster:
 				continue
+			var host: Node = n
+			if not _is_infection_host(host):
+				var pilot: Node = n.get_node_or_null("NpcPilot") if n.has_method("get_node_or_null") else null
+				if pilot != null and _is_infection_host(pilot):
+					host = pilot
+				else:
+					continue
 			var stacks := 0
-			if n.has_method("infection_stacks"):
-				stacks = int(n.infection_stacks())
+			if host.has_method("infection_stacks"):
+				stacks = int(host.infection_stacks())
 			else:
-				var inf: Node = n.get_node_or_null("InfectionStatus")
+				var inf: Node = host.get_node_or_null("InfectionStatus")
 				if inf != null:
 					stacks = int(inf.get("stacks"))
 			if stacks <= 0:
 				continue
-			var d: float = origin.distance_to((n as Node3D).global_position)
+			var dest := _host_world_pos(host)
+			if dest == Vector3.ZERO:
+				continue
+			var d: float = origin.distance_to(dest)
 			if d < best_d:
-				best = n
+				best = host
 				best_d = d
 	return best
 

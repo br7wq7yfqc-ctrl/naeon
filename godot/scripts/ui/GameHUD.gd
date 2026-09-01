@@ -1050,14 +1050,29 @@ func _soft_infection_text(stacks: int) -> String:
 	return _SoftK.infection_label(stacks)
 
 
+func _seated_hull() -> Node:
+	var tree := get_tree()
+	if tree == null:
+		return null
+	var os: Node = tree.get_first_node_in_group("open_space")
+	if os == null or not bool(os.get("_in_ship")):
+		return null
+	var sh: Variant = os.get("ship")
+	return sh if sh is Node and is_instance_valid(sh) else null
+
+
 func _refresh_ability_bar() -> void:
 	if _ability_label == null:
 		return
-	var actor: Node = _alive_player()
+	var actor: Node = _seated_hull()
+	if actor == null:
+		actor = _alive_player()
 	if _ability_sys != null and not is_instance_valid(_ability_sys):
 		_ability_sys = null
-	if _ability_sys == null and actor:
-		_ability_sys = actor.get_node_or_null("AbilitySystem")
+	if actor:
+		var from_actor = actor.get_node_or_null("AbilitySystem")
+		if from_actor != null:
+			_ability_sys = from_actor
 	if _ability_sys == null or not is_instance_valid(_ability_sys):
 		_ability_sys = null
 		_ability_label.text = ""
@@ -1126,7 +1141,9 @@ func _update_channel_hud() -> void:
 	var ratio := 0.0
 	var name := ""
 	var ch: Node = null
-	var actor: Node = _alive_player()
+	var actor: Node = _seated_hull()
+	if actor == null:
+		actor = _alive_player()
 	if actor:
 		ch = actor.get_node_or_null("ChannelController")
 	if _ability_sys != null and not is_instance_valid(_ability_sys):

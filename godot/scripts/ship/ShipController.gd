@@ -120,6 +120,7 @@ func _ready() -> void:
 	_ensure_shield_bubble()
 	_ensure_scan_ring()
 	_ensure_soft_systems()
+	_ensure_ability_kit()
 	attach_module(ShipModule.make_engine())
 	attach_module(ShipModule.make_weapon())
 	attach_module(ShipModule.make_shield())
@@ -253,6 +254,15 @@ func _input(event: InputEvent) -> void:
 		var k: int = event.keycode if event.keycode != KEY_NONE else event.physical_keycode
 		if k == KEY_NONE:
 			k = event.physical_keycode
+		if k == KEY_Q:
+			_try_ability(0)
+			return
+		if k == KEY_E:
+			_try_ability(1)
+			return
+		if k == KEY_R:
+			_try_ability(2)
+			return
 		if k == KEY_C:
 			if is_landed:
 				_claim_nearby_pad()
@@ -1425,6 +1435,10 @@ func apply_faction_modules(fac: String) -> void:
 		attach_module(ShipModule.make_shield("Nex Barrier", 40.0))
 	for m in modules:
 		m.faction_skin = fac
+	_ensure_ability_kit()
+	var ab := get_node_or_null("AbilitySystem")
+	if ab != null and ab.has_method("setup_default_loadout"):
+		ab.setup_default_loadout(faction)
 	print("[Ship] faction modules → ", fac, " count=", modules.size())
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -1988,6 +2002,130 @@ func _tick_hull_ambient(axes: Vector3, _delta: float) -> void:
 		_hull_ambient.call("set_op_mode", op_mode)
 	if _hull_ambient.has_method("set_landed"):
 		_hull_ambient.call("set_landed", is_landed)
+
+
+func _clash_layer() -> bool:
+	return LayerContext != null and str(LayerContext.current_layer) == "Arena"
+
+
+func try_hack(target = null) -> bool:
+	if _clash_layer():
+		return false
+	return _try_kit_kind("hack", target)
+
+
+func try_firewall(target = null) -> bool:
+	if _clash_layer():
+		return false
+	return _try_kit_kind("firewall", target)
+
+
+func _try_kit_kind(kind: String, target = null) -> bool:
+	## HF-B: same AbilityKitCatalog Hack / Firewall as TPS HF-A. No second system.
+	var ab = get_node_or_null("AbilitySystem")
+	if ab == null or not ab.has_method("try_activate") or not ("abilities" in ab):
+		return false
+	var idx := -1
+	var i := 0
+	for a in ab.abilities:
+		if a != null:
+			if kind == "hack" and bool(a.is_hacking) \
+					and int(a.faction_restriction) == Ability.FactionRestriction.GROT_ONLY:
+				idx = i
+				break
+			if kind == "firewall" and bool(a.is_firewall):
+				idx = i
+				break
+		i += 1
+	if idx < 0:
+		return false
+	return bool(ab.try_activate(idx, target))
+
+
+func _try_ability(idx: int) -> void:
+	if not pilot_active or _clash_layer():
+		return
+	var ab = get_node_or_null("AbilitySystem")
+	if ab != null and ab.has_method("try_activate"):
+		ab.try_activate(idx)
+
+
+func _ensure_ability_kit() -> void:
+	## HF-B: reuse AbilitySystem + InfectionStatus on the hull. Not a new kit.
+	if get_node_or_null("InfectionStatus") == null:
+		var inf := Node.new()
+		inf.set_script(preload("res://scripts/abilities/InfectionStatus.gd"))
+		inf.name = "InfectionStatus"
+		add_child(inf)
+	if get_node_or_null("AbilitySystem") != null:
+		return
+	var ab := Node.new()
+	ab.set_script(preload("res://scripts/abilities/AbilitySystem.gd"))
+	ab.name = "AbilitySystem"
+	add_child(ab)
+	if ab.has_method("setup_default_loadout"):
+		ab.setup_default_loadout(faction)
+
+
+func infection_stacks() -> int:
+	var forwarded := _visitor_infection_host()
+	if forwarded != null and forwarded.has_method("infection_stacks") and forwarded != self:
+		return int(forwarded.infection_stacks())
+	var inf := get_node_or_null("InfectionStatus")
+	return int(inf.stacks) if inf != null else 0
+
+
+func infection_cap() -> int:
+	return 5
+
+
+## HF-B: +1 Infection on this hull (or seated NpcPilot). Cap 5 named refuse.
+func apply_infection(_n: int = 1) -> String:
+	var forwarded := _visitor_infection_host()
+	if forwarded != null and forwarded.has_method("apply_infection") and forwarded != self:
+		return str(forwarded.apply_infection(_n))
+	_ensure_ability_kit()
+	var inf := get_node_or_null("InfectionStatus")
+	if inf == null:
+		return "No InfectionStatus"
+	if inf.has_method("try_add_one"):
+		return str(inf.try_add_one())
+	if infection_stacks() >= infection_cap():
+		return "Infection cap 5"
+	if inf.has_method("add_stacks"):
+		inf.add_stacks(1)
+	return ""
+
+
+## HF-B: Firewall −1. Never below 0. No cash-shop cleanse.
+func purge_infection(_n: int = 1) -> int:
+	var forwarded := _visitor_infection_host()
+	if forwarded != null and forwarded.has_method("purge_infection") and forwarded != self:
+		return int(forwarded.purge_infection(_n))
+	var inf := get_node_or_null("InfectionStatus")
+	if inf != null:
+		if inf.has_method("remove_one"):
+			inf.remove_one()
+		elif inf.has_method("remove_stacks"):
+			inf.remove_stacks(1)
+	return infection_stacks()
+
+
+func try_cash_cleanse(_paid: float = 0.0) -> bool:
+	var forwarded := _visitor_infection_host()
+	if forwarded != null and forwarded.has_method("try_cash_cleanse") and forwarded != self:
+		return bool(forwarded.try_cash_cleanse(_paid))
+	var inf := get_node_or_null("InfectionStatus")
+	if inf != null and inf.has_method("try_cash_cleanse"):
+		return bool(inf.try_cash_cleanse(_paid))
+	return false
+
+
+func _visitor_infection_host() -> Node:
+	var pilot := get_node_or_null("NpcPilot")
+	if pilot != null and pilot.has_method("apply_infection"):
+		return pilot
+	return null
 
 
 func get_energy() -> float:
