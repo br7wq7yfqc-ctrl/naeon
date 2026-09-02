@@ -7,11 +7,13 @@ class_name CrewSoftNet
 const VIEWER_NAME := "CrewSoftViewer"
 const PUPPET_NAME := "CrewSeatPuppet"
 const ENGINEER_PUPPET := "EngineerSeatPuppet"
+const SCANNER_PUPPET := "ScannerSeatPuppet"
 
 var _director: Node = null
 var _viewer: Node3D = null
 var _puppet: Node3D = null
 var _eng_puppet: Node3D = null
+var _scan_puppet: Node3D = null
 var _pose: Dictionary = {}
 
 
@@ -27,6 +29,7 @@ func _ready() -> void:
 	_ensure_viewer()
 	_ensure_puppet()
 	_ensure_engineer_puppet()
+	_ensure_scanner_puppet()
 	sync_from_host()
 
 
@@ -37,6 +40,7 @@ func bind_director(d: Node) -> void:
 	_ensure_viewer()
 	_ensure_puppet()
 	_ensure_engineer_puppet()
+	_ensure_scanner_puppet()
 	sync_from_host()
 
 
@@ -53,6 +57,11 @@ func crew_puppet() -> Node3D:
 func engineer_puppet() -> Node3D:
 	_ensure_engineer_puppet()
 	return _eng_puppet if _eng_puppet != null and is_instance_valid(_eng_puppet) else null
+
+
+func scanner_puppet() -> Node3D:
+	_ensure_scanner_puppet()
+	return _scan_puppet if _scan_puppet != null and is_instance_valid(_scan_puppet) else null
 
 
 func hull_authority() -> String:
@@ -90,18 +99,22 @@ func sync_from_host() -> void:
 	_ensure_viewer()
 	_ensure_puppet()
 	_ensure_engineer_puppet()
+	_ensure_scanner_puppet()
 	var seat: Node3D = _crew_seat()
 	var eng: Node3D = _engineer_seat()
+	var scan: Node3D = _scanner_seat()
 	var host_in_gunner := false
 	var host_in_engineer := false
+	var host_in_scanner := false
 	if _director != null and is_instance_valid(_director):
 		if _director.has_method("is_seated") and _director.has_method("get_seat_role"):
 			var seated := bool(_director.is_seated()) and str(_director.get_seat_role()) == "crew"
 			var named := ""
 			if _director.has_method("boarded_station_role"):
 				named = str(_director.boarded_station_role())
-			host_in_gunner = seated and named != "engineer"
+			host_in_gunner = seated and named != "engineer" and named != "scanner"
 			host_in_engineer = seated and named == "engineer"
+			host_in_scanner = seated and named == "scanner"
 	if _puppet != null and is_instance_valid(_puppet):
 		if seat != null:
 			_puppet.global_position = seat.global_position + Vector3(0.0, 1.05, 0.0)
@@ -110,10 +123,15 @@ func sync_from_host() -> void:
 		if eng != null:
 			_eng_puppet.global_position = eng.global_position + Vector3(0.0, 1.05, 0.0)
 		_eng_puppet.visible = not host_in_engineer
+	if _scan_puppet != null and is_instance_valid(_scan_puppet):
+		if scan != null:
+			_scan_puppet.global_position = scan.global_position + Vector3(0.0, 1.05, 0.0)
+		_scan_puppet.visible = not host_in_scanner
 	_pose = {
 		"seat_role": "crew",
 		"station_role": "gunner",
 		"engineer_role": "engineer",
+		"scanner_role": "scanner",
 		"puppet_in_seat": puppet_in_seat(),
 		"authority": "host",
 		"second_hull": false,
@@ -142,7 +160,17 @@ func _engineer_seat() -> Node3D:
 	var n: Node = pocket.get_node_or_null("EngineerSeat")
 	if n is Node3D:
 		return n as Node3D
-	n = pocket.get_node_or_null("EngineerSeatVolume")
+	return null
+
+
+func _scanner_seat() -> Node3D:
+	var pocket: Node = get_parent()
+	if pocket == null or not is_instance_valid(pocket):
+		return null
+	var n: Node = pocket.get_node_or_null("ScannerSeat")
+	if n is Node3D:
+		return n as Node3D
+	n = pocket.get_node_or_null("ScannerSeatVolume")
 	if n is Node3D:
 		return n as Node3D
 	return null
@@ -273,6 +301,48 @@ func _ensure_engineer_puppet() -> void:
 		SoftNetSession.bind_visual_puppet(_eng_puppet)
 
 
+func _ensure_scanner_puppet() -> void:
+	if _scan_puppet != null and is_instance_valid(_scan_puppet):
+		return
+	var existing: Node = get_node_or_null(SCANNER_PUPPET)
+	if existing is Node3D:
+		_scan_puppet = existing as Node3D
+		_tag_visual(_scan_puppet, "scanner_seat_puppet")
+		return
+	_scan_puppet = Node3D.new()
+	_scan_puppet.name = SCANNER_PUPPET
+	_tag_visual(_scan_puppet, "scanner_seat_puppet")
+	_scan_puppet.set_meta("site_pin", "")
+	_scan_puppet.set_meta("passenger_combat", false)
+	add_child(_scan_puppet)
+	if DisplayServer.get_name() != "headless":
+		var body := MeshInstance3D.new()
+		var cap := CapsuleMesh.new()
+		cap.radius = 0.3
+		cap.height = 1.1
+		body.mesh = cap
+		body.position.y = 0.85
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(0.55, 0.7, 1.0, 0.28)
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.emission_enabled = true
+		mat.emission = Color(0.35, 0.55, 0.95)
+		mat.emission_energy_multiplier = 0.85
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		body.material_override = mat
+		_scan_puppet.add_child(body)
+		var lab := Label3D.new()
+		lab.name = "PuppetLabel"
+		lab.text = "SCANNER PUPPET (soft net)"
+		lab.font_size = 18
+		lab.modulate = Color(0.75, 0.85, 1.0, 0.75)
+		lab.position = Vector3(0, 2.0, 0)
+		lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		_scan_puppet.add_child(lab)
+	if SoftNetSession and SoftNetSession.has_method("bind_visual_puppet"):
+		SoftNetSession.bind_visual_puppet(_scan_puppet)
+
+
 func _tag_visual(n: Node3D, kind: String) -> void:
 	n.set_meta("softnet_visual", true)
 	n.set_meta("combat_authority", "host")
@@ -292,3 +362,5 @@ func _bind_soft_visuals() -> void:
 			SoftNetSession.bind_visual_puppet(_puppet)
 		if _eng_puppet != null and is_instance_valid(_eng_puppet) and _eng_puppet.visible:
 			SoftNetSession.bind_visual_puppet(_eng_puppet)
+		if _scan_puppet != null and is_instance_valid(_scan_puppet) and _scan_puppet.visible:
+			SoftNetSession.bind_visual_puppet(_scan_puppet)

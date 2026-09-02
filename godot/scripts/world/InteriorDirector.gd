@@ -109,6 +109,17 @@ func engineer_station_role() -> String:
 	return "engineer"
 
 
+func scanner_station_role() -> String:
+	## MC-D: named station on the scanner seat. F/I role stays crew.
+	if _active != null and is_instance_valid(_active):
+		var seat: Node = _active.get_node_or_null("ScannerSeat")
+		if seat != null:
+			var named := str(seat.get_meta("station_role", "scanner"))
+			if named != "":
+				return named
+	return "scanner"
+
+
 func boarded_station_role() -> String:
 	if _boarded_legal != null and is_instance_valid(_boarded_legal):
 		return str(_boarded_legal.get_meta("station_role", ""))
@@ -130,7 +141,7 @@ func crew_occupancy() -> Dictionary:
 	elif _crew_net != null and is_instance_valid(_crew_net) and _crew_net.has_method("puppet_in_seat"):
 		if bool(_crew_net.puppet_in_seat()):
 			crew = 1
-	var total := mini(pilot + crew, 3)
+	var total := mini(pilot + crew, 4)
 	var role := crew_station_role()
 	if _inside and _seated and _seat_role == "crew" and _boarded_legal != null and is_instance_valid(_boarded_legal):
 		var named := str(_boarded_legal.get_meta("station_role", ""))
@@ -140,7 +151,7 @@ func crew_occupancy() -> Dictionary:
 		"pilot": pilot,
 		"crew": crew,
 		"total": total,
-		"max": 3,
+		"max": 4,
 		"role": role,
 	}
 
@@ -150,7 +161,7 @@ func crew_hud_line() -> String:
 	return "%s %d/%d · %s" % [
 		_SoftK.crew_label(),
 		int(o.get("total", 0)),
-		int(o.get("max", 3)),
+		int(o.get("max", 4)),
 		_SoftK.crew_role_label(str(o.get("role", "gunner"))),
 	]
 
@@ -771,7 +782,7 @@ func _nearest_ship_board(player: Node3D, max_dist: float) -> String:
 		var n: Node = _active.get_node_or_null(nm)
 		if n is Node3D:
 			d_pilot = minf(d_pilot, player.global_position.distance_to((n as Node3D).global_position))
-	for nm2 in ["CrewSeat", "CrewSeatVolume", "EngineerSeat", "EngineerSeatVolume"]:
+	for nm2 in ["CrewSeat", "CrewSeatVolume", "EngineerSeat", "EngineerSeatVolume", "ScannerSeat", "ScannerSeatVolume"]:
 		var n2: Node = _active.get_node_or_null(nm2)
 		if n2 is Node3D:
 			d_crew = minf(d_crew, player.global_position.distance_to((n2 as Node3D).global_position))
@@ -810,12 +821,15 @@ func _nearest_ship_crew_seat() -> Node3D:
 		var eng: Node = _active.get_node_or_null("EngineerSeat")
 		if eng is Node3D:
 			return eng as Node3D
+		var scan: Node = _active.get_node_or_null("ScannerSeat")
+		if scan is Node3D:
+			return scan as Node3D
 		return null
 	var best: Node3D = null
 	var best_d := 9999.0
 	var n: Node = null
 	var d := 0.0
-	for nm in ["CrewSeat", "CrewSeatVolume", "EngineerSeat", "EngineerSeatVolume"]:
+	for nm in ["CrewSeat", "CrewSeatVolume", "EngineerSeat", "EngineerSeatVolume", "ScannerSeat", "ScannerSeatVolume"]:
 		n = _active.get_node_or_null(nm)
 		if n is Node3D:
 			d = who.global_position.distance_to((n as Node3D).global_position)
@@ -1070,13 +1084,18 @@ func _process(delta: float) -> void:
 	var sn: Node = null
 	var role_id := ""
 	var named := ""
-	for lnm in ["OpsSeatLabel", "HangarSeatLabel", "CrewSeatLabel", "EngineerSeatLabel"]:
+	for lnm in ["OpsSeatLabel", "HangarSeatLabel", "CrewSeatLabel", "EngineerSeatLabel", "ScannerSeatLabel"]:
 		sl = _active.get_node_or_null(lnm)
 		if sl is Label3D:
 			this_near = near_legal
 			this_seated = _seated
-			if lnm == "CrewSeatLabel" or lnm == "EngineerSeatLabel":
-				marker = "CrewSeat" if lnm == "CrewSeatLabel" else "EngineerSeat"
+			if lnm == "CrewSeatLabel" or lnm == "EngineerSeatLabel" or lnm == "ScannerSeatLabel":
+				if lnm == "CrewSeatLabel":
+					marker = "CrewSeat"
+				elif lnm == "EngineerSeatLabel":
+					marker = "EngineerSeat"
+				else:
+					marker = "ScannerSeat"
 				sn = _active.get_node_or_null(marker)
 				this_near = false
 				this_seated = false
@@ -1090,7 +1109,12 @@ func _process(delta: float) -> void:
 			elif lnm == "HangarSeatLabel":
 				(sl as Label3D).text = "CARRIER PILOT · I" if _seated else ("CARRIER PILOT · F" if near_legal else "CARRIER PILOT")
 			else:
-				role_id = "gunner" if lnm == "CrewSeatLabel" else "engineer"
+				if lnm == "CrewSeatLabel":
+					role_id = "gunner"
+				elif lnm == "EngineerSeatLabel":
+					role_id = "engineer"
+				else:
+					role_id = "scanner"
 				named = _SoftK.crew_role_label(role_id)
 				if this_seated:
 					(sl as Label3D).text = "CREW SEAT · %s · I" % named
@@ -1490,10 +1514,12 @@ func _clear_crew_softnet() -> void:
 func _set_crew_occupied(on: bool) -> void:
 	if _active == null or not is_instance_valid(_active):
 		return
-	var names: Array = ["CrewSeatOccupied", "EngineerSeatOccupied"]
+	var names: Array = ["CrewSeatOccupied", "EngineerSeatOccupied", "ScannerSeatOccupied"]
 	var want := ""
 	if on and _boarded_legal != null and is_instance_valid(_boarded_legal):
-		if str(_boarded_legal.name).begins_with("Engineer"):
+		if str(_boarded_legal.name).begins_with("Scanner"):
+			want = "ScannerSeatOccupied"
+		elif str(_boarded_legal.name).begins_with("Engineer"):
 			want = "EngineerSeatOccupied"
 		else:
 			want = "CrewSeatOccupied"

@@ -15,6 +15,7 @@
 - HUD `CREW n/3` is a label only. Knowledge does not change thrust / DPS / yield.
 - **MC-B:** station role `gunner` is a SoftKnowledge / HUD label (`GUNNER`). Does not change Pulse / Hack / DPS / thrust / yield or unlock exclusive modules. F/I role stays `crew`.
 - **MC-C:** third legal seat `EngineerSeat` (`engineer_seat` offset). Station role `engineer` is a SoftKnowledge / HUD label (`ENGINEER`). HUD `CREW n/3`. Gunner seat stays. F/I role stays `crew`. Pilot F/I unchanged.
+- **MC-D:** fourth legal seat `ScannerSeat` (`scanner_seat` offset). Station role `scanner` is a SoftKnowledge / HUD label (`SCANNER`). HUD `CREW n/4`. Gunner + engineer stay. F/I role stays `crew`. Pilot F/I unchanged.
 - Optional SoftNet visual puppet when a second local viewer exists. Host authority. No second hull. No passenger combat.
 
 ## EVA
