@@ -1,6 +1,6 @@
 extends RefCounted
 class_name ShipInteriorProfiles
-## Catalog of interior room graphs per hull — pilot + MC-A gunner + MC-C engineer.
+## Catalog of interior room graphs per hull — pilot + MC-A gunner + MC-C engineer + MC-D ops.
 
 static func profile(id: String) -> Dictionary:
 	match id:
@@ -20,6 +20,7 @@ static func profile(id: String) -> Dictionary:
 				"seat": Vector3(0, 1.0, 0.5),
 				"crew_seat": Vector3(-1.4, 1.0, 1.85),
 				"engineer_seat": Vector3(1.4, 1.0, 1.85),
+				"ops_seat": Vector3(0.0, 1.0, 2.55),
 				"hatch": Vector3(0, 1.2, 16.5),
 			}
 		"hauler_cargo":
@@ -38,6 +39,7 @@ static func profile(id: String) -> Dictionary:
 				"seat": Vector3(0, 1.0, 0.5),
 				"crew_seat": Vector3(-1.5, 1.0, 1.9),
 				"engineer_seat": Vector3(1.5, 1.0, 1.9),
+				"ops_seat": Vector3(0.0, 1.0, 2.6),
 				"hatch": Vector3(0, 1.2, 23.5),
 			}
 		_:
@@ -55,6 +57,7 @@ static func profile(id: String) -> Dictionary:
 				"seat": Vector3(0, 0.95, 0.4),
 				"crew_seat": Vector3(-1.35, 0.95, 1.7),
 				"engineer_seat": Vector3(1.35, 0.95, 1.7),
+				"ops_seat": Vector3(0.0, 0.95, 2.35),
 				"hatch": Vector3(0, 1.1, 7.2),
 			}
 

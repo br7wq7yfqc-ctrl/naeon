@@ -1,3 +1,5 @@
+**2026-09-02 — MC-D: fourth crew seat OPS (SoftKnowledge / HUD label; CREW n/4; engineer stays; Pulse/Hack/thrust stay; host authority)**
+
 **2026-09-02 — SN-B: second local viewer seated on the player hull / OpenSpace sees SoftNet visual hull/pilot puppet (host Pulse/occupy/thrust; no second hull; SN-A stays; G5 closed)**
 
 **2026-09-02 — FL-A: first fleet seed — one extra allied pip on ST-A Strategy overlay (existing NP-A visitor; cap 2; FLEET 2/2 SoftKnowledge; host Pulse/occupy; click ≠ combat)**

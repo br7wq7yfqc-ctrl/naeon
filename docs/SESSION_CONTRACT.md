@@ -96,6 +96,12 @@
     + rank number. BR-A Biomass Rank stays (gROT). Rank does not
     change harvest / Pulse / Hack / print / exclusive modules.
     Infection cap 5. No P2W. No SITE_* (this pass).
+33. MC-D: one extra crew seat on the existing player ship pocket
+    (fourth seat). station_role ops is SoftKnowledge / HUD OPS.
+    HUD CREW n/4. F boards crew; I returns to the same ship_int.
+    Pilot F/I unchanged. MC-C engineer seat stays. Host authority.
+    Knowledge does not change thrust / DPS / yield / Pulse / Hack.
+    No second hull. Not Clash. No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

@@ -11,6 +11,7 @@
 - **SN-B:** same tag on seated hull viewer + host hull / pilot puppet (or crew-seat pose) on OpenSpace. Host keeps Pulse / occupy / thrust. No second physical hull. Not ENet cluster.
 - **MC-B:** same puppet. Station role `gunner` is a SoftKnowledge / HUD label. Host keeps combat. No passenger DPS.
 - **MC-C:** engineer puppet on the third seat. Station role `engineer` is a SoftKnowledge / HUD label. Host keeps combat. No passenger DPS.
+- **MC-D:** ops puppet on the fourth seat. Station role `ops` is a SoftKnowledge / HUD label. Host keeps combat. No passenger DPS. SN-B hull viewer stays.
 - **PV-A:** same tag on the pad rival `CombatDummy` + optional viewer. Host keeps Pulse combat. Not Clash. G5 stays closed.
 - **PV-B:** same tag / same rival. Seated hull Pulse is host-authority. SoftNet visual bind only. Not Clash. G5 stays closed.
 

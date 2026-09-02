@@ -227,7 +227,7 @@ LayerContext persists: `actor_mode`, `op_mode`, `interior_id`.
 
 - EVA hard oxygen fail vs soft-only? **Default soft**  
 - Siege in all flight modes vs NAV-only? **Default all except DOCK**  
-- Multi-crew seats: **MC-A + MC-B + MC-C built** (gunner + engineer seats on the player hull pocket; labels only)  
+- Multi-crew seats: **MC-A + MC-B + MC-C + MC-D built** (gunner + engineer + ops seats on the player hull pocket; labels only)  
 
 ---
 

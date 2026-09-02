@@ -8,13 +8,14 @@
 - I from pilot leaves the seat **into the pocket** (no exterior hop)
 - I at airlock/hatch leaves to EVA (zero-G if not landed) or the pad. Doors lead to pocket or EVA — never a locked prop.
 
-## Crew seat [F] (MC-A + MC-B)
+## Crew seat [F] (MC-A + MC-B + MC-C + MC-D)
 - Same ship_int pocket. Nearer-seat wins: `CrewSeat` is not the pilot `Seat`.
 - **F** boards (`try_board_legal_seat` role=`crew`). Walker stays. Occupied marker visible.
 - **I** / **F** while seated returns to the same pocket (IN-B pattern). No exterior hop.
-- HUD `CREW n/3` is a label only. Knowledge does not change thrust / DPS / yield.
+- HUD `CREW n/4` is a label only. Knowledge does not change thrust / DPS / yield.
 - **MC-B:** station role `gunner` is a SoftKnowledge / HUD label (`GUNNER`). Does not change Pulse / Hack / DPS / thrust / yield or unlock exclusive modules. F/I role stays `crew`.
-- **MC-C:** third legal seat `EngineerSeat` (`engineer_seat` offset). Station role `engineer` is a SoftKnowledge / HUD label (`ENGINEER`). HUD `CREW n/3`. Gunner seat stays. F/I role stays `crew`. Pilot F/I unchanged.
+- **MC-C:** third legal seat `EngineerSeat` (`engineer_seat` offset). Station role `engineer` is a SoftKnowledge / HUD label (`ENGINEER`). Gunner seat stays. F/I role stays `crew`. Pilot F/I unchanged.
+- **MC-D:** fourth legal seat `OpsCrewSeat` (`ops_seat` offset). Station role `ops` is a SoftKnowledge / HUD label (`OPS`). HUD `CREW n/4`. Engineer seat stays. F/I role stays `crew`. Pilot F/I unchanged.
 - Optional SoftNet visual puppet when a second local viewer exists. Host authority. No second hull. No passenger combat.
 
 ## EVA
