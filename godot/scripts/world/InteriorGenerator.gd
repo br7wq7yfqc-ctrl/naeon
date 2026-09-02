@@ -199,6 +199,7 @@ static func build_ship(faction: String = "Cybernex") -> Node3D:
 	_attach_ambient(root, "ship", neon)
 	_ensure_seat_markers(root)
 	_ensure_crew_seat(root, Vector3(-1.4, 0.2, 1.0), neon)
+	_ensure_engineer_seat(root, Vector3(1.4, 0.2, 1.0), neon)
 	_link_ship_rooms(root, [
 		{"pos": Vector3(0, 0, 0), "size": Vector3(5, 2.8, 8)},
 		{"pos": Vector3(0, 0, 8), "size": Vector3(4, 2.6, 6)},
@@ -391,6 +392,7 @@ static func build_from_profile(profile_id: String, faction: String = "Cybernex")
 		_try_glb(root, rel, pr["pos"], float(pr.get("s", 1.0)))
 	var seat_pos: Vector3 = prof.get("seat", Vector3(0, 1, 0))
 	var crew_pos: Vector3 = prof.get("crew_seat", seat_pos + Vector3(-1.35, 0.0, 1.3))
+	var eng_pos: Vector3 = prof.get("engineer_seat", seat_pos + Vector3(1.35, 0.0, 1.3))
 	var hatch_pos: Vector3 = prof.get("hatch", Vector3(0, 1, 6))
 	var seat := Marker3D.new()
 	seat.name = "Seat"
@@ -438,6 +440,7 @@ static func build_from_profile(profile_id: String, faction: String = "Cybernex")
 	_hatch_arch(root, hatch_pos, neon)
 	_seat_glow(root, seat_pos, neon)
 	_ensure_crew_seat(root, crew_pos, neon)
+	_ensure_engineer_seat(root, eng_pos, neon)
 	_interior_point_lights(root, neon)
 	_add_neon_strips(root, faction)
 	_attach_ambient(root, "ship", neon)
@@ -623,6 +626,80 @@ static func _stamp_crew_gunner(root: Node3D) -> void:
 	var lab: Node = root.get_node_or_null("CrewSeatLabel")
 	if lab is Label3D and str((lab as Label3D).text).find("GUNNER") < 0:
 		(lab as Label3D).text = "CREW SEAT · GUNNER"
+
+
+static func _ensure_engineer_seat(root: Node3D, pos: Vector3, neon: Color) -> void:
+	## MC-C: third legal seat in the ship pocket. Distinct offset from CrewSeat.
+	## station_role engineer is a SoftKnowledge / HUD name. F/I role stays crew.
+	if root == null:
+		return
+	if root.get_node_or_null("EngineerSeat") == null:
+		_legal_seat(root, pos, neon, "EngineerSeat", "EngineerSeatVolume", "EngineerSeatLabel", "CREW SEAT · ENGINEER", "crew")
+	var occ: Node = root.get_node_or_null("EngineerSeatOccupied")
+	if occ == null:
+		occ = Marker3D.new()
+		occ.name = "EngineerSeatOccupied"
+		(occ as Node3D).position = pos + Vector3(0.0, 1.1, 0.0)
+		occ.set_meta("occupied", false)
+		occ.set_meta("legal_seat", true)
+		occ.visible = false
+		root.add_child(occ)
+	_stamp_crew_engineer(root)
+	if DisplayServer.get_name() == "headless":
+		return
+	if root.get_node_or_null("EngineerSeatPillar") != null:
+		return
+	var pillar := MeshInstance3D.new()
+	pillar.name = "EngineerSeatPillar"
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.07
+	cyl.bottom_radius = 0.1
+	cyl.height = 1.6
+	pillar.mesh = cyl
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = neon.lerp(Color(0.35, 0.95, 0.55), 0.4)
+	mat.emission_enabled = true
+	mat.emission = neon
+	mat.emission_energy_multiplier = 1.8
+	pillar.material_override = mat
+	pillar.position = pos + Vector3(0, 0.8, 0)
+	pillar.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(pillar)
+	var ring := MeshInstance3D.new()
+	ring.name = "EngineerSeatRing"
+	var tm := TorusMesh.new()
+	tm.inner_radius = 0.45
+	tm.outer_radius = 0.62
+	tm.rings = 6
+	tm.ring_segments = 14
+	ring.mesh = tm
+	var rm := StandardMaterial3D.new()
+	rm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	rm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	rm.albedo_color = Color(neon.r, neon.g, neon.b, 0.5)
+	rm.emission_enabled = true
+	rm.emission = neon
+	rm.emission_energy_multiplier = 1.5
+	ring.material_override = rm
+	ring.position = pos + Vector3(0, 0.05, 0)
+	ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(ring)
+
+
+static func _stamp_crew_engineer(root: Node3D) -> void:
+	## MC-C: station_role is a SoftKnowledge / HUD name. Does not change F/I.
+	if root == null:
+		return
+	for nm in ["EngineerSeat", "EngineerSeatVolume", "EngineerSeatOccupied"]:
+		var n: Node = root.get_node_or_null(nm)
+		if n == null:
+			continue
+		n.set_meta("station_role", "engineer")
+		n.set_meta("crew_role", "engineer")
+	var lab: Node = root.get_node_or_null("EngineerSeatLabel")
+	if lab is Label3D and str((lab as Label3D).text).find("ENGINEER") < 0:
+		(lab as Label3D).text = "CREW SEAT · ENGINEER"
 
 
 static func _legal_seat(root: Node3D, pos: Vector3, neon: Color, seat_name: String, vol_name: String, label_name: String, label: String, role: String) -> void:

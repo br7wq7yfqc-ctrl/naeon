@@ -80,6 +80,12 @@
     Not ST-D carrier hangar. Hatch/LAND stay on the pad (same
     OpenSpace, not MainMenu). Overlay B stays. ST-A/B/H/I stay.
     Knowledge labels only. No rover. No SITE_* (this pass).
+30. MC-C: one extra crew seat on the existing player ship pocket
+    (third seat). station_role engineer is SoftKnowledge / HUD ENGINEER.
+    HUD CREW n/3. F boards crew; I returns to the same ship_int.
+    Pilot F/I unchanged. MC-A gunner seat stays. Host authority.
+    Knowledge does not change thrust / DPS / yield / Pulse / Hack.
+    No second hull. Not Clash. No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.
