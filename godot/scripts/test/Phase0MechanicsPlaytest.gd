@@ -66,6 +66,7 @@ func _go() -> void:
 		_assert_kr_a(os, fails)
 		_assert_cr_a(os, fails)
 		await _assert_fl_a(os, fails)
+		await _assert_sn_b(os, fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
 
@@ -670,6 +671,7 @@ func _go() -> void:
 	_assert_kr_a(os, fails)
 	_assert_cr_a(os, fails)
 	await _assert_fl_a(os, fails)
+	await _assert_sn_b(os, fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
@@ -19450,6 +19452,171 @@ func _assert_sn_a(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] SN-A no SITE_*")
 	print("[Playtest] SN-A G5 closed")
 	print("[Playtest] SN-A walker puppet on occupied pad · host Pulse/occupy · no second walker · G5 closed · no SITE_*")
+
+
+func _assert_sn_b(os: Node, fails: PackedStringArray) -> void:
+	## SN-B: second local viewer seated on the player hull / OpenSpace sees a
+	## SoftNet visual puppet of the host hull / pilot (or crew-seat pose).
+	## No second physical hull. Host Pulse / occupy / thrust. SN-A stays.
+	## G5 closed. No SITE_*.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var soft: Node = null
+	var pad_soft: Node = null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var walker: Node3D = os.get("player") as Node3D if os else null
+	var viewer: Node3D = null
+	var puppet: Node3D = null
+	var pose: Dictionary = {}
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	if P0 == null or not bool(P0.SN_B_HULL):
+		fails.append("SN-B P0Slice flag missing")
+		return
+	if P0 == null or not bool(P0.SN_A_PAD):
+		fails.append("SN-B dropped SN-A P0Slice flag")
+		return
+	if os == null:
+		fails.append("SN-B no OpenSpace")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("SN-B must not run on TestArena")
+		return
+	if os.has_method("hull_softnet"):
+		soft = os.hull_softnet()
+	if soft == null and os.has_method("get_hull_softnet"):
+		soft = os.get_hull_softnet()
+	if soft == null:
+		soft = os.get_node_or_null("HullSoftNet")
+	if soft == null:
+		fails.append("SN-B HullSoftNet missing")
+		return
+	if soft.has_meta("site_pin") and str(soft.get_meta("site_pin")).begins_with("SITE_"):
+		fails.append("SN-B HullSoftNet minted SITE_*")
+		return
+	if soft.has_method("is_g5_closed") and not bool(soft.is_g5_closed()):
+		fails.append("SN-B G5 Clash-from-world is open")
+		return
+	if ship == null or not is_instance_valid(ship):
+		fails.append("SN-B no ship")
+		return
+	if not bool(os.get("_in_ship")):
+		if (walker == null or not is_instance_valid(walker)) and os.has_method("_spawn_player_near_ship"):
+			os.call("_spawn_player_near_ship")
+			await get_tree().create_timer(0.2).timeout
+			walker = os.get("player") as Node3D
+		if walker != null and is_instance_valid(walker):
+			walker.global_position = ship.global_position + Vector3(0.0, 2.0, 0.0)
+			if os.has_method("try_enter_ship"):
+				os.try_enter_ship()
+			await get_tree().create_timer(0.25).timeout
+	if not bool(os.get("_in_ship")):
+		os.set("_in_ship", true)
+		os.set("_eva_mode", false)
+		if ship.has_method("set_pilot_active"):
+			ship.set_pilot_active(true)
+		if LayerContext:
+			LayerContext.set_layer("Space")
+	if not bool(os.get("_in_ship")):
+		fails.append("SN-B hull is not seated")
+		return
+	var phys0 := int(soft.physical_hull_count()) if soft.has_method("physical_hull_count") else 0
+	if soft.has_method("bind"):
+		soft.bind(os)
+	if soft.has_method("sync_from_host"):
+		soft.sync_from_host()
+	await get_tree().process_frame
+	if soft.has_method("is_host_authority") and not bool(soft.is_host_authority()):
+		fails.append("SN-B SoftNet stole host authority")
+	if soft.has_method("combat_authority") and str(soft.combat_authority()) != "host":
+		fails.append("SN-B SoftNet combat authority left host")
+	if soft.has_method("occupy_authority") and str(soft.occupy_authority()) != "host":
+		fails.append("SN-B SoftNet occupy authority left host")
+	if soft.has_method("thrust_authority") and str(soft.thrust_authority()) != "host":
+		fails.append("SN-B SoftNet thrust authority left host")
+	if SoftNetSession and SoftNetSession.has_method("combat_authority") and str(SoftNetSession.combat_authority()) != "host":
+		fails.append("SN-B SoftNet combat authority left host")
+	if SoftNetSession and SoftNetSession.get("enabled") == true:
+		fails.append("SN-B enabled SoftNet 20Hz loop")
+	viewer = soft.viewer() if soft.has_method("viewer") else null
+	puppet = soft.hull_puppet() if soft.has_method("hull_puppet") else null
+	pose = soft.observed_pose() if soft.has_method("observed_pose") else {}
+	if viewer == null or not is_instance_valid(viewer):
+		fails.append("SN-B second local viewer missing")
+	elif not bool(viewer.get_meta("softnet_visual", false)):
+		fails.append("SN-B viewer is not a SoftNet visual puppet")
+	if puppet == null or not is_instance_valid(puppet) or not puppet.visible:
+		fails.append("SN-B hull puppet missing")
+	elif not bool(puppet.get_meta("softnet_visual", false)):
+		fails.append("SN-B hull puppet is not SoftNet visual")
+	if puppet != null and puppet.is_in_group("ship") and puppet is CharacterBody3D:
+		fails.append("SN-B hull puppet joined physical ship")
+	if puppet is CharacterBody3D:
+		fails.append("SN-B hull puppet is a physical hull")
+	if puppet != null and puppet.has_method("try_pulse"):
+		fails.append("SN-B hull puppet has combat Pulse")
+	if puppet != null and puppet.has_method("claim"):
+		fails.append("SN-B hull puppet has occupy claim")
+	if str(pose.get("authority", "")) != "host":
+		fails.append("SN-B SoftNet pose authority left host")
+	if str(pose.get("occupy_authority", "")) != "host":
+		fails.append("SN-B SoftNet pose occupy left host")
+	if str(pose.get("thrust_authority", "")) != "host":
+		fails.append("SN-B SoftNet pose thrust left host")
+	var mode := str(pose.get("hull_mode", ""))
+	if mode != "seated" and mode != "hull":
+		fails.append("SN-B viewer missed hull puppet (mode=%s)" % mode)
+	if soft.has_method("viewer_sees_hull_puppet") and not bool(soft.viewer_sees_hull_puppet()):
+		fails.append("SN-B second actor does not see hull puppet")
+	var host_h: Node3D = soft.host_hull() if soft.has_method("host_hull") else ship
+	if host_h != ship:
+		fails.append("SN-B host hull is not OpenSpace.ship")
+	if ship is CharacterBody3D and bool(ship.get_meta("softnet_visual", false)):
+		fails.append("SN-B tagged the host hull as SoftNet visual")
+	var phys1 := int(soft.physical_hull_count()) if soft.has_method("physical_hull_count") else 0
+	if phys1 > phys0:
+		fails.append("SN-B spawned a physical hull (%s → %s)" % [phys0, phys1])
+	if soft.has_method("has_second_physical_hull") and bool(soft.has_second_physical_hull()):
+		fails.append("SN-B spawned a second physical hull")
+	var kn := str(soft.knowledge_label()) if soft.has_method("knowledge_label") else ""
+	if SoftK != null:
+		var want_net := str(SoftK.net_visual_label())
+		if kn != "" and kn != want_net:
+			fails.append("SN-B Knowledge label drifted (%s)" % kn)
+		if kn != "NET" and kn != "NET VISUAL" and kn != "":
+			fails.append("SN-B Knowledge label is not NET (%s)" % kn)
+	print("[Playtest] SN-B visual puppet present")
+	print("[Playtest] SN-B no second physical hull")
+	print("[Playtest] SN-B host authority")
+	if get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("pad_traffic")
+		var traffic: Node = listed[0] if not listed.is_empty() else null
+		if traffic != null:
+			if traffic.has_method("get_softnet"):
+				pad_soft = traffic.get_softnet()
+			if pad_soft == null:
+				pad_soft = traffic.get_node_or_null("PadSoftNet")
+	if pad_soft == null:
+		fails.append("SN-B dropped SN-A PadSoftNet")
+	else:
+		if pad_soft.has_method("is_host_authority") and not bool(pad_soft.is_host_authority()):
+			fails.append("SN-B broke SN-A host authority")
+		if pad_soft.has_method("has_second_physical_walker") and bool(pad_soft.has_second_physical_walker()):
+			fails.append("SN-B spawned a second physical walker on SN-A")
+		print("[Playtest] SN-A still PASS")
+	var pin1 := str(LayerContext.site_pin_id) if LayerContext else ""
+	if pin1 != pin0 and pin1.begins_with("SITE_"):
+		fails.append("SN-B minted SITE_* (%s)" % pin1)
+	if SoftNetSession and SoftNetSession.get("enabled") == true:
+		fails.append("SN-B enabled SoftNet netcode after sync")
+	var scene_name := str(get_tree().current_scene.name) if get_tree() and get_tree().current_scene else ""
+	if scene_name.find("TestArena") >= 0:
+		fails.append("SN-B entered TestArena from OpenSpace (G5)")
+	if ResourceLoader.exists("res://scripts/world/ClashFromWorld.gd") \
+			or ResourceLoader.exists("res://scripts/world/ClashBeacon.gd"):
+		fails.append("SN-B opened G5 world-to-arena")
+	print("[Playtest] SN-B no SITE_*")
+	print("[Playtest] SN-B G5 closed")
+	print("[Playtest] SN-B hull puppet on OpenSpace · host Pulse/occupy/thrust · no second hull · SN-A stays · G5 closed · no SITE_*")
 
 
 func _hf_c_interrupt_channel(host) -> void:
