@@ -19,14 +19,19 @@ const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 
 var orbit_body: String = BODY_NEX
 var faction: String = "Cybernex"
+var ownership: OwnershipData
 var _modules: Array = []
 var _factory: Node3D = null
+var _contest_ring: Node3D = null
+var _contest_side: String = ""
+var _status: String = "owned"
 
 
 func _ready() -> void:
 	_bind_meta()
 	if not is_in_group("player_orbital_stations"):
 		add_to_group("player_orbital_stations")
+	_ensure_ownership()
 	if get_node_or_null("DockModule") == null:
 		setup(BODY_NEX, "Cybernex")
 
@@ -36,6 +41,7 @@ func setup(body: String = BODY_NEX, fac: String = "Cybernex") -> void:
 	faction = fac if fac != "" else "Cybernex"
 	name = "PlayerOrbitalStation"
 	_bind_meta()
+	_ensure_ownership()
 	if module_count() >= 2:
 		_refresh_label()
 		return
@@ -230,6 +236,7 @@ func _attach_catalog_mesh(host: Node3D, kind: String) -> void:
 func _refresh_label() -> void:
 	var lab: Label3D = get_node_or_null("ClusterLabel") as Label3D
 	var kinds := ",".join(module_kinds())
+	var own := ownership_state_label()
 	if lab == null:
 		lab = Label3D.new()
 		lab.name = "ClusterLabel"
@@ -238,4 +245,202 @@ func _refresh_label() -> void:
 		lab.outline_size = 4
 		lab.position = Vector3(0.0, 6.0, 0.0)
 		add_child(lab)
-	lab.text = "%s\n%s · %s" % [_SoftK.orbital_station_label(), kinds, orbit_body]
+	if own != "":
+		lab.text = "%s\n%s · %s\n%s" % [_SoftK.orbital_station_label(), kinds, orbit_body, own]
+	else:
+		lab.text = "%s\n%s · %s" % [_SoftK.orbital_station_label(), kinds, orbit_body]
+
+
+func start_contested_transition(to_faction: String = "") -> String:
+	## DO-B: host starts Cybernex ↔ gROT contest on this cluster.
+	## Same OwnershipData / ContestedRing grammar as DO-A. Not ST-F flip.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var dest := ""
+	var cur := ""
+	if P0 == null or not bool(P0.DO_B_OWNERSHIP):
+		return ""
+	if not is_host_authority():
+		return ""
+	_ensure_ownership()
+	if ownership == null:
+		return ""
+	cur = ownership.faction_name()
+	dest = to_faction
+	if dest == "":
+		dest = "gROT" if cur == "Cybernex" else "Cybernex"
+	if dest != "Cybernex" and dest != "gROT":
+		return ""
+	if dest == cur:
+		dest = "gROT" if cur == "Cybernex" else "Cybernex"
+	if ownership.current_faction == OwnershipData.Faction.CONTESTED:
+		_contest_side = dest
+		_status = "contested"
+		_set_contested_ring(true)
+		_ensure_do_b_component()
+		_refresh_label()
+		return "Contested"
+	if not ownership.is_fully_owned():
+		var hold: OwnershipData.Faction = OwnershipData.from_string(cur)
+		if hold != OwnershipData.Faction.CYBERNEX and hold != OwnershipData.Faction.GROT:
+			hold = OwnershipData.Faction.CYBERNEX
+		_lock_to(hold)
+		ownership.transition_progress = 1.0
+		_status = "owned"
+	ownership.start_transition(OwnershipData.Faction.CONTESTED)
+	_contest_side = dest
+	ownership.claim_strength = maxf(ownership.claim_strength, 0.2)
+	_status = "contested"
+	_set_contested_ring(true)
+	_refresh_label()
+	_ensure_do_b_component()
+	print("[PlayerOrbitalStation] DO-B contest ", ownership.previous_faction, " vs ", dest)
+	return "Contested"
+
+
+func advance_contested_transition(delta: float = 0.25, duration: float = 5.0) -> float:
+	## DO-B: host advances OwnershipData.transition_progress on the cluster.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var step := maxf(delta, 0.0)
+	var dur := maxf(duration, 0.01)
+	if P0 == null or not bool(P0.DO_B_OWNERSHIP):
+		return -1.0
+	if not is_host_authority():
+		return -1.0
+	_ensure_ownership()
+	if ownership == null:
+		return -1.0
+	if ownership.current_faction != OwnershipData.Faction.CONTESTED:
+		return ownership.transition_progress
+	ownership.advance_transition(step, dur)
+	if _contest_side != "":
+		ownership.claim_strength = clampf(
+			ownership.claim_strength + maxf(step * 0.15, 0.02), 0.0, 1.75)
+	_set_contested_ring(true)
+	_refresh_label()
+	_ensure_do_b_component()
+	return ownership.transition_progress
+
+
+func lock_owned(to_faction: String = "Cybernex") -> String:
+	## Resolve a DO-B contest back to a held CX/GR owner. ST-E/ST-G stay.
+	var dest := to_faction
+	var f: OwnershipData.Faction = OwnershipData.Faction.CYBERNEX
+	_ensure_ownership()
+	if dest != "Cybernex" and dest != "gROT":
+		dest = "Cybernex"
+	f = OwnershipData.from_string(dest)
+	_lock_to(f)
+	_status = "owned"
+	_contest_side = ""
+	_set_contested_ring(false)
+	_refresh_label()
+	return ownership.faction_name() if ownership else dest
+
+
+func get_faction() -> String:
+	if ownership != null:
+		return ownership.faction_name()
+	return faction
+
+
+func ownership_state_label() -> String:
+	## SoftKnowledge CONTESTED / CYBERNEX / GROT. Never DPS / yield / Pulse / Hack.
+	return _SoftK.ownership_state_label(get_faction())
+
+
+func hud_ownership_line() -> String:
+	return ownership_state_label()
+
+
+func contested_ring_active() -> bool:
+	if _contest_ring == null or not is_instance_valid(_contest_ring):
+		return false
+	if "active" in _contest_ring:
+		return bool(_contest_ring.active)
+	return _status == "contested"
+
+
+func transition_progress() -> float:
+	if ownership == null:
+		return 0.0
+	return float(ownership.transition_progress)
+
+
+func is_host_authority() -> bool:
+	if multiplayer == null or not multiplayer.has_multiplayer_peer():
+		return true
+	return multiplayer.is_server()
+
+
+func ownership_component() -> Node:
+	return _ensure_do_b_component()
+
+
+func _ensure_ownership() -> void:
+	var hold: OwnershipData.Faction = OwnershipData.from_string(faction)
+	if ownership == null:
+		ownership = OwnershipData.new()
+		ownership.object_id = "PlayerOrbitalStation/%s" % orbit_body
+		if hold != OwnershipData.Faction.CYBERNEX and hold != OwnershipData.Faction.GROT:
+			hold = OwnershipData.Faction.CYBERNEX
+		ownership.current_faction = hold
+		ownership.previous_faction = hold
+		ownership.transition_progress = 1.0
+		ownership.claim_strength = 1.75
+	_ensure_contest_ring()
+
+
+func _lock_to(f: OwnershipData.Faction) -> void:
+	if ownership == null:
+		ownership = OwnershipData.new()
+		ownership.object_id = "PlayerOrbitalStation/%s" % orbit_body
+	ownership.previous_faction = ownership.current_faction
+	ownership.current_faction = f
+	ownership.transition_progress = 1.0
+	ownership.claim_strength = 1.75
+	if f == OwnershipData.Faction.GROT:
+		faction = "gROT"
+	elif f == OwnershipData.Faction.CYBERNEX:
+		faction = "Cybernex"
+
+
+func _ensure_contest_ring() -> void:
+	if _contest_ring != null and is_instance_valid(_contest_ring):
+		return
+	var n: Node = get_node_or_null("ContestedRing")
+	if n is Node3D:
+		_contest_ring = n as Node3D
+		return
+	_contest_ring = Node3D.new()
+	_contest_ring.set_script(preload("res://scripts/world/ContestedRing.gd"))
+	_contest_ring.name = "ContestedRing"
+	add_child(_contest_ring)
+
+
+func _set_contested_ring(on: bool) -> void:
+	_ensure_contest_ring()
+	if _contest_ring and _contest_ring.has_method("set_contested"):
+		var stren := ownership.claim_strength if ownership else 0.0
+		_contest_ring.set_contested(on, stren)
+
+
+func _ensure_do_b_component() -> Node:
+	var n: Node = get_node_or_null("OwnershipComponent")
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.DO_B_OWNERSHIP):
+		return n
+	if n != null and is_instance_valid(n):
+		if "data" in n:
+			n.data = ownership
+		if "claimable" in n:
+			n.claimable = false
+		return n
+	n = Node3D.new()
+	n.set_script(preload("res://scripts/ownership/OwnershipComponent.gd"))
+	n.name = "OwnershipComponent"
+	add_child(n)
+	if "data" in n:
+		n.data = ownership
+	if "claimable" in n:
+		n.claimable = false
+	return n

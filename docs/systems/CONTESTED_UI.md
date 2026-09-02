@@ -11,6 +11,7 @@
 - Pad radar (bottom-left) faction-coloured pips
 - Soft-knowledge toast on contest/claim (Contribution only — no combat power)
 - **DO-A:** SoftKnowledge / HUD label `CONTESTED` / `CYBERNEX` / `GROT` only — never DPS / yield / thrust / Pulse / Hack numbers
+- **DO-B:** same labels on the existing `PlayerOrbitalStation` cluster — never print / yield / Pulse numbers
 
 ## Input
 - `C` near pad (claim CD 0.85s)

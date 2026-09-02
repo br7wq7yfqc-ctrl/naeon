@@ -848,6 +848,21 @@ func _refresh() -> void:
 					if own_l != "" and best_txt.find(own_l) < 0:
 						best_txt = "%s  %s" % [own_l, best_txt]
 		nearest = best_txt
+	if tree:
+		for stn in tree.get_nodes_in_group("player_orbital_stations"):
+			if stn == null or not is_instance_valid(stn):
+				continue
+			if not stn.has_method("ownership_state_label"):
+				continue
+			var stn_l := str(stn.ownership_state_label())
+			if stn_l == "":
+				continue
+			if nearest.find(stn_l) < 0:
+				nearest = ("%s  %s" % [stn_l, nearest]) if nearest != "" else stn_l
+			if stn.has_method("get_faction") and str(stn.get_faction()) == "Contested":
+				contested_near = true
+				if stn.has_method("transition_progress"):
+					claim_ratio = clampf(float(stn.transition_progress()), 0.0, 1.0)
 
 	# Terrain budget
 	var terra := ""
@@ -871,6 +886,12 @@ func _refresh() -> void:
 			var own_banner := str(_SoftK.ownership_state_label("Contested"))
 			if nearest_pad != null and nearest_pad.has_method("ownership_state_label"):
 				own_banner = str(nearest_pad.ownership_state_label())
+			elif tree:
+				for stn2 in tree.get_nodes_in_group("player_orbital_stations"):
+					if stn2 != null and is_instance_valid(stn2) and stn2.has_method("ownership_state_label"):
+						if stn2.has_method("get_faction") and str(stn2.get_faction()) == "Contested":
+							own_banner = str(stn2.ownership_state_label())
+							break
 			_contest_label.text = "%s — occupy to hold · C pulse · Hack  ·  %d%%" % [own_banner, int(claim_ratio * 100.0)]
 			var st := _contest_banner.get_theme_stylebox("panel") as StyleBoxFlat
 			if st:
@@ -1041,6 +1062,16 @@ func _refresh_os_stack(pocket: bool, pad: Node) -> void:
 		var own_s := str(pad.ownership_state_label())
 		if own_s != "":
 			body += "\n" + own_s
+	var hud_tree := get_tree()
+	if hud_tree:
+		for stn in hud_tree.get_nodes_in_group("player_orbital_stations"):
+			if stn == null or not is_instance_valid(stn):
+				continue
+			if not stn.has_method("ownership_state_label"):
+				continue
+			var stn_s := str(stn.ownership_state_label())
+			if stn_s != "" and body.find(stn_s) < 0:
+				body += "\n" + stn_s
 	_os_stack.text = body
 
 

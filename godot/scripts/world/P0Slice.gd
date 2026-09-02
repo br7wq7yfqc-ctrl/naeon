@@ -157,6 +157,11 @@ const AR_H_DOOR := true
 ## HUD label only (CONTESTED / CYBERNEX / GROT). Not HyperGate G4. Not
 ## galaxy-wide transforms. ST-F instant flip stays. Infection cap 5.
 const DO_A_OWNERSHIP := true
+## DO-B: second contested object — existing PlayerOrbitalStation cluster
+## (ST-E dock+habitat, ST-G factory stays). Same OwnershipData /
+## OwnershipComponent / ContestedRing grammar as DO-A. SoftKnowledge
+## HUD label only. Not a second pad. Not galaxy-wide. Infection cap 5.
+const DO_B_OWNERSHIP := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6

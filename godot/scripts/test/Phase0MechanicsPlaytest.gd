@@ -73,6 +73,7 @@ func _go() -> void:
 		await _assert_sn_c(os, fails)
 		await _assert_sn_d(os, fails)
 		await _assert_do_a(os, fails)
+		await _assert_do_b(os, fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
 
@@ -684,6 +685,7 @@ func _go() -> void:
 	await _assert_sn_c(os, fails)
 	await _assert_sn_d(os, fails)
 	await _assert_do_a(os, fails)
+	await _assert_do_b(os, fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
@@ -20640,6 +20642,267 @@ func _assert_do_a(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] DO-A infection cap 5")
 	print("[Playtest] DO-A no SITE_*")
 	print("[Playtest] DO-A contested Cybernex↔gROT on occupied pad · ContestedRing · host · ST-F stays · overlay B opens · cap 5 · no SITE_*")
+
+
+func _assert_do_b(os: Node, fails: PackedStringArray) -> void:
+	## DO-B: contested Cybernex ↔ gROT on the existing PlayerOrbitalStation.
+	## Reuses OwnershipData / OwnershipComponent / ContestedRing from DO-A.
+	## SoftKnowledge / HUD CONTESTED / CYBERNEX / GROT only. Host authority.
+	## ST-E two modules + ST-G factory stay. DO-A / ST-F / ST-A stay.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var pulse0 := 11.0
+	var cluster: Node = null
+	var pad: Node = null
+	var host: Node = null
+	var factory: Node3D = null
+	var ov: Node = null
+	var dummy: Node3D = null
+	var traffic: Node = null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var started := ""
+	var progressed := -1.0
+	var progressed2 := -1.0
+	var kn := ""
+	var kn_hold := ""
+	var hud_txt := ""
+	var ring_on := false
+	var comp: Node = null
+	var flipped := ""
+	var restored := ""
+	var pad_started := ""
+	var mods := 0
+	var orbital_n := 0
+	if P0 == null or not bool(P0.DO_B_OWNERSHIP):
+		fails.append("DO-B P0Slice flag missing")
+		return
+	if P0 == null or not bool(P0.DO_A_OWNERSHIP):
+		fails.append("DO-B dropped DO-A P0Slice flag")
+	if P0 == null or not bool(P0.ST_F_OWNERSHIP):
+		fails.append("DO-B dropped ST-F P0Slice flag")
+	if P0 == null or not bool(P0.ST_A_OVERLAY):
+		fails.append("DO-B dropped ST-A P0Slice flag")
+	if P0 == null or not bool(P0.ST_E_ORBITAL):
+		fails.append("DO-B dropped ST-E P0Slice flag")
+	if P0 == null or not bool(P0.ST_G_FACTORY):
+		fails.append("DO-B dropped ST-G P0Slice flag")
+	if bool(P0.ORBITAL_STATIONS):
+		fails.append("DO-B flipped P0Slice.ORBITAL_STATIONS")
+	if os == null:
+		fails.append("DO-B no OpenSpace")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("DO-B headless must stay on OpenSpace")
+		return
+	if os.has_method("enter_clash_from_world"):
+		fails.append("DO-B opened G5 enter_clash_from_world")
+		return
+	if os.has_method("player_orbital_station"):
+		cluster = os.player_orbital_station()
+	if cluster == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("player_orbital_stations")
+		if not listed.is_empty():
+			cluster = listed[0]
+	if cluster == null:
+		fails.append("DO-B player orbital cluster missing")
+		return
+	if str(cluster.get_meta("site_pin", "")) != "":
+		fails.append("DO-B cluster minted site_pin (%s)" % str(cluster.get_meta("site_pin")))
+		return
+	if bool(cluster.get_meta("city", false)):
+		fails.append("DO-B cluster marked city")
+	if cluster.has_method("cluster_modules"):
+		mods = cluster.cluster_modules().size()
+	if mods != 2:
+		fails.append("DO-B rewrote ST-E cluster_modules (%s)" % mods)
+	if get_tree():
+		orbital_n = get_tree().get_nodes_in_group("player_orbital_modules").size()
+		if orbital_n != 2:
+			fails.append("DO-B rewrote ST-E orbital pair, got %s" % orbital_n)
+	if cluster.has_method("factory_module"):
+		factory = cluster.factory_module()
+	if factory == null:
+		fails.append("DO-B dropped ST-G factory")
+		return
+	if factory.get_parent() != cluster:
+		fails.append("DO-B factory left the player cluster")
+	if not cluster.has_method("start_contested_transition"):
+		fails.append("DO-B start_contested_transition missing")
+		return
+	if not cluster.has_method("advance_contested_transition"):
+		fails.append("DO-B advance_contested_transition missing")
+		return
+	if cluster.has_method("is_host_authority") and not bool(cluster.is_host_authority()):
+		fails.append("DO-B is not host authority")
+	if cluster.has_method("lock_owned"):
+		cluster.lock_owned("Cybernex")
+	started = str(cluster.start_contested_transition("gROT"))
+	if started != "Contested":
+		fails.append("DO-B did not start contest (%s)" % started)
+		return
+	if cluster.has_method("get_faction") and str(cluster.get_faction()) != "Contested":
+		fails.append("DO-B faction is not Contested (%s)" % str(cluster.get_faction()))
+	if cluster.has_method("contested_ring_active"):
+		ring_on = bool(cluster.contested_ring_active())
+	if not ring_on:
+		fails.append("DO-B ContestedRing not active")
+	progressed = float(cluster.advance_contested_transition(2.0, 5.0))
+	progressed2 = float(cluster.advance_contested_transition(2.0, 5.0))
+	if progressed < 0.0 or progressed2 < progressed:
+		fails.append("DO-B did not advance transition (%s → %s)" % [progressed, progressed2])
+	if SoftK != null and SoftK.has_method("ownership_state_label"):
+		kn = str(SoftK.ownership_state_label("Contested"))
+		kn_hold = str(SoftK.ownership_state_label("Cybernex"))
+	if cluster.has_method("ownership_state_label"):
+		var live := str(cluster.ownership_state_label())
+		if live != "CONTESTED" and live != "CONTESTED ZONE":
+			fails.append("DO-B Knowledge label is not CONTESTED (%s)" % live)
+		if kn != "" and live != kn:
+			fails.append("DO-B Knowledge label drifted (%s vs %s)" % [live, kn])
+	else:
+		fails.append("DO-B ownership_state_label missing")
+	if kn_hold != "CYBERNEX" and kn_hold != "CYBERNEX HOLD":
+		fails.append("DO-B Cybernex Knowledge label drifted (%s)" % kn_hold)
+	var grot_l := str(SoftK.ownership_state_label("gROT")) if SoftK else ""
+	if grot_l != "GROT" and grot_l != "GROT HOLD":
+		fails.append("DO-B gROT Knowledge label drifted (%s)" % grot_l)
+	if cluster.has_method("ownership_component"):
+		comp = cluster.ownership_component()
+	if comp == null:
+		fails.append("DO-B OwnershipComponent missing")
+	elif str(comp.get_class()) != "Node3D" and not (comp is Node):
+		fails.append("DO-B OwnershipComponent is not a node")
+	if cluster.has_method("cluster_modules") and cluster.cluster_modules().size() != 2:
+		fails.append("DO-B contest rewrote ST-E modules (%s)" % cluster.cluster_modules().size())
+	if cluster.has_method("factory_module") and cluster.factory_module() == null:
+		fails.append("DO-B contest dropped ST-G factory")
+	var hud: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+	if hud != null:
+		if hud.has_method("_refresh"):
+			hud._refresh()
+		var lab: Variant = hud.get("_owner_label")
+		if lab is Label:
+			hud_txt += (lab as Label).text
+		var stack: Variant = hud.get("_os_stack")
+		if stack is Label:
+			hud_txt += " " + (stack as Label).text
+		var ban: Variant = hud.get("_contest_label")
+		if ban is Label:
+			hud_txt += " " + (ban as Label).text
+	var hud_up := hud_txt.to_upper()
+	if hud_txt != "" and hud_up.find("CONTESTED") < 0 and hud_up.find("CYBERNEX") < 0 and hud_up.find("GROT") < 0:
+		fails.append("DO-B HUD missing ownership state")
+	if Kits != null and Kits.has_method("_pulse"):
+		var pab = Kits._pulse()
+		if pab != null and "damage" in pab:
+			pulse0 = float(pab.damage)
+	if absf(pulse0 - 11.0) > 0.01:
+		fails.append("DO-B Pulse DPS drifted (%s)" % pulse0)
+	pad = _in_a_occupied_pad(os)
+	if pad != null:
+		host = pad
+		if not (str(host.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]):
+			host = null
+			var walk: Node = pad
+			while walk:
+				if walk is Node3D and str(walk.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+					host = walk
+					break
+				walk = walk.get_parent()
+		if host != null:
+			traffic = host.get_node_or_null("PadTraffic")
+		if traffic == null and get_tree():
+			var pads: Array = get_tree().get_nodes_in_group("pad_traffic")
+			if not pads.is_empty():
+				traffic = pads[0]
+		if traffic != null:
+			if traffic.has_method("get_guard"):
+				dummy = traffic.get_guard()
+			if dummy == null and traffic.has_method("get_surface_dummy"):
+				dummy = traffic.get_surface_dummy()
+		if dummy != null and dummy.has_method("infection_cap") and int(dummy.infection_cap()) != 5:
+			fails.append("DO-B infection cap drifted (%s)" % dummy.infection_cap())
+		if pad.has_method("lock_owned"):
+			pad.lock_owned("Cybernex")
+		if pad.has_method("start_contested_transition") and pad.has_method("advance_contested_transition"):
+			pad_started = str(pad.start_contested_transition("gROT"))
+			if pad_started != "Contested":
+				fails.append("DO-B broke DO-A pad contest (%s)" % pad_started)
+			else:
+				var pad_p := float(pad.advance_contested_transition(2.0, 5.0))
+				if pad_p < 0.0:
+					fails.append("DO-B broke DO-A pad advance (%s)" % pad_p)
+				else:
+					print("[Playtest] DO-A still PASS")
+			if pad.has_method("lock_owned"):
+				pad.lock_owned("Cybernex")
+		if pad.has_method("flip_cluster_owner"):
+			flipped = str(pad.flip_cluster_owner("gROT"))
+			if flipped != "gROT":
+				fails.append("DO-B broke ST-F flip (%s)" % flipped)
+			else:
+				print("[Playtest] ST-F still PASS")
+			pad.flip_cluster_owner("Cybernex")
+	if cluster.has_method("lock_owned"):
+		restored = str(cluster.lock_owned("Cybernex"))
+	if restored != "Cybernex":
+		fails.append("DO-B could not restore Cybernex owner (%s)" % restored)
+	if cluster.has_method("ownership_state_label"):
+		var held := str(cluster.ownership_state_label())
+		if held != "CYBERNEX" and held != "CYBERNEX HOLD":
+			fails.append("DO-B held label is not CYBERNEX (%s)" % held)
+	if cluster.has_method("cluster_modules") and cluster.cluster_modules().size() != 2:
+		fails.append("DO-B ST-E modules drifted after lock (%s)" % cluster.cluster_modules().size())
+	else:
+		print("[Playtest] ST-E still PASS")
+	if cluster.has_method("has_factory") and not bool(cluster.has_factory()):
+		fails.append("DO-B ST-G factory missing after lock")
+	else:
+		print("[Playtest] ST-G still PASS")
+	ov = os.strategy_overlay() if os != null and os.has_method("strategy_overlay") else null
+	if ov == null or not ov.has_method("try_enter"):
+		fails.append("DO-B ST-A overlay missing")
+	else:
+		if ov.has_method("is_active") and bool(ov.is_active()) and ov.has_method("exit_overlay"):
+			ov.exit_overlay()
+			await get_tree().process_frame
+		if host == null and pad != null:
+			host = pad
+		var pad_up: Vector3 = host.get_meta("pad_up") if host != null and host.has_meta("pad_up") else Vector3.UP
+		var pad_pos: Vector3 = host.global_position if host is Node3D else (cluster.global_position if cluster is Node3D else Vector3.ZERO)
+		if ship != null and is_instance_valid(ship):
+			if "velocity" in ship:
+				ship.velocity = Vector3.ZERO
+			ship.global_position = pad_pos + pad_up * 8.0
+		var walker: Node3D = os.get("player") as Node3D if os else null
+		if walker != null and is_instance_valid(walker):
+			walker.global_position = pad_pos + pad_up * 1.2
+			if walker is CharacterBody3D:
+				(walker as CharacterBody3D).velocity = Vector3.ZERO
+		await get_tree().process_frame
+		if not bool(ov.try_enter()):
+			fails.append("DO-B overlay B did not open (%s)" % str(ov.readiness_line() if ov.has_method("readiness_line") else ""))
+		else:
+			print("[Playtest] ST-A overlay B still opens")
+			if ov.has_method("exit_overlay"):
+				ov.exit_overlay()
+			await get_tree().process_frame
+	if get_tree() and get_tree().get_nodes_in_group("open_space").size() != 1:
+		fails.append("DO-B opened a second OpenSpace")
+	if ResourceLoader.exists("res://scripts/world/ClashFromWorld.gd") \
+			or ResourceLoader.exists("res://scripts/world/ClashBeacon.gd"):
+		fails.append("DO-B opened G5 world-to-arena")
+	if LayerContext and str(LayerContext.site_pin_id) != pin0 \
+			and str(LayerContext.site_pin_id).begins_with("SITE_"):
+		fails.append("DO-B minted SITE_* (%s)" % LayerContext.site_pin_id)
+	print("[Playtest] DO-B contested transition on PlayerOrbitalStation")
+	print("[Playtest] DO-B SoftKnowledge CONTESTED / CYBERNEX / GROT")
+	print("[Playtest] DO-B host authority")
+	print("[Playtest] DO-B infection cap 5")
+	print("[Playtest] DO-B no SITE_*")
+	print("[Playtest] DO-B contested Cybernex↔gROT on player orbital station · ContestedRing · host · DO-A stays · ST-E/ST-G stay · ST-F stays · overlay B opens · cap 5 · no SITE_*")
 
 
 func _hf_c_interrupt_channel(host) -> void:
