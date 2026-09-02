@@ -26,4 +26,4 @@ Peers silent > 8s → puppet queue_free
 - ENet multiplayer fallback (reduced fields)
 - Loopback for single-machine ghost
 
-Updated: 2026-08-07T23:40:44.258474+00:00
+Updated: 2026-09-02T21:40:00.000000+00:00
