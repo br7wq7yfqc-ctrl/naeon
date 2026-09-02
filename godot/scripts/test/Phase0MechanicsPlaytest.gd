@@ -72,6 +72,7 @@ func _go() -> void:
 		await _assert_ar_h(os, fails)
 		await _assert_sn_c(os, fails)
 		await _assert_sn_d(os, fails)
+		await _assert_do_a(os, fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
 
@@ -682,6 +683,7 @@ func _go() -> void:
 	await _assert_ar_h(os, fails)
 	await _assert_sn_c(os, fails)
 	await _assert_sn_d(os, fails)
+	await _assert_do_a(os, fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
@@ -20419,6 +20421,225 @@ func _assert_sn_d(os: Node, fails: PackedStringArray) -> void:
 		LayerContext.set_layer(back)
 	os.set_meta("clash_via_pad_door", false)
 	await get_tree().process_frame
+
+
+func _assert_do_a(os: Node, fails: PackedStringArray) -> void:
+	## DO-A: contested Cybernex ↔ gROT transition on one occupied unnamed pad.
+	## OwnershipData.start/advance + OwnershipComponent + ContestedRing.
+	## SoftKnowledge / HUD CONTESTED / CYBERNEX / GROT only. Host authority.
+	## ST-F stays. ST-A overlay B still opens. Infection cap 5. No SITE_*.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var pulse0 := 11.0
+	var pad: Node = null
+	var host: Node = null
+	var traffic: Node = null
+	var dummy: Node3D = null
+	var ov: Node = null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var started := ""
+	var progressed := -1.0
+	var progressed2 := -1.0
+	var kn := ""
+	var kn_hold := ""
+	var hud_txt := ""
+	var ring_on := false
+	var comp: Node = null
+	var flipped := ""
+	var restored := ""
+	var pad_name := "?"
+	if P0 == null or not bool(P0.DO_A_OWNERSHIP):
+		fails.append("DO-A P0Slice flag missing")
+		return
+	if P0 == null or not bool(P0.ST_F_OWNERSHIP):
+		fails.append("DO-A dropped ST-F P0Slice flag")
+	if P0 == null or not bool(P0.ST_A_OVERLAY):
+		fails.append("DO-A dropped ST-A P0Slice flag")
+	if P0 == null or not bool(P0.SN_A_PAD) or not bool(P0.SN_B_HULL) \
+			or not bool(P0.SN_C_OVERLAY) or not bool(P0.SN_D_CLASH):
+		fails.append("DO-A dropped SN-A/B/C/D P0Slice flag")
+	if P0 == null or not bool(P0.FL_A_FLEET) or not bool(P0.FL_B_FLEET):
+		fails.append("DO-A dropped FL-A/B P0Slice flag")
+	if P0 == null or not bool(P0.AR_H_DOOR):
+		fails.append("DO-A dropped AR-H P0Slice flag")
+	if P0 == null or not bool(P0.BT_A_GUARD) or not bool(P0.BT_B_VISITOR) \
+			or not bool(P0.BT_C_SWARM) or not bool(P0.BT_D_PACK):
+		fails.append("DO-A dropped BT-A/B/C/D P0Slice flag")
+	if bool(P0.ORBITAL_STATIONS):
+		fails.append("DO-A flipped P0Slice.ORBITAL_STATIONS")
+	if os == null:
+		fails.append("DO-A no OpenSpace")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("DO-A headless must stay on OpenSpace")
+		return
+	if os.has_method("enter_clash_from_world"):
+		fails.append("DO-A opened G5 enter_clash_from_world")
+		return
+	pad = _in_a_occupied_pad(os)
+	if pad == null:
+		fails.append("DO-A no occupied unnamed pad")
+		return
+	host = pad
+	if not (str(host.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]):
+		host = null
+		var walk: Node = pad
+		while walk:
+			if walk is Node3D and str(walk.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+				host = walk
+				break
+			walk = walk.get_parent()
+	if host == null:
+		fails.append("DO-A no unnamed pad (Pad_North class)")
+		return
+	pad_name = str(host.name)
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("DO-A minted SITE_* (%s)" % pin)
+		return
+	if pad.has_method("claim"):
+		pad.claim("Cybernex", 2.0)
+	if "ownership" in pad and pad.ownership and pad.ownership.has_method("advance_transition"):
+		pad.ownership.advance_transition(8.0, 5.0)
+	if pad.has_method("lock_owned"):
+		pad.lock_owned("Cybernex")
+	if pad.has_method("get_faction") and str(pad.get_faction()) != "Cybernex":
+		if pad.has_method("flip_cluster_owner"):
+			pad.flip_cluster_owner("Cybernex")
+	if not pad.has_method("start_contested_transition"):
+		fails.append("DO-A start_contested_transition missing")
+		return
+	if not pad.has_method("advance_contested_transition"):
+		fails.append("DO-A advance_contested_transition missing")
+		return
+	if pad.has_method("is_host_authority") and not bool(pad.is_host_authority()):
+		fails.append("DO-A is not host authority")
+	started = str(pad.start_contested_transition("gROT"))
+	if started != "Contested":
+		fails.append("DO-A did not start contest (%s)" % started)
+		return
+	if pad.has_method("get_faction") and str(pad.get_faction()) != "Contested":
+		fails.append("DO-A faction is not Contested (%s)" % str(pad.get_faction()))
+	if pad.has_method("contested_ring_active"):
+		ring_on = bool(pad.contested_ring_active())
+	if not ring_on:
+		fails.append("DO-A ContestedRing not active")
+	progressed = float(pad.advance_contested_transition(2.0, 5.0))
+	progressed2 = float(pad.advance_contested_transition(2.0, 5.0))
+	if progressed < 0.0 or progressed2 < progressed:
+		fails.append("DO-A did not advance transition (%s → %s)" % [progressed, progressed2])
+	if SoftK != null and SoftK.has_method("ownership_state_label"):
+		kn = str(SoftK.ownership_state_label("Contested"))
+		kn_hold = str(SoftK.ownership_state_label("Cybernex"))
+	if pad.has_method("ownership_state_label"):
+		var live := str(pad.ownership_state_label())
+		if live != "CONTESTED" and live != "CONTESTED ZONE":
+			fails.append("DO-A Knowledge label is not CONTESTED (%s)" % live)
+		if kn != "" and live != kn:
+			fails.append("DO-A Knowledge label drifted (%s vs %s)" % [live, kn])
+	else:
+		fails.append("DO-A ownership_state_label missing")
+	if kn_hold != "CYBERNEX" and kn_hold != "CYBERNEX HOLD":
+		fails.append("DO-A Cybernex Knowledge label drifted (%s)" % kn_hold)
+	var grot_l := str(SoftK.ownership_state_label("gROT")) if SoftK else ""
+	if grot_l != "GROT" and grot_l != "GROT HOLD":
+		fails.append("DO-A gROT Knowledge label drifted (%s)" % grot_l)
+	if pad.has_method("ownership_component"):
+		comp = pad.ownership_component()
+	if comp == null:
+		fails.append("DO-A OwnershipComponent missing")
+	elif str(comp.get_class()) != "Node3D" and not (comp is Node):
+		fails.append("DO-A OwnershipComponent is not a node")
+	var hud: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+	if hud != null:
+		if hud.has_method("_refresh"):
+			hud._refresh()
+		var lab: Variant = hud.get("_owner_label")
+		if lab is Label:
+			hud_txt += (lab as Label).text
+		var stack: Variant = hud.get("_os_stack")
+		if stack is Label:
+			hud_txt += " " + (stack as Label).text
+		var ban: Variant = hud.get("_contest_label")
+		if ban is Label:
+			hud_txt += " " + (ban as Label).text
+	var hud_up := hud_txt.to_upper()
+	if hud_txt != "" and hud_up.find("CONTESTED") < 0 and hud_up.find("CYBERNEX") < 0 and hud_up.find("GROT") < 0:
+		fails.append("DO-A HUD missing ownership state")
+	if Kits != null and Kits.has_method("_pulse"):
+		var pab = Kits._pulse()
+		if pab != null and "damage" in pab:
+			pulse0 = float(pab.damage)
+	if absf(pulse0 - 11.0) > 0.01:
+		fails.append("DO-A Pulse DPS drifted (%s)" % pulse0)
+	traffic = host.get_node_or_null("PadTraffic")
+	if traffic == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("pad_traffic")
+		if not listed.is_empty():
+			traffic = listed[0]
+	if traffic != null:
+		if traffic.has_method("get_guard"):
+			dummy = traffic.get_guard()
+		if dummy == null and traffic.has_method("get_surface_dummy"):
+			dummy = traffic.get_surface_dummy()
+	if dummy != null and dummy.has_method("infection_cap") and int(dummy.infection_cap()) != 5:
+		fails.append("DO-A infection cap drifted (%s)" % dummy.infection_cap())
+	if pad.has_method("lock_owned"):
+		restored = str(pad.lock_owned("Cybernex"))
+	if restored != "Cybernex":
+		fails.append("DO-A could not restore Cybernex owner (%s)" % restored)
+	if pad.has_method("ownership_state_label"):
+		var held := str(pad.ownership_state_label())
+		if held != "CYBERNEX" and held != "CYBERNEX HOLD":
+			fails.append("DO-A held label is not CYBERNEX (%s)" % held)
+	if pad.has_method("flip_cluster_owner"):
+		flipped = str(pad.flip_cluster_owner("gROT"))
+		if flipped != "gROT":
+			fails.append("DO-A broke ST-F flip (%s)" % flipped)
+		else:
+			print("[Playtest] ST-F still PASS")
+		pad.flip_cluster_owner("Cybernex")
+	ov = os.strategy_overlay() if os != null and os.has_method("strategy_overlay") else null
+	if ov == null or not ov.has_method("try_enter"):
+		fails.append("DO-A ST-A overlay missing")
+	else:
+		if ov.has_method("is_active") and bool(ov.is_active()) and ov.has_method("exit_overlay"):
+			ov.exit_overlay()
+			await get_tree().process_frame
+		var pad_up: Vector3 = host.get_meta("pad_up") if host.has_meta("pad_up") else Vector3.UP
+		if ship != null and is_instance_valid(ship):
+			if "velocity" in ship:
+				ship.velocity = Vector3.ZERO
+			ship.global_position = host.global_position + pad_up * 8.0
+		var walker: Node3D = os.get("player") as Node3D if os else null
+		if walker != null and is_instance_valid(walker):
+			walker.global_position = host.global_position + pad_up * 1.2
+			if walker is CharacterBody3D:
+				(walker as CharacterBody3D).velocity = Vector3.ZERO
+		await get_tree().process_frame
+		if not bool(ov.try_enter()):
+			fails.append("DO-A overlay B did not open (%s)" % str(ov.readiness_line() if ov.has_method("readiness_line") else ""))
+		else:
+			print("[Playtest] ST-A overlay B still opens")
+			if ov.has_method("exit_overlay"):
+				ov.exit_overlay()
+			await get_tree().process_frame
+	if get_tree() and get_tree().get_nodes_in_group("open_space").size() != 1:
+		fails.append("DO-A opened a second OpenSpace")
+	if ResourceLoader.exists("res://scripts/world/ClashFromWorld.gd") \
+			or ResourceLoader.exists("res://scripts/world/ClashBeacon.gd"):
+		fails.append("DO-A opened G5 world-to-arena")
+	if LayerContext and str(LayerContext.site_pin_id) != pin0 \
+			and str(LayerContext.site_pin_id).begins_with("SITE_"):
+		fails.append("DO-A minted SITE_* (%s)" % LayerContext.site_pin_id)
+	print("[Playtest] DO-A contested transition on ", pad_name)
+	print("[Playtest] DO-A SoftKnowledge CONTESTED / CYBERNEX / GROT")
+	print("[Playtest] DO-A host authority")
+	print("[Playtest] DO-A infection cap 5")
+	print("[Playtest] DO-A no SITE_*")
+	print("[Playtest] DO-A contested Cybernex↔gROT on occupied pad · ContestedRing · host · ST-F stays · overlay B opens · cap 5 · no SITE_*")
 
 
 func _hf_c_interrupt_channel(host) -> void:

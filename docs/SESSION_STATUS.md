@@ -1,3 +1,5 @@
+**2026-09-02 — DO-A: contested Cybernex ↔ gROT transition seed on one occupied unnamed pad (OwnershipData / OwnershipComponent / ContestedRing; SoftKnowledge CONTESTED / CYBERNEX / GROT; host authority; ST-F stays; ST-A overlay B opens)**
+
 **2026-09-02 — SN-D: second local viewer in Clash (TestArena / ClashDirector) sees SoftNet visual host puppet (arena/Clash pose; host Pulse/Hack/form; no second Clash dummy; SN-A/B/C stay; AR-H door stays; G5 closed)**
 
 **2026-09-02 — SN-C: second local viewer on ST-A Strategy overlay (key B) sees SoftNet visual habitat/extractor/modules puppet (host Pulse/occupy/Hack; no second pad modules; SN-A/SN-B stay; AR-H door stays; G5 closed)**
