@@ -48,6 +48,7 @@ func _go() -> void:
 		await _assert_q_e(os, fails)
 		await _assert_hf_c(os, fails)
 		await _assert_st_h(os, fails)
+		await _assert_st_i(os, fails)
 		await _assert_hf_b(os, fails)
 		await _assert_hf_a(os, fails)
 		await _assert_pv_b(os, fails)
@@ -645,6 +646,7 @@ func _go() -> void:
 	await _eva_snap_pulse(fails)
 	await _assert_hf_c(os, fails)
 	await _assert_st_h(os, fails)
+	await _assert_st_i(os, fails)
 	await _assert_hf_b(os, fails)
 	await _assert_hf_a(os, fails)
 	await _assert_pv_b(os, fails)
@@ -13279,6 +13281,207 @@ func _assert_st_h(os: Node, fails: PackedStringArray) -> void:
 			and str(LayerContext.site_pin_id).begins_with("SITE_"):
 		fails.append("ST-H minted SITE_* (%s)" % LayerContext.site_pin_id)
 	print("[Playtest] ST-H turret present HP Pulse 11 · no SITE_* · Clash TestArena unchanged · G5 closed")
+
+
+func _assert_st_i(os: Node, fails: PackedStringArray) -> void:
+	## ST-I: one pad storage after occupy via BaseBuilder. Cap 1 crate.
+	## Occupy dock pad-storage ↔ ship CargoHold. Not a second ship hold.
+	## Knowledge labels only. Mass/value stay. ST-A/B/H stay. Overlay B opens.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	var nex: Node = _osh_nex()
+	var pad: Node = _in_a_occupied_pad(os)
+	var host: Node3D = null
+	var store: Node3D = null
+	var ov: Node = os.strategy_overlay() if os != null and os.has_method("strategy_overlay") else null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	if P0 == null or not bool(P0.ST_I_STORAGE) or not bool(P0.ST_H_TURRET) \
+			or not bool(P0.ST_A_OVERLAY) or not bool(P0.ST_B_EXTRACTOR):
+		fails.append("ST-I P0Slice flag missing")
+		return
+	if os == null or nex == null:
+		fails.append("ST-I no OpenSpace/Nex-Prime")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("ST-I must not run on Clash")
+		return
+	if LayerContext and str(LayerContext.current_layer) == "Arena":
+		fails.append("ST-I must not run on Clash")
+		return
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.25).timeout
+	if pad == null:
+		pad = _in_a_occupied_pad(os)
+	if pad == null:
+		fails.append("ST-I no occupied unnamed pad")
+		return
+	host = pad as Node3D
+	if not host.has_meta("pad_up"):
+		var walk: Node = pad
+		while walk:
+			if walk is Node3D and str(walk.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+				host = walk as Node3D
+				break
+			walk = walk.get_parent()
+	if host == null or not (str(host.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]):
+		fails.append("ST-I pad is not unnamed North/Approach/Flank")
+		return
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("ST-I minted SITE_* (%s)" % pin)
+		return
+	if pad.has_method("claim"):
+		pad.claim("Cybernex", 2.0)
+	var ow = pad.get("ownership") if pad != null else null
+	if ow and ow.has_method("advance_transition"):
+		ow.advance_transition(8.0, 5.0)
+	await get_tree().process_frame
+	if pad.has_method("ensure_pad_storage"):
+		store = pad.ensure_pad_storage()
+	if store == null:
+		store = _Builder.place_pad_storage(host, "Cybernex")
+	if store == null or not is_instance_valid(store):
+		fails.append("ST-I storage missing on occupied unnamed pad")
+		return
+	var spin := str(store.get_meta("site_pin", "missing"))
+	if spin != "":
+		fails.append("ST-I storage minted site_pin (%s)" % spin)
+	if store.has_meta("player_module") and bool(store.get_meta("player_module")):
+		fails.append("ST-I stole the ST-A player_module slot")
+	if str(store.get_meta("module_type", "")) != "storage":
+		fails.append("ST-I module is not storage")
+	var sscript := str(store.get_script().resource_path) if store.get_script() != null else ""
+	if sscript.ends_with("CargoHold.gd"):
+		fails.append("ST-I reused ship CargoHold")
+	if sscript != "" and sscript.find("PadStorage.gd") < 0:
+		fails.append("ST-I storage script drifted (%s)" % sscript)
+	if str(store.name) != "PadStorage":
+		fails.append("ST-I storage name drifted (%s)" % store.name)
+	if store.has_method("is_ship_cargo_hold") and bool(store.is_ship_cargo_hold()):
+		fails.append("ST-I is a second CargoHold ship")
+	if store.has_method("max_units") and int(store.max_units()) != 1:
+		fails.append("ST-I storage cap drifted (%s)" % store.max_units())
+	if store.has_method("combat_stats") and int(store.combat_stats()) != 0:
+		fails.append("ST-I storage combat drifted")
+	if store.has_method("unit_count") and int(store.unit_count()) < 1 and store.has_method("seed_one"):
+		store.seed_one()
+	if store.has_method("unit_count") and int(store.unit_count()) != 1:
+		fails.append("ST-I storage did not hold one crate")
+	if store.has_method("can_store_unit") and bool(store.can_store_unit(CargoHold.UNIT_VOL_M3, CargoHold.UNIT_MASS_T)):
+		fails.append("ST-I storage accepted a second crate")
+	var mass0 := CargoHold.UNIT_MASS_T
+	var val0 := CargoHold.UNIT_VALUE
+	if store.has_method("crate_mass"):
+		mass0 = float(store.crate_mass())
+	if store.has_method("crate_value"):
+		val0 = float(store.crate_value())
+	if absf(mass0 - CargoHold.UNIT_MASS_T) > 0.001 or absf(val0 - CargoHold.UNIT_VALUE) > 0.001:
+		fails.append("ST-I storage changed crate mass/value")
+	var hab: Node = _Builder.player_module_on(host)
+	if hab != null:
+		var combat := int(hab.combat_stats()) if hab.has_method("combat_stats") else -1
+		if combat != 0:
+			fails.append("ST-I ST-A habitat combat drifted")
+	var ext: Node = pad.visible_extractor() if pad.has_method("visible_extractor") else host.get_node_or_null("PadHarvestExtractor")
+	if ext == null or not is_instance_valid(ext):
+		fails.append("ST-I ST-B extractor missing")
+	var turret: Node = pad.visible_turret() if pad.has_method("visible_turret") else host.get_node_or_null("PadDefenseTurret")
+	if turret == null:
+		turret = _Builder.pad_turret_on(host)
+	if turret == null or not is_instance_valid(turret):
+		fails.append("ST-I ST-H turret missing")
+	if ship == null or not is_instance_valid(ship):
+		fails.append("ST-I no player hull")
+		return
+	var hold: Node = ship.get_node_or_null("CargoHold")
+	if hold == null or not hold.has_method("unit_count"):
+		fails.append("ST-I ship CargoHold missing")
+		return
+	if pad.has_method("clear_pad_yard"):
+		pad.clear_pad_yard()
+	var pad_up: Vector3 = host.get_meta("pad_up") if host.has_meta("pad_up") else Vector3.UP
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	ship.global_position = host.global_position + pad_up * 6.0
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	if ship.has_method("_do_land"):
+		ship._do_land()
+	if not bool(ship.get("is_landed")):
+		fails.append("ST-I ship not landed for occupy dock")
+		return
+	var hold0 := int(hold.unit_count())
+	var store0 := int(store.unit_count()) if store.has_method("unit_count") else 0
+	var yard0 := int(pad.pad_cargo_count()) if pad.has_method("pad_cargo_count") else -1
+	if store0 != 1:
+		fails.append("ST-I storage empty before transfer")
+		return
+	if not bool(ship.try_dock_cargo_transfer(true)) if ship.has_method("try_dock_cargo_transfer") else false:
+		fails.append("ST-I occupy dock did not transfer one unit pad-storage→hold")
+		return
+	var hold1 := int(hold.unit_count())
+	var store1 := int(store.unit_count()) if store.has_method("unit_count") else -1
+	var yard1 := int(pad.pad_cargo_count()) if pad.has_method("pad_cargo_count") else -1
+	print("[Playtest] ST-I pad-storage→hold store ", store0, "→", store1, " hold ", hold0, "→", hold1, " yard ", yard0, "→", yard1)
+	if hold1 != hold0 + 1 or store1 != 0:
+		fails.append("ST-I one-unit pad-storage→hold failed (store %s→%s hold %s→%s)" % [store0, store1, hold0, hold1])
+		return
+	if yard1 != yard0:
+		fails.append("ST-I transfer used the pad yard, not PadStorage")
+	var moved: Dictionary = {}
+	var units_v: Variant = hold.get("units")
+	if units_v is Array and (units_v as Array).size() > 0:
+		moved = (units_v as Array)[(units_v as Array).size() - 1]
+	var mass1 := float(moved.get("mass", -1.0))
+	var val1 := float(moved.get("value", -1.0))
+	if absf(mass1 - mass0) > 0.001 or absf(val1 - val0) > 0.001:
+		fails.append("ST-I transfer changed mass/value")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("logistics", 20.0)
+	var lab := SoftKnowledge.storage_label()
+	var crate_lab := SoftKnowledge.crate_label()
+	print("[Playtest] ST-I Knowledge storage=", lab, " crate=", crate_lab, " mass=", mass1, " value=", val1)
+	if lab == "":
+		fails.append("ST-I Knowledge storage label empty")
+	if crate_lab == "":
+		fails.append("ST-I Knowledge crate label empty")
+	if absf(float(moved.get("mass", -1.0)) - mass0) > 0.001:
+		fails.append("ST-I Knowledge changed crate mass")
+	if absf(float(moved.get("value", -1.0)) - val0) > 0.001:
+		fails.append("ST-I Knowledge changed crate value")
+	if not bool(ship.try_dock_cargo_transfer(false)):
+		fails.append("ST-I occupy dock did not transfer one unit hold→pad-storage")
+		return
+	var hold2 := int(hold.unit_count())
+	var store2 := int(store.unit_count()) if store.has_method("unit_count") else -1
+	print("[Playtest] ST-I hold→pad-storage store ", store1, "→", store2, " hold ", hold1, "→", hold2)
+	if hold2 != hold0 or store2 != 1:
+		fails.append("ST-I one-unit hold→pad-storage failed (store %s→%s hold %s→%s)" % [store1, store2, hold1, hold2])
+	if ov == null or not ov.has_method("try_enter"):
+		fails.append("ST-I StrategyOverlay missing")
+		return
+	if ov.has_method("is_active") and bool(ov.is_active()) and ov.has_method("exit_overlay"):
+		ov.exit_overlay()
+		await get_tree().process_frame
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	ship.global_position = host.global_position + pad_up * 8.0
+	await get_tree().process_frame
+	if not bool(ov.try_enter()):
+		fails.append("ST-I overlay B did not open (%s)" % str(ov.readiness_line() if ov.has_method("readiness_line") else ""))
+	else:
+		var ly := str(LayerContext.current_layer) if LayerContext else ""
+		if ly != "Strategy":
+			fails.append("ST-I LayerContext not Strategy (%s)" % ly)
+		if ov.has_method("exit_overlay"):
+			ov.exit_overlay()
+		await get_tree().process_frame
+	if LayerContext and str(LayerContext.site_pin_id) != pin0 \
+			and str(LayerContext.site_pin_id).begins_with("SITE_"):
+		fails.append("ST-I minted SITE_* (%s)" % LayerContext.site_pin_id)
+	print("[Playtest] ST-I storage present one-unit transfer · no SITE_* · overlay B opens")
 
 
 func _assert_in_a(os: Node, fails: PackedStringArray) -> void:

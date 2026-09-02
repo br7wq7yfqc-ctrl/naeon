@@ -205,6 +205,15 @@ static func extractor_label() -> String:
 	return "EXTRACTOR"
 
 
+## Colony/logistics: name the ST-I pad storage. Never mass / value / cap.
+static func storage_label() -> String:
+	var ops := mastery("colony_ops")
+	var logi := mastery("logistics")
+	if ops >= 15.0 or logi >= 15.0 or rank() >= 5:
+		return "T1 STORAGE"
+	return "STORAGE"
+
+
 ## Colony/combat: name the ST-H pad turret. Never Pulse DPS / HP / repair.
 static func turret_label() -> String:
 	var ops := mastery("colony_ops")

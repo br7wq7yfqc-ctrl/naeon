@@ -77,6 +77,10 @@ const HF_C_OVERLAY := true
 ## ST-H: one defense turret on an occupied unnamed pad via BaseBuilder.
 ## Not Clash Turret / OUTER 160. Pulse 11. Host authority. No SITE_*.
 const ST_H_TURRET := true
+## ST-I: one storage crate/hold on an occupied unnamed pad via BaseBuilder.
+## Cap 1 crate unit. Same occupy dock path as ship CargoHold. Not a second ship
+## hold. Knowledge labels only. Mass/value stay. No SITE_*.
+const ST_I_STORAGE := true
 ## PV-A: first TPS PvP on an occupied unnamed pad. One host-authority rival
 ## CombatDummy takes Pulse and deals Pulse back (DPS 11). Win = rival HP → 0.
 ## No permadeath. Infection cap 5. Knowledge labels only. G5 stays closed.
