@@ -1,3 +1,5 @@
+**2026-09-02 — FL-B: second fleet allied pip on ST-A Strategy overlay (SoftNet / NP-A visual; cap 3 = player + 2; FLEET n/3 SoftKnowledge; host Pulse/occupy; click ≠ combat; FL-A stays)**
+
 **2026-09-02 — MC-D: fourth crew seat SCANNER (SoftKnowledge / HUD label; CREW n/4; gunner+engineer stay; Pulse/Hack/thrust stay; host authority)**
 
 **2026-09-02 — SN-B: second local viewer seated on the player hull / OpenSpace sees SoftNet visual hull/pilot puppet (host Pulse/occupy/thrust; no second hull; SN-A stays; G5 closed)**
@@ -776,8 +778,9 @@ BR-A: lifetime Biomass wallet derives **Biomass Rank 0–4** (same family as `Al
 KR-A: lifetime mastery derives **Knowledge Rank 0–4** (same `AllianceRanks` 0–4 family). SoftKnowledge / HUD label only (`KNOWLEDGE` / `KNOWLEDGE RANK` + rank number). BR-A Biomass Rank stays. Cybernex stays `CONTRIB`. Rank does not change harvest yield, Pulse, Hack, print cost, or exclusive modules. Infection cap 5. No P2W. No `SITE_*`.  
 CR-A: lifetime Contribution wallet derives **Contribution Rank 0–4** (same `AllianceRanks` 0–4 family as BR-A). SoftKnowledge / HUD label only (`CONTRIB` / `CONTRIBUTION` + rank number). gROT stays `BIOMASS` / BR-A. Rank does not change harvest yield, Pulse, Hack, print cost, or exclusive modules. Infection cap 5. No P2W. No `SITE_*`.  
 BT-D: one Cybernex animal-robot pack of 3 `CombatDummy` on an occupied unnamed pad walks a tiny 3-state GDScript BT — gather, pulse-engage Pulse (DPS 11 both ways), scatter-return-to-pad. Host authority. Infection cap 5. No permadeath. Knowledge labels only. BT-A pad-guard, BT-B visitor, BT-C gROT swarm stay distinct. PV-A rival stays distinct. Not Clash waves. Not TestArena. Not AR leftover 5v5. G5 stays closed. No `SITE_*`.  
-FL-A: first fleet seed — one extra allied pip on the ST-A Strategy overlay (key B). Reuses the existing pad-visitor `NpcPilot` / NP-A hull. Cap **2** (player + 1). HUD `FLEET 2/2` is SoftKnowledge only. Click/select does not grant combat. Host keeps Pulse / occupy. Not 10–15 ships. Not a second OpenSpace. Overlay B still opens habitat / extractor / turret / storage / hangar. ST-A…J / BT-A/B/C / BT-D / MC-A/B/C stay. No `SITE_*`. `ORBITAL_STATIONS` stays off.  
-SN-B: second local viewer seated with the host on the player hull / OpenSpace sees a SoftNet visual puppet of the host hull / pilot (or crew-seat pose). Host keeps Pulse / occupy / thrust. No second physical hull. SoftKnowledge `NET` label only. SN-A pad puppet stays. MC-A/B/C crew seats stay. FL-A fleet pip stays. BT-A/B/C/D stay. PV-A/B stay. Clash unchanged. Not ENet cluster. Not 10k CCU. G5 stays closed. No `SITE_*`.
+FL-A: first fleet seed — one extra allied pip on the ST-A Strategy overlay (key B). Reuses the existing pad-visitor `NpcPilot` / NP-A hull. First extra pip stays. Click/select does not grant combat. Host keeps Pulse / occupy. Overlay B still opens. No `SITE_*`.  
+FL-B: second extra allied pip on the same ST-A overlay. SoftNet visual hull (pad-visitor / NP-A grammar). Cap **3** (player + 2). HUD `FLEET n/3` is SoftKnowledge only. Click/select ≠ combat. Host Pulse / occupy. Not 10–15 ships. Not a second OpenSpace. Not ENet. Not G5. FL-A first pip stays. Overlay B still opens. No `SITE_*`. `ORBITAL_STATIONS` stays off.  
+SN-B: second local viewer seated with the host on the player hull / OpenSpace sees a SoftNet visual puppet of the host hull / pilot (or crew-seat pose). Host keeps Pulse / occupy / thrust. No second physical hull. SoftKnowledge `NET` label only. SN-A pad puppet stays. MC-A/B/C crew seats stay. FL-A / FL-B fleet pips stay. BT-A/B/C/D stay. PV-A/B stay. Clash unchanged. Not ENet cluster. Not 10k CCU. G5 stays closed. No `SITE_*`.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -807,7 +810,8 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | BR-A Biomass Rank | **built** — rank 0–4 from lifetime Biomass wallet; HUD label only; harvest numbers stay |
 | KR-A Knowledge Rank | **built** — rank 0–4 from lifetime mastery; HUD label only; harvest / Pulse / Hack stay; BR-A stays |
 | CR-A Contribution Rank | **built** — rank 0–4 from lifetime Contribution wallet; HUD label only; harvest / Pulse / Hack stay; BR-A stays |
-| FL-A first fleet seed | **built** — one extra allied pip on ST-A overlay (existing visitor); cap 2; FLEET 2/2 label; host Pulse/occupy; click ≠ combat |
+| FL-A first fleet seed | **built** — one extra allied pip on ST-A overlay (existing visitor); first pip stays; host Pulse/occupy; click ≠ combat |
+| FL-B second fleet pip | **built** — second extra allied pip (SoftNet / NP-A visual); cap 3; FLEET n/3; host Pulse/occupy; click ≠ combat; FL-A stays |
 | ST-C print one module | **built** — spend Contribution/Biomass → one catalog module |
 | ST-D hangar queue | **built** — one module on catalog carrier; mass/power refuse |
 | ST-E orbital cluster | **built** — two catalog modules (dock + habitat) near Nex-Prime |

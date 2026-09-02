@@ -2,7 +2,8 @@ extends Node
 class_name StrategyOverlay
 ## ST-A: top-down overlay on an already-loaded unnamed pad (Nex-Prime / ARK).
 ## Not a galaxy map (G2 locked). Does not replace ship or TPS.
-## FL-A: one extra allied fleet pip (existing pad-visitor NpcPilot). Cap 2.
+## FL-A: one extra allied fleet pip (existing pad-visitor NpcPilot).
+## FL-B: second extra allied pip (SoftNet visual, same NP-A grammar). Cap 3.
 ## SoftKnowledge / HUD label only. Click/select ≠ combat. Host Pulse / occupy.
 
 const _Builder = preload("res://scripts/world/BaseBuilder.gd")
@@ -12,7 +13,7 @@ const ENTER_M := 90.0
 const CAM_HEIGHT := 180.0
 const CAM_SIZE := 120.0
 const LEGAL_PADS := ["Pad_North", "Pad_Approach", "Pad_Flank"]
-const FLEET_CAP := 2
+const FLEET_CAP := 3
 
 var _os: Node = null
 var _pad: Node3D = null
@@ -23,7 +24,9 @@ var _active: bool = false
 var _last_line: String = "STRATEGY: no unnamed pad"
 var _frozen: Array = []
 var _fleet_pip: Node3D = null
+var _fleet_pip_b: Node3D = null
 var _fleet_selected: bool = false
+var _fleet_selected_b: bool = false
 
 
 func setup(host: Node) -> void:
@@ -88,6 +91,21 @@ func fleet_guest() -> Node3D:
 	return null
 
 
+func fleet_guest_b() -> Node3D:
+	var traffic := _pad_traffic()
+	var guest := _guest_b_from_traffic(traffic)
+	if guest != null:
+		return guest
+	var tree := get_tree()
+	if tree == null:
+		return null
+	for n in tree.get_nodes_in_group("pad_traffic"):
+		guest = _guest_b_from_traffic(n)
+		if guest != null:
+			return guest
+	return null
+
+
 func _guest_from_traffic(traffic: Node) -> Node3D:
 	if traffic == null or not is_instance_valid(traffic):
 		return null
@@ -102,6 +120,16 @@ func _guest_from_traffic(traffic: Node) -> Node3D:
 	return null
 
 
+func _guest_b_from_traffic(traffic: Node) -> Node3D:
+	if traffic == null or not is_instance_valid(traffic):
+		return null
+	if traffic.has_method("fleet_guest_b"):
+		var g: Node3D = traffic.fleet_guest_b()
+		if g != null and is_instance_valid(g):
+			return g
+	return null
+
+
 func fleet_count() -> int:
 	var n := 0
 	if _os != null:
@@ -109,6 +137,8 @@ func fleet_count() -> int:
 		if sh is Node3D and is_instance_valid(sh):
 			n += 1
 	if fleet_guest() != null:
+		n += 1
+	if fleet_guest_b() != null:
 		n += 1
 	return mini(n, FLEET_CAP)
 
@@ -121,8 +151,16 @@ func fleet_pip_visible() -> bool:
 	return _active and _fleet_pip != null and is_instance_valid(_fleet_pip)
 
 
+func fleet_pip_b_visible() -> bool:
+	return _active and _fleet_pip_b != null and is_instance_valid(_fleet_pip_b)
+
+
 func is_fleet_selected() -> bool:
 	return _fleet_selected and fleet_pip_visible()
+
+
+func is_fleet_b_selected() -> bool:
+	return _fleet_selected_b and fleet_pip_b_visible()
 
 
 func fleet_combat_authority() -> String:
@@ -142,8 +180,21 @@ func try_select_fleet_pip() -> bool:
 	return true
 
 
+func try_select_fleet_pip_b() -> bool:
+	if not fleet_pip_b_visible():
+		return false
+	_fleet_selected_b = true
+	_toast(fleet_hud_line())
+	var guest := fleet_guest_b()
+	if guest != null and is_instance_valid(guest):
+		guest.set_meta("combat_authority", "host")
+		guest.set_meta("occupy_authority", "host")
+	print("[StrategyOverlay] fleet pip B select ", fleet_hud_line(), " auth=host")
+	return true
+
+
 func try_add_fleet_member(_who: Node = null) -> bool:
-	## Cap 2 this slice. Does not spawn a second hull or OpenSpace.
+	## Cap 3 this slice. Does not spawn a third extra hull or OpenSpace.
 	return false
 
 
@@ -448,7 +499,7 @@ func _faction() -> String:
 
 
 func _show_fleet_pip() -> void:
-	## SoftKnowledge marker only. Reuses the existing visitor hull — no new ship.
+	## SoftKnowledge markers only. FL-A reuses the visitor hull. FL-B is SoftNet.
 	_hide_fleet_pip()
 	var P0 = load("res://scripts/world/P0Slice.gd")
 	if P0 != null and not bool(P0.FL_A_FLEET):
@@ -458,8 +509,16 @@ func _show_fleet_pip() -> void:
 	var guest := fleet_guest()
 	if guest == null:
 		return
+	_fleet_pip = _make_fleet_pip("FleetPip", guest, Color(0.35, 0.9, 1.0))
+	if P0 != null and bool(P0.FL_B_FLEET):
+		var guest_b := fleet_guest_b()
+		if guest_b != null:
+			_fleet_pip_b = _make_fleet_pip("FleetPipB", guest_b, Color(0.4, 0.95, 0.75))
+
+
+func _make_fleet_pip(id: String, guest: Node3D, col: Color) -> Node3D:
 	var pip := Node3D.new()
-	pip.name = "FleetPip"
+	pip.name = id
 	pip.set_meta("site_pin", "")
 	pip.set_meta("fleet_pip", true)
 	pip.set_meta("combat_authority", "host")
@@ -474,7 +533,7 @@ func _show_fleet_pip() -> void:
 	lab.outline_size = 6
 	lab.position = Vector3(0.0, 2.0, 0.0)
 	lab.text = fleet_hud_line()
-	lab.modulate = Color(0.45, 0.95, 1.0)
+	lab.modulate = col
 	pip.add_child(lab)
 	if DisplayServer.get_name() != "headless":
 		var mi := MeshInstance3D.new()
@@ -485,43 +544,58 @@ func _show_fleet_pip() -> void:
 		mi.mesh = sphere
 		var mat := StandardMaterial3D.new()
 		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		mat.albedo_color = Color(0.35, 0.9, 1.0)
+		mat.albedo_color = col
 		mat.emission_enabled = true
-		mat.emission = Color(0.35, 0.9, 1.0)
+		mat.emission = col
 		mat.emission_energy_multiplier = 1.8
 		mi.material_override = mat
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		pip.add_child(mi)
-	_fleet_pip = pip
+	return pip
 
 
 func _hide_fleet_pip() -> void:
 	_fleet_selected = false
+	_fleet_selected_b = false
 	if _fleet_pip != null and is_instance_valid(_fleet_pip):
 		var p := _fleet_pip.get_parent()
 		if p:
 			p.remove_child(_fleet_pip)
 		_fleet_pip.queue_free()
 	_fleet_pip = null
+	if _fleet_pip_b != null and is_instance_valid(_fleet_pip_b):
+		var pb := _fleet_pip_b.get_parent()
+		if pb:
+			pb.remove_child(_fleet_pip_b)
+		_fleet_pip_b.queue_free()
+	_fleet_pip_b = null
 
 
-func _try_click_fleet_pip(event: InputEventMouseButton) -> bool:
-	if not fleet_pip_visible() or _cam == null or not is_instance_valid(_cam):
+func _ray_hits_pip(event: InputEventMouseButton, pip: Node3D) -> bool:
+	if pip == null or not is_instance_valid(pip) or _cam == null or not is_instance_valid(_cam):
 		return false
 	var vp := get_viewport()
 	if vp == null:
 		return false
 	var origin: Vector3 = _cam.project_ray_origin(event.position)
 	var dir: Vector3 = _cam.project_ray_normal(event.position)
-	var dest: Vector3 = _fleet_pip.global_position
+	var dest: Vector3 = pip.global_position
 	var to: Vector3 = dest - origin
 	var t: float = to.dot(dir)
 	if t < 0.0:
 		return false
 	var nearest: Vector3 = origin + dir * t
-	if nearest.distance_to(dest) > 10.0:
+	return nearest.distance_to(dest) <= 10.0
+
+
+func _try_click_fleet_pip(event: InputEventMouseButton) -> bool:
+	if _cam == null or not is_instance_valid(_cam):
 		return false
-	return try_select_fleet_pip()
+	if fleet_pip_b_visible() and _ray_hits_pip(event, _fleet_pip_b):
+		return try_select_fleet_pip_b()
+	if fleet_pip_visible() and _ray_hits_pip(event, _fleet_pip):
+		return try_select_fleet_pip()
+	return false
 
 
 func _freeze_actors() -> void:

@@ -133,7 +133,7 @@ PV-B: first Space PvP from the seated player hull — same host-authority pad ri
 ### Deliverables
 - Одна система (звезда + 3 тела на разных орбитах + пояс + якоря гейтов) — ARK. Планировка сделана в **Phase G0**; jump points включаются в G3–G4
 - Persistent colonies / ships
-- Fleet system (до 10–15 кораблей, flagship overlay) — **FL-A built:** one extra allied pip on ST-A Strategy overlay (existing pad-visitor `NpcPilot` / NP-A hull; cap 2 = player + 1; SoftKnowledge / HUD `FLEET 2/2`; click/select ≠ combat; host Pulse / occupy; not 10–15 ships; not a second OpenSpace)
+- Fleet system (до 10–15 кораблей, flagship overlay) — **FL-A + FL-B built:** two extra allied pips on ST-A Strategy overlay (FL-A existing pad-visitor `NpcPilot` / NP-A hull; FL-B SoftNet visual, same grammar; cap 3 = player + 2; SoftKnowledge / HUD `FLEET n/3`; click/select ≠ combat; host Pulse / occupy; not 10–15 ships; not a second OpenSpace; not ENet)
 - Carriers seed (hangar + drones/fighters) — очередь печати модуля: `docs/design/BASE_STATION_STRATEGY.md` ST-D **built**
 - **Dynamic Ownership Transformation** (prototype): visual + mechanical swap Cybernex (Venus Project) ↔ gROT (biomass industrial) на 1–2 объектах
 - Advanced AI-bots + NPC quest givers skeleton — **Q-D built** (same Q-A ContractBoard id on the pad visitor; not a second quest system)

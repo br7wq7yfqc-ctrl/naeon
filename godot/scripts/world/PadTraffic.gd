@@ -25,6 +25,8 @@ extends Node3D
 ## Host keeps Pulse / occupy. No second physical walker. Not ENet cluster.
 ## FL-A: that same visitor hull is the one extra Strategy overlay fleet pip.
 ## Cap 2 (player + this guest). Click/select ≠ combat. Host Pulse / occupy.
+## FL-B: a second extra allied pip — SoftNet visual hull (NP-A grammar).
+## Cap 3 (player + 2). Not a second Ship.tscn. Host Pulse / occupy.
 ## Knowledge labels only — never yield.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
@@ -49,6 +51,7 @@ var _pvp: Node = null
 var _softnet: Node = null
 var _swarm: Node3D = null
 var _pack: Node3D = null
+var _fleet_ally: Node3D = null
 
 
 func setup(host_pad: Node3D) -> void:
@@ -65,10 +68,11 @@ func setup(host_pad: Node3D) -> void:
 	_setup_softnet()
 	_spawn_swarm()
 	_spawn_pack()
+	_spawn_fleet_ally()
 	_offer_player_contract()
 	refresh_labels()
 	set_process(true)
-	print("[PadTraffic] host=", _host_name, " guard=1 visitor=1 surface=1 rival=1 softnet=1 swarm=3 pack=3")
+	print("[PadTraffic] host=", _host_name, " guard=1 visitor=1 surface=1 rival=1 softnet=1 swarm=3 pack=3 fleet=2")
 
 
 func host_pad_name() -> String:
@@ -119,21 +123,51 @@ func get_npc_pilot() -> Node:
 
 
 func fleet_guest() -> Node3D:
-	## FL-A: the existing NP-A visitor is the one extra fleet pip. Not a new hull.
+	## FL-A: the existing NP-A visitor is the first extra fleet pip. Not a new hull.
 	return get_visitor()
 
 
+func fleet_guest_b() -> Node3D:
+	## FL-B: SoftNet visual ally. Same NP-A hold grammar. Not Ship.tscn.
+	if _fleet_ally != null and is_instance_valid(_fleet_ally):
+		return _fleet_ally
+	var n: Node = get_node_or_null("FleetAllyVisual")
+	if n is Node3D and is_instance_valid(n):
+		_fleet_ally = n as Node3D
+		return _fleet_ally
+	_spawn_fleet_ally()
+	if _fleet_ally != null and is_instance_valid(_fleet_ally):
+		return _fleet_ally
+	return null
+
+
+func fleet_guests() -> Array:
+	var out: Array = []
+	var a := fleet_guest()
+	if a != null:
+		out.append(a)
+	var b := fleet_guest_b()
+	if b != null:
+		out.append(b)
+	return out
+
+
 func fleet_cap() -> int:
-	return 2
+	return 3
 
 
 func fleet_count() -> int:
-	## Guest only. Overlay / HUD add the player hull for FLEET n/2.
-	return 1 if get_visitor() != null else 0
+	## Guests only. Overlay / HUD add the player hull for FLEET n/3.
+	var n := 0
+	if get_visitor() != null:
+		n += 1
+	if fleet_guest_b() != null:
+		n += 1
+	return n
 
 
 func try_add_fleet_guest(_who: Node = null) -> bool:
-	## Cap 2 (player + this visitor). This slice does not spawn a second guest.
+	## Cap 3 (player + two extras). Setup already placed both guests.
 	return false
 
 
@@ -776,6 +810,44 @@ func _spawn_visitor_hold() -> void:
 	lab.position = Vector3(0, 2.4, 0)
 	lab.text = visitor_label()
 	lab.modulate = Color(0.75, 0.9, 1.0)
+	v.add_child(lab)
+
+
+func _spawn_fleet_ally() -> void:
+	## FL-B: SoftNet visual hull. Reuses visitor-hold grammar. Not a second Ship.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 != null and not bool(P0.FL_B_FLEET):
+		return
+	if _fleet_ally != null and is_instance_valid(_fleet_ally):
+		return
+	if get_node_or_null("FleetAllyVisual") != null:
+		_fleet_ally = get_node_or_null("FleetAllyVisual") as Node3D
+		return
+	var v := Node3D.new()
+	v.name = "FleetAllyVisual"
+	v.set_meta("pad_traffic_role", "fleet_ally")
+	v.set_meta("fleet_member", true)
+	v.set_meta("softnet_visual", true)
+	v.set_meta("combat_authority", "host")
+	v.set_meta("occupy_authority", "host")
+	v.set_meta("site_pin", "")
+	v.position = Vector3(-16.0, 6.5, 12.0)
+	add_child(v)
+	_fleet_ally = v
+	_add_marker(v, "Hull")
+	if SoftNetSession and SoftNetSession.has_method("bind_visual_puppet"):
+		SoftNetSession.bind_visual_puppet(v)
+	if DisplayServer.get_name() == "headless":
+		return
+	_build_visitor_hull(v)
+	var lab := Label3D.new()
+	lab.name = "Label"
+	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lab.font_size = 22
+	lab.outline_size = 5
+	lab.position = Vector3(0, 2.4, 0)
+	lab.text = _SoftK.fleet_label()
+	lab.modulate = Color(0.55, 0.95, 0.85)
 	v.add_child(lab)
 
 
