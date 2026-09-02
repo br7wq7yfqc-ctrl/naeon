@@ -855,7 +855,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | MC-D crew scanner seat | **built** — ScannerSeat in ship_int; F/I same pocket; HUD CREW n/4 · SCANNER; gunner+engineer stay; Pulse/Hack/thrust stay; host authority |
 | SN-A pad SoftNet visual | **built** — second local viewer sees host SurfaceWalker puppet on occupied unnamed pad; host Pulse/occupy; no second walker; G5 closed |
 | SN-B hull SoftNet visual | **built** — second local viewer seated on OpenSpace hull sees host hull/pilot puppet; host Pulse/occupy/thrust; no second hull; SN-A stays; G5 closed |
-| SN-C overlay SoftNet visual | **built** — second local viewer on ST-A Strategy overlay (B) sees host habitat/extractor/modules puppet; host Pulse/occupy/Hack; no second pad modules; SN-A/SN-B stay; G5 closed |
+| SN-C overlay SoftNet visual | **built** — second local viewer on ST-A Strategy overlay (B) sees host habitat/extractor/modules puppet; host Pulse/occupy/Hack; no second pad modules; SN-A/SN-B stay; AR-H door stays; G5 closed |
 | NP-C | **built** — NPC habitat on empty unnamed pad |
 | NP-G | **built** — NPC ST-C print: spend Contribution/Biomass → one catalog module; no cash skip |
 | NP-H | **built** — NPC ST-D hangar: queue one catalog module; mass/power refuse; no SITE_* |
