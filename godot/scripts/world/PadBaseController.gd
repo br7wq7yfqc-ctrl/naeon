@@ -683,7 +683,7 @@ func _refresh_label() -> void:
 		var pct := int(clampf(ownership.claim_strength / CLAIM_NEED, 0.0, 1.0) * 100.0)
 		meter = " → %s %d%%" % [_contest_side, pct]
 	_label.text = "BASE %s\n%s%s  %s\nEXT %.0f / R%.0f" % [
-		ownership.faction_name().to_upper(),
+		ownership_state_label(),
 		_status,
 		meter,
 		GameManager.economy_label() if GameManager else "—",
@@ -1401,6 +1401,148 @@ func flip_cluster_owner(to_faction: String = "") -> String:
 		" services=", services_line(),
 		" harvest=", snapped(extract_rate * contribution_per_unit, 0.01))
 	return dest
+
+
+func start_contested_transition(to_faction: String = "") -> String:
+	## DO-A: after occupy, start Cybernex ↔ gROT contested transition.
+	## Host authority. SoftKnowledge labels CONTESTED. Not ST-F instant flip.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var dest := ""
+	var cur := ""
+	if P0 == null or not bool(P0.DO_A_OWNERSHIP):
+		return ""
+	if not is_host_authority():
+		return ""
+	if ownership == null:
+		return ""
+	cur = ownership.faction_name()
+	dest = to_faction
+	if dest == "":
+		dest = "gROT" if cur == "Cybernex" else "Cybernex"
+	if dest != "Cybernex" and dest != "gROT":
+		return ""
+	if dest == cur:
+		dest = "gROT" if cur == "Cybernex" else "Cybernex"
+	if ownership.current_faction == OwnershipData.Faction.CONTESTED:
+		_contest_side = dest
+		_status = "contested"
+		_set_contested_ring(true)
+		_ensure_do_a_component()
+		_refresh_label()
+		return "Contested"
+	if not ownership.is_fully_owned():
+		var hold: OwnershipData.Faction = OwnershipData.from_string(cur)
+		if hold != OwnershipData.Faction.CYBERNEX and hold != OwnershipData.Faction.GROT:
+			hold = OwnershipData.Faction.CYBERNEX
+		_lock_to(hold, false)
+		ownership.transition_progress = 1.0
+		_status = "owned"
+	ownership.start_transition(OwnershipData.Faction.CONTESTED)
+	_contest_side = dest
+	ownership.claim_strength = maxf(ownership.claim_strength, 0.2)
+	_status = "contested"
+	_set_contested_ring(true)
+	_apply_faction_visual()
+	_refresh_label()
+	_ensure_do_a_component()
+	_notify_hud("%s — occupy the ring" % ownership_state_label())
+	print("[PadBase] DO-A contest ", ownership.previous_faction, " vs ", dest, " @ ", name)
+	return "Contested"
+
+
+func advance_contested_transition(delta: float = 0.25, duration: float = 5.0) -> float:
+	## DO-A: host advances OwnershipData.transition_progress on the contest.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var step := maxf(delta, 0.0)
+	var dur := maxf(duration, 0.01)
+	if P0 == null or not bool(P0.DO_A_OWNERSHIP):
+		return -1.0
+	if not is_host_authority():
+		return -1.0
+	if ownership == null:
+		return -1.0
+	if ownership.current_faction != OwnershipData.Faction.CONTESTED:
+		return ownership.transition_progress
+	ownership.advance_transition(step, dur)
+	if _contest_side != "":
+		_nudge_claim(_contest_side, maxf(step * 0.15, 0.02), false)
+	_set_contested_ring(true)
+	_refresh_label()
+	_ensure_do_a_component()
+	return ownership.transition_progress
+
+
+func lock_owned(faction: String = "Cybernex") -> String:
+	## Resolve a DO-A contest back to a held CX/GR owner. ST-F stays legal.
+	var dest := faction
+	var f: OwnershipData.Faction = OwnershipData.Faction.CYBERNEX
+	if dest != "Cybernex" and dest != "gROT":
+		dest = "Cybernex"
+	f = OwnershipData.from_string(dest)
+	_lock_to(f, false)
+	ownership.transition_progress = 1.0
+	_status = "owned"
+	_contest_side = ""
+	_set_contested_ring(false)
+	_apply_faction_visual()
+	_refresh_label()
+	return ownership.faction_name() if ownership else dest
+
+
+func ownership_state_label() -> String:
+	## SoftKnowledge CONTESTED / CYBERNEX / GROT. Never DPS / yield / Pulse / Hack.
+	var fac := get_faction()
+	return _SoftK.ownership_state_label(fac)
+
+
+func hud_ownership_line() -> String:
+	return ownership_state_label()
+
+
+func contested_ring_active() -> bool:
+	if _contest_ring == null or not is_instance_valid(_contest_ring):
+		return false
+	if "active" in _contest_ring:
+		return bool(_contest_ring.active)
+	return _status == "contested"
+
+
+func transition_progress() -> float:
+	if ownership == null:
+		return 0.0
+	return float(ownership.transition_progress)
+
+
+func is_host_authority() -> bool:
+	if multiplayer == null or not multiplayer.has_multiplayer_peer():
+		return true
+	return multiplayer.is_server()
+
+
+func ownership_component() -> Node:
+	return _ensure_do_a_component()
+
+
+func _ensure_do_a_component() -> Node:
+	var n: Node = get_node_or_null("OwnershipComponent")
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.DO_A_OWNERSHIP):
+		return n
+	if n != null and is_instance_valid(n):
+		if "data" in n:
+			n.data = ownership
+		if "claimable" in n:
+			n.claimable = false
+		return n
+	n = Node3D.new()
+	n.set_script(preload("res://scripts/ownership/OwnershipComponent.gd"))
+	n.name = "OwnershipComponent"
+	add_child(n)
+	if "data" in n:
+		n.data = ownership
+	if "claimable" in n:
+		n.claimable = false
+	return n
 
 
 func swap_cluster_theme(faction_name: String) -> void:

@@ -152,6 +152,11 @@ const FL_B_FLEET := true
 ## AR-H: one door on an occupied unnamed pad into Clash TestArena.
 ## Not a city-map. Not G2. G5 cluster stays closed. Tab/menu Clash stays.
 const AR_H_DOOR := true
+## DO-A: contested Cybernex ↔ gROT transition on one occupied unnamed pad.
+## Uses OwnershipData / OwnershipComponent / ContestedRing. SoftKnowledge
+## HUD label only (CONTESTED / CYBERNEX / GROT). Not HyperGate G4. Not
+## galaxy-wide transforms. ST-F instant flip stays. Infection cap 5.
+const DO_A_OWNERSHIP := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6

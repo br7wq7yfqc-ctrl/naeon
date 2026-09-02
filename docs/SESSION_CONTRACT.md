@@ -106,6 +106,11 @@
     F at ClashDoor. Not a city-map. Not G2. G5 cluster stays closed.
     Headless does not change_scene. AR-A…G stay. No leftover 5v5 soak.
     No SITE_* (this pass).
+37. DO-A: contested Cybernex ↔ gROT transition on one occupied unnamed
+    pad after occupy. OwnershipData / OwnershipComponent / ContestedRing.
+    SoftKnowledge / HUD CONTESTED / CYBERNEX / GROT only. Host authority.
+    ST-F stays. ST-A overlay B opens. Infection cap 5. No SITE_*
+    (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

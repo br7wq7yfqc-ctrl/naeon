@@ -436,6 +436,23 @@ static func exclusive_module_unlocked(_id: String = "") -> bool:
 	return false
 
 
+## DO-A: name the ownership state. Never DPS / yield / thrust / Pulse / Hack.
+static func ownership_state_label(faction: String = "") -> String:
+	var f := str(faction)
+	var hist := mastery("history")
+	var lore := mastery("history") + mastery("field_intel")
+	var rich := hist >= 15.0 or lore >= 20.0 or rank() >= 5
+	match f:
+		"Contested", "CONTESTED":
+			return "CONTESTED ZONE" if rich else "CONTESTED"
+		"Cybernex", "CYBERNEX":
+			return "CYBERNEX HOLD" if rich else "CYBERNEX"
+		"gROT", "GROT", "Grot":
+			return "GROT HOLD" if rich else "GROT"
+		_:
+			return "NEUTRAL"
+
+
 ## ST-F: owner skins the service list. Never harvest / print / hangar numbers.
 static func cluster_services(grot: bool = false) -> PackedStringArray:
 	if grot:

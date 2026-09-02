@@ -512,12 +512,12 @@ func player_factory() -> Node3D:
 
 
 func occupied_pad_base() -> Node:
-	## ST-F: unnamed pad controller the player already occupies. Not a new SITE_*.
+	## ST-F / DO-A: unnamed pad controller the player already occupies. Not a new SITE_*.
 	var tree := get_tree()
 	var actor: Node3D = null
 	var best: Node = null
 	var best_d := 48.0
-	if not _P0.ST_F_OWNERSHIP:
+	if not _P0.ST_F_OWNERSHIP and not _P0.DO_A_OWNERSHIP:
 		return null
 	if player != null and is_instance_valid(player) and player.is_inside_tree():
 		actor = player

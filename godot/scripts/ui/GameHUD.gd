@@ -843,6 +843,10 @@ func _refresh() -> void:
 							best_txt += "  ·  %s" % rl2
 				if st == "contested" or str(n.get_faction()) == "Contested":
 					contested_near = true
+				if n.has_method("ownership_state_label"):
+					var own_l := str(n.ownership_state_label())
+					if own_l != "" and best_txt.find(own_l) < 0:
+						best_txt = "%s  %s" % [own_l, best_txt]
 		nearest = best_txt
 
 	# Terrain budget
@@ -864,7 +868,12 @@ func _refresh() -> void:
 		_contest_banner.visible = contested_near
 		if contested_near:
 			var pulse := 0.55 + 0.45 * sin(Time.get_ticks_msec() * 0.01)
-			_contest_label.text = "CONTESTED — occupy to hold · C pulse · Hack  ·  %d%%" % int(claim_ratio * 100.0)
+			var own_banner := "CONTESTED"
+			if nearest_pad != null and nearest_pad.has_method("ownership_state_label"):
+				own_banner = str(nearest_pad.ownership_state_label())
+			elif _SoftK != null and _SoftK.has_method("ownership_state_label"):
+				own_banner = str(_SoftK.ownership_state_label("Contested"))
+			_contest_label.text = "%s — occupy to hold · C pulse · Hack  ·  %d%%" % [own_banner, int(claim_ratio * 100.0)]
 			var st := _contest_banner.get_theme_stylebox("panel") as StyleBoxFlat
 			if st:
 				st.bg_color = Color(0.55, 0.18, 0.04, 0.55 + pulse * 0.35)
@@ -1030,6 +1039,10 @@ func _refresh_os_stack(pocket: bool, pad: Node) -> void:
 	var ally_line := alliance_hud_text()
 	if ally_line != "":
 		body += "\n" + ally_line
+	if pad != null and is_instance_valid(pad) and pad.has_method("ownership_state_label"):
+		var own_s := str(pad.ownership_state_label())
+		if own_s != "":
+			body += "\n" + own_s
 	_os_stack.text = body
 
 

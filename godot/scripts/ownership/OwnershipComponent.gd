@@ -53,15 +53,16 @@ func _process(delta: float) -> void:
 		return
 	var step := _tick_accum
 	_tick_accum = 0.0
-	_tick_occupy(step)
+	if claimable:
+		_tick_occupy(step)
 	if data:
-		if not data.is_fully_owned():
+		if claimable and not data.is_fully_owned():
 			data.transition_progress = clampf(data.claim_strength / OCCUPY_NEED, 0.0, 1.0)
 		var sig := "%d/%d/%.3f" % [int(data.current_faction), int(data.previous_faction), data.transition_progress]
 		if sig != _visual_sig:
 			_visual_sig = sig
 			_apply_visual(false)
-		if data.claim_strength >= OCCUPY_NEED:
+		if claimable and data.claim_strength >= OCCUPY_NEED:
 			_emit_claimed()
 
 

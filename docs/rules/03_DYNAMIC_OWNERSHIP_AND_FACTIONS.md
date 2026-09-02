@@ -11,6 +11,8 @@ NEUTRAL | CYBERNEX | GROT | CONTESTED
 
 OwnershipData: current/previous faction, transition_progress (0→1), claim_strength, owner_alliance_id, last_claim_time.
 
+**DO-A seed (built):** one occupied unnamed pad starts/advances a contested Cybernex ↔ gROT transition (`OwnershipData` + `OwnershipComponent` + `ContestedRing`). SoftKnowledge / HUD labels `CONTESTED` / `CYBERNEX` / `GROT` only — never DPS / yield / thrust / Pulse / Hack. Host authority. ST-F instant flip stays. Not HyperGate G4. Not galaxy-wide transforms.
+
 ## Visual Transformation
 - Cybernex: clean futuristic + living nature, cyan/white/green emission, Venus Project harmony
 - gROT: industrial post-apocalyptic, biomass overlays, red-purple emission, swarm aesthetics
