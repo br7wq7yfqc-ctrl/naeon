@@ -12,6 +12,7 @@ const FIELDS := [
 	"energy", "energy_max",
 	"power_draw", "power_supply", "cool_load", "cool_cap", "life",
 	"crew", "crew_max", "crew_role",
+	"fleet", "fleet_max",
 ]
 
 
@@ -60,6 +61,8 @@ static func snapshot(ship: Node = null, player: Node = null, pad: Node = null) -
 		"crew": 0,
 		"crew_max": 3,
 		"crew_role": "gunner",
+		"fleet": 0,
+		"fleet_max": 2,
 	}
 	if ship != null and is_instance_valid(ship):
 		if "fuel" in ship:
@@ -130,6 +133,7 @@ static func snapshot(ship: Node = null, player: Node = null, pad: Node = null) -
 			else:
 				snap["eva_mode"] = "EVA"
 	_fill_crew(snap, ship, player)
+	_fill_fleet(snap, ship, player)
 	return snap
 
 
@@ -154,6 +158,32 @@ static func _fill_crew(snap: Dictionary, ship: Node, player: Node) -> void:
 		snap["crew"] = 1
 		snap["crew_max"] = 3
 		snap["crew_role"] = "gunner"
+
+
+static func _fill_fleet(snap: Dictionary, ship: Node, player: Node) -> void:
+	## FL-A: SoftKnowledge count only. Cap 2 (player hull + pad-visitor).
+	## Knowledge does not change DPS / yield / thrust. Not a second OpenSpace.
+	var n := 0
+	var tree: SceneTree = null
+	if ship != null and is_instance_valid(ship):
+		tree = ship.get_tree()
+		n += 1
+	elif player != null and is_instance_valid(player):
+		tree = player.get_tree()
+	if tree != null:
+		for t in tree.get_nodes_in_group("pad_traffic"):
+			if t == null or not is_instance_valid(t):
+				continue
+			var guest: Node = null
+			if t.has_method("fleet_guest"):
+				guest = t.fleet_guest()
+			elif t.has_method("get_visitor"):
+				guest = t.get_visitor()
+			if guest != null and is_instance_valid(guest):
+				n += 1
+				break
+	snap["fleet"] = mini(n, 2)
+	snap["fleet_max"] = 2
 
 
 static func has_fields(snap: Dictionary) -> bool:
@@ -224,8 +254,13 @@ static func stack_text(snap: Dictionary) -> String:
 		int(snap.get("crew_max", 3)),
 		_SoftK.crew_role_label(str(snap.get("crew_role", "gunner"))),
 	]
-	return "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s" % [
-		econ_s, fuel_s, cargo_s, mod_s, pwr_s, cool_s, ls_s, land_s, eva, en_s, crew_s,
+	var fleet_s := "%s %d/%d" % [
+		_SoftK.fleet_label(),
+		int(snap.get("fleet", 0)),
+		int(snap.get("fleet_max", 2)),
+	]
+	return "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s" % [
+		econ_s, fuel_s, cargo_s, mod_s, pwr_s, cool_s, ls_s, land_s, eva, en_s, crew_s, fleet_s,
 	]
 
 

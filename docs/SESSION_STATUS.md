@@ -1,3 +1,5 @@
+**2026-09-02 — FL-A: first fleet seed — one extra allied pip on ST-A Strategy overlay (existing NP-A visitor; cap 2; FLEET 2/2 SoftKnowledge; host Pulse/occupy; click ≠ combat)**
+
 **2026-09-02 — BT-D: one Cybernex animal-robot pack on occupied unnamed pad (3 CombatDummy; gather / pulse-engage / scatter-return-to-pad; Pulse 11 both ways; cap 5; BT-A/B/C stay)**
 
 **2026-09-02 — CR-A: Contribution Rank 0–4 from lifetime Contribution wallet (AllianceRanks family; SoftKnowledge / HUD label; harvest / Pulse / Hack stay; BR-A Biomass Rank stays)**
@@ -768,7 +770,8 @@ ST-I: occupy unnamed pad → `BaseBuilder` places **one** `PadStorage` crate/hol
 BR-A: lifetime Biomass wallet derives **Biomass Rank 0–4** (same family as `AllianceRanks`). SoftKnowledge / HUD label only (`BIOMASS` / `BIOMASS RANK` + rank number). Cybernex stays `CONTRIB` / `CONTRIBUTION`. Rank does not change harvest yield, Pulse, Hack, print cost, or exclusive modules. Infection cap 5. ST-B extractor stays. No P2W. No `SITE_*`.  
 KR-A: lifetime mastery derives **Knowledge Rank 0–4** (same `AllianceRanks` 0–4 family). SoftKnowledge / HUD label only (`KNOWLEDGE` / `KNOWLEDGE RANK` + rank number). BR-A Biomass Rank stays. Cybernex stays `CONTRIB`. Rank does not change harvest yield, Pulse, Hack, print cost, or exclusive modules. Infection cap 5. No P2W. No `SITE_*`.  
 CR-A: lifetime Contribution wallet derives **Contribution Rank 0–4** (same `AllianceRanks` 0–4 family as BR-A). SoftKnowledge / HUD label only (`CONTRIB` / `CONTRIBUTION` + rank number). gROT stays `BIOMASS` / BR-A. Rank does not change harvest yield, Pulse, Hack, print cost, or exclusive modules. Infection cap 5. No P2W. No `SITE_*`.  
-BT-D: one Cybernex animal-robot pack of 3 `CombatDummy` on an occupied unnamed pad walks a tiny 3-state GDScript BT — gather, pulse-engage Pulse (DPS 11 both ways), scatter-return-to-pad. Host authority. Infection cap 5. No permadeath. Knowledge labels only. BT-A pad-guard, BT-B visitor, BT-C gROT swarm stay distinct. PV-A rival stays distinct. Not Clash waves. Not TestArena. Not AR leftover 5v5. G5 stays closed. No `SITE_*`.
+BT-D: one Cybernex animal-robot pack of 3 `CombatDummy` on an occupied unnamed pad walks a tiny 3-state GDScript BT — gather, pulse-engage Pulse (DPS 11 both ways), scatter-return-to-pad. Host authority. Infection cap 5. No permadeath. Knowledge labels only. BT-A pad-guard, BT-B visitor, BT-C gROT swarm stay distinct. PV-A rival stays distinct. Not Clash waves. Not TestArena. Not AR leftover 5v5. G5 stays closed. No `SITE_*`.  
+FL-A: first fleet seed — one extra allied pip on the ST-A Strategy overlay (key B). Reuses the existing pad-visitor `NpcPilot` / NP-A hull. Cap **2** (player + 1). HUD `FLEET 2/2` is SoftKnowledge only. Click/select does not grant combat. Host keeps Pulse / occupy. Not 10–15 ships. Not a second OpenSpace. Overlay B still opens habitat / extractor / turret / storage / hangar. ST-A…J / BT-A/B/C / BT-D / MC-A/B/C stay. No `SITE_*`. `ORBITAL_STATIONS` stays off.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -798,6 +801,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | BR-A Biomass Rank | **built** — rank 0–4 from lifetime Biomass wallet; HUD label only; harvest numbers stay |
 | KR-A Knowledge Rank | **built** — rank 0–4 from lifetime mastery; HUD label only; harvest / Pulse / Hack stay; BR-A stays |
 | CR-A Contribution Rank | **built** — rank 0–4 from lifetime Contribution wallet; HUD label only; harvest / Pulse / Hack stay; BR-A stays |
+| FL-A first fleet seed | **built** — one extra allied pip on ST-A overlay (existing visitor); cap 2; FLEET 2/2 label; host Pulse/occupy; click ≠ combat |
 | ST-C print one module | **built** — spend Contribution/Biomass → one catalog module |
 | ST-D hangar queue | **built** — one module on catalog carrier; mass/power refuse |
 | ST-E orbital cluster | **built** — two catalog modules (dock + habitat) near Nex-Prime |

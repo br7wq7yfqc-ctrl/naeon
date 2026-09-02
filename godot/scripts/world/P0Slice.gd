@@ -123,6 +123,11 @@ const KR_A_KNOWLEDGE_RANK := true
 ## SoftKnowledge / HUD label only. Never yield / DPS / Pulse / Hack / print.
 ## BR-A Biomass Rank stays (gROT). Cybernex HUD CONTRIB + rank number. No SITE_*.
 const CR_A_CONTRIB_RANK := true
+## FL-A: first fleet seed. One extra allied pip on ST-A Strategy overlay.
+## Reuses the existing pad-visitor NpcPilot / NP-A hull. Cap 2 (player + 1).
+## SoftKnowledge / HUD FLEET n/2 only. Click ≠ combat. Host Pulse / occupy.
+## Not 10–15 ships. Not a second OpenSpace. Does not flip ORBITAL_STATIONS.
+const FL_A_FLEET := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6

@@ -65,6 +65,7 @@ func _go() -> void:
 		_assert_br_a(os, fails)
 		_assert_kr_a(os, fails)
 		_assert_cr_a(os, fails)
+		await _assert_fl_a(os, fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
 
@@ -668,6 +669,7 @@ func _go() -> void:
 	_assert_br_a(os, fails)
 	_assert_kr_a(os, fails)
 	_assert_cr_a(os, fails)
+	await _assert_fl_a(os, fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
@@ -12259,9 +12261,12 @@ func _assert_hud_stack(os: Node, fails: PackedStringArray) -> void:
 		" power=", snap.get("power_draw"), "/", snap.get("power_supply"),
 		" cool=", snap.get("cool_load"), "/", snap.get("cool_cap"),
 		" life=", snap.get("life"),
-		" crew=", snap.get("crew"), "/", snap.get("crew_max"))
+		" crew=", snap.get("crew"), "/", snap.get("crew_max"),
+		" fleet=", snap.get("fleet"), "/", snap.get("fleet_max"))
 	if txt_l.find("CREW") < 0:
 		fails.append("HUD stack missing CREW label")
+	if txt_l.find("FLEET") < 0:
+		fails.append("HUD stack missing FLEET label")
 
 
 func _assert_occupy_energy(os: Node, pad: Node, walker: Node, before: float, pulse_before: float, fails: PackedStringArray) -> void:
@@ -20541,6 +20546,193 @@ func _assert_cr_a(os: Node, fails: PackedStringArray) -> void:
 	GameManager.biomass = bio0_r
 	if GameManager.has_method("set_faction"):
 		GameManager.set_faction(fac0_r)
+
+
+func _assert_fl_a(os: Node, fails: PackedStringArray) -> void:
+	## FL-A: one extra allied fleet pip on ST-A overlay (existing NP-A visitor).
+	## Cap 2. SoftKnowledge / HUD FLEET 2/2. Click ≠ combat. Host Pulse / occupy.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
+	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var pulse0 := 11.0
+	var mastery0: Dictionary = GameManager.subject_mastery.duplicate() if GameManager else {}
+	var ov: Node = os.strategy_overlay() if os != null and os.has_method("strategy_overlay") else null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var nex: Node = _osh_nex()
+	var host: Node3D = null
+	var traffic: Node = null
+	var guest: Node3D = null
+	var spaces := 0
+	if P0 == null or not bool(P0.FL_A_FLEET):
+		fails.append("FL-A P0Slice flag missing")
+		return
+	if bool(P0.ORBITAL_STATIONS):
+		fails.append("FL-A flipped ORBITAL_STATIONS")
+	if not bool(P0.ST_A_OVERLAY) or not bool(P0.ST_B_EXTRACTOR) or not bool(P0.ST_H_TURRET) \
+			or not bool(P0.ST_I_STORAGE) or not bool(P0.ST_J_HANGAR):
+		fails.append("FL-A dropped ST-A…J")
+	if not bool(P0.BT_A_GUARD) or not bool(P0.BT_B_VISITOR) or not bool(P0.BT_C_SWARM):
+		fails.append("FL-A dropped BT-A/B/C")
+	if not bool(P0.CR_A_CONTRIB_RANK) or not bool(P0.KR_A_KNOWLEDGE_RANK) \
+			or not bool(P0.BR_A_BIOMASS_RANK):
+		fails.append("FL-A dropped CR-A/KR-A/BR-A")
+	if os == null or nex == null:
+		fails.append("FL-A no OpenSpace/Nex-Prime")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("FL-A must not run on Clash")
+		return
+	if LayerContext and str(LayerContext.current_layer) == "Arena":
+		fails.append("FL-A must not run on Clash")
+		return
+	if ov == null or not ov.has_method("try_enter"):
+		fails.append("FL-A StrategyOverlay missing")
+		return
+	if get_tree():
+		spaces = get_tree().get_nodes_in_group("open_space").size()
+	if spaces != 1:
+		fails.append("FL-A want one OpenSpace, got %s" % spaces)
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.25).timeout
+	if get_tree():
+		for n in get_tree().get_nodes_in_group("landing_pads"):
+			if n is Node3D and str(n.name) == "Pad_North":
+				host = n as Node3D
+				break
+	if host == null:
+		host = _in_a_occupied_pad(os)
+	if host != null and not (str(host.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]):
+		var walk: Node = host
+		host = null
+		while walk:
+			if walk is Node3D and str(walk.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+				host = walk as Node3D
+				break
+			walk = walk.get_parent()
+	if host == null:
+		fails.append("FL-A no unnamed pad (Pad_North class)")
+		return
+	traffic = host.get_node_or_null("PadTraffic")
+	if traffic == null and nex.has_method("pad_traffic"):
+		traffic = nex.call("pad_traffic")
+	if traffic == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("pad_traffic")
+		if not listed.is_empty():
+			traffic = listed[0]
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("FL-A pad visitor traffic missing")
+		return
+	guest = traffic.fleet_guest() if traffic.has_method("fleet_guest") else traffic.get_visitor()
+	if guest == null or not is_instance_valid(guest):
+		fails.append("FL-A visitor hull missing (need existing NP-A ship)")
+		return
+	if str(guest.get_meta("site_pin", "")) != "":
+		fails.append("FL-A visitor minted site_pin")
+	if Kits != null and Kits.has_method("_pulse"):
+		var pab = Kits._pulse()
+		if pab != null and "damage" in pab:
+			pulse0 = float(pab.damage)
+	if absf(pulse0 - 11.0) > 0.01:
+		fails.append("FL-A Pulse DPS drifted (%s)" % pulse0)
+	if ov.has_method("is_active") and bool(ov.is_active()) and ov.has_method("exit_overlay"):
+		ov.exit_overlay()
+		await get_tree().process_frame
+	var pad_up: Vector3 = host.get_meta("pad_up") if host.has_meta("pad_up") else Vector3.UP
+	if ship != null and is_instance_valid(ship):
+		if "velocity" in ship:
+			ship.velocity = Vector3.ZERO
+		ship.global_position = host.global_position + pad_up * 8.0
+	await get_tree().process_frame
+	if not bool(ov.try_enter()):
+		fails.append("FL-A overlay B did not open (%s)" % str(ov.readiness_line() if ov.has_method("readiness_line") else ""))
+		return
+	var ly := str(LayerContext.current_layer) if LayerContext else ""
+	if ly != "Strategy":
+		fails.append("FL-A LayerContext not Strategy (%s)" % ly)
+	if not ov.has_method("fleet_pip_visible") or not bool(ov.fleet_pip_visible()):
+		fails.append("FL-A fleet pip not visible")
+	var n := int(ov.fleet_count()) if ov.has_method("fleet_count") else -1
+	var cap := int(ov.fleet_cap()) if ov.has_method("fleet_cap") else -1
+	if cap != 2:
+		fails.append("FL-A fleet cap=%s, want 2" % cap)
+	if n != 2:
+		fails.append("FL-A fleet count=%s, want 2" % n)
+	if n > 2:
+		fails.append("FL-A spawned more than the cap")
+	var line := str(ov.fleet_hud_line()) if ov.has_method("fleet_hud_line") else ""
+	if line.find("FLEET") < 0 or line.find("2/2") < 0:
+		fails.append("FL-A overlay missing FLEET 2/2 (%s)" % line)
+	var ov_guest: Node3D = ov.fleet_guest() if ov.has_method("fleet_guest") else null
+	if ov_guest != guest:
+		fails.append("FL-A overlay pip is not the existing visitor hull")
+	if ov.has_method("try_add_fleet_member") and bool(ov.try_add_fleet_member(guest)):
+		fails.append("FL-A accepted a third fleet member")
+	if traffic.has_method("try_add_fleet_guest") and bool(traffic.try_add_fleet_guest()):
+		fails.append("FL-A PadTraffic spawned a second guest")
+	if int(ov.fleet_count()) != 2:
+		fails.append("FL-A cap broke after refuse")
+	if ov.has_method("try_select_fleet_pip") and not bool(ov.try_select_fleet_pip()):
+		fails.append("FL-A select fleet pip failed")
+	if ov.has_method("fleet_combat_authority") and str(ov.fleet_combat_authority()) != "host":
+		fails.append("FL-A select granted combat authority")
+	if str(guest.get_meta("combat_authority", "")) != "host":
+		fails.append("FL-A guest combat_authority left host")
+	if Hud != null:
+		var snap: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
+		var stxt := str(Hud.stack_text(snap)).to_upper()
+		if int(snap.get("fleet", -1)) != 2 or int(snap.get("fleet_max", -1)) != 2:
+			fails.append("FL-A HUD fleet=%s/%s, want 2/2" % [
+				snap.get("fleet"), snap.get("fleet_max")
+			])
+		if stxt.find("FLEET") < 0 or stxt.find("2/2") < 0:
+			fails.append("FL-A HUD missing FLEET 2/2")
+		if SoftK != null and GameManager and GameManager.has_method("add_mastery"):
+			var word0 := str(SoftK.fleet_label())
+			GameManager.add_mastery("logistics", 20.0)
+			GameManager.add_mastery("history", 20.0)
+			if SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked()):
+				fails.append("FL-A Knowledge unlocked exclusive weapon")
+			if SoftK.has_method("exclusive_module_unlocked") and bool(SoftK.exclusive_module_unlocked()):
+				fails.append("FL-A Knowledge unlocked exclusive module")
+			if Kits != null and Kits.has_method("_pulse"):
+				var pab1 = Kits._pulse()
+				if pab1 != null and "damage" in pab1 and absf(float(pab1.damage) - 11.0) > 0.01:
+					fails.append("FL-A Knowledge changed Pulse DPS")
+			var snap2: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
+			if int(snap2.get("fleet", -1)) != 2 or int(snap2.get("fleet_max", -1)) != 2:
+				fails.append("FL-A Knowledge changed fleet count")
+			var word1 := str(SoftK.fleet_label())
+			if word0.find("FLEET") < 0 or word1.find("FLEET") < 0:
+				fails.append("FL-A Knowledge dropped FLEET word")
+	if get_tree():
+		var hulls := 0
+		for nship in get_tree().get_nodes_in_group("ship"):
+			if nship != null and is_instance_valid(nship):
+				hulls += 1
+		if hulls > 4:
+			fails.append("FL-A spawned extra hulls (%s)" % hulls)
+		if get_tree().get_nodes_in_group("open_space").size() != 1:
+			fails.append("FL-A opened a second OpenSpace")
+	if LayerContext and str(LayerContext.site_pin_id).begins_with("SITE_"):
+		fails.append("FL-A minted SITE_* (%s)" % LayerContext.site_pin_id)
+	if ov.has_method("exit_overlay"):
+		ov.exit_overlay()
+	await get_tree().process_frame
+	if ov.has_method("fleet_pip_visible") and bool(ov.fleet_pip_visible()):
+		fails.append("FL-A fleet pip stayed after exit")
+	if os != null and os.has_method("strategy_overlay_active") and bool(os.strategy_overlay_active()):
+		fails.append("FL-A overlay stayed active after exit")
+	if LayerContext and str(LayerContext.site_pin_id) != pin0 \
+			and str(LayerContext.site_pin_id).begins_with("SITE_"):
+		fails.append("FL-A minted SITE_* pin (%s)" % LayerContext.site_pin_id)
+	print("[Playtest] FL-A overlay B opens · fleet pip ", line, " cap=2 · host Pulse/occupy · no SITE_*")
+	if GameManager:
+		GameManager.subject_mastery = mastery0
+		if GameManager.has_method("_recalc_knowledge"):
+			GameManager._recalc_knowledge()
 
 
 func _finish(fails: PackedStringArray, code: int) -> void:
