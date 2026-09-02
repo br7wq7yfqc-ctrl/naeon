@@ -86,6 +86,12 @@
     Pilot F/I unchanged. MC-A gunner seat stays. Host authority.
     Knowledge does not change thrust / DPS / yield / Pulse / Hack.
     No second hull. Not Clash. No SITE_* (this pass).
+33. MC-D: one extra crew seat on the existing player ship pocket
+    (fourth seat). station_role scanner is SoftKnowledge / HUD SCANNER.
+    HUD CREW n/4. F boards crew; I returns to the same ship_int.
+    Pilot F/I unchanged. MC-A gunner + MC-C engineer stay. Host authority.
+    Knowledge does not change thrust / DPS / yield / Pulse / Hack.
+    No second hull. Not Clash. No SITE_* (this pass).
 31. KR-A: Knowledge Rank 0–4 from lifetime mastery (AllianceRanks family).
     SoftKnowledge / HUD KNOWLEDGE / KNOWLEDGE RANK + rank number.
     BR-A Biomass Rank stays. Cybernex stays CONTRIB. Rank does not

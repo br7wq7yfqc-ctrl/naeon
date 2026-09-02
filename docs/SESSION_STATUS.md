@@ -1,3 +1,5 @@
+**2026-09-02 — MC-D: fourth crew seat SCANNER (SoftKnowledge / HUD label; CREW n/4; gunner+engineer stay; Pulse/Hack/thrust stay; host authority)**
+
 **2026-09-02 — SN-B: second local viewer seated on the player hull / OpenSpace sees SoftNet visual hull/pilot puppet (host Pulse/occupy/thrust; no second hull; SN-A stays; G5 closed)**
 
 **2026-09-02 — FL-A: first fleet seed — one extra allied pip on ST-A Strategy overlay (existing NP-A visitor; cap 2; FLEET 2/2 SoftKnowledge; host Pulse/occupy; click ≠ combat)**
@@ -756,6 +758,7 @@ SE-A: live power / cool / life buses on the player hull. Fitted `ShipModule.powe
 MC-A: one extra `CrewSeat` in the player `ship_int` pocket. **F** boards crew (walker stays); **I** returns to the same pocket. Pilot **F** / **I** unchanged. Occupied marker is visible. HUD `CREW n/2` is a label only. Optional SoftNet visual puppet when a second local viewer exists. Host authority. No second hull. No passenger combat. No `SITE_*`. 0 Tripo.  
 MC-B: that crew seat is named `gunner` (SoftKnowledge / HUD `GUNNER`). HUD stays `CREW n/2` plus the role. Knowledge does not change Pulse / Hack / thrust / DPS / yield. F/I role stays `crew`. Pilot seat unchanged. Host keeps combat. No second hull. Not Clash. No `SITE_*`. 0 Tripo.  
 MC-C: one extra `EngineerSeat` in the same player `ship_int` pocket (third seat; distinct `engineer_seat` offset). station_role `engineer` is SoftKnowledge / HUD `ENGINEER`. HUD `CREW n/3`. **F** boards crew; **I** returns to the same pocket. Pilot **F** / **I** unchanged. MC-A gunner seat stays. Host authority. Knowledge does not change thrust / DPS / yield / Pulse / Hack. No second hull. No `SITE_*`. 0 Tripo.  
+MC-D: one extra `ScannerSeat` in the same player `ship_int` pocket (fourth seat; distinct `scanner_seat` offset). station_role `scanner` is SoftKnowledge / HUD `SCANNER`. HUD `CREW n/4`. **F** boards crew; **I** returns to the same pocket. Pilot **F** / **I** unchanged. MC-A gunner + MC-C engineer stay. Host authority. Knowledge does not change thrust / DPS / yield / Pulse / Hack. No second hull. No `SITE_*`. 0 Tripo.  
 NP-G: after NP-B occupy/harvest the visitor spends Contribution/Biomass at `PadPrintBench` §6(a) (same ST-C path) → **one** catalog module on an unnamed pad. Without spend → refuse. No cash-shop skip. Knowledge labels the bench only. Not a second NP-C habitat. Not factory (c). Not hangar (b). No `SITE_*`.  
 NP-H: after NP-B occupy/harvest the visitor queues **one** catalog module on the ST-D catalog carrier hangar (`CarrierHangarQueue.enqueue_module`). Same mass/power refuse as the player. Knowledge labels the hangar only. Not a mobile `SITE_*`. Not factory (c). Not a second NP-C habitat. NP-G bench print stays.  
 NP-I: after NP-B occupy/harvest the visitor spends Contribution/Biomass at the player-cluster factory bench (c) (same ST-G path) → **one** catalog module. Without factory → refuse. Without spend → refuse. No cash-shop skip. Knowledge labels the factory only. Not hangar (b). Not pad bench (a). Not a second NP-C habitat. Not a mobile `SITE_*`. NP-G / NP-H stay.  
@@ -839,6 +842,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | MC-A ship crew seat | **built** — CrewSeat in ship_int; F/I same pocket; HUD CREW label; SoftNet puppet optional; pilot unchanged |
 | MC-B crew gunner role | **built** — GUNNER SoftKnowledge / HUD label on the MC-A seat; CREW n/2 stays; Pulse/Hack numbers stay; host authority |
 | MC-C crew engineer seat | **built** — EngineerSeat in ship_int; F/I same pocket; HUD CREW n/3 · ENGINEER; gunner stays; Pulse/Hack/thrust stay; host authority |
+| MC-D crew scanner seat | **built** — ScannerSeat in ship_int; F/I same pocket; HUD CREW n/4 · SCANNER; gunner+engineer stay; Pulse/Hack/thrust stay; host authority |
 | SN-A pad SoftNet visual | **built** — second local viewer sees host SurfaceWalker puppet on occupied unnamed pad; host Pulse/occupy; no second walker; G5 closed |
 | SN-B hull SoftNet visual | **built** — second local viewer seated on OpenSpace hull sees host hull/pilot puppet; host Pulse/occupy/thrust; no second hull; SN-A stays; G5 closed |
 | NP-C | **built** — NPC habitat on empty unnamed pad |

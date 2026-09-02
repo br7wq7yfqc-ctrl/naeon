@@ -59,7 +59,7 @@ static func snapshot(ship: Node = null, player: Node = null, pad: Node = null) -
 		"cool_cap": 0.0,
 		"life": "",
 		"crew": 0,
-		"crew_max": 3,
+		"crew_max": 4,
 		"crew_role": "gunner",
 		"fleet": 0,
 		"fleet_max": 2,
@@ -150,13 +150,13 @@ static func _fill_crew(snap: Dictionary, ship: Node, player: Node) -> void:
 		if n != null and is_instance_valid(n) and n.has_method("crew_occupancy"):
 			var o: Dictionary = n.crew_occupancy()
 			snap["crew"] = int(o.get("total", 0))
-			snap["crew_max"] = int(o.get("max", 3))
+			snap["crew_max"] = int(o.get("max", 4))
 			snap["crew_role"] = str(o.get("role", "gunner"))
 			return
 	var os: Node = tree.get_first_node_in_group("open_space")
 	if os != null and is_instance_valid(os) and bool(os.get("_in_ship")):
 		snap["crew"] = 1
-		snap["crew_max"] = 3
+		snap["crew_max"] = 4
 		snap["crew_role"] = "gunner"
 
 
@@ -251,7 +251,7 @@ static func stack_text(snap: Dictionary) -> String:
 	var crew_s := "%s %d/%d · %s" % [
 		_SoftK.crew_label(),
 		int(snap.get("crew", 0)),
-		int(snap.get("crew_max", 3)),
+		int(snap.get("crew_max", 4)),
 		_SoftK.crew_role_label(str(snap.get("crew_role", "gunner"))),
 	]
 	var fleet_s := "%s %d/%d" % [

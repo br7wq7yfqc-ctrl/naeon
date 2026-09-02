@@ -59,6 +59,7 @@ func _go() -> void:
 		await _assert_mc_a(os, fails)
 		await _assert_mc_b(os, fails)
 		await _assert_mc_c(os, fails)
+		await _assert_mc_d(os, fails)
 		await _assert_sn_a(os, fails)
 		await _assert_bt_c(os, fails)
 		await _assert_bt_d(os, fails)
@@ -80,6 +81,7 @@ func _go() -> void:
 	await _assert_mc_a(os, fails)
 	await _assert_mc_b(os, fails)
 	await _assert_mc_c(os, fails)
+	await _assert_mc_d(os, fails)
 	await _assert_in_c(os, fails)
 	await _assert_in_d(os, fails)
 	await _assert_in_e(os, fails)
@@ -14734,8 +14736,8 @@ func _assert_mc_c(os: Node, fails: PackedStringArray) -> void:
 		print("[Playtest] MC-C HUD ", _SoftK_crew_line(d, snap_c), " max=", snap_c.get("crew_max", 0))
 		if stxt_c.find("CREW") < 0:
 			fails.append("MC-C HUD missing CREW n/3")
-		if int(snap_c.get("crew_max", 0)) != 3:
-			fails.append("MC-C HUD crew_max=%s, want 3" % snap_c.get("crew_max", 0))
+		if int(snap_c.get("crew_max", 0)) < 3:
+			fails.append("MC-C HUD crew_max=%s, want >= 3" % snap_c.get("crew_max", 0))
 		if stxt_c.find("ENGINEER") < 0:
 			fails.append("MC-C HUD missing ENGINEER role")
 		if str(snap_c.get("crew_role", "")) != "engineer":
@@ -14772,7 +14774,7 @@ func _assert_mc_c(os: Node, fails: PackedStringArray) -> void:
 			fails.append("MC-C Knowledge changed crew count")
 		if str(Hud.stack_text(snap_c)).to_upper().find("ENGINEER") < 0:
 			fails.append("MC-C Knowledge dropped ENGINEER label")
-		if int(snap_c.get("crew_max", 0)) != 3:
+		if int(snap_c.get("crew_max", 0)) < 3:
 			fails.append("MC-C Knowledge changed crew_max")
 	if SoftKnowledge.exclusive_weapon_unlocked() or SoftKnowledge.exclusive_module_unlocked():
 		fails.append("MC-C Knowledge unlocked exclusive modules")
@@ -14814,6 +14816,276 @@ func _assert_mc_c(os: Node, fails: PackedStringArray) -> void:
 		fails.append("MC-C minted SITE_* (%s)" % pin1_c)
 	print("[Playtest] MC-C no SITE_* · Knowledge engineer label only · CREW n/3")
 	_in_a_restore_pilot(os, ship_c, true)
+	await get_tree().create_timer(0.3).timeout
+
+
+func _assert_mc_d(os: Node, fails: PackedStringArray) -> void:
+	## MC-D: fourth CrewSeat (scanner) on the player hull pocket.
+	## F boards crew; I same ship_int. Gunner + engineer stay. HUD CREW n/4.
+	## Knowledge does not change thrust / DPS / yield / Pulse / Hack.
+	var d_md: Node = os.get("_interior") if os else null
+	var ship_md: Node3D = os.get("ship") as Node3D if os else null
+	var walker_md: Node3D = os.get("player") as Node3D if os else null
+	var pocket_md: Node3D = null
+	var seat_md: Node3D = null
+	var gun_md: Node3D = null
+	var eng_md: Node3D = null
+	var scan_md: Node3D = null
+	var occ_md: Node = null
+	var soft_md: Node = null
+	var role_md := ""
+	var named_md := ""
+	var Hud_md = load("res://scripts/ui/OpenSpaceHudStack.gd")
+	var Kits_md = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var snap_md: Dictionary = {}
+	var pulse0_md := 11.0
+	var pulse1_md := 11.0
+	var w0_md := 0.0
+	var w1_md := 0.0
+	var tm0_md := 1.0
+	var tm1_md := 1.0
+	var cap0_md := 5
+	var cap1_md := 5
+	var crew0_md := 0
+	var crew1_md := 0
+	var dummy_md: Node = null
+	var pin0_md := str(LayerContext.site_pin_id) if LayerContext else ""
+	if os == null or d_md == null or ship_md == null:
+		fails.append("MC-D no OpenSpace/interior/ship")
+		return
+	if d_md.has_method("is_inside") and bool(d_md.is_inside()) and d_md.has_method("exit_interior"):
+		d_md.exit_interior()
+		await get_tree().create_timer(0.2).timeout
+	if bool(os.get("_in_ship")) and os.has_method("_leave_seat_to_pocket"):
+		os._leave_seat_to_pocket()
+		await get_tree().create_timer(0.55).timeout
+	elif d_md.has_method("enter_ship"):
+		walker_md = os.get("player") as Node3D
+		if walker_md == null or not is_instance_valid(walker_md):
+			fails.append("MC-D no walker for enter_ship")
+			_in_a_restore_pilot(os, ship_md, true)
+			return
+		d_md.enter_ship(walker_md, ship_md)
+		await get_tree().create_timer(0.45).timeout
+	if not (d_md.has_method("is_inside") and bool(d_md.is_inside())):
+		fails.append("MC-D did not enter ship_int")
+		_in_a_restore_pilot(os, ship_md, true)
+		return
+	if str(d_md.get_kind()) != "ship":
+		fails.append("MC-D pocket kind=%s, want ship" % str(d_md.get_kind()))
+	pocket_md = d_md.get_active_interior() if d_md.has_method("get_active_interior") else null
+	if pocket_md == null:
+		fails.append("MC-D ship pocket missing")
+		_in_a_restore_pilot(os, ship_md, true)
+		return
+	seat_md = pocket_md.get_node_or_null("Seat") as Node3D
+	gun_md = pocket_md.get_node_or_null("CrewSeat") as Node3D
+	eng_md = pocket_md.get_node_or_null("EngineerSeat") as Node3D
+	scan_md = pocket_md.get_node_or_null("ScannerSeat") as Node3D
+	if gun_md == null:
+		fails.append("MC-D MC-A gunner CrewSeat missing")
+		_in_a_restore_pilot(os, ship_md, true)
+		return
+	if str(gun_md.get_meta("station_role", "")) != "gunner":
+		fails.append("MC-D gunner seat lost station_role")
+	if eng_md == null:
+		fails.append("MC-D MC-C EngineerSeat missing")
+		_in_a_restore_pilot(os, ship_md, true)
+		return
+	if str(eng_md.get_meta("station_role", "")) != "engineer":
+		fails.append("MC-D engineer seat lost station_role")
+	if scan_md == null:
+		fails.append("MC-D ScannerSeat missing")
+		_in_a_restore_pilot(os, ship_md, true)
+		return
+	if str(scan_md.get_meta("station_role", "")) != "scanner":
+		fails.append("MC-D ScannerSeat missing scanner station_role")
+	if d_md.has_method("scanner_station_role"):
+		named_md = str(d_md.scanner_station_role())
+	if named_md != "scanner":
+		fails.append("MC-D station role=%s, want scanner" % named_md)
+	if gun_md.position.distance_to(scan_md.position) < 0.8:
+		fails.append("MC-D scanner_seat offset collided with crew_seat")
+	if eng_md.position.distance_to(scan_md.position) < 0.8:
+		fails.append("MC-D scanner_seat offset collided with engineer_seat")
+	if pocket_md.get_node_or_null("OpsSeat") != null or pocket_md.get_node_or_null("HangarSeat") != null:
+		fails.append("MC-D ship minted station/hangar seat")
+	walker_md = os.get("player") as Node3D
+	if walker_md == null or not is_instance_valid(walker_md):
+		fails.append("MC-D no walker in pocket")
+		_in_a_restore_pilot(os, ship_md, true)
+		return
+	soft_md = d_md.crew_softnet() if d_md.has_method("crew_softnet") else pocket_md.get_node_or_null("CrewSoftNet")
+	if soft_md != null:
+		if soft_md.has_method("sync_from_host"):
+			soft_md.sync_from_host()
+		if soft_md.has_method("is_host_authority") and not bool(soft_md.is_host_authority()):
+			fails.append("MC-D SoftNet stole hull authority")
+		if SoftNetSession and SoftNetSession.has_method("combat_authority") and str(SoftNetSession.combat_authority()) != "host":
+			fails.append("MC-D SoftNet combat authority left host")
+		if soft_md.has_method("has_second_hull") and bool(soft_md.has_second_hull()):
+			fails.append("MC-D spawned a second physical hull")
+		if soft_md.has_method("has_passenger_combat") and bool(soft_md.has_passenger_combat()):
+			fails.append("MC-D granted passenger combat")
+		if soft_md.has_method("observed_pose"):
+			var pose_md: Dictionary = soft_md.observed_pose()
+			if str(pose_md.get("station_role", "")) != "gunner":
+				fails.append("MC-D SoftNet dropped gunner pose")
+			if str(pose_md.get("engineer_role", "")) != "engineer":
+				fails.append("MC-D SoftNet pose missing engineer")
+			if str(pose_md.get("scanner_role", "")) != "scanner":
+				fails.append("MC-D SoftNet pose missing scanner")
+			if str(pose_md.get("authority", "")) != "host":
+				fails.append("MC-D SoftNet pose authority left host")
+		if soft_md.has_method("scanner_puppet"):
+			var pup_md: Node3D = soft_md.scanner_puppet()
+			if pup_md == null or not is_instance_valid(pup_md):
+				fails.append("MC-D scanner puppet missing")
+			elif pup_md is CharacterBody3D:
+				fails.append("MC-D scanner puppet is a physical body")
+		if soft_md.has_method("engineer_puppet"):
+			var epup_md: Node3D = soft_md.engineer_puppet()
+			if epup_md == null or not is_instance_valid(epup_md):
+				fails.append("MC-D engineer puppet gone")
+	walker_md.global_position = scan_md.global_position + Vector3(0, 1.05, 0)
+	if walker_md is CharacterBody3D:
+		(walker_md as CharacterBody3D).velocity = Vector3.ZERO
+	await get_tree().process_frame
+	if d_md.has_method("is_near_legal_seat") and not bool(d_md.is_near_legal_seat(walker_md, 3.8)):
+		fails.append("MC-D walker not near ScannerSeat")
+	if d_md.has_method("is_near_seat") and bool(d_md.is_near_seat(walker_md, 3.8)):
+		fails.append("MC-D ScannerSeat also counted as pilot Seat")
+	if os.has_method("_try_board_pocket_seat"):
+		if not bool(os._try_board_pocket_seat()):
+			fails.append("MC-D F did not board scanner seat")
+	elif d_md.has_method("try_board_legal_seat"):
+		if not bool(d_md.try_board_legal_seat(walker_md)):
+			fails.append("MC-D F did not board scanner seat")
+	role_md = str(d_md.get_seat_role()) if d_md.has_method("get_seat_role") else ""
+	print("[Playtest] MC-D scanner seat F→", role_md, " scanner=", named_md)
+	if role_md != "crew":
+		fails.append("MC-D seat role=%s, want crew (F/I gating)" % role_md)
+	if not (d_md.has_method("is_seated") and bool(d_md.is_seated())):
+		fails.append("MC-D F did not sit scanner seat")
+	if bool(os.get("_in_ship")):
+		fails.append("MC-D scanner seat stole the pilot seat")
+	if d_md.has_method("boarded_station_role") and str(d_md.boarded_station_role()) != "scanner":
+		fails.append("MC-D boarded station_role=%s, want scanner" % d_md.boarded_station_role())
+	occ_md = pocket_md.get_node_or_null("ScannerSeatOccupied")
+	if occ_md == null:
+		fails.append("MC-D occupied scanner marker missing")
+	elif not bool(occ_md.get_meta("occupied", false)):
+		fails.append("MC-D occupied scanner seat not visible")
+	if Kits_md != null and Kits_md.has_method("_pulse"):
+		var pab_md = Kits_md._pulse()
+		if pab_md != null and "damage" in pab_md:
+			pulse0_md = float(pab_md.damage)
+	if absf(pulse0_md - 11.0) > 0.01:
+		fails.append("MC-D Pulse DPS drifted (%s)" % pulse0_md)
+	if ship_md.has_method("weapon_output"):
+		w0_md = float(ship_md.weapon_output())
+	if ship_md.has_method("_thrust_mult"):
+		tm0_md = float(ship_md._thrust_mult())
+	if get_tree():
+		for n_md in get_tree().get_nodes_in_group("combat_dummy"):
+			if n_md != null and is_instance_valid(n_md) and n_md.has_method("infection_cap"):
+				dummy_md = n_md
+				break
+	if dummy_md != null:
+		cap0_md = int(dummy_md.infection_cap())
+		if cap0_md != 5:
+			fails.append("MC-D Infection cap drifted (%s)" % cap0_md)
+	if SoftKnowledge.exclusive_weapon_unlocked("scanner") or SoftKnowledge.exclusive_module_unlocked("scanner"):
+		fails.append("MC-D unlocked exclusive weapon/module")
+	if Hud_md != null:
+		snap_md = Hud_md.snapshot(ship_md, walker_md, null)
+		var stxt_md := str(Hud_md.stack_text(snap_md)).to_upper()
+		crew0_md = int(snap_md.get("crew", 0))
+		print("[Playtest] MC-D HUD ", _SoftK_crew_line(d_md, snap_md), " max=", snap_md.get("crew_max", 0))
+		if stxt_md.find("CREW") < 0:
+			fails.append("MC-D HUD missing CREW n/4")
+		if int(snap_md.get("crew_max", 0)) != 4:
+			fails.append("MC-D HUD crew_max=%s, want 4" % snap_md.get("crew_max", 0))
+		if stxt_md.find("SCANNER") < 0:
+			fails.append("MC-D HUD missing SCANNER role")
+		if str(snap_md.get("crew_role", "")) != "scanner":
+			fails.append("MC-D HUD crew_role=%s, want scanner" % snap_md.get("crew_role", ""))
+		if crew0_md < 1:
+			fails.append("MC-D HUD crew count did not see occupant")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("combat", 20.0)
+		GameManager.add_mastery("logistics", 20.0)
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("biology", 20.0)
+	if Kits_md != null and Kits_md.has_method("_pulse"):
+		var pab1_md = Kits_md._pulse()
+		if pab1_md != null and "damage" in pab1_md:
+			pulse1_md = float(pab1_md.damage)
+		if absf(pulse1_md - pulse0_md) > 0.01:
+			fails.append("MC-D Knowledge changed Pulse DPS")
+	if ship_md.has_method("weapon_output"):
+		w1_md = float(ship_md.weapon_output())
+		if absf(w1_md - w0_md) > 0.001:
+			fails.append("MC-D Knowledge changed DPS")
+	if ship_md.has_method("_thrust_mult"):
+		tm1_md = float(ship_md._thrust_mult())
+		if absf(tm1_md - tm0_md) > 0.001:
+			fails.append("MC-D Knowledge changed thrust")
+	if dummy_md != null:
+		cap1_md = int(dummy_md.infection_cap())
+		if cap1_md != cap0_md:
+			fails.append("MC-D Knowledge changed Hack cap")
+	if Hud_md != null:
+		snap_md = Hud_md.snapshot(ship_md, walker_md, null)
+		crew1_md = int(snap_md.get("crew", 0))
+		if crew1_md != crew0_md:
+			fails.append("MC-D Knowledge changed crew count")
+		if str(Hud_md.stack_text(snap_md)).to_upper().find("SCANNER") < 0:
+			fails.append("MC-D Knowledge dropped SCANNER label")
+		if int(snap_md.get("crew_max", 0)) != 4:
+			fails.append("MC-D Knowledge changed crew_max")
+	if SoftKnowledge.exclusive_weapon_unlocked() or SoftKnowledge.exclusive_module_unlocked():
+		fails.append("MC-D Knowledge unlocked exclusive modules")
+	print("[Playtest] MC-D Pulse ", pulse1_md, " Hack cap ", cap1_md, " thrust unchanged")
+	if d_md.has_method("try_toggle"):
+		d_md.try_toggle(walker_md, ship_md)
+	await get_tree().process_frame
+	if d_md.has_method("is_seated") and bool(d_md.is_seated()):
+		fails.append("MC-D I did not leave scanner seat")
+	if not (d_md.has_method("is_inside") and bool(d_md.is_inside())):
+		fails.append("MC-D I from scanner seat hopped exterior")
+	if str(d_md.get_kind()) != "ship":
+		fails.append("MC-D I from scanner seat left ship_int")
+	if walker_md.global_position.y < 2000.0:
+		fails.append("MC-D I from scanner seat dropped out of pocket")
+	if LayerContext and str(LayerContext.current_layer) != "ship_int":
+		fails.append("MC-D I did not return to ship_int")
+	print("[Playtest] MC-D scanner seat F→crew I→same pocket · SCANNER label")
+	if gun_md == null or not is_instance_valid(gun_md):
+		fails.append("MC-D gunner seat gone after scanner I")
+	if eng_md == null or not is_instance_valid(eng_md):
+		fails.append("MC-D engineer seat gone after scanner I")
+	if seat_md == null:
+		fails.append("MC-D pilot Seat gone after scanner I")
+	else:
+		walker_md.global_position = seat_md.global_position + Vector3(0, 1.05, 0)
+		if walker_md is CharacterBody3D:
+			(walker_md as CharacterBody3D).velocity = Vector3.ZERO
+		await get_tree().process_frame
+		if os.has_method("_try_seat_to_pilot"):
+			os._try_seat_to_pilot()
+			await get_tree().create_timer(0.25).timeout
+			if d_md.has_method("is_inside") and bool(d_md.is_inside()):
+				fails.append("MC-D still inside after pilot F")
+			if not bool(os.get("_in_ship")):
+				fails.append("MC-D pilot seat no longer boards")
+			else:
+				print("[Playtest] MC-D pilot seat unchanged")
+	var pin1_md := str(LayerContext.site_pin_id) if LayerContext else ""
+	if pin1_md != pin0_md and pin1_md.begins_with("SITE_"):
+		fails.append("MC-D minted SITE_* (%s)" % pin1_md)
+	print("[Playtest] MC-D no SITE_* · Knowledge scanner label only · CREW n/4")
+	_in_a_restore_pilot(os, ship_md, true)
 	await get_tree().create_timer(0.3).timeout
 
 
