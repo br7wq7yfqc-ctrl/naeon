@@ -91,6 +91,11 @@
     BR-A Biomass Rank stays. Cybernex stays CONTRIB. Rank does not
     change harvest / Pulse / Hack / print / exclusive modules.
     Infection cap 5. No P2W. No SITE_* (this pass).
+32. CR-A: Contribution Rank 0–4 from lifetime Contribution wallet
+    (AllianceRanks family). SoftKnowledge / HUD CONTRIB / CONTRIBUTION
+    + rank number. BR-A Biomass Rank stays (gROT). Rank does not
+    change harvest / Pulse / Hack / print / exclusive modules.
+    Infection cap 5. No P2W. No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

@@ -181,6 +181,17 @@ static func biomass_rank_label(rank: int = -1) -> String:
 	return str(clampi(r, 0, 4))
 
 
+## CR-A: Contribution Rank 0–4 as a HUD number. Never yield / DPS / Pulse / Hack / print.
+static func contribution_rank_label(rank: int = -1) -> String:
+	var r := rank
+	if r < 0:
+		if GameManager != null and GameManager.has_method("contribution_rank"):
+			r = int(GameManager.contribution_rank())
+		else:
+			r = 0
+	return str(clampi(r, 0, 4))
+
+
 ## KR-A: name the Knowledge Rank track. Never yield / DPS / Pulse / Hack / print.
 static func knowledge_rank_word() -> String:
 	var intel := mastery("quest_intel") + mastery("field_intel") + mastery("history")

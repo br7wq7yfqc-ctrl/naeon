@@ -15,6 +15,7 @@ signal toast_requested(msg: String)
 
 var player_faction: Faction = Faction.CYBERNEX
 var contribution: float = 0.0  ## Cybernex RBE score
+var lifetime_contribution: float = 0.0  ## earned Contribution; spend does not reduce (CR-A rank)
 var biomass: float = 0.0       ## gROT Biomass score
 var lifetime_biomass: float = 0.0  ## earned Biomass; spend does not reduce (BR-A rank)
 var knowledge_rank: int = 0
@@ -92,6 +93,8 @@ func cycle_faction() -> void:
 
 func add_contribution(amount: float) -> void:
 	contribution += amount
+	if amount > 0.0:
+		lifetime_contribution += amount
 	contribution_changed.emit(contribution)
 
 
@@ -133,6 +136,11 @@ func add_biomass(amount: float) -> void:
 func biomass_rank() -> int:
 	## BR-A: 0–4 from lifetime Biomass wallet. Label only — never combat / yield.
 	return _AllianceRanks.rank_from_lifetime(lifetime_biomass)
+
+
+func contribution_rank() -> int:
+	## CR-A: 0–4 from lifetime Contribution wallet. Label only — never combat / yield.
+	return _AllianceRanks.rank_from_lifetime(lifetime_contribution)
 
 
 func knowledge_ladder() -> int:

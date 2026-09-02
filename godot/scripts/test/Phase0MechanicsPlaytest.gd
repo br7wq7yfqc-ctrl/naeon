@@ -63,6 +63,7 @@ func _go() -> void:
 		await _assert_bt_c(os, fails)
 		_assert_br_a(os, fails)
 		_assert_kr_a(os, fails)
+		_assert_cr_a(os, fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
 
@@ -664,6 +665,7 @@ func _go() -> void:
 	await _assert_bt_c(os, fails)
 	_assert_br_a(os, fails)
 	_assert_kr_a(os, fails)
+	_assert_cr_a(os, fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
@@ -19953,6 +19955,170 @@ func _assert_kr_a(os: Node, fails: PackedStringArray) -> void:
 	GameManager.biomass = bio0_k
 	if GameManager.has_method("set_faction"):
 		GameManager.set_faction(fac0_k)
+
+
+func _assert_cr_a(os: Node, fails: PackedStringArray) -> void:
+	## CR-A: Contribution Rank 0–4 from lifetime Contribution wallet. HUD label only.
+	## Harvest / Pulse / Hack / print stay. BR-A Biomass Rank stays. No SITE_*.
+	var P0r = load("res://scripts/world/P0Slice.gd")
+	var Ranks_r = load("res://scripts/systems/AllianceRanks.gd")
+	var SoftK_r = load("res://scripts/systems/SoftKnowledge.gd")
+	var Hud_r = load("res://scripts/ui/OpenSpaceHudStack.gd")
+	var Kits_r = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var fac0_r = GameManager.player_faction if GameManager else 0
+	var cx0_r := float(GameManager.contribution) if GameManager and "contribution" in GameManager else 0.0
+	var clife0_r := float(GameManager.lifetime_contribution) if GameManager and "lifetime_contribution" in GameManager else 0.0
+	var bio0_r := float(GameManager.biomass) if GameManager and "biomass" in GameManager else 0.0
+	var blife0_r := float(GameManager.lifetime_biomass) if GameManager and "lifetime_biomass" in GameManager else 0.0
+	var mastery0_r: Dictionary = GameManager.subject_mastery.duplicate() if GameManager else {}
+	var pad_r: Node = null
+	var rate0_r := 0.0
+	var cpu0_r := 0.0
+	var cost0_r := 0.0
+	var pulse0_r := 11.0
+	var cap0_r := 5
+	var bench_r: Node = null
+	var pin0_r := str(LayerContext.site_pin_id) if LayerContext else ""
+	if P0r == null or not bool(P0r.CR_A_CONTRIB_RANK):
+		fails.append("CR-A P0Slice flag missing")
+		return
+	if bool(P0r.ORBITAL_STATIONS):
+		fails.append("CR-A flipped ORBITAL_STATIONS")
+	if not bool(P0r.BR_A_BIOMASS_RANK):
+		fails.append("CR-A dropped BR-A flag")
+	if not bool(P0r.KR_A_KNOWLEDGE_RANK):
+		fails.append("CR-A dropped KR-A flag")
+	if GameManager == null or not GameManager.has_method("contribution_rank") or not GameManager.has_method("add_contribution"):
+		fails.append("CR-A GameManager contribution rank missing")
+		return
+	if Ranks_r == null or not Ranks_r.has_method("rank_from_lifetime"):
+		fails.append("CR-A AllianceRanks.rank_from_lifetime missing")
+		return
+	if int(Ranks_r.rank_from_lifetime(0.0)) != 0 or int(Ranks_r.rank_from_lifetime(50.0)) != 1 \
+			or int(Ranks_r.rank_from_lifetime(200.0)) != 2 or int(Ranks_r.rank_from_lifetime(600.0)) != 3 \
+			or int(Ranks_r.rank_from_lifetime(1600.0)) != 4:
+		fails.append("CR-A lifetime ladder is not AllianceRanks 0–4")
+	if get_tree():
+		var pads_r: Array = get_tree().get_nodes_in_group("pad_bases")
+		if not pads_r.is_empty():
+			pad_r = pads_r[0]
+	if pad_r != null:
+		if "extract_rate" in pad_r:
+			rate0_r = float(pad_r.get("extract_rate"))
+		if "contribution_per_unit" in pad_r:
+			cpu0_r = float(pad_r.get("contribution_per_unit"))
+		var pin_r := str(pad_r.get_meta("site_pin", "")) if pad_r.has_meta("site_pin") else ""
+		if pin_r.begins_with("SITE_"):
+			fails.append("CR-A minted SITE_* (%s)" % pin_r)
+	if get_tree():
+		var benches_r: Array = get_tree().get_nodes_in_group("print_benches")
+		if not benches_r.is_empty() and benches_r[0] != null and benches_r[0].has_method("print_cost"):
+			bench_r = benches_r[0]
+			cost0_r = float(bench_r.print_cost())
+	if Kits_r != null and Kits_r.has_method("_pulse"):
+		var pab_r = Kits_r._pulse()
+		if pab_r != null and "damage" in pab_r:
+			pulse0_r = float(pab_r.damage)
+	if absf(pulse0_r - 11.0) > 0.01:
+		fails.append("CR-A Pulse DPS drifted (%s)" % pulse0_r)
+	if get_tree():
+		for n_r in get_tree().get_nodes_in_group("combat_dummy"):
+			if n_r != null and is_instance_valid(n_r) and n_r.has_method("infection_cap"):
+				cap0_r = int(n_r.infection_cap())
+				break
+	if cap0_r != 5:
+		fails.append("CR-A Infection cap drifted (%s)" % cap0_r)
+	GameManager.lifetime_contribution = 0.0
+	GameManager.contribution = 0.0
+	if int(GameManager.contribution_rank()) != 0:
+		fails.append("CR-A rank at lifetime 0 is %s, want 0" % GameManager.contribution_rank())
+	var want_r := [1, 2, 3, 4]
+	var add_amt_r := [50.0, 150.0, 400.0, 1000.0]
+	for i_r in range(want_r.size()):
+		GameManager.add_contribution(float(add_amt_r[i_r]))
+		if int(GameManager.contribution_rank()) != int(want_r[i_r]):
+			fails.append("CR-A rank after lifetime bump is %s, want %s" % [
+				GameManager.contribution_rank(), want_r[i_r]
+			])
+		if pad_r != null and (absf(float(pad_r.get("extract_rate")) - rate0_r) > 0.001 \
+				or absf(float(pad_r.get("contribution_per_unit")) - cpu0_r) > 0.001):
+			fails.append("CR-A rank changed harvest numbers")
+			break
+		if bench_r != null and absf(float(bench_r.print_cost()) - cost0_r) > 0.001:
+			fails.append("CR-A rank cheapened print cost")
+			break
+		if Kits_r != null and Kits_r.has_method("_pulse"):
+			var pab1_r = Kits_r._pulse()
+			if pab1_r != null and "damage" in pab1_r and absf(float(pab1_r.damage) - 11.0) > 0.01:
+				fails.append("CR-A rank changed Pulse DPS")
+				break
+		if SoftK_r != null:
+			if SoftK_r.has_method("exclusive_module_unlocked") and bool(SoftK_r.exclusive_module_unlocked()):
+				fails.append("CR-A rank unlocked exclusive module")
+				break
+			if SoftK_r.has_method("exclusive_weapon_unlocked") and bool(SoftK_r.exclusive_weapon_unlocked()):
+				fails.append("CR-A rank unlocked exclusive weapon")
+				break
+	var r4_r := int(GameManager.contribution_rank())
+	if GameManager.has_method("try_spend_contribution"):
+		GameManager.try_spend_contribution(80.0)
+	if int(GameManager.contribution_rank()) != r4_r:
+		fails.append("CR-A spend dropped Contribution Rank")
+	if GameManager.has_method("set_faction"):
+		GameManager.set_faction(GameManager.Faction.CYBERNEX)
+	if Hud_r != null:
+		var snap_r: Dictionary = Hud_r.snapshot(os.get("ship") if os else null, os.get("player") if os else null, pad_r)
+		var stxt_r := str(Hud_r.stack_text(snap_r))
+		var first_r := stxt_r.get_slice("\n", 0)
+		var unit_r := str(SoftK_r.yield_label(false)) if SoftK_r != null else "CONTRIB"
+		var lab_r := str(SoftK_r.contribution_rank_label(int(GameManager.contribution_rank()))) if SoftK_r != null else "4"
+		if int(snap_r.get("contrib_rank", -99)) != int(GameManager.contribution_rank()):
+			fails.append("CR-A HUD contrib_rank=%s want %s" % [
+				snap_r.get("contrib_rank"), GameManager.contribution_rank()
+			])
+		if int(snap_r.get("econ_rank", 0)) != -1:
+			fails.append("CR-A Cybernex HUD showed Biomass Rank")
+		if first_r.find(unit_r) < 0 or first_r.find("  ·  %s" % lab_r) < 0:
+			fails.append("CR-A HUD missing Cybernex rank label (%s)" % first_r)
+		if first_r.find("BIOMASS") >= 0:
+			fails.append("CR-A Cybernex HUD used BIOMASS (%s)" % first_r)
+		if GameManager.has_method("add_mastery"):
+			GameManager.add_mastery("colony_ops", 20.0)
+		if pad_r != null and (absf(float(pad_r.get("extract_rate")) - rate0_r) > 0.001 \
+				or absf(float(pad_r.get("contribution_per_unit")) - cpu0_r) > 0.001):
+			fails.append("CR-A CONTRIBUTION RANK label changed harvest numbers")
+		var snap2_r: Dictionary = Hud_r.snapshot(os.get("ship") if os else null, os.get("player") if os else null, pad_r)
+		var first2_r := str(Hud_r.stack_text(snap2_r)).get_slice("\n", 0)
+		var unit2_r := str(SoftK_r.yield_label(false)) if SoftK_r != null else "CONTRIBUTION"
+		if unit2_r != "CONTRIBUTION" or first2_r.find("CONTRIBUTION") < 0:
+			fails.append("CR-A HUD missing CONTRIBUTION (%s)" % first2_r)
+		if first2_r.find("  ·  %s" % lab_r) < 0:
+			fails.append("CR-A HUD missing rank number after CONTRIBUTION (%s)" % first2_r)
+		GameManager.set_faction(GameManager.Faction.GROT)
+		var snap_gr_r: Dictionary = Hud_r.snapshot(os.get("ship") if os else null, os.get("player") if os else null, pad_r)
+		var first_gr_r := str(Hud_r.stack_text(snap_gr_r)).get_slice("\n", 0)
+		if first_gr_r.find("BIOMASS") < 0:
+			fails.append("CR-A gROT HUD dropped BIOMASS (%s)" % first_gr_r)
+		if int(snap_gr_r.get("contrib_rank", 0)) != -1:
+			fails.append("CR-A gROT HUD showed Contribution Rank")
+		if GameManager.has_method("biomass_rank") and int(snap_gr_r.get("econ_rank", -99)) != int(GameManager.biomass_rank()):
+			fails.append("CR-A gROT HUD broke BR-A econ_rank")
+	if LayerContext and str(LayerContext.site_pin_id) != pin0_r:
+		fails.append("CR-A changed site_pin (%s → %s)" % [pin0_r, LayerContext.site_pin_id])
+	if pin0_r.begins_with("SITE_") == false and LayerContext and str(LayerContext.site_pin_id).begins_with("SITE_"):
+		fails.append("CR-A minted SITE_* pin (%s)" % LayerContext.site_pin_id)
+	print("[Playtest] CR-A rank ", GameManager.contribution_rank(), " lifetime=",
+		snapped(float(GameManager.lifetime_contribution), 0.1), " harvest=", snapped(rate0_r * cpu0_r, 0.01),
+		" Pulse=", pulse0_r, " cap=", cap0_r, " print=", cost0_r, " no SITE_*")
+	GameManager.subject_mastery = mastery0_r
+	if GameManager.has_method("_recalc_knowledge"):
+		GameManager._recalc_knowledge()
+	GameManager.lifetime_contribution = clife0_r
+	GameManager.contribution = cx0_r
+	GameManager.lifetime_biomass = blife0_r
+	GameManager.biomass = bio0_r
+	if GameManager.has_method("set_faction"):
+		GameManager.set_faction(fac0_r)
 
 
 func _finish(fails: PackedStringArray, code: int) -> void:

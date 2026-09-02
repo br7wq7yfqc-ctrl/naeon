@@ -114,6 +114,10 @@ const BR_A_BIOMASS_RANK := true
 ## SoftKnowledge / HUD label only. Never yield / DPS / Pulse / Hack / print.
 ## BR-A Biomass Rank stays. Cybernex stays CONTRIB. No SITE_*. Infection cap 5.
 const KR_A_KNOWLEDGE_RANK := true
+## CR-A: Contribution Rank 0–4 from lifetime Contribution wallet (AllianceRanks family).
+## SoftKnowledge / HUD label only. Never yield / DPS / Pulse / Hack / print.
+## BR-A Biomass Rank stays (gROT). Cybernex HUD CONTRIB + rank number. No SITE_*.
+const CR_A_CONTRIB_RANK := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6

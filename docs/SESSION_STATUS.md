@@ -1,3 +1,5 @@
+**2026-09-02 — CR-A: Contribution Rank 0–4 from lifetime Contribution wallet (AllianceRanks family; SoftKnowledge / HUD label; harvest / Pulse / Hack stay; BR-A Biomass Rank stays)**
+
 **2026-09-02 — KR-A: Knowledge Rank 0–4 from lifetime mastery (AllianceRanks family; SoftKnowledge / HUD label; harvest / Pulse / Hack stay; BR-A Biomass Rank stays)**
 
 **2026-09-02 — BR-A: Biomass Rank 0–4 from lifetime Biomass wallet (AllianceRanks family; SoftKnowledge / HUD label; harvest numbers stay; Cybernex stays CONTRIB)**
@@ -762,7 +764,8 @@ SN-A: second local viewer on the occupied unnamed pad sees a SoftNet visual `Sur
 ST-H: occupy unnamed pad → `BaseBuilder` places **one** `PadDefenseTurret` (catalog emplacement). HP; Pulse 11 at PV-A rival / BT-A range hostiles. Destroyed turret is not permadeath. ST-A habitat (0 combat) and ST-B extractor stay. Overlay B still opens. Knowledge labels only. Not Clash `Turret.gd` / OUTER 160. No P2W repair. No `SITE_*`. G5 stays closed.  
 ST-I: occupy unnamed pad → `BaseBuilder` places **one** `PadStorage` crate/hold. Cap 1 crate unit. Occupy dock transfers that unit pad-storage ↔ ship `CargoHold`. Knowledge labels only. Mass/value stay. Overlay B still opens. ST-A/B/H stay. Not a second ship hold. No `SITE_*`.  
 BR-A: lifetime Biomass wallet derives **Biomass Rank 0–4** (same family as `AllianceRanks`). SoftKnowledge / HUD label only (`BIOMASS` / `BIOMASS RANK` + rank number). Cybernex stays `CONTRIB` / `CONTRIBUTION`. Rank does not change harvest yield, Pulse, Hack, print cost, or exclusive modules. Infection cap 5. ST-B extractor stays. No P2W. No `SITE_*`.  
-KR-A: lifetime mastery derives **Knowledge Rank 0–4** (same `AllianceRanks` 0–4 family). SoftKnowledge / HUD label only (`KNOWLEDGE` / `KNOWLEDGE RANK` + rank number). BR-A Biomass Rank stays. Cybernex stays `CONTRIB`. Rank does not change harvest yield, Pulse, Hack, print cost, or exclusive modules. Infection cap 5. No P2W. No `SITE_*`.
+KR-A: lifetime mastery derives **Knowledge Rank 0–4** (same `AllianceRanks` 0–4 family). SoftKnowledge / HUD label only (`KNOWLEDGE` / `KNOWLEDGE RANK` + rank number). BR-A Biomass Rank stays. Cybernex stays `CONTRIB`. Rank does not change harvest yield, Pulse, Hack, print cost, or exclusive modules. Infection cap 5. No P2W. No `SITE_*`.  
+CR-A: lifetime Contribution wallet derives **Contribution Rank 0–4** (same `AllianceRanks` 0–4 family as BR-A). SoftKnowledge / HUD label only (`CONTRIB` / `CONTRIBUTION` + rank number). gROT stays `BIOMASS` / BR-A. Rank does not change harvest yield, Pulse, Hack, print cost, or exclusive modules. Infection cap 5. No P2W. No `SITE_*`.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -791,6 +794,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | ST-B extractor / Contribution | **built** — occupy → harvest → HUD number |
 | BR-A Biomass Rank | **built** — rank 0–4 from lifetime Biomass wallet; HUD label only; harvest numbers stay |
 | KR-A Knowledge Rank | **built** — rank 0–4 from lifetime mastery; HUD label only; harvest / Pulse / Hack stay; BR-A stays |
+| CR-A Contribution Rank | **built** — rank 0–4 from lifetime Contribution wallet; HUD label only; harvest / Pulse / Hack stay; BR-A stays |
 | ST-C print one module | **built** — spend Contribution/Biomass → one catalog module |
 | ST-D hangar queue | **built** — one module on catalog carrier; mass/power refuse |
 | ST-E orbital cluster | **built** — two catalog modules (dock + habitat) near Nex-Prime |
