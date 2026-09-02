@@ -12,6 +12,7 @@ var _deaths: int = 0
 var _obj_score: float = 0.0
 var _banner: String = "CLASH — TOP cyan · MID gold · BOT magenta · occupy beacons"
 var _hud: CanvasLayer
+var _result_locked: bool = false
 
 func _ready() -> void:
 	name = "ClashMatchDirector"
@@ -129,6 +130,21 @@ func register_camp_contest() -> void:
 	# Soft announce only — Knowledge may label the pit, never unique DPS.
 	_flash("CAMP CONTESTED — soft · no unique weapon")
 
+func show_soft_result(result_label: String, cosmetic_label: String = "") -> void:
+	## AR-I: SoftKnowledge WIN / LOSS (title if daily WS cap). Never DPS.
+	var line := str(result_label)
+	if cosmetic_label != "":
+		line = "%s · %s" % [result_label, cosmetic_label]
+	_banner = line
+	_result_locked = true
+	if _lbl_banner:
+		_lbl_banner.visible = true
+		_lbl_banner.text = line
+	if _lbl_score:
+		_lbl_score.text = line
+	match_event.emit(line)
+
+
 func _flash(msg: String) -> void:
 	_banner = msg
 	match_event.emit(msg)
@@ -154,7 +170,10 @@ func _process(delta: float) -> void:
 	var lanes := _lbl_lanes
 	var score := _lbl_score
 	if top:
-		if _t < 4.0:
+		if _result_locked:
+			top.visible = true
+			top.text = _banner
+		elif _t < 4.0:
 			top.visible = true
 			top.text = "CLASH — TOP cyan · MID gold · BOT magenta · occupy beacons"
 		else:
@@ -163,7 +182,7 @@ func _process(delta: float) -> void:
 		# Bottom lane-pressure bar: the array was computed and thrown away.
 		lanes.visible = true
 		lanes.text = _lane_bar_line()
-	if score:
+	if score and not _result_locked:
 		var eco := 0.0
 		if GameManager:
 			eco = GameManager.biomass if GameManager.player_faction == GameManager.Faction.GROT else GameManager.contribution

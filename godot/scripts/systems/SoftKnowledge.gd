@@ -106,6 +106,24 @@ static func clash_door_label() -> String:
 	return "CLASH DOOR"
 
 
+## AR-I: match-end word only. Never DPS / Pulse / Hack / yield.
+static func clash_result_label(won: bool = true) -> String:
+	var hist := mastery("history")
+	var combat := mastery("combat")
+	var rich := hist >= 15.0 or combat >= 15.0 or rank() >= 5
+	if won:
+		return "CLASH WIN" if rich else "WIN"
+	return "CLASH LOSS" if rich else "LOSS"
+
+
+## AR-I: daily WS cap 60 → further wins are a title word only. Never a combat item.
+static func clash_cosmetic_label() -> String:
+	var hist := mastery("history")
+	if hist >= 15.0 or rank() >= 5:
+		return "CLASH TITLE"
+	return "TITLE"
+
+
 ## History/combat: surface dummy name only — never Pulse DPS.
 static func surface_dummy_label() -> String:
 	var hist := mastery("history")

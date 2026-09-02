@@ -502,15 +502,32 @@ func _finish_clash_layout() -> void:
 
 
 func _on_match_ended(winner: String) -> void:
-	var obj := 0
-	if _clash and _clash.has_method("objectives_secured"):
-		obj = int(_clash.objectives_secured())
+	var won := true
+	if _clash and "last_player_won" in _clash:
+		won = bool(_clash.last_player_won)
+	var lab := "WIN" if won else "LOSS"
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if SoftK:
+		lab = str(SoftK.clash_result_label(won))
+	var title := ""
+	if _clash and bool(_clash.get("last_cosmetic")) and SoftK:
+		title = str(SoftK.clash_cosmetic_label())
 	var ws := ""
 	if _clash and _clash.get("war") != null and _clash.war.has_method("hud_line"):
 		ws = str(_clash.war.hud_line())
-	_show_match_result("CLASH COMPLETE — %s\nkills %d  ·  lanes %d/3\n%s\nEnter: rematch   ·   Esc: menu" % [
-		winner, int(_clash.kills) if _clash else 0, obj, ws,
-	])
+	var granted := float(_clash.last_ws_granted) if _clash and "last_ws_granted" in _clash else 0.0
+	var lines: PackedStringArray = PackedStringArray([lab])
+	if title != "":
+		lines.append(title)
+	if ws != "":
+		lines.append(ws)
+	lines.append("WS +%.0f · cap 60/day · no planet flip" % granted)
+	_show_match_result("\n".join(lines))
+	var director: Node = get_node_or_null("ClashMatchDirector")
+	if director and director.has_method("show_soft_result"):
+		director.show_soft_result(lab, title)
+	print("[AR-I] result=", lab, " winner=", winner, " ws=", granted,
+		" cosmetic=", title != "", " pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
 func _show_match_result(text: String) -> void:

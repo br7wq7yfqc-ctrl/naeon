@@ -1,3 +1,5 @@
+**2026-09-02 — AR-I: CORE Turret HP → 0 ends Clash match (3v3 + 5v5 on existing TestArena / ClashDirector); SoftKnowledge WIN / LOSS only; SoftSession WS +15 win / +3 loss, daily cap 60 → further wins cosmetics/title; not planet flip; AR-A…AR-H stay; SN-D stays; Infection cap 5; ORBITAL_STATIONS false**
+
 **2026-09-02 — FL-D: fourth fleet allied pip on ST-A Strategy overlay (SoftNet / NP-A visual; cap 5 = player + 4; FLEET n/5 SoftKnowledge; host Pulse/occupy; click ≠ combat; FL-A/FL-B/FL-C stay)**
 
 **2026-09-02 — FL-C: third fleet allied pip on ST-A Strategy overlay (SoftNet / NP-A visual; cap 4 = player + 3; FLEET n/4 SoftKnowledge; host Pulse/occupy; click ≠ combat; FL-A/FL-B stay)**

@@ -1,5 +1,5 @@
 extends Node
-## Headless AR-A + AR-B + AR-C + AR-D + AR-E + AR-F + AR-G + river + jump pads: OTS, structures, waves, camp, kits/module, 3v3/5v5 local, river, short hop.
+## Headless AR-A…AR-I + river + jump pads: OTS, structures, waves, camp, kits/module, 3v3/5v5, CORE match-end.
 ## godot --path godot --scene res://scenes/test/TestArena.tscn -- --playtest-arena
 
 func _ready() -> void:
@@ -11,7 +11,7 @@ func _ready() -> void:
 	if not wanted:
 		queue_free()
 		return
-	print("[Playtest] arena AR-A/AR-B/AR-C/AR-D/AR-E/AR-F/AR-G + river + jump pads driver on")
+	print("[Playtest] arena AR-A…AR-I + river + jump pads driver on")
 	call_deferred("_go")
 
 
@@ -20,7 +20,7 @@ func _go() -> void:
 	var fails: PackedStringArray = PackedStringArray()
 	var arena: Node = get_parent()
 	if arena == null or str(arena.name) != "TestArena":
-		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
+		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
 		return
 
 	var player: Node = arena.get("player")
@@ -93,6 +93,7 @@ func _go() -> void:
 	var ar_f_fails: PackedStringArray = _check_ar_f(arena, lanes, player)
 	var ar_g_fails: PackedStringArray = _check_ar_g(arena, lanes, player)
 	var pad_fails: PackedStringArray = await _check_jump_pads(arena, player)
+	var ar_i_fails: PackedStringArray = _check_ar_i(arena, lanes, player)
 	fails.append_array(ar_c_fails)
 	fails.append_array(ar_b_fails)
 	fails.append_array(ar_d_fails)
@@ -101,8 +102,9 @@ func _go() -> void:
 	fails.append_array(pad_fails)
 	fails.append_array(ar_f_fails)
 	fails.append_array(ar_g_fails)
+	fails.append_array(ar_i_fails)
 
-	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, ar_e_fails, river_fails, pad_fails, ar_f_fails, ar_g_fails, 0 if fails.is_empty() else 1)
+	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, ar_e_fails, river_fails, pad_fails, ar_f_fails, ar_g_fails, ar_i_fails, 0 if fails.is_empty() else 1)
 
 
 func _check_ar_b(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
@@ -767,7 +769,117 @@ func _check_ar_g(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	return fails
 
 
-func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, ar_e: PackedStringArray, river: PackedStringArray, pads: PackedStringArray, ar_f: PackedStringArray, ar_g: PackedStringArray, code: int) -> void:
+func _check_ar_i(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
+	var fails: PackedStringArray = PackedStringArray()
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.AR_I_MATCH_END):
+		fails.append("AR-I P0Slice flag missing")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("AR-I flipped ORBITAL_STATIONS")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-I Infection cap drifted")
+	if SoftSession:
+		if SoftSession.has_method("_roll_ws_day"):
+			SoftSession._roll_ws_day()
+		SoftSession.war_score_daily = 0.0
+		SoftSession.clash_result = ""
+		SoftSession.clash_cosmetic = false
+	if lanes == null or not lanes.has_method("find_structure"):
+		fails.append("AR-I ClashLanes missing")
+		return fails
+	var root: Node3D = lanes.find_structure("CORE", "gROT") as Node3D
+	if root == null:
+		fails.append("AR-I gROT CORE missing")
+		return fails
+	var gun: Node = root.get_node_or_null("Gun")
+	if gun == null or not gun.has_method("take_damage"):
+		fails.append("AR-I CORE gun missing")
+		return fails
+	var clash: Node = arena.get_node_or_null("AexionClash") if arena else null
+	if clash == null and get_tree():
+		clash = get_tree().get_first_node_in_group("aexion_clash")
+	var pulse0 := 11.0
+	if player and player.get("ability_system") != null:
+		var absys: Node = player.ability_system
+		if absys and "abilities" in absys:
+			for ab in absys.abilities:
+				if ab != null and str(ab.get("ability_name")).to_lower().find("pulse") >= 0:
+					pulse0 = float(ab.get("damage"))
+					break
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("combat", 20.0)
+	gun.take_damage(9999.0, "Cybernex")
+	var ended := false
+	if clash and clash.has_method("is_match_over"):
+		ended = bool(clash.is_match_over())
+	elif clash and "_ended" in clash:
+		ended = bool(clash._ended)
+	var localn: Node = arena.get_node_or_null("ClashLocalMatch") if arena else null
+	if not ended and localn and localn.has_method("is_match_over"):
+		ended = bool(localn.is_match_over())
+	if not ended:
+		fails.append("AR-I enemy CORE→0 did not end the match")
+	var won := true
+	if clash and "last_player_won" in clash:
+		won = bool(clash.last_player_won)
+	elif localn and "last_player_won" in localn:
+		won = bool(localn.last_player_won)
+	if not won:
+		fails.append("AR-I enemy CORE should be WIN")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var lab := str(SoftK.clash_result_label(true)) if SoftK else "WIN"
+	if lab.find("WIN") < 0:
+		fails.append("AR-I SoftKnowledge WIN label missing (%s)" % lab)
+	var granted := float(clash.last_ws_granted) if clash and "last_ws_granted" in clash else 0.0
+	if granted < 14.9 and localn and "last_ws_granted" in localn:
+		granted = float(localn.last_ws_granted)
+	if granted < 14.9 and SoftSession:
+		granted = float(SoftSession.clash_ws_granted)
+	if granted < 14.9:
+		fails.append("AR-I WIN WS grant missing (got %s)" % granted)
+	if SoftSession and str(SoftSession.clash_result) != "WIN":
+		fails.append("AR-I SoftSession result not WIN")
+	var panel: Node = null
+	if arena and arena.get("hud"):
+		panel = arena.hud.get_node_or_null("Root/MatchResult") if arena.hud else null
+	if panel:
+		var plab: Label = panel.get_child(0) as Label if panel.get_child_count() > 0 else null
+		if plab and str(plab.text).find("WIN") < 0:
+			fails.append("AR-I HUD missing WIN")
+	# Daily cap: further win is cosmetics / title only.
+	if SoftSession:
+		SoftSession.war_score_daily = 60.0
+	if clash and clash.has_method("_end_match"):
+		# already ended — grant path via SoftSession directly
+		var extra := float(SoftSession.grant_war_score(15.0)) if SoftSession else -1.0
+		if extra > 0.01:
+			fails.append("AR-I daily cap 60 still granted WS (%s)" % extra)
+		SoftSession.remember_clash_result(true, extra)
+		var title := str(SoftK.clash_cosmetic_label()) if SoftK else "TITLE"
+		if title == "" or (title != "TITLE" and title != "CLASH TITLE"):
+			fails.append("AR-I cosmetic title missing (%s)" % title)
+		if not bool(SoftSession.clash_cosmetic):
+			fails.append("AR-I cap win not marked cosmetic")
+	if player and player.get("ability_system") != null:
+		var absys2: Node = player.ability_system
+		if absys2 and "abilities" in absys2:
+			for ab in absys2.abilities:
+				if ab != null and str(ab.get("ability_name")).to_lower().find("pulse") >= 0:
+					if absf(float(ab.get("damage")) - pulse0) > 0.01:
+						fails.append("AR-I Knowledge changed Pulse")
+					break
+	if LayerContext and str(LayerContext.site_pin_id) != "SITE_TEST_ARENA_PILLAR":
+		fails.append("AR-I minted SITE_* (%s)" % LayerContext.site_pin_id)
+	if arena and str(arena.name) != "TestArena":
+		fails.append("AR-I left TestArena")
+	print("[Playtest] AR-I CORE→0 ", lab, " ws=", granted, " cap=60 cosmetic=",
+		SoftSession.clash_cosmetic if SoftSession else "?", " G5 closed · no SITE_*")
+	return fails
+
+
+func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, ar_e: PackedStringArray, river: PackedStringArray, pads: PackedStringArray, ar_f: PackedStringArray, ar_g: PackedStringArray, ar_i: PackedStringArray, code: int) -> void:
 	if ar_a.is_empty():
 		print("[Playtest] PASS arena AR-A")
 	else:
@@ -821,6 +933,12 @@ func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStrin
 	else:
 		print("[Playtest] FAIL arena AR-G")
 		for f in ar_g:
+			print("[Playtest]  - ", f)
+	if ar_i.is_empty():
+		print("[Playtest] PASS arena AR-I")
+	else:
+		print("[Playtest] FAIL arena AR-I")
+		for f in ar_i:
 			print("[Playtest]  - ", f)
 	if AutoUpdater and AutoUpdater.has_method("abort_pending"):
 		AutoUpdater.abort_pending()

@@ -72,6 +72,7 @@ func _go() -> void:
 		await _assert_fl_d(os, fails)
 		await _assert_sn_b(os, fails)
 		await _assert_ar_h(os, fails)
+		await _assert_ar_i(os, fails)
 		await _assert_sn_c(os, fails)
 		await _assert_sn_d(os, fails)
 		await _assert_do_a(os, fails)
@@ -101,6 +102,7 @@ func _go() -> void:
 	await _assert_q_e(os, fails)
 	await _assert_ar_f(os, fails)
 	await _assert_ar_g(os, fails)
+	await _assert_ar_i(os, fails)
 	_assert_se_a(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 	_assert_scan_cache_live(fails)
@@ -21292,6 +21294,184 @@ func _assert_ar_g(os: Node, fails: PackedStringArray) -> void:
 		matchn.shutdown()
 	matchn.queue_free()
 	await get_tree().process_frame
+	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
+		SoftScanCache.invalidate_enemies()
+
+
+func _assert_ar_i(os: Node, fails: PackedStringArray) -> void:
+	## AR-I: CORE HP → 0 ends 3v3 and 5v5. SoftKnowledge WIN/LOSS. SoftSession WS cap 60.
+	## Isolated probe — no TestArena scene change, no leftover 5v5 soak, no G5.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.AR_I_MATCH_END):
+		fails.append("AR-I P0Slice flag missing")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("AR-I flipped ORBITAL_STATIONS")
+	if P0 != null and not bool(P0.AR_H_DOOR):
+		fails.append("AR-I dropped AR-H P0Slice flag")
+	if P0 != null and not bool(P0.SN_D_CLASH):
+		fails.append("AR-I dropped SN-D P0Slice flag")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-I Infection cap drifted")
+	var layer0 := str(LayerContext.current_layer) if LayerContext else ""
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var dummy_scene: PackedScene = load("res://scenes/combat/CombatDummy.tscn")
+	if dummy_scene == null:
+		fails.append("AR-I CombatDummy missing")
+		return
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if SoftSession:
+		if SoftSession.has_method("_roll_ws_day"):
+			SoftSession._roll_ws_day()
+		SoftSession.war_score_daily = 0.0
+		SoftSession.clash_result = ""
+		SoftSession.clash_cosmetic = false
+		SoftSession.clash_ws_granted = 0.0
+	# 3v3: enemy CORE → WIN +15
+	var m3: Node3D = Node3D.new()
+	m3.set_script(preload("res://scripts/arena/ClashLocalMatch.gd"))
+	m3.name = "ClashLocalMatchARI3"
+	if os:
+		os.add_child(m3)
+	else:
+		add_child(m3)
+	if m3.has_method("start_isolated"):
+		m3.start_isolated(os if os else self, dummy_scene)
+	await get_tree().process_frame
+	if m3.has_method("is_3v3") and not bool(m3.is_3v3()):
+		fails.append("AR-I 3v3 path missing")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("combat", 20.0)
+	var pulse0 := 11.0
+	var dmg0 := -1.0
+	for n in (m3.living_actors() if m3.has_method("living_actors") else []):
+		if n != null and "attack_damage" in n:
+			dmg0 = float(n.get("attack_damage"))
+			break
+	if m3.has_method("destroy_core"):
+		m3.destroy_core("gROT")
+	await get_tree().process_frame
+	var ended3 := m3.has_method("is_match_over") and bool(m3.is_match_over())
+	if not ended3:
+		fails.append("AR-I 3v3 CORE→0 did not end the match")
+	if str(m3.last_result) != "WIN":
+		fails.append("AR-I 3v3 want WIN, got %s" % m3.last_result)
+	if float(m3.last_ws_granted) < 14.9:
+		fails.append("AR-I 3v3 WIN WS missing (got %s)" % m3.last_ws_granted)
+	var win_lab := str(SoftK.clash_result_label(true)) if SoftK else "WIN"
+	if win_lab.find("WIN") < 0:
+		fails.append("AR-I SoftKnowledge WIN missing (%s)" % win_lab)
+	if SoftSession and str(SoftSession.clash_result) != "WIN":
+		fails.append("AR-I SoftSession 3v3 not WIN")
+	print("[Playtest] AR-I 3v3 CORE→0 ", win_lab, " ws=", m3.last_ws_granted)
+	if m3.has_method("shutdown"):
+		m3.shutdown()
+	m3.queue_free()
+	await get_tree().process_frame
+	# 5v5: own CORE → LOSS +3
+	var m5: Node3D = Node3D.new()
+	m5.set_script(preload("res://scripts/arena/ClashLocalMatch.gd"))
+	m5.name = "ClashLocalMatchARI5"
+	if os:
+		os.add_child(m5)
+	else:
+		add_child(m5)
+	if m5.has_method("start_isolated_5v5"):
+		m5.start_isolated_5v5(os if os else self, dummy_scene)
+	await get_tree().process_frame
+	if m5.has_method("is_5v5") and not bool(m5.is_5v5()):
+		fails.append("AR-I 5v5 path missing")
+	if m5.has_method("destroy_core"):
+		m5.destroy_core("Cybernex")
+	await get_tree().process_frame
+	var ended5 := m5.has_method("is_match_over") and bool(m5.is_match_over())
+	if not ended5:
+		fails.append("AR-I 5v5 CORE→0 did not end the match")
+	if str(m5.last_result) != "LOSS":
+		fails.append("AR-I 5v5 want LOSS, got %s" % m5.last_result)
+	if float(m5.last_ws_granted) < 2.9:
+		fails.append("AR-I 5v5 LOSS WS missing (got %s)" % m5.last_ws_granted)
+	var loss_lab := str(SoftK.clash_result_label(false)) if SoftK else "LOSS"
+	if loss_lab.find("LOSS") < 0:
+		fails.append("AR-I SoftKnowledge LOSS missing (%s)" % loss_lab)
+	if SoftSession and str(SoftSession.clash_result) != "LOSS":
+		fails.append("AR-I SoftSession 5v5 not LOSS")
+	print("[Playtest] AR-I 5v5 CORE→0 ", loss_lab, " ws=", m5.last_ws_granted)
+	var mid_ws := float(SoftSession.war_score_daily) if SoftSession else 0.0
+	if mid_ws < 17.9:
+		fails.append("AR-I SoftSession daily WS after win+loss want ≥18 (got %s)" % mid_ws)
+	if m5.has_method("shutdown"):
+		m5.shutdown()
+	m5.queue_free()
+	await get_tree().process_frame
+	# Daily cap 60 → further win cosmetics / title only
+	var mc: Node3D = Node3D.new()
+	mc.set_script(preload("res://scripts/arena/ClashLocalMatch.gd"))
+	mc.name = "ClashLocalMatchARICap"
+	if os:
+		os.add_child(mc)
+	else:
+		add_child(mc)
+	if SoftSession:
+		SoftSession.war_score_daily = 60.0
+		SoftSession.clash_cosmetic = false
+	if mc.has_method("start_isolated"):
+		mc.start_isolated(os if os else self, dummy_scene)
+	await get_tree().process_frame
+	if mc.has_method("destroy_core"):
+		mc.destroy_core("gROT")
+	await get_tree().process_frame
+	if str(mc.last_result) != "WIN":
+		fails.append("AR-I cap path want WIN label, got %s" % mc.last_result)
+	if float(mc.last_ws_granted) > 0.01:
+		fails.append("AR-I daily cap 60 still granted WS (%s)" % mc.last_ws_granted)
+	if not bool(mc.last_cosmetic):
+		fails.append("AR-I cap win not cosmetic/title")
+	var title := str(SoftK.clash_cosmetic_label()) if SoftK else "TITLE"
+	if title.find("TITLE") < 0:
+		fails.append("AR-I SoftKnowledge title missing (%s)" % title)
+	if SoftSession and not bool(SoftSession.clash_cosmetic):
+		fails.append("AR-I SoftSession cap not cosmetic")
+	print("[Playtest] AR-I daily cap 60 → ", win_lab, " ", title, " ws=0 cosmetics-only")
+	if mc.has_method("shutdown"):
+		mc.shutdown()
+	mc.queue_free()
+	await get_tree().process_frame
+	if SoftSession:
+		SoftSession.save_session()
+		if float(SoftSession.war_score_daily) < 59.9:
+			fails.append("AR-I SoftSession daily cap not held (got %s)" % SoftSession.war_score_daily)
+	if dmg0 >= 0.0 and absf(dmg0 - 6.0) > 0.01 and absf(dmg0 - 11.0) > 0.01:
+		# Isolated bots use 6.0 attack; pad Pulse stays 11. Either is fine if unchanged.
+		pass
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("cybernetics", 20.0)
+	if Inf and int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-I Infection cap changed")
+	if os != null and os.has_method("enter_clash_from_world"):
+		fails.append("AR-I opened G5 world-to-arena")
+	var soak := 0
+	if os:
+		for ch in os.get_children():
+			if ch != null and is_instance_valid(ch) and str(ch.get_class()) != "":
+				var nm := str(ch.name)
+				if nm.begins_with("ClashLocalMatchARI") or nm == "ClashLocalMatch5v5Probe":
+					if is_instance_valid(ch):
+						soak += 1
+	if soak > 0:
+		fails.append("AR-I leftover 5v5 soak (%s)" % soak)
+	if LayerContext:
+		if str(LayerContext.site_pin_id) != pin0:
+			fails.append("AR-I changed site_pin (%s → %s)" % [pin0, LayerContext.site_pin_id])
+		if pin0 != "SITE_TEST_ARENA_PILLAR" and str(LayerContext.site_pin_id) == "SITE_TEST_ARENA_PILLAR":
+			fails.append("AR-I entered TestArena from OpenSpace (G5)")
+		if layer0 != "" and str(LayerContext.current_layer) == "Arena" and layer0 != "Arena":
+			fails.append("AR-I stole LayerContext to Arena")
+			LayerContext.set_layer(layer0)
+	if SoftK and SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked("clash")):
+		fails.append("AR-I unlocked exclusive weapon")
+	print("[Playtest] AR-I CORE→0 WIN/LOSS + WS cap 60 · SoftKnowledge only · host authority · no SITE_*")
 	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
 		SoftScanCache.invalidate_enemies()
 

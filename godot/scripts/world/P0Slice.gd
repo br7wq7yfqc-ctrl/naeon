@@ -162,6 +162,11 @@ const FL_D_FLEET := true
 ## AR-H: one door on an occupied unnamed pad into Clash TestArena.
 ## Not a city-map. Not G2. G5 cluster stays closed. Tab/menu Clash stays.
 const AR_H_DOOR := true
+## AR-I: CORE Turret HP → 0 ends the Clash match (3v3 and 5v5).
+## SoftKnowledge WIN / LOSS only. SoftSession daily WS cap 60.
+## Excess wins → cosmetics / title label. Not planet flip. Not SITE_*.
+## Does not flip ORBITAL_STATIONS. Infection cap 5. SN-D stays.
+const AR_I_MATCH_END := true
 ## DO-A: contested Cybernex ↔ gROT transition on one occupied unnamed pad.
 ## Uses OwnershipData / OwnershipComponent / ContestedRing. SoftKnowledge
 ## HUD label only (CONTESTED / CYBERNEX / GROT). Not HyperGate G4. Not

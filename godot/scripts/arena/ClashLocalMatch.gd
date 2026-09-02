@@ -27,6 +27,12 @@ var _host: Node3D = null
 var _actors: Array = []
 var _started: bool = false
 var _isolated: bool = false
+var _match_over: bool = false
+var _cores: Array = []
+var last_result: String = ""
+var last_player_won: bool = false
+var last_ws_granted: float = 0.0
+var last_cosmetic: bool = false
 
 
 func _ready() -> void:
@@ -43,6 +49,7 @@ func bind(arena: Node, lanes: Node, dummy_scene: PackedScene, host_player: Node3
 	_started = true
 	mode = MODE_3V3
 	_fill_3v3()
+	_wire_lane_cores()
 	match_started.emit(mode, actor_count())
 	print("[ClashLocalMatch] 3v3 local authority actors=", actor_count(), " G5=closed")
 
@@ -56,6 +63,7 @@ func bind_5v5(arena: Node, lanes: Node, dummy_scene: PackedScene, host_player: N
 	_started = true
 	mode = MODE_5V5
 	_fill_5v5()
+	_wire_lane_cores()
 	match_started.emit(mode, actor_count())
 	print("[ClashLocalMatch] 5v5 local authority actors=", actor_count(), " G5=closed")
 
@@ -73,6 +81,7 @@ func start_isolated(parent: Node, dummy_scene: PackedScene) -> void:
 		parent.add_child(self)
 	position = Vector3(0.0, 80000.0, 0.0)
 	_fill_3v3()
+	_spawn_isolated_cores()
 	match_started.emit(mode, actor_count())
 	print("[ClashLocalMatch] isolated 3v3 local authority actors=", actor_count(), " G5=closed")
 
@@ -90,6 +99,7 @@ func start_isolated_5v5(parent: Node, dummy_scene: PackedScene) -> void:
 		parent.add_child(self)
 	position = Vector3(0.0, 80000.0, 0.0)
 	_fill_5v5()
+	_spawn_isolated_cores()
 	match_started.emit(mode, actor_count())
 	print("[ClashLocalMatch] isolated 5v5 local authority actors=", actor_count(), " G5=closed")
 
@@ -204,13 +214,63 @@ func evidence() -> Dictionary:
 		"g5": "closed" if is_g5_closed() else "open",
 		"puppets": visual_puppet_count(),
 		"isolated": _isolated,
+		"ended": _match_over,
+		"result": last_result,
+		"ws": last_ws_granted,
+		"cosmetic": last_cosmetic,
 	}
+
+
+func is_match_over() -> bool:
+	return _match_over
+
+
+func find_core(fac: String) -> Node:
+	for c in _cores:
+		if c == null or not is_instance_valid(c):
+			continue
+		if str(c.get_meta("clash_faction", c.get("faction"))) == fac:
+			return c
+	if _lanes != null and _lanes.has_method("find_structure"):
+		var root: Node3D = _lanes.find_structure("CORE", fac) as Node3D
+		if root != null:
+			var gun: Node = root.get_node_or_null("Gun")
+			if gun != null:
+				return gun
+	return null
+
+
+func destroy_core(fac: String) -> void:
+	var core: Node = find_core(fac)
+	if core == null:
+		return
+	if core.has_method("take_damage"):
+		core.take_damage(9999.0, "AR-I")
+	elif core.has_method("_die"):
+		core.call("_die")
+
+
+func on_core_destroyed(fac: String) -> void:
+	if _match_over:
+		return
+	var clash := _find_clash()
+	if clash != null and clash.has_method("register_structure_down"):
+		if clash.has_method("is_match_over") and bool(clash.is_match_over()):
+			_sync_from_clash(clash)
+			return
+		clash.register_structure_down("CORE", "MID", fac)
+		_sync_from_clash(clash)
+		if clash.has_method("is_match_over") and bool(clash.is_match_over()):
+			return
+	_resolve_local(fac)
 
 
 func shutdown() -> void:
 	_clear_bots()
+	_clear_cores()
 	_actors.clear()
 	_started = false
+	_match_over = false
 
 
 func _fill_3v3() -> void:
@@ -370,3 +430,101 @@ func _clear_bots() -> void:
 			n.queue_free()
 	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
 		SoftScanCache.invalidate_enemies()
+
+
+func _wire_lane_cores() -> void:
+	_cores.clear()
+	if _lanes == null or not _lanes.has_method("find_structure"):
+		return
+	for fac in ["Cybernex", "gROT"]:
+		var root: Node3D = _lanes.find_structure("CORE", fac) as Node3D
+		if root == null:
+			continue
+		var gun: Node = root.get_node_or_null("Gun")
+		if gun == null:
+			continue
+		gun.set_meta("clash_role", "CORE")
+		gun.set_meta("clash_faction", fac)
+		if gun.has_signal("died") and not gun.died.is_connected(_on_isolated_core_died):
+			gun.died.connect(_on_isolated_core_died.bind(fac))
+		_cores.append(gun)
+
+
+func _spawn_isolated_cores() -> void:
+	_clear_cores()
+	var script := preload("res://scripts/combat/Turret.gd")
+	for fac in ["Cybernex", "gROT"]:
+		var t := Node3D.new()
+		t.set_script(script)
+		t.name = "Core_%s" % fac
+		t.set("faction", fac)
+		t.set("max_health", 360.0)
+		t.set("target_player", false)
+		t.set("skip_visual", true)
+		t.set("display_name", "CORE")
+		t.set_meta("clash_role", "CORE")
+		t.set_meta("clash_faction", fac)
+		add_child(t)
+		t.position = Vector3(0.0, 2.0, 18.0 if fac == "Cybernex" else -18.0)
+		t.set_process(false)
+		t.set_physics_process(false)
+		if t.has_signal("died"):
+			t.died.connect(_on_isolated_core_died.bind(fac))
+		_cores.append(t)
+
+
+func _on_isolated_core_died(fac: String) -> void:
+	on_core_destroyed(fac)
+
+
+func _find_clash() -> Node:
+	if _arena != null:
+		var n: Node = _arena.get_node_or_null("AexionClash")
+		if n != null:
+			return n
+	var tree := get_tree()
+	if tree:
+		return tree.get_first_node_in_group("aexion_clash")
+	return null
+
+
+func _sync_from_clash(clash: Node) -> void:
+	_match_over = true
+	if "last_result" in clash:
+		last_result = str(clash.last_result)
+	if "last_player_won" in clash:
+		last_player_won = bool(clash.last_player_won)
+	if "last_ws_granted" in clash:
+		last_ws_granted = float(clash.last_ws_granted)
+	if "last_cosmetic" in clash:
+		last_cosmetic = bool(clash.last_cosmetic)
+
+
+func _resolve_local(fac: String) -> void:
+	if _match_over and last_result != "":
+		return
+	_match_over = true
+	var player_fac := "Cybernex"
+	if GameManager and GameManager.has_method("get_faction_name"):
+		player_fac = str(GameManager.get_faction_name())
+	last_player_won = fac != player_fac
+	last_result = "WIN" if last_player_won else "LOSS"
+	var wanted := 15.0 if last_player_won else 3.0
+	var granted := 0.0
+	if SoftSession and SoftSession.has_method("grant_war_score"):
+		granted = float(SoftSession.grant_war_score(wanted))
+	last_ws_granted = granted
+	last_cosmetic = last_player_won and granted <= 0.0
+	if SoftSession and SoftSession.has_method("remember_clash_result"):
+		SoftSession.remember_clash_result(last_player_won, granted)
+	print("[ClashLocalMatch] CORE down fac=", fac, " result=", last_result,
+		" ws=", granted, " cosmetic=", last_cosmetic)
+
+
+func _clear_cores() -> void:
+	for c in _cores:
+		if c == null or not is_instance_valid(c):
+			continue
+		if c.get_parent() == self:
+			c.queue_free()
+	_cores.clear()
