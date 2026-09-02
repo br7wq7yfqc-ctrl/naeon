@@ -223,6 +223,15 @@ static func turret_label() -> String:
 	return "TURRET"
 
 
+## Colony/logistics: name the ST-J pad hangar stub. Never mass / queue / combat.
+static func hangar_stub_label() -> String:
+	var ops := mastery("colony_ops")
+	var logi := mastery("logistics")
+	if ops >= 15.0 or logi >= 15.0 or rank() >= 5:
+		return "T1 HANGAR STUB"
+	return "HANGAR STUB"
+
+
 ## Q-A: name the ops contract board. Never yield / DPS / exclusive modules.
 static func contract_board_label() -> String:
 	var intel := mastery("quest_intel")

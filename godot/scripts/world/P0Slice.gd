@@ -81,6 +81,9 @@ const ST_H_TURRET := true
 ## Cap 1 crate unit. Same occupy dock path as ship CargoHold. Not a second ship
 ## hold. Knowledge labels only. Mass/value stay. No SITE_*.
 const ST_I_STORAGE := true
+## ST-J: one hangar stub on an occupied unnamed pad via BaseBuilder.
+## Not ST-D CarrierHangarQueue. Hatch/LAND stay on the pad. No rover. No SITE_*.
+const ST_J_HANGAR := true
 ## PV-A: first TPS PvP on an occupied unnamed pad. One host-authority rival
 ## CombatDummy takes Pulse and deals Pulse back (DPS 11). Win = rival HP → 0.
 ## No permadeath. Infection cap 5. Knowledge labels only. G5 stays closed.

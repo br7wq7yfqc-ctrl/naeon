@@ -247,6 +247,43 @@ static func place_pad_storage(pad: Node3D, faction: String) -> Node3D:
 	return n
 
 
+static func pad_hangar_stub_on(pad: Node3D) -> Node3D:
+	if pad == null or not is_instance_valid(pad):
+		return null
+	var existing: Node = pad.get_node_or_null("PadHangarStub")
+	if existing is Node3D:
+		return existing as Node3D
+	for c in pad.get_children():
+		if c is Node3D and c.has_meta("pad_hangar_stub") and bool(c.get_meta("pad_hangar_stub")):
+			return c as Node3D
+	return pad.find_child("PadHangarStub", true, false) as Node3D
+
+
+static func place_pad_hangar_stub(pad: Node3D, faction: String) -> Node3D:
+	## ST-J: one hangar stub after occupy. Not ST-D carrier hangar queue.
+	var n: Node3D = null
+	if pad == null or not is_instance_valid(pad):
+		return null
+	if not is_unnamed_pad(pad):
+		return null
+	n = pad_hangar_stub_on(pad)
+	if n != null:
+		return n
+	n = Node3D.new()
+	n.set_script(preload("res://scripts/world/PadHangarStub.gd"))
+	n.name = "PadHangarStub"
+	n.set_meta("site_pin", "")
+	n.set_meta("player_module", false)
+	pad.add_child(n)
+	# Off ST-A habitat (8, 2.6, 6), NP-C (-8, 2.6, 6), ST-B extractor (10, 1.2, -8),
+	# ST-C bench (0, 0.35, 12), ST-H turret (-12, 1.2, 4), ST-I storage (12, 1.2, 10).
+	n.position = Vector3(-6.0, 1.2, -12.0)
+	if n.has_method("setup"):
+		n.setup(faction)
+	print("[BaseBuilder] pad hangar stub on ", pad.name, " faction=", faction)
+	return n
+
+
 static func place_player_habitat(pad: Node3D, faction: String) -> Node3D:
 	## ST-A: one habitat, code-first. Not a SITE_*, not the OS-G silhouette.
 	return _place_habitat(pad, faction, false)

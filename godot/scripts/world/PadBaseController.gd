@@ -72,6 +72,7 @@ func _ready() -> void:
 	call_deferred("_ensure_print_bench")
 	call_deferred("_ensure_pad_turret")
 	call_deferred("_ensure_pad_storage")
+	call_deferred("_ensure_pad_hangar_stub")
 	_seed_pad_cargo()
 	_contest_ring = Node3D.new()
 	_contest_ring.set_script(preload("res://scripts/world/ContestedRing.gd"))
@@ -146,6 +147,7 @@ func _process(delta: float) -> void:
 			_refresh_label()
 			call_deferred("_ensure_pad_turret")
 			call_deferred("_ensure_pad_storage")
+			call_deferred("_ensure_pad_hangar_stub")
 	_tick_occupy(delta)
 	_tick_guard_respawn(delta)
 	_tick_arena_influence(delta)
@@ -316,6 +318,7 @@ func _tick_occupy(delta: float) -> void:
 		_clear_guard()
 		_ensure_pad_turret()
 		_ensure_pad_storage()
+		_ensure_pad_hangar_stub()
 	_occupy_label_t += delta
 	if _occupy_label_t >= 0.35:
 		_occupy_label_t = 0.0
@@ -474,6 +477,7 @@ func _lock_to(f: OwnershipData.Faction, noisy: bool) -> void:
 	call_deferred("_ensure_claim_beacon")
 	call_deferred("_ensure_pad_turret")
 	call_deferred("_ensure_pad_storage")
+	call_deferred("_ensure_pad_hangar_stub")
 	print("[PadBase] claim → ", ownership.faction_name(), " @ ", name)
 
 
@@ -856,6 +860,44 @@ func _ensure_pad_storage() -> void:
 		fac = default_faction
 	_Builder.place_pad_storage(pad, fac)
 	print("[PadBase] ST-I storage on ", pad.name)
+
+
+func visible_hangar_stub() -> Node3D:
+	## ST-J: one pad hangar stub. Not ST-D CarrierHangarQueue.
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	var pad := _unnamed_pad_host()
+	if pad != null:
+		return _Builder.pad_hangar_stub_on(pad)
+	return find_child("PadHangarStub", true, false) as Node3D
+
+
+func ensure_pad_hangar_stub() -> Node3D:
+	_ensure_pad_hangar_stub()
+	return visible_hangar_stub()
+
+
+func _ensure_pad_hangar_stub() -> void:
+	## ST-J: one hangar stub after occupy. Hatch/LAND stay on the pad.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	var pad := _unnamed_pad_host()
+	var fac := default_faction
+	if P0 == null or not bool(P0.ST_J_HANGAR):
+		return
+	if pad == null:
+		return
+	if ownership == null or not ownership.is_fully_owned():
+		return
+	if _status == "contested":
+		return
+	if _Builder.pad_hangar_stub_on(pad) != null:
+		return
+	if ownership.has_method("faction_name"):
+		fac = str(ownership.faction_name())
+	if fac == "" or fac == "Neutral" or fac == "Contested":
+		fac = default_faction
+	_Builder.place_pad_hangar_stub(pad, fac)
+	print("[PadBase] ST-J hangar stub on ", pad.name)
 
 
 func print_bench() -> Node:

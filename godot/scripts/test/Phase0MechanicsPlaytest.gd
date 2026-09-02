@@ -49,6 +49,7 @@ func _go() -> void:
 		await _assert_hf_c(os, fails)
 		await _assert_st_h(os, fails)
 		await _assert_st_i(os, fails)
+		await _assert_st_j(os, fails)
 		await _assert_hf_b(os, fails)
 		await _assert_hf_a(os, fails)
 		await _assert_pv_b(os, fails)
@@ -647,6 +648,7 @@ func _go() -> void:
 	await _assert_hf_c(os, fails)
 	await _assert_st_h(os, fails)
 	await _assert_st_i(os, fails)
+	await _assert_st_j(os, fails)
 	await _assert_hf_b(os, fails)
 	await _assert_hf_a(os, fails)
 	await _assert_pv_b(os, fails)
@@ -13482,6 +13484,172 @@ func _assert_st_i(os: Node, fails: PackedStringArray) -> void:
 			and str(LayerContext.site_pin_id).begins_with("SITE_"):
 		fails.append("ST-I minted SITE_* (%s)" % LayerContext.site_pin_id)
 	print("[Playtest] ST-I storage present one-unit transfer · no SITE_* · overlay B opens")
+
+
+func _assert_st_j(os: Node, fails: PackedStringArray) -> void:
+	## ST-J: one pad hangar stub after occupy via BaseBuilder.
+	## Not ST-D carrier hangar. Hatch/LAND stay on pad (same OpenSpace).
+	## Overlay B opens. ST-A/B/H/I stay. No rover. No SITE_*.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	var nex_j: Node = _osh_nex()
+	var pad_j: Node = _in_a_occupied_pad(os)
+	var host_j: Node3D = null
+	var stub_j: Node3D = null
+	var ov_j: Node = os.strategy_overlay() if os != null and os.has_method("strategy_overlay") else null
+	var ship_j: Node3D = os.get("ship") as Node3D if os else null
+	var pin0_j := str(LayerContext.site_pin_id) if LayerContext else ""
+	var scene0_j := _osh_scene_file()
+	if P0 == null or not bool(P0.ST_J_HANGAR) or not bool(P0.ST_I_STORAGE) \
+			or not bool(P0.ST_H_TURRET) or not bool(P0.ST_A_OVERLAY) or not bool(P0.ST_B_EXTRACTOR):
+		fails.append("ST-J P0Slice flag missing")
+		return
+	if os == null or nex_j == null:
+		fails.append("ST-J no OpenSpace/Nex-Prime")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("ST-J must not run on Clash")
+		return
+	if LayerContext and str(LayerContext.current_layer) == "Arena":
+		fails.append("ST-J must not run on Clash")
+		return
+	if nex_j.has_method("ensure_pad_bases"):
+		nex_j.ensure_pad_bases()
+		await get_tree().create_timer(0.25).timeout
+	if pad_j == null:
+		pad_j = _in_a_occupied_pad(os)
+	if pad_j == null:
+		fails.append("ST-J no occupied unnamed pad")
+		return
+	host_j = pad_j as Node3D
+	if not host_j.has_meta("pad_up"):
+		var walk_j: Node = pad_j
+		while walk_j:
+			if walk_j is Node3D and str(walk_j.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+				host_j = walk_j as Node3D
+				break
+			walk_j = walk_j.get_parent()
+	if host_j == null or not (str(host_j.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]):
+		fails.append("ST-J pad is not unnamed North/Approach/Flank")
+		return
+	var pin_j := str(host_j.get_meta("site_pin")) if host_j.has_meta("site_pin") else ""
+	if pin_j.begins_with("SITE_"):
+		fails.append("ST-J minted SITE_* (%s)" % pin_j)
+		return
+	if pad_j.has_method("claim"):
+		pad_j.claim("Cybernex", 2.0)
+	var ow_j = pad_j.get("ownership") if pad_j != null else null
+	if ow_j and ow_j.has_method("advance_transition"):
+		ow_j.advance_transition(8.0, 5.0)
+	await get_tree().process_frame
+	if pad_j.has_method("ensure_pad_hangar_stub"):
+		stub_j = pad_j.ensure_pad_hangar_stub()
+	if stub_j == null:
+		stub_j = _Builder.place_pad_hangar_stub(host_j, "Cybernex")
+	if stub_j == null or not is_instance_valid(stub_j):
+		fails.append("ST-J hangar stub missing on occupied unnamed pad")
+		return
+	var spin_j := str(stub_j.get_meta("site_pin", "missing"))
+	if spin_j != "":
+		fails.append("ST-J hangar stub minted site_pin (%s)" % spin_j)
+	if stub_j.has_meta("player_module") and bool(stub_j.get_meta("player_module")):
+		fails.append("ST-J stole the ST-A player_module slot")
+	if str(stub_j.get_meta("module_type", "")) != "hangar_stub":
+		fails.append("ST-J module is not hangar_stub")
+	var sscript_j := str(stub_j.get_script().resource_path) if stub_j.get_script() != null else ""
+	if sscript_j.find("CarrierHangarQueue") >= 0:
+		fails.append("ST-J reused ST-D CarrierHangarQueue")
+	if sscript_j.find("HangarBay") >= 0:
+		fails.append("ST-J reused IN-C HangarBay")
+	if sscript_j != "" and sscript_j.find("PadHangarStub.gd") < 0:
+		fails.append("ST-J hangar stub script drifted (%s)" % sscript_j)
+	if str(stub_j.name) != "PadHangarStub":
+		fails.append("ST-J hangar stub name drifted (%s)" % stub_j.name)
+	if stub_j.has_method("is_carrier_hangar") and bool(stub_j.is_carrier_hangar()):
+		fails.append("ST-J is a carrier hangar")
+	if stub_j.has_method("combat_stats") and int(stub_j.combat_stats()) != 0:
+		fails.append("ST-J hangar stub combat drifted")
+	if stub_j.has_method("rover_spawned") and bool(stub_j.rover_spawned()):
+		fails.append("ST-J spawned a rover")
+	if stub_j.has_method("hatch_exit") and str(stub_j.hatch_exit()) != "pad":
+		fails.append("ST-J hatch does not return to pad (%s)" % stub_j.hatch_exit())
+	if stub_j.has_method("hatch_returns_to_pad") and not bool(stub_j.hatch_returns_to_pad()):
+		fails.append("ST-J hatch leaves the pad")
+	if stub_j.has_method("scene_swap") and bool(stub_j.scene_swap()):
+		fails.append("ST-J hangar stub swaps scene")
+	if stub_j.has_method("bay_slots") and int(stub_j.bay_slots()) != 1:
+		fails.append("ST-J bay slots drifted (%s)" % stub_j.bay_slots())
+	var hab_j: Node = _Builder.player_module_on(host_j)
+	if hab_j != null:
+		var combat_j := int(hab_j.combat_stats()) if hab_j.has_method("combat_stats") else -1
+		if combat_j != 0:
+			fails.append("ST-J ST-A habitat combat drifted")
+	var ext_j: Node = pad_j.visible_extractor() if pad_j.has_method("visible_extractor") else host_j.get_node_or_null("PadHarvestExtractor")
+	if ext_j == null or not is_instance_valid(ext_j):
+		fails.append("ST-J ST-B extractor missing")
+	var turret_j: Node = pad_j.visible_turret() if pad_j.has_method("visible_turret") else host_j.get_node_or_null("PadDefenseTurret")
+	if turret_j == null:
+		turret_j = _Builder.pad_turret_on(host_j)
+	if turret_j == null or not is_instance_valid(turret_j):
+		fails.append("ST-J ST-H turret missing")
+	var store_j: Node = pad_j.visible_storage() if pad_j.has_method("visible_storage") else host_j.get_node_or_null("PadStorage")
+	if store_j == null:
+		store_j = _Builder.pad_storage_on(host_j)
+	if store_j == null or not is_instance_valid(store_j):
+		fails.append("ST-J ST-I storage missing")
+	if ship_j == null or not is_instance_valid(ship_j):
+		fails.append("ST-J no player hull")
+		return
+	var pad_up_j: Vector3 = host_j.get_meta("pad_up") if host_j.has_meta("pad_up") else Vector3.UP
+	if "velocity" in ship_j:
+		ship_j.velocity = Vector3.ZERO
+	ship_j.global_position = host_j.global_position + pad_up_j * 6.0
+	if ship_j.has_method("_set_mode"):
+		ship_j._set_mode(2)
+	if ship_j.has_method("_do_land"):
+		ship_j._do_land()
+	if not bool(ship_j.get("is_landed")):
+		fails.append("ST-J LAND did not hold the pad")
+		return
+	if not _osh_same_scene(scene0_j):
+		fails.append("ST-J LAND swapped scene (%s → %s)" % [scene0_j, _osh_scene_file()])
+	var scene_j := str(get_tree().current_scene.name) if get_tree() and get_tree().current_scene else ""
+	if scene_j.find("MainMenu") >= 0:
+		fails.append("ST-J hatch/LAND went to MainMenu")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("logistics", 20.0)
+		GameManager.add_mastery("colony_ops", 20.0)
+	var lab_j := SoftKnowledge.hangar_stub_label()
+	print("[Playtest] ST-J hangar stub present pad=", host_j.name, " label=", lab_j,
+		" hatch=", stub_j.hatch_exit() if stub_j.has_method("hatch_exit") else "",
+		" landed=", ship_j.get("is_landed"), " scene=", _osh_scene_file())
+	if lab_j == "":
+		fails.append("ST-J Knowledge hangar stub label empty")
+	if ov_j == null or not ov_j.has_method("try_enter"):
+		fails.append("ST-J StrategyOverlay missing")
+		return
+	if ov_j.has_method("is_active") and bool(ov_j.is_active()) and ov_j.has_method("exit_overlay"):
+		ov_j.exit_overlay()
+		await get_tree().process_frame
+	if "velocity" in ship_j:
+		ship_j.velocity = Vector3.ZERO
+	ship_j.global_position = host_j.global_position + pad_up_j * 8.0
+	await get_tree().process_frame
+	if not bool(ov_j.try_enter()):
+		fails.append("ST-J overlay B did not open (%s)" % str(ov_j.readiness_line() if ov_j.has_method("readiness_line") else ""))
+	else:
+		var ly_j := str(LayerContext.current_layer) if LayerContext else ""
+		if ly_j != "Strategy":
+			fails.append("ST-J LayerContext not Strategy (%s)" % ly_j)
+		if ov_j.has_method("exit_overlay"):
+			ov_j.exit_overlay()
+		await get_tree().process_frame
+	if LayerContext and str(LayerContext.site_pin_id) != pin0_j \
+			and str(LayerContext.site_pin_id).begins_with("SITE_"):
+		fails.append("ST-J minted SITE_* (%s)" % LayerContext.site_pin_id)
+	if not _osh_same_scene(scene0_j):
+		fails.append("ST-J overlay/hatch left OpenSpace")
+	print("[Playtest] ST-J hangar stub present · LAND/hatch on pad · overlay B opens · no SITE_*")
 
 
 func _assert_in_a(os: Node, fails: PackedStringArray) -> void:
