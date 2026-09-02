@@ -19659,6 +19659,7 @@ func _assert_br_a(os: Node, fails: PackedStringArray) -> void:
 	var pulse0 := 11.0
 	var cap0 := 5
 	var bench: Node = null
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
 	if P0 == null or not bool(P0.BR_A_BIOMASS_RANK):
 		fails.append("BR-A P0Slice flag missing")
 		return
@@ -19778,7 +19779,9 @@ func _assert_br_a(os: Node, fails: PackedStringArray) -> void:
 			fails.append("BR-A Cybernex HUD missing CONTRIB (%s)" % first_cx)
 		if int(snap_cx.get("econ_rank", 0)) != -1:
 			fails.append("BR-A Cybernex HUD showed Biomass Rank")
-	if LayerContext and str(LayerContext.site_pin_id).begins_with("SITE_"):
+	if LayerContext and str(LayerContext.site_pin_id) != pin0:
+		fails.append("BR-A changed site_pin (%s → %s)" % [pin0, LayerContext.site_pin_id])
+	if pin0.begins_with("SITE_") == false and LayerContext and str(LayerContext.site_pin_id).begins_with("SITE_"):
 		fails.append("BR-A minted SITE_* pin (%s)" % LayerContext.site_pin_id)
 	print("[Playtest] BR-A rank ", GameManager.biomass_rank(), " lifetime=",
 		snapped(float(GameManager.lifetime_biomass), 0.1), " harvest=", snapped(rate0 * cpu0, 0.01),
