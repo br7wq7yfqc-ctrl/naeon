@@ -295,9 +295,16 @@ static func crew_label() -> String:
 	return "CREW"
 
 
-## MC-B: name the crew station role. Never Pulse / Hack / thrust / DPS / yield.
+## MC-B / MC-C: name the crew station role. Never Pulse / Hack / thrust / DPS / yield.
 static func crew_role_label(role: String = "gunner") -> String:
-	if str(role) != "gunner":
+	var r := str(role)
+	if r == "engineer":
+		var ops := mastery("colony_ops")
+		var logi_e := mastery("logistics")
+		if ops >= 15.0 or logi_e >= 15.0 or rank() >= 5:
+			return "ENGINEER STATION"
+		return "ENGINEER"
+	if r != "gunner":
 		return ""
 	var combat := mastery("combat")
 	var logi := mastery("logistics")
