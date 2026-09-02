@@ -1,3 +1,5 @@
+**2026-09-02 — BR-A: Biomass Rank 0–4 from lifetime Biomass wallet (AllianceRanks family; SoftKnowledge / HUD label; harvest numbers stay; Cybernex stays CONTRIB)**
+
 **2026-09-02 — MC-C: third crew seat ENGINEER (SoftKnowledge / HUD label; CREW n/3; gunner stays; Pulse/Hack/thrust stay; host authority)**
 
 **2026-09-02 — BT-C: one gROT swarm on occupied unnamed pad (3 CombatDummy; gather / pulse-engage / scatter-return-to-pad; Pulse 11 both ways; cap 5; BT-A/B stay)**
@@ -756,7 +758,8 @@ BT-A: one occupied unnamed-pad guard (`PadGuardDummy`) walks a tiny 3-state GDSc
 BT-B: one visitor `NpcPilot` on that occupied unnamed pad walks a sibling 3-state GDScript BT — approach the plate, hold (occupy/harvest still legal, NP-B numbers stay), leave. Host authority. Pulse DPS stays 11. Pad-guard BT-A stays. Knowledge labels only. Not Clash waves. Not 10k CCU. G5 stays closed. No `SITE_*`.  
 SN-A: second local viewer on the occupied unnamed pad sees a SoftNet visual `SurfaceWalker` puppet (optional PV-A rival pose). Host keeps Pulse / occupy. No second physical walker. Knowledge labels only. Clash unchanged. Not ENet cluster. Not 10k CCU. G5 stays closed. No `SITE_*`.  
 ST-H: occupy unnamed pad → `BaseBuilder` places **one** `PadDefenseTurret` (catalog emplacement). HP; Pulse 11 at PV-A rival / BT-A range hostiles. Destroyed turret is not permadeath. ST-A habitat (0 combat) and ST-B extractor stay. Overlay B still opens. Knowledge labels only. Not Clash `Turret.gd` / OUTER 160. No P2W repair. No `SITE_*`. G5 stays closed.  
-ST-I: occupy unnamed pad → `BaseBuilder` places **one** `PadStorage` crate/hold. Cap 1 crate unit. Occupy dock transfers that unit pad-storage ↔ ship `CargoHold`. Knowledge labels only. Mass/value stay. Overlay B still opens. ST-A/B/H stay. Not a second ship hold. No `SITE_*`.
+ST-I: occupy unnamed pad → `BaseBuilder` places **one** `PadStorage` crate/hold. Cap 1 crate unit. Occupy dock transfers that unit pad-storage ↔ ship `CargoHold`. Knowledge labels only. Mass/value stay. Overlay B still opens. ST-A/B/H stay. Not a second ship hold. No `SITE_*`.  
+BR-A: lifetime Biomass wallet derives **Biomass Rank 0–4** (same family as `AllianceRanks`). SoftKnowledge / HUD label only (`BIOMASS` / `BIOMASS RANK` + rank number). Cybernex stays `CONTRIB` / `CONTRIBUTION`. Rank does not change harvest yield, Pulse, Hack, print cost, or exclusive modules. Infection cap 5. ST-B extractor stays. No P2W. No `SITE_*`.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -783,6 +786,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | OPEN SPACE SC bar | **OS-A…OS-H built** — 60 FPS / 5 мин = 3090 human gate |
 | ST-A strategy overlay | **built** — один habitat на unnamed паде |
 | ST-B extractor / Contribution | **built** — occupy → harvest → HUD number |
+| BR-A Biomass Rank | **built** — rank 0–4 from lifetime Biomass wallet; HUD label only; harvest numbers stay |
 | ST-C print one module | **built** — spend Contribution/Biomass → one catalog module |
 | ST-D hangar queue | **built** — one module on catalog carrier; mass/power refuse |
 | ST-E orbital cluster | **built** — two catalog modules (dock + habitat) near Nex-Prime |

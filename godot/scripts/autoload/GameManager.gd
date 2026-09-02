@@ -16,6 +16,7 @@ signal toast_requested(msg: String)
 var player_faction: Faction = Faction.CYBERNEX
 var contribution: float = 0.0  ## Cybernex RBE score
 var biomass: float = 0.0       ## gROT Biomass score
+var lifetime_biomass: float = 0.0  ## earned Biomass; spend does not reduce (BR-A rank)
 var knowledge_rank: int = 0
 var subject_mastery: Dictionary = {}
 var session_started_at: int = 0
@@ -123,7 +124,14 @@ func try_spend_economy(amount: float) -> bool:
 
 func add_biomass(amount: float) -> void:
 	biomass += amount
+	if amount > 0.0:
+		lifetime_biomass += amount
 	biomass_changed.emit(biomass)
+
+
+func biomass_rank() -> int:
+	## BR-A: 0–4 from lifetime Biomass wallet. Label only — never combat / yield.
+	return _AllianceRanks.rank_from_lifetime(lifetime_biomass)
 
 ## Faction-aware soft economy deposit from harvest/work.
 ## `owner_faction` names the side that earned it; empty means the local player.

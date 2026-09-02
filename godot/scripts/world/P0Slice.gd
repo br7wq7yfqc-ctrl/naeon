@@ -106,6 +106,10 @@ const BT_C_SWARM := true
 ## SurfaceWalker puppet (optional PV-A rival pose). Host keeps Pulse / occupy.
 ## Not ENet cluster. Not 10k CCU. G5 closed. No SITE_*.
 const SN_A_PAD := true
+## BR-A: Biomass Rank 0–4 from lifetime Biomass wallet (AllianceRanks family).
+## SoftKnowledge / HUD label only. Never yield / DPS / Pulse / Hack / print.
+## Cybernex stays CONTRIB / CONTRIBUTION. No SITE_*. Infection cap 5.
+const BR_A_BIOMASS_RANK := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6

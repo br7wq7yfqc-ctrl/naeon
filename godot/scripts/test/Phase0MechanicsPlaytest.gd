@@ -61,6 +61,7 @@ func _go() -> void:
 		await _assert_mc_c(os, fails)
 		await _assert_sn_a(os, fails)
 		await _assert_bt_c(os, fails)
+		_assert_br_a(os, fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
 
@@ -660,6 +661,7 @@ func _go() -> void:
 	await _assert_bt_b(os, fails)
 	await _assert_sn_a(os, fails)
 	await _assert_bt_c(os, fails)
+	_assert_br_a(os, fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
@@ -19636,6 +19638,161 @@ func _assert_scan_cache_live(fails: PackedStringArray) -> void:
 			fails.append("SoftScanCache.get_ships has off-tree hull")
 			return
 	print("[Playtest] SoftScanCache live player=", p != null, " ships=", SoftScanCache.get_ships().size())
+
+
+func _assert_br_a(os: Node, fails: PackedStringArray) -> void:
+	## BR-A: Biomass Rank 0–4 from lifetime Biomass wallet. HUD label only.
+	## Harvest / Pulse / Hack / print / exclusive modules stay. No SITE_*.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var Ranks = load("res://scripts/systems/AllianceRanks.gd")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
+	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var fac0 = GameManager.player_faction if GameManager else 0
+	var bio0 := float(GameManager.biomass) if GameManager and "biomass" in GameManager else 0.0
+	var life0 := float(GameManager.lifetime_biomass) if GameManager and "lifetime_biomass" in GameManager else 0.0
+	var mastery0: Dictionary = GameManager.subject_mastery.duplicate() if GameManager else {}
+	var pad: Node = null
+	var rate0 := 0.0
+	var cpu0 := 0.0
+	var cost0 := 0.0
+	var pulse0 := 11.0
+	var cap0 := 5
+	var bench: Node = null
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	if P0 == null or not bool(P0.BR_A_BIOMASS_RANK):
+		fails.append("BR-A P0Slice flag missing")
+		return
+	if bool(P0.ORBITAL_STATIONS):
+		fails.append("BR-A flipped ORBITAL_STATIONS")
+	if GameManager == null or not GameManager.has_method("biomass_rank") or not GameManager.has_method("add_biomass"):
+		fails.append("BR-A GameManager biomass rank missing")
+		return
+	if Ranks == null or not Ranks.has_method("rank_from_lifetime"):
+		fails.append("BR-A AllianceRanks.rank_from_lifetime missing")
+		return
+	if int(Ranks.rank_from_lifetime(0.0)) != 0 or int(Ranks.rank_from_lifetime(49.9)) != 0 \
+			or int(Ranks.rank_from_lifetime(50.0)) != 1 or int(Ranks.rank_from_lifetime(199.9)) != 1 \
+			or int(Ranks.rank_from_lifetime(200.0)) != 2 or int(Ranks.rank_from_lifetime(599.9)) != 2 \
+			or int(Ranks.rank_from_lifetime(600.0)) != 3 or int(Ranks.rank_from_lifetime(1599.9)) != 3 \
+			or int(Ranks.rank_from_lifetime(1600.0)) != 4 or int(Ranks.rank_from_lifetime(99999.0)) != 4:
+		fails.append("BR-A lifetime ladder is not AllianceRanks 0–4")
+	if get_tree():
+		var pads: Array = get_tree().get_nodes_in_group("pad_bases")
+		if not pads.is_empty():
+			pad = pads[0]
+	if pad != null:
+		if "extract_rate" in pad:
+			rate0 = float(pad.get("extract_rate"))
+		if "contribution_per_unit" in pad:
+			cpu0 = float(pad.get("contribution_per_unit"))
+		var pin := str(pad.get_meta("site_pin", "")) if pad.has_meta("site_pin") else ""
+		if pin.begins_with("SITE_"):
+			fails.append("BR-A minted SITE_* (%s)" % pin)
+	if get_tree():
+		var benches: Array = get_tree().get_nodes_in_group("print_benches")
+		if not benches.is_empty() and benches[0] != null and benches[0].has_method("print_cost"):
+			bench = benches[0]
+			cost0 = float(bench.print_cost())
+	if Kits != null and Kits.has_method("_pulse"):
+		var pab = Kits._pulse()
+		if pab != null and "damage" in pab:
+			pulse0 = float(pab.damage)
+	if absf(pulse0 - 11.0) > 0.01:
+		fails.append("BR-A Pulse DPS drifted (%s)" % pulse0)
+	if get_tree():
+		for n in get_tree().get_nodes_in_group("combat_dummy"):
+			if n != null and is_instance_valid(n) and n.has_method("infection_cap"):
+				cap0 = int(n.infection_cap())
+				break
+	if cap0 != 5:
+		fails.append("BR-A Infection cap drifted (%s)" % cap0)
+	GameManager.lifetime_biomass = 0.0
+	GameManager.biomass = 0.0
+	if int(GameManager.biomass_rank()) != 0:
+		fails.append("BR-A rank at lifetime 0 is %s, want 0" % GameManager.biomass_rank())
+	var want := [1, 2, 3, 4]
+	var add_amt := [50.0, 150.0, 400.0, 1000.0]
+	for i in range(want.size()):
+		GameManager.add_biomass(float(add_amt[i]))
+		if int(GameManager.biomass_rank()) != int(want[i]):
+			fails.append("BR-A rank after lifetime bump is %s, want %s" % [
+				GameManager.biomass_rank(), want[i]
+			])
+		if pad != null and (absf(float(pad.get("extract_rate")) - rate0) > 0.001 \
+				or absf(float(pad.get("contribution_per_unit")) - cpu0) > 0.001):
+			fails.append("BR-A rank changed harvest numbers")
+			break
+		if bench != null and absf(float(bench.print_cost()) - cost0) > 0.001:
+			fails.append("BR-A rank cheapened print cost")
+			break
+		if Kits != null and Kits.has_method("_pulse"):
+			var pab1 = Kits._pulse()
+			if pab1 != null and "damage" in pab1 and absf(float(pab1.damage) - 11.0) > 0.01:
+				fails.append("BR-A rank changed Pulse DPS")
+				break
+		if SoftK != null:
+			if SoftK.has_method("exclusive_module_unlocked") and bool(SoftK.exclusive_module_unlocked()):
+				fails.append("BR-A rank unlocked exclusive module")
+				break
+			if SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked()):
+				fails.append("BR-A rank unlocked exclusive weapon")
+				break
+	var r4 := int(GameManager.biomass_rank())
+	if GameManager.has_method("try_spend_biomass"):
+		GameManager.try_spend_biomass(80.0)
+	if int(GameManager.biomass_rank()) != r4:
+		fails.append("BR-A spend dropped Biomass Rank")
+	if GameManager.has_method("set_faction"):
+		GameManager.set_faction(GameManager.Faction.GROT)
+	if Hud != null:
+		var snap: Dictionary = Hud.snapshot(os.get("ship") if os else null, os.get("player") if os else null, pad)
+		var stxt := str(Hud.stack_text(snap))
+		var first := stxt.get_slice("\n", 0)
+		var unit := str(SoftK.yield_label(true)) if SoftK != null else "BIOMASS"
+		var lab := str(SoftK.biomass_rank_label(int(GameManager.biomass_rank()))) if SoftK != null else "4"
+		if int(snap.get("econ_rank", -99)) != int(GameManager.biomass_rank()):
+			fails.append("BR-A HUD econ_rank=%s want %s" % [
+				snap.get("econ_rank"), GameManager.biomass_rank()
+			])
+		if first.find(unit) < 0 or first.find("  ·  %s" % lab) < 0:
+			fails.append("BR-A HUD missing gROT rank label (%s)" % first)
+		if GameManager.has_method("add_mastery"):
+			GameManager.add_mastery("biomass_ops", 20.0)
+		if pad != null and (absf(float(pad.get("extract_rate")) - rate0) > 0.001 \
+				or absf(float(pad.get("contribution_per_unit")) - cpu0) > 0.001):
+			fails.append("BR-A BIOMASS RANK label changed harvest numbers")
+		var snap2: Dictionary = Hud.snapshot(os.get("ship") if os else null, os.get("player") if os else null, pad)
+		var first2 := str(Hud.stack_text(snap2)).get_slice("\n", 0)
+		var unit2 := str(SoftK.yield_label(true)) if SoftK != null else "BIOMASS RANK"
+		if unit2 != "BIOMASS RANK" or first2.find("BIOMASS RANK") < 0:
+			fails.append("BR-A HUD missing BIOMASS RANK (%s)" % first2)
+		if first2.find("  ·  %s" % lab) < 0:
+			fails.append("BR-A HUD missing rank number after BIOMASS RANK (%s)" % first2)
+		GameManager.set_faction(GameManager.Faction.CYBERNEX)
+		var snap_cx: Dictionary = Hud.snapshot(os.get("ship") if os else null, os.get("player") if os else null, pad)
+		var first_cx := str(Hud.stack_text(snap_cx)).get_slice("\n", 0)
+		var unit_cx := str(SoftK.yield_label(false)) if SoftK != null else "CONTRIB"
+		if first_cx.find("BIOMASS") >= 0:
+			fails.append("BR-A Cybernex HUD used BIOMASS (%s)" % first_cx)
+		if first_cx.find(unit_cx) < 0:
+			fails.append("BR-A Cybernex HUD missing CONTRIB (%s)" % first_cx)
+		if int(snap_cx.get("econ_rank", 0)) != -1:
+			fails.append("BR-A Cybernex HUD showed Biomass Rank")
+	if LayerContext and str(LayerContext.site_pin_id) != pin0:
+		fails.append("BR-A changed site_pin (%s → %s)" % [pin0, LayerContext.site_pin_id])
+	if pin0.begins_with("SITE_") == false and LayerContext and str(LayerContext.site_pin_id).begins_with("SITE_"):
+		fails.append("BR-A minted SITE_* pin (%s)" % LayerContext.site_pin_id)
+	print("[Playtest] BR-A rank ", GameManager.biomass_rank(), " lifetime=",
+		snapped(float(GameManager.lifetime_biomass), 0.1), " harvest=", snapped(rate0 * cpu0, 0.01),
+		" Pulse=", pulse0, " cap=", cap0, " print=", cost0, " no SITE_*")
+	GameManager.subject_mastery = mastery0
+	if GameManager.has_method("_recalc_knowledge"):
+		GameManager._recalc_knowledge()
+	GameManager.lifetime_biomass = life0
+	GameManager.biomass = bio0
+	if GameManager.has_method("set_faction"):
+		GameManager.set_faction(fac0)
 
 
 func _finish(fails: PackedStringArray, code: int) -> void:

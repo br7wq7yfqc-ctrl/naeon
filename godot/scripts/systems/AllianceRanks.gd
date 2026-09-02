@@ -35,3 +35,20 @@ static func next_rank_cost_contribution(rank: int) -> float:
 		2: return 400.0
 		3: return 1000.0
 		_: return 0.0
+
+
+static func rank_from_lifetime(lifetime: float) -> int:
+	## Same 0–4 ladder as social ranks, derived from lifetime wallet.
+	## Spend does not drop rank. Never yield / DPS / Pulse / Hack / print.
+	var r := 0
+	var acc := 0.0
+	var life := maxf(lifetime, 0.0)
+	while r < 4:
+		var cost: float = next_rank_cost_contribution(r)
+		if cost <= 0.0:
+			break
+		if life < acc + cost:
+			return r
+		acc += cost
+		r += 1
+	return 4
