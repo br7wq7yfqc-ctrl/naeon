@@ -133,6 +133,10 @@ const CR_A_CONTRIB_RANK := true
 ## SoftKnowledge / HUD FLEET n/2 only. Click ≠ combat. Host Pulse / occupy.
 ## Not 10–15 ships. Not a second OpenSpace. Does not flip ORBITAL_STATIONS.
 const FL_A_FLEET := true
+## FL-B: second extra allied pip on the same ST-A overlay. SoftNet visual
+## (pad-visitor / NP-A hull grammar). Cap 3 (player + 2). HUD FLEET n/3.
+## Click ≠ combat. Host Pulse / occupy. Not 10–15 ships. Not ENet. Not G5.
+const FL_B_FLEET := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6

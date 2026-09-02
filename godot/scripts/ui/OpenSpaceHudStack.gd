@@ -62,7 +62,7 @@ static func snapshot(ship: Node = null, player: Node = null, pad: Node = null) -
 		"crew_max": 4,
 		"crew_role": "gunner",
 		"fleet": 0,
-		"fleet_max": 2,
+		"fleet_max": 3,
 	}
 	if ship != null and is_instance_valid(ship):
 		if "fuel" in ship:
@@ -161,7 +161,7 @@ static func _fill_crew(snap: Dictionary, ship: Node, player: Node) -> void:
 
 
 static func _fill_fleet(snap: Dictionary, ship: Node, player: Node) -> void:
-	## FL-A: SoftKnowledge count only. Cap 2 (player hull + pad-visitor).
+	## FL-A/B: SoftKnowledge count only. Cap 3 (player + visitor + SoftNet ally).
 	## Knowledge does not change DPS / yield / thrust. Not a second OpenSpace.
 	var n := 0
 	var tree: SceneTree = null
@@ -174,6 +174,13 @@ static func _fill_fleet(snap: Dictionary, ship: Node, player: Node) -> void:
 		for t in tree.get_nodes_in_group("pad_traffic"):
 			if t == null or not is_instance_valid(t):
 				continue
+			if t.has_method("fleet_guests"):
+				for g in t.fleet_guests():
+					if g != null and is_instance_valid(g):
+						n += 1
+				if n > 1:
+					break
+				continue
 			var guest: Node = null
 			if t.has_method("fleet_guest"):
 				guest = t.fleet_guest()
@@ -181,9 +188,14 @@ static func _fill_fleet(snap: Dictionary, ship: Node, player: Node) -> void:
 				guest = t.get_visitor()
 			if guest != null and is_instance_valid(guest):
 				n += 1
+			if t.has_method("fleet_guest_b"):
+				var gb: Node = t.fleet_guest_b()
+				if gb != null and is_instance_valid(gb):
+					n += 1
+			if n > 1:
 				break
-	snap["fleet"] = mini(n, 2)
-	snap["fleet_max"] = 2
+	snap["fleet"] = mini(n, 3)
+	snap["fleet_max"] = 3
 
 
 static func has_fields(snap: Dictionary) -> bool:
@@ -257,7 +269,7 @@ static func stack_text(snap: Dictionary) -> String:
 	var fleet_s := "%s %d/%d" % [
 		_SoftK.fleet_label(),
 		int(snap.get("fleet", 0)),
-		int(snap.get("fleet_max", 2)),
+		int(snap.get("fleet_max", 3)),
 	]
 	return "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s" % [
 		econ_s, fuel_s, cargo_s, mod_s, pwr_s, cool_s, ls_s, land_s, eva, en_s, crew_s, fleet_s,
