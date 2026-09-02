@@ -62,7 +62,7 @@ static func snapshot(ship: Node = null, player: Node = null, pad: Node = null) -
 		"crew_max": 4,
 		"crew_role": "gunner",
 		"fleet": 0,
-		"fleet_max": 4,
+		"fleet_max": 5,
 	}
 	if ship != null and is_instance_valid(ship):
 		if "fuel" in ship:
@@ -161,7 +161,7 @@ static func _fill_crew(snap: Dictionary, ship: Node, player: Node) -> void:
 
 
 static func _fill_fleet(snap: Dictionary, ship: Node, player: Node) -> void:
-	## FL-A/B/C: SoftKnowledge count only. Cap 4 (player + visitor + two SoftNet).
+	## FL-A/B/C/D: SoftKnowledge count only. Cap 5 (player + visitor + three SoftNet).
 	## Knowledge does not change DPS / yield / thrust. Not a second OpenSpace.
 	var n := 0
 	var tree: SceneTree = null
@@ -196,10 +196,14 @@ static func _fill_fleet(snap: Dictionary, ship: Node, player: Node) -> void:
 				var gc: Node = t.fleet_guest_c()
 				if gc != null and is_instance_valid(gc):
 					n += 1
+			if t.has_method("fleet_guest_d"):
+				var gd: Node = t.fleet_guest_d()
+				if gd != null and is_instance_valid(gd):
+					n += 1
 			if n > 1:
 				break
-	snap["fleet"] = mini(n, 4)
-	snap["fleet_max"] = 4
+	snap["fleet"] = mini(n, 5)
+	snap["fleet_max"] = 5
 
 
 static func has_fields(snap: Dictionary) -> bool:
@@ -273,7 +277,7 @@ static func stack_text(snap: Dictionary) -> String:
 	var fleet_s := "%s %d/%d" % [
 		_SoftK.fleet_label(),
 		int(snap.get("fleet", 0)),
-		int(snap.get("fleet_max", 4)),
+		int(snap.get("fleet_max", 5)),
 	]
 	return "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s" % [
 		econ_s, fuel_s, cargo_s, mod_s, pwr_s, cool_s, ls_s, land_s, eva, en_s, crew_s, fleet_s,
