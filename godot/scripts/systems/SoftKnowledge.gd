@@ -162,11 +162,23 @@ static func crate_label() -> String:
 
 
 ## Colony/biomass ops: name the soft wallet. Never changes harvest yield.
+## gROT: BIOMASS / BIOMASS RANK. Cybernex stays CONTRIB / CONTRIBUTION.
 static func yield_label(grot: bool = false) -> String:
 	var ops := mastery("biomass_ops") if grot else mastery("colony_ops")
 	if grot:
 		return "BIOMASS RANK" if ops >= 15.0 or rank() >= 5 else "BIOMASS"
 	return "CONTRIBUTION" if ops >= 15.0 or rank() >= 5 else "CONTRIB"
+
+
+## BR-A: Biomass Rank 0–4 as a HUD number. Never yield / DPS / Pulse / Hack / print.
+static func biomass_rank_label(rank: int = -1) -> String:
+	var r := rank
+	if r < 0:
+		if GameManager != null and GameManager.has_method("biomass_rank"):
+			r = int(GameManager.biomass_rank())
+		else:
+			r = 0
+	return str(clampi(r, 0, 4))
 
 
 ## Colony/history: name the ST-E orbital cluster. Never mints SITE_* or a city.

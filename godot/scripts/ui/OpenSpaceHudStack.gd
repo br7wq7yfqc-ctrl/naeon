@@ -8,7 +8,7 @@ const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 const FIELDS := [
 	"fuel", "fuel_max", "cargo", "module_tag", "module_pct",
 	"landed", "occupy", "eva_mode",
-	"econ", "econ_rate", "econ_grot",
+	"econ", "econ_rate", "econ_grot", "econ_rank",
 	"energy", "energy_max",
 	"power_draw", "power_supply", "cool_load", "cool_cap", "life",
 	"crew", "crew_max", "crew_role",
@@ -47,6 +47,7 @@ static func snapshot(ship: Node = null, player: Node = null, pad: Node = null) -
 		"econ": 0.0,
 		"econ_rate": 0.0,
 		"econ_grot": false,
+		"econ_rank": -1,
 		"energy": -1.0,
 		"energy_max": -1.0,
 		"power_draw": 0.0,
@@ -101,8 +102,13 @@ static func snapshot(ship: Node = null, player: Node = null, pad: Node = null) -
 		snap["econ_grot"] = grot
 		if grot:
 			snap["econ"] = float(GameManager.biomass) if "biomass" in GameManager else 0.0
+			if GameManager.has_method("biomass_rank"):
+				snap["econ_rank"] = int(GameManager.biomass_rank())
+			else:
+				snap["econ_rank"] = 0
 		else:
 			snap["econ"] = float(GameManager.contribution) if "contribution" in GameManager else 0.0
+			snap["econ_rank"] = -1
 	if player != null and is_instance_valid(player):
 		if "energy" in player:
 			snap["energy"] = float(player.get("energy"))
@@ -171,6 +177,8 @@ static func stack_text(snap: Dictionary) -> String:
 	var grot := bool(snap.get("econ_grot", false))
 	var unit := _SoftK.yield_label(grot)
 	var econ_s := "%s %.1f" % [unit, float(snap.get("econ", 0.0))]
+	if grot:
+		econ_s += "  ·  %s" % _SoftK.biomass_rank_label(int(snap.get("econ_rank", 0)))
 	var rate := float(snap.get("econ_rate", 0.0))
 	if rate > 0.001:
 		econ_s += "  +%.1f/s" % rate

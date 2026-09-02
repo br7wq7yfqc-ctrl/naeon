@@ -1110,8 +1110,9 @@ func _refresh_economy() -> void:
 	if _econ_label == null or GameManager == null:
 		return
 	var fac := GameManager.get_faction_name()
-	var cur: float = GameManager.biomass if fac == "gROT" else GameManager.contribution
-	var label_n := "BIOMASS" if fac == "gROT" else "CONTRIB"
+	var grot := fac == "gROT"
+	var cur: float = GameManager.biomass if grot else GameManager.contribution
+	var unit := _SoftK.yield_label(grot)
 	var rank: int = int(GameManager.alliance_rank) if "alliance_rank" in GameManager else 0
 	var next_cost: float = float(GameManager.next_alliance_cost()) if GameManager.has_method("next_alliance_cost") else float(_AllianceRanks.next_rank_cost_contribution(rank))
 	var rname: String = str(_AllianceRanks.rank_name(rank))
@@ -1121,9 +1122,15 @@ func _refresh_economy() -> void:
 	var delta_s := ""
 	if _econ_flash > 0.0 and absf(_econ_delta) > 0.01:
 		delta_s = "  %+0.1f" % _econ_delta
-	_econ_label.text = "%s %.1f%s  ·  %s  → next %.0f  ·  soft only (no P2W)" % [
-		label_n, cur, delta_s, rname, next_cost
-	]
+	if grot:
+		var br := int(GameManager.biomass_rank()) if GameManager.has_method("biomass_rank") else 0
+		_econ_label.text = "%s %.1f%s  ·  %s  ·  soft only (no P2W)" % [
+			unit, cur, delta_s, _SoftK.biomass_rank_label(br)
+		]
+	else:
+		_econ_label.text = "%s %.1f%s  ·  %s  → next %.0f  ·  soft only (no P2W)" % [
+			unit, cur, delta_s, rname, next_cost
+		]
 	if _econ_flash > 0.0:
 		var pulse := 0.5 + 0.5 * (_econ_flash / 1.2)
 		_econ_label.modulate = Color(0.55, 1.0, 0.75).lerp(Color(1.0, 1.0, 0.5), pulse)
