@@ -154,6 +154,11 @@ const FL_B_FLEET := true
 ## Click ≠ combat. Host Pulse / occupy. Not 10–15 ships. Not ENet. Not G5.
 ## FL-A / FL-B first two extra pips stay. Does not flip ORBITAL_STATIONS.
 const FL_C_FLEET := true
+## FL-D: fourth extra allied pip on the same ST-A overlay. SoftNet visual
+## (pad-visitor / NP-A hull grammar). Cap 5 (player + 4). HUD FLEET n/5.
+## Click ≠ combat. Host Pulse / occupy. Not 10–15 ships. Not ENet. Not G5.
+## FL-A / FL-B / FL-C first three extra pips stay. Does not flip ORBITAL_STATIONS.
+const FL_D_FLEET := true
 ## AR-H: one door on an occupied unnamed pad into Clash TestArena.
 ## Not a city-map. Not G2. G5 cluster stays closed. Tab/menu Clash stays.
 const AR_H_DOOR := true
