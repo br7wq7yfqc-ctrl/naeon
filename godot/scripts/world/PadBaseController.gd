@@ -70,6 +70,7 @@ func _ready() -> void:
 	add_to_group("pad_bases")
 	call_deferred("_ensure_visible_extractor")
 	call_deferred("_ensure_print_bench")
+	call_deferred("_ensure_pad_turret")
 	_seed_pad_cargo()
 	_contest_ring = Node3D.new()
 	_contest_ring.set_script(preload("res://scripts/world/ContestedRing.gd"))
@@ -142,6 +143,7 @@ func _process(delta: float) -> void:
 			swap_cluster_theme(ownership.faction_name())
 			_update_city_density()
 			_refresh_label()
+			call_deferred("_ensure_pad_turret")
 	_tick_occupy(delta)
 	_tick_guard_respawn(delta)
 	_tick_arena_influence(delta)
@@ -310,6 +312,7 @@ func _tick_occupy(delta: float) -> void:
 			_nudge_claim(gf, GUARD_RATE * delta, false)
 	if ownership.is_fully_owned() and _status != "contested":
 		_clear_guard()
+		_ensure_pad_turret()
 	_occupy_label_t += delta
 	if _occupy_label_t >= 0.35:
 		_occupy_label_t = 0.0
@@ -466,6 +469,7 @@ func _lock_to(f: OwnershipData.Faction, noisy: bool) -> void:
 			_notify_hud("%s lost — %s holds it now (occupy to take it back)" % [_pad_label(), new_fac])
 	_bind_layer_claim()
 	call_deferred("_ensure_claim_beacon")
+	call_deferred("_ensure_pad_turret")
 	print("[PadBase] claim → ", ownership.faction_name(), " @ ", name)
 
 
@@ -730,6 +734,20 @@ func visible_extractor() -> Node3D:
 	return find_child("PadHarvestExtractor", true, false) as Node3D
 
 
+func visible_turret() -> Node3D:
+	## ST-H: one pad defense turret. Not Clash Turret / PadContestGuard.
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	var pad := _unnamed_pad_host()
+	if pad != null:
+		return _Builder.pad_turret_on(pad)
+	return find_child("PadDefenseTurret", true, false) as Node3D
+
+
+func ensure_pad_turret() -> Node3D:
+	_ensure_pad_turret()
+	return visible_turret()
+
+
 func _unnamed_pad_host() -> Node3D:
 	var n: Node = get_parent()
 	while n:
@@ -760,6 +778,30 @@ func _ensure_visible_extractor() -> void:
 	if ext.has_method("bind_pad"):
 		ext.bind_pad(self)
 	print("[PadBase] ST-B extractor on ", pad.name)
+
+
+func _ensure_pad_turret() -> void:
+	## ST-H: one defense module after occupy. Distinct from Clash OUTER / contest Turret.gd.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	var pad := _unnamed_pad_host()
+	var fac := default_faction
+	if P0 == null or not bool(P0.ST_H_TURRET):
+		return
+	if pad == null:
+		return
+	if ownership == null or not ownership.is_fully_owned():
+		return
+	if _status == "contested":
+		return
+	if _Builder.pad_turret_on(pad) != null:
+		return
+	if ownership.has_method("faction_name"):
+		fac = str(ownership.faction_name())
+	if fac == "" or fac == "Neutral" or fac == "Contested":
+		fac = default_faction
+	_Builder.place_pad_turret(pad, fac)
+	print("[PadBase] ST-H turret on ", pad.name)
 
 
 func print_bench() -> Node:

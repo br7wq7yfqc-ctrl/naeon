@@ -205,6 +205,15 @@ static func extractor_label() -> String:
 	return "EXTRACTOR"
 
 
+## Colony/combat: name the ST-H pad turret. Never Pulse DPS / HP / repair.
+static func turret_label() -> String:
+	var ops := mastery("colony_ops")
+	var combat := mastery("combat")
+	if ops >= 15.0 or combat >= 15.0 or rank() >= 5:
+		return "T1 TURRET"
+	return "TURRET"
+
+
 ## Q-A: name the ops contract board. Never yield / DPS / exclusive modules.
 static func contract_board_label() -> String:
 	var intel := mastery("quest_intel")

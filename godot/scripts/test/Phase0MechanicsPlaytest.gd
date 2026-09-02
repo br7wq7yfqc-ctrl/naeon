@@ -47,6 +47,7 @@ func _go() -> void:
 		await _assert_q_d(os, fails)
 		await _assert_q_e(os, fails)
 		await _assert_hf_c(os, fails)
+		await _assert_st_h(os, fails)
 		await _assert_hf_b(os, fails)
 		await _assert_hf_a(os, fails)
 		await _assert_pv_b(os, fails)
@@ -643,6 +644,7 @@ func _go() -> void:
 	await _npc_soft_alliance(fails)
 	await _eva_snap_pulse(fails)
 	await _assert_hf_c(os, fails)
+	await _assert_st_h(os, fails)
 	await _assert_hf_b(os, fails)
 	await _assert_hf_a(os, fails)
 	await _assert_pv_b(os, fails)
@@ -13089,6 +13091,194 @@ func _assert_st_g(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] ST-G factory present spent Contribution ", snapped(before, 0.01),
 		" -> ", snapped(after, 0.01), " cost=", snapped(cost, 0.01),
 		" module=", mod.name, " kind=", kind, " cash_skip=false")
+
+
+func _assert_st_h(os: Node, fails: PackedStringArray) -> void:
+	## ST-H: one pad turret after occupy via BaseBuilder. HP + Pulse 11 at
+	## PV-A rival / BT-A range hostiles. Not Clash Turret / OUTER 160.
+	## Destroyed turret ≠ permadeath. ST-A habitat + ST-B extractor stay.
+	## Overlay B still opens. No SITE_*. G5 closed. No P2W repair.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	var nex: Node = _osh_nex()
+	var traffic: Node = null
+	var pad: Node = _in_a_occupied_pad(os)
+	var host: Node3D = null
+	var turret: Node3D = null
+	var rival: Node3D = null
+	var ov: Node = os.strategy_overlay() if os != null and os.has_method("strategy_overlay") else null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var walker: Node3D = os.get("player") as Node3D if os else null
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	if P0 == null or not bool(P0.ST_H_TURRET) or not bool(P0.ST_A_OVERLAY) \
+			or not bool(P0.ST_B_EXTRACTOR):
+		fails.append("ST-H P0Slice flag missing")
+		return
+	if os == null or nex == null:
+		fails.append("ST-H no OpenSpace/Nex-Prime")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("ST-H must not run on Clash")
+		return
+	if LayerContext and str(LayerContext.current_layer) == "Arena":
+		fails.append("ST-H must not run on Clash")
+		return
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.25).timeout
+	if pad == null:
+		pad = _in_a_occupied_pad(os)
+	if pad == null:
+		fails.append("ST-H no occupied unnamed pad")
+		return
+	host = pad as Node3D
+	if not host.has_meta("pad_up"):
+		var walk: Node = pad
+		while walk:
+			if walk is Node3D and str(walk.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+				host = walk as Node3D
+				break
+			walk = walk.get_parent()
+	if host == null or not (str(host.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]):
+		fails.append("ST-H pad is not unnamed North/Approach/Flank")
+		return
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("ST-H minted SITE_* (%s)" % pin)
+		return
+	if pad.has_method("claim"):
+		pad.claim("Cybernex", 2.0)
+	var ow = pad.get("ownership") if pad != null else null
+	if ow and ow.has_method("advance_transition"):
+		ow.advance_transition(8.0, 5.0)
+	await get_tree().process_frame
+	if pad.has_method("ensure_pad_turret"):
+		turret = pad.ensure_pad_turret()
+	if turret == null:
+		turret = _Builder.place_pad_turret(host, "Cybernex")
+	if turret == null or not is_instance_valid(turret):
+		fails.append("ST-H turret missing on occupied unnamed pad")
+		return
+	var tpin := str(turret.get_meta("site_pin", "missing"))
+	if tpin != "":
+		fails.append("ST-H turret minted site_pin (%s)" % tpin)
+	if turret.has_meta("player_module") and bool(turret.get_meta("player_module")):
+		fails.append("ST-H stole the ST-A player_module slot")
+	if str(turret.get_meta("module_type", "")) != "turret":
+		fails.append("ST-H module is not turret")
+	var tscript := str(turret.get_script().resource_path) if turret.get_script() != null else ""
+	if tscript.ends_with("combat/Turret.gd") or tscript.ends_with("scenes/combat/Turret.gd"):
+		fails.append("ST-H reused Clash Turret.gd")
+	if tscript != "" and tscript.find("PadDefenseTurret.gd") < 0:
+		fails.append("ST-H turret script drifted (%s)" % tscript)
+	if not str(turret.name).begins_with("PadDefense"):
+		fails.append("ST-H turret name drifted (%s)" % turret.name)
+	if "max_health" in turret and absf(float(turret.max_health) - 160.0) < 0.01:
+		fails.append("ST-H reused Clash OUTER 160 HP")
+	if "health" not in turret or float(turret.health) <= 0.0:
+		fails.append("ST-H turret has no HP")
+	if turret.has_method("pulse_dps") and absf(float(turret.pulse_dps()) - 11.0) > 0.01:
+		fails.append("ST-H Pulse DPS drifted (%s)" % turret.pulse_dps())
+	if turret.has_method("combat_authority") and str(turret.combat_authority()) != "host":
+		fails.append("ST-H combat authority is not host")
+	if turret.has_method("has_p2w_repair") and bool(turret.has_p2w_repair()):
+		fails.append("ST-H P2W repair")
+	if turret.has_method("try_cash_repair_skip") and bool(turret.try_cash_repair_skip(999.0)):
+		fails.append("ST-H cash-shop repair skip")
+	if turret.has_method("is_g5_closed") and not bool(turret.is_g5_closed()):
+		fails.append("ST-H G5 Clash-from-world is open")
+	var clash_src := FileAccess.get_file_as_string("res://scripts/arena/ClashLanes.gd")
+	var arena_src := FileAccess.get_file_as_string("res://scripts/test/TestArena.gd")
+	if clash_src.find('"hp": 160.0') < 0 or clash_src.find("Turret.gd") < 0:
+		fails.append("ST-H Clash OUTER / Turret.gd drifted")
+	if arena_src.find("Turret.tscn") < 0:
+		fails.append("ST-H TestArena turrets drifted")
+	if arena_src.find("PadDefenseTurret") >= 0:
+		fails.append("ST-H wrote pad turret into TestArena")
+	var extras := 0
+	if get_tree():
+		extras = get_tree().get_nodes_in_group("pad_defense_turrets").size()
+	if extras < 1:
+		fails.append("ST-H want a pad turret group, got %s" % extras)
+	var hab: Node = _Builder.player_module_on(host)
+	if hab != null:
+		var combat := int(hab.combat_stats()) if hab.has_method("combat_stats") else -1
+		if combat != 0:
+			fails.append("ST-H ST-A habitat combat drifted")
+	var ext: Node = pad.visible_extractor() if pad.has_method("visible_extractor") else host.get_node_or_null("PadHarvestExtractor")
+	if ext == null or not is_instance_valid(ext):
+		fails.append("ST-H ST-B extractor missing")
+	if nex.has_method("pad_traffic"):
+		traffic = nex.call("pad_traffic")
+	if traffic == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("pad_traffic")
+		if not listed.is_empty():
+			traffic = listed[0]
+	if traffic != null and traffic.has_method("get_rival"):
+		rival = traffic.get_rival()
+	if rival == null and traffic != null:
+		var pvp: Node = traffic.get_pvp() if traffic.has_method("get_pvp") else traffic.get_node_or_null("PadPvp")
+		if pvp != null and pvp.has_method("get_rival"):
+			rival = pvp.get_rival()
+	if rival == null or not is_instance_valid(rival):
+		fails.append("ST-H PV-A rival missing for Pulse")
+		return
+	if "aggro_range" in rival:
+		rival.set("aggro_range", 20.0)
+	var rival_home: Vector3 = rival.global_position
+	rival.global_position = turret.global_position + Vector3(2.0, 0.0, 2.0)
+	var hp0 := float(rival.health) if "health" in rival else 80.0
+	var walker_hp0 := 0.0
+	if walker != null and is_instance_valid(walker) and "health" in walker:
+		walker_hp0 = float(walker.health)
+	if not turret.has_method("try_pulse") or not bool(turret.try_pulse(rival)):
+		fails.append("ST-H turret did not fire Pulse")
+	else:
+		var hp1 := float(rival.health) if "health" in rival else hp0
+		print("[Playtest] ST-H pulse rival ", snapped(hp0, 0.01), " -> ", snapped(hp1, 0.01))
+		if hp1 >= hp0 - 0.01:
+			fails.append("ST-H Pulse did not reduce rival HP")
+		if "health" in rival:
+			rival.set("health", hp0)
+			if rival.has_method("is_alive") and not bool(rival.is_alive()):
+				rival.set("_alive", true)
+	if is_instance_valid(rival):
+		rival.global_position = rival_home
+	var t_hp0 := float(turret.health)
+	if turret.has_method("take_damage"):
+		turret.take_damage(t_hp0 + 40.0, "gROT")
+	if turret.has_method("is_alive") and bool(turret.is_alive()):
+		fails.append("ST-H destroyed turret still alive")
+	if walker != null and is_instance_valid(walker) and "health" in walker:
+		if float(walker.health) <= 0.0:
+			fails.append("ST-H turret death was permadeath")
+		elif walker_hp0 > 0.0 and float(walker.health) < walker_hp0 - 0.01:
+			fails.append("ST-H turret death damaged the walker")
+	if ov == null or not ov.has_method("try_enter"):
+		fails.append("ST-H StrategyOverlay missing")
+		return
+	if ov.has_method("is_active") and bool(ov.is_active()) and ov.has_method("exit_overlay"):
+		ov.exit_overlay()
+		await get_tree().process_frame
+	var pad_up: Vector3 = host.get_meta("pad_up") if host.has_meta("pad_up") else Vector3.UP
+	if ship != null and is_instance_valid(ship):
+		if "velocity" in ship:
+			ship.velocity = Vector3.ZERO
+		ship.global_position = host.global_position + pad_up * 8.0
+	await get_tree().process_frame
+	if not bool(ov.try_enter()):
+		fails.append("ST-H overlay B did not open (%s)" % str(ov.readiness_line() if ov.has_method("readiness_line") else ""))
+	else:
+		var ly := str(LayerContext.current_layer) if LayerContext else ""
+		if ly != "Strategy":
+			fails.append("ST-H LayerContext not Strategy (%s)" % ly)
+		if ov.has_method("exit_overlay"):
+			ov.exit_overlay()
+		await get_tree().process_frame
+	if LayerContext and str(LayerContext.site_pin_id) != pin0 \
+			and str(LayerContext.site_pin_id).begins_with("SITE_"):
+		fails.append("ST-H minted SITE_* (%s)" % LayerContext.site_pin_id)
+	print("[Playtest] ST-H turret present HP Pulse 11 · no SITE_* · Clash TestArena unchanged · G5 closed")
 
 
 func _assert_in_a(os: Node, fails: PackedStringArray) -> void:
