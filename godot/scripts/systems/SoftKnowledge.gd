@@ -125,6 +125,15 @@ static func swarm_label() -> String:
 	return "SWARM"
 
 
+## History/combat: Cybernex animal-robot pack name only — never Pulse DPS / HP / yield.
+static func pack_label() -> String:
+	var hist := mastery("history")
+	var combat := mastery("combat")
+	if hist >= 10.0 or combat >= 10.0 or rank() >= 5:
+		return "NEX PACK"
+	return "PACK"
+
+
 ## History/Lore: structure weakness tip (info only)
 static func structure_tip(faction: String) -> String:
 	var lore := mastery("history")
