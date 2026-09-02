@@ -6,9 +6,10 @@
 ## Rules (implemented)
 | Rule | Value |
 |------|-------|
-| Daily War Score cap | **60** |
+| Daily War Score cap | **60** (SoftSession `user://soft_session.json`; further wins → cosmetics / title) |
 | Kill WS | 1.5 |
-| Match win WS | 8 |
+| Match win WS | **15** (rules/13) |
+| Match loss WS | **3** (participation) |
 | Soft influence | ≤20% of match WS, max 4 — **temporary**, never permanent planet flip |
 | Layer | Arena via LayerContext |
 | Exit | O → OpenSpace · Tab → SpaceTest |
@@ -37,6 +38,7 @@ OpenSpace → **M** or **Tab** → TestArena Clash · kill dummies to 5 · soft 
 - 3v3 local (AR-F): `ClashLocalMatch` fills six slots on TOP/MID/BOT (host + SoftNet visual `CombatDummy` puppets). Host owns combat. G5 stays closed. Still startable.
 - 5v5 local (AR-G): same host + SoftNet path; ten slots on TOP/MID/BOT + AR-D jungle. Default TestArena door. `--clash-3v3` keeps 3v3.
 - Pad door (AR-H): occupied unnamed pad `ClashDoor` → TestArena. Not a city-map. G5 cluster stays closed.
+- Match end (AR-I): either team's CORE Turret HP → 0 ends 3v3 and 5v5. SoftKnowledge HUD `WIN` / `LOSS` only. SoftSession records WS (+15 / +3, daily cap 60). Excess wins → `TITLE` cosmetics only. Not planet flip. Not a unique combat item.
 
 ## Soft lane objectives
 | Action | Pressure | Soft WS |

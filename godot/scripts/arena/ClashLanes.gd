@@ -299,13 +299,24 @@ func _on_structure_died(spire: Node3D, lane: String, fac: String, role: String) 
 			mesh.material_override = mat
 	var player_fac := GameManager.get_faction_name() if GameManager else "Cybernex"
 	var tree := get_tree()
-	if fac != player_fac and tree:
-		var clash: Node = tree.get_first_node_in_group("aexion_clash")
+	var clash: Node = tree.get_first_node_in_group("aexion_clash") if tree else null
+	var matchn: Node = tree.get_first_node_in_group("clash_match") if tree else null
+	if role == ROLE_CORE:
+		# AR-I: either CORE at 0 HP ends the match (3v3 and 5v5).
 		if clash and clash.has_method("register_structure_down"):
-			clash.register_structure_down(role, lane)
+			clash.register_structure_down(role, lane, fac)
+		var localn: Node = tree.get_first_node_in_group("clash_local_match") if tree else null
+		if localn and localn.has_method("on_core_destroyed"):
+			localn.on_core_destroyed(fac)
+		if matchn and matchn.has_method("register_objective"):
+			matchn.register_objective()
+		print("[ClashLanes] CORE down ", fac, " ", lane, " — match end")
+		return
+	if fac != player_fac and tree:
+		if clash and clash.has_method("register_structure_down"):
+			clash.register_structure_down(role, lane, fac)
 		elif clash and clash.has_method("register_tower_down"):
 			clash.register_tower_down(lane)
-		var matchn: Node = tree.get_first_node_in_group("clash_match")
 		if matchn and matchn.has_method("register_objective"):
 			matchn.register_objective()
 		if GameManager:

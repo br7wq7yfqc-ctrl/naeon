@@ -13,7 +13,7 @@ NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY
 
 Это **не** клон карт Omeda/Epic, карточной колоды Paragon и не IP героев. Новых SITE_* и городов нет. G5 (Clash-из-мира) **закрыт**. G2–G6 не реализовывать. P2W запрещён. Knowledge — soft (подпись, не unique DPS). Infection — кап 5. story ≠ power.
 
-**CODE арены не вытесняет OS-A.** Этот PR: карта SC + сшивка OS-A + этот план. Первый арена-код — только после OS-A green, срез AR-A.
+**CODE арены не вытесняет OS-A.** Этот PR: карта SC + сшивка OS-A + этот план. Первый арена-код — только после OS-A green, срез AR-A. **AR-I** — first Clash match-end + soft WS (rules/13) on the existing TestArena / ClashDirector.
 
 ---
 
@@ -29,7 +29,7 @@ NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY
 | 6 | Heroes / kits | `AbilityKitCatalog` + `AbilitySystem`; формы = идентичность | **AR-E:** 4 кита × 4 слота (CX Nex/Grid, GR Rot/Spore; Pulse / utility / probe\|surge / Form Cycle) | feel lock; формы не rank-стат | P2W kits; форма = скрытый MMR |
 | 7 | Items / cards | модули / blueprints NAEON, не колода Paragon | **AR-E:** один `ClashModuleBench` (session `ShipModule.SENSOR`); Knowledge только подпись; не колода | не shop of power | cash-shop power; клон карт Epic |
 | 8 | Vision / wards | `ClashRadar`; soft scan | радар всегда рисует форму; вард-предметов нет | wait или soft label; Knowledge не покупает вард | pay-to-ward |
-| 9 | Draft / match | `ClashMatchDirector` + kill-to-5 / 3 lane objectives | матч в редакторе; драфта нет; вход из мира = **G5 закрыт** | драфт later; дверь = TestArena | Arena Commander; G5 сейчас |
+| 9 | Draft / match | `ClashMatchDirector` + kill-to-5 / 3 lane objectives | **AR-I:** CORE HP → 0 ends match (WIN/LOSS SoftKnowledge); soft WS +15/+3, daily cap 60; драфта нет; вход из мира = **G5 закрыт** | драфт later; дверь = TestArena | Arena Commander; G5 сейчас |
 | 10 | Net | SoftNet сейчас visual; Phase 2 server authority | **AR-G:** 5v5 local host authority на том же 60×60; SoftNet visual puppets; 3v3 startable | feel lock; не cluster | pay-rank matchmaking |
 
 ---
@@ -69,6 +69,7 @@ NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY
 | **AR-F** | 3v3 local authority, затем 5v5 | **сделано:** 3v3 local host + SoftNet visual puppets на том же 60×60 | 3v3 startable | вход из мира сейчас |
 | **AR-G** | 5v5 local authority на тех же полосах + jungle | **сделано:** 10 actors (host Cybernex MID + 9 SoftNet visual puppets) на том же 60×60 | этот срез | вход из мира сейчас |
 | **AR-H** | дверь из OpenSpace / occupied unnamed pad в Clash TestArena | **сделано:** `ClashDoor` на паде; F → TestArena; не city-map; G5 cluster закрыт | этот срез | G2 карта; leftover 5v5 soak |
+| **AR-I** | match-end + soft world influence seed | **сделано:** CORE Turret HP → 0 ends 3v3/5v5; SoftKnowledge WIN/LOSS; SoftSession WS +15/+3, daily cap 60 → further wins cosmetics/title; не planet flip | этот срез | unique combat item; SITE_*; G5; leftover 5v5 soak |
 
 ---
 

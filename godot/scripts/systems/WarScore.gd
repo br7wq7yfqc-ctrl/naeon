@@ -27,8 +27,14 @@ func _roll_day() -> void:
 	day_key = "%04d-%02d-%02d" % [d.year, d.month, d.day]
 
 func _load_daily() -> void:
-	## The tracker is rebuilt on every arena load, so the cap has to live on
-	## disk or re-entering the scene would hand out unlimited War Score.
+	## SoftSession is the AR-I session of record. war_score.cfg stays equivalent.
+	if SoftSession and SoftSession.has_method("grant_war_score"):
+		if SoftSession.has_method("_roll_ws_day"):
+			SoftSession._roll_ws_day()
+		if str(SoftSession.war_score_day) == day_key:
+			daily_earned = clampf(float(SoftSession.war_score_daily), 0.0, DAILY_CAP)
+			print("[WarScore] restored daily ", daily_earned, "/", DAILY_CAP, " (SoftSession)")
+			return
 	var cfg := ConfigFile.new()
 	if cfg.load(SAVE_PATH) != OK:
 		return
@@ -60,13 +66,22 @@ func add_match_points(amount: float) -> float:
 	_ensure_day()
 	if amount <= 0.0:
 		return 0.0
-	var room := remaining_daily()
-	var got := minf(amount, room)
+	var got := 0.0
+	if SoftSession and SoftSession.has_method("grant_war_score"):
+		got = float(SoftSession.grant_war_score(amount))
+		daily_earned = clampf(float(SoftSession.war_score_daily), 0.0, DAILY_CAP)
+		day_key = str(SoftSession.war_score_day)
+	else:
+		var room := remaining_daily()
+		got = minf(amount, room)
+		daily_earned += got
 	if got <= 0.0:
 		if GameManager:
-			GameManager.toast_requested.emit("War Score daily cap (%.0f) reached — soft only" % DAILY_CAP)
+			GameManager.toast_requested.emit(
+				"War Score daily cap (%.0f) reached — cosmetics / title only" % DAILY_CAP
+			)
+		_save_daily()
 		return 0.0
-	daily_earned += got
 	match_ws += got
 	_save_daily()
 	score_changed.emit(daily_earned, match_ws)

@@ -21,6 +21,11 @@ const OBJECTIVE_WS := 2.0  ## soft WS when a lane hits 100
 var _lane_objective_claimed: Dictionary = {"TOP": false, "MID": false, "BOT": false}
 var _player_ref: Node3D = null
 var _tick: float = 0.0
+var last_result: String = ""
+var last_player_won: bool = false
+var last_ws_granted: float = 0.0
+var last_cosmetic: bool = false
+const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 
 func _ready() -> void:
 	war = _WarScore.new()
@@ -82,7 +87,7 @@ func register_tower_down(lane: String = "MID") -> void:
 	register_structure_down("OUTER", lane)
 
 
-func register_structure_down(role: String = "OUTER", lane: String = "MID") -> void:
+func register_structure_down(role: String = "OUTER", lane: String = "MID", fac: String = "") -> void:
 	if _ended or not active:
 		return
 	var press := 28.0
@@ -98,9 +103,11 @@ func register_structure_down(role: String = "OUTER", lane: String = "MID") -> vo
 	_add_pressure(lane, press)
 	if GameManager:
 		GameManager.add_mastery("combat", 0.6)
-	# Soft win — core HP is honest; no P2W repair / planet flip.
+	# AR-I: CORE HP → 0 ends the match. Enemy CORE = WIN; own CORE = LOSS.
 	if role == "CORE":
-		_end_match("player_core")
+		var player_fac := GameManager.get_faction_name() if GameManager else "Cybernex"
+		var won := fac == "" or fac != player_fac
+		_end_match("core", won)
 
 func _process(delta: float) -> void:
 	if _ended or not active or _player_ref == null or not is_instance_valid(_player_ref):
@@ -160,23 +167,44 @@ func _add_pressure(lane: String, amount: float) -> void:
 				all_done = false
 				break
 		if all_done:
-			_end_match("player_lanes")
+			_end_match("player_lanes", true)
 	lane_pressure_changed.emit(lane_pressure.duplicate())
 
-func _end_match(winner: String) -> void:
+func is_match_over() -> bool:
+	return _ended
+
+
+func _end_match(winner: String, player_won: bool = true) -> void:
 	if _ended:
 		return
 	_ended = true
 	active = false
+	last_player_won = player_won
+	last_result = "WIN" if player_won else "LOSS"
+	var granted := 0.0
 	if war:
-		war.on_match_win()
-		war.emit_soft_influence()
+		if player_won:
+			granted = float(war.on_match_win())
+			war.emit_soft_influence()
+		else:
+			granted = float(war.on_match_loss())
+	last_ws_granted = granted
+	last_cosmetic = player_won and granted <= 0.0
+	if SoftSession and SoftSession.has_method("remember_clash_result"):
+		SoftSession.remember_clash_result(player_won, granted)
 	match_ended.emit(winner)
+	var lab := last_result
+	if _SoftK and _SoftK.has_method("clash_result_label"):
+		lab = str(_SoftK.clash_result_label(player_won))
+	var title := ""
+	if last_cosmetic and _SoftK and _SoftK.has_method("clash_cosmetic_label"):
+		title = str(_SoftK.clash_cosmetic_label())
 	if GameManager:
-		GameManager.toast_requested.emit(
-			"Clash complete (%s) — soft influence only, no permanent flip" % winner
-		)
-	print("[AexionClash] match end → ", winner)
+		var msg := "%s — soft WS +%.0f (cap 60/day) · no planet flip" % [lab, granted]
+		if title != "":
+			msg = "%s · %s — cosmetics only (daily cap)" % [lab, title]
+		GameManager.toast_requested.emit(msg)
+	print("[AexionClash] match end → ", winner, " ", last_result, " ws=", granted, " cosmetic=", last_cosmetic)
 
 func status_line() -> String:
 	var ws: String = war.hud_line() if war else "WS —"

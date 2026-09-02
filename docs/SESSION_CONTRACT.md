@@ -116,6 +116,12 @@
     grammar as DO-A. SoftKnowledge / HUD CONTESTED / CYBERNEX / GROT only.
     Host authority. DO-A pad path stays. Not a second pad. Infection cap 5.
     No SITE_* (this pass).
+39. AR-I: CORE Turret HP → 0 ends Clash (3v3 and 5v5) on the existing
+    TestArena / ClashDirector. SoftKnowledge HUD WIN / LOSS only.
+    SoftSession War Score +15 win / +3 loss; daily cap 60 → further
+    wins cosmetics/title only. Not a unique combat item. Not planet flip.
+    AR-A…AR-H stay. Infection cap 5. Host authority. SN-D stays.
+    P0Slice.ORBITAL_STATIONS stays false. No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.
