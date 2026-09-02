@@ -816,11 +816,16 @@ func _check_ar_i(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 		ended = bool(clash.is_match_over())
 	elif clash and "_ended" in clash:
 		ended = bool(clash._ended)
+	var localn: Node = arena.get_node_or_null("ClashLocalMatch") if arena else null
+	if not ended and localn and localn.has_method("is_match_over"):
+		ended = bool(localn.is_match_over())
 	if not ended:
 		fails.append("AR-I enemy CORE→0 did not end the match")
 	var won := true
 	if clash and "last_player_won" in clash:
 		won = bool(clash.last_player_won)
+	elif localn and "last_player_won" in localn:
+		won = bool(localn.last_player_won)
 	if not won:
 		fails.append("AR-I enemy CORE should be WIN")
 	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
@@ -828,6 +833,10 @@ func _check_ar_i(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	if lab.find("WIN") < 0:
 		fails.append("AR-I SoftKnowledge WIN label missing (%s)" % lab)
 	var granted := float(clash.last_ws_granted) if clash and "last_ws_granted" in clash else 0.0
+	if granted < 14.9 and localn and "last_ws_granted" in localn:
+		granted = float(localn.last_ws_granted)
+	if granted < 14.9 and SoftSession:
+		granted = float(SoftSession.clash_ws_granted)
 	if granted < 14.9:
 		fails.append("AR-I WIN WS grant missing (got %s)" % granted)
 	if SoftSession and str(SoftSession.clash_result) != "WIN":

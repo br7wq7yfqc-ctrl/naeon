@@ -194,10 +194,10 @@ func _end_match(winner: String, player_won: bool = true) -> void:
 		SoftSession.remember_clash_result(player_won, granted)
 	match_ended.emit(winner)
 	var lab := last_result
-	if _SoftK and _SoftK.has_method("clash_result_label"):
+	if _SoftK:
 		lab = str(_SoftK.clash_result_label(player_won))
 	var title := ""
-	if last_cosmetic and _SoftK and _SoftK.has_method("clash_cosmetic_label"):
+	if last_cosmetic and _SoftK:
 		title = str(_SoftK.clash_cosmetic_label())
 	if GameManager:
 		var msg := "%s — soft WS +%.0f (cap 60/day) · no planet flip" % [lab, granted]

@@ -507,10 +507,10 @@ func _on_match_ended(winner: String) -> void:
 		won = bool(_clash.last_player_won)
 	var lab := "WIN" if won else "LOSS"
 	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
-	if SoftK and SoftK.has_method("clash_result_label"):
+	if SoftK:
 		lab = str(SoftK.clash_result_label(won))
 	var title := ""
-	if _clash and bool(_clash.get("last_cosmetic")) and SoftK and SoftK.has_method("clash_cosmetic_label"):
+	if _clash and bool(_clash.get("last_cosmetic")) and SoftK:
 		title = str(SoftK.clash_cosmetic_label())
 	var ws := ""
 	if _clash and _clash.get("war") != null and _clash.war.has_method("hud_line"):
