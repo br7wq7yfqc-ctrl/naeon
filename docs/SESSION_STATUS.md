@@ -1,3 +1,5 @@
+**2026-09-02 — BT-C: one gROT swarm on occupied unnamed pad (3 CombatDummy; gather / pulse-engage / scatter-return-to-pad; Pulse 11 both ways; cap 5; BT-A/B stay)**
+
 **2026-09-02 — ST-J: one pad hangar stub on occupied unnamed pad (BaseBuilder after occupy; hatch/LAND stay on pad; not ST-D carrier hangar; overlay B stays)**
 
 **2026-09-02 — ST-I: one pad storage on occupied unnamed pad (BaseBuilder after occupy; one-unit occupy dock ↔ ship CargoHold; Knowledge labels; mass/value stay)**

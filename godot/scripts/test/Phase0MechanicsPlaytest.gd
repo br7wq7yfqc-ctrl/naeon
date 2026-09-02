@@ -59,6 +59,7 @@ func _go() -> void:
 		await _assert_mc_a(os, fails)
 		await _assert_mc_b(os, fails)
 		await _assert_sn_a(os, fails)
+		await _assert_bt_c(os, fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
 
@@ -656,6 +657,7 @@ func _go() -> void:
 	await _assert_bt_a(os, fails)
 	await _assert_bt_b(os, fails)
 	await _assert_sn_a(os, fails)
+	await _assert_bt_c(os, fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
@@ -18200,6 +18202,389 @@ func _assert_bt_b(os: Node, fails: PackedStringArray) -> void:
 		pilot._seat_on_pad()
 	if bt.has_method("request_hold"):
 		bt.request_hold()
+
+
+func _assert_bt_c(os: Node, fails: PackedStringArray) -> void:
+	## BT-C: one gROT swarm on an occupied unnamed pad. 3 CombatDummy.
+	## Tiny BT gather → pulse-engage Pulse 11 both ways → scatter-return-to-pad.
+	## Infection cap 5. No permadeath. BT-A / BT-B stay. PV-A rival stays distinct.
+	## Host authority. G5 closed. No SITE_*. Not Clash waves. Not TestArena. Not AR 5v5.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var nex: Node = _osh_nex()
+	var traffic: Node = null
+	var swarm: Node3D = null
+	var bt: Node = null
+	var members: Array = []
+	var guard: Node3D = null
+	var guard_bt: Node = null
+	var visitor_bt: Node = null
+	var rival: Node3D = null
+	var surface: Node3D = null
+	var host: Node3D = null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var walker: Node3D = null
+	var pad: Node = _in_a_occupied_pad(os)
+	var dmg0 := 11.0
+	var dmg1 := 11.0
+	var harvest0 := 0.0
+	var harvest1 := 0.0
+	if P0 == null or not bool(P0.BT_C_SWARM):
+		fails.append("BT-C P0Slice flag missing")
+		return
+	if bool(P0.ORBITAL_STATIONS):
+		fails.append("BT-C flipped P0Slice.ORBITAL_STATIONS")
+		return
+	if os == null or nex == null:
+		fails.append("BT-C no OpenSpace/Nex-Prime")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("BT-C must not run on TestArena")
+		return
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.2).timeout
+	if nex.has_method("pad_traffic"):
+		traffic = nex.call("pad_traffic")
+	if traffic == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("pad_traffic")
+		if not listed.is_empty():
+			traffic = listed[0]
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("BT-C pad traffic missing")
+		return
+	if traffic.has_method("get_swarm"):
+		swarm = traffic.get_swarm()
+	if swarm == null:
+		swarm = traffic.get_node_or_null("GrotSwarm") as Node3D
+	if swarm == null or not is_instance_valid(swarm):
+		fails.append("BT-C swarm missing on occupied unnamed pad")
+		return
+	if traffic.has_method("get_swarm_members"):
+		members = traffic.get_swarm_members()
+	if members.is_empty():
+		for c in swarm.get_children():
+			if c is CharacterBody3D:
+				members.append(c)
+	if members.size() != 3:
+		fails.append("BT-C want 3 CombatDummy, got %s" % members.size())
+		return
+	if traffic.has_method("get_swarm_bt"):
+		bt = traffic.get_swarm_bt()
+	if bt == null:
+		bt = swarm.get_node_or_null("GrotSwarmBT")
+	if bt == null:
+		fails.append("BT-C GrotSwarmBT missing")
+		return
+	if traffic.has_method("get_guard"):
+		guard = traffic.get_guard()
+	if traffic.has_method("get_guard_bt"):
+		guard_bt = traffic.get_guard_bt()
+	if guard == null or not is_instance_valid(guard):
+		fails.append("BT-C pad-guard missing (BT-A must stay)")
+		return
+	if guard_bt == null:
+		guard_bt = guard.get_node_or_null("PadGuardBT")
+	if guard_bt == null:
+		fails.append("BT-C dropped PadGuardBT (BT-A)")
+		return
+	if traffic.has_method("get_visitor_bt"):
+		visitor_bt = traffic.get_visitor_bt()
+	if visitor_bt == null:
+		var pilot: Node = traffic.get_npc_pilot() if traffic.has_method("get_npc_pilot") else null
+		if pilot != null:
+			visitor_bt = pilot.get_node_or_null("VisitorBT")
+	if visitor_bt == null:
+		fails.append("BT-C dropped VisitorBT (BT-B)")
+		return
+	if traffic.has_method("get_rival"):
+		rival = traffic.get_rival()
+	if traffic.has_method("get_surface_dummy"):
+		surface = traffic.get_surface_dummy()
+	host = traffic.get_parent() as Node3D
+	if host == null or not host.has_meta("pad_up"):
+		fails.append("BT-C swarm not on a pad")
+		return
+	var pname := str(host.name)
+	if pname != "Pad_North" and pname != "Pad_Approach" and pname != "Pad_Flank":
+		fails.append("BT-C unknown pad (%s)" % pname)
+		return
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("BT-C minted SITE_* (%s)" % pin)
+		return
+	if swarm.has_meta("site_pin") and str(swarm.get_meta("site_pin")).begins_with("SITE_"):
+		fails.append("BT-C swarm minted SITE_*")
+		return
+	if bt.has_meta("site_pin") and str(bt.get_meta("site_pin")).begins_with("SITE_"):
+		fails.append("BT-C BT minted SITE_*")
+		return
+	if bt.has_method("is_g5_closed") and not bool(bt.is_g5_closed()):
+		fails.append("BT-C G5 Clash-from-world is open")
+		return
+	if traffic.has_method("is_g5_closed") and not bool(traffic.is_g5_closed()):
+		fails.append("BT-C traffic G5 is open")
+	var auth := ""
+	if bt.has_method("combat_authority"):
+		auth = str(bt.combat_authority())
+	elif traffic.has_method("combat_authority"):
+		auth = str(traffic.combat_authority())
+	if auth != "host":
+		fails.append("BT-C combat authority is not host (%s)" % auth)
+	for d in members:
+		if d == null or not is_instance_valid(d):
+			fails.append("BT-C swarm member missing")
+			return
+		if d == guard:
+			fails.append("BT-C merged swarm with BT-A pad-guard")
+			return
+		if rival != null and is_instance_valid(rival) and d == rival:
+			fails.append("BT-C merged swarm with PV-A rival")
+			return
+		if surface != null and is_instance_valid(surface) and d == surface:
+			fails.append("BT-C merged swarm with surface dummy")
+			return
+		var fac := ""
+		if d.has_method("get_faction"):
+			fac = str(d.get_faction())
+		elif "faction" in d:
+			fac = str(d.get("faction"))
+		if fac != "gROT":
+			fails.append("BT-C swarm faction is not gROT (%s)" % fac)
+			return
+		if bool(d.get("lane_march")) or d.is_in_group("clash_minion"):
+			fails.append("BT-C used ClashWaves / clash minion")
+			return
+		if bool(d.get("one_shot")):
+			fails.append("BT-C permadeath (one_shot)")
+			return
+		if d.has_method("infection_cap") and int(d.infection_cap()) != 5:
+			fails.append("BT-C Infection cap drifted (%s)" % d.infection_cap())
+			return
+		if d.has_meta("site_pin") and str(d.get_meta("site_pin")).begins_with("SITE_"):
+			fails.append("BT-C dummy minted SITE_*")
+			return
+	if members.size() == 5 or members.size() == 10:
+		fails.append("BT-C leftover AR 5v5 (%s actors)" % members.size())
+		return
+	if "attack_damage" in members[0]:
+		dmg0 = float(members[0].get("attack_damage"))
+	if pad != null and pad.has_method("claim"):
+		pad.claim("Cybernex", 2.0)
+	elif host.has_method("claim"):
+		host.claim("Cybernex", 2.0)
+	if pad != null and pad.has_method("tier_budget"):
+		harvest0 = float(pad.tier_budget().get("harvest", 0.0))
+	var pad_up: Vector3 = host.get_meta("pad_up")
+	if ship == null or not is_instance_valid(ship):
+		fails.append("BT-C no ship")
+		return
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	ship.global_position = host.global_position + pad_up * 8.0
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	if ship.has_method("_do_land"):
+		ship._do_land()
+	if os.has_method("try_exit_ship"):
+		os.try_exit_ship()
+	await get_tree().create_timer(0.4).timeout
+	walker = os.get("player") as Node3D
+	if (walker == null or not is_instance_valid(walker)) and os.has_method("_spawn_player_near_ship"):
+		os.call("_spawn_player_near_ship")
+		await get_tree().create_timer(0.25).timeout
+		walker = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("BT-C no walker after EVA")
+		return
+	if walker.has_method("set_eva_profile"):
+		walker.set_eva_profile(false)
+	os.set("_eva_mode", false)
+	if "firewall_timer" in walker:
+		walker.set("firewall_timer", 0.0)
+	if walker.has_method("purge_infection"):
+		for _i in range(5):
+			walker.purge_infection()
+	if "health" in walker:
+		walker.set("health", float(walker.get("max_health")) if "max_health" in walker else 100.0)
+	if "_down_t" in walker:
+		walker.set("_down_t", 0.0)
+	walker.set("faction", "Cybernex")
+	var homes: Array[Vector3] = []
+	for d in members:
+		d.set("_alive", true)
+		if float(d.get("health")) < 20.0:
+			d.set("health", float(d.get("max_health")))
+		d.set("faction", "gROT")
+		homes.append(d.global_position)
+		if "velocity" in d:
+			d.velocity = Vector3.ZERO
+	if bt.has_method("bind"):
+		bt.bind(members, host)
+	if "_pulse_cd" in bt:
+		bt.set("_pulse_cd", 0.0)
+	var away: Vector3 = homes[0] - host.global_position
+	away = away - pad_up * away.dot(pad_up)
+	if away.length_squared() < 0.01:
+		away = host.global_transform.basis.x
+	away = away.normalized()
+	## Far walker + swarm at home → gather. No Relief snap (it can steal the pose).
+	walker.global_position = host.global_position + away * 40.0 + pad_up * 2.0
+	if SoftScanCache:
+		SoftScanCache.invalidate_player()
+		SoftScanCache.invalidate_enemies()
+	if bt.has_method("tick"):
+		bt.tick(0.1, walker)
+	var st0 := str(traffic.swarm_bt_state()) if traffic.has_method("swarm_bt_state") else str(bt.bt_state())
+	print("[Playtest] BT-C gather state=", st0, " pad=", pname, " n=", members.size())
+	if st0 != "gather":
+		fails.append("BT-C gather state missing (got %s)" % st0)
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("combat", 20.0)
+	if traffic.has_method("refresh_labels"):
+		traffic.refresh_labels()
+	if "attack_damage" in members[0]:
+		dmg1 = float(members[0].get("attack_damage"))
+	if absf(dmg1 - dmg0) > 0.01 or absf(dmg1 - 11.0) > 0.01:
+		fails.append("BT-C Knowledge changed Pulse DPS (%s → %s)" % [dmg0, dmg1])
+	if bt.has_method("pulse_dps") and absf(float(bt.pulse_dps()) - 11.0) > 0.01:
+		fails.append("BT-C Pulse DPS drifted (%s)" % bt.pulse_dps())
+	var slabel := str(traffic.swarm_label()) if traffic.has_method("swarm_label") else ""
+	if slabel == "":
+		fails.append("BT-C Knowledge swarm label empty")
+	## In-range walker → pulse-engage. Pulse 11 both ways.
+	var aim: Node3D = members[0] as Node3D
+	walker.global_position = aim.global_position - away * 8.0 + pad_up * 2.0
+	if walker.has_method("face_world_point"):
+		walker.face_world_point(aim.global_position)
+	if SoftScanCache:
+		SoftScanCache.invalidate_player()
+	if "_pulse_cd" in bt:
+		bt.set("_pulse_cd", 0.0)
+	if bt.has_method("tick"):
+		bt.tick(0.1, walker)
+	var st1 := str(bt.bt_state()) if bt.has_method("bt_state") else ""
+	print("[Playtest] BT-C pulse-engage state=", st1, " label=", slabel)
+	if st1 != "pulse-engage":
+		fails.append("BT-C pulse-engage state missing (got %s)" % st1)
+	var ab: Node = walker.get_node_or_null("AbilitySystem")
+	if "energy" in walker:
+		walker.set("energy", 100.0)
+	if ab != null and ab.has_method("setup_default_loadout"):
+		ab.setup_default_loadout("Cybernex")
+	if ab != null and ab.get("abilities") != null and (ab.abilities as Array).size() > 0 and ab.abilities[0]:
+		ab.current_cooldowns[ab.abilities[0]] = 0.0
+	var hp0: float = float(aim.get("health"))
+	var fired := false
+	if walker.has_method("try_pulse"):
+		fired = bool(walker.try_pulse(aim))
+	var hp1: float = float(aim.get("health"))
+	var drop: float = hp0 - hp1
+	print("[Playtest] BT-C walker Pulse hit=", fired, " dummy hp ",
+		snapped(hp0, 0.1), " → ", snapped(hp1, 0.1), " drop=", snapped(drop, 0.1))
+	if not fired:
+		fails.append("BT-C walker Pulse did not fire")
+	elif drop < 10.0:
+		fails.append("BT-C walker Pulse did not hit swarm (%s → %s)" % [
+			snapped(hp0, 0.1), snapped(hp1, 0.1)])
+	elif drop > 12.5:
+		fails.append("BT-C walker Pulse DPS drifted (drop=%s)" % snapped(drop, 0.1))
+	if "_pulse_cd" in bt:
+		bt.set("_pulse_cd", 0.0)
+	var walker_hp0: float = float(walker.get("health")) if "health" in walker else 100.0
+	var back := false
+	if traffic.has_method("try_swarm_pulse"):
+		back = bool(traffic.try_swarm_pulse(walker))
+	elif bt.has_method("try_engage_pulse"):
+		back = bool(bt.try_engage_pulse(walker))
+	var walker_hp1: float = float(walker.get("health")) if "health" in walker else walker_hp0
+	var back_drop: float = walker_hp0 - walker_hp1
+	print("[Playtest] BT-C swarm Pulse back hit=", back, " walker hp ",
+		snapped(walker_hp0, 0.1), " → ", snapped(walker_hp1, 0.1), " drop=", snapped(back_drop, 0.1))
+	if not back:
+		fails.append("BT-C swarm Pulse did not fire")
+	elif back_drop < 10.0:
+		fails.append("BT-C swarm Pulse did not hit walker (%s → %s)" % [
+			snapped(walker_hp0, 0.1), snapped(walker_hp1, 0.1)])
+	elif back_drop > 12.5:
+		fails.append("BT-C swarm Pulse DPS drifted (drop=%s)" % snapped(back_drop, 0.1))
+	## Infection cap 5 refuse. No permadeath after HP 0.
+	var cap_dummy: Node = members[0]
+	if cap_dummy.has_method("purge_infection"):
+		for _j in range(5):
+			cap_dummy.purge_infection()
+	var refuse := ""
+	if cap_dummy.has_method("apply_infection"):
+		for _k in range(6):
+			refuse = str(cap_dummy.apply_infection(1))
+	var stacks := int(cap_dummy.infection_stacks()) if cap_dummy.has_method("infection_stacks") else 0
+	if stacks != 5:
+		fails.append("BT-C Infection stacks not capped at 5 (got %s)" % stacks)
+	if str(refuse).find("cap 5") < 0 and str(refuse).find("Infection cap") < 0:
+		fails.append("BT-C Infection cap 5 refuse missing (%s)" % refuse)
+	var down: Node = members[1]
+	if down.has_method("take_damage"):
+		down.take_damage(float(down.get("health")) + 1.0, "Cybernex")
+	if down == null or not is_instance_valid(down):
+		fails.append("BT-C permadeath (swarm dummy freed)")
+	## Off-range walker + swarm off home → scatter-return-to-pad.
+	for i in range(members.size()):
+		var d2: Node3D = members[i] as Node3D
+		d2.global_position = homes[i] + away * 8.0 + pad_up * 0.2
+		if "velocity" in d2:
+			d2.velocity = Vector3.ZERO
+	walker.global_position = host.global_position + away * 45.0 + pad_up * 2.0
+	if SoftScanCache:
+		SoftScanCache.invalidate_player()
+	if bt.has_method("tick"):
+		bt.tick(0.1, walker)
+	var st2 := str(bt.bt_state()) if bt.has_method("bt_state") else ""
+	print("[Playtest] BT-C scatter-return-to-pad state=", st2)
+	if st2 != "scatter-return-to-pad":
+		fails.append("BT-C scatter-return-to-pad state missing (got %s)" % st2)
+	if pad != null and pad.has_method("tier_budget"):
+		harvest1 = float(pad.tier_budget().get("harvest", -1.0))
+	if harvest0 > 0.0 and absf(harvest1 - harvest0) > 0.0001:
+		fails.append("BT-C harvest number changed (%s → %s)" % [harvest0, harvest1])
+	if guard_bt.has_method("bt_state"):
+		var gst := str(guard_bt.bt_state())
+		if gst != "patrol" and gst != "engage" and gst != "return":
+			fails.append("BT-C broke BT-A guard state (%s)" % gst)
+	if visitor_bt.has_method("bt_state"):
+		var vst := str(visitor_bt.bt_state())
+		if vst != "approach" and vst != "hold" and vst != "leave":
+			fails.append("BT-C broke BT-B visitor state (%s)" % vst)
+	var scene_name := str(get_tree().current_scene.name) if get_tree() and get_tree().current_scene else ""
+	if scene_name.find("TestArena") >= 0:
+		fails.append("BT-C entered TestArena from OpenSpace (G5)")
+	if ResourceLoader.exists("res://scripts/world/ClashFromWorld.gd") \
+			or ResourceLoader.exists("res://scripts/world/ClashBeacon.gd"):
+		fails.append("BT-C opened G5 world-to-arena")
+	print("[Playtest] BT-C gather · pulse-engage Pulse 11 · scatter-return · cap 5 · BT-A/B stay · G5 closed · no SITE_*")
+	for i in range(members.size()):
+		var d3: Node3D = members[i] as Node3D
+		if d3 == null or not is_instance_valid(d3):
+			continue
+		d3.global_position = homes[i]
+		if "velocity" in d3:
+			d3.velocity = Vector3.ZERO
+		d3.set("_alive", true)
+		if "health" in d3:
+			d3.set("health", float(d3.get("max_health")))
+	if "health" in walker:
+		walker.set("health", float(walker.get("max_health")) if "max_health" in walker else 100.0)
+	if ship != null and is_instance_valid(ship):
+		if "velocity" in ship:
+			ship.velocity = Vector3.ZERO
+		ship.global_position = host.global_position + pad_up * 80.0
+		if "is_landed" in ship:
+			ship.set("is_landed", false)
+		if ship.has_method("_set_mode"):
+			ship._set_mode(1)
+	if walker != null and is_instance_valid(walker) and ship != null and is_instance_valid(ship):
+		walker.global_position = ship.global_position + pad_up * 2.0
+		if os.has_method("try_enter_ship"):
+			os.try_enter_ship()
 
 
 func _assert_sn_a(os: Node, fails: PackedStringArray) -> void:

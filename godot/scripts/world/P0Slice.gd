@@ -97,6 +97,11 @@ const BT_A_GUARD := true
 ## BT-B: one visitor NpcPilot. Tiny 3-state BT (approach / hold / leave).
 ## Hold keeps NP-B occupy/harvest. Host authority. Pulse 11. BT-A stays. G5 closed.
 const BT_B_VISITOR := true
+## BT-C: one gROT swarm on an occupied unnamed pad. Three CombatDummy.
+## Tiny 3-state BT (gather / pulse-engage / scatter-return-to-pad). Host authority.
+## Pulse 11 both ways. Infection cap 5. No permadeath. BT-A / BT-B stay. G5 closed.
+## Not Clash waves. Not TestArena. Not AR leftover 5v5. PV-A rival stays distinct.
+const BT_C_SWARM := true
 ## SN-A: second local viewer on the occupied unnamed pad sees a SoftNet visual
 ## SurfaceWalker puppet (optional PV-A rival pose). Host keeps Pulse / occupy.
 ## Not ENet cluster. Not 10k CCU. G5 closed. No SITE_*.
