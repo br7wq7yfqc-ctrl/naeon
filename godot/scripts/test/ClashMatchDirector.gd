@@ -17,12 +17,37 @@ func _ready() -> void:
 	name = "ClashMatchDirector"
 	add_to_group("clash_match")
 	_build_hud()
+	_ensure_clash_softnet()
 	if SessionObjectives:
 		SessionObjectives.on_entered_mode("clash")
 	if GameManager:
 		GameManager.toast_requested.emit("Aexion Clash — 3 lanes · soft WS · no P2W")
 	set_process(true)
 	_tick_accum = 0.0
+
+
+func _ensure_clash_softnet() -> void:
+	## SN-D: visual Clash viewer/puppet lives on the arena root, not this HUD node.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.SN_D_CLASH):
+		return
+	var host: Node = get_parent()
+	if host == null:
+		host = self
+	var existing: Node = host.get_node_or_null("ClashSoftNet")
+	if existing != null:
+		if existing.has_method("bind"):
+			existing.bind(self)
+		if existing.has_method("sync_from_host"):
+			existing.sync_from_host()
+		return
+	var n: Node3D = Node3D.new()
+	n.set_script(load("res://scripts/world/ClashSoftNet.gd"))
+	n.name = "ClashSoftNet"
+	host.add_child(n)
+	if n.has_method("bind"):
+		n.bind(self)
+
 
 func _build_hud() -> void:
 	_hud = CanvasLayer.new()

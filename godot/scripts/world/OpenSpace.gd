@@ -68,6 +68,7 @@ func _ready() -> void:
 	_setup_interior()
 	_setup_squad()
 	_setup_hull_softnet()
+	_setup_clash_softnet()
 	_setup_mechanics_playtest()
 	_setup_sandbox_playtest()
 	if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
@@ -297,6 +298,33 @@ func hull_softnet() -> Node:
 
 func get_hull_softnet() -> Node:
 	return hull_softnet()
+
+
+func clash_softnet() -> Node:
+	return get_node_or_null("ClashSoftNet")
+
+
+func get_clash_softnet() -> Node:
+	return clash_softnet()
+
+
+func _setup_clash_softnet() -> void:
+	## SN-D: second local viewer in Clash. SoftNet visual only.
+	if not _P0.SN_D_CLASH:
+		return
+	var existing: Node = get_node_or_null("ClashSoftNet")
+	if existing != null:
+		if existing.has_method("bind"):
+			existing.bind(self)
+		if existing.has_method("sync_from_host"):
+			existing.sync_from_host()
+		return
+	var n: Node3D = Node3D.new()
+	n.set_script(preload("res://scripts/world/ClashSoftNet.gd"))
+	n.name = "ClashSoftNet"
+	add_child(n)
+	if n.has_method("bind"):
+		n.bind(self)
 
 
 func _setup_hull_softnet() -> void:
@@ -1655,6 +1683,7 @@ func try_clash_pad_door() -> bool:
 		LayerContext.set_layer("Arena")
 	_toast_hud("CLASH DOOR · TESTARENA")
 	print("[OpenSpace] AR-H clash door → TestArena layer=Arena city_map=0")
+	_setup_clash_softnet()
 	if DisplayServer.get_name() == "headless":
 		return true
 	get_tree().change_scene_to_file(target)

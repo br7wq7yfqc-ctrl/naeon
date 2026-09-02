@@ -71,6 +71,7 @@ func _go() -> void:
 		await _assert_sn_b(os, fails)
 		await _assert_ar_h(os, fails)
 		await _assert_sn_c(os, fails)
+		await _assert_sn_d(os, fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
 
@@ -680,6 +681,7 @@ func _go() -> void:
 	await _assert_sn_b(os, fails)
 	await _assert_ar_h(os, fails)
 	await _assert_sn_c(os, fails)
+	await _assert_sn_d(os, fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
@@ -20142,6 +20144,281 @@ func _assert_sn_c(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] SN-C no SITE_*")
 	print("[Playtest] SN-C G5 closed")
 	print("[Playtest] SN-C overlay puppet on occupied pad · host Pulse/occupy/Hack · no second module · SN-A/SN-B stay · AR-H door stays · G5 closed · no SITE_*")
+
+
+func _assert_sn_d(os: Node, fails: PackedStringArray) -> void:
+	## SN-D: second local viewer in Clash (TestArena / ClashDirector) sees a
+	## SoftNet visual puppet of the host (arena / Clash pose). No second
+	## physical Clash dummy. Host Pulse / Hack / form. SN-A/B/C stay.
+	## AR-H door stays as the legal Clash entry. G5 closed. No SITE_*.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var soft: Node = null
+	var pad_soft: Node = null
+	var hull_soft: Node = null
+	var ov_soft: Node = null
+	var walker: Node3D = os.get("player") as Node3D if os else null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var d: Node = os.get("_interior") if os else null
+	var viewer: Node3D = null
+	var puppet: Node3D = null
+	var pose: Dictionary = {}
+	var host: Node3D = null
+	var traffic: Node = null
+	var door: Node3D = null
+	var dummy: Node3D = null
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var form0 := str(SoftSession.form) if SoftSession else ""
+	var pulse0 := 11.0
+	if P0 == null or not bool(P0.SN_D_CLASH):
+		fails.append("SN-D P0Slice flag missing")
+		return
+	if P0 == null or not bool(P0.SN_A_PAD):
+		fails.append("SN-D dropped SN-A P0Slice flag")
+		return
+	if P0 == null or not bool(P0.SN_B_HULL):
+		fails.append("SN-D dropped SN-B P0Slice flag")
+		return
+	if P0 == null or not bool(P0.SN_C_OVERLAY):
+		fails.append("SN-D dropped SN-C P0Slice flag")
+		return
+	if P0 == null or not bool(P0.AR_H_DOOR):
+		fails.append("SN-D dropped AR-H P0Slice flag")
+		return
+	if os == null:
+		fails.append("SN-D no OpenSpace")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("SN-D headless must stay on OpenSpace")
+		return
+	if os.has_method("enter_clash_from_world"):
+		fails.append("SN-D opened G5 enter_clash_from_world")
+		return
+	if os.has_method("is_city_map") and bool(os.is_city_map()):
+		fails.append("SN-D is a city-map")
+	if d != null and d.has_method("is_inside") and bool(d.is_inside()) \
+			and d.has_method("exit_interior"):
+		d.exit_interior()
+		await get_tree().create_timer(0.2).timeout
+	if bool(os.get("_in_ship")) and os.has_method("_leave_seat_to_pocket"):
+		os._leave_seat_to_pocket()
+		await get_tree().create_timer(0.4).timeout
+	if bool(os.get("_in_ship")) and os.has_method("try_exit_ship"):
+		os.try_exit_ship()
+		await get_tree().create_timer(0.35).timeout
+	host = _in_a_occupied_pad(os)
+	if host == null:
+		fails.append("SN-D no occupied unnamed pad")
+		return
+	if not (str(host.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]):
+		var walk: Node = host
+		host = null
+		while walk:
+			if walk is Node3D and str(walk.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+				host = walk as Node3D
+				break
+			walk = walk.get_parent()
+	if host == null:
+		fails.append("SN-D no unnamed pad (Pad_North class)")
+		return
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("SN-D minted SITE_* (%s)" % pin)
+		return
+	traffic = host.get_node_or_null("PadTraffic")
+	if traffic == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("pad_traffic")
+		if not listed.is_empty():
+			traffic = listed[0]
+	if traffic == null:
+		fails.append("SN-D pad traffic missing")
+		return
+	door = traffic.get_clash_door() if traffic.has_method("get_clash_door") else null
+	if door == null and os.has_method("clash_pad_door"):
+		door = os.clash_pad_door()
+	if door == null or not is_instance_valid(door):
+		fails.append("SN-D dropped AR-H ClashDoor")
+		return
+	if str(door.get_meta("site_pin", "")) != "":
+		fails.append("SN-D door minted site_pin")
+	if traffic.has_method("get_guard"):
+		dummy = traffic.get_guard()
+	if dummy == null and traffic.has_method("get_surface_dummy"):
+		dummy = traffic.get_surface_dummy()
+	if dummy != null and dummy.has_method("infection_cap") and int(dummy.infection_cap()) != 5:
+		fails.append("SN-D infection cap drifted (%s)" % dummy.infection_cap())
+	walker = os.get("player") as Node3D
+	if walker == null or not is_instance_valid(walker):
+		fails.append("SN-D no pad walker")
+		return
+	walker.global_position = door.global_position + Vector3(0, 1.05, 0)
+	if walker is CharacterBody3D:
+		(walker as CharacterBody3D).velocity = Vector3.ZERO
+	await get_tree().process_frame
+	if os.has_method("is_near_clash_door") and not bool(os.is_near_clash_door(walker, 4.2)):
+		fails.append("SN-D walker not near ClashDoor")
+	if Kits != null and Kits.has_method("_pulse"):
+		var pab = Kits._pulse()
+		if pab != null and "damage" in pab:
+			pulse0 = float(pab.damage)
+	if absf(pulse0 - 11.0) > 0.01:
+		fails.append("SN-D Pulse DPS drifted (%s)" % pulse0)
+	if os.has_method("try_clash_pad_door"):
+		if not bool(os.try_clash_pad_door()):
+			fails.append("SN-D F did not enter clash door")
+			return
+	else:
+		fails.append("SN-D try_clash_pad_door missing")
+		return
+	var ly := str(LayerContext.current_layer) if LayerContext else ""
+	print("[Playtest] SN-D clash layer=", ly, " pad=", host.name)
+	if ly != "Arena":
+		fails.append("SN-D LayerContext not Arena (%s)" % ly)
+	if os.has_method("clash_softnet"):
+		soft = os.clash_softnet()
+	if soft == null and os.has_method("get_clash_softnet"):
+		soft = os.get_clash_softnet()
+	if soft == null:
+		soft = os.get_node_or_null("ClashSoftNet")
+	if soft == null and get_tree():
+		soft = get_tree().get_first_node_in_group("clash_softnet")
+	if soft == null:
+		fails.append("SN-D ClashSoftNet missing")
+		return
+	if soft.has_meta("site_pin") and str(soft.get_meta("site_pin")).begins_with("SITE_"):
+		fails.append("SN-D ClashSoftNet minted SITE_*")
+		return
+	if soft.has_method("is_g5_closed") and not bool(soft.is_g5_closed()):
+		fails.append("SN-D G5 Clash-from-world is open")
+		return
+	var phys0 := int(soft.physical_dummy_count()) if soft.has_method("physical_dummy_count") else 0
+	if soft.has_method("bind"):
+		soft.bind(os)
+	if soft.has_method("sync_from_host"):
+		soft.sync_from_host()
+	await get_tree().process_frame
+	if soft.has_method("is_host_authority") and not bool(soft.is_host_authority()):
+		fails.append("SN-D SoftNet stole host authority")
+	if soft.has_method("combat_authority") and str(soft.combat_authority()) != "host":
+		fails.append("SN-D SoftNet combat authority left host")
+	if soft.has_method("hack_authority") and str(soft.hack_authority()) != "host":
+		fails.append("SN-D SoftNet Hack authority left host")
+	if soft.has_method("form_authority") and str(soft.form_authority()) != "host":
+		fails.append("SN-D SoftNet form authority left host")
+	if SoftNetSession and SoftNetSession.has_method("combat_authority") and str(SoftNetSession.combat_authority()) != "host":
+		fails.append("SN-D SoftNet combat authority left host")
+	if SoftNetSession and SoftNetSession.get("enabled") == true:
+		fails.append("SN-D enabled SoftNet 20Hz loop")
+	viewer = soft.viewer() if soft.has_method("viewer") else null
+	puppet = soft.clash_puppet() if soft.has_method("clash_puppet") else null
+	pose = soft.observed_pose() if soft.has_method("observed_pose") else {}
+	if viewer == null or not is_instance_valid(viewer):
+		fails.append("SN-D second local viewer missing")
+	elif not bool(viewer.get_meta("softnet_visual", false)):
+		fails.append("SN-D viewer is not a SoftNet visual puppet")
+	if puppet == null or not is_instance_valid(puppet) or not puppet.visible:
+		fails.append("SN-D clash puppet missing")
+	elif not bool(puppet.get_meta("softnet_visual", false)):
+		fails.append("SN-D clash puppet is not SoftNet visual")
+	if puppet is CharacterBody3D:
+		fails.append("SN-D clash puppet is a physical body")
+	if puppet != null and puppet.has_method("try_pulse"):
+		fails.append("SN-D clash puppet has combat Pulse")
+	if puppet != null and puppet.has_method("try_hack"):
+		fails.append("SN-D clash puppet has Hack")
+	if puppet != null and puppet.has_method("apply_form"):
+		fails.append("SN-D clash puppet has form swap")
+	if str(pose.get("authority", "")) != "host":
+		fails.append("SN-D SoftNet pose authority left host")
+	if str(pose.get("hack_authority", "")) != "host":
+		fails.append("SN-D SoftNet pose Hack left host")
+	if str(pose.get("form_authority", "")) != "host":
+		fails.append("SN-D SoftNet pose form left host")
+	var mode := str(pose.get("clash_mode", ""))
+	if mode != "arena" and mode != "clash":
+		fails.append("SN-D viewer missed clash puppet (mode=%s)" % mode)
+	if soft.has_method("viewer_sees_clash_puppet") and not bool(soft.viewer_sees_clash_puppet()):
+		fails.append("SN-D second actor does not see clash puppet")
+	var actor: Node3D = soft.host_actor() if soft.has_method("host_actor") else null
+	if actor == null or not is_instance_valid(actor):
+		fails.append("SN-D host clash actor missing")
+	elif bool(actor.get_meta("softnet_visual", false)):
+		fails.append("SN-D tagged the host clash actor as SoftNet visual")
+	var phys1 := int(soft.physical_dummy_count()) if soft.has_method("physical_dummy_count") else 0
+	if phys1 > phys0:
+		fails.append("SN-D spawned a physical Clash dummy (%s → %s)" % [phys0, phys1])
+	if soft.has_method("has_second_physical_dummy") and bool(soft.has_second_physical_dummy()):
+		fails.append("SN-D spawned a second physical Clash dummy")
+	var kn := str(soft.knowledge_label()) if soft.has_method("knowledge_label") else ""
+	if SoftK != null:
+		var want_net := str(SoftK.net_visual_label())
+		if kn != "" and kn != want_net:
+			fails.append("SN-D Knowledge label drifted (%s)" % kn)
+		if kn != "NET" and kn != "NET VISUAL" and kn != "":
+			fails.append("SN-D Knowledge label is not NET (%s)" % kn)
+	if SoftSession and str(SoftSession.form) != form0 and form0 != "":
+		fails.append("SN-D changed host form (%s → %s)" % [form0, SoftSession.form])
+	print("[Playtest] SN-D visual puppet present")
+	print("[Playtest] SN-D no second physical Clash dummy")
+	print("[Playtest] SN-D host authority")
+	if os.has_method("hull_softnet"):
+		hull_soft = os.hull_softnet()
+	if hull_soft == null:
+		hull_soft = os.get_node_or_null("HullSoftNet")
+	if hull_soft == null:
+		fails.append("SN-D dropped SN-B HullSoftNet")
+	else:
+		print("[Playtest] SN-B still PASS")
+	if traffic.has_method("get_softnet"):
+		pad_soft = traffic.get_softnet()
+	if pad_soft == null:
+		pad_soft = traffic.get_node_or_null("PadSoftNet")
+	if pad_soft == null:
+		fails.append("SN-D dropped SN-A PadSoftNet")
+	else:
+		print("[Playtest] SN-A still PASS")
+	var ov: Node = os.strategy_overlay() if os.has_method("strategy_overlay") else null
+	if ov != null:
+		if ov.has_method("overlay_softnet"):
+			ov_soft = ov.overlay_softnet()
+		if ov_soft == null:
+			ov_soft = ov.get_node_or_null("OverlaySoftNet")
+	if ov_soft == null:
+		fails.append("SN-D dropped SN-C OverlaySoftNet")
+	else:
+		print("[Playtest] SN-C still PASS")
+	if get_tree() and get_tree().get_nodes_in_group("open_space").size() != 1:
+		fails.append("SN-D opened a second OpenSpace")
+	if str(os.name).begins_with("TestArena"):
+		fails.append("SN-D headless changed scene to TestArena")
+	var scene_name := str(get_tree().current_scene.name) if get_tree() and get_tree().current_scene else ""
+	if scene_name.find("TestArena") >= 0:
+		fails.append("SN-D entered TestArena from OpenSpace (G5)")
+	if ResourceLoader.exists("res://scripts/world/ClashFromWorld.gd") \
+			or ResourceLoader.exists("res://scripts/world/ClashBeacon.gd"):
+		fails.append("SN-D opened G5 world-to-arena")
+	if get_tree():
+		var soak := 0
+		for n_soak in get_tree().get_nodes_in_group("clash_local_match"):
+			if n_soak != null and is_instance_valid(n_soak):
+				soak += 1
+		if soak > 0:
+			fails.append("SN-D leftover 5v5 soak (%s matches)" % soak)
+	if LayerContext and str(LayerContext.site_pin_id) != pin0 \
+			and str(LayerContext.site_pin_id).begins_with("SITE_"):
+		fails.append("SN-D minted SITE_* (%s)" % LayerContext.site_pin_id)
+	if SoftNetSession and SoftNetSession.get("enabled") == true:
+		fails.append("SN-D enabled SoftNet netcode after sync")
+	print("[Playtest] AR-H door still PASS")
+	print("[Playtest] SN-D no SITE_*")
+	print("[Playtest] SN-D G5 closed")
+	print("[Playtest] SN-D clash puppet in TestArena/ClashDirector · host Pulse/Hack/form · no second dummy · SN-A/B/C stay · AR-H door stays · G5 closed · no SITE_*")
+	if LayerContext:
+		var back := "TPS"
+		LayerContext.set_layer(back)
+	os.set_meta("clash_via_pad_door", false)
+	await get_tree().process_frame
 
 
 func _hf_c_interrupt_channel(host) -> void:
