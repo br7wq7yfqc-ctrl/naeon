@@ -98,6 +98,14 @@ static func traffic_label(kind: String = "guard") -> String:
 	return "PAD GUARD" if named else "GUARD"
 
 
+## AR-H: name the pad door into Clash TestArena. Never DPS / yield. Not a city-map.
+static func clash_door_label() -> String:
+	var hist := mastery("history")
+	if hist >= 15.0 or rank() >= 5:
+		return "CLASH DOOR · TESTARENA"
+	return "CLASH DOOR"
+
+
 ## History/combat: surface dummy name only — never Pulse DPS.
 static func surface_dummy_label() -> String:
 	var hist := mastery("history")

@@ -36,6 +36,7 @@ OpenSpace → **M** or **Tab** → TestArena Clash · kill dummies to 5 · soft 
 - Kits / module (AR-E): 4 kits × 4 slots (CX Nex/Grid, GR Rot/Spore); one `ClashModuleBench` session `ShipModule` (not a Paragon deck, not cash-shop); Knowledge may label only; forms stay identity
 - 3v3 local (AR-F): `ClashLocalMatch` fills six slots on TOP/MID/BOT (host + SoftNet visual `CombatDummy` puppets). Host owns combat. G5 stays closed. Still startable.
 - 5v5 local (AR-G): same host + SoftNet path; ten slots on TOP/MID/BOT + AR-D jungle. Default TestArena door. `--clash-3v3` keeps 3v3.
+- Pad door (AR-H): occupied unnamed pad `ClashDoor` → TestArena. Not a city-map. G5 cluster stays closed.
 
 ## Soft lane objectives
 | Action | Pressure | Soft WS |

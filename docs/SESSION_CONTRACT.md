@@ -102,6 +102,10 @@
     + rank number. BR-A Biomass Rank stays (gROT). Rank does not
     change harvest / Pulse / Hack / print / exclusive modules.
     Infection cap 5. No P2W. No SITE_* (this pass).
+36. AR-H: one door on an occupied unnamed pad into Clash TestArena.
+    F at ClashDoor. Not a city-map. Not G2. G5 cluster stays closed.
+    Headless does not change_scene. AR-A…G stay. No leftover 5v5 soak.
+    No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.
