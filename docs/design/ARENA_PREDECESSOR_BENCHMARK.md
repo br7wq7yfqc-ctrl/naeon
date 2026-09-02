@@ -68,6 +68,7 @@ NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY
 | **AR-E** | 4–8 китов; предметы = modules/blueprints | **сделано:** 4 кита + один session-bench | этот срез | Paragon deck; форма=стат |
 | **AR-F** | 3v3 local authority, затем 5v5 | **сделано:** 3v3 local host + SoftNet visual puppets на том же 60×60 | 3v3 startable | вход из мира сейчас |
 | **AR-G** | 5v5 local authority на тех же полосах + jungle | **сделано:** 10 actors (host Cybernex MID + 9 SoftNet visual puppets) на том же 60×60 | этот срез | вход из мира сейчас |
+| **AR-H** | дверь из OpenSpace / occupied unnamed pad в Clash TestArena | **сделано:** `ClashDoor` на паде; F → TestArena; не city-map; G5 cluster закрыт | этот срез | G2 карта; leftover 5v5 soak |
 
 ---
 

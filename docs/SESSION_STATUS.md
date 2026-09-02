@@ -1,3 +1,5 @@
+**2026-09-02 — AR-H: pad door on occupied unnamed pad into Clash TestArena (not city-map; G5 cluster closed; AR-A…G stay)**
+
 **2026-09-02 — FL-B: second fleet allied pip on ST-A Strategy overlay (SoftNet / NP-A visual; cap 3 = player + 2; FLEET n/3 SoftKnowledge; host Pulse/occupy; click ≠ combat; FL-A stays)**
 
 **2026-09-02 — MC-D: fourth crew seat SCANNER (SoftKnowledge / HUD label; CREW n/4; gunner+engineer stay; Pulse/Hack/thrust stay; host authority)**
@@ -842,6 +844,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | BT-D Cybernex pack | **built** — gather / pulse-engage / scatter-return-to-pad; 3 CombatDummy; Pulse 11 both ways; cap 5; BT-A/B/C stay |
 | AR-F 3v3 local | **built** — 6 actors on existing lanes; host authority; SoftNet visual; G5 closed; still startable |
 | AR-G 5v5 local | **built** — 10 actors on existing lanes + jungle; host authority; SoftNet visual; G5 closed |
+| AR-H pad clash door | **built** — occupied unnamed pad door → Clash TestArena; not city-map; G5 cluster closed; AR-A…G stay |
 | SE-A hull buses | **built** — power/cool/life live; overdraw/overheat sag; IN-B LS soft; no P2W skip |
 | MC-A ship crew seat | **built** — CrewSeat in ship_int; F/I same pocket; HUD CREW label; SoftNet puppet optional; pilot unchanged |
 | MC-B crew gunner role | **built** — GUNNER SoftKnowledge / HUD label on the MC-A seat; CREW n/2 stays; Pulse/Hack numbers stay; host authority |

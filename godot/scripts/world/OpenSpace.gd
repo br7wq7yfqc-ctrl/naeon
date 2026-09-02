@@ -1607,6 +1607,64 @@ func _pad_traffic_node() -> Node:
 	return null
 
 
+func clash_pad_door() -> Node3D:
+	## AR-H: occupied-pad door into Clash TestArena. Not a city-map.
+	var traffic := _pad_traffic_node()
+	if traffic != null and traffic.has_method("get_clash_door"):
+		var d: Node3D = traffic.get_clash_door()
+		if d != null and is_instance_valid(d):
+			return d
+	return null
+
+
+func clash_door_target() -> String:
+	return "res://scenes/test/TestArena.tscn"
+
+
+func is_city_map() -> bool:
+	return false
+
+
+func is_near_clash_door(who: Node3D = null, max_dist: float = 4.2) -> bool:
+	var door := clash_pad_door()
+	if door == null:
+		return false
+	var actor: Node3D = who
+	if actor == null:
+		actor = player if player != null and is_instance_valid(player) else ship
+	if actor == null or not is_instance_valid(actor):
+		return false
+	return actor.global_position.distance_to(door.global_position) <= max_dist
+
+
+func try_clash_pad_door() -> bool:
+	## F at the pad door → Clash TestArena. Headless keeps this OpenSpace.
+	## Not enter_clash_from_world (G5). Not a city-map (G2).
+	if _in_ship:
+		return false
+	if not is_near_clash_door(player, 4.2):
+		return false
+	var target := clash_door_target()
+	if not ResourceLoader.exists(target):
+		_toast_hud("Clash door — TestArena missing")
+		return false
+	set_meta("clash_via_pad_door", true)
+	set_meta("city_map", false)
+	set_meta("site_pin", "")
+	if LayerContext:
+		LayerContext.set_layer("Arena")
+	_toast_hud("CLASH DOOR · TESTARENA")
+	print("[OpenSpace] AR-H clash door → TestArena layer=Arena city_map=0")
+	if DisplayServer.get_name() == "headless":
+		return true
+	get_tree().change_scene_to_file(target)
+	return true
+
+
+func _try_clash_pad_door() -> bool:
+	return try_clash_pad_door()
+
+
 func _handle_f_interact() -> void:
 	# Priority: unboard rover → pocket seat / hatch → rover → seat→pilot → ship board/exit
 	if _seat_transition or _rover_transition:
@@ -1616,6 +1674,8 @@ func _handle_f_interact() -> void:
 		return
 	if not _in_ship and player and is_instance_valid(player) and player.is_inside_tree():
 		if _pocket_f_interact():
+			return
+		if _try_clash_pad_door():
 			return
 		if _try_board_nearby_rover():
 			return

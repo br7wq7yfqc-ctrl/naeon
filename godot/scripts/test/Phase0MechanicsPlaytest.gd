@@ -69,6 +69,7 @@ func _go() -> void:
 		await _assert_fl_a(os, fails)
 		await _assert_fl_b(os, fails)
 		await _assert_sn_b(os, fails)
+		await _assert_ar_h(os, fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
 
@@ -676,6 +677,7 @@ func _go() -> void:
 	await _assert_fl_a(os, fails)
 	await _assert_fl_b(os, fails)
 	await _assert_sn_b(os, fails)
+	await _assert_ar_h(os, fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
@@ -19973,6 +19975,126 @@ func _hf_a_cast(walker: Node, ab: Node, dummy: Node, kind: String) -> String:
 	if not fired and why == "" and kind == "hack":
 		why = "Hack did not fire"
 	return why
+
+
+func _assert_ar_h(os: Node, fails: PackedStringArray) -> void:
+	## AR-H: one door on an occupied unnamed pad into Clash TestArena.
+	## Not a city-map. Not G2. Does not mint SITE_*. G5 cluster stays closed.
+	## Headless does not change_scene. AR-A…G stay. Not leftover 5v5 soak.
+	var P0_ah = load("res://scripts/world/P0Slice.gd")
+	var Kits_ah = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var pin0_ah := str(LayerContext.site_pin_id) if LayerContext else ""
+	var layer0_ah := str(LayerContext.current_layer) if LayerContext else "Space"
+	var pulse0_ah := 11.0
+	var host_ah: Node3D = null
+	var traffic_ah: Node = null
+	var door_ah: Node3D = null
+	var walker_ah: Node3D = os.get("player") as Node3D if os else null
+	var ship_ah: Node3D = os.get("ship") as Node3D if os else null
+	var d_ah: Node = os.get("_interior") if os else null
+	if P0_ah == null or not bool(P0_ah.AR_H_DOOR):
+		fails.append("AR-H P0Slice flag missing")
+		return
+	if os == null:
+		fails.append("AR-H no OpenSpace")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("AR-H already on Clash (want OpenSpace door)")
+		return
+	if os.has_method("enter_clash_from_world"):
+		fails.append("AR-H opened G5 enter_clash_from_world")
+	if os.has_method("is_city_map") and bool(os.is_city_map()):
+		fails.append("AR-H is a city-map")
+	if d_ah != null and d_ah.has_method("is_inside") and bool(d_ah.is_inside()) \
+			and d_ah.has_method("exit_interior"):
+		d_ah.exit_interior()
+		await get_tree().create_timer(0.2).timeout
+	if bool(os.get("_in_ship")) and os.has_method("_leave_seat_to_pocket"):
+		os._leave_seat_to_pocket()
+		await get_tree().create_timer(0.4).timeout
+	if bool(os.get("_in_ship")) and os.has_method("try_exit_ship"):
+		os.try_exit_ship()
+		await get_tree().create_timer(0.35).timeout
+	host_ah = _in_a_occupied_pad(os)
+	if host_ah == null:
+		fails.append("AR-H no occupied unnamed pad")
+		return
+	traffic_ah = host_ah.get_node_or_null("PadTraffic")
+	if traffic_ah == null and get_tree():
+		var listed_ah: Array = get_tree().get_nodes_in_group("pad_traffic")
+		if not listed_ah.is_empty():
+			traffic_ah = listed_ah[0]
+	if traffic_ah == null:
+		fails.append("AR-H pad traffic missing")
+		return
+	door_ah = traffic_ah.get_clash_door() if traffic_ah.has_method("get_clash_door") else null
+	if door_ah == null:
+		door_ah = os.clash_pad_door() if os.has_method("clash_pad_door") else null
+	if door_ah == null or not is_instance_valid(door_ah):
+		fails.append("AR-H ClashDoor missing")
+		return
+	if bool(door_ah.get_meta("city_map", false)):
+		fails.append("AR-H door tagged city_map")
+	if str(door_ah.get_meta("site_pin", "")) != "":
+		fails.append("AR-H door minted site_pin")
+	var tgt_ah := ""
+	if os.has_method("clash_door_target"):
+		tgt_ah = str(os.clash_door_target())
+	elif traffic_ah.has_method("clash_door_target"):
+		tgt_ah = str(traffic_ah.clash_door_target())
+	if tgt_ah.find("TestArena") < 0:
+		fails.append("AR-H door target is not TestArena (%s)" % tgt_ah)
+	if not ResourceLoader.exists(tgt_ah):
+		fails.append("AR-H TestArena scene missing")
+	walker_ah = os.get("player") as Node3D
+	if walker_ah == null or not is_instance_valid(walker_ah):
+		fails.append("AR-H no pad walker")
+		return
+	walker_ah.global_position = door_ah.global_position + Vector3(0, 1.05, 0)
+	if walker_ah is CharacterBody3D:
+		(walker_ah as CharacterBody3D).velocity = Vector3.ZERO
+	await get_tree().process_frame
+	if os.has_method("is_near_clash_door") and not bool(os.is_near_clash_door(walker_ah, 4.2)):
+		fails.append("AR-H walker not near ClashDoor")
+	if Kits_ah != null and Kits_ah.has_method("_pulse"):
+		var pab_ah = Kits_ah._pulse()
+		if pab_ah != null and "damage" in pab_ah:
+			pulse0_ah = float(pab_ah.damage)
+	if absf(pulse0_ah - 11.0) > 0.01:
+		fails.append("AR-H Pulse DPS drifted (%s)" % pulse0_ah)
+	if os.has_method("try_clash_pad_door"):
+		if not bool(os.try_clash_pad_door()):
+			fails.append("AR-H F did not enter clash door")
+	else:
+		fails.append("AR-H try_clash_pad_door missing")
+	var ly_ah := str(LayerContext.current_layer) if LayerContext else ""
+	print("[Playtest] AR-H clash door F→", ly_ah, " target=", tgt_ah)
+	if ly_ah != "Arena":
+		fails.append("AR-H LayerContext not Arena (%s)" % ly_ah)
+	if get_tree() and get_tree().get_nodes_in_group("open_space").size() != 1:
+		fails.append("AR-H opened a second OpenSpace")
+	if str(os.name).begins_with("TestArena"):
+		fails.append("AR-H headless changed scene to TestArena")
+	if LayerContext and str(LayerContext.site_pin_id) != pin0_ah \
+			and str(LayerContext.site_pin_id).begins_with("SITE_"):
+		fails.append("AR-H minted SITE_* (%s)" % LayerContext.site_pin_id)
+	if SoftKnowledge.exclusive_weapon_unlocked() or SoftKnowledge.exclusive_module_unlocked():
+		fails.append("AR-H unlocked exclusive modules")
+	if get_tree():
+		var soak_ah := 0
+		for n_ah in get_tree().get_nodes_in_group("clash_local_match"):
+			if n_ah != null and is_instance_valid(n_ah):
+				soak_ah += 1
+		if soak_ah > 0:
+			fails.append("AR-H leftover 5v5 soak (%s matches)" % soak_ah)
+	print("[Playtest] AR-H pad door → TestArena · not city-map · G5 closed · no SITE_*")
+	if LayerContext:
+		var back_ah := layer0_ah
+		if back_ah == "Arena" or back_ah == "Strategy":
+			back_ah = "TPS"
+		LayerContext.set_layer(back_ah)
+	os.set_meta("clash_via_pad_door", false)
+	await get_tree().process_frame
 
 
 func _assert_ar_f(os: Node, fails: PackedStringArray) -> void:

@@ -52,6 +52,8 @@ var _softnet: Node = null
 var _swarm: Node3D = null
 var _pack: Node3D = null
 var _fleet_ally: Node3D = null
+var _clash_door: Node3D = null
+var _clash_door_base: Vector3 = Vector3(0.0, 1.15, 20.0)
 
 
 func setup(host_pad: Node3D) -> void:
@@ -69,6 +71,7 @@ func setup(host_pad: Node3D) -> void:
 	_spawn_swarm()
 	_spawn_pack()
 	_spawn_fleet_ally()
+	_spawn_clash_door()
 	_offer_player_contract()
 	refresh_labels()
 	set_process(true)
@@ -164,6 +167,21 @@ func fleet_count() -> int:
 	if fleet_guest_b() != null:
 		n += 1
 	return n
+
+
+func get_clash_door() -> Node3D:
+	## AR-H: pad door into Clash TestArena. Not a city-map. Not G5 cluster.
+	if _clash_door != null and is_instance_valid(_clash_door):
+		return _clash_door
+	var n: Node = get_node_or_null("ClashDoor")
+	if n is Node3D:
+		_clash_door = n as Node3D
+		return _clash_door
+	return null
+
+
+func clash_door_target() -> String:
+	return "res://scenes/test/TestArena.tscn"
 
 
 func try_add_fleet_guest(_who: Node = null) -> bool:
@@ -849,6 +867,62 @@ func _spawn_fleet_ally() -> void:
 	lab.text = _SoftK.fleet_label()
 	lab.modulate = Color(0.55, 0.95, 0.85)
 	v.add_child(lab)
+
+
+func _spawn_clash_door() -> void:
+	## AR-H: pad door into Clash TestArena. Not a city-map. Not G5 cluster.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 != null and not bool(P0.AR_H_DOOR):
+		return
+	if _clash_door != null and is_instance_valid(_clash_door):
+		return
+	if get_node_or_null("ClashDoor") != null:
+		_clash_door = get_node_or_null("ClashDoor") as Node3D
+		return
+	var d := Marker3D.new()
+	d.name = "ClashDoor"
+	d.set_meta("legal_door", true)
+	d.set_meta("clash_door", true)
+	d.set_meta("city_map", false)
+	d.set_meta("site_pin", "")
+	d.set_meta("combat_authority", "host")
+	d.position = _clash_door_base
+	add_child(d)
+	_clash_door = d
+	var vol := Marker3D.new()
+	vol.name = "ClashDoorVolume"
+	vol.set_meta("clash_door", true)
+	vol.set_meta("site_pin", "")
+	vol.position = _clash_door_base
+	add_child(vol)
+	if DisplayServer.get_name() == "headless":
+		return
+	var lab := Label3D.new()
+	lab.name = "ClashDoorLabel"
+	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lab.font_size = 28
+	lab.outline_size = 6
+	lab.position = _clash_door_base + Vector3(0, 1.8, 0)
+	lab.text = _SoftK.clash_door_label()
+	lab.modulate = Color(0.95, 0.8, 0.35)
+	add_child(lab)
+	var pillar := MeshInstance3D.new()
+	pillar.name = "ClashDoorPillar"
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.08
+	cyl.bottom_radius = 0.12
+	cyl.height = 2.2
+	pillar.mesh = cyl
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(0.95, 0.75, 0.25)
+	mat.emission_enabled = true
+	mat.emission = Color(0.95, 0.7, 0.2)
+	mat.emission_energy_multiplier = 1.6
+	pillar.material_override = mat
+	pillar.position = _clash_door_base + Vector3(0, 1.1, 0)
+	pillar.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(pillar)
 
 
 func _add_marker(host: Node3D, id: String) -> void:
