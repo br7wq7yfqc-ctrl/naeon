@@ -181,6 +181,25 @@ static func biomass_rank_label(rank: int = -1) -> String:
 	return str(clampi(r, 0, 4))
 
 
+## KR-A: name the Knowledge Rank track. Never yield / DPS / Pulse / Hack / print.
+static func knowledge_rank_word() -> String:
+	var intel := mastery("quest_intel") + mastery("field_intel") + mastery("history")
+	if intel >= 15.0 or rank() >= 5:
+		return "KNOWLEDGE RANK"
+	return "KNOWLEDGE"
+
+
+## KR-A: Knowledge Rank 0–4 as a HUD number. Never yield / DPS / Pulse / Hack / print.
+static func knowledge_rank_label(rank: int = -1) -> String:
+	var r := rank
+	if r < 0:
+		if GameManager != null and GameManager.has_method("knowledge_ladder"):
+			r = int(GameManager.knowledge_ladder())
+		else:
+			r = 0
+	return str(clampi(r, 0, 4))
+
+
 ## Colony/history: name the ST-E orbital cluster. Never mints SITE_* or a city.
 static func orbital_station_label() -> String:
 	var ops := mastery("colony_ops")

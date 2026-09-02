@@ -8,7 +8,7 @@ const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 const FIELDS := [
 	"fuel", "fuel_max", "cargo", "module_tag", "module_pct",
 	"landed", "occupy", "eva_mode",
-	"econ", "econ_rate", "econ_grot", "econ_rank",
+	"econ", "econ_rate", "econ_grot", "econ_rank", "know_rank",
 	"energy", "energy_max",
 	"power_draw", "power_supply", "cool_load", "cool_cap", "life",
 	"crew", "crew_max", "crew_role",
@@ -48,6 +48,7 @@ static func snapshot(ship: Node = null, player: Node = null, pad: Node = null) -
 		"econ_rate": 0.0,
 		"econ_grot": false,
 		"econ_rank": -1,
+		"know_rank": 0,
 		"energy": -1.0,
 		"energy_max": -1.0,
 		"power_draw": 0.0,
@@ -109,6 +110,10 @@ static func snapshot(ship: Node = null, player: Node = null, pad: Node = null) -
 		else:
 			snap["econ"] = float(GameManager.contribution) if "contribution" in GameManager else 0.0
 			snap["econ_rank"] = -1
+		if GameManager.has_method("knowledge_ladder"):
+			snap["know_rank"] = int(GameManager.knowledge_ladder())
+		else:
+			snap["know_rank"] = 0
 	if player != null and is_instance_valid(player):
 		if "energy" in player:
 			snap["energy"] = float(player.get("energy"))
@@ -179,6 +184,10 @@ static func stack_text(snap: Dictionary) -> String:
 	var econ_s := "%s %.1f" % [unit, float(snap.get("econ", 0.0))]
 	if grot:
 		econ_s += "  ·  %s" % _SoftK.biomass_rank_label(int(snap.get("econ_rank", 0)))
+	econ_s += "  ·  %s %s" % [
+		_SoftK.knowledge_rank_word(),
+		_SoftK.knowledge_rank_label(int(snap.get("know_rank", 0))),
+	]
 	var rate := float(snap.get("econ_rate", 0.0))
 	if rate > 0.001:
 		econ_s += "  +%.1f/s" % rate

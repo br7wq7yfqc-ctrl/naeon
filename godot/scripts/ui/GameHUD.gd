@@ -764,7 +764,10 @@ func _refresh() -> void:
 		var rank: int = int(GameManager.knowledge_rank)
 		var soft: float = float(GameManager.knowledge_insight_bonus()) * 100.0
 		var ar := GameManager.get_alliance_rank_name() if GameManager.has_method("get_alliance_rank_name") else ""
-		_mastery_label.text = "KNOWLEDGE r%d | %s %.1f | bio %.0f | insight +%.1f%% | %s | rank %s" % [rank, ops_key, colony, bio, soft, GameManager.economy_label(), ar]
+		_mastery_label.text = "%s %s | r%d | %s %.1f | bio %.0f | insight +%.1f%% | %s | rank %s" % [
+			_SoftK.knowledge_rank_word(), _SoftK.knowledge_rank_label(),
+			rank, ops_key, colony, bio, soft, GameManager.economy_label(), ar
+		]
 
 	# Infection pips — always visible (shape + number, max 5)
 	var stacks := 0
@@ -1124,12 +1127,14 @@ func _refresh_economy() -> void:
 		delta_s = "  %+0.1f" % _econ_delta
 	if grot:
 		var br := int(GameManager.biomass_rank()) if GameManager.has_method("biomass_rank") else 0
-		_econ_label.text = "%s %.1f%s  ·  %s  ·  soft only (no P2W)" % [
-			unit, cur, delta_s, _SoftK.biomass_rank_label(br)
+		_econ_label.text = "%s %.1f%s  ·  %s  ·  %s %s  ·  soft only (no P2W)" % [
+			unit, cur, delta_s, _SoftK.biomass_rank_label(br),
+			_SoftK.knowledge_rank_word(), _SoftK.knowledge_rank_label()
 		]
 	else:
-		_econ_label.text = "%s %.1f%s  ·  %s  → next %.0f  ·  soft only (no P2W)" % [
-			unit, cur, delta_s, rname, next_cost
+		_econ_label.text = "%s %.1f%s  ·  %s  → next %.0f  ·  %s %s  ·  soft only (no P2W)" % [
+			unit, cur, delta_s, rname, next_cost,
+			_SoftK.knowledge_rank_word(), _SoftK.knowledge_rank_label()
 		]
 	if _econ_flash > 0.0:
 		var pulse := 0.5 + 0.5 * (_econ_flash / 1.2)
