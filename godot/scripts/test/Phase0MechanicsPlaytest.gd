@@ -56,10 +56,10 @@ func _go() -> void:
 		await _assert_pv_a(os, fails)
 		await _assert_bt_a(os, fails)
 		await _assert_bt_b(os, fails)
-		await _assert_bt_c(os, fails)
 		await _assert_mc_a(os, fails)
 		await _assert_mc_b(os, fails)
 		await _assert_sn_a(os, fails)
+		await _assert_bt_c(os, fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
 
@@ -656,8 +656,8 @@ func _go() -> void:
 	await _assert_pv_a(os, fails)
 	await _assert_bt_a(os, fails)
 	await _assert_bt_b(os, fails)
-	await _assert_bt_c(os, fails)
 	await _assert_sn_a(os, fails)
+	await _assert_bt_c(os, fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
