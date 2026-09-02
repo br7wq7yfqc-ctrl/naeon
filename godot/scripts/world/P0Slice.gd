@@ -116,6 +116,12 @@ const SN_A_PAD := true
 ## Host keeps Pulse / occupy / thrust. No second physical hull. Not ENet.
 ## Not 10k CCU. G5 closed. No SITE_*. SN-A pad puppet stays.
 const SN_B_HULL := true
+## SN-C: second local viewer on ST-A Strategy overlay (key B) on an occupied
+## unnamed pad sees a SoftNet visual puppet of the host pad / strategy actor
+## (habitat / extractor / modules pose). Host keeps Pulse / occupy / Hack.
+## No second physical pad modules. Not ENet. Not 10k CCU. G5 closed. No SITE_*.
+## SN-A pad puppet and SN-B hull puppet stay.
+const SN_C_OVERLAY := true
 ## BR-A: Biomass Rank 0–4 from lifetime Biomass wallet (AllianceRanks family).
 ## SoftKnowledge / HUD label only. Never yield / DPS / Pulse / Hack / print.
 ## Cybernex stays CONTRIB / CONTRIBUTION. No SITE_*. Infection cap 5.

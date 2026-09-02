@@ -4,10 +4,12 @@ class_name StrategyOverlay
 ## Not a galaxy map (G2 locked). Does not replace ship or TPS.
 ## FL-A: one extra allied fleet pip (existing pad-visitor NpcPilot).
 ## FL-B: second extra allied pip (SoftNet visual, same NP-A grammar). Cap 3.
-## SoftKnowledge / HUD label only. Click/select ≠ combat. Host Pulse / occupy.
+## SN-C: second local viewer sees SoftNet visual habitat/extractor/modules puppet.
+## SoftKnowledge / HUD label only. Click/select ≠ combat. Host Pulse / occupy / Hack.
 
 const _Builder = preload("res://scripts/world/BaseBuilder.gd")
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
+const _OverlayNet = preload("res://scripts/world/OverlaySoftNet.gd")
 
 const ENTER_M := 90.0
 const CAM_HEIGHT := 180.0
@@ -27,12 +29,14 @@ var _fleet_pip: Node3D = null
 var _fleet_pip_b: Node3D = null
 var _fleet_selected: bool = false
 var _fleet_selected_b: bool = false
+var _softnet: Node = null
 
 
 func setup(host: Node) -> void:
 	_os = host
 	add_to_group("strategy_overlay")
 	set_process_input(true)
+	_ensure_overlay_softnet()
 
 
 func is_active() -> bool:
@@ -41,6 +45,35 @@ func is_active() -> bool:
 
 func active_pad() -> Node3D:
 	return _pad if _active else null
+
+
+func overlay_softnet() -> Node:
+	if _softnet != null and is_instance_valid(_softnet):
+		return _softnet
+	return get_node_or_null("OverlaySoftNet")
+
+
+func get_overlay_softnet() -> Node:
+	return overlay_softnet()
+
+
+func _ensure_overlay_softnet() -> void:
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.SN_C_OVERLAY):
+		return
+	var existing: Node = get_node_or_null("OverlaySoftNet")
+	if existing != null:
+		_softnet = existing
+		if _softnet.has_method("bind"):
+			_softnet.bind(self)
+		return
+	var n: Node3D = Node3D.new()
+	n.set_script(_OverlayNet)
+	n.name = "OverlaySoftNet"
+	add_child(n)
+	_softnet = n
+	if n.has_method("bind"):
+		n.bind(self)
 
 
 func readiness_line() -> String:
@@ -356,6 +389,8 @@ func place_module() -> Node3D:
 		push_error("[StrategyOverlay] player module minted a site_pin")
 	_toast("Habitat on %s — 0 combat stats" % _pad.name)
 	print("[StrategyOverlay] placed habitat on ", _pad.name, " fac=", fac)
+	if _softnet != null and is_instance_valid(_softnet) and _softnet.has_method("sync_from_host"):
+		_softnet.sync_from_host()
 	return mod
 
 
@@ -403,6 +438,9 @@ func _enter(pad: Node3D) -> void:
 	_make_camera()
 	_active = true
 	_show_fleet_pip()
+	_ensure_overlay_softnet()
+	if _softnet != null and is_instance_valid(_softnet) and _softnet.has_method("sync_from_host"):
+		_softnet.sync_from_host()
 	if LayerContext:
 		LayerContext.set_layer("Strategy")
 	if DisplayServer.get_name() != "headless":
