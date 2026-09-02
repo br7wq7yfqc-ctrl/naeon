@@ -13166,8 +13166,11 @@ func _assert_st_h(os: Node, fails: PackedStringArray) -> void:
 		fails.append("ST-H stole the ST-A player_module slot")
 	if str(turret.get_meta("module_type", "")) != "turret":
 		fails.append("ST-H module is not turret")
-	if turret.get_script() != null and str(turret.get_script().resource_path).ends_with("Turret.gd"):
+	var tscript := str(turret.get_script().resource_path) if turret.get_script() != null else ""
+	if tscript.ends_with("combat/Turret.gd") or tscript.ends_with("scenes/combat/Turret.gd"):
 		fails.append("ST-H reused Clash Turret.gd")
+	if tscript != "" and tscript.find("PadDefenseTurret.gd") < 0:
+		fails.append("ST-H turret script drifted (%s)" % tscript)
 	if not str(turret.name).begins_with("PadDefense"):
 		fails.append("ST-H turret name drifted (%s)" % turret.name)
 	if "max_health" in turret and absf(float(turret.max_health) - 160.0) < 0.01:
