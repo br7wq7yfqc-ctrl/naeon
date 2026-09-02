@@ -1,3 +1,5 @@
+**2026-09-02 — ST-J: one pad hangar stub on occupied unnamed pad (BaseBuilder after occupy; hatch/LAND stay on pad; not ST-D carrier hangar; overlay B stays)**
+
 **2026-09-02 — ST-I: one pad storage on occupied unnamed pad (BaseBuilder after occupy; one-unit occupy dock ↔ ship CargoHold; Knowledge labels; mass/value stay)**
 
 **2026-09-01 — ST-H: one pad turret on occupied unnamed pad (BaseBuilder after occupy; HP; Pulse 11; not Clash OUTER; G5 closed)**

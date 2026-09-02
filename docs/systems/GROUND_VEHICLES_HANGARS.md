@@ -111,6 +111,8 @@ CapitalShip / Hauler
 
 IN-C (V0+V1): `HangarBay.gd` + `CargoHold` + `CargoRamp` on `CatalogCarrier` (`cybernex_capital_carrier` …). Deploy when landed / hover < 8 m AGL / docked and speed < 5; else BLOCKED toast. Hatch from `hangar_bay` onto deployed plates (not MainMenu). No rover spawn. 0 Tripo.
 
+ST-J: pad-side `PadHangarStub` via `BaseBuilder` after occupy on unnamed `Pad_North` / `Pad_Approach` / `Pad_Flank`. Hatch/LAND stay on the pad (same OpenSpace). Not ST-D `CarrierHangarQueue`. No rover. No `SITE_*`.
+
 IN-D (V2): `GroundVehicle` rover on ramp top when plates are `DEPLOYED`. WASD drive, `F` board/exit (walker parked, not freed). Drive onto the unnamed pad deck. One rover. No SoftNet multi-seat. No `SITE_*`. 0 Tripo. Procedural chassis/wheels.
 
 IN-E (V3): drive onto the deployed ramp mouth / `hangar_bay` volume → despawn world rover → `CargoHold` (`id` + `health`). Bay console or hangar interact retrieves onto ramp top when `DEPLOYED` and IN-C pose rules pass. Takeoff keeps inventory. No second world rover. No pay-stat power. No SoftNet multi-seat. No `SITE_*`. 0 Tripo.

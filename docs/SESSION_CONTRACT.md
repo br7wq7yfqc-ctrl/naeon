@@ -76,6 +76,10 @@
     HUD CREW n/2 plus role. Knowledge does not change Pulse / Hack /
     thrust / DPS / yield. F/I role stays crew. Host authority.
     No second hull. Not Clash. No SITE_* (this pass).
+29. ST-J: one hangar stub on an occupied unnamed pad via BaseBuilder.
+    Not ST-D carrier hangar. Hatch/LAND stay on the pad (same
+    OpenSpace, not MainMenu). Overlay B stays. ST-A/B/H/I stay.
+    Knowledge labels only. No rover. No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.
