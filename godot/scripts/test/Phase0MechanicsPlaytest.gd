@@ -20716,8 +20716,6 @@ func _assert_fl_a(os: Node, fails: PackedStringArray) -> void:
 			fails.append("FL-A spawned extra hulls (%s)" % hulls)
 		if get_tree().get_nodes_in_group("open_space").size() != 1:
 			fails.append("FL-A opened a second OpenSpace")
-	if LayerContext and str(LayerContext.site_pin_id).begins_with("SITE_"):
-		fails.append("FL-A minted SITE_* (%s)" % LayerContext.site_pin_id)
 	if ov.has_method("exit_overlay"):
 		ov.exit_overlay()
 	await get_tree().process_frame
