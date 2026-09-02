@@ -67,6 +67,7 @@ func _ready() -> void:
 	_setup_strategy_overlay()
 	_setup_interior()
 	_setup_squad()
+	_setup_hull_softnet()
 	_setup_mechanics_playtest()
 	_setup_sandbox_playtest()
 	if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
@@ -288,6 +289,31 @@ func _setup_squad() -> void:
 
 func get_squad() -> Node:
 	return _squad
+
+
+func hull_softnet() -> Node:
+	return get_node_or_null("HullSoftNet")
+
+
+func get_hull_softnet() -> Node:
+	return hull_softnet()
+
+
+func _setup_hull_softnet() -> void:
+	## SN-B: second local viewer on the seated hull. SoftNet visual only.
+	if not _P0.SN_B_HULL:
+		return
+	var existing: Node = get_node_or_null("HullSoftNet")
+	if existing != null:
+		if existing.has_method("bind"):
+			existing.bind(self)
+		return
+	var n: Node3D = Node3D.new()
+	n.set_script(preload("res://scripts/world/HullSoftNet.gd"))
+	n.name = "HullSoftNet"
+	add_child(n)
+	if n.has_method("bind"):
+		n.bind(self)
 
 
 func get_alliance() -> Node:

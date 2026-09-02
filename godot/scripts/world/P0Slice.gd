@@ -111,6 +111,11 @@ const BT_D_PACK := true
 ## SurfaceWalker puppet (optional PV-A rival pose). Host keeps Pulse / occupy.
 ## Not ENet cluster. Not 10k CCU. G5 closed. No SITE_*.
 const SN_A_PAD := true
+## SN-B: second local viewer seated on the player hull / OpenSpace sees a
+## SoftNet visual puppet of the host hull / pilot (or crew-seat pose).
+## Host keeps Pulse / occupy / thrust. No second physical hull. Not ENet.
+## Not 10k CCU. G5 closed. No SITE_*. SN-A pad puppet stays.
+const SN_B_HULL := true
 ## BR-A: Biomass Rank 0–4 from lifetime Biomass wallet (AllianceRanks family).
 ## SoftKnowledge / HUD label only. Never yield / DPS / Pulse / Hack / print.
 ## Cybernex stays CONTRIB / CONTRIBUTION. No SITE_*. Infection cap 5.

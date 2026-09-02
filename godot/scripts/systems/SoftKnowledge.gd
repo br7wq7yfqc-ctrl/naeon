@@ -338,6 +338,14 @@ static func life_bus_label() -> String:
 	return "LS"
 
 
+## SN-B: name the hull SoftNet visual. Never DPS / yield / thrust / Pulse.
+static func net_visual_label() -> String:
+	var logi := mastery("logistics")
+	if logi >= 15.0 or rank() >= 5:
+		return "NET VISUAL"
+	return "NET"
+
+
 ## FL-A: name the Strategy overlay fleet pip. Never DPS / yield / thrust.
 static func fleet_label() -> String:
 	var logi := mastery("logistics")
