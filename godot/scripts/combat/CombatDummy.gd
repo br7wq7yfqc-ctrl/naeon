@@ -23,7 +23,7 @@ signal damaged(amount: float, health_left: float)
 @export var one_shot: bool = false
 @export var grant_economy: bool = true
 @export var intel_name: String = ""
-## BT-A: PadGuardBT drives xz. Default chase / lane AI stays off.
+## BT-A: PadGuardBT drives xz. BT-C: GrotSwarmBT drives swarm members. Default chase / lane AI stays off.
 @export var bt_driven: bool = false
 var lane_waypoints: Array = []
 var _wp_i: int = 0
@@ -106,6 +106,9 @@ func _physics_process(delta: float) -> void:
 		var bt: Node = get_node_or_null("PadGuardBT")
 		if bt != null and bt.has_method("physics_tick"):
 			bt.physics_tick(delta)
+			return
+		if has_meta("grot_swarm"):
+			## BT-C coordinator owns xz / stick-to-pad.
 			return
 		if not is_on_floor():
 			velocity.y -= gravity * delta

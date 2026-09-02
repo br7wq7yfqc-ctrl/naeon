@@ -16,6 +16,9 @@ extends Node3D
 ## Distinct from the PV-A rival. Host authority. Pulse 11. Not Clash waves.
 ## BT-B: the visitor NpcPilot walks a sibling 3-state BT (approach / hold / leave).
 ## Hold keeps NP-B occupy/harvest. Host authority. Pulse 11. Not Clash waves.
+## BT-C: one gROT swarm of 3 CombatDummy (gather / pulse-engage / scatter-return-to-pad).
+## Host authority. Pulse 11 both ways. Infection cap 5. No permadeath. Not Clash waves.
+## Distinct from BT-A pad-guard, BT-B visitor, PV-A rival, and the surface dummy.
 ## SN-A: second local viewer sees a SoftNet visual SurfaceWalker puppet.
 ## Host keeps Pulse / occupy. No second physical walker. Not ENet cluster.
 ## Knowledge labels only — never yield.
@@ -28,6 +31,7 @@ const _Pvp := preload("res://scripts/world/PadPvp.gd")
 const _SoftNet := preload("res://scripts/world/PadSoftNet.gd")
 const _GuardBT := preload("res://scripts/combat/PadGuardBT.gd")
 const _VisitorBT := preload("res://scripts/world/VisitorBT.gd")
+const _SwarmBT := preload("res://scripts/combat/GrotSwarmBT.gd")
 
 var _host_name: String = ""
 var _guard: Node3D = null
@@ -38,6 +42,7 @@ var _life_accum: float = 0.0
 var _alliance: Node = null
 var _pvp: Node = null
 var _softnet: Node = null
+var _swarm: Node3D = null
 
 
 func setup(host_pad: Node3D) -> void:
@@ -52,10 +57,11 @@ func setup(host_pad: Node3D) -> void:
 	_setup_alliance()
 	_setup_pvp()
 	_setup_softnet()
+	_spawn_swarm()
 	_offer_player_contract()
 	refresh_labels()
 	set_process(true)
-	print("[PadTraffic] host=", _host_name, " guard=1 visitor=1 surface=1 rival=1 softnet=1")
+	print("[PadTraffic] host=", _host_name, " guard=1 visitor=1 surface=1 rival=1 softnet=1 swarm=3")
 
 
 func host_pad_name() -> String:
@@ -204,6 +210,61 @@ func rival_label() -> String:
 	return _SoftK.rival_label()
 
 
+func swarm_label() -> String:
+	return _SoftK.swarm_label()
+
+
+func get_swarm() -> Node3D:
+	if _swarm != null and is_instance_valid(_swarm):
+		return _swarm
+	return get_node_or_null("GrotSwarm") as Node3D
+
+
+func get_swarm_bt() -> Node:
+	var s := get_swarm()
+	if s == null:
+		return null
+	return s.get_node_or_null("GrotSwarmBT")
+
+
+func swarm_bt_state() -> String:
+	var bt := get_swarm_bt()
+	if bt != null and bt.has_method("bt_state"):
+		return str(bt.bt_state())
+	return ""
+
+
+func get_swarm_members() -> Array:
+	var out: Array = []
+	var s := get_swarm()
+	if s == null:
+		return out
+	for c in s.get_children():
+		if c != null and is_instance_valid(c) and c is CharacterBody3D \
+				and str(c.get_meta("pad_traffic_role", "")) == "swarm":
+			out.append(c)
+	return out
+
+
+func swarm_count() -> int:
+	return get_swarm_members().size()
+
+
+func try_swarm_pulse(target: Node = null) -> bool:
+	var bt := get_swarm_bt()
+	if bt != null and bt.has_method("try_engage_pulse"):
+		return bool(bt.try_engage_pulse(target))
+	var members := get_swarm_members()
+	if members.is_empty():
+		return false
+	var d: Node = members[0]
+	if d != null and d.has_method("try_pulse_walker"):
+		return bool(d.try_pulse_walker(target))
+	if d != null and d.has_method("try_pulse"):
+		return bool(d.try_pulse(target))
+	return false
+
+
 func refresh_labels() -> void:
 	var extra := _alliance_tag()
 	var gname := guard_label()
@@ -221,6 +282,13 @@ func refresh_labels() -> void:
 	var pvp := get_pvp()
 	if pvp != null and pvp.has_method("refresh_label"):
 		pvp.refresh_label()
+	var sname := swarm_label()
+	for d in get_swarm_members():
+		if d == null or not is_instance_valid(d):
+			continue
+		d.set("intel_name", sname)
+		if d.has_method("_update_labels"):
+			d._update_labels()
 	var vname := visitor_label()
 	if extra != "":
 		vname = "%s · %s" % [vname, extra]
@@ -384,6 +452,78 @@ func _bind_visitor_bt(pilot: Node, ship: Node, pad: Node3D) -> void:
 		pilot.add_child(bt)
 	if bt.has_method("bind"):
 		bt.bind(pilot, ship as Node3D, pad)
+
+
+func _spawn_swarm() -> void:
+	## BT-C: three gROT CombatDummy on this occupied unnamed pad. Not Clash waves.
+	## Distinct from pad-guard, surface dummy, PV-A rival, and visitor hull.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 != null and not bool(P0.BT_C_SWARM):
+		return
+	if _DUMMY == null:
+		return
+	var existing: Node = get_node_or_null("GrotSwarm")
+	var root: Node3D = existing as Node3D if existing is Node3D else null
+	if root == null:
+		root = Node3D.new()
+		root.name = "GrotSwarm"
+		root.set_meta("site_pin", "")
+		root.set_meta("pad_traffic_role", "swarm")
+		root.set_meta("combat_authority", "host")
+		add_child(root)
+	_swarm = root
+	var spots: Array[Vector3] = [
+		Vector3(-6.0, 1.2, -6.0),
+		Vector3(-10.0, 1.2, -2.0),
+		Vector3(-2.0, 1.2, -10.0),
+	]
+	var members: Array = []
+	for i in range(spots.size()):
+		var kid: Node = root.get_node_or_null("SwarmDummy%d" % i)
+		var d: Node = kid
+		if d == null:
+			d = _DUMMY.instantiate()
+			d.name = "SwarmDummy%d" % i
+			root.add_child(d)
+		d.set("faction", "gROT")
+		d.set("can_move", true)
+		d.set("bt_driven", true)
+		d.set("lane_march", false)
+		d.set("one_shot", false)
+		d.set("aggro_range", 16.0)
+		d.set("attack_range", 16.0)
+		d.set("attack_damage", 11.0)
+		d.set("grant_economy", false)
+		d.set("intel_name", swarm_label())
+		d.set_meta("pad_traffic_role", "swarm")
+		d.set_meta("combat_authority", "host")
+		d.set_meta("grot_swarm", true)
+		d.set_meta("site_pin", "")
+		if d.is_in_group("clash_minion"):
+			d.remove_from_group("clash_minion")
+		if d is Node3D:
+			(d as Node3D).position = spots[i]
+			d.set("_spawn_pos", (d as Node3D).global_position)
+		members.append(d)
+	_bind_swarm_bt(root, members)
+
+
+func _bind_swarm_bt(root: Node, members: Array) -> void:
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 != null and not bool(P0.BT_C_SWARM):
+		return
+	if root == null or _SwarmBT == null:
+		return
+	var existing: Node = root.get_node_or_null("GrotSwarmBT")
+	var bt: Node = existing
+	if bt == null:
+		bt = Node.new()
+		bt.set_script(_SwarmBT)
+		bt.name = "GrotSwarmBT"
+		root.add_child(bt)
+	var pad: Node3D = get_parent() as Node3D
+	if bt.has_method("bind"):
+		bt.bind(members, pad)
 
 
 func _spawn_surface_dummy() -> void:
