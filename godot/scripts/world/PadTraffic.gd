@@ -23,6 +23,8 @@ extends Node3D
 ## Distinct from BT-C swarm. Host authority. Pulse 11 both ways. Cap 5. No permadeath.
 ## SN-A: second local viewer sees a SoftNet visual SurfaceWalker puppet.
 ## Host keeps Pulse / occupy. No second physical walker. Not ENet cluster.
+## FL-A: that same visitor hull is the one extra Strategy overlay fleet pip.
+## Cap 2 (player + this guest). Click/select ≠ combat. Host Pulse / occupy.
 ## Knowledge labels only — never yield.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
@@ -114,6 +116,25 @@ func get_npc_pilot() -> Node:
 	if v == null:
 		return null
 	return v.get_node_or_null("NpcPilot")
+
+
+func fleet_guest() -> Node3D:
+	## FL-A: the existing NP-A visitor is the one extra fleet pip. Not a new hull.
+	return get_visitor()
+
+
+func fleet_cap() -> int:
+	return 2
+
+
+func fleet_count() -> int:
+	## Guest only. Overlay / HUD add the player hull for FLEET n/2.
+	return 1 if get_visitor() != null else 0
+
+
+func try_add_fleet_guest(_who: Node = null) -> bool:
+	## Cap 2 (player + this visitor). This slice does not spawn a second guest.
+	return false
 
 
 func get_visitor_bt() -> Node:
@@ -696,6 +717,8 @@ func _spawn_visitor() -> void:
 	s.set("pilot_active", false)
 	s.set_meta("pad_traffic_role", "visitor")
 	s.set_meta("npc_pilot", true)
+	s.set_meta("fleet_member", true)
+	s.set_meta("combat_authority", "host")
 	s.set_meta("site_pin", "")
 	var keep: Camera3D = null
 	var vp := get_viewport()
@@ -735,6 +758,8 @@ func _spawn_visitor_hold() -> void:
 	var v := Node3D.new()
 	v.name = "VisitorHold"
 	v.set_meta("pad_traffic_role", "visitor")
+	v.set_meta("fleet_member", true)
+	v.set_meta("combat_authority", "host")
 	v.set_meta("site_pin", "")
 	v.position = _visitor_base
 	add_child(v)

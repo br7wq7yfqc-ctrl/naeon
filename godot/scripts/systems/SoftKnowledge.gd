@@ -338,6 +338,15 @@ static func life_bus_label() -> String:
 	return "LS"
 
 
+## FL-A: name the Strategy overlay fleet pip. Never DPS / yield / thrust.
+static func fleet_label() -> String:
+	var logi := mastery("logistics")
+	var hist := mastery("history")
+	if logi >= 15.0 or hist >= 15.0 or rank() >= 5:
+		return "FLEET MANIFEST"
+	return "FLEET"
+
+
 ## MC-A: name the hull crew count. Never changes thrust / DPS / yield.
 static func crew_label() -> String:
 	var logi := mastery("logistics")
