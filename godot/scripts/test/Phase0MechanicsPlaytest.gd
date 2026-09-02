@@ -62,6 +62,7 @@ func _go() -> void:
 		await _assert_sn_a(os, fails)
 		await _assert_bt_c(os, fails)
 		_assert_br_a(os, fails)
+		_assert_kr_a(os, fails)
 		_finish(fails, 0 if fails.is_empty() else 1)
 		return
 
@@ -662,6 +663,7 @@ func _go() -> void:
 	await _assert_sn_a(os, fails)
 	await _assert_bt_c(os, fails)
 	_assert_br_a(os, fails)
+	_assert_kr_a(os, fails)
 	_osh_invariants(fails)
 	_finish(fails, 0 if fails.is_empty() else 1)
 
@@ -19793,6 +19795,164 @@ func _assert_br_a(os: Node, fails: PackedStringArray) -> void:
 	GameManager.biomass = bio0
 	if GameManager.has_method("set_faction"):
 		GameManager.set_faction(fac0)
+
+
+func _assert_kr_a(os: Node, fails: PackedStringArray) -> void:
+	## KR-A: Knowledge Rank 0–4 from lifetime mastery. HUD label only.
+	## Harvest / Pulse / Hack / print stay. BR-A Biomass Rank stays. No SITE_*.
+	var P0k = load("res://scripts/world/P0Slice.gd")
+	var Ranks_k = load("res://scripts/systems/AllianceRanks.gd")
+	var SoftK_k = load("res://scripts/systems/SoftKnowledge.gd")
+	var Hud_k = load("res://scripts/ui/OpenSpaceHudStack.gd")
+	var Kits_k = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var fac0_k = GameManager.player_faction if GameManager else 0
+	var bio0_k := float(GameManager.biomass) if GameManager and "biomass" in GameManager else 0.0
+	var life0_k := float(GameManager.lifetime_biomass) if GameManager and "lifetime_biomass" in GameManager else 0.0
+	var know0_k := float(GameManager.lifetime_knowledge) if GameManager and "lifetime_knowledge" in GameManager else 0.0
+	var mastery0_k: Dictionary = GameManager.subject_mastery.duplicate() if GameManager else {}
+	var pad_k: Node = null
+	var rate0_k := 0.0
+	var cpu0_k := 0.0
+	var cost0_k := 0.0
+	var pulse0_k := 11.0
+	var cap0_k := 5
+	var bench_k: Node = null
+	var pin0_k := str(LayerContext.site_pin_id) if LayerContext else ""
+	if P0k == null or not bool(P0k.KR_A_KNOWLEDGE_RANK):
+		fails.append("KR-A P0Slice flag missing")
+		return
+	if bool(P0k.ORBITAL_STATIONS):
+		fails.append("KR-A flipped ORBITAL_STATIONS")
+	if not bool(P0k.BR_A_BIOMASS_RANK):
+		fails.append("KR-A dropped BR-A flag")
+	if GameManager == null or not GameManager.has_method("knowledge_ladder") or not GameManager.has_method("add_mastery"):
+		fails.append("KR-A GameManager knowledge ladder missing")
+		return
+	if Ranks_k == null or not Ranks_k.has_method("rank_from_lifetime"):
+		fails.append("KR-A AllianceRanks.rank_from_lifetime missing")
+		return
+	if int(Ranks_k.rank_from_lifetime(0.0)) != 0 or int(Ranks_k.rank_from_lifetime(50.0)) != 1 \
+			or int(Ranks_k.rank_from_lifetime(200.0)) != 2 or int(Ranks_k.rank_from_lifetime(600.0)) != 3 \
+			or int(Ranks_k.rank_from_lifetime(1600.0)) != 4:
+		fails.append("KR-A lifetime ladder is not AllianceRanks 0–4")
+	if get_tree():
+		var pads_k: Array = get_tree().get_nodes_in_group("pad_bases")
+		if not pads_k.is_empty():
+			pad_k = pads_k[0]
+	if pad_k != null:
+		if "extract_rate" in pad_k:
+			rate0_k = float(pad_k.get("extract_rate"))
+		if "contribution_per_unit" in pad_k:
+			cpu0_k = float(pad_k.get("contribution_per_unit"))
+		var pin_k := str(pad_k.get_meta("site_pin", "")) if pad_k.has_meta("site_pin") else ""
+		if pin_k.begins_with("SITE_"):
+			fails.append("KR-A minted SITE_* (%s)" % pin_k)
+	if get_tree():
+		var benches_k: Array = get_tree().get_nodes_in_group("print_benches")
+		if not benches_k.is_empty() and benches_k[0] != null and benches_k[0].has_method("print_cost"):
+			bench_k = benches_k[0]
+			cost0_k = float(bench_k.print_cost())
+	if Kits_k != null and Kits_k.has_method("_pulse"):
+		var pab_k = Kits_k._pulse()
+		if pab_k != null and "damage" in pab_k:
+			pulse0_k = float(pab_k.damage)
+	if absf(pulse0_k - 11.0) > 0.01:
+		fails.append("KR-A Pulse DPS drifted (%s)" % pulse0_k)
+	if get_tree():
+		for n_k in get_tree().get_nodes_in_group("combat_dummy"):
+			if n_k != null and is_instance_valid(n_k) and n_k.has_method("infection_cap"):
+				cap0_k = int(n_k.infection_cap())
+				break
+	if cap0_k != 5:
+		fails.append("KR-A Infection cap drifted (%s)" % cap0_k)
+	GameManager.lifetime_knowledge = 0.0
+	if int(GameManager.knowledge_ladder()) != 0:
+		fails.append("KR-A rank at lifetime 0 is %s, want 0" % GameManager.knowledge_ladder())
+	var want_k := [1, 2, 3, 4]
+	var add_amt_k := [50.0, 150.0, 400.0, 1000.0]
+	for i_k in range(want_k.size()):
+		GameManager.add_mastery("kr_probe", float(add_amt_k[i_k]))
+		if int(GameManager.knowledge_ladder()) != int(want_k[i_k]):
+			fails.append("KR-A rank after lifetime bump is %s, want %s" % [
+				GameManager.knowledge_ladder(), want_k[i_k]
+			])
+		if pad_k != null and (absf(float(pad_k.get("extract_rate")) - rate0_k) > 0.001 \
+				or absf(float(pad_k.get("contribution_per_unit")) - cpu0_k) > 0.001):
+			fails.append("KR-A rank changed harvest numbers")
+			break
+		if bench_k != null and absf(float(bench_k.print_cost()) - cost0_k) > 0.001:
+			fails.append("KR-A rank cheapened print cost")
+			break
+		if Kits_k != null and Kits_k.has_method("_pulse"):
+			var pab1_k = Kits_k._pulse()
+			if pab1_k != null and "damage" in pab1_k and absf(float(pab1_k.damage) - 11.0) > 0.01:
+				fails.append("KR-A rank changed Pulse DPS")
+				break
+		if SoftK_k != null:
+			if SoftK_k.has_method("exclusive_module_unlocked") and bool(SoftK_k.exclusive_module_unlocked()):
+				fails.append("KR-A rank unlocked exclusive module")
+				break
+			if SoftK_k.has_method("exclusive_weapon_unlocked") and bool(SoftK_k.exclusive_weapon_unlocked()):
+				fails.append("KR-A rank unlocked exclusive weapon")
+				break
+	var r4_k := int(GameManager.knowledge_ladder())
+	GameManager.add_mastery("kr_probe", -80.0)
+	if int(GameManager.knowledge_ladder()) != r4_k:
+		fails.append("KR-A spend dropped Knowledge Rank")
+	if GameManager.has_method("set_faction"):
+		GameManager.set_faction(GameManager.Faction.CYBERNEX)
+	if Hud_k != null:
+		var snap_k: Dictionary = Hud_k.snapshot(os.get("ship") if os else null, os.get("player") if os else null, pad_k)
+		var stxt_k := str(Hud_k.stack_text(snap_k))
+		var first_k := stxt_k.get_slice("\n", 0)
+		var word_k := str(SoftK_k.knowledge_rank_word()) if SoftK_k != null else "KNOWLEDGE"
+		var lab_k := str(SoftK_k.knowledge_rank_label(int(GameManager.knowledge_ladder()))) if SoftK_k != null else "4"
+		if int(snap_k.get("know_rank", -99)) != int(GameManager.knowledge_ladder()):
+			fails.append("KR-A HUD know_rank=%s want %s" % [
+				snap_k.get("know_rank"), GameManager.knowledge_ladder()
+			])
+		if first_k.find(word_k) < 0 or first_k.find(lab_k) < 0:
+			fails.append("KR-A HUD missing Knowledge Rank label (%s)" % first_k)
+		if first_k.find("CONTRIB") < 0 and first_k.find("CONTRIBUTION") < 0:
+			fails.append("KR-A Cybernex HUD dropped CONTRIB (%s)" % first_k)
+		if int(snap_k.get("econ_rank", 0)) != -1:
+			fails.append("KR-A Cybernex HUD showed Biomass Rank")
+		if GameManager.has_method("add_mastery"):
+			GameManager.add_mastery("history", 20.0)
+		if pad_k != null and (absf(float(pad_k.get("extract_rate")) - rate0_k) > 0.001 \
+				or absf(float(pad_k.get("contribution_per_unit")) - cpu0_k) > 0.001):
+			fails.append("KR-A KNOWLEDGE RANK label changed harvest numbers")
+		var snap2_k: Dictionary = Hud_k.snapshot(os.get("ship") if os else null, os.get("player") if os else null, pad_k)
+		var first2_k := str(Hud_k.stack_text(snap2_k)).get_slice("\n", 0)
+		var word2_k := str(SoftK_k.knowledge_rank_word()) if SoftK_k != null else "KNOWLEDGE RANK"
+		if word2_k != "KNOWLEDGE RANK" or first2_k.find("KNOWLEDGE RANK") < 0:
+			fails.append("KR-A HUD missing KNOWLEDGE RANK (%s)" % first2_k)
+		if first2_k.find(lab_k) < 0:
+			fails.append("KR-A HUD missing rank number after KNOWLEDGE RANK (%s)" % first2_k)
+		GameManager.set_faction(GameManager.Faction.GROT)
+		var snap_gr: Dictionary = Hud_k.snapshot(os.get("ship") if os else null, os.get("player") if os else null, pad_k)
+		var first_gr := str(Hud_k.stack_text(snap_gr)).get_slice("\n", 0)
+		if first_gr.find("BIOMASS") < 0:
+			fails.append("KR-A gROT HUD dropped BIOMASS (%s)" % first_gr)
+		if first_gr.find("KNOWLEDGE") < 0:
+			fails.append("KR-A gROT HUD missing Knowledge Rank (%s)" % first_gr)
+		if GameManager.has_method("biomass_rank") and int(snap_gr.get("econ_rank", -99)) != int(GameManager.biomass_rank()):
+			fails.append("KR-A gROT HUD broke BR-A econ_rank")
+	if LayerContext and str(LayerContext.site_pin_id) != pin0_k:
+		fails.append("KR-A changed site_pin (%s → %s)" % [pin0_k, LayerContext.site_pin_id])
+	if pin0_k.begins_with("SITE_") == false and LayerContext and str(LayerContext.site_pin_id).begins_with("SITE_"):
+		fails.append("KR-A minted SITE_* pin (%s)" % LayerContext.site_pin_id)
+	print("[Playtest] KR-A rank ", GameManager.knowledge_ladder(), " lifetime=",
+		snapped(float(GameManager.lifetime_knowledge), 0.1), " harvest=", snapped(rate0_k * cpu0_k, 0.01),
+		" Pulse=", pulse0_k, " cap=", cap0_k, " print=", cost0_k, " no SITE_*")
+	GameManager.subject_mastery = mastery0_k
+	if GameManager.has_method("_recalc_knowledge"):
+		GameManager._recalc_knowledge()
+	GameManager.lifetime_knowledge = know0_k
+	GameManager.lifetime_biomass = life0_k
+	GameManager.biomass = bio0_k
+	if GameManager.has_method("set_faction"):
+		GameManager.set_faction(fac0_k)
 
 
 func _finish(fails: PackedStringArray, code: int) -> void:

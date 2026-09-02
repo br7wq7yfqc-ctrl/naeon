@@ -86,6 +86,11 @@
     Pilot F/I unchanged. MC-A gunner seat stays. Host authority.
     Knowledge does not change thrust / DPS / yield / Pulse / Hack.
     No second hull. Not Clash. No SITE_* (this pass).
+31. KR-A: Knowledge Rank 0–4 from lifetime mastery (AllianceRanks family).
+    SoftKnowledge / HUD KNOWLEDGE / KNOWLEDGE RANK + rank number.
+    BR-A Biomass Rank stays. Cybernex stays CONTRIB. Rank does not
+    change harvest / Pulse / Hack / print / exclusive modules.
+    Infection cap 5. No P2W. No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

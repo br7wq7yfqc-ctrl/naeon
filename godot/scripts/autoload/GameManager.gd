@@ -18,6 +18,7 @@ var contribution: float = 0.0  ## Cybernex RBE score
 var biomass: float = 0.0       ## gROT Biomass score
 var lifetime_biomass: float = 0.0  ## earned Biomass; spend does not reduce (BR-A rank)
 var knowledge_rank: int = 0
+var lifetime_knowledge: float = 0.0  ## earned mastery; never reduced (KR-A rank)
 var subject_mastery: Dictionary = {}
 var session_started_at: int = 0
 var alliance_rank: int = 0  ## 0–4 soft social only (AllianceRanks)
@@ -133,6 +134,11 @@ func biomass_rank() -> int:
 	## BR-A: 0–4 from lifetime Biomass wallet. Label only — never combat / yield.
 	return _AllianceRanks.rank_from_lifetime(lifetime_biomass)
 
+
+func knowledge_ladder() -> int:
+	## KR-A: 0–4 from lifetime mastery. HUD label only — never yield / DPS / Pulse.
+	return _AllianceRanks.rank_from_lifetime(lifetime_knowledge)
+
 ## Faction-aware soft economy deposit from harvest/work.
 ## `owner_faction` names the side that earned it; empty means the local player.
 func deposit_economy(amount: float, from_harvest: bool = false, owner_faction: String = "") -> void:
@@ -189,6 +195,8 @@ func economy_label() -> String:
 	return "CONTRIB %.1f" % contribution
 
 func add_mastery(subject: String, amount: float) -> void:
+	if amount > 0.0:
+		lifetime_knowledge += amount
 	var cur: float = subject_mastery.get(subject, 0.0)
 	var nxt: float = clampf(cur + amount, 0.0, 100.0)
 	subject_mastery[subject] = nxt
