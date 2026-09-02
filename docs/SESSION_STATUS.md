@@ -1,3 +1,5 @@
+**2026-09-02 — DO-B: contested Cybernex ↔ gROT on existing PlayerOrbitalStation cluster (ST-E dock+habitat, ST-G factory stays; same OwnershipData / OwnershipComponent / ContestedRing as DO-A; SoftKnowledge CONTESTED / CYBERNEX / GROT; host authority; DO-A pad path stays)**
+
 **2026-09-02 — DO-A: contested Cybernex ↔ gROT transition seed on one occupied unnamed pad (OwnershipData / OwnershipComponent / ContestedRing; SoftKnowledge CONTESTED / CYBERNEX / GROT; host authority; ST-F stays; ST-A overlay B opens)**
 
 **2026-09-02 — SN-D: second local viewer in Clash (TestArena / ClashDirector) sees SoftNet visual host puppet (arena/Clash pose; host Pulse/Hack/form; no second Clash dummy; SN-A/B/C stay; AR-H door stays; G5 closed)**
@@ -747,6 +749,8 @@ ST-C: spend Contribution/Biomass at `PadPrintBench` (§6(a)) → **one** catalog
 ST-D: hangar queue of **one** module on a catalog carrier (`cybernex_capital_carrier` …). Refuse if mass/power exceeded. Not a mobile `SITE_*`.  
 ST-E: player-owned orbital cluster of **two** catalog modules (dock + habitat) on Nex-Prime orbit. Same scene. Not a city. Not `SITE_*`. `ORBITAL_STATIONS` stays off.  
 ST-F: occupy unnamed pad → `O` / `flip_cluster_owner` CX↔GR. Theme + services list change. Harvest / print / hangar numbers stay. Not a second `SITE_*`. Not arena-flip.  
+DO-A: occupy unnamed pad → `start_contested_transition` / `advance_contested_transition` CX↔GR. SoftKnowledge `CONTESTED` / `CYBERNEX` / `GROT`. ST-F instant flip stays.  
+DO-B: existing `PlayerOrbitalStation` cluster → same contested start/advance grammar. ST-E dock+habitat stay. ST-G factory stays. SoftKnowledge labels only.  
 ST-G: factory in the existing `PlayerOrbitalStation` cluster (ST-E stays dock+habitat). Spend Contribution/Biomass at bench (c) → **one** catalog module. Without factory, (c) refuses. No cash-shop skip. Knowledge does not cheapen `rules/15`.  
 ST-H: occupy unnamed pad → one `PadDefenseTurret` via `BaseBuilder` (not Clash `Turret.gd`). HP; Pulse 11. Overlay B still opens. ST-A/B stay. No `SITE_*`.  
 ST-I: occupy unnamed pad → one `PadStorage` via `BaseBuilder` (not a second ship `CargoHold`). Holds **one** crate; occupy dock transfers pad-storage ↔ ship hold. Knowledge labels only. Mass/value stay. Overlay B still opens. ST-A/B/H stay. No `SITE_*`.  
@@ -862,6 +866,8 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | SN-B hull SoftNet visual | **built** — second local viewer seated on OpenSpace hull sees host hull/pilot puppet; host Pulse/occupy/thrust; no second hull; SN-A stays; G5 closed |
 | SN-C overlay SoftNet visual | **built** — second local viewer on ST-A Strategy overlay (B) sees host habitat/extractor/modules puppet; host Pulse/occupy/Hack; no second pad modules; SN-A/SN-B stay; AR-H door stays; G5 closed |
 | SN-D Clash SoftNet visual | **built** — second local viewer in Clash (TestArena / ClashDirector) sees host arena/Clash puppet; host Pulse/Hack/form; no second dummy; SN-A/B/C stay; AR-H door stays; G5 closed |
+| DO-A pad contested ownership | **built** — occupied unnamed pad CX↔GR transition; OwnershipData / OwnershipComponent / ContestedRing; SoftKnowledge CONTESTED / CYBERNEX / GROT; ST-F stays |
+| DO-B orbital contested ownership | **built** — PlayerOrbitalStation CX↔GR transition; same grammar as DO-A; ST-E two modules + ST-G factory stay; DO-A pad path stays |
 | NP-C | **built** — NPC habitat on empty unnamed pad |
 | NP-G | **built** — NPC ST-C print: spend Contribution/Biomass → one catalog module; no cash skip |
 | NP-H | **built** — NPC ST-D hangar: queue one catalog module; mass/power refuse; no SITE_* |

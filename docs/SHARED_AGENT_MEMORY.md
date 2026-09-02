@@ -154,6 +154,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-08-27 | ST-E: player-owned orbital cluster of two catalog modules (dock + habitat) on Nex-Prime orbit. Not a city. Not SITE_*. Not ORBITAL_STATIONS. | st-e-orbital |
 | 2026-08-27 | ST-F: CX↔GR owner swap on one occupied unnamed pad. Theme + services change. Harvest / print / hangar numbers stay. Not SITE_*. Not arena-flip. | st-f-owner |
 | 2026-09-02 | DO-A: contested CX↔GR transition on one occupied unnamed pad. OwnershipData start/advance + OwnershipComponent + ContestedRing. SoftKnowledge CONTESTED / CYBERNEX / GROT. Host authority. ST-F stays. | do-a-ownership |
+| 2026-09-02 | DO-B: contested CX↔GR on existing PlayerOrbitalStation. Same OwnershipData / OwnershipComponent / ContestedRing as DO-A. ST-E two modules + ST-G factory stay. SoftKnowledge CONTESTED / CYBERNEX / GROT. Host authority. DO-A stays. | do-b-ownership |
 | 2026-08-29 | AR-E leftover: cycle_form advances from live current_form, not stale _form_index after SoftSession restore (Feline+0 → Feline). Identity only; no HP/DPS. |
 | 2026-08-29 | OS-H leftover: F-board frees the pad walker; occupy / HUD / dummy no longer read `global_transform` on a node that is valid but off-tree. ST-F playtest `get_meta("site_pin")` uses a default. | os-h-freed-actor |
 | 2026-08-29 | OS-H leftover: SoftScanCache get_player/pads/ships/enemies require `is_inside_tree`; Pulse hurtbox skips off-tree; F-interact same. | os-h-scan-cache |

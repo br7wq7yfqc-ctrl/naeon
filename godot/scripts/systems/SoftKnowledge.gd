@@ -436,7 +436,7 @@ static func exclusive_module_unlocked(_id: String = "") -> bool:
 	return false
 
 
-## DO-A: name the ownership state. Never DPS / yield / thrust / Pulse / Hack.
+## DO-A / DO-B: name the ownership state. Never DPS / yield / thrust / Pulse / Hack.
 static func ownership_state_label(faction: String = "") -> String:
 	var f := str(faction)
 	var hist := mastery("history")

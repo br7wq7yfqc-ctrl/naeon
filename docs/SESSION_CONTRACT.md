@@ -111,6 +111,11 @@
     SoftKnowledge / HUD CONTESTED / CYBERNEX / GROT only. Host authority.
     ST-F stays. ST-A overlay B opens. Infection cap 5. No SITE_*
     (this pass).
+38. DO-B: same contested transition on the existing PlayerOrbitalStation
+    cluster (ST-E dock+habitat; ST-G factory stays). Same OwnershipData
+    grammar as DO-A. SoftKnowledge / HUD CONTESTED / CYBERNEX / GROT only.
+    Host authority. DO-A pad path stays. Not a second pad. Infection cap 5.
+    No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

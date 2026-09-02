@@ -513,6 +513,7 @@ func player_factory() -> Node3D:
 
 func occupied_pad_base() -> Node:
 	## ST-F / DO-A: unnamed pad controller the player already occupies. Not a new SITE_*.
+	## DO-B lives on PlayerOrbitalStation, not this pad.
 	var tree := get_tree()
 	var actor: Node3D = null
 	var best: Node = null

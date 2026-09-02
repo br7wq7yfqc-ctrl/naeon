@@ -13,6 +13,8 @@ OwnershipData: current/previous faction, transition_progress (0→1), claim_stre
 
 **DO-A seed (built):** one occupied unnamed pad starts/advances a contested Cybernex ↔ gROT transition (`OwnershipData` + `OwnershipComponent` + `ContestedRing`). SoftKnowledge / HUD labels `CONTESTED` / `CYBERNEX` / `GROT` only — never DPS / yield / thrust / Pulse / Hack. Host authority. ST-F instant flip stays. Not HyperGate G4. Not galaxy-wide transforms.
 
+**DO-B seed (built):** the existing `PlayerOrbitalStation` cluster (ST-E dock+habitat; ST-G factory stays) uses the same start/advance grammar. SoftKnowledge / HUD labels only. Not a second pad. Not galaxy-wide transforms.
+
 ## Visual Transformation
 - Cybernex: clean futuristic + living nature, cyan/white/green emission, Venus Project harmony
 - gROT: industrial post-apocalyptic, biomass overlays, red-purple emission, swarm aesthetics
