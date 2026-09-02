@@ -162,6 +162,7 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 | **ST-E** | Своя орбитальная станция ≥2 модулей | **built:** `PlayerOrbitalStation` dock+habitat на орбите Nex-Prime; грамматика §5 | два модуля в одном кластере; не город | mint `SITE_*`; 2-я система |
 | **ST-F** | Смена владельца CX↔GR на одной базе | **built:** `PadBaseController.flip_cluster_owner`; `swap_cluster_theme`; `OwnershipData` | визуал + услуги, те же числа тира | второй `SITE_*`; арена-флип |
 | **DO-A** | Contested переход CX↔GR на одном occupied unnamed паде | **built:** `start_contested_transition` / `advance_contested_transition`; `OwnershipData` + `OwnershipComponent` + `ContestedRing`; SoftKnowledge `CONTESTED` / `CYBERNEX` / `GROT` | визуал + метр contest; host authority | HyperGate G4; galaxy transforms; P2W |
+| **DO-B** | Contested переход CX↔GR на ST-E orbital cluster | **built:** same `OwnershipData` / `OwnershipComponent` / `ContestedRing` on `PlayerOrbitalStation`; ST-G factory stays | визуал + метр contest; host authority; DO-A pad + ST-F stay | HyperGate G4; galaxy transforms; mint `SITE_*` |
 | **ST-G** | Своя factory + печать (c) | **built:** factory on `PlayerOrbitalStation`; `PadPrintBench.print_one_factory_module`; `rules/15` | factory в том же кластере; списать Contribution/Biomass; **один** модуль; без factory — отказ | cash-shop skip; mint `SITE_*`; ST-E = 3 модуля |
 | **ST-H** | Один turret на occupied unnamed паде | **built:** `BaseBuilder.place_pad_turret` / `PadDefenseTurret` after occupy | turret с HP; Pulse 11 по PV-A rival / BT-A range; overlay B жив; ST-A/B stay; не Clash OUTER | Clash `Turret.gd`; mint `SITE_*`; P2W repair; permadeath |
 | **ST-I** | Один storage на occupied unnamed паде | **built:** `BaseBuilder.place_pad_storage` / `PadStorage` after occupy | storage держит **один** crate; occupy dock ↔ ship `CargoHold`; overlay B жив; ST-A/B/H stay; Knowledge labels; mass/value stay | второй ship `CargoHold`; mint `SITE_*`; Clash; P2W |
@@ -195,6 +196,7 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 | ST-G своя factory + печать (c) в player cluster | **built** |
 | ST-F смена владельца CX↔GR на одной базе | **built** |
 | DO-A contested переход CX↔GR на occupied unnamed паде | **built** |
+| DO-B contested переход CX↔GR на ST-E orbital cluster | **built** |
 | NP-C | **built** — NPC ставит один модуль |
 | G2–G6 | закрыты |
 

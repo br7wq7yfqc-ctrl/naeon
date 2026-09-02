@@ -157,6 +157,12 @@ const AR_H_DOOR := true
 ## HUD label only (CONTESTED / CYBERNEX / GROT). Not HyperGate G4. Not
 ## galaxy-wide transforms. ST-F instant flip stays. Infection cap 5.
 const DO_A_OWNERSHIP := true
+## DO-B: contested Cybernex ↔ gROT transition on the existing player
+## orbital cluster (ST-E dock+habitat, Nex-Prime orbit). ST-G factory stays.
+## Reuses OwnershipData / OwnershipComponent / ContestedRing. SoftKnowledge
+## CONTESTED / CYBERNEX / GROT. DO-A pad path and ST-F instant flip stay.
+## Not HyperGate G4. Not galaxy-wide transforms. Infection cap 5. No SITE_*.
+const DO_B_OWNERSHIP := true
 
 const BUILD_TOKENS := 1
 const RESTORE_TOKENS := 6

@@ -849,6 +849,25 @@ func _refresh() -> void:
 						best_txt = "%s  %s" % [own_l, best_txt]
 		nearest = best_txt
 
+	# DO-B: orbital cluster Knowledge label. Distance-gated so pad occupy HUD stays.
+	if not pocket and tree and origin != null:
+		for n in tree.get_nodes_in_group("player_orbital_stations"):
+			if not (n is Node3D):
+				continue
+			if not n.has_method("ownership_state_label"):
+				continue
+			var d_orb: float = origin.global_position.distance_to((n as Node3D).global_position)
+			if d_orb > 180.0:
+				continue
+			var ol := str(n.ownership_state_label())
+			if n.has_method("get_faction") and str(n.get_faction()) == "Contested":
+				contested_near = true
+			elif n.has_method("contested_ring_active") and bool(n.contested_ring_active()):
+				contested_near = true
+			if ol != "" and nearest.find(ol) < 0:
+				nearest = (nearest + "  ·  " + ol) if nearest != "" else ol
+			break
+
 	# Terrain budget
 	var terra := ""
 	if not pocket and origin != null and get_tree():

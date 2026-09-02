@@ -1,3 +1,5 @@
+**2026-09-02 — DO-B: contested Cybernex ↔ gROT transition on the ST-E player orbital cluster (dock+habitat, Nex-Prime orbit; OwnershipData / OwnershipComponent / ContestedRing; SoftKnowledge CONTESTED / CYBERNEX / GROT; host authority; ST-G factory stays; DO-A pad path and ST-F stay)**
+
 **2026-09-02 — DO-A: contested Cybernex ↔ gROT transition seed on one occupied unnamed pad (OwnershipData / OwnershipComponent / ContestedRing; SoftKnowledge CONTESTED / CYBERNEX / GROT; host authority; ST-F stays; ST-A overlay B opens)**
 
 **2026-09-02 — SN-D: second local viewer in Clash (TestArena / ClashDirector) sees SoftNet visual host puppet (arena/Clash pose; host Pulse/Hack/form; no second Clash dummy; SN-A/B/C stay; AR-H door stays; G5 closed)**
@@ -790,7 +792,9 @@ FL-A: first fleet seed — one extra allied pip on the ST-A Strategy overlay (ke
 FL-B: second extra allied pip on the same ST-A overlay. SoftNet visual hull (pad-visitor / NP-A grammar). Cap **3** (player + 2). HUD `FLEET n/3` is SoftKnowledge only. Click/select ≠ combat. Host Pulse / occupy. Not 10–15 ships. Not a second OpenSpace. Not ENet. Not G5. FL-A first pip stays. Overlay B still opens. No `SITE_*`. `ORBITAL_STATIONS` stays off.  
 SN-B: second local viewer seated with the host on the player hull / OpenSpace sees a SoftNet visual puppet of the host hull / pilot (or crew-seat pose). Host keeps Pulse / occupy / thrust. No second physical hull. SoftKnowledge `NET` label only. SN-A pad puppet stays. MC-A/B/C crew seats stay. FL-A / FL-B fleet pips stay. BT-A/B/C/D stay. PV-A/B stay. Clash unchanged. Not ENet cluster. Not 10k CCU. G5 stays closed. No `SITE_*`.  
 SN-C: second local viewer on ST-A Strategy overlay (key B) on an occupied unnamed pad sees a SoftNet visual puppet of the host pad / strategy actor (habitat / extractor / modules pose). Host keeps Pulse / occupy / Hack. No second physical pad modules. SoftKnowledge `NET` label only. SN-A pad puppet stays. SN-B hull puppet stays. Overlay B still opens. Clash unchanged. Not ENet cluster. Not 10k CCU. G5 stays closed. No `SITE_*`.  
-SN-D: second local viewer in Clash (`TestArena` / `ClashMatchDirector`) sees a SoftNet visual puppet of the host (arena / Clash pose). Host keeps Pulse / Hack / form. No second physical Clash dummy. SoftKnowledge `NET` label only. SN-A / SN-B / SN-C stay. AR-H pad door stays as the legal Clash entry. Not leftover 5v5 soak. Not ENet cluster. Not 10k CCU. G5 stays closed. No `SITE_*`.
+SN-D: second local viewer in Clash (`TestArena` / `ClashMatchDirector`) sees a SoftNet visual puppet of the host (arena / Clash pose). Host keeps Pulse / Hack / form. No second physical Clash dummy. SoftKnowledge `NET` label only. SN-A / SN-B / SN-C stay. AR-H pad door stays as the legal Clash entry. Not leftover 5v5 soak. Not ENet cluster. Not 10k CCU. G5 stays closed. No `SITE_*`.  
+DO-A: after occupy on one unnamed pad, start/advance a contested Cybernex ↔ gROT transition. `OwnershipData` / `OwnershipComponent` / `ContestedRing`. SoftKnowledge / HUD `CONTESTED` / `CYBERNEX` / `GROT` only. Host authority. ST-F instant flip stays. Not HyperGate G4. Not galaxy-wide transforms. No `SITE_*`.  
+DO-B: same contested Cybernex ↔ gROT transition on the existing ST-E player orbital cluster (dock+habitat, Nex-Prime orbit). ST-G factory stays. DO-A pad path stays. ST-F instant flip stays. SoftKnowledge / HUD `CONTESTED` / `CYBERNEX` / `GROT` only. Host authority. Not HyperGate G4. Not galaxy-wide transforms. No `SITE_*`.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -862,6 +866,8 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | SN-B hull SoftNet visual | **built** — second local viewer seated on OpenSpace hull sees host hull/pilot puppet; host Pulse/occupy/thrust; no second hull; SN-A stays; G5 closed |
 | SN-C overlay SoftNet visual | **built** — second local viewer on ST-A Strategy overlay (B) sees host habitat/extractor/modules puppet; host Pulse/occupy/Hack; no second pad modules; SN-A/SN-B stay; AR-H door stays; G5 closed |
 | SN-D Clash SoftNet visual | **built** — second local viewer in Clash (TestArena / ClashDirector) sees host arena/Clash puppet; host Pulse/Hack/form; no second dummy; SN-A/B/C stay; AR-H door stays; G5 closed |
+| DO-A pad contested ownership | **built** — CX↔GR contested transition on one occupied unnamed pad; OwnershipData / OwnershipComponent / ContestedRing; SoftKnowledge CONTESTED / CYBERNEX / GROT; host; ST-F stays |
+| DO-B orbital contested ownership | **built** — CX↔GR contested transition on ST-E player orbital cluster; same OwnershipData / OwnershipComponent / ContestedRing; ST-G factory stays; DO-A pad + ST-F stay |
 | NP-C | **built** — NPC habitat on empty unnamed pad |
 | NP-G | **built** — NPC ST-C print: spend Contribution/Biomass → one catalog module; no cash skip |
 | NP-H | **built** — NPC ST-D hangar: queue one catalog module; mass/power refuse; no SITE_* |

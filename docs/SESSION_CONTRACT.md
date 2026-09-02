@@ -111,6 +111,12 @@
     SoftKnowledge / HUD CONTESTED / CYBERNEX / GROT only. Host authority.
     ST-F stays. ST-A overlay B opens. Infection cap 5. No SITE_*
     (this pass).
+38. DO-B: contested Cybernex ↔ gROT transition on the existing ST-E
+    player orbital cluster (dock+habitat, Nex-Prime orbit). ST-G factory
+    stays. OwnershipData / OwnershipComponent / ContestedRing.
+    SoftKnowledge / HUD CONTESTED / CYBERNEX / GROT only. Host authority.
+    DO-A pad path stays. ST-F instant flip stays. Infection cap 5.
+    No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.
