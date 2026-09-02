@@ -1132,8 +1132,9 @@ func _refresh_economy() -> void:
 			_SoftK.knowledge_rank_word(), _SoftK.knowledge_rank_label()
 		]
 	else:
-		_econ_label.text = "%s %.1f%s  ·  %s  → next %.0f  ·  %s %s  ·  soft only (no P2W)" % [
-			unit, cur, delta_s, rname, next_cost,
+		var cr := int(GameManager.contribution_rank()) if GameManager.has_method("contribution_rank") else 0
+		_econ_label.text = "%s %.1f%s  ·  %s  ·  %s  → next %.0f  ·  %s %s  ·  soft only (no P2W)" % [
+			unit, cur, delta_s, _SoftK.contribution_rank_label(cr), rname, next_cost,
 			_SoftK.knowledge_rank_word(), _SoftK.knowledge_rank_label()
 		]
 	if _econ_flash > 0.0:
