@@ -20573,8 +20573,9 @@ func _assert_fl_a(os: Node, fails: PackedStringArray) -> void:
 	if not bool(P0.ST_A_OVERLAY) or not bool(P0.ST_B_EXTRACTOR) or not bool(P0.ST_H_TURRET) \
 			or not bool(P0.ST_I_STORAGE) or not bool(P0.ST_J_HANGAR):
 		fails.append("FL-A dropped ST-A…J")
-	if not bool(P0.BT_A_GUARD) or not bool(P0.BT_B_VISITOR) or not bool(P0.BT_C_SWARM):
-		fails.append("FL-A dropped BT-A/B/C")
+	if not bool(P0.BT_A_GUARD) or not bool(P0.BT_B_VISITOR) or not bool(P0.BT_C_SWARM) \
+			or not bool(P0.BT_D_PACK):
+		fails.append("FL-A dropped BT-A/B/C/D")
 	if not bool(P0.CR_A_CONTRIB_RANK) or not bool(P0.KR_A_KNOWLEDGE_RANK) \
 			or not bool(P0.BR_A_BIOMASS_RANK):
 		fails.append("FL-A dropped CR-A/KR-A/BR-A")
@@ -20726,6 +20727,15 @@ func _assert_fl_a(os: Node, fails: PackedStringArray) -> void:
 	if LayerContext and str(LayerContext.site_pin_id) != pin0 \
 			and str(LayerContext.site_pin_id).begins_with("SITE_"):
 		fails.append("FL-A minted SITE_* pin (%s)" % LayerContext.site_pin_id)
+	if traffic != null and is_instance_valid(traffic):
+		if traffic.has_method("get_pack") and traffic.get_pack() == null:
+			fails.append("FL-A dropped BT-D Cybernex pack")
+		if traffic.has_method("pack_count") and int(traffic.pack_count()) != 3:
+			fails.append("FL-A dropped BT-D pack size")
+		if traffic.has_method("get_swarm") and traffic.get_swarm() == null:
+			fails.append("FL-A dropped BT-C GrotSwarm")
+		if traffic.has_method("swarm_count") and int(traffic.swarm_count()) != 3:
+			fails.append("FL-A dropped BT-C swarm size")
 	print("[Playtest] FL-A overlay B opens · fleet pip ", line, " cap=2 · host Pulse/occupy · no SITE_*")
 	if GameManager:
 		GameManager.subject_mastery = mastery0
