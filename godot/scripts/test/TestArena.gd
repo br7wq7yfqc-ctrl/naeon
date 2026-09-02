@@ -33,6 +33,7 @@ func _ready() -> void:
 	_apply_arena_perf()
 	_phase0_arena_feel()
 	_ensure_clash_director()
+	_ensure_clash_softnet()
 	print("[TestArena] Loaded — Aexion Clash slice")
 	if player and player.has_method("apply_clash_ots"):
 		player.apply_clash_ots()
@@ -778,6 +779,36 @@ func _ensure_clash_director() -> void:
 	d.name = "ClashMatchDirector"
 	add_child(d)
 	print("[TestArena] ClashMatchDirector")
+
+
+func clash_softnet() -> Node:
+	return get_node_or_null("ClashSoftNet")
+
+
+func get_clash_softnet() -> Node:
+	return clash_softnet()
+
+
+func _ensure_clash_softnet() -> void:
+	## SN-D: second local viewer sees host Clash pose. Visual only.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.SN_D_CLASH):
+		return
+	var existing: Node = get_node_or_null("ClashSoftNet")
+	if existing != null:
+		var d: Node = get_node_or_null("ClashMatchDirector")
+		if existing.has_method("bind"):
+			existing.bind(d if d != null else self)
+		if existing.has_method("sync_from_host"):
+			existing.sync_from_host()
+		return
+	var n: Node3D = Node3D.new()
+	n.set_script(load("res://scripts/world/ClashSoftNet.gd"))
+	n.name = "ClashSoftNet"
+	add_child(n)
+	var dir: Node = get_node_or_null("ClashMatchDirector")
+	if n.has_method("bind"):
+		n.bind(dir if dir != null else self)
 
 
 func _soft_neon_ambient() -> void:

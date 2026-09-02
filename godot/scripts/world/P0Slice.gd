@@ -122,6 +122,12 @@ const SN_B_HULL := true
 ## No second physical pad modules. Not ENet. Not 10k CCU. G5 closed. No SITE_*.
 ## SN-A pad puppet and SN-B hull puppet stay.
 const SN_C_OVERLAY := true
+## SN-D: second local viewer in Clash (TestArena / ClashDirector) sees a
+## SoftNet visual puppet of the host (arena / Clash pose). Host keeps Pulse /
+## Hack / form. No second physical Clash dummy. Not ENet. Not 10k CCU.
+## G5 cluster stays closed. AR-H pad door stays as the legal Clash entry.
+## SN-A / SN-B / SN-C stay. No SITE_*.
+const SN_D_CLASH := true
 ## BR-A: Biomass Rank 0–4 from lifetime Biomass wallet (AllianceRanks family).
 ## SoftKnowledge / HUD label only. Never yield / DPS / Pulse / Hack / print.
 ## Cybernex stays CONTRIB / CONTRIBUTION. No SITE_*. Infection cap 5.
