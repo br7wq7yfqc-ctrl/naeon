@@ -3,8 +3,8 @@
 **Версия:** 1.0  
 **Дата:** 2026-08-17  
 **Движок:** Godot 4.7.2  
-**Статус:** ST-H built (2026-09-01).  
-**Очередь кода:** ST-H one pad turret after occupy. G2–G6 still locked.
+**Статус:** ST-I built (2026-09-02).  
+**Очередь кода:** ST-I one pad storage after occupy. G2–G6 still locked.
 
 Это **третий бар**: не полёт OPEN SPACE и не Clash.  
 Подход космоса: [`OPEN_SPACE_SC_BENCHMARK.md`](OPEN_SPACE_SC_BENCHMARK.md) (OS-A…OS-H).  
@@ -82,7 +82,7 @@ Top-down или overlay на **уже загруженном** теле или �
 | Extractor | съём с ноды → Contribution / Biomass | `Extractor.gd`; T1 в `rules/22` + `rules/15` (80–120); slug `t1_resource_extractor` |
 | Turret | оборона структуры | **ST-H:** `PadDefenseTurret` via BaseBuilder after occupy. Clash `Turret.gd` stays TestArena OUTER / contest guard. |
 | Pad | посадка, якорь перехода | OS-D пластины; `environments/landing_pad/` |
-| Storage | объём, права альянса | таблица `rules/22`; кода склада базы нет |
+| Storage | объём, права альянса | **ST-I:** `PadStorage` via BaseBuilder after occupy. Cap 1 crate. Occupy dock ↔ ship `CargoHold`. |
 | Hangar stub | техника / малый корабль | `GROUND_VEHICLES_HANGARS.md`; не гараж-клон |
 
 Тема CX / GR — `OwnershipData` + `swap_cluster_theme` / dual-mesh. Не второй `SITE_*`.
@@ -149,9 +149,9 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 
 ---
 
-## 9. Срезы ST-A … ST-G
+## 9. Срезы ST-A … ST-I
 
-Каждый срез playable сам. ST-A built 2026-08-22. ST-B built 2026-08-27. ST-C built 2026-08-27. ST-D built 2026-08-27. ST-E built 2026-08-27 (`PlayerOrbitalStation`: dock + habitat on Nex-Prime orbit). ST-F built 2026-08-27 (`flip_cluster_owner` on the occupied unnamed pad). ST-G built 2026-08-28 (factory in that same player cluster; bench (c) print of one catalog module). ST-H built 2026-09-01 (one pad turret via `BaseBuilder.place_pad_turret` after occupy; not Clash `Turret.gd`).
+Каждый срез playable сам. ST-A built 2026-08-22. ST-B built 2026-08-27. ST-C built 2026-08-27. ST-D built 2026-08-27. ST-E built 2026-08-27 (`PlayerOrbitalStation`: dock + habitat on Nex-Prime orbit). ST-F built 2026-08-27 (`flip_cluster_owner` on the occupied unnamed pad). ST-G built 2026-08-28 (factory in that same player cluster; bench (c) print of one catalog module). ST-H built 2026-09-01 (one pad turret via `BaseBuilder.place_pad_turret` after occupy; not Clash `Turret.gd`). ST-I built 2026-09-02 (one pad storage via `BaseBuilder.place_pad_storage` after occupy; one crate; occupy dock ↔ ship `CargoHold`).
 
 | ID | Роль | Семя | DoD | Отказ |
 |----|------|------|-----|-------|
@@ -163,6 +163,7 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 | **ST-F** | Смена владельца CX↔GR на одной базе | **built:** `PadBaseController.flip_cluster_owner`; `swap_cluster_theme`; `OwnershipData` | визуал + услуги, те же числа тира | второй `SITE_*`; арена-флип |
 | **ST-G** | Своя factory + печать (c) | **built:** factory on `PlayerOrbitalStation`; `PadPrintBench.print_one_factory_module`; `rules/15` | factory в том же кластере; списать Contribution/Biomass; **один** модуль; без factory — отказ | cash-shop skip; mint `SITE_*`; ST-E = 3 модуля |
 | **ST-H** | Один turret на occupied unnamed паде | **built:** `BaseBuilder.place_pad_turret` / `PadDefenseTurret` after occupy | turret с HP; Pulse 11 по PV-A rival / BT-A range; overlay B жив; ST-A/B stay; не Clash OUTER | Clash `Turret.gd`; mint `SITE_*`; P2W repair; permadeath |
+| **ST-I** | Один storage на occupied unnamed паде | **built:** `BaseBuilder.place_pad_storage` / `PadStorage` after occupy | storage держит **один** crate; occupy dock ↔ ship `CargoHold`; overlay B жив; ST-A/B/H stay; Knowledge labels; mass/value stay | второй ship `CargoHold`; mint `SITE_*`; Clash; P2W |
 
 ---
 
@@ -187,7 +188,8 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 
 | Сейчас | Дальше |
 |--------|--------|
-| ST-H один turret на occupied unnamed паде | — |
+| ST-I один storage на occupied unnamed паде | — |
+| ST-H один turret на occupied unnamed паде | **built** |
 | ST-G своя factory + печать (c) в player cluster | **built** |
 | ST-F смена владельца CX↔GR на одной базе | **built** |
 | NP-C | **built** — NPC ставит один модуль |

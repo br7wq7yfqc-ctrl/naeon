@@ -7,13 +7,13 @@
 **Принцип:** Local-first → Vertical Slices → Iterative Multiplayer → Platform + AI + Educational Systems  
 **SC → NAEON (роли, не клон):** `docs/design/SC_FEATURE_MAP.md` · бар подхода OS-A…OS-H: `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (OS-A…OS-H built; harness ритуала. 60 FPS / 5 мин = 3090 human gate).  
 **Clash нативен; бар арены — Predecessor/Paragon, не Arena Commander:** `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (AR-A…AR-G; код арены не вытесняет OS-A).  
-**Стратегия — третий бар, не Clash и не полёт OPEN SPACE:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-H built: overlay, extractor, print, hangar, orbital cluster, CX↔GR owner swap, own factory print, one pad turret).  
+**Стратегия — третий бар, не Clash и не полёт OPEN SPACE:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-I built: overlay, extractor, print, hangar, orbital cluster, CX↔GR owner swap, own factory print, one pad turret, one pad storage).  
 **Каталог — дыры (очередь, не новый catalog):** `docs/design/WORLD_FILL.md` §6. Ready-made fill → locked plates без GLB → пластины только на титульную дыру. Не mint SITE_*. Не capital-ship wave. OS-H harness built; не G2.  
 **NPC agency + MMO HOLD:** `docs/design/NPC_AGENCY.md` (NP-A…NP-F + NP-C + NP-G ST-C print + NP-H ST-D hangar + **NP-I** ST-G factory built) · `docs/design/MMO_SERVERS.md` (Phase 3 HOLD; 10k CCU / ≥100 на шард без instance-split; нет netcode сейчас; не G5 / G2–G6).
 
 **2026-09-01 — текущий бар PV-B (не Voice, не G2, не G5):**  
 OS-A…OS-H built. G2–G6 закрыты. G1 CRUISE не открыт.  
-ST-A…ST-H / IN-A…E / WF-A / Q-A / Q-B / Q-C / Q-D / Q-E / HF-A / HF-B / HF-C / PV-A built.  
+ST-A…ST-I / IN-A…E / WF-A / Q-A / Q-B / Q-C / Q-D / Q-E / HF-A / HF-B / HF-C / PV-A built.  
 PV-B: first Space PvP from the seated player hull — same host-authority pad rival `CombatDummy`, Pulse 11 both ways, win HP → 0, Infection cap 5, Knowledge labels only. TPS PV-A stays.  
 Петля P0.6 на RTX 3090 жива — не ломать. llvmpipe ≠ FPS PASS.
 
@@ -72,15 +72,16 @@ PV-B: first Space PvP from the seated player hull — same host-authority pad ri
 - **DoD**: экипировать, летать, стрелять, save/load
 
 ### 1.3 Colony / Strategy Core
-**Бар:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-H built). Overlay на загруженном теле ARK — не карта галактики.
+**Бар:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-I built). Overlay на загруженном теле ARK — не карта галактики.
 
 - **ST-A (built):** `StrategyOverlay` (клавиша B) + один habitat на `Pad_North` / `Pad_Approach` / `Pad_Flank`. `LayerContext` = Strategy. Корабль и TPS живы после Esc/B. Не `SITE_*`.
 - **ST-B (built):** видимый extractor на unnamed паде; occupy → harvest → Contribution на HUD. Knowledge только подпись.
 - **ST-C (built):** печать одного catalog-модуля на паде / NPC-верстаке (`PadPrintBench`). Spend Contribution/Biomass (`rules/15`). Нет cash-shop skip. Knowledge ≠ cheaper tables.
 - **ST-D (built):** очередь одного модуля в hangar catalog-носителя (`CatalogCarrier` / `CarrierHangarQueue`). Refuse если mass/power корпуса превышен. Не мобильный `SITE_*`. Интерьеры later.
 - **ST-E (built):** своя орбитальная станция — два catalog-модуля (dock + habitat) в одном `PlayerOrbitalStation` на орбите Nex-Prime. Не город. Не `SITE_*`. `ORBITAL_STATIONS` выкл.
-- Свои базы из модулей на unnamed pads / claimed dirt (occupy-to-hold): habitat (ST-A), extractor (ST-B), turret (ST-H), pad, storage, hangar stub
+- Свои базы из модулей на unnamed pads / claimed dirt (occupy-to-hold): habitat (ST-A), extractor (ST-B), turret (ST-H), pad, storage (ST-I), hangar stub
 - **ST-H (built):** one `PadDefenseTurret` on an occupied unnamed pad via `BaseBuilder.place_pad_turret` after occupy. HP; Pulse 11 at PV-A rival / BT-A range hostiles. Not Clash `Turret.gd` / OUTER 160. Overlay B still opens. ST-A habitat 0 combat + ST-B extractor stay. Knowledge labels only. No P2W repair. No `SITE_*`.
+- **ST-I (built):** one `PadStorage` on an occupied unnamed pad via `BaseBuilder.place_pad_storage` after occupy. Holds **one** crate; occupy dock transfers pad-storage ↔ ship `CargoHold`. Knowledge labels only. Mass/value stay. Overlay B still opens. ST-A/B/H stay. Not a second ship hold. No `SITE_*`.
 - Свои орбитальные станции из той же грамматики (dock, habitat, factory, defense, hangar) — орбита authored-тела, не `SITE_*` — ST-E built (два модуля)
 - Печать модулей на трёх верстаках: (a) NPC/authored пад или станция — ST-C built; (b) hangar carrier/mothership — ST-D built; (c) своя factory — ST-G built
 - Ресурсные ноды + extraction + локальный Contribution / RBE / Biomass — ST-B built
@@ -91,6 +92,7 @@ PV-B: first Space PvP from the seated player hull — same host-authority pad ri
 - **DoD ST-E:** два модуля в одном player orbital cluster; не город; не mint `SITE_*`; не 2-я система
 - **DoD ST-G:** factory в том же player cluster; списать Contribution/Biomass; один catalog-модуль; без factory — отказ; cash-shop skip невозможен
 - **DoD ST-H:** occupy unnamed pad → one visible turret with HP; Pulse hits a pad hostile; destroyed turret ≠ permadeath; not Clash OUTER; overlay B opens; no `SITE_*`
+- **DoD ST-I:** occupy unnamed pad → one visible storage; one-unit occupy dock pad-storage ↔ ship CargoHold; mass/value stay; overlay B opens; no `SITE_*`
 
 ### Cross
 - Asset pipeline (GLTF + LOD), dark-neon materials, local save

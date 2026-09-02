@@ -1,3 +1,5 @@
+**2026-09-02 — ST-I: one pad storage on occupied unnamed pad (BaseBuilder after occupy; one-unit occupy dock ↔ ship CargoHold; Knowledge labels; mass/value stay)**
+
 **2026-09-01 — ST-H: one pad turret on occupied unnamed pad (BaseBuilder after occupy; HP; Pulse 11; not Clash OUTER; G5 closed)**
 
 **2026-09-01 — HF-C: Strategy overlay (B) Hack / Firewall on occupied unnamed pad (same AbilitySystem; +1 / cap 5 refuse / Firewall −1; ST-A still opens)**
@@ -717,6 +719,7 @@ ST-E: player-owned orbital cluster of **two** catalog modules (dock + habitat) o
 ST-F: occupy unnamed pad → `O` / `flip_cluster_owner` CX↔GR. Theme + services list change. Harvest / print / hangar numbers stay. Not a second `SITE_*`. Not arena-flip.  
 ST-G: factory in the existing `PlayerOrbitalStation` cluster (ST-E stays dock+habitat). Spend Contribution/Biomass at bench (c) → **one** catalog module. Without factory, (c) refuses. No cash-shop skip. Knowledge does not cheapen `rules/15`.  
 ST-H: occupy unnamed pad → one `PadDefenseTurret` via `BaseBuilder` (not Clash `Turret.gd`). HP; Pulse 11. Overlay B still opens. ST-A/B stay. No `SITE_*`.  
+ST-I: occupy unnamed pad → one `PadStorage` via `BaseBuilder` (not a second ship `CargoHold`). Holds **one** crate; occupy dock transfers pad-storage ↔ ship hold. Knowledge labels only. Mass/value stay. Overlay B still opens. ST-A/B/H stay. No `SITE_*`.  
 IN-A: `I` at the player orbital cluster or an occupied unnamed pad → station foyer/ops pocket. `I` on the ST-D catalog carrier → `hangar_bay` pocket. Seat↔pocket↔hatch stays. Hatch from station/hangar returns to pad or dock (not MainMenu). No `SITE_*`. 0 Tripo.  
 IN-B: station **E** is board status / occupy / factory print gate (recycler toggle stays). **F** at `OpsSeat` or `HangarSeat` boards that seat; **I** returns to the same pocket. Live life-support readout; vented pocket uses the EVA suit soft warn (no HP). Station/hangar still ≠ ship cockpit. No `SITE_*`. 0 Tripo.  
 IN-C: ST-D catalog carrier has `HangarBay` + `CargoHold`. Ramp deploys when landed / slow hover / docked; BLOCKED when too fast or too high. Hatch from `hangar_bay` walks plates to the pad (not MainMenu). No rover. No `SITE_*`. 0 Tripo.  
@@ -745,7 +748,8 @@ PV-B: from the seated player hull (OpenSpace, not Clash), the same host-authorit
 BT-A: one occupied unnamed-pad guard (`PadGuardDummy`) walks a tiny 3-state GDScript BT — patrol near the plate, engage the player `SurfaceWalker` with Pulse (DPS 11), return-to-pad when the walker leaves. Host authority. Knowledge labels only. PV-A `PadRivalDummy` stays a distinct actor. Not Clash waves. Not 10k CCU. G5 stays closed. No `SITE_*`.  
 BT-B: one visitor `NpcPilot` on that occupied unnamed pad walks a sibling 3-state GDScript BT — approach the plate, hold (occupy/harvest still legal, NP-B numbers stay), leave. Host authority. Pulse DPS stays 11. Pad-guard BT-A stays. Knowledge labels only. Not Clash waves. Not 10k CCU. G5 stays closed. No `SITE_*`.  
 SN-A: second local viewer on the occupied unnamed pad sees a SoftNet visual `SurfaceWalker` puppet (optional PV-A rival pose). Host keeps Pulse / occupy. No second physical walker. Knowledge labels only. Clash unchanged. Not ENet cluster. Not 10k CCU. G5 stays closed. No `SITE_*`.  
-ST-H: occupy unnamed pad → `BaseBuilder` places **one** `PadDefenseTurret` (catalog emplacement). HP; Pulse 11 at PV-A rival / BT-A range hostiles. Destroyed turret is not permadeath. ST-A habitat (0 combat) and ST-B extractor stay. Overlay B still opens. Knowledge labels only. Not Clash `Turret.gd` / OUTER 160. No P2W repair. No `SITE_*`. G5 stays closed.
+ST-H: occupy unnamed pad → `BaseBuilder` places **one** `PadDefenseTurret` (catalog emplacement). HP; Pulse 11 at PV-A rival / BT-A range hostiles. Destroyed turret is not permadeath. ST-A habitat (0 combat) and ST-B extractor stay. Overlay B still opens. Knowledge labels only. Not Clash `Turret.gd` / OUTER 160. No P2W repair. No `SITE_*`. G5 stays closed.  
+ST-I: occupy unnamed pad → `BaseBuilder` places **one** `PadStorage` crate/hold. Cap 1 crate unit. Occupy dock transfers that unit pad-storage ↔ ship `CargoHold`. Knowledge labels only. Mass/value stay. Overlay B still opens. ST-A/B/H stay. Not a second ship hold. No `SITE_*`.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -755,7 +759,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
 | Документ | Роль |
 |----------|------|
-| `docs/design/BASE_STATION_STRATEGY.md` | ST-A…ST-H built |
+| `docs/design/BASE_STATION_STRATEGY.md` | ST-A…ST-I built |
 | `docs/design/OPEN_SPACE_SC_BENCHMARK.md` | Бар подхода OS-A…OS-H. G2–G6 закрыты |
 | `docs/design/ASSET_SOURCE_CANON.md` | unique→Tripo / CC0→neon / paid→neon+notice / отказ |
 | `docs/design/WORLD_FILL.md` | Авторский скелет / безымянный filler. Не чеканит `SITE_*` |
@@ -778,6 +782,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | ST-F ownership swap | **built** — CX↔GR on one occupied unnamed pad; same-tier numbers |
 | ST-G own factory print | **built** — factory in player cluster; spend → one catalog module; (c) refuses without factory |
 | ST-H pad turret | **built** — one PadDefenseTurret after occupy; HP; Pulse 11; not Clash OUTER; overlay B stays |
+| ST-I pad storage | **built** — one PadStorage after occupy; one-unit occupy dock ↔ ship CargoHold; Knowledge labels; mass/value stay |
 | IN-A interiors bar | **built** — station pocket ≠ ship; hangar_bay ≠ ship; doors not locked props |
 | IN-B interiors bar | **built** — ops console occupy/factory gate; F seat → I same pocket; LS readout |
 | IN-C hangar ramp | **built** — HangarBay+CargoHold on catalog carrier; gated ramp; hatch → plates → pad; no rover |

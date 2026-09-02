@@ -71,6 +71,7 @@ func _ready() -> void:
 	call_deferred("_ensure_visible_extractor")
 	call_deferred("_ensure_print_bench")
 	call_deferred("_ensure_pad_turret")
+	call_deferred("_ensure_pad_storage")
 	_seed_pad_cargo()
 	_contest_ring = Node3D.new()
 	_contest_ring.set_script(preload("res://scripts/world/ContestedRing.gd"))
@@ -144,6 +145,7 @@ func _process(delta: float) -> void:
 			_update_city_density()
 			_refresh_label()
 			call_deferred("_ensure_pad_turret")
+			call_deferred("_ensure_pad_storage")
 	_tick_occupy(delta)
 	_tick_guard_respawn(delta)
 	_tick_arena_influence(delta)
@@ -313,6 +315,7 @@ func _tick_occupy(delta: float) -> void:
 	if ownership.is_fully_owned() and _status != "contested":
 		_clear_guard()
 		_ensure_pad_turret()
+		_ensure_pad_storage()
 	_occupy_label_t += delta
 	if _occupy_label_t >= 0.35:
 		_occupy_label_t = 0.0
@@ -470,6 +473,7 @@ func _lock_to(f: OwnershipData.Faction, noisy: bool) -> void:
 	_bind_layer_claim()
 	call_deferred("_ensure_claim_beacon")
 	call_deferred("_ensure_pad_turret")
+	call_deferred("_ensure_pad_storage")
 	print("[PadBase] claim → ", ownership.faction_name(), " @ ", name)
 
 
@@ -748,6 +752,32 @@ func ensure_pad_turret() -> Node3D:
 	return visible_turret()
 
 
+func visible_storage() -> Node3D:
+	## ST-I: one pad storage crate/hold. Not a ship CargoHold.
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	var pad := _unnamed_pad_host()
+	if pad != null:
+		return _Builder.pad_storage_on(pad)
+	return find_child("PadStorage", true, false) as Node3D
+
+
+func ensure_pad_storage() -> Node3D:
+	_ensure_pad_storage()
+	return visible_storage()
+
+
+func pad_storage_count() -> int:
+	var store := visible_storage()
+	if store != null and store.has_method("unit_count"):
+		return int(store.unit_count())
+	return 0
+
+
+func clear_pad_yard() -> void:
+	## Playtest: empty the invisible yard so occupy dock uses PadStorage.
+	_cargo_units.clear()
+
+
 func _unnamed_pad_host() -> Node3D:
 	var n: Node = get_parent()
 	while n:
@@ -802,6 +832,30 @@ func _ensure_pad_turret() -> void:
 		fac = default_faction
 	_Builder.place_pad_turret(pad, fac)
 	print("[PadBase] ST-H turret on ", pad.name)
+
+
+func _ensure_pad_storage() -> void:
+	## ST-I: one storage crate/hold after occupy. Cap 1. Not a ship CargoHold.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	var pad := _unnamed_pad_host()
+	var fac := default_faction
+	if P0 == null or not bool(P0.ST_I_STORAGE):
+		return
+	if pad == null:
+		return
+	if ownership == null or not ownership.is_fully_owned():
+		return
+	if _status == "contested":
+		return
+	if _Builder.pad_storage_on(pad) != null:
+		return
+	if ownership.has_method("faction_name"):
+		fac = str(ownership.faction_name())
+	if fac == "" or fac == "Neutral" or fac == "Contested":
+		fac = default_faction
+	_Builder.place_pad_storage(pad, fac)
+	print("[PadBase] ST-I storage on ", pad.name)
 
 
 func print_bench() -> Node:
@@ -911,6 +965,7 @@ func ensure_pad_cargo(n: int = PAD_YARD_SEED) -> void:
 
 func try_dock_transfer(ship: Node, to_hold: bool) -> bool:
 	## One crate pad↔CargoHold. Dock = land + occupy. No tractor. No cash skip.
+	## Yard first (existing cargo dock). Empty yard → ST-I PadStorage (cap 1).
 	if ship == null or not is_instance_valid(ship):
 		return false
 	if not bool(ship.get("is_landed")):
@@ -923,33 +978,70 @@ func try_dock_transfer(ship: Node, to_hold: bool) -> bool:
 	if hold == null:
 		return false
 	if to_hold:
-		if _cargo_units.is_empty():
-			return false
 		if not hold.has_method("store_unit"):
 			return false
-		var unit: Dictionary = _cargo_units[0]
+		var unit: Dictionary = _take_dock_unit()
+		if unit.is_empty():
+			return false
 		if hold.has_method("can_store_unit"):
 			var vol := float(unit.get("volume", _Hold.UNIT_VOL_M3))
 			var mass := float(unit.get("mass", _Hold.UNIT_MASS_T))
 			if not bool(hold.can_store_unit(vol, mass)):
+				_put_dock_unit(unit)
 				return false
 		if not bool(hold.store_unit(unit)):
+			_put_dock_unit(unit)
 			return false
-		_cargo_units.pop_at(0)
 		_notify_hud("%s pad→hold · occupy dock, no cash" % _SoftK.crate_label())
 		return true
 	if not hold.has_method("retrieve_unit") or not hold.has_method("unit_count"):
 		return false
 	if int(hold.unit_count()) < 1:
 		return false
-	if _cargo_units.size() >= PAD_YARD_CAP:
+	if not _can_put_dock_unit():
 		return false
 	var back: Dictionary = hold.retrieve_unit(0)
 	if back.is_empty():
 		return false
-	_cargo_units.append(_Hold.normalize_unit(back))
+	if not _put_dock_unit(back):
+		if hold.has_method("store_unit"):
+			hold.store_unit(back)
+		return false
 	_notify_hud("%s hold→pad · occupy dock, no cash" % _SoftK.crate_label())
 	return true
+
+
+func _take_dock_unit() -> Dictionary:
+	if not _cargo_units.is_empty():
+		return _cargo_units.pop_at(0)
+	var store := visible_storage()
+	if store != null and store.has_method("retrieve_unit") and store.has_method("unit_count"):
+		if int(store.unit_count()) >= 1:
+			return store.retrieve_unit(0)
+	return {}
+
+
+func _can_put_dock_unit() -> bool:
+	var store := visible_storage()
+	if store != null and _cargo_units.is_empty() and store.has_method("can_store_unit"):
+		if bool(store.can_store_unit(_Hold.UNIT_VOL_M3, _Hold.UNIT_MASS_T)):
+			return true
+	return _cargo_units.size() < PAD_YARD_CAP
+
+
+func _put_dock_unit(unit: Dictionary) -> bool:
+	var packed: Dictionary = _Hold.normalize_unit(unit)
+	var store := visible_storage()
+	var vol := float(packed.get("volume", _Hold.UNIT_VOL_M3))
+	var mass := float(packed.get("mass", _Hold.UNIT_MASS_T))
+	if store != null and _cargo_units.is_empty() and store.has_method("can_store_unit"):
+		if bool(store.can_store_unit(vol, mass)) and store.has_method("store_unit"):
+			if bool(store.store_unit(packed)):
+				return true
+	if _cargo_units.size() < PAD_YARD_CAP:
+		_cargo_units.append(packed)
+		return true
+	return false
 
 
 func _seed_pad_cargo() -> void:
