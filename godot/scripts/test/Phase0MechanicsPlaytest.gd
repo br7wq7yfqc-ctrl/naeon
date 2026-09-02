@@ -61,6 +61,7 @@ func _go() -> void:
 		await _assert_mc_c(os, fails)
 		await _assert_sn_a(os, fails)
 		await _assert_bt_c(os, fails)
+		await _assert_bt_d(os, fails)
 		_assert_br_a(os, fails)
 		_assert_kr_a(os, fails)
 		_assert_cr_a(os, fails)
@@ -663,6 +664,7 @@ func _go() -> void:
 	await _assert_bt_b(os, fails)
 	await _assert_sn_a(os, fails)
 	await _assert_bt_c(os, fails)
+	await _assert_bt_d(os, fails)
 	_assert_br_a(os, fails)
 	_assert_kr_a(os, fails)
 	_assert_cr_a(os, fails)
@@ -18843,6 +18845,426 @@ func _assert_bt_c(os: Node, fails: PackedStringArray) -> void:
 			ship._set_mode(1)
 	if walker != null and is_instance_valid(walker) and ship != null and is_instance_valid(ship):
 		walker.global_position = ship.global_position + pad_up * 2.0
+		if os.has_method("try_enter_ship"):
+			os.try_enter_ship()
+
+
+func _assert_bt_d(os: Node, fails: PackedStringArray) -> void:
+	## BT-D: one Cybernex animal-robot pack on an occupied unnamed pad. 3 CombatDummy.
+	## Tiny BT gather → pulse-engage Pulse 11 both ways → scatter-return-to-pad.
+	## Infection cap 5. No permadeath. BT-A / BT-B / BT-C stay. PV-A rival stays distinct.
+	## Host authority. G5 closed. No SITE_*. Not Clash waves. Not TestArena. Not AR 5v5.
+	var P0d = load("res://scripts/world/P0Slice.gd")
+	var nex_d: Node = _osh_nex()
+	var traffic_d: Node = null
+	var pack_d: Node3D = null
+	var bt_d: Node = null
+	var members_d: Array = []
+	var swarm_d: Node3D = null
+	var swarm_bt_d: Node = null
+	var swarm_mem_d: Array = []
+	var guard_d: Node3D = null
+	var guard_bt_d: Node = null
+	var visitor_bt_d: Node = null
+	var rival_d: Node3D = null
+	var surface_d: Node3D = null
+	var host_d: Node3D = null
+	var ship_d: Node3D = os.get("ship") as Node3D if os else null
+	var walker_d: Node3D = null
+	var pad_d: Node = _in_a_occupied_pad(os)
+	var dmg0_d := 11.0
+	var dmg1_d := 11.0
+	var harvest0_d := 0.0
+	var harvest1_d := 0.0
+	if P0d == null or not bool(P0d.BT_D_PACK) or not bool(P0d.BT_C_SWARM) \
+			or not bool(P0d.BT_A_GUARD) or not bool(P0d.BT_B_VISITOR):
+		fails.append("BT-D P0Slice flag missing")
+		return
+	if bool(P0d.ORBITAL_STATIONS):
+		fails.append("BT-D flipped P0Slice.ORBITAL_STATIONS")
+		return
+	if os == null or nex_d == null:
+		fails.append("BT-D no OpenSpace/Nex-Prime")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("BT-D must not run on TestArena")
+		return
+	if nex_d.has_method("ensure_pad_bases"):
+		nex_d.ensure_pad_bases()
+		await get_tree().create_timer(0.2).timeout
+	if nex_d.has_method("pad_traffic"):
+		traffic_d = nex_d.call("pad_traffic")
+	if traffic_d == null and get_tree():
+		var listed_d: Array = get_tree().get_nodes_in_group("pad_traffic")
+		if not listed_d.is_empty():
+			traffic_d = listed_d[0]
+	if traffic_d == null or not is_instance_valid(traffic_d):
+		fails.append("BT-D pad traffic missing")
+		return
+	if traffic_d.has_method("get_pack"):
+		pack_d = traffic_d.get_pack()
+	if pack_d == null:
+		pack_d = traffic_d.get_node_or_null("CybernexPack") as Node3D
+	if pack_d == null or not is_instance_valid(pack_d):
+		fails.append("BT-D pack missing on occupied unnamed pad")
+		return
+	if traffic_d.has_method("get_pack_members"):
+		members_d = traffic_d.get_pack_members()
+	if members_d.is_empty():
+		for c_d in pack_d.get_children():
+			if c_d is CharacterBody3D:
+				members_d.append(c_d)
+	if members_d.size() != 3:
+		fails.append("BT-D want 3 CombatDummy, got %s" % members_d.size())
+		return
+	if traffic_d.has_method("get_pack_bt"):
+		bt_d = traffic_d.get_pack_bt()
+	if bt_d == null:
+		bt_d = pack_d.get_node_or_null("CybernexPackBT")
+	if bt_d == null:
+		fails.append("BT-D CybernexPackBT missing")
+		return
+	if traffic_d.has_method("get_swarm"):
+		swarm_d = traffic_d.get_swarm()
+	if swarm_d == null:
+		swarm_d = traffic_d.get_node_or_null("GrotSwarm") as Node3D
+	if swarm_d == null or not is_instance_valid(swarm_d):
+		fails.append("BT-D dropped BT-C gROT swarm")
+		return
+	if traffic_d.has_method("get_swarm_members"):
+		swarm_mem_d = traffic_d.get_swarm_members()
+	if swarm_mem_d.size() != 3:
+		fails.append("BT-D dropped BT-C swarm size (%s)" % swarm_mem_d.size())
+		return
+	if traffic_d.has_method("get_swarm_bt"):
+		swarm_bt_d = traffic_d.get_swarm_bt()
+	if swarm_bt_d == null:
+		swarm_bt_d = swarm_d.get_node_or_null("GrotSwarmBT")
+	if swarm_bt_d == null:
+		fails.append("BT-D dropped GrotSwarmBT (BT-C)")
+		return
+	if traffic_d.has_method("get_guard"):
+		guard_d = traffic_d.get_guard()
+	if traffic_d.has_method("get_guard_bt"):
+		guard_bt_d = traffic_d.get_guard_bt()
+	if guard_d == null or not is_instance_valid(guard_d):
+		fails.append("BT-D pad-guard missing (BT-A must stay)")
+		return
+	if guard_bt_d == null:
+		guard_bt_d = guard_d.get_node_or_null("PadGuardBT")
+	if guard_bt_d == null:
+		fails.append("BT-D dropped PadGuardBT (BT-A)")
+		return
+	if traffic_d.has_method("get_visitor_bt"):
+		visitor_bt_d = traffic_d.get_visitor_bt()
+	if visitor_bt_d == null:
+		var pilot_d: Node = traffic_d.get_npc_pilot() if traffic_d.has_method("get_npc_pilot") else null
+		if pilot_d != null:
+			visitor_bt_d = pilot_d.get_node_or_null("VisitorBT")
+	if visitor_bt_d == null:
+		fails.append("BT-D dropped VisitorBT (BT-B)")
+		return
+	if traffic_d.has_method("get_rival"):
+		rival_d = traffic_d.get_rival()
+	if traffic_d.has_method("get_surface_dummy"):
+		surface_d = traffic_d.get_surface_dummy()
+	host_d = traffic_d.get_parent() as Node3D
+	if host_d == null or not host_d.has_meta("pad_up"):
+		fails.append("BT-D pack not on a pad")
+		return
+	var pname_d := str(host_d.name)
+	if pname_d != "Pad_North" and pname_d != "Pad_Approach" and pname_d != "Pad_Flank":
+		fails.append("BT-D unknown pad (%s)" % pname_d)
+		return
+	var pin_d := str(host_d.get_meta("site_pin")) if host_d.has_meta("site_pin") else ""
+	if pin_d.begins_with("SITE_"):
+		fails.append("BT-D minted SITE_* (%s)" % pin_d)
+		return
+	if pack_d.has_meta("site_pin") and str(pack_d.get_meta("site_pin")).begins_with("SITE_"):
+		fails.append("BT-D pack minted SITE_*")
+		return
+	if bt_d.has_meta("site_pin") and str(bt_d.get_meta("site_pin")).begins_with("SITE_"):
+		fails.append("BT-D BT minted SITE_*")
+		return
+	if bt_d.has_method("is_g5_closed") and not bool(bt_d.is_g5_closed()):
+		fails.append("BT-D G5 Clash-from-world is open")
+		return
+	var auth_d := ""
+	if bt_d.has_method("combat_authority"):
+		auth_d = str(bt_d.combat_authority())
+	if auth_d != "host":
+		fails.append("BT-D combat authority is not host (%s)" % auth_d)
+	for d_d in members_d:
+		if d_d == null or not is_instance_valid(d_d):
+			fails.append("BT-D pack member missing")
+			return
+		if d_d == guard_d:
+			fails.append("BT-D merged pack with BT-A pad-guard")
+			return
+		if rival_d != null and is_instance_valid(rival_d) and d_d == rival_d:
+			fails.append("BT-D merged pack with PV-A rival")
+			return
+		if surface_d != null and is_instance_valid(surface_d) and d_d == surface_d:
+			fails.append("BT-D merged pack with surface dummy")
+			return
+		for sm_d in swarm_mem_d:
+			if d_d == sm_d:
+				fails.append("BT-D merged pack with BT-C swarm")
+				return
+		var fac_d := ""
+		if d_d.has_method("get_faction"):
+			fac_d = str(d_d.get_faction())
+		elif "faction" in d_d:
+			fac_d = str(d_d.get("faction"))
+		if fac_d != "Cybernex":
+			fails.append("BT-D pack faction is not Cybernex (%s)" % fac_d)
+			return
+		if bool(d_d.get("lane_march")) or d_d.is_in_group("clash_minion"):
+			fails.append("BT-D used ClashWaves / clash minion")
+			return
+		if bool(d_d.get("one_shot")):
+			fails.append("BT-D permadeath (one_shot)")
+			return
+		if d_d.has_method("infection_cap") and int(d_d.infection_cap()) != 5:
+			fails.append("BT-D Infection cap drifted (%s)" % d_d.infection_cap())
+			return
+		if d_d.has_meta("site_pin") and str(d_d.get_meta("site_pin")).begins_with("SITE_"):
+			fails.append("BT-D dummy minted SITE_*")
+			return
+	if members_d.size() == 5 or members_d.size() == 10:
+		fails.append("BT-D leftover AR 5v5 (%s actors)" % members_d.size())
+		return
+	if pack_d == swarm_d:
+		fails.append("BT-D reused the BT-C GrotSwarm node")
+		return
+	if "attack_damage" in members_d[0]:
+		dmg0_d = float(members_d[0].get("attack_damage"))
+	if pad_d != null and pad_d.has_method("claim"):
+		pad_d.claim("gROT", 2.0)
+	elif host_d.has_method("claim"):
+		host_d.claim("gROT", 2.0)
+	if pad_d != null and pad_d.has_method("tier_budget"):
+		harvest0_d = float(pad_d.tier_budget().get("harvest", 0.0))
+	var pad_up_d: Vector3 = host_d.get_meta("pad_up")
+	if ship_d == null or not is_instance_valid(ship_d):
+		fails.append("BT-D no ship")
+		return
+	if "velocity" in ship_d:
+		ship_d.velocity = Vector3.ZERO
+	ship_d.global_position = host_d.global_position + pad_up_d * 8.0
+	if ship_d.has_method("_set_mode"):
+		ship_d._set_mode(2)
+	if ship_d.has_method("_do_land"):
+		ship_d._do_land()
+	if os.has_method("try_exit_ship"):
+		os.try_exit_ship()
+	await get_tree().create_timer(0.4).timeout
+	walker_d = os.get("player") as Node3D
+	if (walker_d == null or not is_instance_valid(walker_d)) and os.has_method("_spawn_player_near_ship"):
+		os.call("_spawn_player_near_ship")
+		await get_tree().create_timer(0.25).timeout
+		walker_d = os.get("player") as Node3D
+	if walker_d == null or not is_instance_valid(walker_d):
+		fails.append("BT-D no walker after EVA")
+		return
+	if walker_d.has_method("set_eva_profile"):
+		walker_d.set_eva_profile(false)
+	os.set("_eva_mode", false)
+	if "firewall_timer" in walker_d:
+		walker_d.set("firewall_timer", 0.0)
+	if walker_d.has_method("purge_infection"):
+		for _id in range(5):
+			walker_d.purge_infection()
+	if "health" in walker_d:
+		walker_d.set("health", float(walker_d.get("max_health")) if "max_health" in walker_d else 100.0)
+	if "_down_t" in walker_d:
+		walker_d.set("_down_t", 0.0)
+	walker_d.set("faction", "gROT")
+	var pack_spots_d: Array[Vector3] = [
+		Vector3(6.0, 1.2, 10.0),
+		Vector3(10.0, 1.2, 12.0),
+		Vector3(12.0, 1.2, 8.0),
+	]
+	for i_reset in range(members_d.size()):
+		var d_reset: Node3D = members_d[i_reset] as Node3D
+		if d_reset == null or not is_instance_valid(d_reset):
+			continue
+		d_reset.position = pack_spots_d[i_reset]
+		d_reset.set("_alive", true)
+		if float(d_reset.get("health")) < 20.0:
+			d_reset.set("health", float(d_reset.get("max_health")))
+		d_reset.set("faction", "Cybernex")
+		if "velocity" in d_reset:
+			d_reset.velocity = Vector3.ZERO
+	var homes_d: Array[Vector3] = []
+	for d2d in members_d:
+		homes_d.append(d2d.global_position)
+	if bt_d.has_method("bind"):
+		bt_d.bind(members_d, host_d)
+	if "_pulse_cd" in bt_d:
+		bt_d.set("_pulse_cd", 0.0)
+	var away_d: Vector3 = homes_d[0] - host_d.global_position
+	away_d = away_d - pad_up_d * away_d.dot(pad_up_d)
+	if away_d.length_squared() < 0.01:
+		away_d = host_d.global_transform.basis.x
+	away_d = away_d.normalized()
+	## Far walker + pack at home → gather. Keep outside Pulse 16 / leave 22.
+	walker_d.global_position = host_d.global_position + away_d * 55.0 + pad_up_d * 2.0
+	if SoftScanCache:
+		SoftScanCache.invalidate_player()
+		SoftScanCache.invalidate_enemies()
+	if bt_d.has_method("tick"):
+		bt_d.tick(0.1, walker_d)
+	var st0_d := str(traffic_d.pack_bt_state()) if traffic_d.has_method("pack_bt_state") else str(bt_d.bt_state())
+	print("[Playtest] BT-D gather state=", st0_d, " pad=", pname_d, " n=", members_d.size())
+	if st0_d != "gather":
+		fails.append("BT-D gather state missing (got %s)" % st0_d)
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("combat", 20.0)
+	if traffic_d.has_method("refresh_labels"):
+		traffic_d.refresh_labels()
+	if "attack_damage" in members_d[0]:
+		dmg1_d = float(members_d[0].get("attack_damage"))
+	if absf(dmg1_d - dmg0_d) > 0.01 or absf(dmg1_d - 11.0) > 0.01:
+		fails.append("BT-D Knowledge changed Pulse DPS (%s → %s)" % [dmg0_d, dmg1_d])
+	if bt_d.has_method("pulse_dps") and absf(float(bt_d.pulse_dps()) - 11.0) > 0.01:
+		fails.append("BT-D Pulse DPS drifted (%s)" % bt_d.pulse_dps())
+	var plabel_d := str(traffic_d.pack_label()) if traffic_d.has_method("pack_label") else ""
+	if plabel_d == "":
+		fails.append("BT-D Knowledge pack label empty")
+	var aim_d: Node3D = members_d[0] as Node3D
+	walker_d.global_position = aim_d.global_position - away_d * 8.0 + pad_up_d * 2.0
+	if walker_d.has_method("face_world_point"):
+		walker_d.face_world_point(aim_d.global_position)
+	if SoftScanCache:
+		SoftScanCache.invalidate_player()
+	if "_pulse_cd" in bt_d:
+		bt_d.set("_pulse_cd", 0.0)
+	if bt_d.has_method("tick"):
+		bt_d.tick(0.1, walker_d)
+	var st1_d := str(bt_d.bt_state()) if bt_d.has_method("bt_state") else ""
+	print("[Playtest] BT-D pulse-engage state=", st1_d, " label=", plabel_d)
+	if st1_d != "pulse-engage":
+		fails.append("BT-D pulse-engage state missing (got %s)" % st1_d)
+	var ab_d: Node = walker_d.get_node_or_null("AbilitySystem")
+	if "energy" in walker_d:
+		walker_d.set("energy", 100.0)
+	if ab_d != null and ab_d.has_method("setup_default_loadout"):
+		ab_d.setup_default_loadout("gROT")
+	if ab_d != null and ab_d.get("abilities") != null and (ab_d.abilities as Array).size() > 0 and ab_d.abilities[0]:
+		ab_d.current_cooldowns[ab_d.abilities[0]] = 0.0
+	var hp0_d: float = float(aim_d.get("health"))
+	var fired_d := false
+	if walker_d.has_method("try_pulse"):
+		fired_d = bool(walker_d.try_pulse(aim_d))
+	var hp1_d: float = float(aim_d.get("health"))
+	var drop_d: float = hp0_d - hp1_d
+	print("[Playtest] BT-D walker Pulse hit=", fired_d, " dummy hp ",
+		snapped(hp0_d, 0.1), " → ", snapped(hp1_d, 0.1), " drop=", snapped(drop_d, 0.1))
+	if not fired_d:
+		fails.append("BT-D walker Pulse did not fire")
+	elif drop_d < 10.0:
+		fails.append("BT-D walker Pulse did not hit pack (%s → %s)" % [
+			snapped(hp0_d, 0.1), snapped(hp1_d, 0.1)])
+	elif drop_d > 12.5:
+		fails.append("BT-D walker Pulse DPS drifted (drop=%s)" % snapped(drop_d, 0.1))
+	if "_pulse_cd" in bt_d:
+		bt_d.set("_pulse_cd", 0.0)
+	var walker_hp0_d: float = float(walker_d.get("health")) if "health" in walker_d else 100.0
+	var back_d := false
+	if traffic_d.has_method("try_pack_pulse"):
+		back_d = bool(traffic_d.try_pack_pulse(walker_d))
+	elif bt_d.has_method("try_engage_pulse"):
+		back_d = bool(bt_d.try_engage_pulse(walker_d))
+	var walker_hp1_d: float = float(walker_d.get("health")) if "health" in walker_d else walker_hp0_d
+	var back_drop_d: float = walker_hp0_d - walker_hp1_d
+	print("[Playtest] BT-D pack Pulse back hit=", back_d, " walker hp ",
+		snapped(walker_hp0_d, 0.1), " → ", snapped(walker_hp1_d, 0.1), " drop=", snapped(back_drop_d, 0.1))
+	if not back_d:
+		fails.append("BT-D pack Pulse did not fire")
+	elif back_drop_d < 10.0:
+		fails.append("BT-D pack Pulse did not hit walker (%s → %s)" % [
+			snapped(walker_hp0_d, 0.1), snapped(walker_hp1_d, 0.1)])
+	elif back_drop_d > 12.5:
+		fails.append("BT-D pack Pulse DPS drifted (drop=%s)" % snapped(back_drop_d, 0.1))
+	var cap_dummy_d: Node = members_d[0]
+	if cap_dummy_d.has_method("purge_infection"):
+		for _jd in range(5):
+			cap_dummy_d.purge_infection()
+	var refuse_d := ""
+	if cap_dummy_d.has_method("apply_infection"):
+		for _kd in range(6):
+			refuse_d = str(cap_dummy_d.apply_infection(1))
+	var stacks_d := int(cap_dummy_d.infection_stacks()) if cap_dummy_d.has_method("infection_stacks") else 0
+	if stacks_d != 5:
+		fails.append("BT-D Infection stacks not capped at 5 (got %s)" % stacks_d)
+	if str(refuse_d).find("cap 5") < 0 and str(refuse_d).find("Infection cap") < 0:
+		fails.append("BT-D Infection cap 5 refuse missing (%s)" % refuse_d)
+	var down_d: Node = members_d[1]
+	if down_d.has_method("take_damage"):
+		down_d.take_damage(float(down_d.get("health")) + 1.0, "gROT")
+	if down_d == null or not is_instance_valid(down_d):
+		fails.append("BT-D permadeath (pack dummy freed)")
+	for i_d in range(members_d.size()):
+		var d3d: Node3D = members_d[i_d] as Node3D
+		d3d.global_position = homes_d[i_d] + away_d * 8.0 + pad_up_d * 0.2
+		if "velocity" in d3d:
+			d3d.velocity = Vector3.ZERO
+	walker_d.global_position = host_d.global_position + away_d * 55.0 + pad_up_d * 2.0
+	if SoftScanCache:
+		SoftScanCache.invalidate_player()
+	if bt_d.has_method("tick"):
+		bt_d.tick(0.1, walker_d)
+	var st2_d := str(bt_d.bt_state()) if bt_d.has_method("bt_state") else ""
+	print("[Playtest] BT-D scatter-return-to-pad state=", st2_d)
+	if st2_d != "scatter-return-to-pad":
+		fails.append("BT-D scatter-return-to-pad state missing (got %s)" % st2_d)
+	if pad_d != null and pad_d.has_method("tier_budget"):
+		harvest1_d = float(pad_d.tier_budget().get("harvest", -1.0))
+	if harvest0_d > 0.0 and absf(harvest1_d - harvest0_d) > 0.0001:
+		fails.append("BT-D harvest number changed (%s → %s)" % [harvest0_d, harvest1_d])
+	if guard_bt_d.has_method("bt_state"):
+		var gst_d := str(guard_bt_d.bt_state())
+		if gst_d != "patrol" and gst_d != "engage" and gst_d != "return":
+			fails.append("BT-D broke BT-A guard state (%s)" % gst_d)
+	if visitor_bt_d.has_method("bt_state"):
+		var vst_d := str(visitor_bt_d.bt_state())
+		if vst_d != "approach" and vst_d != "hold" and vst_d != "leave":
+			fails.append("BT-D broke BT-B visitor state (%s)" % vst_d)
+	if swarm_bt_d.has_method("bt_state"):
+		var sst_d := str(swarm_bt_d.bt_state())
+		if sst_d != "gather" and sst_d != "pulse-engage" and sst_d != "scatter-return-to-pad":
+			fails.append("BT-D broke BT-C swarm state (%s)" % sst_d)
+	var scene_name_d := str(get_tree().current_scene.name) if get_tree() and get_tree().current_scene else ""
+	if scene_name_d.find("TestArena") >= 0:
+		fails.append("BT-D entered TestArena from OpenSpace (G5)")
+	if ResourceLoader.exists("res://scripts/world/ClashFromWorld.gd") \
+			or ResourceLoader.exists("res://scripts/world/ClashBeacon.gd"):
+		fails.append("BT-D opened G5 world-to-arena")
+	print("[Playtest] BT-D gather · pulse-engage Pulse 11 · scatter-return · cap 5 · BT-A/B/C stay · G5 closed · no SITE_*")
+	for i2d in range(members_d.size()):
+		var d4d: Node3D = members_d[i2d] as Node3D
+		if d4d == null or not is_instance_valid(d4d):
+			continue
+		d4d.global_position = homes_d[i2d]
+		if "velocity" in d4d:
+			d4d.velocity = Vector3.ZERO
+		d4d.set("_alive", true)
+		if "health" in d4d:
+			d4d.set("health", float(d4d.get("max_health")))
+	if "health" in walker_d:
+		walker_d.set("health", float(walker_d.get("max_health")) if "max_health" in walker_d else 100.0)
+	if ship_d != null and is_instance_valid(ship_d):
+		if "velocity" in ship_d:
+			ship_d.velocity = Vector3.ZERO
+		ship_d.global_position = host_d.global_position + pad_up_d * 80.0
+		if "is_landed" in ship_d:
+			ship_d.set("is_landed", false)
+		if ship_d.has_method("_set_mode"):
+			ship_d._set_mode(1)
+	if walker_d != null and is_instance_valid(walker_d) and ship_d != null and is_instance_valid(ship_d):
+		walker_d.global_position = ship_d.global_position + pad_up_d * 2.0
 		if os.has_method("try_enter_ship"):
 			os.try_enter_ship()
 

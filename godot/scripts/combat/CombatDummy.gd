@@ -23,7 +23,7 @@ signal damaged(amount: float, health_left: float)
 @export var one_shot: bool = false
 @export var grant_economy: bool = true
 @export var intel_name: String = ""
-## BT-A: PadGuardBT drives xz. BT-C: GrotSwarmBT drives swarm members. Default chase / lane AI stays off.
+## BT-A: PadGuardBT drives xz. BT-C: GrotSwarmBT drives swarm members. BT-D: CybernexPackBT drives pack members. Default chase / lane AI stays off.
 @export var bt_driven: bool = false
 var lane_waypoints: Array = []
 var _wp_i: int = 0

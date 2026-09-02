@@ -1,10 +1,11 @@
 extends Node
-class_name GrotSwarmBT
-## BT-C: tiny 3-state gROT swarm BT. No plugin. Not Clash waves. Not 10k CCU.
+class_name CybernexPackBT
+## BT-D: tiny 3-state Cybernex animal-robot pack BT. Mirror of BT-C gROT swarm.
+## No plugin. Not Clash waves. Not 10k CCU. Not TestArena. Not AR leftover 5v5.
 ## gather on the pad → pulse-engage SurfaceWalker in Pulse range → scatter-return-to-pad.
 ## Three CombatDummy actors. Host authority. Pulse DPS stays 11. Infection cap 5.
-## No permadeath. Knowledge labels only. BT-A pad-guard and BT-B visitor stay distinct.
-## PV-A rival stays distinct. Not TestArena. Not AR leftover 5v5.
+## No permadeath. Knowledge labels only. BT-A pad-guard, BT-B visitor, BT-C gROT swarm stay distinct.
+## PV-A rival stays distinct.
 
 const PULSE_DPS := 11.0
 const PULSE_RANGE := 16.0
@@ -31,12 +32,12 @@ var _gather_pts: Array[Vector3] = []
 
 
 func _ready() -> void:
-	name = "GrotSwarmBT"
+	name = "CybernexPackBT"
 	set_meta("site_pin", "")
 	set_meta("combat_authority", "host")
-	set_meta("grot_swarm_bt", true)
-	if not is_in_group("grot_swarm_bt"):
-		add_to_group("grot_swarm_bt")
+	set_meta("cybernex_pack_bt", true)
+	if not is_in_group("cybernex_pack_bt"):
+		add_to_group("cybernex_pack_bt")
 	set_physics_process(false)
 
 
@@ -60,12 +61,13 @@ func bind(members: Array, pad: Node3D = null) -> void:
 		d.set("lane_march", false)
 		d.set("one_shot", false)
 		d.set("grant_economy", false)
-		d.set("faction", "gROT")
+		d.set("faction", "Cybernex")
 		d.set("attack_damage", PULSE_DPS)
 		d.set("attack_range", PULSE_RANGE)
 		d.set("aggro_range", PULSE_RANGE)
 		d.set_meta("combat_authority", "host")
-		d.set_meta("grot_swarm", true)
+		d.set_meta("cybernex_pack", true)
+		d.set_meta("grot_swarm", false)
 		d.set_meta("site_pin", "")
 		if d.is_in_group("clash_minion"):
 			d.remove_from_group("clash_minion")
@@ -77,7 +79,7 @@ func bind(members: Array, pad: Node3D = null) -> void:
 	_gather_i = 0
 	_pulse_cd = 0.0
 	set_physics_process(true)
-	print("[GrotSwarmBT] bind gather/pulse-engage/scatter-return n=", _members.size(),
+	print("[CybernexPackBT] bind gather/pulse-engage/scatter-return n=", _members.size(),
 		" Pulse=", PULSE_DPS, " cap=5 G5=closed")
 
 
@@ -89,7 +91,12 @@ func pulse_dps() -> float:
 	return PULSE_DPS
 
 
+func pack_size() -> int:
+	return _members.size()
+
+
 func swarm_size() -> int:
+	## Same count helper as BT-C so playtest/HUD can share a size read.
 	return _members.size()
 
 
@@ -276,7 +283,6 @@ func _drive_member_toward(d: CharacterBody3D, dest: Vector3, _delta: float) -> v
 
 
 func _stick_to_pad(d: CharacterBody3D) -> void:
-	## Stay on the plate (parent-local). Gravity must not drop the dummy into dirt.
 	var idx := _members.find(d)
 	if idx < 0 or idx >= _homes_local.size():
 		return
@@ -339,9 +345,9 @@ func _find_walker() -> Node3D:
 func _is_walker(n: Node) -> bool:
 	if n == null or not is_instance_valid(n) or not n.is_inside_tree():
 		return false
-	if n.has_meta("grot_swarm"):
-		return false
 	if n.has_meta("cybernex_pack") and bool(n.get_meta("cybernex_pack")):
+		return false
+	if n.has_meta("grot_swarm") and bool(n.get_meta("grot_swarm")):
 		return false
 	if n.has_method("set_pilot_active") or n.has_method("set_npc_driven"):
 		return false

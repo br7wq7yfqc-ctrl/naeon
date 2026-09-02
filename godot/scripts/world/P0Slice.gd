@@ -102,6 +102,11 @@ const BT_B_VISITOR := true
 ## Pulse 11 both ways. Infection cap 5. No permadeath. BT-A / BT-B stay. G5 closed.
 ## Not Clash waves. Not TestArena. Not AR leftover 5v5. PV-A rival stays distinct.
 const BT_C_SWARM := true
+## BT-D: one Cybernex animal-robot pack on an occupied unnamed pad. Three CombatDummy.
+## Tiny 3-state BT (gather / pulse-engage / scatter-return-to-pad). Host authority.
+## Pulse 11 both ways. Infection cap 5. No permadeath. BT-A / BT-B / BT-C stay. G5 closed.
+## Not Clash waves. Not TestArena. Not AR leftover 5v5. PV-A rival stays distinct.
+const BT_D_PACK := true
 ## SN-A: second local viewer on the occupied unnamed pad sees a SoftNet visual
 ## SurfaceWalker puppet (optional PV-A rival pose). Host keeps Pulse / occupy.
 ## Not ENet cluster. Not 10k CCU. G5 closed. No SITE_*.

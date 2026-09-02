@@ -19,6 +19,8 @@ extends Node3D
 ## BT-C: one gROT swarm of 3 CombatDummy (gather / pulse-engage / scatter-return-to-pad).
 ## Host authority. Pulse 11 both ways. Infection cap 5. No permadeath. Not Clash waves.
 ## Distinct from BT-A pad-guard, BT-B visitor, PV-A rival, and the surface dummy.
+## BT-D: one Cybernex animal-robot pack of 3 CombatDummy (same 3-state BT). Mirror of BT-C.
+## Distinct from BT-C swarm. Host authority. Pulse 11 both ways. Cap 5. No permadeath.
 ## SN-A: second local viewer sees a SoftNet visual SurfaceWalker puppet.
 ## Host keeps Pulse / occupy. No second physical walker. Not ENet cluster.
 ## Knowledge labels only — never yield.
@@ -32,6 +34,7 @@ const _SoftNet := preload("res://scripts/world/PadSoftNet.gd")
 const _GuardBT := preload("res://scripts/combat/PadGuardBT.gd")
 const _VisitorBT := preload("res://scripts/world/VisitorBT.gd")
 const _SwarmBT := preload("res://scripts/combat/GrotSwarmBT.gd")
+const _PackBT := preload("res://scripts/combat/CybernexPackBT.gd")
 
 var _host_name: String = ""
 var _guard: Node3D = null
@@ -43,6 +46,7 @@ var _alliance: Node = null
 var _pvp: Node = null
 var _softnet: Node = null
 var _swarm: Node3D = null
+var _pack: Node3D = null
 
 
 func setup(host_pad: Node3D) -> void:
@@ -58,10 +62,11 @@ func setup(host_pad: Node3D) -> void:
 	_setup_pvp()
 	_setup_softnet()
 	_spawn_swarm()
+	_spawn_pack()
 	_offer_player_contract()
 	refresh_labels()
 	set_process(true)
-	print("[PadTraffic] host=", _host_name, " guard=1 visitor=1 surface=1 rival=1 softnet=1 swarm=3")
+	print("[PadTraffic] host=", _host_name, " guard=1 visitor=1 surface=1 rival=1 softnet=1 swarm=3 pack=3")
 
 
 func host_pad_name() -> String:
@@ -265,6 +270,61 @@ func try_swarm_pulse(target: Node = null) -> bool:
 	return false
 
 
+func pack_label() -> String:
+	return _SoftK.pack_label()
+
+
+func get_pack() -> Node3D:
+	if _pack != null and is_instance_valid(_pack):
+		return _pack
+	return get_node_or_null("CybernexPack") as Node3D
+
+
+func get_pack_bt() -> Node:
+	var p := get_pack()
+	if p == null:
+		return null
+	return p.get_node_or_null("CybernexPackBT")
+
+
+func pack_bt_state() -> String:
+	var bt := get_pack_bt()
+	if bt != null and bt.has_method("bt_state"):
+		return str(bt.bt_state())
+	return ""
+
+
+func get_pack_members() -> Array:
+	var out: Array = []
+	var p := get_pack()
+	if p == null:
+		return out
+	for c in p.get_children():
+		if c != null and is_instance_valid(c) and c is CharacterBody3D \
+				and str(c.get_meta("pad_traffic_role", "")) == "pack":
+			out.append(c)
+	return out
+
+
+func pack_count() -> int:
+	return get_pack_members().size()
+
+
+func try_pack_pulse(target: Node = null) -> bool:
+	var bt := get_pack_bt()
+	if bt != null and bt.has_method("try_engage_pulse"):
+		return bool(bt.try_engage_pulse(target))
+	var members := get_pack_members()
+	if members.is_empty():
+		return false
+	var d: Node = members[0]
+	if d != null and d.has_method("try_pulse_walker"):
+		return bool(d.try_pulse_walker(target))
+	if d != null and d.has_method("try_pulse"):
+		return bool(d.try_pulse(target))
+	return false
+
+
 func refresh_labels() -> void:
 	var extra := _alliance_tag()
 	var gname := guard_label()
@@ -287,6 +347,13 @@ func refresh_labels() -> void:
 		if d == null or not is_instance_valid(d):
 			continue
 		d.set("intel_name", sname)
+		if d.has_method("_update_labels"):
+			d._update_labels()
+	var pname := pack_label()
+	for d in get_pack_members():
+		if d == null or not is_instance_valid(d):
+			continue
+		d.set("intel_name", pname)
 		if d.has_method("_update_labels"):
 			d._update_labels()
 	var vname := visitor_label()
@@ -520,6 +587,79 @@ func _bind_swarm_bt(root: Node, members: Array) -> void:
 		bt = Node.new()
 		bt.set_script(_SwarmBT)
 		bt.name = "GrotSwarmBT"
+		root.add_child(bt)
+	var pad: Node3D = get_parent() as Node3D
+	if bt.has_method("bind"):
+		bt.bind(members, pad)
+
+
+func _spawn_pack() -> void:
+	## BT-D: three Cybernex CombatDummy on this occupied unnamed pad. Mirror of BT-C.
+	## Distinct from pad-guard, surface dummy, PV-A rival, visitor hull, and gROT swarm.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 != null and not bool(P0.BT_D_PACK):
+		return
+	if _DUMMY == null:
+		return
+	var existing: Node = get_node_or_null("CybernexPack")
+	var root: Node3D = existing as Node3D if existing is Node3D else null
+	if root == null:
+		root = Node3D.new()
+		root.name = "CybernexPack"
+		root.set_meta("site_pin", "")
+		root.set_meta("pad_traffic_role", "pack")
+		root.set_meta("combat_authority", "host")
+		add_child(root)
+	_pack = root
+	var spots: Array[Vector3] = [
+		Vector3(6.0, 1.2, 10.0),
+		Vector3(10.0, 1.2, 12.0),
+		Vector3(12.0, 1.2, 8.0),
+	]
+	var members: Array = []
+	for i in range(spots.size()):
+		var kid: Node = root.get_node_or_null("PackDummy%d" % i)
+		var d: Node = kid
+		if d == null:
+			d = _DUMMY.instantiate()
+			d.name = "PackDummy%d" % i
+			root.add_child(d)
+		d.set("faction", "Cybernex")
+		d.set("can_move", true)
+		d.set("bt_driven", true)
+		d.set("lane_march", false)
+		d.set("one_shot", false)
+		d.set("aggro_range", 16.0)
+		d.set("attack_range", 16.0)
+		d.set("attack_damage", 11.0)
+		d.set("grant_economy", false)
+		d.set("intel_name", pack_label())
+		d.set_meta("pad_traffic_role", "pack")
+		d.set_meta("combat_authority", "host")
+		d.set_meta("cybernex_pack", true)
+		d.set_meta("grot_swarm", false)
+		d.set_meta("site_pin", "")
+		if d.is_in_group("clash_minion"):
+			d.remove_from_group("clash_minion")
+		if d is Node3D:
+			(d as Node3D).position = spots[i]
+			d.set("_spawn_pos", (d as Node3D).global_position)
+		members.append(d)
+	_bind_pack_bt(root, members)
+
+
+func _bind_pack_bt(root: Node, members: Array) -> void:
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 != null and not bool(P0.BT_D_PACK):
+		return
+	if root == null or _PackBT == null:
+		return
+	var existing: Node = root.get_node_or_null("CybernexPackBT")
+	var bt: Node = existing
+	if bt == null:
+		bt = Node.new()
+		bt.set_script(_PackBT)
+		bt.name = "CybernexPackBT"
 		root.add_child(bt)
 	var pad: Node3D = get_parent() as Node3D
 	if bt.has_method("bind"):

@@ -1,3 +1,5 @@
+**2026-09-02 — BT-D: one Cybernex animal-robot pack on occupied unnamed pad (3 CombatDummy; gather / pulse-engage / scatter-return-to-pad; Pulse 11 both ways; cap 5; BT-A/B/C stay)**
+
 **2026-09-02 — CR-A: Contribution Rank 0–4 from lifetime Contribution wallet (AllianceRanks family; SoftKnowledge / HUD label; harvest / Pulse / Hack stay; BR-A Biomass Rank stays)**
 
 **2026-09-02 — KR-A: Knowledge Rank 0–4 from lifetime mastery (AllianceRanks family; SoftKnowledge / HUD label; harvest / Pulse / Hack stay; BR-A Biomass Rank stays)**
@@ -765,7 +767,8 @@ ST-H: occupy unnamed pad → `BaseBuilder` places **one** `PadDefenseTurret` (ca
 ST-I: occupy unnamed pad → `BaseBuilder` places **one** `PadStorage` crate/hold. Cap 1 crate unit. Occupy dock transfers that unit pad-storage ↔ ship `CargoHold`. Knowledge labels only. Mass/value stay. Overlay B still opens. ST-A/B/H stay. Not a second ship hold. No `SITE_*`.  
 BR-A: lifetime Biomass wallet derives **Biomass Rank 0–4** (same family as `AllianceRanks`). SoftKnowledge / HUD label only (`BIOMASS` / `BIOMASS RANK` + rank number). Cybernex stays `CONTRIB` / `CONTRIBUTION`. Rank does not change harvest yield, Pulse, Hack, print cost, or exclusive modules. Infection cap 5. ST-B extractor stays. No P2W. No `SITE_*`.  
 KR-A: lifetime mastery derives **Knowledge Rank 0–4** (same `AllianceRanks` 0–4 family). SoftKnowledge / HUD label only (`KNOWLEDGE` / `KNOWLEDGE RANK` + rank number). BR-A Biomass Rank stays. Cybernex stays `CONTRIB`. Rank does not change harvest yield, Pulse, Hack, print cost, or exclusive modules. Infection cap 5. No P2W. No `SITE_*`.  
-CR-A: lifetime Contribution wallet derives **Contribution Rank 0–4** (same `AllianceRanks` 0–4 family as BR-A). SoftKnowledge / HUD label only (`CONTRIB` / `CONTRIBUTION` + rank number). gROT stays `BIOMASS` / BR-A. Rank does not change harvest yield, Pulse, Hack, print cost, or exclusive modules. Infection cap 5. No P2W. No `SITE_*`.
+CR-A: lifetime Contribution wallet derives **Contribution Rank 0–4** (same `AllianceRanks` 0–4 family as BR-A). SoftKnowledge / HUD label only (`CONTRIB` / `CONTRIBUTION` + rank number). gROT stays `BIOMASS` / BR-A. Rank does not change harvest yield, Pulse, Hack, print cost, or exclusive modules. Infection cap 5. No P2W. No `SITE_*`.  
+BT-D: one Cybernex animal-robot pack of 3 `CombatDummy` on an occupied unnamed pad walks a tiny 3-state GDScript BT — gather, pulse-engage Pulse (DPS 11 both ways), scatter-return-to-pad. Host authority. Infection cap 5. No permadeath. Knowledge labels only. BT-A pad-guard, BT-B visitor, BT-C gROT swarm stay distinct. PV-A rival stays distinct. Not Clash waves. Not TestArena. Not AR leftover 5v5. G5 stays closed. No `SITE_*`.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -821,6 +824,8 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | PV-B hull Space PvP | **built** — seated hull Pulse 11 vs same PadPvp rival; rival Pulse back; win HP 0; TPS PV-A stays |
 | BT-A pad-guard BT | **built** — patrol / engage Pulse / return-to-pad; host authority; Pulse 11; PV-A rival distinct; G5 closed |
 | BT-B visitor BT | **built** — approach / hold / leave; NP-B harvest stays; host authority; Pulse 11; BT-A stays; G5 closed |
+| BT-C gROT swarm | **built** — gather / pulse-engage / scatter-return-to-pad; 3 CombatDummy; Pulse 11 both ways; cap 5; BT-A/B stay |
+| BT-D Cybernex pack | **built** — gather / pulse-engage / scatter-return-to-pad; 3 CombatDummy; Pulse 11 both ways; cap 5; BT-A/B/C stay |
 | AR-F 3v3 local | **built** — 6 actors on existing lanes; host authority; SoftNet visual; G5 closed; still startable |
 | AR-G 5v5 local | **built** — 10 actors on existing lanes + jungle; host authority; SoftNet visual; G5 closed |
 | SE-A hull buses | **built** — power/cool/life live; overdraw/overheat sag; IN-B LS soft; no P2W skip |

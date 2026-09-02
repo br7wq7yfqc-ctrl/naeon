@@ -3,8 +3,8 @@
 **Версия:** 1.0  
 **Дата:** 2026-08-18  
 **Движок:** Godot 4.7.2  
-**Статус:** NP-A…NP-F + NP-C + NP-G + NP-H + NP-I + Q-D + BT-A + BT-B built. **BT-C this pass** (gROT swarm 3-state gather / pulse-engage / scatter-return-to-pad).  
-**Код срезов:** NP-A flight · NP-B occupy/harvest · NP-C habitat · NP-D invite · NP-E soft alliance · NP-F offline · NP-G print · NP-H hangar · NP-I factory · Q-D same board giver · BT-A pad-guard · BT-B visitor BT · **BT-C gROT swarm**. Не G2–G6. Не 10k CCU.
+**Статус:** NP-A…NP-F + NP-C + NP-G + NP-H + NP-I + Q-D + BT-A + BT-B + BT-C built. **BT-D this pass** (Cybernex animal-robot pack 3-state gather / pulse-engage / scatter-return-to-pad).  
+**Код срезов:** NP-A flight · NP-B occupy/harvest · NP-C habitat · NP-D invite · NP-E soft alliance · NP-F offline · NP-G print · NP-H hangar · NP-I factory · Q-D same board giver · BT-A pad-guard · BT-B visitor BT · BT-C gROT swarm · **BT-D Cybernex pack**. Не G2–G6. Не 10k CCU.
 
 Запрос владельца (в план): NPC должны **полностью закрывать петлю живого игрока**, пока MMO-кластер не запущен — летать, делать все playable-действия, прогрессировать, ставить базы, собирать альянсы и рейды. Живые: отвечают игроку, меняются под его влияние, работают offline и в coop с друзьями. Игрок берёт NPC в отряд и сообщество. **ИИ NPC — подписка AI Agency:** платят за инициативу и диалог, **никогда** за HP / DPS / yield / уникальное оружие (это P2W, отказ). Кластер: [`MMO_SERVERS.md`](MMO_SERVERS.md) — HOLD до Phase 3.
 
@@ -29,11 +29,11 @@ Clash: [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md).
 
 ## 2. Честный статус (2026-08-18)
 
-**Боты есть. Полной замены игрока нет.** Phase 2 «BehaviorTree / Navigation» — **BT-A built** (pad-guard patrol / engage / return) + **BT-B built** (visitor approach / hold / leave) + **BT-C built** (gROT swarm gather / pulse-engage / scatter-return-to-pad). Not 10k CCU. Not Clash waves.
+**Боты есть. Полной замены игрока нет.** Phase 2 «BehaviorTree / Navigation» — **BT-A built** (pad-guard patrol / engage / return) + **BT-B built** (visitor approach / hold / leave) + **BT-C built** (gROT swarm gather / pulse-engage / scatter-return-to-pad) + **BT-D built** (Cybernex pack gather / pulse-engage / scatter-return-to-pad). Not 10k CCU. Not Clash waves.
 
 | Узел | Факт репо | Это не |
 |------|-----------|--------|
-| `PadTraffic.gd` | 1 pad-guard `CombatDummy` + visitor `ShipController`/`NpcPilot` (NP-A flight, NP-B occupy/harvest, NP-C habitat, NP-G ST-C print, NP-H ST-D hangar, NP-I ST-G factory, NP-D squad invite, NP-F short offline pad/follow, NP-E soft alliance / raid-or-logistics intent, **Q-D same Q-A ContractBoard id**) + surface dummy под Pulse + **PV-A / PV-B** host-authority rival dummy (Pulse 11 both ways; TPS + seated hull) + **BT-A** tiny 3-state BT on the existing pad-guard (patrol / engage Pulse / return; rival stays distinct) + **BT-B** sibling 3-state BT on the visitor (approach / hold / leave; NP-B harvest stays) + **BT-C** one gROT swarm of 3 `CombatDummy` (gather / pulse-engage / scatter-return-to-pad; Pulse 11 both ways; cap 5; no permadeath) | mobile SITE_*; second quest board; G5 Clash |
+| `PadTraffic.gd` | 1 pad-guard `CombatDummy` + visitor `ShipController`/`NpcPilot` (NP-A flight, NP-B occupy/harvest, NP-C habitat, NP-G ST-C print, NP-H ST-D hangar, NP-I ST-G factory, NP-D squad invite, NP-F short offline pad/follow, NP-E soft alliance / raid-or-logistics intent, **Q-D same Q-A ContractBoard id**) + surface dummy под Pulse + **PV-A / PV-B** host-authority rival dummy (Pulse 11 both ways; TPS + seated hull) + **BT-A** tiny 3-state BT on the existing pad-guard (patrol / engage Pulse / return; rival stays distinct) + **BT-B** sibling 3-state BT on the visitor (approach / hold / leave; NP-B harvest stays) + **BT-C** one gROT swarm of 3 `CombatDummy` (gather / pulse-engage / scatter-return-to-pad; Pulse 11 both ways; cap 5; no permadeath) + **BT-D** one Cybernex pack of 3 `CombatDummy` (same 3-state BT; Pulse 11 both ways; cap 5; no permadeath; swarm stays distinct) | mobile SITE_*; second quest board; G5 Clash |
 | `PadAmbientLife.gd` | GLB-пропы, bob/wander, **0 боя** | агент, квест, альянс |
 | `ClashWaves.gd` | timed `CombatDummy` march по `ClashLanes` | герой Clash, драфт, agency |
 | `CombatDummy.gd` | HP, optional aggro/lane; цель и миньон | корабль, база, Contribution |
@@ -155,7 +155,7 @@ OS-G силуэт и ambient life — WorldFill / плотность, не жи�
 
 | Сейчас | Дальше |
 |--------|--------|
-| NP-A…F + NP-C habitat + NP-G ST-C print + NP-H ST-D hangar + NP-I ST-G factory + **Q-D** same Q-A board giver + **BT-A** pad-guard + **BT-B** visitor 3-state BT + **BT-C** gROT swarm (3 dummy, gather / pulse-engage / scatter-return) | следующий NP-срез |
+| NP-A…F + NP-C habitat + NP-G ST-C print + NP-H ST-D hangar + NP-I ST-G factory + **Q-D** same Q-A board giver + **BT-A** pad-guard + **BT-B** visitor 3-state BT + **BT-C** gROT swarm (3 dummy, gather / pulse-engage / scatter-return) + **BT-D** Cybernex pack (3 dummy, same 3-state) | следующий NP-срез |
 | Стратегия — ST-A…ST-G built; NPC print = (a)/(b)/(c) | не mint `SITE_*` |
 | SoftNet — visual | authority later; не 10k |
 | G2–G6 | закрыты |
