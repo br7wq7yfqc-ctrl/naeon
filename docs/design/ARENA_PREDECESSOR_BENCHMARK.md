@@ -26,7 +26,7 @@ NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY
 | 3 | Структуры: towers / inhibitors / core | башни = live `Turret` 160 HP; nexus = prop | **AR-B:** OUTER×6 + MID×6 + INHIB×2 + CORE×2, все с HP (`Turret`); inhib = gate у ядра (не 3-й полный ряд); нет P2W-ремонта | AR-C волны; не city-map | P2W-ремонт башен |
 | 4 | Objectives: camps / fangtooth / prime | claim beacons + lane pressure + tower-down | **AR-D** fangtooth + **AR-J** prime (оба off-lane, не IP); damageable; soft contest; drop = soft WS, не unique weapon; Knowledge только подпись | feel lock; **не** story-power drop | unique DPS с босса; Knowledge→урон |
 | 5 | Waves / minions | `CombatDummy` с `lane_spawn_table()` | **AR-C:** `ClashWaves` — периодические волны `CombatDummy` по линии; march к OUTER; без магазина | feel lock | магазин-миньоны |
-| 6 | Heroes / kits | `AbilityKitCatalog` + `AbilitySystem`; формы = идентичность | **AR-E + AR-L:** 5 китов × 4 слота (CX Nex/Grid/Lattice, GR Rot/Spore; Pulse / utility / probe\|surge / Form Cycle) | feel lock; формы не rank-стат; toward 6–8 | P2W kits; форма = скрытый MMR |
+| 6 | Heroes / kits | `AbilityKitCatalog` + `AbilitySystem`; формы = идентичность | **AR-E + AR-L + AR-M:** 6 китов × 4 слота (CX Nex/Grid/Lattice, GR Rot/Spore/Vein; Pulse / utility / probe\|surge / Form Cycle) | feel lock; формы не rank-стат; toward 6–8 | P2W kits; форма = скрытый MMR |
 | 7 | Items / cards | модули / blueprints NAEON, не колода Paragon | **AR-E + AR-K:** один `ClashModuleBench` (session `ShipModule.SENSOR` + catalog `CARGO` / Nex Hold); Knowledge только подпись; не колода | не shop of power | cash-shop power; клон карт Epic |
 | 8 | Vision / wards | `ClashRadar`; soft scan | радар всегда рисует форму; вард-предметов нет | wait или soft label; Knowledge не покупает вард | pay-to-ward |
 | 9 | Draft / match | `ClashMatchDirector` + kill-to-5 / 3 lane objectives | **AR-I:** CORE HP → 0 ends match (WIN/LOSS SoftKnowledge); soft WS +15/+3, daily cap 60; драфта нет; вход из мира = **G5 закрыт** | драфт later; дверь = TestArena | Arena Commander; G5 сейчас |
@@ -47,15 +47,15 @@ NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY
 | `ClashJumpPads.gd` | 4 pad на том же 60×60; короткий hop walker/hero, не полёт и не корабль |
 | `TestArena.gd` | дверь слоя; beacons Neutral; `ClashWaves` на полосах; `ClashCamp` + `ClashPrimeCamp`; один `ClashModuleBench` (AR-E SENSOR + AR-K CARGO); `ClashRiver`; `ClashJumpPads`; `ClashLocalMatch` 5v5 (3v3 startable) |
 | `ClashLocalMatch.gd` | 5v5 local host authority; 10 actors на TOP/MID/BOT + jungle; 3v3 startable; SoftNet visual puppets; G5 закрыт |
-| `AbilityKitCatalog.gd` | 5 китов (AR-E 4 + AR-L Lattice); costs из `EnergyEconomy`; `kit_for_faction` = прежний default |
+| `AbilityKitCatalog.gd` | 6 китов (AR-E 4 + AR-L Lattice + AR-M Vein); costs из `EnergyEconomy`; `kit_for_faction` = прежний default |
 | `HeroFormCatalog.gd` | Canine/Feline/Avian/Human + лёгкие loco-числа — **не** rank; не усиливать |
 | `docs/systems/AEXION_CLASH_SLICE.md` | бар уже назван Predecessor; non-goal: full lanes/items P2W |
 | `docs/rules/13_MOBA_ARENA_INFLUENCE.md` | арена не флипает планету; daily WS 60 |
-| Phase 3 план | 6–8 heroes / items / matchmaking — **ещё не код**; jungle bite = AR-D + AR-J; items-shop seed = AR-K; fifth kit = AR-L (5v5 local = AR-G) |
+| Phase 3 план | 6–8 heroes / items / matchmaking — **ещё не код**; jungle bite = AR-D + AR-J; items-shop seed = AR-K; fifth kit = AR-L; sixth kit = AR-M (5v5 local = AR-G) |
 
 ---
 
-## Срезы AR-A…AR-L
+## Срезы AR-A…AR-M
 
 Каждый срез playable сам. **Не начинать, пока OS-A зелёный** (космос читает одно тело). Арена не перехватывает очередь Open Space.
 
@@ -73,6 +73,7 @@ NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY
 | **AR-J** | второй jungle objective (prime-класс) | **сделано:** один extra off-lane `ClashCamp` prime-роль на том же 60×60; soft contest; drop = soft WS; AR-D fangtooth stays; Knowledge только подпись | этот срез | unique weapon; SITE_*; city-map; leftover 5v5 soak |
 | **AR-K** | session items-shop seed | **сделано:** вторая session option на том же `ClashModuleBench` (catalog `CARGO` / Nex Hold); SoftKnowledge HOLD; не колода Paragon; не cash-shop / P2W / unique weapon | этот срез | shop of power; клон карт Epic; leftover 5v5 soak |
 | **AR-L** | fifth AbilityKit toward 6–8 | **сделано:** один extra кит CX Lattice на том же `AbilityKitCatalog` (Pulse / Lattice Seal / Lattice Probe / Form Cycle); SoftKnowledge LATTICE; prior 4 kits stay; AR-K bench stays | этот срез | P2W kits; форма=стат; leftover 5v5 soak |
+| **AR-M** | sixth AbilityKit toward 6–8 | **сделано:** один extra кит GR Vein на том же `AbilityKitCatalog` (Pulse / Vein Claim / Vein Surge / Form Cycle); SoftKnowledge VEIN; prior 5 kits stay; AR-K bench stays | этот срез | P2W kits; форма=стат; leftover 5v5 soak |
 
 ---
 
@@ -84,4 +85,4 @@ NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY
 
 ## Этот PR
 
-AR-L: пятый Clash AbilityKit (CX Lattice) на существующем `AbilityKitCatalog` / TestArena / ClashDirector. Та же грамматика Pulse / utility / probe|surge / Form Cycle. SoftKnowledge / HUD `LATTICE` only. Prior 4 kits stay. ClashModuleBench AR-E SENSOR + AR-K CARGO stay. AR-A…AR-K, река и jump pads не откатывать. G5 закрыт. Не mint SITE_*. Knowledge не меняет DPS. Дверь: меню → AEXION CLASH → TestArena.
+AR-M: шестой Clash AbilityKit (GR Vein) на существующем `AbilityKitCatalog` / TestArena / ClashDirector — gROT-симметрия CX Lattice. Та же грамматика Pulse / utility / probe|surge / Form Cycle. SoftKnowledge / HUD `VEIN` only. Prior 5 kits stay. ClashModuleBench AR-E SENSOR + AR-K CARGO stay. AR-A…AR-L, река и jump pads не откатывать. G5 закрыт. Не mint SITE_*. Knowledge не меняет DPS. Дверь: меню → AEXION CLASH → TestArena.

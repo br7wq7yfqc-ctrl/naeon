@@ -31,7 +31,16 @@ AR-L fifth kit (same cost sheet, identity only; toward 6–8):
 | 2 R | Lattice Probe |
 | 3 F | Form Cycle |
 
-TestArena: `1` / `2` / `3` cycle faction kits. SoftKnowledge HUD `LATTICE` / `NEX LATTICE`. Forms = identity, never a hidden stat.
+AR-M sixth kit (same cost sheet, identity only; gROT symmetric to Lattice):
+
+| Slot | gROT Vein |
+|------|-----------|
+| 0 Q | Pulse Bolt |
+| 1 E | Vein Claim |
+| 2 R | Vein Surge |
+| 3 F | Form Cycle |
+
+TestArena: `1` / `2` / `3` cycle faction kits. SoftKnowledge HUD `LATTICE` / `NEX LATTICE` · `VEIN` / `ROT VEIN`. Forms = identity, never a hidden stat.
 
 No P2W: costs/cooldowns fixed; economy never raises damage. Knowledge insight is a soft damage scalar only.
 

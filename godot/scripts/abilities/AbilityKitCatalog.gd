@@ -4,6 +4,7 @@ class_name AbilityKitCatalog
 ## AR-E: 4 faction kits × 4 slots. Forms = identity, never a hidden stat.
 ## AR-L: fifth kit (CX Lattice) toward Phase-3 6–8. Same Pulse / utility /
 ## probe|surge / Form Cycle grammar. SoftKnowledge labels only.
+## AR-M: sixth kit (GR Vein) — gROT symmetric to CX Lattice. Same grammar.
 
 const EE = preload("res://scripts/systems/EnergyEconomy.gd")
 
@@ -12,6 +13,7 @@ const KIT_CX_GRID := "cx_grid"
 const KIT_GR_ROT := "gr_rot"
 const KIT_GR_SPORE := "gr_spore"
 const KIT_CX_LATTICE := "cx_lattice"
+const KIT_GR_VEIN := "gr_vein"
 
 const KIT_TABLE := [
 	{"id": KIT_CX_NEX, "faction": "Cybernex", "label": "Nex"},
@@ -19,6 +21,7 @@ const KIT_TABLE := [
 	{"id": KIT_GR_ROT, "faction": "gROT", "label": "Rot"},
 	{"id": KIT_GR_SPORE, "faction": "gROT", "label": "Spore"},
 	{"id": KIT_CX_LATTICE, "faction": "Cybernex", "label": "Lattice"},
+	{"id": KIT_GR_VEIN, "faction": "gROT", "label": "Vein"},
 ]
 
 
@@ -65,6 +68,8 @@ static func kit_by_id(kit_id: String) -> Array:
 			return [_pulse(), _lattice_seal(), _lattice_probe(), _form_cycle()]
 		KIT_GR_SPORE:
 			return [_pulse(), _spore_claim(), _rot_bloom(), _form_cycle()]
+		KIT_GR_VEIN:
+			return [_pulse(), _vein_claim(), _vein_surge(), _form_cycle()]
 		KIT_GR_ROT:
 			return [_pulse(), _hack_grot(), _surge(), _form_cycle()]
 		_:
@@ -233,6 +238,37 @@ static func _rot_bloom() -> Ability:
 	a.force = 8.0
 	a.targeting = Ability.TargetingType.AOE
 	a.effect_color = Color(0.85, 0.28, 0.12)
+	return a
+
+
+static func _vein_claim() -> Ability:
+	var a := Ability.new()
+	a.ability_name = "Vein Claim"
+	a.description = "Channeled vein claim (identity, same cost sheet)"
+	a.cooldown = EE.CD_HACK
+	a.energy_cost = EE.HACK
+	a.damage = 12.0
+	a.range = 18.0
+	a.is_hacking = true
+	a.is_channeled = true
+	a.channel_time = 1.5
+	a.faction_restriction = Ability.FactionRestriction.GROT_ONLY
+	a.effect_color = Color(0.78, 0.18, 0.48)
+	return a
+
+
+static func _vein_surge() -> Ability:
+	var a := Ability.new()
+	a.ability_name = "Vein Surge"
+	a.description = "Close vein burst (identity, same cost sheet)"
+	a.cooldown = EE.CD_SURGE
+	a.energy_cost = EE.ROT_SURGE
+	a.damage = 16.0
+	a.range = 5.0
+	a.aoe_radius = 4.5
+	a.force = 8.0
+	a.targeting = Ability.TargetingType.AOE
+	a.effect_color = Color(0.68, 0.08, 0.32)
 	return a
 
 
