@@ -14,6 +14,7 @@ class_name StrategyOverlay
 ## FL-J: tenth extra allied pip (SoftNet visual, same NP-A grammar). Cap 11.
 ## FL-K: eleventh extra allied pip (SoftNet visual, same NP-A grammar). Cap 12.
 ## FL-L: twelfth extra allied pip (SoftNet visual, same NP-A grammar). Cap 13.
+## FL-M: thirteenth extra allied pip (SoftNet visual, same NP-A grammar). Cap 14.
 ## SN-C: second local viewer sees SoftNet visual habitat/extractor/modules puppet.
 ## SoftKnowledge / HUD label only. Click/select ≠ combat. Host Pulse / occupy / Hack.
 
@@ -25,7 +26,7 @@ const ENTER_M := 90.0
 const CAM_HEIGHT := 180.0
 const CAM_SIZE := 120.0
 const LEGAL_PADS := ["Pad_North", "Pad_Approach", "Pad_Flank"]
-const FLEET_CAP := 13
+const FLEET_CAP := 14
 
 var _os: Node = null
 var _pad: Node3D = null
@@ -47,6 +48,7 @@ var _fleet_pip_i: Node3D = null
 var _fleet_pip_j: Node3D = null
 var _fleet_pip_k: Node3D = null
 var _fleet_pip_l: Node3D = null
+var _fleet_pip_m: Node3D = null
 var _fleet_selected: bool = false
 var _fleet_selected_b: bool = false
 var _fleet_selected_c: bool = false
@@ -59,6 +61,7 @@ var _fleet_selected_i: bool = false
 var _fleet_selected_j: bool = false
 var _fleet_selected_k: bool = false
 var _fleet_selected_l: bool = false
+var _fleet_selected_m: bool = false
 var _softnet: Node = null
 
 
@@ -443,6 +446,31 @@ func _guest_l_from_traffic(traffic: Node) -> Node3D:
 	return null
 
 
+func fleet_guest_m() -> Node3D:
+	var traffic := _pad_traffic()
+	var guest := _guest_m_from_traffic(traffic)
+	if guest != null:
+		return guest
+	var tree := get_tree()
+	if tree == null:
+		return null
+	for n in tree.get_nodes_in_group("pad_traffic"):
+		guest = _guest_m_from_traffic(n)
+		if guest != null:
+			return guest
+	return null
+
+
+func _guest_m_from_traffic(traffic: Node) -> Node3D:
+	if traffic == null or not is_instance_valid(traffic):
+		return null
+	if traffic.has_method("fleet_guest_m"):
+		var g: Node3D = traffic.fleet_guest_m()
+		if g != null and is_instance_valid(g):
+			return g
+	return null
+
+
 func fleet_count() -> int:
 	var n := 0
 	if _os != null:
@@ -472,6 +500,8 @@ func fleet_count() -> int:
 	if fleet_guest_k() != null:
 		n += 1
 	if fleet_guest_l() != null:
+		n += 1
+	if fleet_guest_m() != null:
 		n += 1
 	return mini(n, FLEET_CAP)
 
@@ -528,6 +558,10 @@ func fleet_pip_l_visible() -> bool:
 	return _active and _fleet_pip_l != null and is_instance_valid(_fleet_pip_l)
 
 
+func fleet_pip_m_visible() -> bool:
+	return _active and _fleet_pip_m != null and is_instance_valid(_fleet_pip_m)
+
+
 func is_fleet_selected() -> bool:
 	return _fleet_selected and fleet_pip_visible()
 
@@ -574,6 +608,10 @@ func is_fleet_k_selected() -> bool:
 
 func is_fleet_l_selected() -> bool:
 	return _fleet_selected_l and fleet_pip_l_visible()
+
+
+func is_fleet_m_selected() -> bool:
+	return _fleet_selected_m and fleet_pip_m_visible()
 
 
 func fleet_combat_authority() -> String:
@@ -736,8 +774,21 @@ func try_select_fleet_pip_l() -> bool:
 	return true
 
 
+func try_select_fleet_pip_m() -> bool:
+	if not fleet_pip_m_visible():
+		return false
+	_fleet_selected_m = true
+	_toast(fleet_hud_line())
+	var guest := fleet_guest_m()
+	if guest != null and is_instance_valid(guest):
+		guest.set_meta("combat_authority", "host")
+		guest.set_meta("occupy_authority", "host")
+	print("[StrategyOverlay] fleet pip M select ", fleet_hud_line(), " auth=host")
+	return true
+
+
 func try_add_fleet_member(_who: Node = null) -> bool:
-	## Cap 13 this slice. Does not spawn a fourteenth hull or OpenSpace.
+	## Cap 14 this slice. Does not spawn a fifteenth hull or OpenSpace.
 	return false
 
 
@@ -1102,6 +1153,10 @@ func _show_fleet_pip() -> void:
 		var guest_l := fleet_guest_l()
 		if guest_l != null:
 			_fleet_pip_l = _make_fleet_pip("FleetPipL", guest_l, Color(1.0, 0.58, 0.38))
+	if P0 != null and bool(P0.FL_M_FLEET):
+		var guest_m := fleet_guest_m()
+		if guest_m != null:
+			_fleet_pip_m = _make_fleet_pip("FleetPipM", guest_m, Color(0.5, 0.95, 0.65))
 
 
 func _make_fleet_pip(id: String, guest: Node3D, col: Color) -> Node3D:
@@ -1155,6 +1210,7 @@ func _hide_fleet_pip() -> void:
 	_fleet_selected_j = false
 	_fleet_selected_k = false
 	_fleet_selected_l = false
+	_fleet_selected_m = false
 	if _fleet_pip != null and is_instance_valid(_fleet_pip):
 		var p := _fleet_pip.get_parent()
 		if p:
@@ -1227,6 +1283,12 @@ func _hide_fleet_pip() -> void:
 			pl.remove_child(_fleet_pip_l)
 		_fleet_pip_l.queue_free()
 	_fleet_pip_l = null
+	if _fleet_pip_m != null and is_instance_valid(_fleet_pip_m):
+		var pm := _fleet_pip_m.get_parent()
+		if pm:
+			pm.remove_child(_fleet_pip_m)
+		_fleet_pip_m.queue_free()
+	_fleet_pip_m = null
 
 
 func _ray_hits_pip(event: InputEventMouseButton, pip: Node3D) -> bool:
@@ -1249,6 +1311,8 @@ func _ray_hits_pip(event: InputEventMouseButton, pip: Node3D) -> bool:
 func _try_click_fleet_pip(event: InputEventMouseButton) -> bool:
 	if _cam == null or not is_instance_valid(_cam):
 		return false
+	if fleet_pip_m_visible() and _ray_hits_pip(event, _fleet_pip_m):
+		return try_select_fleet_pip_m()
 	if fleet_pip_l_visible() and _ray_hits_pip(event, _fleet_pip_l):
 		return try_select_fleet_pip_l()
 	if fleet_pip_k_visible() and _ray_hits_pip(event, _fleet_pip_k):

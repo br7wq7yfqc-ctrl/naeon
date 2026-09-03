@@ -244,6 +244,13 @@
     weapon. No Paragon card deck. Prior 10 kits stay. ClashModuleBench
     AR-E SENSOR + AR-K CARGO stay. AR-A…AR-Q stay. Infection cap 5.
     Host authority. ORBITAL_STATIONS stays false. No SITE_* (this pass).
+55. FL-M: thirteenth extra allied pip on ST-A Strategy overlay (key B).
+    SoftNet visual hull (pad-visitor / NP-A grammar). Cap 14
+    (player + 13) toward 10–15. HUD FLEET n/14 SoftKnowledge only.
+    Click/select ≠ combat. Host Pulse / occupy. FL-A…FL-L stay.
+    Not 10–15 ships. Not a second OpenSpace. Not ENet. Not G5.
+    Infection cap 5. ORBITAL_STATIONS stays false. No SITE_*
+    (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.
