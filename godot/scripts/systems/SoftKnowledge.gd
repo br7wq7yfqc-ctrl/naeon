@@ -231,6 +231,33 @@ static func reward_label(cosmetic: bool = false) -> String:
 	return "REWARD"
 
 
+## AR-Z: name Clash matchmaking. Never pay-rank / P2W skip / Pulse / kit unlock.
+static func match_label() -> String:
+	var hist := mastery("history")
+	var combat := mastery("combat")
+	if hist >= 15.0 or combat >= 15.0 or rank() >= 5:
+		return "CLASH MATCH"
+	return "MATCH"
+
+
+## AR-Z: name the local host queue. Never cash skip.
+static func queue_label() -> String:
+	var hist := mastery("history")
+	var combat := mastery("combat")
+	if hist >= 15.0 or combat >= 15.0 or rank() >= 5:
+		return "CLASH QUEUE"
+	return "QUEUE"
+
+
+## AR-Z: name host ready. Informational only — Rank ≠ queue power.
+static func ready_label() -> String:
+	var hist := mastery("history")
+	var combat := mastery("combat")
+	if hist >= 15.0 or combat >= 15.0 or rank() >= 5:
+		return "CLASH READY"
+	return "READY"
+
+
 ## History/combat: surface dummy name only — never Pulse DPS.
 static func surface_dummy_label() -> String:
 	var hist := mastery("history")

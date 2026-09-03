@@ -326,6 +326,17 @@
     Infection cap 5. ST-H pad turret stays distinct. Not Clash
     Turret.gd / OUTER 160. Not a 13th AbilityKit. Not FL-O.
     ORBITAL_STATIONS stays false. No SITE_* (this pass).
+65. AR-Z: first Clash matchmaking seed on the existing 60×60
+    TestArena / ClashDirector. Local host-authority QUEUE / READY
+    before 3v3/5v5. SoftKnowledge / HUD MATCH / QUEUE / READY only.
+    Informational — never pay-rank matchmaking, P2W queue skip,
+    unique combat item / Pulse / yield / kit unlock. Infection cap 5.
+    Not a 13th AbilityKit. Not another fleet pip. AbilityKitCatalog
+    stays at 12 (cx_nex…gr_thorn). FL-N FLEET 15/15 stays. AR-Y
+    REWARD/TITLE stays. AR-X small jungle camp stays. AR-W third-lane
+    wave stays. AR-A…AR-Y stay. ST-L orbital turret stays.
+    Host authority. ORBITAL_STATIONS
+    stays false. No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

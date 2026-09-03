@@ -176,11 +176,28 @@ func reward_hud_line() -> String:
 	return reward_soft_label()
 
 
+func match_soft_label() -> String:
+	var local := _local_match()
+	if local != null and local.has_method("match_soft_label"):
+		return str(local.match_soft_label())
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if SoftK and SoftK.has_method("match_label"):
+		return str(SoftK.match_label())
+	return "MATCH"
+
+
+func match_hud_line() -> String:
+	var local := _local_match()
+	if local != null and local.has_method("match_hud_line"):
+		return str(local.match_hud_line())
+	return match_soft_label()
+
+
 func score_hud_line() -> String:
 	var eco := 0.0
 	if GameManager:
 		eco = GameManager.biomass if GameManager.player_faction == GameManager.Faction.GROT else GameManager.contribution
-	return "K %d  D %d  ·  OBJ %.0f  ·  ECO %.0f  ·  %s  ·  %s" % [_kills, _deaths, _obj_score, eco, xp_hud_line(), reward_hud_line()]
+	return "K %d  D %d  ·  OBJ %.0f  ·  ECO %.0f  ·  %s  ·  %s  ·  %s" % [_kills, _deaths, _obj_score, eco, xp_hud_line(), reward_hud_line(), match_hud_line()]
 
 func register_death() -> void:
 	_deaths += 1

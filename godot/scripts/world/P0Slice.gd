@@ -342,6 +342,17 @@ const AR_X_SMALL_CAMP := true
 ## wave stays. AR-U XP/LEVEL stays. AR-T minion wave stays. AR-A…AR-X stay.
 ## Host authority. ORBITAL_STATIONS stays false. No SITE_*.
 const AR_Y_REWARDS := true
+## AR-Z: first Clash matchmaking seed on the existing 60×60 TestArena /
+## ClashDirector. Local host-authority QUEUE / READY before 3v3/5v5.
+## SoftKnowledge / HUD MATCH / QUEUE / READY only. Informational —
+## never pay-rank matchmaking, P2W queue skip, unique combat item /
+## Pulse / yield / kit unlock. Infection cap 5. Not a 13th AbilityKit.
+## Not another fleet pip. AbilityKitCatalog stays at 12 (cx_nex…gr_thorn).
+## FL-N FLEET 15/15 stays. AR-Y REWARD/TITLE stays. AR-X small jungle
+## camp stays. AR-W third-lane wave stays. AR-A…AR-Y stay. ST-L
+## orbital turret stays. Host
+## authority. ORBITAL_STATIONS stays false. No SITE_*.
+const AR_Z_MATCHMAKING := true
 ## DO-A: contested Cybernex ↔ gROT transition on one occupied unnamed pad.
 ## Uses OwnershipData / OwnershipComponent / ContestedRing. SoftKnowledge
 ## HUD label only (CONTESTED / CYBERNEX / GROT). Not HyperGate G4. Not

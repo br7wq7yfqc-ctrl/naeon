@@ -531,6 +531,7 @@ func _finish_clash_layout() -> void:
 	_evidence_ar_g()
 	_evidence_ar_u()
 	_evidence_ar_y()
+	_evidence_ar_z()
 	_setup_arena_playtest()
 
 
@@ -693,10 +694,15 @@ func _update_clash_radar() -> void:
 				reward = "  ·  %s" % str(_local_match.reward_hud_line())
 			elif get_node_or_null("ClashMatchDirector") and get_node("ClashMatchDirector").has_method("reward_hud_line"):
 				reward = "  ·  %s" % str(get_node("ClashMatchDirector").reward_hud_line())
+			var matchq := ""
+			if _local_match and _local_match.has_method("match_hud_line"):
+				matchq = "  ·  %s" % str(_local_match.match_hud_line())
+			elif get_node_or_null("ClashMatchDirector") and get_node("ClashMatchDirector").has_method("match_hud_line"):
+				matchq = "  ·  %s" % str(get_node("ClashMatchDirector").match_hud_line())
 			if press == "":
-				_lane_hud.text = "LANE %s%s%s%s%s%s%s%s%s%s" % [_lanes.player_lane, wave, camp, kit, mod, river, pad, localm, xp, reward]
+				_lane_hud.text = "LANE %s%s%s%s%s%s%s%s%s%s%s" % [_lanes.player_lane, wave, camp, kit, mod, river, pad, localm, xp, reward, matchq]
 			else:
-				_lane_hud.text = "LANE %s  ·  %s%s%s%s%s%s%s%s%s%s" % [_lanes.player_lane, press, wave, camp, kit, mod, river, pad, localm, xp, reward]
+				_lane_hud.text = "LANE %s  ·  %s%s%s%s%s%s%s%s%s%s%s" % [_lanes.player_lane, press, wave, camp, kit, mod, river, pad, localm, xp, reward, matchq]
 	if _radar == null or not _radar.has_method("set_snapshot"):
 		return
 	# One entry per node: the old second pass compared a Node against an Array
@@ -1439,6 +1445,28 @@ func _evidence_ar_y() -> void:
 		line = str(dir.reward_hud_line())
 	print("[AR-Y] reward=", rlab, " title=", tlab, " granted=", granted,
 		" hud=", line, " pin=", LayerContext.site_pin_id if LayerContext else "")
+
+
+func _evidence_ar_z() -> void:
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var mlab := str(SoftK.match_label()) if SoftK and SoftK.has_method("match_label") else ""
+	var qlab := str(SoftK.queue_label()) if SoftK and SoftK.has_method("queue_label") else ""
+	var rlab := str(SoftK.ready_label()) if SoftK and SoftK.has_method("ready_label") else ""
+	var line := ""
+	var queued := false
+	var ready := false
+	if _local_match and _local_match.has_method("match_hud_line"):
+		line = str(_local_match.match_hud_line())
+		if "queue_open" in _local_match:
+			queued = bool(_local_match.queue_open)
+		if "host_ready" in _local_match:
+			ready = bool(_local_match.host_ready)
+	var dir: Node = get_node_or_null("ClashMatchDirector")
+	if line == "" and dir and dir.has_method("match_hud_line"):
+		line = str(dir.match_hud_line())
+	print("[AR-Z] match=", mlab, " queue=", qlab, " ready=", rlab,
+		" queued=", queued, " is_ready=", ready, " hud=", line,
+		" pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
 func _want_clash_5v5() -> bool:

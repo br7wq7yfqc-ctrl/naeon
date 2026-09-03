@@ -44,6 +44,9 @@ var match_level: int = 1
 ## AR-Y: match-end reward is a SoftKnowledge label only. Never a unique item.
 var last_reward: String = ""
 var last_reward_cosmetic: bool = false
+## AR-Z: local host-authority queue/ready. Labels only. Never P2W skip.
+var queue_open: bool = false
+var host_ready: bool = false
 
 
 func _ready() -> void:
@@ -237,6 +240,8 @@ func evidence() -> Dictionary:
 		"level": match_level,
 		"reward": last_reward,
 		"reward_cosmetic": last_reward_cosmetic,
+		"queue_open": queue_open,
+		"host_ready": host_ready,
 	}
 
 
@@ -301,6 +306,63 @@ func reward_hud_line() -> String:
 func is_reward_informational() -> bool:
 	## rules/13 cosmetic / title / lore. Never unique combat item / Pulse.
 	return true
+
+
+## AR-Z: informational local queue. Never pay-rank / P2W skip / Pulse.
+func open_queue() -> String:
+	queue_open = true
+	host_ready = false
+	return queue_soft_label()
+
+
+func mark_ready() -> String:
+	if not queue_open:
+		open_queue()
+	host_ready = true
+	return ready_soft_label()
+
+
+func try_cash_queue_skip(_paid: float = 0.0) -> bool:
+	## P2W queue skip stays locked.
+	return false
+
+
+func is_rank_gated() -> bool:
+	## Never pay-rank matchmaking.
+	return false
+
+
+func is_matchmaking_informational() -> bool:
+	return true
+
+
+func match_soft_label() -> String:
+	if host_ready:
+		return ready_soft_label()
+	if queue_open:
+		return queue_soft_label()
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if SoftK and SoftK.has_method("match_label"):
+		return str(SoftK.match_label())
+	return "MATCH"
+
+
+func queue_soft_label() -> String:
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if SoftK and SoftK.has_method("queue_label"):
+		return str(SoftK.queue_label())
+	return "QUEUE"
+
+
+func ready_soft_label() -> String:
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if SoftK and SoftK.has_method("ready_label"):
+		return str(SoftK.ready_label())
+	return "READY"
+
+
+func match_hud_line() -> String:
+	return match_soft_label()
 
 
 func _recompute_level() -> void:

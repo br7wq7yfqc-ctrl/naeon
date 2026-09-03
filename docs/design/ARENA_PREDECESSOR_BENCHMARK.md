@@ -41,21 +41,21 @@ NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY
 | `ClashLanes.gd` | 3 полосы; OUTER/MID/INHIB/CORE live `Turret`; `structure_table()` + `lane_march_path()` |
 | `ClashWaves.gd` | timed волны `CombatDummy` по линии; **AR-T** host-authority Pulse 11; **AR-V** opposite-lane seed; **AR-W** remaining-lane (MID) seed; SoftKnowledge `WAVE` / `MINION`; cap по GraphicsQuality; no P2W |
 | `AexionClash.gd` | kills→5, pressure TOP/MID/BOT, soft WS, `SITE_TEST_ARENA_PILLAR` уже в LayerContext (не чеканить новый) |
-| `ClashMatchDirector.gd` | K/D, banner, lane HUD; **AR-T** SoftKnowledge `WAVE` / `MINION`; **AR-U** SoftKnowledge `XP` / `LEVEL`; **AR-X** SoftKnowledge `CAMP` / `JUNGLE`; **AR-Y** SoftKnowledge `REWARD` / `TITLE`; no P2W |
+| `ClashMatchDirector.gd` | K/D, banner, lane HUD; **AR-T** SoftKnowledge `WAVE` / `MINION`; **AR-U** SoftKnowledge `XP` / `LEVEL`; **AR-X** SoftKnowledge `CAMP` / `JUNGLE`; **AR-Y** SoftKnowledge `REWARD` / `TITLE`; **AR-Z** SoftKnowledge `MATCH` / `QUEUE` / `READY`; no P2W |
 | `ClashCamp.gd` | три off-lane pit (AR-D fangtooth + AR-J prime + AR-X small); HP; soft contest announce; drop = soft WS (не оружие); small weaker than prime |
 | `ClashRiver.gd` | река на том же 60×60: mid-crossing + каналы между полосами; terrain/read, не objective |
 | `ClashJumpPads.gd` | 4 pad на том же 60×60; короткий hop walker/hero, не полёт и не корабль |
-| `TestArena.gd` | дверь слоя; beacons Neutral; `ClashWaves` на полосах (**AR-T** WAVE/MINION + **AR-V** opposite + **AR-W** MID); `ClashCamp` + `ClashPrimeCamp` + `ClashSmallCamp`; один `ClashModuleBench` (AR-E SENSOR + AR-K CARGO); `ClashRiver`; `ClashJumpPads`; `ClashLocalMatch` 5v5 (3v3 startable); **AR-U** XP/LEVEL HUD; **AR-Y** REWARD/TITLE HUD |
+| `TestArena.gd` | дверь слоя; beacons Neutral; `ClashWaves` на полосах (**AR-T** WAVE/MINION + **AR-V** opposite + **AR-W** MID); `ClashCamp` + `ClashPrimeCamp` + `ClashSmallCamp`; один `ClashModuleBench` (AR-E SENSOR + AR-K CARGO); `ClashRiver`; `ClashJumpPads`; `ClashLocalMatch` 5v5 (3v3 startable); **AR-U** XP/LEVEL HUD; **AR-Y** REWARD/TITLE HUD; **AR-Z** MATCH/QUEUE/READY HUD |
 | `ClashLocalMatch.gd` | 5v5 local host authority; 10 actors на TOP/MID/BOT + jungle; 3v3 startable; SoftNet visual puppets; G5 закрыт; **AR-U** match XP / level labels only |
 | `AbilityKitCatalog.gd` | 12 китов (AR-E 4 + AR-L Lattice + AR-M Vein + AR-N Prism + AR-O Facet + AR-P Helix + AR-Q Coil + AR-R Spire + AR-S Thorn); costs из `EnergyEconomy`; `kit_for_faction` = прежний default |
 | `HeroFormCatalog.gd` | Canine/Feline/Avian/Human + лёгкие loco-числа — **не** rank; не усиливать |
 | `docs/systems/AEXION_CLASH_SLICE.md` | бар уже назван Predecessor; non-goal: full lanes/items P2W |
 | `docs/rules/13_MOBA_ARENA_INFLUENCE.md` | арена не флипает планету; daily WS 60 |
-| Phase 3 план | 6–8 heroes / items / matchmaking — **ещё не код**; jungle bite = AR-D + AR-J + AR-X; items-shop seed = AR-K; fifth kit = AR-L; sixth kit = AR-M; seventh kit = AR-N; eighth kit = AR-O; ninth kit = AR-P; tenth kit = AR-Q; eleventh kit = AR-R; twelfth kit = AR-S (12 kits toward 6–8); minion-wave seed = AR-T; XP/leveling seed = AR-U; second-lane wave = AR-V; third-lane wave = AR-W (3 lanes; 5v5 local = AR-G); small jungle camp = AR-X; rewards pipeline seed = AR-Y |
+| Phase 3 план | 6–8 heroes / items / matchmaking — **ещё не код**; jungle bite = AR-D + AR-J + AR-X; items-shop seed = AR-K; fifth kit = AR-L; sixth kit = AR-M; seventh kit = AR-N; eighth kit = AR-O; ninth kit = AR-P; tenth kit = AR-Q; eleventh kit = AR-R; twelfth kit = AR-S (12 kits toward 6–8); minion-wave seed = AR-T; XP/leveling seed = AR-U; second-lane wave = AR-V; third-lane wave = AR-W (3 lanes; 5v5 local = AR-G); small jungle camp = AR-X; rewards pipeline seed = AR-Y; matchmaking seed = AR-Z |
 
 ---
 
-## Срезы AR-A…AR-Y
+## Срезы AR-A…AR-Z
 
 Каждый срез playable сам. **Не начинать, пока OS-A зелёный** (космос читает одно тело). Арена не перехватывает очередь Open Space.
 
@@ -86,6 +86,7 @@ NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY
 | **AR-W** | third Clash lane minion-wave | **сделано:** третья host-authority lane-волна `CombatDummy` на remaining Clash lane MID (тот же `ClashWaves`); Pulse 11; SoftKnowledge `WAVE` / `MINION`; 3-lane seed complete; AR-T и AR-V остаются; Infection cap 5; не 13-й кит; 12 kits stay; FL-N FLEET 15/15 stays; AR-U XP/LEVEL informational | этот срез | unique weapon; XP power; AbilityKit 13; FL-O; leftover 5v5 soak |
 | **AR-X** | small jungle camp | **сделано:** один extra off-lane `ClashCamp` (weaker than AR-J prime; AR-D fangtooth stays) на том же 60×60; soft contest; drop = soft WS; SoftKnowledge `CAMP` / `JUNGLE`; Pulse 11; Infection cap 5; не 4-я полоса; не 13-й кит; 12 kits stay; FL-N FLEET 15/15 stays; AR-T/V/W stay; AR-U XP/LEVEL informational | этот срез | unique weapon; 4th lane; AbilityKit 13; FL-O; leftover 5v5 soak |
 | **AR-Y** | first Clash rewards pipeline seed | **сделано:** SoftKnowledge / HUD `REWARD` / `TITLE` на match-end (rules/13 cosmetic / title / lore); grant informational — never unique combat item / Pulse / yield / kit unlock; Infection cap 5; не 13-й кит; 12 kits stay; FL-N FLEET 15/15 stays; AR-X camp stays; AR-W wave stays; AR-V wave stays; AR-U XP stays | этот срез | unique combat item; Pulse power; AbilityKit 13; FL-O; leftover 5v5 soak |
+| **AR-Z** | first Clash matchmaking seed | **сделано:** SoftKnowledge / HUD `MATCH` / `QUEUE` / `READY`; local host-authority queue/ready before 3v3/5v5; informational — never pay-rank / P2W skip / unique item / Pulse / kit unlock; Infection cap 5; не 13-й кит; 12 kits stay; FL-N FLEET 15/15 stays; AR-Y REWARD stays | этот срез | pay-rank queue; P2W skip; AbilityKit 13; FL-O; leftover 5v5 soak |
 
 ---
 
@@ -97,4 +98,4 @@ NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY
 
 ## Этот PR
 
-AR-Y: first Clash rewards pipeline seed on the existing TestArena / ClashDirector 60×60. SoftKnowledge / HUD `REWARD` / `TITLE` only (rules/13 cosmetic / title / lore). Match-end grant informational — never unique combat item / Pulse / yield / kit unlock. Infection cap 5. Not a 13th kit. Not another fleet pip. AbilityKitCatalog stays at 12 (`cx_nex`…`gr_thorn`). FL-N FLEET 15/15 stays. AR-X small jungle camp stays. AR-W third-lane wave stays. AR-V second-lane wave stays. AR-U XP/LEVEL stay informational. AR-T stays on its lane. AR-A…AR-X, река и jump pads не откатывать. G5 закрыт. Не mint SITE_*. Knowledge не меняет DPS. Дверь: меню → AEXION CLASH → TestArena.
+AR-Z: first Clash matchmaking seed on the existing TestArena / ClashDirector 60×60. SoftKnowledge / HUD `MATCH` / `QUEUE` / `READY` only. Local host-authority queue/ready before 3v3/5v5. Informational — never pay-rank matchmaking, P2W queue skip, unique combat item / Pulse / yield / kit unlock. Infection cap 5. Not a 13th kit. Not another fleet pip. AbilityKitCatalog stays at 12 (`cx_nex`…`gr_thorn`). FL-N FLEET 15/15 stays. AR-Y REWARD/TITLE stays. AR-X small jungle camp stays. AR-W third-lane wave stays. AR-A…AR-Y, река и jump pads не откатывать. G5 закрыт. Не mint SITE_*. Knowledge не меняет DPS. Дверь: меню → AEXION CLASH → TestArena.
