@@ -1412,7 +1412,10 @@ func _update_hud() -> void:
 	if strategy_overlay_active() and _strategy.has_method("readiness_line"):
 		var ov := str(_strategy.readiness_line())
 		hud_label.visible = true
-		hud_label.text = ov + "  ·  Q hack  E firewall  ·  Esc leave"
+		var pvp := ""
+		if _strategy.has_method("pvp_hud_line"):
+			pvp = "  ·  %s  ·  R pulse" % str(_strategy.pvp_hud_line())
+		hud_label.text = ov + pvp + "  ·  Q hack  E firewall  ·  Esc leave"
 		return
 	var pl: Node3D = nearest_planet(ship.global_position)
 	var alt := 0.0

@@ -15,6 +15,7 @@
 - **MC-C:** engineer puppet on the third seat. Station role `engineer` is a SoftKnowledge / HUD label. Host keeps combat. No passenger DPS.
 - **PV-A:** same tag on the pad rival `CombatDummy` + optional viewer. Host keeps Pulse combat. Not Clash. G5 stays closed.
 - **PV-B:** same tag / same rival. Seated hull Pulse is host-authority. SoftNet visual bind only. Not Clash. G5 stays closed.
+- **PV-C:** same tag / same rival. ST-A Strategy overlay Pulse is host-authority. SoftNet visual bind only. Click/select ≠ combat. Not Clash. G5 stays closed.
 
 ## Continuum fields (UDP STATE)
 

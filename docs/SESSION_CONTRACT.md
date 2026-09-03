@@ -344,6 +344,14 @@
     ST-I pad storage stays distinct. Not a second ship CargoHold.
     Not a 13th AbilityKit. Not FL-O. ORBITAL_STATIONS stays false.
     No SITE_* (this pass).
+67. PV-C: first Strategy PvP from ST-A overlay (key B) on an occupied
+    unnamed pad. Same PadPvp rival as PV-A / PV-B. Overlay Pulse 11
+    both ways. Win = rival HP → 0. No permadeath. Infection cap 5.
+    SoftKnowledge / HUD PVP / STRATEGY PVP only. TPS PV-A and hull
+    PV-B stay. Click/select still ≠ combat. Host authority. Not Clash.
+    Not a 13th AbilityKit. Not FL-O. AbilityKitCatalog stays at 12
+    (cx_nex…gr_thorn). FL-N FLEET 15/15 stays. ST-A…ST-M stay. AR-Z
+    stays. ORBITAL_STATIONS stays false. No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

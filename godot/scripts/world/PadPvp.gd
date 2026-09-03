@@ -1,8 +1,8 @@
 extends Node3D
 class_name PadPvp
-## PV-A / PV-B: one host-authority rival CombatDummy on the occupied unnamed pad.
-## TPS walker (PV-A) and seated hull (PV-B) share this rival. Pulse 11 both ways.
-## Win = rival HP → 0. No permadeath. Infection cap 5.
+## PV-A / PV-B / PV-C: one host-authority rival CombatDummy on the occupied unnamed pad.
+## TPS walker (PV-A), seated hull (PV-B), and ST-A overlay Pulse (PV-C) share this rival.
+## Pulse 11 both ways. Win = rival HP → 0. No permadeath. Infection cap 5.
 ## SoftNet visual only. G5 stays closed. No SITE_*. Knowledge labels only.
 
 const _DUMMY := preload("res://scenes/combat/CombatDummy.tscn")
@@ -42,6 +42,10 @@ func get_rival() -> Node3D:
 
 func rival_label() -> String:
 	return _SoftK.rival_label()
+
+
+func pvp_soft_label() -> String:
+	return str(_SoftK.pvp_label())
 
 
 func combat_authority() -> String:

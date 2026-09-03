@@ -56,6 +56,7 @@ func _go() -> void:
 		await _assert_hf_b(os, fails)
 		await _assert_hf_a(os, fails)
 		await _assert_pv_b(os, fails)
+		await _assert_pv_c(os, fails)
 		await _assert_pv_a(os, fails)
 		await _assert_bt_a(os, fails)
 		await _assert_bt_b(os, fails)
@@ -723,6 +724,7 @@ func _go() -> void:
 	await _assert_hf_b(os, fails)
 	await _assert_hf_a(os, fails)
 	await _assert_pv_b(os, fails)
+	await _assert_pv_c(os, fails)
 	await _assert_pv_a(os, fails)
 	await _assert_bt_a(os, fails)
 	await _assert_bt_b(os, fails)
@@ -18792,6 +18794,288 @@ func _assert_pv_b(os: Node, fails: PackedStringArray) -> void:
 		ship.global_position = host.global_position + pad_up * 80.0
 		if ship.has_method("_set_mode"):
 			ship._set_mode(1)
+
+
+func _assert_pv_c(os: Node, fails: PackedStringArray) -> void:
+	## PV-C: ST-A Strategy overlay Pulse vs the same PadPvp rival as PV-A/B.
+	## Overlay Pulse 11 hits rival; rival Pulse hits overlay caster. Win = HP → 0.
+	## No permadeath. Infection cap 5. Knowledge labels only. G5 closed.
+	## TPS PV-A and hull PV-B stay. Click/select still ≠ combat.
+	var fail0 := fails.size()
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	var nex: Node = _osh_nex()
+	var traffic: Node = null
+	var pvp: Node = null
+	var rival: Node3D = null
+	var host: Node3D = null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var walker: Node3D = os.get("player") as Node3D if os else null
+	var ov: Node = os.strategy_overlay() if os != null and os.has_method("strategy_overlay") else null
+	var caster: Node = null
+	var ab: Node = null
+	var pulse0 := 11.0
+	var pulse1 := 11.0
+	var dmg0 := 11.0
+	var dmg1 := 11.0
+	if P0 == null or not bool(P0.PV_C_STRATEGY) or not bool(P0.PV_A_PVP) or not bool(P0.PV_B_SPACE) \
+			or not bool(P0.ST_A_OVERLAY):
+		fails.append("PV-C P0Slice flag missing")
+		return
+	if P0 != null and not bool(P0.ST_M_STORAGE):
+		fails.append("PV-C dropped ST-M P0Slice flag")
+	if P0 != null and not bool(P0.AR_Z_MATCHMAKING):
+		fails.append("PV-C dropped AR-Z P0Slice flag")
+	if P0 != null and not bool(P0.FL_N_FLEET):
+		fails.append("PV-C dropped FL-N P0Slice flag")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("PV-C flipped ORBITAL_STATIONS")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("PV-C Infection cap drifted")
+	if Kit == null or not Kit.has_method("kit_ids"):
+		fails.append("PV-C AbilityKitCatalog missing")
+	else:
+		var ids: PackedStringArray = Kit.kit_ids()
+		if int(ids.size()) != 12:
+			fails.append("PV-C kit count want 12 (got %s)" % ids.size())
+		if int(ids.size()) >= 13:
+			fails.append("PV-C added a 13th AbilityKit")
+	var plab := str(SoftK.pvp_label()) if SoftK and SoftK.has_method("pvp_label") else ""
+	if plab == "" or (plab != "PVP" and plab != "STRATEGY PVP"):
+		fails.append("PV-C SoftKnowledge PVP missing (%s)" % plab)
+	if os == null or nex == null:
+		fails.append("PV-C no OpenSpace/Nex-Prime")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("PV-C must not run on TestArena")
+		return
+	if LayerContext and str(LayerContext.current_layer) == "Arena":
+		fails.append("PV-C must not run on Clash")
+		return
+	if ov == null or not ov.has_method("try_enter") or not ov.has_method("try_pulse"):
+		fails.append("PV-C StrategyOverlay missing Pulse")
+		return
+	if ov.has_method("is_active") and bool(ov.is_active()) and ov.has_method("exit_overlay"):
+		ov.exit_overlay()
+		await get_tree().process_frame
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.2).timeout
+	if nex.has_method("pad_traffic"):
+		traffic = nex.call("pad_traffic")
+	if traffic == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("pad_traffic")
+		if not listed.is_empty():
+			traffic = listed[0]
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("PV-C pad traffic missing")
+		return
+	if traffic.has_method("get_pvp"):
+		pvp = traffic.get_pvp()
+	if pvp == null:
+		pvp = traffic.get_node_or_null("PadPvp")
+	if pvp == null:
+		fails.append("PV-C PadPvp missing")
+		return
+	if traffic.has_method("get_rival"):
+		rival = traffic.get_rival()
+	if rival == null and pvp.has_method("get_rival"):
+		rival = pvp.get_rival()
+	if rival == null or not is_instance_valid(rival):
+		fails.append("PV-C rival missing on occupied pad")
+		return
+	host = traffic.get_parent() as Node3D
+	if host == null or not host.has_meta("pad_up"):
+		fails.append("PV-C rival not on a pad")
+		return
+	var pname := str(host.name)
+	if pname != "Pad_North" and pname != "Pad_Approach" and pname != "Pad_Flank":
+		fails.append("PV-C unknown pad (%s)" % pname)
+		return
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("PV-C minted SITE_* (%s)" % pin)
+		return
+	if pvp.has_method("is_g5_closed") and not bool(pvp.is_g5_closed()):
+		fails.append("PV-C G5 Clash-from-world is open")
+		return
+	var auth := str(pvp.combat_authority()) if pvp.has_method("combat_authority") else ""
+	if auth != "host":
+		fails.append("PV-C combat authority is not host (%s)" % auth)
+	if pvp.has_method("has_p2w_hp") and bool(pvp.has_p2w_hp()):
+		fails.append("PV-C pay-to-win HP")
+	if rival.has_method("infection_cap") and int(rival.infection_cap()) != 5:
+		fails.append("PV-C Infection cap drifted (%s)" % rival.infection_cap())
+	if "attack_damage" in rival:
+		dmg0 = float(rival.get("attack_damage"))
+	if ship == null or not is_instance_valid(ship):
+		fails.append("PV-C no ship")
+		return
+	if not bool(os.get("_in_ship")):
+		if (walker == null or not is_instance_valid(walker)) and os.has_method("_spawn_player_near_ship"):
+			os.call("_spawn_player_near_ship")
+			await get_tree().create_timer(0.2).timeout
+			walker = os.get("player") as Node3D
+		if walker != null and is_instance_valid(walker):
+			walker.global_position = ship.global_position + Vector3(0.0, 2.0, 0.0)
+			if os.has_method("try_enter_ship"):
+				os.try_enter_ship()
+			await get_tree().create_timer(0.2).timeout
+	if not bool(os.get("_in_ship")):
+		os.set("_in_ship", true)
+		os.set("_eva_mode", false)
+		if ship.has_method("set_pilot_active"):
+			ship.set_pilot_active(true)
+		if LayerContext:
+			LayerContext.set_layer("Space")
+	var pad_up: Vector3 = host.get_meta("pad_up")
+	if "velocity" in ship:
+		ship.velocity = Vector3.ZERO
+	ship.global_position = rival.global_position + pad_up * 6.0
+	if ship.has_method("_set_mode"):
+		ship._set_mode(2)
+	if walker != null and is_instance_valid(walker):
+		walker.global_position = rival.global_position + pad_up * 2.0
+	rival.set("faction", "gROT")
+	rival.set("_alive", true)
+	if float(rival.get("health")) < 20.0:
+		rival.set("health", float(rival.get("max_health")))
+	if ship.has_method("_ensure_ability_kit"):
+		ship._ensure_ability_kit()
+	if not bool(ov.try_enter()):
+		fails.append("PV-C ST-A overlay did not open (%s)" % str(ov.readiness_line() if ov.has_method("readiness_line") else ""))
+		return
+	var ly := str(LayerContext.current_layer) if LayerContext else ""
+	print("[Playtest] PV-C overlay layer=", ly, " pad=", pname)
+	if ly != "Strategy":
+		fails.append("PV-C LayerContext not Strategy (%s)" % ly)
+	if ov.has_method("is_active") and not bool(ov.is_active()):
+		fails.append("PV-C overlay not active")
+	caster = ov.overlay_caster() if ov.has_method("overlay_caster") else ship
+	if caster == null or not is_instance_valid(caster):
+		fails.append("PV-C no overlay caster")
+		if ov.has_method("exit_overlay"):
+			ov.exit_overlay()
+		return
+	ab = caster.get_node_or_null("AbilitySystem")
+	if ab == null:
+		fails.append("PV-C no AbilitySystem on overlay caster")
+		if ov.has_method("exit_overlay"):
+			ov.exit_overlay()
+		return
+	if "energy" in caster:
+		caster.set("energy", 100.0)
+	if ab.has_method("setup_default_loadout"):
+		ab.setup_default_loadout("Cybernex")
+	if ab.get("abilities") != null and (ab.abilities as Array).size() > 0 and ab.abilities[0]:
+		pulse0 = float(ab.abilities[0].damage)
+		ab.current_cooldowns[ab.abilities[0]] = 0.0
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("history", 20.0)
+		GameManager.add_mastery("combat", 20.0)
+	if ab.get("abilities") != null and (ab.abilities as Array).size() > 0 and ab.abilities[0]:
+		pulse1 = float(ab.abilities[0].damage)
+		if absf(pulse1 - pulse0) > 0.01 or absf(pulse1 - 11.0) > 0.01:
+			fails.append("PV-C Knowledge changed Pulse DPS (%s → %s)" % [pulse0, pulse1])
+	if "attack_damage" in rival:
+		dmg1 = float(rival.get("attack_damage"))
+	if absf(dmg1 - dmg0) > 0.01 or absf(dmg1 - 11.0) > 0.01:
+		fails.append("PV-C Knowledge changed rival Pulse DPS (%s → %s)" % [dmg0, dmg1])
+	var hud := str(ov.pvp_hud_line()) if ov.has_method("pvp_hud_line") else plab
+	if hud == "" or (hud != "PVP" and hud != "STRATEGY PVP"):
+		fails.append("PV-C overlay HUD PVP missing (%s)" % hud)
+	if SoftScanCache:
+		SoftScanCache.invalidate_enemies()
+		SoftScanCache.invalidate_player()
+	var hp0: float = float(rival.get("health"))
+	var caster_hp0: float = float(caster.get("health")) if "health" in caster else 120.0
+	var shield0: float = float(caster.get("shields")) if "shields" in caster else 0.0
+	var fired := bool(ov.try_pulse(rival))
+	var hp1: float = float(rival.get("health"))
+	var drop: float = hp0 - hp1
+	print("[Playtest] PV-C overlay Pulse pad=", pname, " rival hp ", snapped(hp0, 0.1), " → ",
+		snapped(hp1, 0.1), " drop=", snapped(drop, 0.1), " label=", hud)
+	if not fired:
+		fails.append("PV-C overlay Pulse did not fire")
+	elif drop < 10.0:
+		fails.append("PV-C overlay Pulse did not hit rival (%s → %s)" % [snapped(hp0, 0.1), snapped(hp1, 0.1)])
+	elif drop > 12.5:
+		fails.append("PV-C Pulse DPS drifted (drop=%s)" % snapped(drop, 0.1))
+	var back := false
+	if pvp.has_method("try_rival_pulse"):
+		back = bool(pvp.try_rival_pulse(caster))
+	elif rival.has_method("try_pulse"):
+		back = bool(rival.try_pulse(caster))
+	var caster_hp1: float = float(caster.get("health")) if "health" in caster else caster_hp0
+	var shield1: float = float(caster.get("shields")) if "shields" in caster else shield0
+	var back_drop: float = (caster_hp0 - caster_hp1) + (shield0 - shield1)
+	print("[Playtest] PV-C rival Pulse back hit=", back, " caster hp/shield ",
+		snapped(caster_hp0, 0.1), "/", snapped(shield0, 0.1), " → ",
+		snapped(caster_hp1, 0.1), "/", snapped(shield1, 0.1), " drop=", snapped(back_drop, 0.1))
+	if not back:
+		fails.append("PV-C rival Pulse did not fire")
+	elif back_drop < 10.0:
+		fails.append("PV-C rival Pulse did not hit overlay caster")
+	elif back_drop > 12.5:
+		fails.append("PV-C rival Pulse DPS drifted (drop=%s)" % snapped(back_drop, 0.1))
+	if "respawn_time" in rival:
+		rival.set("respawn_time", 60.0)
+	if rival.has_method("take_damage"):
+		rival.take_damage(float(rival.get("health")) + 1.0, "Cybernex")
+	var hp_win: float = float(rival.get("health"))
+	var alive := true
+	if rival.has_method("is_alive"):
+		alive = bool(rival.is_alive())
+	elif "_alive" in rival:
+		alive = bool(rival.get("_alive"))
+	var won := bool(pvp.win_reached()) if pvp.has_method("win_reached") else (hp_win <= 0.0)
+	print("[Playtest] PV-C win rival hp=", snapped(hp_win, 0.1), " alive=", alive, " won=", won)
+	if hp_win > 0.0 and alive:
+		fails.append("PV-C rival HP did not reach 0")
+	if not won:
+		fails.append("PV-C win condition missing")
+	if rival == null or not is_instance_valid(rival):
+		fails.append("PV-C permadeath (rival freed)")
+	if ship == null or not is_instance_valid(ship):
+		fails.append("PV-C permadeath (hull freed)")
+	if rival.has_method("infection_cap") and int(rival.infection_cap()) != 5:
+		fails.append("PV-C Infection cap after win is not 5")
+	if Kit and Kit.has_method("kit_ids") and int(Kit.kit_ids().size()) != 12:
+		fails.append("PV-C overlay Pulse unlocked a 13th kit")
+	var cap15 := 15
+	if traffic and traffic.has_method("fleet_cap"):
+		cap15 = int(traffic.fleet_cap())
+	elif ov.has_method("fleet_cap"):
+		cap15 = int(ov.fleet_cap())
+	if cap15 != 15:
+		fails.append("PV-C FLEET cap=%s, want 15" % cap15)
+	if ResourceLoader.exists("res://scripts/world/ClashFromWorld.gd") \
+			or ResourceLoader.exists("res://scripts/world/ClashBeacon.gd"):
+		fails.append("PV-C opened G5 world-to-arena")
+	print("[Playtest] PV-C overlay Pulse · ", hud,
+		" Pulse 11 · host · kits=12 · FLEET 15/15 · G5 closed · no SITE_*")
+	if ov.has_method("exit_overlay"):
+		ov.exit_overlay()
+	## Revive so PV-A still runs after this slice.
+	rival.set("_alive", true)
+	if "health" in rival:
+		rival.set("health", float(rival.get("max_health")))
+	if not rival.is_in_group("enemy"):
+		rival.add_to_group("enemy")
+	if "collision_layer" in rival:
+		rival.set("collision_layer", 4)
+	rival.visible = true
+	if pvp != null:
+		pvp.set("_won", false)
+	if "respawn_time" in rival:
+		rival.set("respawn_time", 4.0)
+	if SoftScanCache:
+		SoftScanCache.invalidate_enemies()
+		SoftScanCache.invalidate_player()
+	if fails.size() == fail0:
+		print("[Playtest] PASS PV-C")
 
 
 func _assert_pv_a(os: Node, fails: PackedStringArray) -> void:

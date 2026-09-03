@@ -276,6 +276,15 @@ static func rival_label() -> String:
 	return "RIVAL"
 
 
+## PV-C: name Strategy overlay PvP. Never Pulse / HP / kit unlock.
+static func pvp_label() -> String:
+	var hist := mastery("history")
+	var combat := mastery("combat")
+	if hist >= 10.0 or combat >= 10.0 or rank() >= 5:
+		return "STRATEGY PVP"
+	return "PVP"
+
+
 ## History/combat: gROT swarm name only — never Pulse DPS / HP / yield.
 static func swarm_label() -> String:
 	var hist := mastery("history")
