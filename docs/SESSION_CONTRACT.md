@@ -337,6 +337,13 @@
     wave stays. AR-A…AR-Y stay. ST-L orbital turret stays.
     Host authority. ORBITAL_STATIONS
     stays false. No SITE_* (this pass).
+66. ST-M: one PadStorage on the existing PlayerOrbitalStation
+    cluster (ST-E dock+habitat; ST-G factory stays; ST-K hangar stub
+    stays; ST-L turret stays) via BaseBuilder / PadStorage.setup_orbital.
+    SoftKnowledge / HUD STORAGE only. Host authority. Infection cap 5.
+    ST-I pad storage stays distinct. Not a second ship CargoHold.
+    Not a 13th AbilityKit. Not FL-O. ORBITAL_STATIONS stays false.
+    No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

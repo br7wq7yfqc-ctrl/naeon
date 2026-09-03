@@ -1,7 +1,8 @@
 extends Node3D
 class_name PadStorage
 ## ST-I: one pad storage crate/hold. Not a ship CargoHold. Cap 1 crate unit.
-## Occupied unnamed pad only. Same occupy dock unit as ship cargo.
+## ST-M: same grammar on PlayerOrbitalStation (orbital_storage).
+## Occupied unnamed pad (ST-I) or host orbital cluster (ST-M).
 ## Knowledge labels only. Mass/value stay. No SITE_*.
 
 const _Prop := preload("res://scripts/assets/GlbProp.gd")
@@ -16,24 +17,40 @@ var _label: Label3D = null
 
 
 func setup(fac: String) -> void:
+	_bind_storage(fac, false)
+
+
+func setup_orbital(fac: String) -> void:
+	## ST-M: same PadStorage grammar on the player orbital cluster.
+	_bind_storage(fac, true)
+
+
+func _bind_storage(fac: String, orbital: bool) -> void:
 	faction = fac if fac != "" else "Cybernex"
-	name = "PadStorage"
+	name = "OrbitalStorage" if orbital else "PadStorage"
 	set_meta("site_pin", "")
 	set_meta("module_type", "storage")
-	set_meta("pad_storage", true)
+	set_meta("pad_storage", not orbital)
+	set_meta("orbital_storage", orbital)
 	set_meta("player_module", false)
 	set_meta("npc_module", false)
 	set_meta("printed_module", false)
 	set_meta("ship_cargo_hold", false)
 	set_meta("combat_stats", 0)
-	if not is_in_group("pad_storage"):
+	if orbital:
+		if not is_in_group("orbital_storages"):
+			add_to_group("orbital_storages")
+	elif not is_in_group("pad_storage"):
 		add_to_group("pad_storage")
 	_spawn_marker()
 	_spawn_mesh()
 	_ensure_label()
 	if _units.is_empty():
 		seed_one()
-	print("[PadStorage] ST-I on pad fac=", faction, " cap=", CAP, " units=", _units.size())
+	if orbital:
+		print("[PadStorage] ST-M on orbital cluster fac=", faction, " cap=", CAP, " units=", _units.size())
+	else:
+		print("[PadStorage] ST-I on pad fac=", faction, " cap=", CAP, " units=", _units.size())
 
 
 func module_type() -> String:
@@ -121,7 +138,7 @@ func _spawn_marker() -> void:
 	var n := Node3D.new()
 	n.name = "Storage"
 	n.set_meta("site_pin", "")
-	n.set_meta("outpost_part", "pad_storage")
+	n.set_meta("outpost_part", "orbital_storage" if bool(get_meta("orbital_storage", false)) else "pad_storage")
 	add_child(n)
 
 

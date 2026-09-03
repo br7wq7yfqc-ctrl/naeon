@@ -7,13 +7,13 @@
 **Принцип:** Local-first → Vertical Slices → Iterative Multiplayer → Platform + AI + Educational Systems  
 **SC → NAEON (роли, не клон):** `docs/design/SC_FEATURE_MAP.md` · бар подхода OS-A…OS-H: `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (OS-A…OS-H built; harness ритуала. 60 FPS / 5 мин = 3090 human gate).  
 **Clash нативен; бар арены — Predecessor/Paragon, не Arena Commander:** `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (AR-A…AR-Z; код арены не вытесняет OS-A).  
-**Стратегия — третий бар, не Clash и не полёт OPEN SPACE:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-L built: overlay, extractor, print, hangar, orbital cluster, CX↔GR owner swap, own factory print, one pad turret, one pad storage, one pad hangar stub, one orbital hangar stub, one orbital defense turret). 
+**Стратегия — третий бар, не Clash и не полёт OPEN SPACE:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-M built: overlay, extractor, print, hangar, orbital cluster, CX↔GR owner swap, own factory print, one pad turret, one pad storage, one pad hangar stub, one orbital hangar stub, one orbital defense turret, one orbital storage). 
 **Каталог — дыры (очередь, не новый catalog):** `docs/design/WORLD_FILL.md` §6. Ready-made fill → locked plates без GLB → пластины только на титульную дыру. Не mint SITE_*. Не capital-ship wave. OS-H harness built; не G2.  
 **NPC agency + MMO HOLD:** `docs/design/NPC_AGENCY.md` (NP-A…NP-F + NP-C + NP-G ST-C print + NP-H ST-D hangar + **NP-I** ST-G factory built) · `docs/design/MMO_SERVERS.md` (Phase 3 HOLD; 10k CCU / ≥100 на шард без instance-split; нет netcode сейчас; не G5 / G2–G6).
 
 **2026-09-01 — текущий бар PV-B (не Voice, не G2, не G5):**  
 OS-A…OS-H built. G2–G6 закрыты. G1 CRUISE не открыт.  
-ST-A…ST-L / IN-A…F / WF-A / Q-A / Q-B / Q-C / Q-D / Q-E / HF-A / HF-B / HF-C / PV-A built.  
+ST-A…ST-M / IN-A…F / WF-A / Q-A / Q-B / Q-C / Q-D / Q-E / HF-A / HF-B / HF-C / PV-A built.  
 PV-B: first Space PvP from the seated player hull — same host-authority pad rival `CombatDummy`, Pulse 11 both ways, win HP → 0, Infection cap 5, Knowledge labels only. TPS PV-A stays.  
 Петля P0.6 на RTX 3090 жива — не ломать. llvmpipe ≠ FPS PASS.
 
@@ -72,7 +72,7 @@ PV-B: first Space PvP from the seated player hull — same host-authority pad ri
 - **DoD**: экипировать, летать, стрелять, save/load
 
 ### 1.3 Colony / Strategy Core
-**Бар:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-L built). Overlay на загруженном теле ARK — не карта галактики.
+**Бар:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-M built). Overlay на загруженном теле ARK — не карта галактики.
 
 - **ST-A (built):** `StrategyOverlay` (клавиша B) + один habitat на `Pad_North` / `Pad_Approach` / `Pad_Flank`. `LayerContext` = Strategy. Корабль и TPS живы после Esc/B. Не `SITE_*`.
 - **ST-B (built):** видимый extractor на unnamed паде; occupy → harvest → Contribution на HUD. Knowledge только подпись.
@@ -83,9 +83,10 @@ PV-B: first Space PvP from the seated player hull — same host-authority pad ri
 - **ST-J (built):** one `PadHangarStub` on an occupied unnamed pad via `BaseBuilder.place_pad_hangar_stub` after occupy. Hatch/LAND stay on the pad. Not ST-D `CarrierHangarQueue`. Overlay B still opens. ST-A/B/H/I stay. Knowledge labels only. No rover. No `SITE_*`.
 - **ST-K (built):** one hangar stub on the existing `PlayerOrbitalStation` cluster via `BaseBuilder.place_orbital_hangar_stub` (`PadHangarStub.setup_orbital`). ST-E dock+habitat stay. ST-G factory stays. SoftKnowledge / HUD label only. Host authority. Hatch/LAND stay legal. Not ST-D carrier hangar. Not IN-F. Not a mobile `SITE_*`. `ORBITAL_STATIONS` stays false.
 - **ST-L (built):** one `PadDefenseTurret` on the existing `PlayerOrbitalStation` cluster via `BaseBuilder.place_orbital_turret` (`PadDefenseTurret.setup_orbital`). ST-E dock+habitat stay. ST-G factory stays. ST-K hangar stub stays. SoftKnowledge / HUD label only. Host authority. Pulse 11. Infection cap 5. ST-H pad turret stays distinct. Not Clash `Turret.gd` / OUTER 160. Not a 13th kit. Not FL-O. `ORBITAL_STATIONS` stays false.
+- **ST-M (built):** one `PadStorage` on the existing `PlayerOrbitalStation` cluster via `BaseBuilder.place_orbital_storage` (`PadStorage.setup_orbital`). ST-E dock+habitat stay. ST-G factory stays. ST-K hangar stub stays. ST-L turret stays. SoftKnowledge / HUD label only. Host authority. Infection cap 5. ST-I pad storage stays distinct. Not a second ship `CargoHold`. Not a 13th kit. Not FL-O. `ORBITAL_STATIONS` stays false.
 - **ST-H (built):** one `PadDefenseTurret` on an occupied unnamed pad via `BaseBuilder.place_pad_turret` after occupy. HP; Pulse 11 at PV-A rival / BT-A range hostiles. Not Clash `Turret.gd` / OUTER 160. Overlay B still opens. ST-A habitat 0 combat + ST-B extractor stay. Knowledge labels only. No P2W repair. No `SITE_*`.
 - **ST-I (built):** one `PadStorage` on an occupied unnamed pad via `BaseBuilder.place_pad_storage` after occupy. Holds **one** crate; occupy dock transfers pad-storage ↔ ship `CargoHold`. Knowledge labels only. Mass/value stay. Overlay B still opens. ST-A/B/H stay. Not a second ship hold. No `SITE_*`.
-- Свои орбитальные станции из той же грамматики (dock, habitat, factory, defense, hangar) — орбита authored-тела, не `SITE_*` — ST-E built (два модуля)
+- Свои орбитальные станции из той же грамматики (dock, habitat, factory, defense, hangar, storage) — орбита authored-тела, не `SITE_*` — ST-E built (два модуля)
 - Печать модулей на трёх верстаках: (a) NPC/authored пад или станция — ST-C built; (b) hangar carrier/mothership — ST-D built; (c) своя factory — ST-G built
 - Ресурсные ноды + extraction + локальный Contribution / RBE / Biomass — ST-B built
 - **DoD ST-A:** overlay на Nex-Prime; модуль на unnamed паде; корабль и TPS живы
@@ -99,6 +100,7 @@ PV-B: first Space PvP from the seated player hull — same host-authority pad ri
 - **DoD ST-J:** occupy unnamed pad → one hangar stub; hatch/LAND on pad; overlay B opens; no `SITE_*`
 - **DoD ST-K:** one hangar stub on the existing player orbital cluster; SoftKnowledge / HUD label; ST-E/G/J stay; hatch/LAND legal; no `SITE_*`
 - **DoD ST-L:** one defense turret on the existing player orbital cluster; SoftKnowledge / HUD label; Pulse 11; host authority; ST-E/G/H/K stay; no `SITE_*`
+- **DoD ST-M:** one storage on the existing player orbital cluster; SoftKnowledge / HUD label; host authority; ST-E/G/I/K/L stay; no `SITE_*`
 
 ### Cross
 - Asset pipeline (GLTF + LOD), dark-neon materials, local save

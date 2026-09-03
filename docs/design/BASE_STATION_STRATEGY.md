@@ -3,8 +3,8 @@
 **Версия:** 1.0  
 **Дата:** 2026-08-17  
 **Движок:** Godot 4.7.2  
-**Статус:** ST-L built (2026-09-03).  
-**Очередь кода:** ST-L one orbital defense turret on the ST-E cluster. G2–G6 still locked.
+**Статус:** ST-M built (2026-09-03).  
+**Очередь кода:** ST-M one orbital storage on the ST-E cluster. G2–G6 still locked.
 
 Это **третий бар**: не полёт OPEN SPACE и не Clash.  
 Подход космоса: [`OPEN_SPACE_SC_BENCHMARK.md`](OPEN_SPACE_SC_BENCHMARK.md) (OS-A…OS-H).  
@@ -82,7 +82,7 @@ Top-down или overlay на **уже загруженном** теле или �
 | Extractor | съём с ноды → Contribution / Biomass | `Extractor.gd`; T1 в `rules/22` + `rules/15` (80–120); slug `t1_resource_extractor` |
 | Turret | оборона структуры | **ST-H:** `PadDefenseTurret` via BaseBuilder after occupy. **ST-L:** same turret on `PlayerOrbitalStation` (ST-E cluster). Clash `Turret.gd` stays TestArena OUTER / contest guard. |
 | Pad | посадка, якорь перехода | OS-D пластины; `environments/landing_pad/` |
-| Storage | объём, права альянса | **ST-I:** `PadStorage` via BaseBuilder after occupy. Cap 1 crate. Occupy dock ↔ ship `CargoHold`. |
+| Storage | объём, права альянса | **ST-I:** `PadStorage` via BaseBuilder after occupy. Cap 1 crate. Occupy dock ↔ ship `CargoHold`. **ST-M:** same storage on `PlayerOrbitalStation` (ST-E cluster). SoftKnowledge / HUD only. |
 | Hangar stub | техника / малый корабль | **ST-J:** `PadHangarStub` via BaseBuilder after occupy. Hatch/LAND stay on pad. **ST-K:** same stub on `PlayerOrbitalStation` (ST-E cluster). Not ST-D `CarrierHangarQueue`. |
 
 Тема CX / GR — `OwnershipData` + `swap_cluster_theme` / dual-mesh. Не второй `SITE_*`.
@@ -102,6 +102,7 @@ Top-down или overlay на **уже загруженном** теле или �
 | Factory | верстак (c) в §6 |
 | Defense | turret / harden, тот же tier-бюджет — **ST-L:** one `PadDefenseTurret` on the ST-E cluster (SoftKnowledge / HUD only; Pulse 11; host authority) |
 | Hangar | очередь / слот, не мобильный `SITE_*` — **ST-K:** one `PadHangarStub` on the ST-E cluster (SoftKnowledge / HUD only) |
+| Storage | объём — **ST-M:** one `PadStorage` on the ST-E cluster (SoftKnowledge / HUD only; host authority). ST-I pad storage stays distinct. |
 
 Это не сгенерированный город (`CityNightLights` ≠ город). Не чеканить `SITE_*`. Не `OpenSpace._spawn_orbital_stations` как «своя станция» — тот код = безымянный проп, и он выключен.
 
@@ -149,9 +150,9 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 
 ---
 
-## 9. Срезы ST-A … ST-L
+## 9. Срезы ST-A … ST-M
 
-Каждый срез playable сам. ST-A built 2026-08-22. ST-B built 2026-08-27. ST-C built 2026-08-27. ST-D built 2026-08-27. ST-E built 2026-08-27 (`PlayerOrbitalStation`: dock + habitat on Nex-Prime orbit). ST-F built 2026-08-27 (`flip_cluster_owner` on the occupied unnamed pad). ST-G built 2026-08-28 (factory in that same player cluster; bench (c) print of one catalog module). ST-H built 2026-09-01 (one pad turret via `BaseBuilder.place_pad_turret` after occupy; not Clash `Turret.gd`). ST-I built 2026-09-02 (one pad storage via `BaseBuilder.place_pad_storage` after occupy; one crate; occupy dock ↔ ship `CargoHold`). ST-J built 2026-09-02 (one pad hangar stub via `BaseBuilder.place_pad_hangar_stub` after occupy; hatch/LAND stay on pad; not ST-D carrier hangar). ST-K built 2026-09-03 (one hangar stub on the existing `PlayerOrbitalStation` via `BaseBuilder.place_orbital_hangar_stub`; ST-E dock+habitat and ST-G factory stay; hatch/LAND stay legal; not ST-D carrier hangar). ST-L built 2026-09-03 (one defense turret on the existing `PlayerOrbitalStation` via `BaseBuilder.place_orbital_turret`; ST-E dock+habitat, ST-G factory, ST-K hangar stub stay; Pulse 11; ST-H pad turret stays distinct).
+Каждый срез playable сам. ST-A built 2026-08-22. ST-B built 2026-08-27. ST-C built 2026-08-27. ST-D built 2026-08-27. ST-E built 2026-08-27 (`PlayerOrbitalStation`: dock + habitat on Nex-Prime orbit). ST-F built 2026-08-27 (`flip_cluster_owner` on the occupied unnamed pad). ST-G built 2026-08-28 (factory in that same player cluster; bench (c) print of one catalog module). ST-H built 2026-09-01 (one pad turret via `BaseBuilder.place_pad_turret` after occupy; not Clash `Turret.gd`). ST-I built 2026-09-02 (one pad storage via `BaseBuilder.place_pad_storage` after occupy; one crate; occupy dock ↔ ship `CargoHold`). ST-J built 2026-09-02 (one pad hangar stub via `BaseBuilder.place_pad_hangar_stub` after occupy; hatch/LAND stay on pad; not ST-D carrier hangar). ST-K built 2026-09-03 (one hangar stub on the existing `PlayerOrbitalStation` via `BaseBuilder.place_orbital_hangar_stub`; ST-E dock+habitat and ST-G factory stay; hatch/LAND stay legal; not ST-D carrier hangar). ST-L built 2026-09-03 (one defense turret on the existing `PlayerOrbitalStation` via `BaseBuilder.place_orbital_turret`; ST-E dock+habitat, ST-G factory, ST-K hangar stub stay; Pulse 11; ST-H pad turret stays distinct). ST-M built 2026-09-03 (one storage on the existing `PlayerOrbitalStation` via `BaseBuilder.place_orbital_storage`; ST-E dock+habitat, ST-G factory, ST-K hangar stub, ST-L turret stay; ST-I pad storage stays distinct).
 
 | ID | Роль | Семя | DoD | Отказ |
 |----|------|------|-----|-------|
@@ -169,6 +170,7 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 | **ST-J** | Один hangar stub на occupied unnamed паде | **built:** `BaseBuilder.place_pad_hangar_stub` / `PadHangarStub` after occupy | hatch/LAND на пад (тот же OpenSpace); overlay B жив; ST-A/B/H/I stay; не ST-D carrier hangar | `CarrierHangarQueue`; mint `SITE_*`; rover spawn; MainMenu |
 | **ST-K** | Один hangar stub на существующем player orbital cluster | **built:** `BaseBuilder.place_orbital_hangar_stub` / `PadHangarStub.setup_orbital` on `PlayerOrbitalStation` | SoftKnowledge / HUD label; host authority; hatch/LAND legal; ST-E dock+habitat stay; ST-G factory stays; ST-J pad stub stays; не ST-D / IN-F | `CarrierHangarQueue`; mint `SITE_*`; rover spawn; 13th kit; FL-O |
 | **ST-L** | Один defense turret на существующем player orbital cluster | **built:** `BaseBuilder.place_orbital_turret` / `PadDefenseTurret.setup_orbital` on `PlayerOrbitalStation` | SoftKnowledge / HUD label; host authority; Pulse 11; ST-E dock+habitat stay; ST-G factory stays; ST-K hangar stub stays; ST-H pad turret stays distinct; не Clash OUTER | Clash `Turret.gd`; mint `SITE_*`; P2W repair; permadeath; 13th kit; FL-O |
+| **ST-M** | Один storage на существующем player orbital cluster | **built:** `BaseBuilder.place_orbital_storage` / `PadStorage.setup_orbital` on `PlayerOrbitalStation` | SoftKnowledge / HUD label; host authority; ST-E dock+habitat stay; ST-G factory stays; ST-K hangar stub stays; ST-L turret stays; ST-I pad storage stays distinct; cap 1 crate | второй ship `CargoHold`; mint `SITE_*`; Clash; P2W; 13th kit; FL-O |
 
 ---
 
@@ -193,6 +195,7 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 
 | Сейчас | Дальше |
 |--------|--------|
+| ST-M один storage на ST-E orbital cluster | **built** |
 | ST-L один defense turret на ST-E orbital cluster | **built** |
 | ST-K один hangar stub на ST-E orbital cluster | **built** |
 | ST-J один hangar stub на occupied unnamed паде | **built** |

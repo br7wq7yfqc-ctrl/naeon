@@ -425,7 +425,8 @@ static func extractor_label() -> String:
 	return "EXTRACTOR"
 
 
-## Colony/logistics: name the ST-I pad storage. Never mass / value / cap.
+## Colony/logistics: name the ST-I pad / ST-M orbital storage.
+## Never mass / value / cap.
 static func storage_label() -> String:
 	var ops := mastery("colony_ops")
 	var logi := mastery("logistics")

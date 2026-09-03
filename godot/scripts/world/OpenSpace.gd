@@ -498,6 +498,8 @@ func _spawn_player_orbital_station() -> void:
 		n.ensure_hangar_stub()
 	if _P0.ST_L_TURRET and n.has_method("ensure_defense_turret"):
 		n.ensure_defense_turret()
+	if _P0.ST_M_STORAGE and n.has_method("ensure_storage"):
+		n.ensure_storage()
 	print("[OpenSpace] ST-E player orbital cluster modules=2 body=", body_name, " · not SITE_* · not city")
 
 
@@ -529,6 +531,14 @@ func player_orbital_turret() -> Node3D:
 	if cluster != null and cluster.has_method("defense_turret"):
 		return cluster.defense_turret()
 	return find_child("OrbitalDefenseTurret", true, false) as Node3D
+
+
+func player_orbital_storage() -> Node3D:
+	## ST-M: PadStorage on the existing player cluster. Not ST-I pad storage.
+	var cluster := player_orbital_station()
+	if cluster != null and cluster.has_method("cluster_storage"):
+		return cluster.cluster_storage()
+	return find_child("OrbitalStorage", true, false) as Node3D
 
 
 func occupied_pad_base() -> Node:
