@@ -3,6 +3,7 @@ extends Node
 ## NP-F: player leave starts a short local offline cycle. Not combat power. Not P2W.
 ## PC-A: pad/orbital player modules + ship across relaunch. Same user:// file.
 ## PC-B: one crate (amount/slug) for PadStorage / CargoHold. Same file.
+## PC-C: ONE hangar insurance record (ST-J/ST-K stub; optional ST-D queue).
 ## SoftKnowledge / HUD only. Host authority. Never Pulse / kit / P2W.
 
 signal offline_changed(offline: bool)
@@ -14,6 +15,9 @@ const LEGAL_PADS := ["Pad_North", "Pad_Approach", "Pad_Flank"]
 const LEGAL_PAD_KINDS := ["habitat", "turret", "storage", "hangar"]
 const LEGAL_ORBITAL_KINDS := ["hangar", "turret", "storage"]
 const LEGAL_CRATE_WHERE := ["pad", "orbital", "ship"]
+const LEGAL_HANGAR_WHERE := ["pad", "orbital", "queue"]
+const LEGAL_HANGAR_KINDS := ["hangar_stub", "queue"]
+const LEGAL_QUEUE_KINDS := ["sensor", "extractor", "engine", "cargo"]
 const PC_B_SLUG := "pc_b_crate"
 
 var form: String = "Canine"
@@ -31,6 +35,7 @@ var colony: Array = []
 var orbital: Array = []
 var ship: Dictionary = {}
 var crate: Dictionary = {}
+var hangar: Dictionary = {}
 var _offline: bool = false
 
 func _ready() -> void:
@@ -67,10 +72,11 @@ func load_session() -> void:
 	_ingest_orbital(data.get("orbital", []))
 	_ingest_ship(data.get("ship", {}))
 	_ingest_crate(data.get("crate", {}))
+	_ingest_hangar(data.get("hangar", {}))
 	_roll_ws_day()
 	print("[SoftSession] loaded form=", form, " faction=", faction, " ws=", war_score_daily, "/", WS_DAILY_CAP,
 		" colony=", colony.size(), " orbital=", orbital.size(), " ship=", str(ship.get("faction", "")),
-		" crate=", str(crate.get("slug", "")))
+		" crate=", str(crate.get("slug", "")), " hangar=", str(hangar.get("where", "")))
 
 func save_session() -> void:
 	var payload := {
@@ -93,6 +99,8 @@ func save_session() -> void:
 		payload["ship"] = ship
 	if _pc_b():
 		payload["crate"] = crate
+	if _pc_c():
+		payload["hangar"] = hangar
 	var f := FileAccess.open(PATH, FileAccess.WRITE)
 	if f == null:
 		return
@@ -227,6 +235,11 @@ func _pc_b() -> bool:
 	return P0 != null and bool(P0.PC_B_PERSIST)
 
 
+func _pc_c() -> bool:
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	return P0 != null and bool(P0.PC_C_INSURE)
+
+
 func is_host_authority() -> bool:
 	if multiplayer == null or not multiplayer.has_multiplayer_peer():
 		return true
@@ -247,6 +260,14 @@ func crate_persist_hud_line() -> String:
 	if SoftK == null:
 		return ""
 	return "%s · %s · %s" % [str(SoftK.crate_label()), str(SoftK.cargo_label()), str(SoftK.persist_label())]
+
+
+func hangar_insure_hud_line() -> String:
+	## PC-C SoftKnowledge HANGAR / INSURE / PERSIST. Never Pulse / P2W / kit.
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if SoftK == null:
+		return ""
+	return "%s · %s · %s" % [str(SoftK.hangar_label()), str(SoftK.insure_label()), str(SoftK.persist_label())]
 
 
 func remember_pad_module(pad, kind: String, faction_name: String) -> void:
@@ -350,8 +371,81 @@ func restore_crate(os: Node = null) -> void:
 	_apply_crate_to(target, slug)
 
 
+func remember_hangar_insure(source = null, where: String = "") -> void:
+	## ONE hangar insurance record. Prefer ST-J pad / ST-K orbital stub.
+	## Optional ST-D queue kind if that queue is already in-tree. No SITE_*.
+	if not _pc_c() or not is_host_authority():
+		return
+	var loc := str(where)
+	var kind := "hangar_stub"
+	var pname := ""
+	var fac := faction if faction != "" else "Cybernex"
+	var queued := ""
+	if source is Node and is_instance_valid(source):
+		if source.has_meta("orbital_hangar_stub") and bool(source.get_meta("orbital_hangar_stub")):
+			loc = "orbital"
+			kind = "hangar_stub"
+		elif source.has_meta("pad_hangar_stub") and bool(source.get_meta("pad_hangar_stub")):
+			loc = "pad"
+			kind = "hangar_stub"
+			var parent: Node = source.get_parent()
+			if parent != null:
+				pname = str(parent.name)
+		elif source.has_meta("hangar_queue") and bool(source.get_meta("hangar_queue")):
+			loc = "queue"
+			kind = "queue"
+			queued = _queued_kind_from(source)
+		if "faction" in source and str(source.get("faction")) != "":
+			fac = str(source.get("faction"))
+	if loc == "":
+		loc = "pad"
+	if not LEGAL_HANGAR_WHERE.has(loc) or not LEGAL_HANGAR_KINDS.has(kind):
+		return
+	if loc == "pad":
+		if pname == "" and source is Node and is_instance_valid(source):
+			var pad_n: Node = source.get_parent()
+			if pad_n != null:
+				pname = str(pad_n.name)
+		if not LEGAL_PADS.has(pname):
+			return
+	if loc == "queue":
+		if queued == "":
+			queued = _snapshot_queue_kind()
+		if not LEGAL_QUEUE_KINDS.has(queued):
+			return
+	elif queued == "":
+		queued = _snapshot_queue_kind()
+	if fac == "":
+		fac = "Cybernex"
+	hangar = {"where": loc, "kind": kind, "faction": fac}
+	if loc == "pad":
+		hangar["pad"] = pname
+	if LEGAL_QUEUE_KINDS.has(queued):
+		hangar["queued"] = queued
+	save_session()
+	print("[SoftSession] PC-C hangar where=", loc, " kind=", kind, " pad=", pname, " queued=", queued)
+
+
+func restore_hangar_insure(_os: Node = null) -> void:
+	## Host-only. Existing BaseBuilder / CarrierHangarQueue APIs. Never mints SITE_*.
+	if not _pc_c() or not is_host_authority():
+		return
+	var loc := str(hangar.get("where", ""))
+	var kind := str(hangar.get("kind", "hangar_stub"))
+	var fac := str(hangar.get("faction", "Cybernex"))
+	var queued := str(hangar.get("queued", ""))
+	if not LEGAL_HANGAR_WHERE.has(loc) or not LEGAL_HANGAR_KINDS.has(kind):
+		return
+	if fac == "":
+		fac = "Cybernex"
+	if loc == "pad" or (loc != "queue" and kind == "hangar_stub"):
+		_restore_hangar_stub(loc, fac)
+	if LEGAL_QUEUE_KINDS.has(queued) or loc == "queue":
+		_restore_hangar_queue(queued if queued != "" else "sensor")
+
+
 func wipe_colony_memory() -> void:
-	## Playtest relaunch sim. Does not write disk. Does not touch PC-B crate.
+	## Playtest relaunch sim. Does not write disk. Does not touch PC-B crate or PC-C hangar.
 	colony = []
 	orbital = []
 	ship = {}
@@ -360,6 +454,11 @@ func wipe_colony_memory() -> void:
 func wipe_crate_memory() -> void:
 	## PC-B playtest relaunch sim. Does not write disk.
 	crate = {}
+
+
+func wipe_hangar_insure_memory() -> void:
+	## PC-C playtest relaunch sim. Does not write disk.
+	hangar = {}
 
 
 func restore_world(os: Node = null) -> void:
@@ -379,6 +478,10 @@ func restore_world(os: Node = null) -> void:
 		restore_crate(os)
 		print("[SoftSession] PC-B restore crate=", str(crate.get("slug", "")),
 			" amount=", int(crate.get("amount", 0)), " where=", str(crate.get("where", "")))
+	if _pc_c():
+		restore_hangar_insure(os)
+		print("[SoftSession] PC-C restore hangar=", str(hangar.get("where", "")),
+			" kind=", str(hangar.get("kind", "")), " queued=", str(hangar.get("queued", "")))
 
 
 func restore_colony() -> void:
@@ -495,6 +598,100 @@ func _ingest_crate(raw) -> void:
 	if amount < 1 or not _legal_crate_slug(slug) or not LEGAL_CRATE_WHERE.has(loc):
 		return
 	crate = {"amount": 1, "slug": slug, "where": loc}
+
+
+func _ingest_hangar(raw) -> void:
+	hangar = {}
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	var loc := str(raw.get("where", ""))
+	var kind := str(raw.get("kind", "hangar_stub"))
+	var fac := str(raw.get("faction", "Cybernex"))
+	var pname := str(raw.get("pad", ""))
+	var queued := str(raw.get("queued", ""))
+	if not LEGAL_HANGAR_WHERE.has(loc) or not LEGAL_HANGAR_KINDS.has(kind):
+		return
+	if loc == "pad" and not LEGAL_PADS.has(pname):
+		return
+	if loc == "queue" and not LEGAL_QUEUE_KINDS.has(queued):
+		return
+	if fac == "":
+		fac = "Cybernex"
+	hangar = {"where": loc, "kind": kind, "faction": fac}
+	if loc == "pad":
+		hangar["pad"] = pname
+	if LEGAL_QUEUE_KINDS.has(queued):
+		hangar["queued"] = queued
+
+
+func _restore_hangar_stub(loc: String, fac: String) -> void:
+	var Builder = load("res://scripts/world/BaseBuilder.gd")
+	if Builder == null:
+		return
+	if loc == "orbital":
+		var cluster: Node3D = _orbital_cluster()
+		if cluster != null:
+			Builder.place_orbital_hangar_stub(cluster, fac)
+		return
+	var pname := str(hangar.get("pad", ""))
+	var pad: Node3D = _pad_named(pname)
+	if pad != null:
+		Builder.place_pad_hangar_stub(pad, fac)
+
+
+func _restore_hangar_queue(kind: String) -> void:
+	## Existing CarrierHangarQueue only. Does not invent a carrier.
+	var k := str(kind)
+	if not LEGAL_QUEUE_KINDS.has(k):
+		return
+	var queue: Node = _hangar_queue()
+	if queue == null or not queue.has_method("enqueue_module"):
+		return
+	if queue.has_method("queued_module") and queue.queued_module() != null:
+		return
+	var _mod: Node = queue.enqueue_module(k, 0.0)
+
+
+func _snapshot_queue_kind() -> String:
+	return _queued_kind_from(_hangar_queue())
+
+
+func _queued_kind_from(queue: Node) -> String:
+	if queue == null or not is_instance_valid(queue):
+		return ""
+	if not queue.has_method("queued_module"):
+		return ""
+	var mod: Node = queue.queued_module()
+	if mod == null or not is_instance_valid(mod):
+		return ""
+	var k := str(mod.get_meta("module_type", ""))
+	if LEGAL_QUEUE_KINDS.has(k):
+		return k
+	return ""
+
+
+func _hangar_queue() -> Node:
+	var tree := get_tree()
+	if tree == null:
+		return null
+	var listed: Array = tree.get_nodes_in_group("hangar_queues")
+	if listed.is_empty():
+		return null
+	if listed[0] is Node:
+		return listed[0]
+	return null
+
+
+func _orbital_cluster() -> Node3D:
+	var tree := get_tree()
+	if tree == null:
+		return null
+	var listed: Array = tree.get_nodes_in_group("player_orbital_stations")
+	if listed.is_empty():
+		return null
+	if listed[0] is Node3D:
+		return listed[0] as Node3D
+	return null
 
 
 func _legal_crate_slug(slug: String) -> bool:

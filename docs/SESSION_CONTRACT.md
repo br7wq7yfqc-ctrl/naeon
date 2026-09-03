@@ -373,6 +373,22 @@
     AbilityKitCatalog stays at 12 (cx_nex…gr_thorn). FL-N FLEET
     15/15 stays. ST-A…ST-M stay. PV-A…PV-C stay. AR-Z stays.
     ORBITAL_STATIONS stays false. No SITE_* (this pass).
+70. PC-C: SoftSession persists ONE hangar insurance record across
+    relaunch (same user://soft_session.json). Prefer ST-J pad hangar
+    stub and/or ST-K orbital hangar stub already placed via
+    BaseBuilder / PadHangarStub. Optionally remembers ST-D
+    CarrierHangarQueue slot (one module) if already in-tree — do
+    not invent a carrier. Restore via existing hangar / BaseBuilder
+    / CarrierHangarQueue APIs only. SoftKnowledge / HUD HANGAR /
+    INSURE / PERSIST only. Host authority. Infection cap 5.
+    Knowledge soft. story≠power. No P2W. No pay-to-restore. No
+    cash-shop insurance. Does not redo PC-A or PC-B. No SITE_*
+    mint. Not Pulse / kit unlock / P2W. Not Voice. Not aiNEX.
+    Not G2–G6. Not ranked/pay matchmaking. Not a 13th AbilityKit.
+    Not FL-O. AbilityKitCatalog stays at 12 (cx_nex…gr_thorn).
+    FL-N FLEET 15/15 stays. ST-A…ST-M stay. PV-A…PV-C stay.
+    AR-Z stays. DO-A/B stay. ORBITAL_STATIONS stays false.
+    No SITE_* (this pass). Full colony sim still later.
 
 ## Tripo
 - Balance check when generating; code-first when zero.

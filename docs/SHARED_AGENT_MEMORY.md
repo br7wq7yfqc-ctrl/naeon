@@ -476,6 +476,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-09-03 | ST-M: one PadStorage on existing PlayerOrbitalStation. Same PadStorage / BaseBuilder grammar as ST-I. SoftKnowledge / HUD STORAGE. Host authority. ST-E two modules + ST-G factory + ST-K hangar stub + ST-L turret stay. ST-I pad storage stays distinct. | st-m-orbital-storage |
 | 2026-09-03 | PC-A: SoftSession persists pad/orbital player modules + ship across relaunch. Same user://soft_session.json. Restore via BaseBuilder. SoftKnowledge / HUD COLONY / SHIP / PERSIST. Host authority. Does not steal ST-A player_module slot. Never Pulse / kit / P2W. | pc-a-persist |
 | 2026-09-03 | PC-B: SoftSession persists ONE crate (amount/slug) for PadStorage ST-I/ST-M and/or ship CargoHold across relaunch. Restore via existing APIs. SoftKnowledge / HUD CRATE / CARGO / PERSIST. Does not redo PC-A. No SITE_*. | pc-b-persist |
+| 2026-09-03 | PC-C: SoftSession persists ONE hangar insurance record (ST-J pad / ST-K orbital stub; optional ST-D queue if in-tree) across relaunch. Restore via existing hangar APIs. SoftKnowledge / HUD HANGAR / INSURE / PERSIST. No pay-to-restore. Does not redo PC-A/PC-B. | pc-c-insure |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
 | 2026-08-21 | OS-J: orbit-read FarPlate/FarMast/outpost hide below ~400 m. Near hull metal. Cyan 96 m slab was the blue monolith next to the ship. |

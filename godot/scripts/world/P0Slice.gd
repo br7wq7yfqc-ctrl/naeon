@@ -134,6 +134,19 @@ const PC_A_PERSIST := true
 ## FL-N FLEET 15/15. Not Voice. Not aiNEX. Not G2–G6. Not ranked/pay
 ## matchmaking. Not FL-O. Not a 13th kit. ORBITAL_STATIONS stays false.
 const PC_B_PERSIST := true
+## PC-C: SoftSession persists ONE hangar insurance record across relaunch.
+## Prefer ST-J pad hangar stub and/or ST-K orbital hangar stub already
+## placed via BaseBuilder / PadHangarStub. Optionally remembers ST-D
+## CarrierHangarQueue slot (one module) if that queue is already in-tree.
+## Same user://soft_session.json. Restore via existing hangar /
+## BaseBuilder / CarrierHangarQueue APIs only. SoftKnowledge / HUD
+## HANGAR / INSURE / PERSIST only. Host authority. Infection cap 5.
+## Knowledge soft. story≠power. No P2W. No pay-to-restore. No cash-shop
+## insurance. Does not redo PC-A or PC-B. No SITE_* mint.
+## AbilityKitCatalog stays at 12. FL-N FLEET 15/15. Not Voice. Not
+## aiNEX. Not G2–G6. Not ranked/pay matchmaking. Not FL-O. Not a 13th
+## kit. ORBITAL_STATIONS stays false.
+const PC_C_INSURE := true
 ## BT-A: one occupied-pad guard. Tiny 3-state BT (patrol / engage Pulse / return).
 ## Host authority. Pulse 11. PV-A rival stays distinct. G5 closed. Not Clash waves.
 const BT_A_GUARD := true

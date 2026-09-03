@@ -284,6 +284,7 @@ static func place_pad_hangar_stub(pad: Node3D, faction: String) -> Node3D:
 		n.setup(faction)
 	print("[BaseBuilder] pad hangar stub on ", pad.name, " faction=", faction)
 	_pc_a_remember_pad(pad, "hangar", faction)
+	_pc_c_remember_hangar(n, "pad")
 	return n
 
 
@@ -322,6 +323,7 @@ static func place_orbital_hangar_stub(cluster: Node3D, faction: String) -> Node3
 		n.setup_orbital(faction)
 	print("[BaseBuilder] orbital hangar stub on ", cluster.name, " faction=", faction)
 	_pc_a_remember_orbital("hangar", faction)
+	_pc_c_remember_hangar(n, "orbital")
 	return n
 
 
@@ -463,3 +465,16 @@ static func _pc_a_remember_orbital(kind: String, faction: String) -> void:
 	var sess = _pc_a_session()
 	if sess != null and sess.has_method("remember_orbital_module"):
 		sess.remember_orbital_module(kind, faction)
+
+
+static func _pc_c_on() -> bool:
+	var p0 := load("res://scripts/world/P0Slice.gd")
+	return p0 != null and bool(p0.PC_C_INSURE)
+
+
+static func _pc_c_remember_hangar(stub: Node3D, where: String) -> void:
+	if not _pc_c_on() or stub == null:
+		return
+	var sess = _pc_a_session()
+	if sess != null and sess.has_method("remember_hangar_insure"):
+		sess.remember_hangar_insure(stub, where)

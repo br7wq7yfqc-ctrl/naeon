@@ -104,8 +104,8 @@ func _ensure_game_hud() -> void:
 
 
 func _restore_pc_a_session() -> void:
-	## PC-A/PC-B: host restores pad/orbital/ship + crate after the ARK boot.
-	if not bool(_P0.PC_A_PERSIST) and not bool(_P0.PC_B_PERSIST):
+	## PC-A / PC-B / PC-C: host restores persist identity after the ARK boot.
+	if not bool(_P0.PC_A_PERSIST) and not bool(_P0.PC_B_PERSIST) and not bool(_P0.PC_C_INSURE):
 		return
 	if SoftSession and SoftSession.has_method("restore_world"):
 		SoftSession.restore_world(self)

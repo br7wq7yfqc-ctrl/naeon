@@ -20,6 +20,7 @@ class_name StrategyOverlay
 ## PV-C: overlay Pulse 11 vs the same PadPvp rival (PV-A / PV-B stay).
 ## PC-A: SoftSession persist HUD COLONY / SHIP / PERSIST (never Pulse / kit).
 ## PC-B: SoftSession crate HUD CRATE / CARGO / PERSIST (never mass / Pulse / kit).
+## PC-C: SoftSession hangar HUD HANGAR / INSURE / PERSIST (never Pulse / P2W).
 ## SoftKnowledge / HUD label only. Click/select ≠ combat. Host Pulse / occupy / Hack.
 
 const _Builder = preload("res://scripts/world/BaseBuilder.gd")
@@ -929,6 +930,13 @@ func crate_persist_hud_line() -> String:
 	if SoftSession and SoftSession.has_method("crate_persist_hud_line"):
 		return str(SoftSession.crate_persist_hud_line())
 	return "%s · %s · %s" % [_SoftK.crate_label(), _SoftK.cargo_label(), _SoftK.persist_label()]
+
+
+func hangar_insure_hud_line() -> String:
+	## PC-C SoftKnowledge HANGAR / INSURE / PERSIST. Never Pulse / P2W / kit.
+	if SoftSession and SoftSession.has_method("hangar_insure_hud_line"):
+		return str(SoftSession.hangar_insure_hud_line())
+	return "%s · %s · %s" % [_SoftK.hangar_label(), _SoftK.insure_label(), _SoftK.persist_label()]
 
 
 func _try_kit(kind: String, target) -> bool:

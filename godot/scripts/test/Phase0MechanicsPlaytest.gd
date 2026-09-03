@@ -59,6 +59,7 @@ func _go() -> void:
 		await _assert_pv_c(os, fails)
 		await _assert_pc_a(os, fails)
 		await _assert_pc_b(os, fails)
+		await _assert_pc_c(os, fails)
 		await _assert_pv_a(os, fails)
 		await _assert_bt_a(os, fails)
 		await _assert_bt_b(os, fails)
@@ -729,6 +730,7 @@ func _go() -> void:
 	await _assert_pv_c(os, fails)
 	await _assert_pc_a(os, fails)
 	await _assert_pc_b(os, fails)
+	await _assert_pc_c(os, fails)
 	await _assert_pv_a(os, fails)
 	await _assert_bt_a(os, fails)
 	await _assert_bt_b(os, fails)
@@ -19473,6 +19475,190 @@ func _assert_pc_b(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] PC-B persist · ", hud, " Pulse 11 · host · kits=12 · FLEET 15/15 · G5 closed · no SITE_*")
 	if fails.size() == fail0:
 		print("[Playtest] PASS PC-B")
+
+
+func _assert_pc_c(os: Node, fails: PackedStringArray) -> void:
+	## PC-C: SoftSession persist ONE hangar insurance record across relaunch.
+	## Prefer ST-J pad hangar stub / ST-K orbital stub. Optional ST-D queue.
+	## Restore via existing BaseBuilder / CarrierHangarQueue APIs.
+	## SoftKnowledge / HUD HANGAR / INSURE / PERSIST only. Host authority.
+	## Does not redo PC-A / PC-B. Pulse 11. Kits 12. FLEET 15/15. No SITE_*.
+	var fail0 := fails.size()
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	var Builder = load("res://scripts/world/BaseBuilder.gd")
+	var nex: Node = _osh_nex()
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var ov: Node = os.strategy_overlay() if os != null and os.has_method("strategy_overlay") else null
+	var pad: Node3D = null
+	var stub: Node3D = null
+	var cluster: Node3D = null
+	var queue: Node = null
+	var queued_kind := ""
+	var pulse0 := 11.0
+	if P0 == null or not bool(P0.PC_C_INSURE) or not bool(P0.PC_B_PERSIST) \
+			or not bool(P0.PC_A_PERSIST) or not bool(P0.ST_J_HANGAR) \
+			or not bool(P0.ST_K_HANGAR):
+		fails.append("PC-C P0Slice flag missing")
+		return
+	if P0 != null and not bool(P0.AR_Z_MATCHMAKING):
+		fails.append("PC-C dropped AR-Z P0Slice flag")
+	if P0 != null and not bool(P0.FL_N_FLEET):
+		fails.append("PC-C dropped FL-N P0Slice flag")
+	if P0 != null and not bool(P0.ST_D_HANGAR):
+		fails.append("PC-C dropped ST-D P0Slice flag")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("PC-C flipped ORBITAL_STATIONS")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("PC-C Infection cap drifted")
+	if Kit == null or not Kit.has_method("kit_ids"):
+		fails.append("PC-C AbilityKitCatalog missing")
+	else:
+		var ids: PackedStringArray = Kit.kit_ids()
+		if int(ids.size()) != 12:
+			fails.append("PC-C kit count want 12 (got %s)" % ids.size())
+		if int(ids.size()) >= 13:
+			fails.append("PC-C added a 13th AbilityKit")
+	if SoftSession == null or not SoftSession.has_method("remember_hangar_insure") \
+			or not SoftSession.has_method("restore_hangar_insure") \
+			or not SoftSession.has_method("hangar_insure_hud_line") \
+			or not SoftSession.has_method("wipe_hangar_insure_memory"):
+		fails.append("PC-C SoftSession hangar API missing")
+		return
+	if not bool(SoftSession.is_host_authority()):
+		fails.append("PC-C host authority missing")
+	var hlab := str(SoftK.hangar_label()) if SoftK and SoftK.has_method("hangar_label") else ""
+	var ilab := str(SoftK.insure_label()) if SoftK and SoftK.has_method("insure_label") else ""
+	var plab := str(SoftK.persist_label()) if SoftK and SoftK.has_method("persist_label") else ""
+	if hlab != "HANGAR" and hlab != "T1 HANGAR":
+		fails.append("PC-C SoftKnowledge HANGAR missing (%s)" % hlab)
+	if ilab != "INSURE" and ilab != "HANGAR INSURE":
+		fails.append("PC-C SoftKnowledge INSURE missing (%s)" % ilab)
+	if plab != "PERSIST" and plab != "SESSION PERSIST":
+		fails.append("PC-C SoftKnowledge PERSIST missing (%s)" % plab)
+	var hud := str(SoftSession.hangar_insure_hud_line())
+	if hud.find("HANGAR") < 0 or hud.find("INSURE") < 0 or hud.find("PERSIST") < 0:
+		fails.append("PC-C HUD hangar insure missing (%s)" % hud)
+	if ov != null and ov.has_method("hangar_insure_hud_line"):
+		var ohud := str(ov.hangar_insure_hud_line())
+		if ohud.find("HANGAR") < 0 or ohud.find("INSURE") < 0 or ohud.find("PERSIST") < 0:
+			fails.append("PC-C overlay HUD hangar insure missing (%s)" % ohud)
+	if ov != null and ov.has_method("fleet_cap") and int(ov.fleet_cap()) != 15:
+		fails.append("PC-C FLEET cap=%s, want 15" % int(ov.fleet_cap()))
+	if os == null or nex == null:
+		fails.append("PC-C no OpenSpace/Nex-Prime")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("PC-C must not run on TestArena")
+		return
+	if LayerContext and str(LayerContext.current_layer) == "Arena":
+		fails.append("PC-C must not run on Clash")
+		return
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.2).timeout
+	var tree := get_tree()
+	if tree:
+		for n in tree.get_nodes_in_group("pad_hangar_stubs"):
+			if n is Node3D and is_instance_valid(n):
+				stub = n as Node3D
+				pad = n.get_parent() as Node3D
+				break
+		if stub == null:
+			for want in ["Pad_Flank", "Pad_Approach", "Pad_North"]:
+				for n in tree.get_nodes_in_group("landing_pads"):
+					if n is Node3D and str(n.name) == want:
+						pad = n as Node3D
+						break
+				if pad != null:
+					break
+		var listed: Array = tree.get_nodes_in_group("player_orbital_stations")
+		if not listed.is_empty():
+			cluster = listed[0] as Node3D
+		var queues: Array = tree.get_nodes_in_group("hangar_queues")
+		if not queues.is_empty() and queues[0] is Node:
+			queue = queues[0]
+	if stub == null and pad != null and Builder != null:
+		stub = Builder.place_pad_hangar_stub(pad, "Cybernex")
+	if stub == null or not is_instance_valid(stub):
+		fails.append("PC-C no pad hangar stub for insure persist")
+		return
+	if str(stub.get_meta("site_pin", "missing")) != "":
+		fails.append("PC-C hangar stub minted SITE_*")
+	if stub.has_method("is_carrier_hangar") and bool(stub.is_carrier_hangar()):
+		fails.append("PC-C reused ST-D carrier hangar as pad stub")
+	if stub.has_method("combat_stats") and int(stub.combat_stats()) != 0:
+		fails.append("PC-C hangar stub has combat stats")
+	if queue != null and queue.has_method("enqueue_module") \
+			and queue.has_method("queued_module"):
+		if queue.queued_module() == null:
+			var queued_mod: Node = queue.enqueue_module("sensor", 0.0)
+			if queued_mod != null and is_instance_valid(queued_mod):
+				queued_kind = "sensor"
+		else:
+			queued_kind = str(queue.queued_module().get_meta("module_type", ""))
+	SoftSession.remember_hangar_insure(stub, "pad")
+	SoftSession.save_session()
+	print("[Playtest] PC-C remember pad=", str(pad.name) if pad else "?",
+		" stub=", stub.name, " queued=", queued_kind)
+	stub.queue_free()
+	stub = null
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if SoftSession.has_method("wipe_hangar_insure_memory"):
+		SoftSession.wipe_hangar_insure_memory()
+	if not SoftSession.hangar.is_empty():
+		fails.append("PC-C wipe did not clear in-memory hangar")
+	SoftSession.load_session()
+	if str(SoftSession.hangar.get("where", "")) != "pad":
+		fails.append("PC-C load lost hangar where (%s)" % str(SoftSession.hangar.get("where", "")))
+	if str(SoftSession.hangar.get("kind", "")) != "hangar_stub":
+		fails.append("PC-C load lost hangar kind (%s)" % str(SoftSession.hangar.get("kind", "")))
+	if pad != null and str(SoftSession.hangar.get("pad", "")) != str(pad.name):
+		fails.append("PC-C load lost hangar pad (%s)" % str(SoftSession.hangar.get("pad", "")))
+	if queued_kind != "" and str(SoftSession.hangar.get("queued", "")) != queued_kind:
+		fails.append("PC-C load lost hangar queued (%s)" % str(SoftSession.hangar.get("queued", "")))
+	SoftSession.restore_hangar_insure(os)
+	await get_tree().process_frame
+	if Builder != null and pad != null:
+		stub = Builder.pad_hangar_stub_on(pad)
+	if stub == null or not is_instance_valid(stub):
+		fails.append("PC-C restore missed pad hangar stub on %s" % (str(pad.name) if pad else "?"))
+	else:
+		var pin := str(stub.get_meta("site_pin", "missing"))
+		print("[Playtest] PC-C restore stub=", stub.name, " pad=", pad.name, " pin=", pin)
+		if pin != "":
+			fails.append("PC-C restore minted SITE_* (%s)" % pin)
+		if stub.has_method("is_carrier_hangar") and bool(stub.is_carrier_hangar()):
+			fails.append("PC-C restore invented a carrier")
+	if cluster != null and Builder != null:
+		var ostub: Node3D = Builder.orbital_hangar_stub_on(cluster)
+		if ostub != null and str(ostub.get_meta("site_pin", "missing")) != "":
+			fails.append("PC-C orbital hangar minted SITE_*")
+	if queued_kind != "" and queue != null and queue.has_method("queued_module"):
+		var live: Node = queue.queued_module()
+		if live == null or not is_instance_valid(live):
+			fails.append("PC-C restore missed ST-D hangar queue slot")
+		elif str(live.get_meta("site_pin", "missing")) != "":
+			fails.append("PC-C hangar queue minted SITE_*")
+	if ship != null and is_instance_valid(ship):
+		var ab: Node = ship.get_node_or_null("AbilitySystem")
+		if ab != null and ab.get("abilities") != null and (ab.abilities as Array).size() > 0 and ab.abilities[0]:
+			pulse0 = float(ab.abilities[0].damage)
+	if Kit != null and Kit.has_method("kit_by_id"):
+		var loadout: Array = Kit.kit_by_id("cx_nex")
+		if loadout.size() > 0 and loadout[0] != null:
+			pulse0 = float(loadout[0].damage)
+	if absf(pulse0 - 11.0) > 0.01:
+		fails.append("PC-C Pulse DPS drifted (%s)" % pulse0)
+	if ResourceLoader.exists("res://scripts/world/ClashFromWorld.gd") \
+			or ResourceLoader.exists("res://scripts/world/ClashBeacon.gd"):
+		fails.append("PC-C opened G5 world-to-arena")
+	print("[Playtest] PC-C persist · ", hud, " Pulse 11 · host · kits=12 · FLEET 15/15 · G5 closed · no SITE_*")
+	if fails.size() == fail0:
+		print("[Playtest] PASS PC-C")
 
 
 func _assert_pv_a(os: Node, fails: PackedStringArray) -> void:
