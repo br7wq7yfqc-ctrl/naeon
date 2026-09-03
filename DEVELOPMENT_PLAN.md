@@ -7,14 +7,14 @@
 **Принцип:** Local-first → Vertical Slices → Iterative Multiplayer → Platform + AI + Educational Systems  
 **SC → NAEON (роли, не клон):** `docs/design/SC_FEATURE_MAP.md` · бар подхода OS-A…OS-H: `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (OS-A…OS-H built; harness ритуала. 60 FPS / 5 мин = 3090 human gate).  
 **Clash нативен; бар арены — Predecessor/Paragon, не Arena Commander:** `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (AR-A…AR-Z; код арены не вытесняет OS-A).  
-**Стратегия — третий бар, не Clash и не полёт OPEN SPACE:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-M built: overlay, extractor, print, hangar, orbital cluster, CX↔GR owner swap, own factory print, one pad turret, one pad storage, one pad hangar stub, one orbital hangar stub, one orbital defense turret, one orbital storage). 
+**Стратегия — третий бар, не Clash и не полёт OPEN SPACE:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-N built: overlay, extractor, print, hangar, orbital cluster, CX↔GR owner swap, own factory print, one pad turret, one pad storage, one pad hangar stub, one orbital hangar stub, one orbital defense turret, one orbital storage, one hangar drone/fighter). 
 **Каталог — дыры (очередь, не новый catalog):** `docs/design/WORLD_FILL.md` §6. Ready-made fill → locked plates без GLB → пластины только на титульную дыру. Не mint SITE_*. Не capital-ship wave. OS-H harness built; не G2.  
 **NPC agency + MMO HOLD:** `docs/design/NPC_AGENCY.md` (NP-A…NP-F + NP-C + NP-G ST-C print + NP-H ST-D hangar + **NP-I** ST-G factory built) · `docs/design/MMO_SERVERS.md` (Phase 3 HOLD; 10k CCU / ≥100 на шард без instance-split; нет netcode сейчас; не G5 / G2–G6).
 
-**2026-09-03 — текущий бар PC-C (не Voice, не G2, не G5):**  
+**2026-09-03 — текущий бар ST-N (не Voice, не G2, не G5):**  
 OS-A…OS-H built. G2–G6 закрыты. G1 CRUISE не открыт.  
-ST-A…ST-M / IN-A…F / WF-A / Q-A / Q-B / Q-C / Q-D / Q-E / HF-A / HF-B / HF-C / PV-A / PV-B / PV-C built.  
-PC-A+PC-B+PC-C built: SoftSession persists pad/orbital/ship (**PC-A**), ONE crate (**PC-B**), and ONE hangar insurance record (**PC-C**: ST-J/ST-K stub; optional ST-D queue). SoftKnowledge / HUD HANGAR / INSURE / PERSIST. Host authority. Full colony sim later. ST-A…ST-M / PV-A…PV-C stay.  
+ST-A…ST-N / IN-A…F / WF-A / Q-A / Q-B / Q-C / Q-D / Q-E / HF-A / HF-B / HF-C / PV-A / PV-B / PV-C built.  
+PC-A+PC-B+PC-C stay built. ST-N: one host-authority drone/fighter on the existing ST-D hangar (`CarrierHangarQueue`). SoftKnowledge / HUD DRONE / FIGHTER / HANGAR. Pulse 11 both ways. Infection cap 5. Not a 15th fleet pip.  
 Петля P0.6 на RTX 3090 жива — не ломать. llvmpipe ≠ FPS PASS.
 
 ---
@@ -72,12 +72,13 @@ PC-A+PC-B+PC-C built: SoftSession persists pad/orbital/ship (**PC-A**), ONE crat
 - **DoD**: экипировать, летать, стрелять, save/load
 
 ### 1.3 Colony / Strategy Core
-**Бар:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-M built). Overlay на загруженном теле ARK — не карта галактики.
+**Бар:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-N built). Overlay на загруженном теле ARK — не карта галактики.
 
 - **ST-A (built):** `StrategyOverlay` (клавиша B) + один habitat на `Pad_North` / `Pad_Approach` / `Pad_Flank`. `LayerContext` = Strategy. Корабль и TPS живы после Esc/B. Не `SITE_*`.
 - **ST-B (built):** видимый extractor на unnamed паде; occupy → harvest → Contribution на HUD. Knowledge только подпись.
 - **ST-C (built):** печать одного catalog-модуля на паде / NPC-верстаке (`PadPrintBench`). Spend Contribution/Biomass (`rules/15`). Нет cash-shop skip. Knowledge ≠ cheaper tables.
 - **ST-D (built):** очередь одного модуля в hangar catalog-носителя (`CatalogCarrier` / `CarrierHangarQueue`). Refuse если mass/power корпуса превышен. Не мобильный `SITE_*`. Интерьеры later.
+- **ST-N (built):** one host-authority drone/fighter on that same ST-D hangar (`CombatDummy` + SoftNet visual, parented to `CarrierHangarQueue`). SoftKnowledge / HUD `DRONE` / `FIGHTER` / `HANGAR`. Pulse 11 both ways. Infection cap 5. No permadeath. Not a second player hull. Not a 15th fleet pip. Not a new OpenSpace. PC-A+B+C stay.
 - **ST-E (built):** своя орбитальная станция — два catalog-модуля (dock + habitat) в одном `PlayerOrbitalStation` на орбите Nex-Prime. Не город. Не `SITE_*`. `ORBITAL_STATIONS` выкл.
 - Свои базы из модулей на unnamed pads / claimed dirt (occupy-to-hold): habitat (ST-A), extractor (ST-B), turret (ST-H), pad, storage (ST-I), hangar stub (ST-J)
 - **ST-J (built):** one `PadHangarStub` on an occupied unnamed pad via `BaseBuilder.place_pad_hangar_stub` after occupy. Hatch/LAND stay on the pad. Not ST-D `CarrierHangarQueue`. Overlay B still opens. ST-A/B/H/I stay. Knowledge labels only. No rover. No `SITE_*`.
@@ -93,6 +94,7 @@ PC-A+PC-B+PC-C built: SoftSession persists pad/orbital/ship (**PC-A**), ONE crat
 - **DoD ST-B:** occupy → добыча → число Contribution на HUD; Knowledge ≠ yield
 - **DoD ST-C:** списать Contribution/Biomass; получить один модуль; cash-shop skip невозможен
 - **DoD ST-D:** очередь в hangar (один модуль); упёрлась в mass/power; не мобильный `SITE_*`
+- **DoD ST-N:** one drone/fighter on the existing ST-D hangar; SoftKnowledge DRONE/FIGHTER; Pulse 11 both ways; hangar queue stays; cash-shop skip refused; FLEET 15/15; kits 12; no `SITE_*`
 - **DoD ST-E:** два модуля в одном player orbital cluster; не город; не mint `SITE_*`; не 2-я система
 - **DoD ST-G:** factory в том же player cluster; списать Contribution/Biomass; один catalog-модуль; без factory — отказ; cash-shop skip невозможен
 - **DoD ST-H:** occupy unnamed pad → one visible turret with HP; Pulse hits a pad hostile; destroyed turret ≠ permadeath; not Clash OUTER; overlay B opens; no `SITE_*`
@@ -142,7 +144,7 @@ PC-A+PC-B+PC-C built: SoftSession persists pad/orbital/ship (**PC-A**), ONE crat
 - Одна система (звезда + 3 тела на разных орбитах + пояс + якоря гейтов) — ARK. Планировка сделана в **Phase G0**; jump points включаются в G3–G4
 - Persistent colonies / ships — **PC-A+PC-B+PC-C built:** SoftSession `user://soft_session.json` remembers pad player modules (habitat/turret/storage/hangar), orbital extras (ST-K/L/M hangar/turret/storage) and ship faction/module kinds (**PC-A**); plus ONE crate contents (amount/slug) for PadStorage (ST-I pad and/or ST-M orbital) and/or ship `CargoHold` (**PC-B**); plus ONE hangar insurance record — prefer ST-J pad hangar stub and/or ST-K orbital hangar stub, optional ST-D `CarrierHangarQueue` slot if already in-tree (**PC-C**); restore via `BaseBuilder` (modules / hangar stubs), existing PadStorage / CargoHold APIs (crate), and existing hangar / `CarrierHangarQueue` APIs (insure) on relaunch; SoftKnowledge / HUD `COLONY` / `SHIP` / `CRATE` / `CARGO` / `HANGAR` / `INSURE` / `PERSIST` only; host authority; does not steal the ST-A `player_module` slot; never Pulse / kit / P2W / pay-to-restore. Full colony sim later. Not Voice. Not aiNEX.
 - Fleet system (до 10–15 кораблей, flagship overlay) — **FL-A + FL-B + FL-C + FL-D + FL-E + FL-F + FL-G + FL-H + FL-I + FL-J + FL-K + FL-L + FL-M + FL-N built:** fourteen extra allied pips on ST-A Strategy overlay (FL-A existing pad-visitor `NpcPilot` / NP-A hull; FL-B / FL-C / FL-D / FL-E / FL-F / FL-G / FL-H / FL-I / FL-J / FL-K / FL-L / FL-M / FL-N SoftNet visual, same grammar; cap 15 = player + 14 closes the 10–15 bar as SoftNet pips; SoftKnowledge / HUD `FLEET n/15`; click/select ≠ combat; host Pulse / occupy; not 15 physical ships; not a second OpenSpace; not ENet)
-- Carriers seed (hangar + drones/fighters) — очередь печати модуля: `docs/design/BASE_STATION_STRATEGY.md` ST-D **built**
+- Carriers seed (hangar + drones/fighters) — **ST-D built** hangar queue + **ST-N built** one host-authority drone/fighter on that hangar (`CarrierHangarQueue` / `CombatDummy` SoftNet visual; SoftKnowledge `DRONE` / `FIGHTER`; Pulse 11; not a 15th fleet pip): `docs/design/BASE_STATION_STRATEGY.md`
 - **Dynamic Ownership Transformation** (prototype): visual + mechanical swap Cybernex (Venus Project) ↔ gROT (biomass industrial) на 1–2 объектах — **DO-A built:** contested transition on one occupied unnamed pad (`Pad_North` / `Pad_Approach` / `Pad_Flank`); `OwnershipData.start_transition` / `advance_transition` + `OwnershipComponent` + `ContestedRing`; SoftKnowledge / HUD `CONTESTED` / `CYBERNEX` / `GROT` only; host authority; ST-F instant flip stays; not HyperGate G4; not galaxy-wide transforms. **DO-B built:** same grammar on the existing `PlayerOrbitalStation` cluster (ST-E dock+habitat stay; ST-G factory stays); not a second pad; not galaxy-wide
 - Advanced AI-bots + NPC quest givers skeleton — **Q-D built** (same Q-A ContractBoard id on the pad visitor; not a second quest system)
 - **Quest system foundation**: Contract Board, generated quests (templates), basic Alliance Quest Constructor — **Q-A + Q-B + Q-C + Q-D + Q-E built** (one board, occupy/harvest/deliver_crate/scan_extractor, one shared alliance occupy/logistics contract, one optional Learning Node, one NPC giver on the same board; not campaigns)

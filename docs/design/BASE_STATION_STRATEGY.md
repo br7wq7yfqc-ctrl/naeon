@@ -36,7 +36,7 @@ NPC agency (NP-C после ST-A) + MMO HOLD: [`NPC_AGENCY.md`](NPC_AGENCY.md) �
 | Узел | Факт репо | Это не |
 |------|-----------|--------|
 | `DEVELOPMENT_PLAN.md` §1.3 | habitat / extractor / turret, ноды, Contribution, RBE allocator; DoD «outpost + добыча + Contribution» | playable strategy overlay |
-| Phase 3 | carriers seed (hangar + drones); Dynamic Ownership на 1–2 объектах; цикл Strategy → Space → TPS | код очереди hangar / print |
+| Phase 3 | carriers seed (hangar + drones); Dynamic Ownership на 1–2 объектах; цикл Strategy → Space → TPS | ST-D hangar queue + ST-N drone/fighter built |
 | `LayerContext.gd` | комментарий `Strategy \| Space \| TPS \| Arena` | `set_layer("Strategy")` нигде не зовётся; OpenSpace = Space/TPS, Clash = Arena |
 | `BaseBuilder.gd` | стримит HQ-кластер (habitat, extractor, turret, beacon…) **или** P0: только `PadBaseController` | игрок не ставит один модуль |
 | `P0Slice.ONE_PAD` | `true` → BaseBuilder идёт в controller-only | размещение зданий |
@@ -130,7 +130,7 @@ Factory печатает модули базы/станции. Три закон
 
 Hangar + очередь на **один** модуль в ST-D. Лимит — mass / power корпуса (`ShipModule.mass`, `power_draw`), не «станция в полёте».
 
-Каталог (slug, без новых UUID): `cybernex_capital_carrier`, `grot_capital_carrier`, `grot_drone_carrier`, `cybernex_mothership`, `grot_mothership`. Phase 3 seed: hangar + drones/fighters. Интерьеры hangar — later (`InteriorGenerator` = pocket, не верстак).
+Каталог (slug, без новых UUID): `cybernex_capital_carrier`, `grot_capital_carrier`, `grot_drone_carrier`, `cybernex_mothership`, `grot_mothership`. Phase 3 seed: hangar **ST-D built** + drones/fighters **ST-N built** (one host-authority `CombatDummy` / SoftNet visual parented to `CarrierHangarQueue`; SoftKnowledge `DRONE` / `FIGHTER` / `HANGAR`; Pulse 11 both ways; Infection cap 5; not a 15th fleet pip). Интерьеры hangar — later (`InteriorGenerator` = pocket, не верстак).
 
 Не чеканить `SITE_*` на корпус.
 
@@ -150,9 +150,9 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 
 ---
 
-## 9. Срезы ST-A … ST-M
+## 9. Срезы ST-A … ST-N
 
-Каждый срез playable сам. ST-A built 2026-08-22. ST-B built 2026-08-27. ST-C built 2026-08-27. ST-D built 2026-08-27. ST-E built 2026-08-27 (`PlayerOrbitalStation`: dock + habitat on Nex-Prime orbit). ST-F built 2026-08-27 (`flip_cluster_owner` on the occupied unnamed pad). ST-G built 2026-08-28 (factory in that same player cluster; bench (c) print of one catalog module). ST-H built 2026-09-01 (one pad turret via `BaseBuilder.place_pad_turret` after occupy; not Clash `Turret.gd`). ST-I built 2026-09-02 (one pad storage via `BaseBuilder.place_pad_storage` after occupy; one crate; occupy dock ↔ ship `CargoHold`). ST-J built 2026-09-02 (one pad hangar stub via `BaseBuilder.place_pad_hangar_stub` after occupy; hatch/LAND stay on pad; not ST-D carrier hangar). ST-K built 2026-09-03 (one hangar stub on the existing `PlayerOrbitalStation` via `BaseBuilder.place_orbital_hangar_stub`; ST-E dock+habitat and ST-G factory stay; hatch/LAND stay legal; not ST-D carrier hangar). ST-L built 2026-09-03 (one defense turret on the existing `PlayerOrbitalStation` via `BaseBuilder.place_orbital_turret`; ST-E dock+habitat, ST-G factory, ST-K hangar stub stay; Pulse 11; ST-H pad turret stays distinct). ST-M built 2026-09-03 (one storage on the existing `PlayerOrbitalStation` via `BaseBuilder.place_orbital_storage`; ST-E dock+habitat, ST-G factory, ST-K hangar stub, ST-L turret stay; ST-I pad storage stays distinct).
+Каждый срез playable сам. ST-A built 2026-08-22. ST-B built 2026-08-27. ST-C built 2026-08-27. ST-D built 2026-08-27. ST-E built 2026-08-27 (`PlayerOrbitalStation`: dock + habitat on Nex-Prime orbit). ST-F built 2026-08-27 (`flip_cluster_owner` on the occupied unnamed pad). ST-G built 2026-08-28 (factory in that same player cluster; bench (c) print of one catalog module). ST-H built 2026-09-01 (one pad turret via `BaseBuilder.place_pad_turret` after occupy; not Clash `Turret.gd`). ST-I built 2026-09-02 (one pad storage via `BaseBuilder.place_pad_storage` after occupy; one crate; occupy dock ↔ ship `CargoHold`). ST-J built 2026-09-02 (one pad hangar stub via `BaseBuilder.place_pad_hangar_stub` after occupy; hatch/LAND stay on pad; not ST-D carrier hangar). ST-K built 2026-09-03 (one hangar stub on the existing `PlayerOrbitalStation` via `BaseBuilder.place_orbital_hangar_stub`; ST-E dock+habitat and ST-G factory stay; hatch/LAND stay legal; not ST-D carrier hangar). ST-L built 2026-09-03 (one defense turret on the existing `PlayerOrbitalStation` via `BaseBuilder.place_orbital_turret`; ST-E dock+habitat, ST-G factory, ST-K hangar stub stay; Pulse 11; ST-H pad turret stays distinct). ST-M built 2026-09-03 (one storage on the existing `PlayerOrbitalStation` via `BaseBuilder.place_orbital_storage`; ST-E dock+habitat, ST-G factory, ST-K hangar stub, ST-L turret stay; ST-I pad storage stays distinct). ST-N built 2026-09-03 (one host-authority drone/fighter on the existing ST-D `CarrierHangarQueue`; SoftKnowledge `DRONE` / `FIGHTER` / `HANGAR`; Pulse 11 both ways; Infection cap 5; not a 15th fleet pip).
 
 | ID | Роль | Семя | DoD | Отказ |
 |----|------|------|-----|-------|
@@ -160,6 +160,7 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 | **ST-B** | Extractor + видимый Contribution | **built:** `PadBaseController` harvest; `Extractor.bind_pad`; HUD stack | occupy → добыча → число на HUD; Knowledge только подпись | P2W-ноды; Knowledge→yield |
 | **ST-C** | Печать модуля на паде / NPC-верстаке | **built:** `PadPrintBench`; `rules/12`, `rules/15`, §6(a) | списать Contribution/Biomass; получить **один** модуль | cash-shop skip |
 | **ST-D** | Очередь на носителе (один модуль) | **built:** `CatalogCarrier` + `CarrierHangarQueue`; catalog slugs; Phase 3 hangar seed | очередь в hangar; упёрлась в mass/power | мобильный `SITE_*` |
+| **ST-N** | Один drone/fighter на hangar ST-D | **built:** `CarrierHangarQueue._ensure_st_n_craft` / `CombatDummy` SoftNet visual parented to hangar | SoftKnowledge / HUD `DRONE` / `FIGHTER` / `HANGAR`; Pulse 11 both ways; Infection cap 5; host authority; hangar queue stays; FLEET 15/15; kits 12 | 15th fleet pip; second player hull; new OpenSpace; 13th kit; cash-shop skip; mint `SITE_*` |
 | **ST-E** | Своя орбитальная станция ≥2 модулей | **built:** `PlayerOrbitalStation` dock+habitat на орбите Nex-Prime; грамматика §5 | два модуля в одном кластере; не город | mint `SITE_*`; 2-я система |
 | **ST-F** | Смена владельца CX↔GR на одной базе | **built:** `PadBaseController.flip_cluster_owner`; `swap_cluster_theme`; `OwnershipData` | визуал + услуги, те же числа тира | второй `SITE_*`; арена-флип |
 | **DO-A** | Contested переход CX↔GR на одном occupied unnamed паде | **built:** `start_contested_transition` / `advance_contested_transition`; `OwnershipData` + `OwnershipComponent` + `ContestedRing`; SoftKnowledge `CONTESTED` / `CYBERNEX` / `GROT` | визуал + метр contest; host authority | HyperGate G4; galaxy transforms; P2W |
@@ -195,6 +196,7 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 
 | Сейчас | Дальше |
 |--------|--------|
+| ST-N один drone/fighter на ST-D hangar | **built** |
 | ST-M один storage на ST-E orbital cluster | **built** |
 | ST-L один defense turret на ST-E orbital cluster | **built** |
 | ST-K один hangar stub на ST-E orbital cluster | **built** |

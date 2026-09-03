@@ -875,6 +875,13 @@ func _refresh() -> void:
 				contested_near = true
 				if stn.has_method("transition_progress"):
 					claim_ratio = clampf(float(stn.transition_progress()), 0.0, 1.0)
+	if tree:
+		for q in tree.get_nodes_in_group("hangar_queues"):
+			if q == null or not is_instance_valid(q) or not q.has_method("drone_hud_line"):
+				continue
+			var dr_l := str(q.drone_hud_line())
+			if dr_l != "" and nearest.find(dr_l) < 0:
+				nearest = ("%s  %s" % [dr_l, nearest]) if nearest != "" else dr_l
 
 	# Terrain budget
 	var terra := ""
@@ -1096,6 +1103,12 @@ func _refresh_os_stack(pocket: bool, pad: Node) -> void:
 					stn_s = ("%s  %s" % [stn_s, st_s]) if stn_s != "" else st_s
 			if stn_s != "" and body.find(stn_s) < 0:
 				body += "\n" + stn_s
+		for q in hud_tree.get_nodes_in_group("hangar_queues"):
+			if q == null or not is_instance_valid(q) or not q.has_method("drone_hud_line"):
+				continue
+			var dr_s := str(q.drone_hud_line())
+			if dr_s != "" and body.find(dr_s) < 0:
+				body += "\n" + dr_s
 	_os_stack.text = body
 
 

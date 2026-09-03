@@ -147,6 +147,15 @@ const PC_B_PERSIST := true
 ## aiNEX. Not G2–G6. Not ranked/pay matchmaking. Not FL-O. Not a 13th
 ## kit. ORBITAL_STATIONS stays false.
 const PC_C_INSURE := true
+## ST-N: one host-authority drone/fighter on the existing ST-D hangar
+## (`CarrierHangarQueue` / `CatalogCarrier`). CombatDummy + SoftNet visual,
+## parented to the hangar — not a second player hull, not a 15th fleet pip,
+## not a new OpenSpace. SoftKnowledge / HUD DRONE / FIGHTER (HANGAR stays).
+## Pulse 11 both ways. Infection cap 5. No permadeath. Host authority.
+## Does not redo ST-D / NP-H / PC-A/B/C. AbilityKitCatalog stays at 12.
+## FL-N FLEET 15/15. Not Voice. Not aiNEX. Not G2–G6. Not FL-O. Not a
+## 13th kit. ORBITAL_STATIONS stays false. No SITE_*.
+const ST_N_DRONE := true
 ## BT-A: one occupied-pad guard. Tiny 3-state BT (patrol / engage Pulse / return).
 ## Host authority. Pulse 11. PV-A rival stays distinct. G5 closed. Not Clash waves.
 const BT_A_GUARD := true
