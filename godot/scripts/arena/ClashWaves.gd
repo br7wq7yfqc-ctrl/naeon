@@ -3,6 +3,9 @@ class_name ClashWaves
 ## AR-C: timed minion waves on existing ClashLanes (Predecessor bar).
 ## AR-T: first host-authority lane-wave seed — same CombatDummy, Pulse 11,
 ## SoftKnowledge WAVE / MINION only. Not a 13th kit. No shop / P2W.
+## AR-V: second host-authority WAVE/MINION on the opposite Clash lane
+## (TOP stays AR-T; BOT is the opposite seed). Same Pulse 11. Not a 13th
+## kit. Not XP power. Not another fleet pip.
 ## AR-U XP from a last-hit is a SoftKnowledge label only — never Pulse.
 
 signal wave_spawned(wave_index: int, count: int)
@@ -11,6 +14,9 @@ const WAVE_INTERVAL := 16.0
 const FIRST_WAVE_DELAY := 0.2
 const STAGGER := 0.28
 const PULSE_DAMAGE := 11.0
+## AR-T seed lane. AR-V mirrors the same wave on the opposite side lane.
+const SEED_LANE := "TOP"
+const OPPOSITE_LANE := "BOT"
 
 var wave_index: int = 0
 var last_wave_count: int = 0
@@ -35,9 +41,9 @@ func bind(arena: Node, lanes: Node, dummy_scene: PackedScene) -> void:
 	_started = true
 	print("[ClashWaves] bound lanes=", lanes != null, " dummy=", dummy_scene != null)
 	_queue_wave()
-	if not _spawn_q.is_empty():
-		var e = _spawn_q.pop_front()
-		_spawn_minion(str(e[0]), str(e[1]), int(e[2]))
+	# AR-T first dummy on the seed lane; AR-V first dummy on the opposite lane.
+	_spawn_first_for_lane(SEED_LANE)
+	_spawn_first_for_lane(OPPOSITE_LANE)
 	_timer = WAVE_INTERVAL
 
 
@@ -53,6 +59,55 @@ func living_minions() -> Array:
 			continue
 		out.append(n)
 	return out
+
+
+func seed_lane() -> String:
+	return SEED_LANE
+
+
+func opposite_lane() -> String:
+	return OPPOSITE_LANE
+
+
+func wave_lanes() -> PackedStringArray:
+	return _wave_lanes()
+
+
+func living_on_lane(lane: String) -> Array:
+	var out: Array = []
+	for n in living_minions():
+		if n == null or not is_instance_valid(n):
+			continue
+		if n.get_parent() != self:
+			continue
+		if str(n.get_meta("lane")) != lane:
+			continue
+		out.append(n)
+	return out
+
+
+func living_lanes() -> PackedStringArray:
+	var seen: PackedStringArray = PackedStringArray()
+	for n in living_minions():
+		if n == null or not is_instance_valid(n):
+			continue
+		if n.get_parent() != self:
+			continue
+		var lane := str(n.get_meta("lane")) if n.has_meta("lane") else ""
+		if lane != "" and not seen.has(lane):
+			seen.append(lane)
+	return seen
+
+
+func _spawn_first_for_lane(lane: String) -> void:
+	var i := 0
+	while i < _spawn_q.size():
+		var e = _spawn_q[i]
+		if str(e[0]) == lane:
+			_spawn_q.remove_at(i)
+			_spawn_minion(str(e[0]), str(e[1]), int(e[2]))
+			return
+		i += 1
 
 
 func _process(delta: float) -> void:
@@ -76,9 +131,11 @@ func _queue_wave() -> void:
 	var per := _per_side()
 	var room := cap - live
 	var planned: Array = []
-	for lane in lanes:
+	# Interleave lanes so AR-T seed and AR-V opposite both get a dummy
+	# even when the live cap is tight (never starve the second lane).
+	for i in per:
 		for fac in ["Cybernex", "gROT"]:
-			for i in per:
+			for lane in lanes:
 				if planned.size() >= room:
 					break
 				planned.append([str(lane), str(fac), i])
@@ -97,8 +154,8 @@ func _queue_wave() -> void:
 	print("[ClashWaves] wave ", wave_index, " queued n=", last_wave_count, " lanes=", ",".join(lanes))
 	if wave_index == 1 and GameManager:
 		GameManager.toast_requested.emit(
-			"%s — CombatDummy %s · Pulse 11 · host · no shop · no P2W" % [
-				wave_soft_label(), minion_soft_label(),
+			"%s — CombatDummy %s · Pulse 11 · host · %s+%s · no shop · no P2W" % [
+				wave_soft_label(), minion_soft_label(), SEED_LANE, OPPOSITE_LANE,
 			]
 		)
 
@@ -138,6 +195,10 @@ func _spawn_minion(lane: String, fac: String, idx: int) -> void:
 	d.set_meta("lane", lane)
 	d.set_meta("clash_wave", true)
 	d.set_meta("combat_authority", "host")
+	if lane == OPPOSITE_LANE:
+		d.set_meta("clash_seed", "ar_v")
+	else:
+		d.set_meta("clash_seed", "ar_t")
 	d.add_to_group("clash_minion")
 	if d.has_method("set_lane_path"):
 		d.set_lane_path(_lane_path(lane, fac))
@@ -167,9 +228,15 @@ func _wave_lanes() -> PackedStringArray:
 	var tier := 1
 	if gq:
 		tier = int(gq.tier)
-	if tier <= 0:
-		return PackedStringArray(["MID"])
-	return PackedStringArray(["TOP", "MID", "BOT"])
+	# AR-T seed + AR-V opposite. MID stays an AR-C extra when the quality
+	# tier can afford a third strip. Low-tier / isolated still get both
+	# side-lane seeds (never drop AR-T to spawn AR-V).
+	var out := PackedStringArray([SEED_LANE])
+	if not out.has(OPPOSITE_LANE):
+		out.append(OPPOSITE_LANE)
+	if tier >= 1 and not out.has("MID"):
+		out.append("MID")
+	return out
 
 
 func _per_side() -> int:

@@ -95,6 +95,7 @@ func _go() -> void:
 		await _assert_ar_s(os, fails)
 		await _assert_ar_t(os, fails)
 		await _assert_ar_u(os, fails)
+		await _assert_ar_v(os, fails)
 		await _assert_sn_c(os, fails)
 		await _assert_sn_d(os, fails)
 		await _assert_do_a(os, fails)
@@ -137,6 +138,7 @@ func _go() -> void:
 	await _assert_ar_s(os, fails)
 	await _assert_ar_t(os, fails)
 	await _assert_ar_u(os, fails)
+	await _assert_ar_v(os, fails)
 	_assert_se_a(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 	_assert_scan_cache_live(fails)
@@ -23061,6 +23063,167 @@ func _assert_ar_u(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] AR-U XP/LEVEL · SoftKnowledge only · AR-A…AR-T stay · FLEET 15/15 · no SITE_*")
 	if fails.size() == fail0:
 		print("[Playtest] PASS AR-U")
+	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
+		SoftScanCache.invalidate_enemies()
+
+
+func _assert_ar_v(os: Node, fails: PackedStringArray) -> void:
+	## AR-V: second Clash lane minion-wave. Isolated — no TestArena scene change.
+	## Mirror AR-T (host-authority WAVE/MINION, Pulse 11) on the opposite lane.
+	var fail0 := fails.size()
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.AR_V_SECOND_LANE_WAVE):
+		fails.append("AR-V P0Slice flag missing")
+	if P0 != null and not bool(P0.AR_T_MINION_WAVE):
+		fails.append("AR-V dropped AR-T P0Slice flag")
+	if P0 != null and not bool(P0.AR_U_XP_LEVELING):
+		fails.append("AR-V dropped AR-U P0Slice flag")
+	if P0 != null and not bool(P0.AR_S_TWELFTH_KIT):
+		fails.append("AR-V dropped AR-S P0Slice flag")
+	if P0 != null and not bool(P0.AR_I_MATCH_END):
+		fails.append("AR-V dropped AR-I P0Slice flag")
+	if P0 != null and not bool(P0.FL_N_FLEET):
+		fails.append("AR-V dropped FL-N P0Slice flag")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("AR-V flipped ORBITAL_STATIONS")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-V Infection cap drifted")
+	var layer0 := str(LayerContext.current_layer) if LayerContext else ""
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	if Kit == null or not Kit.has_method("kit_ids"):
+		fails.append("AR-V AbilityKitCatalog missing")
+	else:
+		var ids: PackedStringArray = Kit.kit_ids()
+		if int(ids.size()) != 12:
+			fails.append("AR-V isolated kit count want 12 (got %s)" % ids.size())
+		for need in ["cx_nex", "cx_grid", "gr_rot", "gr_spore", "cx_lattice", "gr_vein", "cx_prism", "gr_facet", "cx_helix", "gr_coil", "cx_spire", "gr_thorn"]:
+			if not ids.has(need):
+				fails.append("AR-V isolated dropped kit (%s)" % need)
+		if int(ids.size()) >= 13:
+			fails.append("AR-V isolated added a 13th AbilityKit")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var wlab := str(SoftK.wave_label()) if SoftK and SoftK.has_method("wave_label") else ""
+	var mlab := str(SoftK.minion_label()) if SoftK and SoftK.has_method("minion_label") else ""
+	if wlab == "" or (wlab != "WAVE" and wlab != "LANE WAVE"):
+		fails.append("AR-V isolated SoftKnowledge WAVE missing (%s)" % wlab)
+	if mlab == "" or (mlab != "MINION" and mlab != "LANE MINION"):
+		fails.append("AR-V isolated SoftKnowledge MINION missing (%s)" % mlab)
+	var xlab := str(SoftK.xp_label()) if SoftK and SoftK.has_method("xp_label") else ""
+	var llab := str(SoftK.level_label()) if SoftK and SoftK.has_method("level_label") else ""
+	if xlab == "" or (xlab != "XP" and xlab != "CLASH XP"):
+		fails.append("AR-V isolated dropped AR-U XP label (%s)" % xlab)
+	if llab == "" or (llab != "LEVEL" and llab != "CLASH LEVEL"):
+		fails.append("AR-V isolated dropped AR-U LEVEL label (%s)" % llab)
+	var host: Node = os if os else self
+	var matchn := Node3D.new()
+	matchn.set_script(preload("res://scripts/arena/ClashLocalMatch.gd"))
+	matchn.name = "ClashLocalMatchARV"
+	host.add_child(matchn)
+	await get_tree().process_frame
+	if not matchn.has_method("is_level_informational") or not bool(matchn.is_level_informational()):
+		fails.append("AR-V isolated AR-U level is not informational")
+	var waves := Node.new()
+	waves.set_script(preload("res://scripts/arena/ClashWaves.gd"))
+	waves.name = "ClashWavesARV"
+	host.add_child(waves)
+	var dummy_scene: PackedScene = load("res://scenes/combat/CombatDummy.tscn")
+	if waves.has_method("bind"):
+		waves.bind(host, waves, dummy_scene)
+	await get_tree().process_frame
+	await get_tree().create_timer(0.2).timeout
+	if not waves.has_method("is_host_authority") or not bool(waves.is_host_authority()):
+		fails.append("AR-V isolated wave is not host authority")
+	if not waves.has_method("pulse_damage") or absf(float(waves.pulse_damage()) - 11.0) > 0.01:
+		fails.append("AR-V isolated Pulse 11 drifted")
+	var seed := str(waves.seed_lane()) if waves.has_method("seed_lane") else "TOP"
+	var opp := str(waves.opposite_lane()) if waves.has_method("opposite_lane") else "BOT"
+	if seed == "" or opp == "" or seed == opp:
+		fails.append("AR-V isolated seed/opposite lanes collapsed (%s/%s)" % [seed, opp])
+	var on_seed: Array = waves.living_on_lane(seed) if waves.has_method("living_on_lane") else []
+	var on_opp: Array = waves.living_on_lane(opp) if waves.has_method("living_on_lane") else []
+	if on_seed.is_empty():
+		fails.append("AR-V isolated dropped AR-T WAVE on %s" % seed)
+	if on_opp.is_empty():
+		fails.append("AR-V isolated no opposite-lane WAVE on %s" % opp)
+	var walker: Node3D = null
+	for n in on_opp:
+		if n is Node3D:
+			walker = n as Node3D
+			break
+	if walker != null:
+		if str(walker.get_meta("combat_authority")) != "host":
+			fails.append("AR-V isolated minion combat_authority left host")
+		if walker.has_method("infection_cap") and int(walker.infection_cap()) != 5:
+			fails.append("AR-V isolated Infection cap drifted (%s)" % walker.infection_cap())
+		if str(walker.get_meta("clash_seed")) != "ar_v":
+			fails.append("AR-V isolated opposite minion missing clash_seed")
+		var tgt: Node = dummy_scene.instantiate() if dummy_scene else null
+		if tgt:
+			tgt.set("faction", "Cybernex" if str(walker.get("faction")) != "Cybernex" else "gROT")
+			host.add_child(tgt)
+			await get_tree().process_frame
+			var hp0 := float(tgt.get("health"))
+			if walker.has_method("try_pulse"):
+				walker.try_pulse(tgt)
+			var hp1 := float(tgt.get("health"))
+			print("[Playtest] AR-V isolated Pulse ", hp0, " -> ", hp1, " lane=", opp)
+			if hp1 >= hp0:
+				fails.append("AR-V isolated minion Pulse did not hit")
+			elif absf(hp0 - hp1 - 11.0) > 0.05:
+				fails.append("AR-V isolated Pulse want 11 (got %s)" % (hp0 - hp1))
+			if is_instance_valid(tgt):
+				tgt.queue_free()
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("combat", 20.0)
+		GameManager.add_mastery("history", 20.0)
+	if waves.has_method("pulse_damage") and absf(float(waves.pulse_damage()) - 11.0) > 0.01:
+		fails.append("AR-V isolated Knowledge changed Pulse")
+	if matchn.has_method("is_level_informational") and not bool(matchn.is_level_informational()):
+		fails.append("AR-V isolated Knowledge made AR-U level a power")
+	var wlab2 := str(waves.wave_soft_label()) if waves.has_method("wave_soft_label") else ""
+	var mlab2 := str(waves.minion_soft_label()) if waves.has_method("minion_soft_label") else ""
+	if wlab2 == "" or (wlab2 != "WAVE" and wlab2 != "LANE WAVE"):
+		fails.append("AR-V isolated HUD WAVE missing (%s)" % wlab2)
+	if mlab2 == "" or (mlab2 != "MINION" and mlab2 != "LANE MINION"):
+		fails.append("AR-V isolated HUD MINION missing (%s)" % mlab2)
+	if SoftK and SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked("wave")):
+		fails.append("AR-V isolated unlocked exclusive weapon")
+	if SoftK and SoftK.has_method("exclusive_module_unlocked") and bool(SoftK.exclusive_module_unlocked("minion")):
+		fails.append("AR-V isolated unlocked exclusive combat module")
+	if Kit and Kit.has_method("kit_ids") and int(Kit.kit_ids().size()) != 12:
+		fails.append("AR-V isolated added a 13th kit")
+	var cap15 := 15
+	var traffic: Node = null
+	if os:
+		traffic = os.get_node_or_null("PadTraffic")
+	if traffic == null and get_tree():
+		traffic = get_tree().get_first_node_in_group("pad_traffic")
+	if traffic and traffic.has_method("fleet_cap"):
+		cap15 = int(traffic.fleet_cap())
+	if cap15 != 15:
+		fails.append("AR-V isolated FLEET cap=%s, want 15" % cap15)
+	print("[Playtest] AR-V second-lane wave isolated · ", seed, "+", opp,
+		" ", wlab2, "/", mlab2, " Pulse 11 · host · kits=12 · FLEET 15/15")
+	if is_instance_valid(waves):
+		waves.queue_free()
+	if is_instance_valid(matchn):
+		matchn.queue_free()
+	await get_tree().process_frame
+	if os != null and os.has_method("enter_clash_from_world"):
+		fails.append("AR-V opened G5 world-to-arena")
+	if LayerContext:
+		if str(LayerContext.site_pin_id) != pin0:
+			fails.append("AR-V changed site_pin (%s → %s)" % [pin0, LayerContext.site_pin_id])
+		if layer0 != "" and str(LayerContext.current_layer) == "Arena" and layer0 != "Arena":
+			fails.append("AR-V stole LayerContext to Arena")
+			LayerContext.set_layer(layer0)
+	if Inf and int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-V Infection cap changed")
+	print("[Playtest] AR-V WAVE/MINION · opposite lane · SoftKnowledge only · AR-T stays · AR-U informational · FLEET 15/15 · no SITE_*")
+	if fails.size() == fail0:
+		print("[Playtest] PASS AR-V")
 	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
 		SoftScanCache.invalidate_enemies()
 
