@@ -78,6 +78,7 @@ func _go() -> void:
 		await _assert_fl_j(os, fails)
 		await _assert_fl_k(os, fails)
 		await _assert_fl_l(os, fails)
+		await _assert_fl_m(os, fails)
 		await _assert_sn_b(os, fails)
 		await _assert_ar_h(os, fails)
 		await _assert_ar_i(os, fails)
@@ -720,6 +721,7 @@ func _go() -> void:
 	await _assert_fl_j(os, fails)
 	await _assert_fl_k(os, fails)
 	await _assert_fl_l(os, fails)
+	await _assert_fl_m(os, fails)
 	await _assert_sn_b(os, fails)
 	await _assert_ar_h(os, fails)
 	await _assert_sn_c(os, fails)
@@ -27048,15 +27050,15 @@ func _assert_fl_l(os: Node, fails: PackedStringArray) -> void:
 		fails.append("FL-L twelfth fleet pip not visible")
 	var n := int(ov.fleet_count()) if ov.has_method("fleet_count") else -1
 	var cap := int(ov.fleet_cap()) if ov.has_method("fleet_cap") else -1
-	if cap != 13:
-		fails.append("FL-L fleet cap=%s, want 13" % cap)
-	if n != 13:
-		fails.append("FL-L fleet count=%s, want 13" % n)
+	if cap < 13:
+		fails.append("FL-L fleet cap=%s, want >= 13" % cap)
+	if n < 13:
+		fails.append("FL-L fleet count=%s, want >= 13" % n)
 	if n > cap:
 		fails.append("FL-L spawned more than the cap")
 	var line := str(ov.fleet_hud_line()) if ov.has_method("fleet_hud_line") else ""
-	if line.find("FLEET") < 0 or line.find("13/13") < 0:
-		fails.append("FL-L overlay missing FLEET 13/13 (%s)" % line)
+	if line.find("FLEET") < 0:
+		fails.append("FL-L overlay missing FLEET (%s)" % line)
 	var ov_guest: Node3D = ov.fleet_guest() if ov.has_method("fleet_guest") else null
 	var ov_guest_b: Node3D = ov.fleet_guest_b() if ov.has_method("fleet_guest_b") else null
 	var ov_guest_c: Node3D = ov.fleet_guest_c() if ov.has_method("fleet_guest_c") else null
@@ -27153,12 +27155,12 @@ func _assert_fl_l(os: Node, fails: PackedStringArray) -> void:
 	if Hud != null:
 		var snap: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
 		var stxt := str(Hud.stack_text(snap)).to_upper()
-		if int(snap.get("fleet", -1)) != 13 or int(snap.get("fleet_max", -1)) != 13:
-			fails.append("FL-L HUD fleet=%s/%s, want 13/13" % [
+		if int(snap.get("fleet", -1)) < 13 or int(snap.get("fleet_max", -1)) < 13:
+			fails.append("FL-L HUD fleet=%s/%s, want >= 13" % [
 				snap.get("fleet"), snap.get("fleet_max")
 			])
-		if stxt.find("FLEET") < 0 or stxt.find("13/13") < 0:
-			fails.append("FL-L HUD missing FLEET 13/13")
+		if stxt.find("FLEET") < 0:
+			fails.append("FL-L HUD missing FLEET")
 		if SoftK != null and GameManager and GameManager.has_method("add_mastery"):
 			var word0 := str(SoftK.fleet_label())
 			GameManager.add_mastery("logistics", 20.0)
@@ -27173,15 +27175,15 @@ func _assert_fl_l(os: Node, fails: PackedStringArray) -> void:
 					fails.append("FL-L Knowledge changed Pulse DPS")
 			var snap2: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
 			var stxt2 := str(Hud.stack_text(snap2)).to_upper()
-			if int(snap2.get("fleet", -1)) != 13 or int(snap2.get("fleet_max", -1)) != 13:
+			if int(snap2.get("fleet", -1)) < 13 or int(snap2.get("fleet_max", -1)) < 13:
 				fails.append("FL-L Knowledge changed fleet count")
 			var word1 := str(SoftK.fleet_label())
 			if word0.find("FLEET") < 0 or word1.find("FLEET") < 0:
 				fails.append("FL-L Knowledge dropped FLEET word")
 			if word1 != "FLEET MANIFEST":
 				fails.append("FL-L Knowledge missing FLEET MANIFEST (%s)" % word1)
-			if stxt2.find("FLEET MANIFEST") < 0 or stxt2.find("13/13") < 0:
-				fails.append("FL-L HUD missing FLEET MANIFEST 13/13 (%s)" % stxt2.get_slice("\n", -1))
+			if stxt2.find("FLEET MANIFEST") < 0:
+				fails.append("FL-L HUD missing FLEET MANIFEST (%s)" % stxt2.get_slice("\n", -1))
 	if get_tree():
 		var hulls := 0
 		for nship in get_tree().get_nodes_in_group("ship"):
@@ -27246,6 +27248,451 @@ func _assert_fl_l(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] FL-J still PASS")
 	print("[Playtest] FL-K still PASS")
 	print("[Playtest] FL-L PASS")
+	if GameManager:
+		GameManager.subject_mastery = mastery0
+		if GameManager.has_method("_recalc_knowledge"):
+			GameManager._recalc_knowledge()
+
+
+func _assert_fl_m(os: Node, fails: PackedStringArray) -> void:
+	## FL-M: thirteenth extra allied pip on ST-A overlay (SoftNet / NP-A visual).
+	## Cap 14. SoftKnowledge / HUD FLEET MANIFEST 14/14. Click ≠ combat. Host Pulse / occupy.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
+	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var pulse0 := 11.0
+	var mastery0: Dictionary = GameManager.subject_mastery.duplicate() if GameManager else {}
+	var ov: Node = os.strategy_overlay() if os != null and os.has_method("strategy_overlay") else null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var nex: Node = _osh_nex()
+	var host: Node3D = null
+	var traffic: Node = null
+	var guest: Node3D = null
+	var guest_b: Node3D = null
+	var guest_c: Node3D = null
+	var guest_d: Node3D = null
+	var guest_e: Node3D = null
+	var guest_f: Node3D = null
+	var guest_g: Node3D = null
+	var guest_h: Node3D = null
+	var guest_i: Node3D = null
+	var guest_j: Node3D = null
+	var guest_k: Node3D = null
+	var guest_l: Node3D = null
+	var guest_m: Node3D = null
+	var spaces := 0
+	if P0 == null or not bool(P0.FL_M_FLEET):
+		fails.append("FL-M P0Slice flag missing")
+		return
+	if not bool(P0.FL_A_FLEET):
+		fails.append("FL-M dropped FL-A")
+	if not bool(P0.FL_B_FLEET):
+		fails.append("FL-M dropped FL-B")
+	if not bool(P0.FL_C_FLEET):
+		fails.append("FL-M dropped FL-C")
+	if not bool(P0.FL_D_FLEET):
+		fails.append("FL-M dropped FL-D")
+	if not bool(P0.FL_E_FLEET):
+		fails.append("FL-M dropped FL-E")
+	if not bool(P0.FL_F_FLEET):
+		fails.append("FL-M dropped FL-F")
+	if not bool(P0.FL_G_FLEET):
+		fails.append("FL-M dropped FL-G")
+	if not bool(P0.FL_H_FLEET):
+		fails.append("FL-M dropped FL-H")
+	if not bool(P0.FL_I_FLEET):
+		fails.append("FL-M dropped FL-I")
+	if not bool(P0.FL_J_FLEET):
+		fails.append("FL-M dropped FL-J")
+	if not bool(P0.FL_K_FLEET):
+		fails.append("FL-M dropped FL-K")
+	if not bool(P0.FL_L_FLEET):
+		fails.append("FL-M dropped FL-L")
+	if bool(P0.ORBITAL_STATIONS):
+		fails.append("FL-M flipped ORBITAL_STATIONS")
+	if not bool(P0.ST_A_OVERLAY) or not bool(P0.SN_A_PAD) or not bool(P0.SN_B_HULL):
+		fails.append("FL-M dropped ST-A / SN-A / SN-B")
+	if os == null or nex == null:
+		fails.append("FL-M no OpenSpace/Nex-Prime")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("FL-M must not run on Clash")
+		return
+	if LayerContext and str(LayerContext.current_layer) == "Arena":
+		fails.append("FL-M must not run on Clash")
+		return
+	if ov == null or not ov.has_method("try_enter"):
+		fails.append("FL-M StrategyOverlay missing")
+		return
+	if get_tree():
+		spaces = get_tree().get_nodes_in_group("open_space").size()
+	if spaces != 1:
+		fails.append("FL-M want one OpenSpace, got %s" % spaces)
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.25).timeout
+	if get_tree():
+		for n in get_tree().get_nodes_in_group("landing_pads"):
+			if n is Node3D and str(n.name) == "Pad_North":
+				host = n as Node3D
+				break
+	if host == null:
+		host = _in_a_occupied_pad(os)
+	if host != null and not (str(host.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]):
+		var walk: Node = host
+		host = null
+		while walk:
+			if walk is Node3D and str(walk.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+				host = walk as Node3D
+				break
+			walk = walk.get_parent()
+	if host == null:
+		fails.append("FL-M no unnamed pad (Pad_North class)")
+		return
+	traffic = host.get_node_or_null("PadTraffic")
+	if traffic == null and nex.has_method("pad_traffic"):
+		traffic = nex.call("pad_traffic")
+	if traffic == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("pad_traffic")
+		if not listed.is_empty():
+			traffic = listed[0]
+	if traffic == null or not is_instance_valid(traffic):
+		fails.append("FL-M pad visitor traffic missing")
+		return
+	guest = traffic.fleet_guest() if traffic.has_method("fleet_guest") else traffic.get_visitor()
+	guest_b = traffic.fleet_guest_b() if traffic.has_method("fleet_guest_b") else null
+	guest_c = traffic.fleet_guest_c() if traffic.has_method("fleet_guest_c") else null
+	guest_d = traffic.fleet_guest_d() if traffic.has_method("fleet_guest_d") else null
+	guest_e = traffic.fleet_guest_e() if traffic.has_method("fleet_guest_e") else null
+	guest_f = traffic.fleet_guest_f() if traffic.has_method("fleet_guest_f") else null
+	guest_g = traffic.fleet_guest_g() if traffic.has_method("fleet_guest_g") else null
+	guest_h = traffic.fleet_guest_h() if traffic.has_method("fleet_guest_h") else null
+	guest_i = traffic.fleet_guest_i() if traffic.has_method("fleet_guest_i") else null
+	guest_j = traffic.fleet_guest_j() if traffic.has_method("fleet_guest_j") else null
+	guest_k = traffic.fleet_guest_k() if traffic.has_method("fleet_guest_k") else null
+	guest_l = traffic.fleet_guest_l() if traffic.has_method("fleet_guest_l") else null
+	guest_m = traffic.fleet_guest_m() if traffic.has_method("fleet_guest_m") else null
+	if guest == null or not is_instance_valid(guest):
+		fails.append("FL-M first visitor hull missing (FL-A)")
+		return
+	if guest_b == null or not is_instance_valid(guest_b):
+		fails.append("FL-M second fleet ally missing (FL-B)")
+		return
+	if guest_c == null or not is_instance_valid(guest_c):
+		fails.append("FL-M third fleet ally missing (FL-C)")
+		return
+	if guest_d == null or not is_instance_valid(guest_d):
+		fails.append("FL-M fourth fleet ally missing (FL-D)")
+		return
+	if guest_e == null or not is_instance_valid(guest_e):
+		fails.append("FL-M fifth fleet ally missing (FL-E)")
+		return
+	if guest_f == null or not is_instance_valid(guest_f):
+		fails.append("FL-M sixth fleet ally missing (FL-F)")
+		return
+	if guest_g == null or not is_instance_valid(guest_g):
+		fails.append("FL-M seventh fleet ally missing (FL-G)")
+		return
+	if guest_h == null or not is_instance_valid(guest_h):
+		fails.append("FL-M eighth fleet ally missing (FL-H)")
+		return
+	if guest_i == null or not is_instance_valid(guest_i):
+		fails.append("FL-M ninth fleet ally missing (FL-I)")
+		return
+	if guest_j == null or not is_instance_valid(guest_j):
+		fails.append("FL-M tenth fleet ally missing (FL-J)")
+		return
+	if guest_k == null or not is_instance_valid(guest_k):
+		fails.append("FL-M eleventh fleet ally missing (FL-K)")
+		return
+	if guest_l == null or not is_instance_valid(guest_l):
+		fails.append("FL-M twelfth fleet ally missing (FL-L)")
+		return
+	if guest_m == null or not is_instance_valid(guest_m):
+		fails.append("FL-M thirteenth fleet ally missing")
+		return
+	if guest_m == guest or guest_m == guest_b or guest_m == guest_c \
+			or guest_m == guest_d or guest_m == guest_e or guest_m == guest_f \
+			or guest_m == guest_g or guest_m == guest_h or guest_m == guest_i \
+			or guest_m == guest_j or guest_m == guest_k or guest_m == guest_l:
+		fails.append("FL-M thirteenth pip reused FL-A/FL-B/FL-C/FL-D/FL-E/FL-F/FL-G/FL-H/FL-I/FL-J/FL-K/FL-L")
+	if guest_m is CharacterBody3D:
+		fails.append("FL-M spawned a second physical hull")
+	elif guest_m.is_in_group("ship") and not bool(guest_m.get_meta("softnet_visual", false)):
+		fails.append("FL-M spawned a second physical hull")
+	if not bool(guest_m.get_meta("softnet_visual", false)):
+		fails.append("FL-M ally is not SoftNet visual")
+	if str(guest_m.get_meta("site_pin", "")) != "":
+		fails.append("FL-M ally minted site_pin")
+	if str(guest_m.get_meta("combat_authority", "")) != "host":
+		fails.append("FL-M ally combat_authority left host")
+	var rival: Node3D = traffic.get_rival() if traffic.has_method("get_rival") else null
+	if rival != null and is_instance_valid(rival) and rival.has_method("infection_cap"):
+		if int(rival.infection_cap()) != 5:
+			fails.append("FL-M Infection cap drifted (%s)" % rival.infection_cap())
+	var dummy: Node3D = traffic.get_surface_dummy() if traffic.has_method("get_surface_dummy") else null
+	if dummy != null and is_instance_valid(dummy) and dummy.has_method("infection_cap"):
+		if int(dummy.infection_cap()) != 5:
+			fails.append("FL-M Infection cap drifted (%s)" % dummy.infection_cap())
+	if Kits != null and Kits.has_method("_pulse"):
+		var pab = Kits._pulse()
+		if pab != null and "damage" in pab:
+			pulse0 = float(pab.damage)
+	if absf(pulse0 - 11.0) > 0.01:
+		fails.append("FL-M Pulse DPS drifted (%s)" % pulse0)
+	if ov.has_method("is_active") and bool(ov.is_active()) and ov.has_method("exit_overlay"):
+		ov.exit_overlay()
+		await get_tree().process_frame
+	var pad_up: Vector3 = host.get_meta("pad_up") if host.has_meta("pad_up") else Vector3.UP
+	if ship != null and is_instance_valid(ship):
+		if "velocity" in ship:
+			ship.velocity = Vector3.ZERO
+		ship.global_position = host.global_position + pad_up * 8.0
+	await get_tree().process_frame
+	if not bool(ov.try_enter()):
+		fails.append("FL-M overlay B did not open (%s)" % str(ov.readiness_line() if ov.has_method("readiness_line") else ""))
+		return
+	var ly := str(LayerContext.current_layer) if LayerContext else ""
+	if ly != "Strategy":
+		fails.append("FL-M LayerContext not Strategy (%s)" % ly)
+	if not ov.has_method("fleet_pip_visible") or not bool(ov.fleet_pip_visible()):
+		fails.append("FL-M dropped FL-A fleet pip")
+	if not ov.has_method("fleet_pip_b_visible") or not bool(ov.fleet_pip_b_visible()):
+		fails.append("FL-M dropped FL-B fleet pip")
+	if not ov.has_method("fleet_pip_c_visible") or not bool(ov.fleet_pip_c_visible()):
+		fails.append("FL-M dropped FL-C fleet pip")
+	if not ov.has_method("fleet_pip_d_visible") or not bool(ov.fleet_pip_d_visible()):
+		fails.append("FL-M dropped FL-D fleet pip")
+	if not ov.has_method("fleet_pip_e_visible") or not bool(ov.fleet_pip_e_visible()):
+		fails.append("FL-M dropped FL-E fleet pip")
+	if not ov.has_method("fleet_pip_f_visible") or not bool(ov.fleet_pip_f_visible()):
+		fails.append("FL-M dropped FL-F fleet pip")
+	if not ov.has_method("fleet_pip_g_visible") or not bool(ov.fleet_pip_g_visible()):
+		fails.append("FL-M dropped FL-G fleet pip")
+	if not ov.has_method("fleet_pip_h_visible") or not bool(ov.fleet_pip_h_visible()):
+		fails.append("FL-M dropped FL-H fleet pip")
+	if not ov.has_method("fleet_pip_i_visible") or not bool(ov.fleet_pip_i_visible()):
+		fails.append("FL-M dropped FL-I fleet pip")
+	if not ov.has_method("fleet_pip_j_visible") or not bool(ov.fleet_pip_j_visible()):
+		fails.append("FL-M dropped FL-J fleet pip")
+	if not ov.has_method("fleet_pip_k_visible") or not bool(ov.fleet_pip_k_visible()):
+		fails.append("FL-M dropped FL-K fleet pip")
+	if not ov.has_method("fleet_pip_l_visible") or not bool(ov.fleet_pip_l_visible()):
+		fails.append("FL-M dropped FL-L fleet pip")
+	if not ov.has_method("fleet_pip_m_visible") or not bool(ov.fleet_pip_m_visible()):
+		fails.append("FL-M thirteenth fleet pip not visible")
+	var n := int(ov.fleet_count()) if ov.has_method("fleet_count") else -1
+	var cap := int(ov.fleet_cap()) if ov.has_method("fleet_cap") else -1
+	if cap != 14:
+		fails.append("FL-M fleet cap=%s, want 14" % cap)
+	if n != 14:
+		fails.append("FL-M fleet count=%s, want 14" % n)
+	if n > cap:
+		fails.append("FL-M spawned more than the cap")
+	var line := str(ov.fleet_hud_line()) if ov.has_method("fleet_hud_line") else ""
+	if line.find("FLEET") < 0 or line.find("14/14") < 0:
+		fails.append("FL-M overlay missing FLEET 14/14 (%s)" % line)
+	var ov_guest: Node3D = ov.fleet_guest() if ov.has_method("fleet_guest") else null
+	var ov_guest_b: Node3D = ov.fleet_guest_b() if ov.has_method("fleet_guest_b") else null
+	var ov_guest_c: Node3D = ov.fleet_guest_c() if ov.has_method("fleet_guest_c") else null
+	var ov_guest_d: Node3D = ov.fleet_guest_d() if ov.has_method("fleet_guest_d") else null
+	var ov_guest_e: Node3D = ov.fleet_guest_e() if ov.has_method("fleet_guest_e") else null
+	var ov_guest_f: Node3D = ov.fleet_guest_f() if ov.has_method("fleet_guest_f") else null
+	var ov_guest_g: Node3D = ov.fleet_guest_g() if ov.has_method("fleet_guest_g") else null
+	var ov_guest_h: Node3D = ov.fleet_guest_h() if ov.has_method("fleet_guest_h") else null
+	var ov_guest_i: Node3D = ov.fleet_guest_i() if ov.has_method("fleet_guest_i") else null
+	var ov_guest_j: Node3D = ov.fleet_guest_j() if ov.has_method("fleet_guest_j") else null
+	var ov_guest_k: Node3D = ov.fleet_guest_k() if ov.has_method("fleet_guest_k") else null
+	var ov_guest_l: Node3D = ov.fleet_guest_l() if ov.has_method("fleet_guest_l") else null
+	var ov_guest_m: Node3D = ov.fleet_guest_m() if ov.has_method("fleet_guest_m") else null
+	if ov_guest != guest:
+		fails.append("FL-M first pip is not the existing visitor hull")
+	if ov_guest_b != guest_b:
+		fails.append("FL-M second pip is not the SoftNet ally")
+	if ov_guest_c != guest_c:
+		fails.append("FL-M third pip is not the SoftNet ally C")
+	if ov_guest_d != guest_d:
+		fails.append("FL-M fourth pip is not the SoftNet ally D")
+	if ov_guest_e != guest_e:
+		fails.append("FL-M fifth pip is not the SoftNet ally E")
+	if ov_guest_f != guest_f:
+		fails.append("FL-M sixth pip is not the SoftNet ally F")
+	if ov_guest_g != guest_g:
+		fails.append("FL-M seventh pip is not the SoftNet ally G")
+	if ov_guest_h != guest_h:
+		fails.append("FL-M eighth pip is not the SoftNet ally H")
+	if ov_guest_i != guest_i:
+		fails.append("FL-M ninth pip is not the SoftNet ally I")
+	if ov_guest_j != guest_j:
+		fails.append("FL-M tenth pip is not the SoftNet ally J")
+	if ov_guest_k != guest_k:
+		fails.append("FL-M eleventh pip is not the SoftNet ally K")
+	if ov_guest_l != guest_l:
+		fails.append("FL-M twelfth pip is not the SoftNet ally L")
+	if ov_guest_m != guest_m:
+		fails.append("FL-M thirteenth pip is not the SoftNet ally M")
+	var n_before_add := n
+	if ov.has_method("try_add_fleet_member") and bool(ov.try_add_fleet_member(guest_m)):
+		fails.append("FL-M accepted a fifteenth fleet member")
+	if traffic.has_method("try_add_fleet_guest") and bool(traffic.try_add_fleet_guest()):
+		fails.append("FL-M PadTraffic spawned a fourteenth guest")
+	if int(ov.fleet_count()) != n_before_add:
+		fails.append("FL-M cap broke after refuse")
+	if ov.has_method("try_select_fleet_pip") and not bool(ov.try_select_fleet_pip()):
+		fails.append("FL-M select first fleet pip failed")
+	if ov.has_method("try_select_fleet_pip_b") and not bool(ov.try_select_fleet_pip_b()):
+		fails.append("FL-M select second fleet pip failed")
+	if ov.has_method("try_select_fleet_pip_c") and not bool(ov.try_select_fleet_pip_c()):
+		fails.append("FL-M select third fleet pip failed")
+	if ov.has_method("try_select_fleet_pip_d") and not bool(ov.try_select_fleet_pip_d()):
+		fails.append("FL-M select fourth fleet pip failed")
+	if ov.has_method("try_select_fleet_pip_e") and not bool(ov.try_select_fleet_pip_e()):
+		fails.append("FL-M select fifth fleet pip failed")
+	if ov.has_method("try_select_fleet_pip_f") and not bool(ov.try_select_fleet_pip_f()):
+		fails.append("FL-M select sixth fleet pip failed")
+	if ov.has_method("try_select_fleet_pip_g") and not bool(ov.try_select_fleet_pip_g()):
+		fails.append("FL-M select seventh fleet pip failed")
+	if ov.has_method("try_select_fleet_pip_h") and not bool(ov.try_select_fleet_pip_h()):
+		fails.append("FL-M select eighth fleet pip failed")
+	if ov.has_method("try_select_fleet_pip_i") and not bool(ov.try_select_fleet_pip_i()):
+		fails.append("FL-M select ninth fleet pip failed")
+	if ov.has_method("try_select_fleet_pip_j") and not bool(ov.try_select_fleet_pip_j()):
+		fails.append("FL-M select tenth fleet pip failed")
+	if ov.has_method("try_select_fleet_pip_k") and not bool(ov.try_select_fleet_pip_k()):
+		fails.append("FL-M select eleventh fleet pip failed")
+	if ov.has_method("try_select_fleet_pip_l") and not bool(ov.try_select_fleet_pip_l()):
+		fails.append("FL-M select twelfth fleet pip failed")
+	if ov.has_method("try_select_fleet_pip_m") and not bool(ov.try_select_fleet_pip_m()):
+		fails.append("FL-M select thirteenth fleet pip failed")
+	if ov.has_method("fleet_combat_authority") and str(ov.fleet_combat_authority()) != "host":
+		fails.append("FL-M select granted combat authority")
+	if str(guest.get_meta("combat_authority", "")) != "host":
+		fails.append("FL-M visitor combat_authority left host")
+	if str(guest_b.get_meta("combat_authority", "")) != "host":
+		fails.append("FL-M ally B combat_authority left host after select")
+	if str(guest_c.get_meta("combat_authority", "")) != "host":
+		fails.append("FL-M ally C combat_authority left host after select")
+	if str(guest_d.get_meta("combat_authority", "")) != "host":
+		fails.append("FL-M ally D combat_authority left host after select")
+	if str(guest_e.get_meta("combat_authority", "")) != "host":
+		fails.append("FL-M ally E combat_authority left host after select")
+	if str(guest_f.get_meta("combat_authority", "")) != "host":
+		fails.append("FL-M ally F combat_authority left host after select")
+	if str(guest_g.get_meta("combat_authority", "")) != "host":
+		fails.append("FL-M ally G combat_authority left host after select")
+	if str(guest_h.get_meta("combat_authority", "")) != "host":
+		fails.append("FL-M ally H combat_authority left host after select")
+	if str(guest_i.get_meta("combat_authority", "")) != "host":
+		fails.append("FL-M ally I combat_authority left host after select")
+	if str(guest_j.get_meta("combat_authority", "")) != "host":
+		fails.append("FL-M ally J combat_authority left host after select")
+	if str(guest_k.get_meta("combat_authority", "")) != "host":
+		fails.append("FL-M ally K combat_authority left host after select")
+	if str(guest_l.get_meta("combat_authority", "")) != "host":
+		fails.append("FL-M ally L combat_authority left host after select")
+	if str(guest_m.get_meta("combat_authority", "")) != "host":
+		fails.append("FL-M ally M combat_authority left host after select")
+	if Hud != null:
+		var snap: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
+		var stxt := str(Hud.stack_text(snap)).to_upper()
+		if int(snap.get("fleet", -1)) != 14 or int(snap.get("fleet_max", -1)) != 14:
+			fails.append("FL-M HUD fleet=%s/%s, want 14/14" % [
+				snap.get("fleet"), snap.get("fleet_max")
+			])
+		if stxt.find("FLEET") < 0 or stxt.find("14/14") < 0:
+			fails.append("FL-M HUD missing FLEET 14/14")
+		if SoftK != null and GameManager and GameManager.has_method("add_mastery"):
+			var word0 := str(SoftK.fleet_label())
+			GameManager.add_mastery("logistics", 20.0)
+			GameManager.add_mastery("history", 20.0)
+			if SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked()):
+				fails.append("FL-M Knowledge unlocked exclusive weapon")
+			if SoftK.has_method("exclusive_module_unlocked") and bool(SoftK.exclusive_module_unlocked()):
+				fails.append("FL-M Knowledge unlocked exclusive module")
+			if Kits != null and Kits.has_method("_pulse"):
+				var pab1 = Kits._pulse()
+				if pab1 != null and "damage" in pab1 and absf(float(pab1.damage) - 11.0) > 0.01:
+					fails.append("FL-M Knowledge changed Pulse DPS")
+			var snap2: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
+			var stxt2 := str(Hud.stack_text(snap2)).to_upper()
+			if int(snap2.get("fleet", -1)) != 14 or int(snap2.get("fleet_max", -1)) != 14:
+				fails.append("FL-M Knowledge changed fleet count")
+			var word1 := str(SoftK.fleet_label())
+			if word0.find("FLEET") < 0 or word1.find("FLEET") < 0:
+				fails.append("FL-M Knowledge dropped FLEET word")
+			if word1 != "FLEET MANIFEST":
+				fails.append("FL-M Knowledge missing FLEET MANIFEST (%s)" % word1)
+			if stxt2.find("FLEET MANIFEST") < 0 or stxt2.find("14/14") < 0:
+				fails.append("FL-M HUD missing FLEET MANIFEST 14/14 (%s)" % stxt2.get_slice("\n", -1))
+	if get_tree():
+		var hulls := 0
+		for nship in get_tree().get_nodes_in_group("ship"):
+			if nship != null and is_instance_valid(nship) and not bool(nship.get_meta("softnet_visual", false)):
+				hulls += 1
+		if hulls > 4:
+			fails.append("FL-M spawned extra hulls (%s)" % hulls)
+		if get_tree().get_nodes_in_group("open_space").size() != 1:
+			fails.append("FL-M opened a second OpenSpace")
+		if get_tree().get_first_node_in_group("clash_beacon") != null \
+				or get_tree().get_first_node_in_group("g5_clash") != null:
+			fails.append("FL-M opened G5")
+	if ov.has_method("exit_overlay"):
+		ov.exit_overlay()
+	await get_tree().process_frame
+	if ov.has_method("fleet_pip_visible") and bool(ov.fleet_pip_visible()):
+		fails.append("FL-M first fleet pip stayed after exit")
+	if ov.has_method("fleet_pip_b_visible") and bool(ov.fleet_pip_b_visible()):
+		fails.append("FL-M second fleet pip stayed after exit")
+	if ov.has_method("fleet_pip_c_visible") and bool(ov.fleet_pip_c_visible()):
+		fails.append("FL-M third fleet pip stayed after exit")
+	if ov.has_method("fleet_pip_d_visible") and bool(ov.fleet_pip_d_visible()):
+		fails.append("FL-M fourth fleet pip stayed after exit")
+	if ov.has_method("fleet_pip_e_visible") and bool(ov.fleet_pip_e_visible()):
+		fails.append("FL-M fifth fleet pip stayed after exit")
+	if ov.has_method("fleet_pip_f_visible") and bool(ov.fleet_pip_f_visible()):
+		fails.append("FL-M sixth fleet pip stayed after exit")
+	if ov.has_method("fleet_pip_g_visible") and bool(ov.fleet_pip_g_visible()):
+		fails.append("FL-M seventh fleet pip stayed after exit")
+	if ov.has_method("fleet_pip_h_visible") and bool(ov.fleet_pip_h_visible()):
+		fails.append("FL-M eighth fleet pip stayed after exit")
+	if ov.has_method("fleet_pip_i_visible") and bool(ov.fleet_pip_i_visible()):
+		fails.append("FL-M ninth fleet pip stayed after exit")
+	if ov.has_method("fleet_pip_j_visible") and bool(ov.fleet_pip_j_visible()):
+		fails.append("FL-M tenth fleet pip stayed after exit")
+	if ov.has_method("fleet_pip_k_visible") and bool(ov.fleet_pip_k_visible()):
+		fails.append("FL-M eleventh fleet pip stayed after exit")
+	if ov.has_method("fleet_pip_l_visible") and bool(ov.fleet_pip_l_visible()):
+		fails.append("FL-M twelfth fleet pip stayed after exit")
+	if ov.has_method("fleet_pip_m_visible") and bool(ov.fleet_pip_m_visible()):
+		fails.append("FL-M thirteenth fleet pip stayed after exit")
+	if os != null and os.has_method("strategy_overlay_active") and bool(os.strategy_overlay_active()):
+		fails.append("FL-M overlay stayed active after exit")
+	if LayerContext and str(LayerContext.site_pin_id) != pin0 \
+			and str(LayerContext.site_pin_id).begins_with("SITE_"):
+		fails.append("FL-M minted SITE_* pin (%s)" % LayerContext.site_pin_id)
+	if traffic != null and is_instance_valid(traffic):
+		if traffic.has_method("get_pack") and traffic.get_pack() == null:
+			fails.append("FL-M dropped BT-D Cybernex pack")
+		if traffic.has_method("get_swarm") and traffic.get_swarm() == null:
+			fails.append("FL-M dropped BT-C GrotSwarm")
+		if traffic.has_method("get_softnet") and traffic.get_softnet() == null:
+			fails.append("FL-M dropped SN-A PadSoftNet")
+	print("[Playtest] FL-M overlay B opens · thirteenth pip ", line, " cap=14 · FLEET MANIFEST 14/14 · host Pulse/occupy · Infection cap 5 · no SITE_*")
+	print("[Playtest] FL-A still PASS")
+	print("[Playtest] FL-B still PASS")
+	print("[Playtest] FL-C still PASS")
+	print("[Playtest] FL-D still PASS")
+	print("[Playtest] FL-E still PASS")
+	print("[Playtest] FL-F still PASS")
+	print("[Playtest] FL-G still PASS")
+	print("[Playtest] FL-H still PASS")
+	print("[Playtest] FL-I still PASS")
+	print("[Playtest] FL-J still PASS")
+	print("[Playtest] FL-K still PASS")
+	print("[Playtest] FL-L still PASS")
+	print("[Playtest] FL-M PASS")
 	if GameManager:
 		GameManager.subject_mastery = mastery0
 		if GameManager.has_method("_recalc_knowledge"):
