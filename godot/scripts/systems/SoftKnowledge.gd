@@ -517,6 +517,24 @@ static func insure_label() -> String:
 	return "INSURE"
 
 
+## ST-N: name the hangar drone. Never DPS / yield / Pulse / Hack / rank / kit.
+static func drone_label() -> String:
+	var ops := mastery("colony_ops")
+	var hist := mastery("history")
+	if ops >= 15.0 or hist >= 15.0 or rank() >= 5:
+		return "T1 DRONE"
+	return "DRONE"
+
+
+## ST-N: name the hangar fighter. Never DPS / yield / Pulse / Hack / rank / kit.
+static func fighter_label() -> String:
+	var ops := mastery("colony_ops")
+	var combat := mastery("combat")
+	if ops >= 15.0 or combat >= 15.0 or rank() >= 5:
+		return "T1 FIGHTER"
+	return "FIGHTER"
+
+
 ## Q-A: name the ops contract board. Never yield / DPS / exclusive modules.
 static func contract_board_label() -> String:
 	var intel := mastery("quest_intel")

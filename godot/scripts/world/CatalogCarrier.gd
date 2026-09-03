@@ -85,6 +85,20 @@ func hangar_queue() -> Node:
 	return get_node_or_null("CarrierHangarQueue")
 
 
+func st_n_craft() -> Node3D:
+	var q := hangar_queue()
+	if q != null and q.has_method("st_n_craft"):
+		return q.st_n_craft()
+	return null
+
+
+func drone_hud_line() -> String:
+	var q := hangar_queue()
+	if q != null and q.has_method("drone_hud_line"):
+		return str(q.drone_hud_line())
+	return ""
+
+
 func hangar_bay() -> Node:
 	if _bay != null and is_instance_valid(_bay):
 		return _bay

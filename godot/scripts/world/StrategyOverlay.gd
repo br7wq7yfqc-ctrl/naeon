@@ -939,6 +939,18 @@ func hangar_insure_hud_line() -> String:
 	return "%s · %s · %s" % [_SoftK.hangar_label(), _SoftK.insure_label(), _SoftK.persist_label()]
 
 
+func drone_hud_line() -> String:
+	## ST-N SoftKnowledge HANGAR / DRONE / FIGHTER. Never DPS / kit / fleet pip.
+	var tree := get_tree()
+	if tree:
+		for q in tree.get_nodes_in_group("hangar_queues"):
+			if q != null and is_instance_valid(q) and q.has_method("drone_hud_line"):
+				var line := str(q.drone_hud_line())
+				if line != "":
+					return line
+	return "%s · %s · %s" % [_SoftK.hangar_label(), _SoftK.drone_label(), _SoftK.fighter_label()]
+
+
 func _try_kit(kind: String, target) -> bool:
 	## HF-C / PV-C: reuse walker / hull AbilitySystem. Overlay is not a second kit.
 	if not _active:

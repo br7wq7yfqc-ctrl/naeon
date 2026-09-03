@@ -60,6 +60,7 @@ func _go() -> void:
 		await _assert_pc_a(os, fails)
 		await _assert_pc_b(os, fails)
 		await _assert_pc_c(os, fails)
+		await _assert_st_n(os, fails)
 		await _assert_pv_a(os, fails)
 		await _assert_bt_a(os, fails)
 		await _assert_bt_b(os, fails)
@@ -731,6 +732,7 @@ func _go() -> void:
 	await _assert_pc_a(os, fails)
 	await _assert_pc_b(os, fails)
 	await _assert_pc_c(os, fails)
+	await _assert_st_n(os, fails)
 	await _assert_pv_a(os, fails)
 	await _assert_bt_a(os, fails)
 	await _assert_bt_b(os, fails)
@@ -19659,6 +19661,185 @@ func _assert_pc_c(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] PC-C persist · ", hud, " Pulse 11 · host · kits=12 · FLEET 15/15 · G5 closed · no SITE_*")
 	if fails.size() == fail0:
 		print("[Playtest] PASS PC-C")
+
+
+func _assert_st_n(os: Node, fails: PackedStringArray) -> void:
+	## ST-N: one host-authority drone/fighter on the existing ST-D hangar.
+	## CombatDummy + SoftNet visual, parented to CarrierHangarQueue.
+	## SoftKnowledge / HUD DRONE / FIGHTER (HANGAR stays). Pulse 11 both ways.
+	## Infection cap 5. No permadeath. Not a 15th fleet pip. Not a 13th kit.
+	## Cash-shop skip still refused. FLEET 15/15. Kits 12. No SITE_*.
+	var fail0 := fails.size()
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	var hull: Node = null
+	var queue: Node = null
+	var craft: Node3D = null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var walker: Node3D = os.get("player") as Node3D if os else null
+	var ov: Node = os.strategy_overlay() if os != null and os.has_method("strategy_overlay") else null
+	var tree: SceneTree = get_tree()
+	var pulse0 := 11.0
+	var crafts := 0
+	var dlab := ""
+	var flab := ""
+	var hlab := ""
+	var hud := ""
+	if P0 == null or not bool(P0.ST_N_DRONE) or not bool(P0.ST_D_HANGAR):
+		fails.append("ST-N P0Slice flag missing")
+		return
+	if not bool(P0.PC_C_INSURE) or not bool(P0.PC_B_PERSIST) or not bool(P0.PC_A_PERSIST):
+		fails.append("ST-N dropped PC-A/B/C P0Slice flag")
+	if bool(P0.ORBITAL_STATIONS):
+		fails.append("ST-N flipped ORBITAL_STATIONS")
+	if not bool(P0.FL_N_FLEET):
+		fails.append("ST-N dropped FL-N P0Slice flag")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("ST-N Infection cap drifted")
+	if Kit == null or not Kit.has_method("kit_ids"):
+		fails.append("ST-N AbilityKitCatalog missing")
+	else:
+		var ids: PackedStringArray = Kit.kit_ids()
+		if int(ids.size()) != 12:
+			fails.append("ST-N kit count want 12 (got %s)" % ids.size())
+		if int(ids.size()) >= 13:
+			fails.append("ST-N added a 13th AbilityKit")
+		if ids.size() > 0 and str(ids[0]) != "cx_nex":
+			fails.append("ST-N kit list lost cx_nex")
+		if ids.size() >= 12 and str(ids[11]) != "gr_thorn":
+			fails.append("ST-N kit list lost gr_thorn")
+	if SoftK != null and SoftK.has_method("drone_label"):
+		dlab = str(SoftK.drone_label())
+	if SoftK != null and SoftK.has_method("fighter_label"):
+		flab = str(SoftK.fighter_label())
+	if SoftK != null and SoftK.has_method("hangar_label"):
+		hlab = str(SoftK.hangar_label())
+	if dlab != "DRONE" and dlab != "T1 DRONE":
+		fails.append("ST-N SoftKnowledge DRONE missing (%s)" % dlab)
+	if flab != "FIGHTER" and flab != "T1 FIGHTER":
+		fails.append("ST-N SoftKnowledge FIGHTER missing (%s)" % flab)
+	if hlab != "HANGAR" and hlab != "T1 HANGAR":
+		fails.append("ST-N SoftKnowledge HANGAR missing (%s)" % hlab)
+	if os == null:
+		fails.append("ST-N no OpenSpace")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("ST-N must not run on TestArena")
+		return
+	if LayerContext and str(LayerContext.current_layer) == "Arena":
+		fails.append("ST-N must not run on Clash")
+		return
+	if os.has_method("catalog_carrier"):
+		hull = os.catalog_carrier()
+	if hull == null and tree:
+		var hulls: Array = tree.get_nodes_in_group("catalog_carriers")
+		if not hulls.is_empty():
+			hull = hulls[0]
+	if hull == null:
+		fails.append("ST-N catalog carrier / hangar queue missing")
+		return
+	if hull.has_method("hangar_queue"):
+		queue = hull.hangar_queue()
+	if queue == null and os.has_method("hangar_queue"):
+		queue = os.hangar_queue()
+	if queue == null and tree:
+		var queues: Array = tree.get_nodes_in_group("hangar_queues")
+		if not queues.is_empty():
+			queue = queues[0]
+	if queue == null or not queue.has_method("enqueue_module"):
+		fails.append("ST-N hangar queue missing")
+		return
+	if queue.has_method("cash_shop_skip_possible") and bool(queue.cash_shop_skip_possible()):
+		fails.append("ST-N cash-shop skip possible")
+	if queue.has_method("try_cash_skip_queue") and bool(queue.try_cash_skip_queue(999.0)):
+		fails.append("ST-N cash-shop skip queued a module")
+	if queue.has_method("st_n_craft"):
+		craft = queue.st_n_craft()
+	if craft == null and hull != null and hull.has_method("st_n_craft"):
+		craft = hull.st_n_craft()
+	if craft == null and tree:
+		var listed: Array = tree.get_nodes_in_group("st_n_crafts")
+		if not listed.is_empty() and listed[0] is Node3D:
+			craft = listed[0] as Node3D
+	if tree:
+		crafts = tree.get_nodes_in_group("st_n_crafts").size()
+	if crafts != 1:
+		fails.append("ST-N want exactly one craft, got %s" % crafts)
+	if craft == null or not is_instance_valid(craft):
+		fails.append("ST-N craft missing on hangar")
+		return
+	if craft.get_parent() != queue and (hull == null or craft.get_parent() != hull):
+		fails.append("ST-N craft not parented to hangar/carrier")
+	if str(craft.get_class()) == "ShipController" or bool(craft.get_meta("player_hull", false)):
+		fails.append("ST-N spawned a second physical player hull")
+	if bool(craft.get_meta("fleet_member", false)):
+		fails.append("ST-N became a 15th fleet pip")
+	if craft.is_in_group("fleet"):
+		fails.append("ST-N joined the fleet group")
+	if str(craft.get_meta("site_pin", "missing")) != "":
+		fails.append("ST-N craft minted SITE_*")
+	if str(craft.get_meta("combat_authority", "")) != "host":
+		fails.append("ST-N host authority missing")
+	if queue.has_method("is_host_authority") and not bool(queue.is_host_authority()):
+		fails.append("ST-N hangar host authority missing")
+	if SoftSession != null and SoftSession.has_method("is_host_authority") \
+			and not bool(SoftSession.is_host_authority()):
+		fails.append("ST-N SoftSession host authority missing")
+	if bool(craft.get("one_shot")):
+		fails.append("ST-N permadeath (one_shot)")
+	if absf(float(craft.get("attack_damage")) - 11.0) > 0.01:
+		fails.append("ST-N Pulse DPS drifted (%s)" % craft.get("attack_damage"))
+	if craft.has_method("infection_cap") and int(craft.infection_cap()) != 5:
+		fails.append("ST-N Infection cap drifted on craft")
+	if Kit != null and Kit.has_method("kit_by_id"):
+		var loadout: Array = Kit.kit_by_id("cx_nex")
+		if loadout.size() > 0 and loadout[0] != null:
+			pulse0 = float(loadout[0].damage)
+	if absf(pulse0 - 11.0) > 0.01:
+		fails.append("ST-N Pulse DPS drifted (%s)" % pulse0)
+	var hp0: float = float(craft.get("health"))
+	if craft.has_method("take_damage"):
+		craft.take_damage(11.0, "Cybernex")
+	var hp1: float = float(craft.get("health"))
+	var drop: float = hp0 - hp1
+	if drop < 10.0 or drop > 12.5:
+		fails.append("ST-N Pulse did not hit craft (%s → %s)" % [snapped(hp0, 0.1), snapped(hp1, 0.1)])
+	var target: Node3D = walker
+	if target == null or not is_instance_valid(target):
+		target = ship
+	craft.set("faction", "gROT")
+	if target != null and is_instance_valid(target) and "faction" in target:
+		target.set("faction", "Cybernex")
+	if target == null or not is_instance_valid(target) or not craft.has_method("try_pulse"):
+		fails.append("ST-N no Pulse target for craft")
+	else:
+		if "shields" in target:
+			target.set("shields", 0.0)
+		var thp0: float = float(target.get("health")) if "health" in target else -1.0
+		var back := bool(craft.try_pulse(target))
+		var thp1: float = float(target.get("health")) if "health" in target else -1.0
+		if not back:
+			fails.append("ST-N craft Pulse did not fire")
+		elif thp0 >= 0.0 and (thp0 - thp1) < 10.0:
+			fails.append("ST-N craft Pulse did not hit back (%s → %s)" % [snapped(thp0, 0.1), snapped(thp1, 0.1)])
+	if ov != null and ov.has_method("fleet_cap") and int(ov.fleet_cap()) != 15:
+		fails.append("ST-N FLEET cap=%s, want 15" % int(ov.fleet_cap()))
+	if queue.has_method("drone_hud_line"):
+		hud = str(queue.drone_hud_line())
+	if hud.find("HANGAR") < 0 or (hud.find("DRONE") < 0 and hud.find("FIGHTER") < 0):
+		fails.append("ST-N HUD drone line missing (%s)" % hud)
+	if ov != null and ov.has_method("drone_hud_line"):
+		var ohud := str(ov.drone_hud_line())
+		if ohud.find("HANGAR") < 0 or (ohud.find("DRONE") < 0 and ohud.find("FIGHTER") < 0):
+			fails.append("ST-N overlay HUD drone missing (%s)" % ohud)
+	if ResourceLoader.exists("res://scripts/world/ClashFromWorld.gd") \
+			or ResourceLoader.exists("res://scripts/world/ClashBeacon.gd"):
+		fails.append("ST-N opened G5 world-to-arena")
+	print("[Playtest] ST-N drone · ", hud, " Pulse 11 both ways · host · kits=12 · FLEET 15/15 · no SITE_*")
+	if fails.size() == fail0:
+		print("[Playtest] PASS ST-N")
 
 
 func _assert_pv_a(os: Node, fails: PackedStringArray) -> void:
