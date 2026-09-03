@@ -2024,14 +2024,17 @@ func _check_ar_t(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 		lane_id = str(lanes.lane_at(walker.global_position))
 	if lane_id != "TOP" and lane_id != "MID" and lane_id != "BOT":
 		fails.append("AR-T minion not on a Clash lane")
-	var tgt := CharacterBody3D.new()
+	var dummy_scene: PackedScene = load("res://scenes/combat/CombatDummy.tscn")
+	var tgt: Node = dummy_scene.instantiate() if dummy_scene else null
+	if tgt == null:
+		fails.append("AR-T Pulse target scene missing")
+		return fails
 	tgt.name = "ARTPulseTarget"
 	tgt.set("faction", "Cybernex" if str(walker.get("faction")) != "Cybernex" else "gROT")
-	tgt.set("health", 80.0)
-	tgt.set_script(preload("res://scripts/combat/CombatDummy.gd"))
 	arena.add_child(tgt)
 	await get_tree().process_frame
-	tgt.global_position = walker.global_position + Vector3(0.0, 0.0, 2.0)
+	if tgt is Node3D:
+		(tgt as Node3D).global_position = walker.global_position + Vector3(0.0, 0.0, 2.0)
 	var hp0 := float(tgt.health)
 	if walker.has_method("try_pulse"):
 		walker.try_pulse(tgt)
