@@ -9,6 +9,7 @@ const KIND_HABITAT := "habitat"
 const KIND_FACTORY := "factory"
 const KIND_DEFENSE := "defense"
 const KIND_HANGAR := "hangar"
+const KIND_STORAGE := "storage"
 
 const BODY_NEX := "Nex-Prime"
 const BODY_ROT := "ROT-Hive"
@@ -24,6 +25,7 @@ var _modules: Array = []
 var _factory: Node3D = null
 var _hangar: Node3D = null
 var _turret: Node3D = null
+var _storage: Node3D = null
 var _contest_ring: Node3D = null
 var _contest_side: String = ""
 var _status: String = "owned"
@@ -203,6 +205,53 @@ func ensure_defense_turret() -> Node3D:
 	return n
 
 
+func cluster_storage() -> Node3D:
+	## ST-M: orbital storage. Not in the ST-E dock+habitat pair.
+	if _storage != null and is_instance_valid(_storage) and _storage.is_inside_tree():
+		return _storage
+	var n: Node = get_node_or_null("OrbitalStorage")
+	if n is Node3D:
+		_storage = n as Node3D
+		return _storage
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	n = _Builder.orbital_storage_on(self)
+	if n is Node3D:
+		_storage = n as Node3D
+		return _storage
+	return null
+
+
+func has_storage() -> bool:
+	return cluster_storage() != null
+
+
+func storage_hud_line() -> String:
+	## SoftKnowledge storage label only. Never mass / value / cap.
+	if cluster_storage() == null:
+		return ""
+	return _SoftK.storage_label()
+
+
+func ensure_storage() -> Node3D:
+	## ST-M: one PadStorage in this player cluster. Not a third ST-E module.
+	## Host authority. SoftKnowledge / HUD label only.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	var n: Node3D = cluster_storage()
+	if P0 == null or not bool(P0.ST_M_STORAGE):
+		return null
+	if not is_host_authority():
+		return n
+	if n != null:
+		return n
+	n = _Builder.place_orbital_storage(self, faction)
+	if n != null:
+		_storage = n
+		_refresh_label()
+		print("[PlayerOrbitalStation] ST-M storage in cluster body=", orbit_body, " site_pin=")
+	return n
+
+
 func ensure_factory() -> Node3D:
 	## ST-G §6(c): one factory in this player cluster. Not a third ST-E module.
 	var P0 = load("res://scripts/world/P0Slice.gd")
@@ -219,7 +268,7 @@ func ensure_factory() -> Node3D:
 
 static func is_grammar_kind(kind: String) -> bool:
 	match kind:
-		KIND_DOCK, KIND_HABITAT, KIND_FACTORY, KIND_DEFENSE, KIND_HANGAR:
+		KIND_DOCK, KIND_HABITAT, KIND_FACTORY, KIND_DEFENSE, KIND_HANGAR, KIND_STORAGE:
 			return true
 		_:
 			return false
@@ -335,11 +384,14 @@ func _refresh_label() -> void:
 	var own := ownership_state_label()
 	var hang := hangar_hud_line()
 	var tur := turret_hud_line()
+	var store := storage_hud_line()
 	var extras := PackedStringArray()
 	if hang != "":
 		extras.append(hang)
 	if tur != "":
 		extras.append(tur)
+	if store != "":
+		extras.append(store)
 	if own != "":
 		extras.append(own)
 	if lab == null:

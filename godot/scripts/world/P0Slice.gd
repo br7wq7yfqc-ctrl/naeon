@@ -97,6 +97,13 @@ const ST_K_HANGAR := true
 ## stays distinct. Not Clash Turret / OUTER 160. Not a 13th kit. Not FL-O.
 ## Does not flip ORBITAL_STATIONS. No SITE_*.
 const ST_L_TURRET := true
+## ST-M: one PadStorage on the existing PlayerOrbitalStation cluster
+## (ST-E dock+habitat, ST-G factory, ST-K hangar stub, ST-L turret stay).
+## Same PadStorage / BaseBuilder grammar as ST-I. SoftKnowledge / HUD
+## label only. Host authority. Infection cap 5. ST-I pad storage stays
+## distinct. Not a second ship CargoHold. Not a 13th kit. Not FL-O.
+## Does not flip ORBITAL_STATIONS. No SITE_*.
+const ST_M_STORAGE := true
 ## PV-A: first TPS PvP on an occupied unnamed pad. One host-authority rival
 ## CombatDummy takes Pulse and deals Pulse back (DPS 11). Win = rival HP → 0.
 ## No permadeath. Infection cap 5. Knowledge labels only. G5 stays closed.

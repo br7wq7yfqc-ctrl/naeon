@@ -52,6 +52,7 @@ func _go() -> void:
 		await _assert_st_j(os, fails)
 		await _assert_st_k(os, fails)
 		await _assert_st_l(os, fails)
+		await _assert_st_m(os, fails)
 		await _assert_hf_b(os, fails)
 		await _assert_hf_a(os, fails)
 		await _assert_pv_b(os, fails)
@@ -718,6 +719,7 @@ func _go() -> void:
 	await _assert_st_j(os, fails)
 	await _assert_st_k(os, fails)
 	await _assert_st_l(os, fails)
+	await _assert_st_m(os, fails)
 	await _assert_hf_b(os, fails)
 	await _assert_hf_a(os, fails)
 	await _assert_pv_b(os, fails)
@@ -14244,6 +14246,228 @@ func _assert_st_l(os: Node, fails: PackedStringArray) -> void:
 	if not _osh_same_scene(scene0):
 		fails.append("ST-L overlay left OpenSpace")
 	print("[Playtest] ST-L orbital turret present · Pulse 11 · ST-E/G/H/K stay · no SITE_*")
+
+
+func _assert_st_m(os: Node, fails: PackedStringArray) -> void:
+	## ST-M: one PadStorage on the existing PlayerOrbitalStation cluster.
+	## Same PadStorage / BaseBuilder grammar as ST-I. SoftKnowledge / HUD
+	## label only. Host authority. Infection cap 5. ST-I pad storage stays
+	## distinct. ST-K hangar stub stays. ST-L turret stays. Not a 13th kit.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	var cluster: Node3D = null
+	var factory: Node3D = null
+	var stub_k: Node3D = null
+	var turret_l: Node3D = null
+	var store_m: Node3D = null
+	var store_i: Node3D = null
+	var pad_i: Node = _in_a_occupied_pad(os)
+	var ov: Node = os.strategy_overlay() if os != null and os.has_method("strategy_overlay") else null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var scene0 := _osh_scene_file()
+	var mods := 0
+	var orbital_n := 0
+	var kit_n := 0
+	var lab_m := ""
+	var hud_txt := ""
+	if P0 == null or not bool(P0.ST_M_STORAGE):
+		fails.append("ST-M P0Slice flag missing")
+		return
+	if not bool(P0.ST_I_STORAGE) or not bool(P0.ST_K_HANGAR) or not bool(P0.ST_L_TURRET) \
+			or not bool(P0.ST_E_ORBITAL) or not bool(P0.ST_G_FACTORY):
+		fails.append("ST-M dropped ST-E/G/I/K/L")
+	if bool(P0.ORBITAL_STATIONS):
+		fails.append("ST-M flipped P0Slice.ORBITAL_STATIONS")
+	if not bool(P0.AR_Z_MATCHMAKING):
+		fails.append("ST-M dropped Clash AR-Z")
+	if os == null:
+		fails.append("ST-M no OpenSpace")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("ST-M must not run on Clash")
+		return
+	if LayerContext and str(LayerContext.current_layer) == "Arena":
+		fails.append("ST-M must not run on Clash")
+		return
+	if os.has_method("player_orbital_station"):
+		cluster = os.player_orbital_station()
+	if cluster == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("player_orbital_stations")
+		if not listed.is_empty() and listed[0] is Node3D:
+			cluster = listed[0] as Node3D
+	if cluster == null:
+		fails.append("ST-M player orbital cluster missing")
+		return
+	if str(cluster.get_meta("site_pin", "")) != "":
+		fails.append("ST-M cluster minted site_pin (%s)" % str(cluster.get_meta("site_pin")))
+		return
+	if bool(cluster.get_meta("city", false)):
+		fails.append("ST-M cluster marked city")
+	if cluster.has_method("is_host_authority") and not bool(cluster.is_host_authority()):
+		fails.append("ST-M is not host authority")
+	if cluster.has_method("cluster_modules"):
+		mods = cluster.cluster_modules().size()
+	if mods != 2:
+		fails.append("ST-M rewrote ST-E cluster_modules (%s)" % mods)
+	if get_tree():
+		orbital_n = get_tree().get_nodes_in_group("player_orbital_modules").size()
+		if orbital_n != 2:
+			fails.append("ST-M rewrote ST-E orbital pair, got %s" % orbital_n)
+	if cluster.has_method("factory_module"):
+		factory = cluster.factory_module()
+	if factory == null and os.has_method("player_factory"):
+		factory = os.player_factory()
+	if factory == null:
+		fails.append("ST-M dropped ST-G factory")
+		return
+	if factory.get_parent() != cluster:
+		fails.append("ST-M factory left the player cluster")
+	if cluster.has_method("hangar_stub"):
+		stub_k = cluster.hangar_stub()
+	if stub_k == null and os.has_method("player_orbital_hangar"):
+		stub_k = os.player_orbital_hangar()
+	if stub_k == null:
+		fails.append("ST-M dropped ST-K hangar stub")
+		return
+	if stub_k.get_parent() != cluster:
+		fails.append("ST-M hangar stub left PlayerOrbitalStation")
+	if cluster.has_method("defense_turret"):
+		turret_l = cluster.defense_turret()
+	if turret_l == null and os.has_method("player_orbital_turret"):
+		turret_l = os.player_orbital_turret()
+	if turret_l == null:
+		fails.append("ST-M dropped ST-L orbital turret")
+		return
+	if turret_l.get_parent() != cluster:
+		fails.append("ST-M turret left PlayerOrbitalStation")
+	if cluster.has_method("ensure_storage"):
+		store_m = cluster.ensure_storage()
+	if store_m == null and os.has_method("player_orbital_storage"):
+		store_m = os.player_orbital_storage()
+	if store_m == null:
+		store_m = _Builder.place_orbital_storage(cluster, "Cybernex")
+	if store_m == null or not is_instance_valid(store_m):
+		fails.append("ST-M orbital storage missing")
+		return
+	if store_m.get_parent() != cluster:
+		fails.append("ST-M storage is not on PlayerOrbitalStation")
+	var spin_m := str(store_m.get_meta("site_pin", "missing"))
+	if spin_m != "":
+		fails.append("ST-M storage minted site_pin (%s)" % spin_m)
+	if store_m.has_meta("player_module") and bool(store_m.get_meta("player_module")):
+		fails.append("ST-M stole the ST-A player_module slot")
+	if bool(store_m.get_meta("pad_storage", false)):
+		fails.append("ST-M stole the ST-I pad_storage slot")
+	if not bool(store_m.get_meta("orbital_storage", false)):
+		fails.append("ST-M storage missing orbital_storage meta")
+	if str(store_m.get_meta("module_type", "")) != "storage":
+		fails.append("ST-M module is not storage")
+	var sscript_m := str(store_m.get_script().resource_path) if store_m.get_script() != null else ""
+	if sscript_m.find("CargoHold") >= 0:
+		fails.append("ST-M reused ship CargoHold")
+	if sscript_m != "" and sscript_m.find("PadStorage.gd") < 0:
+		fails.append("ST-M storage script drifted (%s)" % sscript_m)
+	if str(store_m.name) != "OrbitalStorage":
+		fails.append("ST-M storage name drifted (%s)" % store_m.name)
+	if store_m == stub_k:
+		fails.append("ST-M reused the ST-K hangar stub")
+	if store_m == turret_l:
+		fails.append("ST-M reused the ST-L turret")
+	if store_m.has_method("is_ship_cargo_hold") and bool(store_m.is_ship_cargo_hold()):
+		fails.append("ST-M is a second CargoHold ship")
+	if store_m.has_method("max_units") and int(store_m.max_units()) != 1:
+		fails.append("ST-M storage cap drifted (%s)" % store_m.max_units())
+	if store_m.has_method("combat_stats") and int(store_m.combat_stats()) != 0:
+		fails.append("ST-M storage combat drifted")
+	if store_m.has_method("unit_count") and int(store_m.unit_count()) < 1:
+		fails.append("ST-M storage did not hold one crate")
+	if store_m.has_method("can_store_unit") and bool(store_m.can_store_unit(1.0, 1.0)):
+		fails.append("ST-M storage accepted a second crate")
+	if cluster.has_method("cluster_modules") and cluster.cluster_modules().size() != 2:
+		fails.append("ST-M storage folded into the ST-E orbital pair")
+	if cluster.has_method("factory_module") and cluster.factory_module() == null:
+		fails.append("ST-M storage dropped ST-G factory")
+	if pad_i != null:
+		var host_i: Node3D = pad_i as Node3D
+		if not host_i.has_meta("pad_up"):
+			var walk_m: Node = pad_i
+			while walk_m:
+				if walk_m is Node3D and str(walk_m.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+					host_i = walk_m as Node3D
+					break
+				walk_m = walk_m.get_parent()
+		if host_i != null and str(host_i.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+			if pad_i.has_method("ensure_pad_storage"):
+				store_i = pad_i.ensure_pad_storage()
+			if store_i == null:
+				store_i = _Builder.pad_storage_on(host_i)
+			if store_i == null or not is_instance_valid(store_i):
+				fails.append("ST-M dropped ST-I pad storage")
+			elif store_i == store_m:
+				fails.append("ST-M reused the ST-I pad storage")
+			elif bool(store_i.get_meta("orbital_storage", false)):
+				fails.append("ST-M overwrote ST-I as orbital")
+	if Inf != null and int(Inf.MAX_STACKS) != 5:
+		fails.append("ST-M infection cap drifted (%s)" % Inf.MAX_STACKS)
+	if Kits != null and Kits.has_method("kit_ids"):
+		kit_n = int(Kits.kit_ids().size())
+		if kit_n != 12:
+			fails.append("ST-M added a 13th kit (%s)" % kit_n)
+	if SoftK != null and SoftK.has_method("storage_label"):
+		lab_m = str(SoftK.storage_label())
+	if lab_m == "":
+		fails.append("ST-M Knowledge storage label empty")
+	if cluster.has_method("storage_hud_line"):
+		var hud_m := str(cluster.storage_hud_line())
+		if hud_m == "" or hud_m != lab_m:
+			fails.append("ST-M HUD storage line drifted (%s vs %s)" % [hud_m, lab_m])
+	var hud: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+	if hud != null:
+		if hud.has_method("_refresh"):
+			hud._refresh()
+		var lab: Variant = hud.get("_owner_label")
+		if lab is Label:
+			hud_txt += (lab as Label).text
+		var stack: Variant = hud.get("_os_stack")
+		if stack is Label:
+			hud_txt += " " + (stack as Label).text
+	var hud_up := hud_txt.to_upper()
+	if hud_txt != "" and hud_up.find("STORAGE") < 0:
+		fails.append("ST-M HUD missing storage label")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("logistics", 20.0)
+		GameManager.add_mastery("colony_ops", 20.0)
+	print("[Playtest] ST-M orbital storage present cluster=", cluster.name,
+		" label=", lab_m, " factory=", factory.name if factory else "",
+		" hangar=", stub_k.name if stub_k else "", " turret=", turret_l.name if turret_l else "",
+		" kits=", kit_n)
+	if ov != null and ov.has_method("try_enter"):
+		if ov.has_method("is_active") and bool(ov.is_active()) and ov.has_method("exit_overlay"):
+			ov.exit_overlay()
+			await get_tree().process_frame
+		if ship != null and is_instance_valid(ship) and pad_i != null:
+			var host_ov_m: Node3D = pad_i as Node3D
+			var pad_up_ov_m: Vector3 = host_ov_m.get_meta("pad_up") if host_ov_m.has_meta("pad_up") else Vector3.UP
+			if "velocity" in ship:
+				ship.velocity = Vector3.ZERO
+			ship.global_position = host_ov_m.global_position + pad_up_ov_m * 8.0
+			await get_tree().process_frame
+		if not bool(ov.try_enter()):
+			fails.append("ST-M overlay B did not open")
+		else:
+			if ov.has_method("exit_overlay"):
+				ov.exit_overlay()
+			await get_tree().process_frame
+	if LayerContext and str(LayerContext.site_pin_id) != pin0 \
+			and str(LayerContext.site_pin_id).begins_with("SITE_"):
+		fails.append("ST-M minted SITE_* (%s)" % LayerContext.site_pin_id)
+	if not _osh_same_scene(scene0):
+		fails.append("ST-M overlay left OpenSpace")
+	print("[Playtest] ST-M orbital storage present · ST-E/G/I/K/L stay · no SITE_*")
 
 
 func _assert_in_a(os: Node, fails: PackedStringArray) -> void:
