@@ -62,16 +62,23 @@ static func intercept_claim_toast(enemy_faction: String) -> String:
 	return "Intercept: unknown protocol"
 
 ## Ecology/History: jungle camp name only — never HP / DPS / Pulse / Hack / yield.
-## AR-D fangtooth role vs AR-J prime role. Never a unique weapon.
+## AR-D fangtooth / AR-J prime / AR-X small. Never a unique weapon.
 static func camp_label(role: String = "") -> String:
 	var eco := mastery("ecology")
 	var hist := mastery("history")
 	var named := eco >= 10.0 or hist >= 15.0 or rank() >= 5
 	if str(role) == "prime":
 		return "PRIME PIT" if named else "PRIME"
+	if str(role) == "small" or str(role) == "jungle":
+		return "JUNGLE" if named else "CAMP"
 	if named:
 		return "PIT OBJECTIVE"
 	return "CAMP"
+
+
+## AR-X: SoftKnowledge CAMP / JUNGLE pair. Never DPS / yield / Pulse / Hack.
+static func jungle_label() -> String:
+	return camp_label("small")
 
 
 ## Cybernetics/Logic: module bench name only — never DPS / HP.

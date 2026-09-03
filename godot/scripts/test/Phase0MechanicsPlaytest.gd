@@ -97,6 +97,7 @@ func _go() -> void:
 		await _assert_ar_u(os, fails)
 		await _assert_ar_v(os, fails)
 		await _assert_ar_w(os, fails)
+		await _assert_ar_x(os, fails)
 		await _assert_sn_c(os, fails)
 		await _assert_sn_d(os, fails)
 		await _assert_do_a(os, fails)
@@ -141,6 +142,7 @@ func _go() -> void:
 	await _assert_ar_u(os, fails)
 	await _assert_ar_v(os, fails)
 	await _assert_ar_w(os, fails)
+	await _assert_ar_x(os, fails)
 	_assert_se_a(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 	_assert_scan_cache_live(fails)
@@ -23393,6 +23395,184 @@ func _assert_ar_w(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] AR-W WAVE/MINION · remaining lane · SoftKnowledge only · AR-T stays · AR-V stays · AR-U informational · FLEET 15/15 · no SITE_*")
 	if fails.size() == fail0:
 		print("[Playtest] PASS AR-W")
+	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
+		SoftScanCache.invalidate_enemies()
+
+
+func _assert_ar_x(os: Node, fails: PackedStringArray) -> void:
+	## AR-X: one extra small off-lane ClashCamp. Isolated — no TestArena scene change.
+	## Weaker than AR-J prime. AR-D fangtooth stays. Soft WS / CAMP / JUNGLE only.
+	var fail0 := fails.size()
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.AR_X_SMALL_CAMP):
+		fails.append("AR-X P0Slice flag missing")
+	if P0 != null and not bool(P0.AR_J_PRIME_CAMP):
+		fails.append("AR-X dropped AR-J P0Slice flag")
+	if P0 != null and not bool(P0.AR_W_THIRD_LANE_WAVE):
+		fails.append("AR-X dropped AR-W P0Slice flag")
+	if P0 != null and not bool(P0.AR_V_SECOND_LANE_WAVE):
+		fails.append("AR-X dropped AR-V P0Slice flag")
+	if P0 != null and not bool(P0.AR_T_MINION_WAVE):
+		fails.append("AR-X dropped AR-T P0Slice flag")
+	if P0 != null and not bool(P0.AR_U_XP_LEVELING):
+		fails.append("AR-X dropped AR-U P0Slice flag")
+	if P0 != null and not bool(P0.AR_S_TWELFTH_KIT):
+		fails.append("AR-X dropped AR-S P0Slice flag")
+	if P0 != null and not bool(P0.AR_I_MATCH_END):
+		fails.append("AR-X dropped AR-I P0Slice flag")
+	if P0 != null and not bool(P0.FL_N_FLEET):
+		fails.append("AR-X dropped FL-N P0Slice flag")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("AR-X flipped ORBITAL_STATIONS")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-X Infection cap drifted")
+	var layer0 := str(LayerContext.current_layer) if LayerContext else ""
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	if Kit == null or not Kit.has_method("kit_ids"):
+		fails.append("AR-X AbilityKitCatalog missing")
+	else:
+		var ids: PackedStringArray = Kit.kit_ids()
+		if int(ids.size()) != 12:
+			fails.append("AR-X isolated kit count want 12 (got %s)" % ids.size())
+		for need in ["cx_nex", "cx_grid", "gr_rot", "gr_spore", "cx_lattice", "gr_vein", "cx_prism", "gr_facet", "cx_helix", "gr_coil", "cx_spire", "gr_thorn"]:
+			if not ids.has(need):
+				fails.append("AR-X isolated dropped kit (%s)" % need)
+		if int(ids.size()) >= 13:
+			fails.append("AR-X isolated added a 13th AbilityKit")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var slab := str(SoftK.camp_label("small")) if SoftK else ""
+	var jlab := str(SoftK.jungle_label()) if SoftK and SoftK.has_method("jungle_label") else ""
+	if slab == "" or (slab != "CAMP" and slab != "JUNGLE"):
+		fails.append("AR-X isolated SoftKnowledge CAMP/JUNGLE missing (%s)" % slab)
+	if jlab == "" or (jlab != "CAMP" and jlab != "JUNGLE"):
+		fails.append("AR-X isolated SoftKnowledge JUNGLE missing (%s)" % jlab)
+	var xlab := str(SoftK.xp_label()) if SoftK and SoftK.has_method("xp_label") else ""
+	var llab := str(SoftK.level_label()) if SoftK and SoftK.has_method("level_label") else ""
+	if xlab == "" or (xlab != "XP" and xlab != "CLASH XP"):
+		fails.append("AR-X isolated dropped AR-U XP label (%s)" % xlab)
+	if llab == "" or (llab != "LEVEL" and llab != "CLASH LEVEL"):
+		fails.append("AR-X isolated dropped AR-U LEVEL label (%s)" % llab)
+	var host: Node = os if os else self
+	var fang: Node3D = Node3D.new()
+	fang.set_script(preload("res://scripts/arena/ClashCamp.gd"))
+	fang.name = "ClashCampARXFang"
+	host.add_child(fang)
+	var prime: Node3D = Node3D.new()
+	prime.set_script(preload("res://scripts/arena/ClashCamp.gd"))
+	prime.name = "ClashPrimeCampARX"
+	prime.set("camp_role", "prime")
+	host.add_child(prime)
+	var small: Node3D = Node3D.new()
+	small.set_script(preload("res://scripts/arena/ClashCamp.gd"))
+	small.name = "ClashSmallCampARX"
+	small.set("camp_role", "small")
+	host.add_child(small)
+	await get_tree().process_frame
+	if fang is Node3D:
+		fang.global_position = Vector3(7.2, 0.0, -1.2)
+	if prime is Node3D:
+		prime.global_position = Vector3(-7.2, 0.0, 1.2)
+	if small is Node3D:
+		small.global_position = Vector3(9.6, 0.0, 4.2)
+	if fang.has_method("get_camp_role") and str(fang.get_camp_role()) != "fangtooth":
+		fails.append("AR-X fangtooth role drifted (%s)" % fang.get_camp_role())
+	if not prime.has_method("is_prime") or not bool(prime.is_prime()):
+		fails.append("AR-X prime role missing")
+	if not small.has_method("is_small") or not bool(small.is_small()):
+		fails.append("AR-X small role missing")
+	if small.has_method("get_camp_role") and str(small.get_camp_role()) != "small":
+		fails.append("AR-X small role drifted (%s)" % small.get_camp_role())
+	if small.has_method("is_off_lane") and not bool(small.is_off_lane()):
+		fails.append("AR-X small sits on a lane strip")
+	if fang.has_method("is_off_lane") and not bool(fang.is_off_lane()):
+		fails.append("AR-X fangtooth sits on a lane strip")
+	if prime.has_method("is_off_lane") and not bool(prime.is_off_lane()):
+		fails.append("AR-X prime sits on a lane strip")
+	if fang.global_position.distance_to(small.global_position) < 4.0:
+		fails.append("AR-X small stacked on fangtooth")
+	if prime.global_position.distance_to(small.global_position) < 4.0:
+		fails.append("AR-X small stacked on prime")
+	if small.has_method("camp_drop_kind") and str(small.camp_drop_kind()) != "soft_ws":
+		fails.append("AR-X small drop is not soft WS")
+	if fang.has_method("camp_drop_kind") and str(fang.camp_drop_kind()) != "soft_ws":
+		fails.append("AR-X fangtooth drop drifted")
+	if prime.has_method("camp_drop_kind") and str(prime.camp_drop_kind()) != "soft_ws":
+		fails.append("AR-X prime drop drifted")
+	if not small.has_method("is_host_authority") or not bool(small.is_host_authority()):
+		fails.append("AR-X isolated camp is not host authority")
+	if str(small.get_meta("combat_authority")) != "host":
+		fails.append("AR-X isolated combat_authority left host")
+	if not small.has_method("pulse_damage") or absf(float(small.pulse_damage()) - 11.0) > 0.01:
+		fails.append("AR-X isolated Pulse 11 drifted")
+	var max0 := float(small.get("max_health"))
+	var prime_max := float(prime.get("max_health"))
+	if max0 >= prime_max - 0.01:
+		fails.append("AR-X small HP not weaker than prime")
+	var hp0 := float(small.get("health"))
+	small.take_damage(18.0, "Cybernex")
+	if float(small.get("health")) >= hp0:
+		fails.append("AR-X small did not take damage")
+	if small.has_method("is_alive") and not bool(small.is_alive()):
+		fails.append("AR-X 18 dmg killed small")
+	if small.has_method("is_contested") and not bool(small.is_contested()):
+		fails.append("AR-X small did not contest")
+	var announced := str(small.last_announce()) if small.has_method("last_announce") else ""
+	if announced.to_lower().find("contest") < 0 and announced.to_lower().find("weapon") < 0:
+		fails.append("AR-X small contest announce missing")
+	var matchn := Node3D.new()
+	matchn.set_script(preload("res://scripts/arena/ClashLocalMatch.gd"))
+	matchn.name = "ClashLocalMatchARX"
+	host.add_child(matchn)
+	await get_tree().process_frame
+	if not matchn.has_method("is_level_informational") or not bool(matchn.is_level_informational()):
+		fails.append("AR-X isolated AR-U level is not informational")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("ecology", 20.0)
+		GameManager.add_mastery("history", 20.0)
+	if absf(float(small.get("max_health")) - max0) > 0.01:
+		fails.append("AR-X Knowledge changed small HP")
+	if SoftK and SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked("small")):
+		fails.append("AR-X unlocked exclusive weapon")
+	if SoftK and SoftK.has_method("exclusive_module_unlocked") and bool(SoftK.exclusive_module_unlocked("jungle")):
+		fails.append("AR-X unlocked exclusive combat module")
+	if Kit and Kit.has_method("kit_ids") and int(Kit.kit_ids().size()) != 12:
+		fails.append("AR-X isolated added a 13th kit")
+	var cap15 := 15
+	var traffic: Node = null
+	if os:
+		traffic = os.get_node_or_null("PadTraffic")
+	if traffic == null and get_tree():
+		traffic = get_tree().get_first_node_in_group("pad_traffic")
+	if traffic and traffic.has_method("fleet_cap"):
+		cap15 = int(traffic.fleet_cap())
+	if cap15 != 15:
+		fails.append("AR-X isolated FLEET cap=%s, want 15" % cap15)
+	print("[Playtest] AR-X small camp isolated · role=", small.get_camp_role() if small.has_method("get_camp_role") else "?",
+		" drop=soft_ws · ", slab, "/", jlab, " · Pulse 11 · host · kits=12 · FLEET 15/15")
+	if is_instance_valid(fang):
+		fang.queue_free()
+	if is_instance_valid(prime):
+		prime.queue_free()
+	if is_instance_valid(small):
+		small.queue_free()
+	if is_instance_valid(matchn):
+		matchn.queue_free()
+	await get_tree().process_frame
+	if os != null and os.has_method("enter_clash_from_world"):
+		fails.append("AR-X opened G5 world-to-arena")
+	if LayerContext:
+		if str(LayerContext.site_pin_id) != pin0:
+			fails.append("AR-X changed site_pin (%s → %s)" % [pin0, LayerContext.site_pin_id])
+		if layer0 != "" and str(LayerContext.current_layer) == "Arena" and layer0 != "Arena":
+			fails.append("AR-X stole LayerContext to Arena")
+			LayerContext.set_layer(layer0)
+	if Inf and int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-X Infection cap changed")
+	print("[Playtest] AR-X small off-lane · CAMP/JUNGLE · soft WS only · AR-D/AR-J stay · AR-T/V/W stay · AR-U informational · FLEET 15/15 · no SITE_*")
+	if fails.size() == fail0:
+		print("[Playtest] PASS AR-X")
 	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
 		SoftScanCache.invalidate_enemies()
 

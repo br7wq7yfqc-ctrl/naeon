@@ -312,6 +312,14 @@ const AR_V_SECOND_LANE_WAVE := true
 ## waves stay. AR-U XP/LEVEL stay informational. AR-A…AR-V stay. Host
 ## authority. ORBITAL_STATIONS stays false. No SITE_*.
 const AR_W_THIRD_LANE_WAVE := true
+## AR-X: one extra small off-lane ClashCamp on the existing 60×60.
+## Weaker than AR-J prime. AR-D fangtooth stays. Drop = soft WS only.
+## SoftKnowledge / HUD CAMP / JUNGLE only. Pulse 11. Infection cap 5.
+## Not a 4th minion lane. Not a 13th AbilityKit. Not another fleet pip.
+## AbilityKitCatalog stays at 12 (cx_nex…gr_thorn). FL-N FLEET 15/15 stays.
+## AR-T / AR-V / AR-W waves stay. AR-U XP/LEVEL stay informational.
+## AR-A…AR-W stay. Host authority. ORBITAL_STATIONS stays false. No SITE_*.
+const AR_X_SMALL_CAMP := true
 ## DO-A: contested Cybernex ↔ gROT transition on one occupied unnamed pad.
 ## Uses OwnershipData / OwnershipComponent / ContestedRing. SoftKnowledge
 ## HUD label only (CONTESTED / CYBERNEX / GROT). Not HyperGate G4. Not

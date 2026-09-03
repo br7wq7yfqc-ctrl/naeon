@@ -2,6 +2,7 @@ extends Node3D
 class_name ClashCamp
 ## AR-D: one off-lane jungle objective (fangtooth-class role, not IP).
 ## AR-J: optional second pit (prime-class role, not IP) on the same 60×60.
+## AR-X: optional third pit (small jungle, weaker than prime) on the same 60×60.
 ## Code-first proxy — no GLB, no unique weapon, Knowledge may label only.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
@@ -11,16 +12,21 @@ signal camp_down
 
 const ROLE_FANG := "fangtooth"
 const ROLE_PRIME := "prime"
+const ROLE_SMALL := "small"
 
 ## Between MID (x=0±3.2) and TOP (x=14±3.2) on the same 60×60 floor.
 const CAMP_POS := Vector3(7.2, 0.0, -1.2)
 ## Opposite jungle pocket — between MID and BOT. Same footprint.
 const PRIME_POS := Vector3(-7.2, 0.0, 1.2)
+## AR-X: TOP–MID pocket, clear of fangtooth / pads / bench. Same 60×60.
+const SMALL_POS := Vector3(9.6, 0.0, 4.2)
 const CONTEST_RADIUS := 7.5
 const CAMP_HP := 220.0
 const PRIME_HP := 360.0
+const SMALL_HP := 140.0
 const RESPAWN := 40.0
 const PRIME_RESPAWN := 55.0
+const SMALL_RESPAWN := 28.0
 const CONTEST_HOLD := 2.4
 
 var camp_role: String = ROLE_FANG
@@ -39,11 +45,18 @@ var _drop_kind: String = "soft_ws"
 func _ready() -> void:
 	if name == "ClashPrimeCamp" and camp_role != ROLE_PRIME:
 		camp_role = ROLE_PRIME
+	if name == "ClashSmallCamp" and camp_role != ROLE_SMALL:
+		camp_role = ROLE_SMALL
 	if camp_role == ROLE_PRIME:
 		if name == "" or name == "Node3D":
 			name = "ClashPrimeCamp"
 		max_health = PRIME_HP
 		position = PRIME_POS
+	elif camp_role == ROLE_SMALL:
+		if name == "" or name == "Node3D":
+			name = "ClashSmallCamp"
+		max_health = SMALL_HP
+		position = SMALL_POS
 	else:
 		if name == "" or name == "Node3D":
 			name = "ClashCamp"
@@ -52,6 +65,7 @@ func _ready() -> void:
 	add_to_group("clash_camp")
 	add_to_group("enemy")
 	add_to_group("hackable")
+	set_meta("combat_authority", "host")
 	health = max_health
 	_build_proxy()
 	_refresh_label()
@@ -95,6 +109,18 @@ func is_prime() -> bool:
 	return camp_role == ROLE_PRIME
 
 
+func is_small() -> bool:
+	return camp_role == ROLE_SMALL
+
+
+func is_host_authority() -> bool:
+	return true
+
+
+func pulse_damage() -> float:
+	return 11.0
+
+
 func is_off_lane() -> bool:
 	return absf(global_position.x) > 3.6 and absf(global_position.x - 14.0) > 3.6 \
 		and absf(global_position.x + 14.0) > 3.6
@@ -109,11 +135,16 @@ func get_faction() -> String:
 
 
 func hurtbox_center() -> Vector3:
-	return global_position + Vector3(0, 1.35 if is_prime() else 1.15, 0)
+	var y := 1.35 if is_prime() else (0.95 if is_small() else 1.15)
+	return global_position + Vector3(0, y, 0)
 
 
 func hurtbox_radius() -> float:
-	return 1.7 if is_prime() else 1.45
+	if is_prime():
+		return 1.7
+	if is_small():
+		return 1.2
+	return 1.45
 
 
 func note_presence(pos: Vector3) -> void:
@@ -161,6 +192,8 @@ func _open_contest(reason: String) -> void:
 	_contested = true
 	if is_prime():
 		_last_announce = "PRIME CONTESTED — soft · no unique weapon"
+	elif is_small():
+		_last_announce = "CAMP CONTESTED — soft · no unique weapon"
 	else:
 		_last_announce = "CAMP CONTESTED — soft · no unique weapon"
 	contest_changed.emit(true)
@@ -209,7 +242,7 @@ func _die() -> void:
 	visible = false
 	print("[ClashCamp] ", camp_role, " down drop=", _drop_kind, " (not a unique weapon)")
 	if get_tree():
-		var wait := PRIME_RESPAWN if is_prime() else RESPAWN
+		var wait := PRIME_RESPAWN if is_prime() else (SMALL_RESPAWN if is_small() else RESPAWN)
 		get_tree().create_timer(wait).timeout.connect(_respawn)
 
 
@@ -226,9 +259,17 @@ func _respawn() -> void:
 
 
 func _build_proxy() -> void:
-	var col := Color(0.92, 0.72, 0.22) if is_prime() else Color(0.55, 0.82, 0.28)
-	var mound_sz := Vector3(2.8, 2.0, 2.8) if is_prime() else Vector3(2.2, 1.6, 2.2)
-	var ring_sz := Vector3(5.2, 0.14, 5.2) if is_prime() else Vector3(4.4, 0.12, 4.4)
+	var col := Color(0.55, 0.82, 0.28)
+	var mound_sz := Vector3(2.2, 1.6, 2.2)
+	var ring_sz := Vector3(4.4, 0.12, 4.4)
+	if is_prime():
+		col = Color(0.92, 0.72, 0.22)
+		mound_sz = Vector3(2.8, 2.0, 2.8)
+		ring_sz = Vector3(5.2, 0.14, 5.2)
+	elif is_small():
+		col = Color(0.32, 0.78, 0.72)
+		mound_sz = Vector3(1.7, 1.2, 1.7)
+		ring_sz = Vector3(3.4, 0.1, 3.4)
 	_mat = StandardMaterial3D.new()
 	_mat.albedo_color = col * 0.4
 	_mat.metallic = 0.35
@@ -264,7 +305,7 @@ func _build_proxy() -> void:
 		_label.font_size = 20
 		_label.outline_size = 10
 		_label.outline_modulate = Color(0, 0, 0, 0.9)
-		_label.position = Vector3(0, 2.9 if is_prime() else 2.6, 0)
+		_label.position = Vector3(0, 2.9 if is_prime() else (2.2 if is_small() else 2.6), 0)
 		add_child(_label)
 	var body := StaticBody3D.new()
 	body.collision_layer = 4
