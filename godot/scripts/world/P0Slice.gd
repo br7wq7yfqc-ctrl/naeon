@@ -268,6 +268,12 @@ const AR_Q_TENTH_KIT := true
 ## AR-K CARGO stay. Infection cap 5. Host authority. ORBITAL_STATIONS stays
 ## false. No SITE_*.
 const AR_R_ELEVENTH_KIT := true
+## AR-S: twelfth Clash AbilityKit (GR Thorn) — gROT symmetric to CX Spire.
+## Same Pulse / utility / probe|surge / Form Cycle grammar. SoftKnowledge /
+## HUD kit label only. Knowledge ≠ DPS / yield / Pulse / Hack / rank.
+## Prior 11 kits stay. ClashModuleBench AR-E SENSOR + AR-K CARGO stay.
+## Infection cap 5. Host authority. ORBITAL_STATIONS stays false. No SITE_*.
+const AR_S_TWELFTH_KIT := true
 ## DO-A: contested Cybernex ↔ gROT transition on one occupied unnamed pad.
 ## Uses OwnershipData / OwnershipComponent / ContestedRing. SoftKnowledge
 ## HUD label only (CONTESTED / CYBERNEX / GROT). Not HyperGate G4. Not

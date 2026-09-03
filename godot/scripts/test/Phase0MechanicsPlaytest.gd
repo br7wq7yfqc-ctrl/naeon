@@ -91,6 +91,7 @@ func _go() -> void:
 		await _assert_ar_p(os, fails)
 		await _assert_ar_q(os, fails)
 		await _assert_ar_r(os, fails)
+		await _assert_ar_s(os, fails)
 		await _assert_sn_c(os, fails)
 		await _assert_sn_d(os, fails)
 		await _assert_do_a(os, fails)
@@ -130,6 +131,7 @@ func _go() -> void:
 	await _assert_ar_p(os, fails)
 	await _assert_ar_q(os, fails)
 	await _assert_ar_r(os, fails)
+	await _assert_ar_s(os, fails)
 	_assert_se_a(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 	_assert_scan_cache_live(fails)
@@ -22539,8 +22541,8 @@ func _assert_ar_r(os: Node, fails: PackedStringArray) -> void:
 		fails.append("AR-R AbilityKitCatalog missing")
 		return
 	var ids: PackedStringArray = Kit.kit_ids()
-	if int(ids.size()) != 11:
-		fails.append("AR-R isolated kit count want 11 (got %s)" % ids.size())
+	if int(ids.size()) < 11:
+		fails.append("AR-R isolated kit count want >= 11 (got %s)" % ids.size())
 	for need in ["cx_nex", "cx_grid", "gr_rot", "gr_spore", "cx_lattice", "gr_vein", "cx_prism", "gr_facet", "cx_helix", "gr_coil"]:
 		if not ids.has(need):
 			fails.append("AR-R isolated dropped prior kit (%s)" % need)
@@ -22644,6 +22646,156 @@ func _assert_ar_r(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] AR-R eleventh kit · SoftKnowledge only · AR-A…AR-Q stay · no SITE_*")
 	if fails.size() == fail0:
 		print("[Playtest] PASS AR-R")
+	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
+		SoftScanCache.invalidate_enemies()
+
+
+func _assert_ar_s(os: Node, fails: PackedStringArray) -> void:
+	## AR-S: twelfth Clash AbilityKit (GR Thorn) on the same TestArena grammar.
+	## Isolated — no TestArena scene change. SoftKnowledge / HUD labels only.
+	var fail0 := fails.size()
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.AR_S_TWELFTH_KIT):
+		fails.append("AR-S P0Slice flag missing")
+	if P0 != null and not bool(P0.AR_R_ELEVENTH_KIT):
+		fails.append("AR-S dropped AR-R P0Slice flag")
+	if P0 != null and not bool(P0.AR_Q_TENTH_KIT):
+		fails.append("AR-S dropped AR-Q P0Slice flag")
+	if P0 != null and not bool(P0.AR_P_NINTH_KIT):
+		fails.append("AR-S dropped AR-P P0Slice flag")
+	if P0 != null and not bool(P0.AR_O_EIGHTH_KIT):
+		fails.append("AR-S dropped AR-O P0Slice flag")
+	if P0 != null and not bool(P0.AR_N_SEVENTH_KIT):
+		fails.append("AR-S dropped AR-N P0Slice flag")
+	if P0 != null and not bool(P0.AR_M_SIXTH_KIT):
+		fails.append("AR-S dropped AR-M P0Slice flag")
+	if P0 != null and not bool(P0.AR_L_FIFTH_KIT):
+		fails.append("AR-S dropped AR-L P0Slice flag")
+	if P0 != null and not bool(P0.AR_K_SESSION_SHOP):
+		fails.append("AR-S dropped AR-K P0Slice flag")
+	if P0 != null and not bool(P0.AR_J_PRIME_CAMP):
+		fails.append("AR-S dropped AR-J P0Slice flag")
+	if P0 != null and not bool(P0.AR_I_MATCH_END):
+		fails.append("AR-S dropped AR-I P0Slice flag")
+	if P0 != null and not bool(P0.AR_H_DOOR):
+		fails.append("AR-S dropped AR-H P0Slice flag")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("AR-S flipped ORBITAL_STATIONS")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-S Infection cap drifted")
+	var layer0 := str(LayerContext.current_layer) if LayerContext else ""
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	if Kit == null or not Kit.has_method("kit_ids") or not Kit.has_method("kit_by_id"):
+		fails.append("AR-S AbilityKitCatalog missing")
+		return
+	var ids: PackedStringArray = Kit.kit_ids()
+	if int(ids.size()) != 12:
+		fails.append("AR-S isolated kit count want 12 (got %s)" % ids.size())
+	for need in ["cx_nex", "cx_grid", "gr_rot", "gr_spore", "cx_lattice", "gr_vein", "cx_prism", "gr_facet", "cx_helix", "gr_coil", "cx_spire"]:
+		if not ids.has(need):
+			fails.append("AR-S isolated dropped prior kit (%s)" % need)
+	if not ids.has("gr_thorn"):
+		fails.append("AR-S isolated twelfth kit gr_thorn missing")
+	var kit: Array = Kit.kit_by_id("gr_thorn")
+	if kit.size() != 4:
+		fails.append("AR-S isolated Thorn is not 4 slots")
+	else:
+		if kit[0] == null or str(kit[0].ability_name) != "Pulse Bolt":
+			fails.append("AR-S isolated Thorn slot0 is not Pulse")
+		elif absf(float(kit[0].damage) - 11.0) > 0.01:
+			fails.append("AR-S isolated Thorn Pulse damage drifted")
+		if kit[1] == null or not bool(kit[1].is_firewall) or str(kit[1].ability_name) != "Thorn Seal":
+			fails.append("AR-S isolated Thorn utility missing")
+		if kit[2] == null or not bool(kit[2].is_hacking) or str(kit[2].ability_name) != "Thorn Probe":
+			fails.append("AR-S isolated Thorn probe missing")
+		if kit[3] == null or str(kit[3].ability_name) != "Form Cycle":
+			fails.append("AR-S isolated Thorn Form Cycle missing")
+	if Kit.has_method("kit_for_faction"):
+		var cx0: Array = Kit.kit_for_faction("Cybernex")
+		var gr0: Array = Kit.kit_for_faction("gROT")
+		if cx0.size() != 4 or str(cx0[1].ability_name) != "Nex-Firewall":
+			fails.append("AR-S isolated default CX kit changed")
+		if gr0.size() != 4 or str(gr0[1].ability_name) != "Hack":
+			fails.append("AR-S isolated default GR kit changed")
+	if Kit.has_method("kits_for_faction"):
+		var gr_cycle: PackedStringArray = Kit.kits_for_faction("gROT")
+		if gr_cycle.size() < 6 or str(gr_cycle[5]) != "gr_thorn":
+			fails.append("AR-S isolated GR Thorn not selectable in kit cycle")
+		if gr_cycle.size() < 5 or str(gr_cycle[4]) != "gr_coil":
+			fails.append("AR-S isolated GR Coil dropped from kit cycle")
+		if gr_cycle.size() < 4 or str(gr_cycle[3]) != "gr_facet":
+			fails.append("AR-S isolated GR Facet dropped from kit cycle")
+		var cx_cycle: PackedStringArray = Kit.kits_for_faction("Cybernex")
+		if cx_cycle.size() < 6 or str(cx_cycle[5]) != "cx_spire":
+			fails.append("AR-S isolated CX Spire dropped from kit cycle")
+		if cx_cycle.size() < 5 or str(cx_cycle[4]) != "cx_helix":
+			fails.append("AR-S isolated CX Helix dropped from kit cycle")
+	var host: Node = os if os else self
+	var dummy := Node3D.new()
+	dummy.name = "AR-SDummy"
+	var absys := Node.new()
+	absys.set_script(preload("res://scripts/abilities/AbilitySystem.gd"))
+	absys.name = "AbilitySystem"
+	dummy.add_child(absys)
+	host.add_child(dummy)
+	await get_tree().process_frame
+	if absys.has_method("setup_kit"):
+		absys.setup_kit("gr_thorn", "gROT")
+		if str(absys.current_kit_id) != "gr_thorn":
+			fails.append("AR-S isolated could not apply GR Thorn kit")
+		if absys.abilities.size() != 4:
+			fails.append("AR-S isolated Thorn kit not 4 slots")
+		elif str(absys.abilities[1].ability_name) != "Thorn Seal":
+			fails.append("AR-S isolated player Thorn utility missing")
+		elif absys.abilities[0] and absf(float(absys.abilities[0].damage) - 11.0) > 0.01:
+			fails.append("AR-S isolated Pulse DPS drifted")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("combat", 20.0)
+		GameManager.add_mastery("history", 20.0)
+	if absys.abilities.size() > 0 and absys.abilities[0] and absf(float(absys.abilities[0].damage) - 11.0) > 0.01:
+		fails.append("AR-S isolated Knowledge changed Pulse")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var klab := str(SoftK.kit_label("gr_thorn")) if SoftK and SoftK.has_method("kit_label") else ""
+	if klab == "" or (klab != "THORN" and klab != "ROT THORN"):
+		fails.append("AR-S isolated SoftKnowledge kit label missing (%s)" % klab)
+	if absys.has_method("kit_label"):
+		var hlab := str(absys.kit_label())
+		if hlab == "" or (hlab != "THORN" and hlab != "ROT THORN"):
+			fails.append("AR-S isolated HUD kit label missing (%s)" % hlab)
+	if SoftK and SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked("thorn")):
+		fails.append("AR-S isolated unlocked exclusive weapon")
+	if SoftK and SoftK.has_method("exclusive_module_unlocked") and bool(SoftK.exclusive_module_unlocked("gr_thorn")):
+		fails.append("AR-S isolated unlocked exclusive combat module")
+	var bench: Node3D = Node3D.new()
+	bench.set_script(preload("res://scripts/arena/ClashModuleBench.gd"))
+	bench.name = "ClashModuleBenchARS"
+	host.add_child(bench)
+	await get_tree().process_frame
+	var offers := int(bench.offer_count()) if bench.has_method("offer_count") else 0
+	if offers != 2:
+		fails.append("AR-S isolated drifted ClashModuleBench offers (got %s)" % offers)
+	print("[Playtest] AR-S twelfth kit isolated · kits=", ids.size(), " twelfth=gr_thorn",
+		" label=", klab, " · prior 11 stay · AR-K bench stays")
+	if is_instance_valid(dummy):
+		dummy.queue_free()
+	if is_instance_valid(bench):
+		bench.queue_free()
+	await get_tree().process_frame
+	if os != null and os.has_method("enter_clash_from_world"):
+		fails.append("AR-S opened G5 world-to-arena")
+	if LayerContext:
+		if str(LayerContext.site_pin_id) != pin0:
+			fails.append("AR-S changed site_pin (%s → %s)" % [pin0, LayerContext.site_pin_id])
+		if layer0 != "" and str(LayerContext.current_layer) == "Arena" and layer0 != "Arena":
+			fails.append("AR-S stole LayerContext to Arena")
+			LayerContext.set_layer(layer0)
+	if Inf and int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-S Infection cap changed")
+	print("[Playtest] AR-S twelfth kit · SoftKnowledge only · AR-A…AR-R stay · no SITE_*")
+	if fails.size() == fail0:
+		print("[Playtest] PASS AR-S")
 	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
 		SoftScanCache.invalidate_enemies()
 

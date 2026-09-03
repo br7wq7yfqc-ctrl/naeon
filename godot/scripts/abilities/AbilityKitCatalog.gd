@@ -10,6 +10,7 @@ class_name AbilityKitCatalog
 ## AR-P: ninth kit (CX Helix) — Cybernex symmetric slot after Prism / Facet.
 ## AR-Q: tenth kit (GR Coil) — gROT symmetric to CX Helix. Same grammar.
 ## AR-R: eleventh kit (CX Spire) — Cybernex symmetric slot after Coil / Helix.
+## AR-S: twelfth kit (GR Thorn) — gROT symmetric to CX Spire. Same grammar.
 
 const EE = preload("res://scripts/systems/EnergyEconomy.gd")
 
@@ -24,6 +25,7 @@ const KIT_GR_FACET := "gr_facet"
 const KIT_CX_HELIX := "cx_helix"
 const KIT_GR_COIL := "gr_coil"
 const KIT_CX_SPIRE := "cx_spire"
+const KIT_GR_THORN := "gr_thorn"
 
 const KIT_TABLE := [
 	{"id": KIT_CX_NEX, "faction": "Cybernex", "label": "Nex"},
@@ -37,6 +39,7 @@ const KIT_TABLE := [
 	{"id": KIT_CX_HELIX, "faction": "Cybernex", "label": "Helix"},
 	{"id": KIT_GR_COIL, "faction": "gROT", "label": "Coil"},
 	{"id": KIT_CX_SPIRE, "faction": "Cybernex", "label": "Spire"},
+	{"id": KIT_GR_THORN, "faction": "gROT", "label": "Thorn"},
 ]
 
 
@@ -95,6 +98,8 @@ static func kit_by_id(kit_id: String) -> Array:
 			return [_pulse(), _facet_seal(), _facet_probe(), _form_cycle()]
 		KIT_GR_COIL:
 			return [_pulse(), _coil_seal(), _coil_probe(), _form_cycle()]
+		KIT_GR_THORN:
+			return [_pulse(), _thorn_seal(), _thorn_probe(), _form_cycle()]
 		KIT_GR_ROT:
 			return [_pulse(), _hack_grot(), _surge(), _form_cycle()]
 		_:
@@ -307,6 +312,37 @@ static func _spire_probe() -> Ability:
 	a.is_channeled = true
 	a.channel_time = 1.5
 	a.effect_color = Color(0.38, 0.82, 0.96)
+	return a
+
+
+static func _thorn_seal() -> Ability:
+	var a := Ability.new()
+	a.ability_name = "Thorn Seal"
+	a.description = "Short thorn seal window (identity, same cost sheet)"
+	a.cooldown = EE.CD_FIREWALL
+	a.energy_cost = EE.NEX_FIREWALL
+	a.duration = 2.5
+	a.heal = 12.0
+	a.range = 18.0
+	a.is_firewall = true
+	a.faction_restriction = Ability.FactionRestriction.GROT_ONLY
+	a.effect_color = Color(0.72, 0.62, 0.22)
+	return a
+
+
+static func _thorn_probe() -> Ability:
+	var a := Ability.new()
+	a.ability_name = "Thorn Probe"
+	a.description = "Channeled thorn recon (identity, same cost sheet)"
+	a.cooldown = EE.CD_PROBE
+	a.energy_cost = EE.SYSTEM_PROBE
+	a.damage = 7.0
+	a.range = 18.0
+	a.is_hacking = true
+	a.is_channeled = true
+	a.channel_time = 1.5
+	a.faction_restriction = Ability.FactionRestriction.GROT_ONLY
+	a.effect_color = Color(0.62, 0.52, 0.14)
 	return a
 
 
