@@ -351,11 +351,10 @@ func restore_crate(os: Node = null) -> void:
 
 
 func wipe_colony_memory() -> void:
-	## Playtest relaunch sim. Does not write disk.
+	## Playtest relaunch sim. Does not write disk. Does not touch PC-B crate.
 	colony = []
 	orbital = []
 	ship = {}
-	crate = {}
 
 
 func wipe_crate_memory() -> void:
@@ -367,6 +366,7 @@ func restore_world(os: Node = null) -> void:
 	## Host-only. BaseBuilder place_*. Never steals the ST-A player_module slot.
 	if not is_host_authority():
 		return
+	var crate_snap: Dictionary = crate.duplicate()
 	if _pc_a():
 		restore_colony()
 		restore_orbital()
@@ -374,6 +374,8 @@ func restore_world(os: Node = null) -> void:
 		print("[SoftSession] PC-A restore colony=", colony.size(), " orbital=", orbital.size(),
 			" ship=", str(ship.get("faction", "")))
 	if _pc_b():
+		if crate.is_empty() and not crate_snap.is_empty():
+			crate = crate_snap
 		restore_crate(os)
 		print("[SoftSession] PC-B restore crate=", str(crate.get("slug", "")),
 			" amount=", int(crate.get("amount", 0)), " where=", str(crate.get("where", "")))
