@@ -9,6 +9,7 @@ class_name AbilityKitCatalog
 ## AR-O: eighth kit (GR Facet) — gROT symmetric slot after CX Prism / GR Vein.
 ## AR-P: ninth kit (CX Helix) — Cybernex symmetric slot after Prism / Facet.
 ## AR-Q: tenth kit (GR Coil) — gROT symmetric to CX Helix. Same grammar.
+## AR-R: eleventh kit (CX Spire) — Cybernex symmetric slot after Coil / Helix.
 
 const EE = preload("res://scripts/systems/EnergyEconomy.gd")
 
@@ -22,6 +23,7 @@ const KIT_CX_PRISM := "cx_prism"
 const KIT_GR_FACET := "gr_facet"
 const KIT_CX_HELIX := "cx_helix"
 const KIT_GR_COIL := "gr_coil"
+const KIT_CX_SPIRE := "cx_spire"
 
 const KIT_TABLE := [
 	{"id": KIT_CX_NEX, "faction": "Cybernex", "label": "Nex"},
@@ -34,6 +36,7 @@ const KIT_TABLE := [
 	{"id": KIT_GR_FACET, "faction": "gROT", "label": "Facet"},
 	{"id": KIT_CX_HELIX, "faction": "Cybernex", "label": "Helix"},
 	{"id": KIT_GR_COIL, "faction": "gROT", "label": "Coil"},
+	{"id": KIT_CX_SPIRE, "faction": "Cybernex", "label": "Spire"},
 ]
 
 
@@ -82,6 +85,8 @@ static func kit_by_id(kit_id: String) -> Array:
 			return [_pulse(), _prism_seal(), _prism_probe(), _form_cycle()]
 		KIT_CX_HELIX:
 			return [_pulse(), _helix_seal(), _helix_probe(), _form_cycle()]
+		KIT_CX_SPIRE:
+			return [_pulse(), _spire_seal(), _spire_probe(), _form_cycle()]
 		KIT_GR_SPORE:
 			return [_pulse(), _spore_claim(), _rot_bloom(), _form_cycle()]
 		KIT_GR_VEIN:
@@ -272,6 +277,36 @@ static func _coil_probe() -> Ability:
 	a.channel_time = 1.5
 	a.faction_restriction = Ability.FactionRestriction.GROT_ONLY
 	a.effect_color = Color(0.88, 0.32, 0.22)
+	return a
+
+
+static func _spire_seal() -> Ability:
+	var a := Ability.new()
+	a.ability_name = "Spire Seal"
+	a.description = "Short spire seal window (identity, same cost sheet)"
+	a.cooldown = EE.CD_FIREWALL
+	a.energy_cost = EE.NEX_FIREWALL
+	a.duration = 2.5
+	a.heal = 12.0
+	a.range = 18.0
+	a.is_firewall = true
+	a.faction_restriction = Ability.FactionRestriction.CYBERNEX_ONLY
+	a.effect_color = Color(0.52, 0.94, 1.0)
+	return a
+
+
+static func _spire_probe() -> Ability:
+	var a := Ability.new()
+	a.ability_name = "Spire Probe"
+	a.description = "Channeled spire recon (identity, same cost sheet)"
+	a.cooldown = EE.CD_PROBE
+	a.energy_cost = EE.SYSTEM_PROBE
+	a.damage = 7.0
+	a.range = 18.0
+	a.is_hacking = true
+	a.is_channeled = true
+	a.channel_time = 1.5
+	a.effect_color = Color(0.38, 0.82, 0.96)
 	return a
 
 

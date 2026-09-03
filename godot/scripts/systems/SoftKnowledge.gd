@@ -83,7 +83,7 @@ static func module_bench_label() -> String:
 	return "MODULE BENCH"
 
 
-## AR-L / AR-M / AR-N / AR-O / AR-P: name a Clash AbilityKit. Never DPS / yield / Pulse / Hack / rank.
+## AR-L / AR-M / AR-N / AR-O / AR-P / AR-Q / AR-R: name a Clash AbilityKit. Never DPS / yield / Pulse / Hack / rank.
 static func kit_label(kit_id: String = "") -> String:
 	var combat := mastery("combat")
 	var hist := mastery("history")
@@ -95,6 +95,8 @@ static func kit_label(kit_id: String = "") -> String:
 			return "NEX PRISM" if named else "PRISM"
 		"cx_helix":
 			return "NEX HELIX" if named else "HELIX"
+		"cx_spire":
+			return "NEX SPIRE" if named else "SPIRE"
 		"cx_nex":
 			return "NEX KIT" if named else "NEX"
 		"cx_grid":
