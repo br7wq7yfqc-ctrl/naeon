@@ -73,6 +73,7 @@ func _ready() -> void:
 	call_deferred("_ensure_pad_turret")
 	call_deferred("_ensure_pad_storage")
 	call_deferred("_ensure_pad_hangar_stub")
+	call_deferred("_restore_soft_colony")
 	_seed_pad_cargo()
 	_contest_ring = Node3D.new()
 	_contest_ring.set_script(preload("res://scripts/world/ContestedRing.gd"))
@@ -898,6 +899,13 @@ func _ensure_pad_hangar_stub() -> void:
 		fac = default_faction
 	_Builder.place_pad_hangar_stub(pad, fac)
 	print("[PadBase] ST-J hangar stub on ", pad.name)
+
+
+func _restore_soft_colony() -> void:
+	## PC-A: re-place the same legal stubs from SoftSession. Host authority.
+	if SoftSession == null or not SoftSession.has_method("restore_pad_on"):
+		return
+	SoftSession.restore_pad_on(_unnamed_pad_host())
 
 
 func print_bench() -> Node:

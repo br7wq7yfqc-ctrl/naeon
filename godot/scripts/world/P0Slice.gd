@@ -104,6 +104,12 @@ const ST_L_TURRET := true
 ## distinct. Not a second ship CargoHold. Not a 13th kit. Not FL-O.
 ## Does not flip ORBITAL_STATIONS. No SITE_*.
 const ST_M_STORAGE := true
+## PC-A: SoftSession persist of legal pad/orbital stubs + soft ship hull.
+## Restore via existing BaseBuilder.place_pad_* / place_orbital_*.
+## SoftKnowledge / HUD COLONY / SHIP / SAVED only. Host authority.
+## Leave/rejoin same footprint. No DPS / yield. No SITE_* mint.
+## Does not flip ORBITAL_STATIONS. Infection cap 5. ST-M / PV-C / AR-Z stay.
+const PC_A_PERSIST := true
 ## PV-A: first TPS PvP on an occupied unnamed pad. One host-authority rival
 ## CombatDummy takes Pulse and deals Pulse back (DPS 11). Win = rival HP → 0.
 ## No permadeath. Infection cap 5. Knowledge labels only. G5 stays closed.

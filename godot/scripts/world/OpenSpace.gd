@@ -500,6 +500,12 @@ func _spawn_player_orbital_station() -> void:
 		n.ensure_defense_turret()
 	if _P0.ST_M_STORAGE and n.has_method("ensure_storage"):
 		n.ensure_storage()
+	if SoftSession and SoftSession.has_method("restore_world"):
+		SoftSession.restore_world()
+	if SoftSession and SoftSession.has_method("remember_world"):
+		SoftSession.remember_world(ship)
+	if n.has_method("_refresh_label"):
+		n._refresh_label()
 	print("[OpenSpace] ST-E player orbital cluster modules=2 body=", body_name, " · not SITE_* · not city")
 
 

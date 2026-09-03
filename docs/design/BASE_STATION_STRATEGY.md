@@ -195,6 +195,7 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 
 | Сейчас | Дальше |
 |--------|--------|
+| PC-A SoftSession persist pad/orbital stubs + ship hull | **built** |
 | ST-M один storage на ST-E orbital cluster | **built** |
 | ST-L один defense turret на ST-E orbital cluster | **built** |
 | ST-K один hangar stub на ST-E orbital cluster | **built** |

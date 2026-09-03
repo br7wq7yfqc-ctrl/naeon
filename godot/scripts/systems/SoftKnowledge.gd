@@ -434,6 +434,32 @@ static func extractor_label() -> String:
 	return "EXTRACTOR"
 
 
+## PC-A: name the persisted colony footprint. Never DPS / yield / SITE_*.
+static func colony_label() -> String:
+	var ops := mastery("colony_ops")
+	var hist := mastery("history")
+	if ops >= 15.0 or hist >= 15.0 or rank() >= 5:
+		return "T1 COLONY"
+	return "COLONY"
+
+
+## PC-A: name the soft ship identity. Never thrust / Pulse / remorph.
+static func persist_ship_label() -> String:
+	var logi := mastery("logistics")
+	var hist := mastery("history")
+	if logi >= 15.0 or hist >= 15.0 or rank() >= 5:
+		return "SHIP HULL"
+	return "SHIP"
+
+
+## PC-A: name a SoftSession restore. Never combat / print / exclusive modules.
+static func saved_label() -> String:
+	var ops := mastery("colony_ops")
+	if ops >= 15.0 or rank() >= 5:
+		return "SESSION SAVED"
+	return "SAVED"
+
+
 ## Colony/logistics: name the ST-I pad / ST-M orbital storage.
 ## Never mass / value / cap.
 static func storage_label() -> String:

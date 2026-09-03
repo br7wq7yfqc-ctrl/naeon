@@ -53,6 +53,7 @@ func _go() -> void:
 		await _assert_st_k(os, fails)
 		await _assert_st_l(os, fails)
 		await _assert_st_m(os, fails)
+		await _assert_pc_a(os, fails)
 		await _assert_hf_b(os, fails)
 		await _assert_hf_a(os, fails)
 		await _assert_pv_b(os, fails)
@@ -721,6 +722,7 @@ func _go() -> void:
 	await _assert_st_k(os, fails)
 	await _assert_st_l(os, fails)
 	await _assert_st_m(os, fails)
+	await _assert_pc_a(os, fails)
 	await _assert_hf_b(os, fails)
 	await _assert_hf_a(os, fails)
 	await _assert_pv_b(os, fails)
@@ -14470,6 +14472,194 @@ func _assert_st_m(os: Node, fails: PackedStringArray) -> void:
 	if not _osh_same_scene(scene0):
 		fails.append("ST-M overlay left OpenSpace")
 	print("[Playtest] ST-M orbital storage present · ST-E/G/I/K/L stay · no SITE_*")
+
+
+func _assert_pc_a(os: Node, fails: PackedStringArray) -> void:
+	## PC-A: SoftSession save→clear→load restores one legal orbital storage
+	## (default OpenSpace path). SoftKnowledge COLONY / SHIP / SAVED.
+	## No DPS / yield change. Host authority. No SITE_*.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var Pvp = load("res://scripts/world/PadPvp.gd")
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	var cluster: Node3D = null
+	var store0: Node3D = null
+	var store1: Node3D = null
+	var pad: Node = _in_a_occupied_pad(os)
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var scene0 := _osh_scene_file()
+	var rate0 := 4.0
+	var pulse0 := 11.0
+	var form0 := ""
+	var hull0 := ""
+	var lab_c := ""
+	var lab_s := ""
+	var lab_v := ""
+	var hud_txt := ""
+	var kit_n := 0
+	if P0 == null or not bool(P0.PC_A_PERSIST):
+		fails.append("PC-A P0Slice flag missing")
+		return
+	if not bool(P0.ST_M_STORAGE) or not bool(P0.ST_I_STORAGE) or not bool(P0.ST_E_ORBITAL):
+		fails.append("PC-A dropped ST-E/I/M")
+	if not bool(P0.PV_C_STRATEGY) or not bool(P0.AR_Z_MATCHMAKING):
+		fails.append("PC-A dropped PV-C / AR-Z")
+	if bool(P0.ORBITAL_STATIONS):
+		fails.append("PC-A flipped P0Slice.ORBITAL_STATIONS")
+	if SoftSession == null:
+		fails.append("PC-A SoftSession missing")
+		return
+	if os == null:
+		fails.append("PC-A no OpenSpace")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("PC-A must not run on Clash")
+		return
+	if LayerContext and str(LayerContext.current_layer) == "Arena":
+		fails.append("PC-A must not run on Clash")
+		return
+	if os.has_method("player_orbital_station"):
+		cluster = os.player_orbital_station()
+	if cluster == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("player_orbital_stations")
+		if not listed.is_empty() and listed[0] is Node3D:
+			cluster = listed[0] as Node3D
+	if cluster == null:
+		fails.append("PC-A player orbital cluster missing")
+		return
+	if cluster.has_method("is_host_authority") and not bool(cluster.is_host_authority()):
+		fails.append("PC-A is not host authority")
+	if str(cluster.get_meta("site_pin", "")) != "":
+		fails.append("PC-A cluster minted site_pin (%s)" % str(cluster.get_meta("site_pin")))
+		return
+	if pad != null and "extract_rate" in pad:
+		rate0 = float(pad.get("extract_rate"))
+	if Pvp != null:
+		pulse0 = float(Pvp.PULSE_DPS)
+	if pulse0 != 11.0:
+		fails.append("PC-A Pulse DPS drifted before restore (%s)" % pulse0)
+	if SoftSession.has_method("remember_world"):
+		SoftSession.remember_world(ship)
+	else:
+		fails.append("PC-A remember_world missing")
+		return
+	form0 = str(SoftSession.form)
+	if typeof(SoftSession.ship) == TYPE_DICTIONARY:
+		hull0 = str(SoftSession.ship.get("hull", ""))
+	if SoftK != null and SoftK.has_method("colony_label"):
+		lab_c = str(SoftK.colony_label())
+		lab_s = str(SoftK.persist_ship_label())
+		lab_v = str(SoftK.saved_label())
+	if lab_c.find("COLONY") < 0:
+		fails.append("PC-A SoftKnowledge COLONY missing (%s)" % lab_c)
+	if lab_s.find("SHIP") < 0:
+		fails.append("PC-A SoftKnowledge SHIP missing (%s)" % lab_s)
+	if lab_v.find("SAVED") < 0:
+		fails.append("PC-A SoftKnowledge SAVED missing (%s)" % lab_v)
+	if cluster.has_method("cluster_storage"):
+		store0 = cluster.cluster_storage()
+	if store0 == null and os.has_method("player_orbital_storage"):
+		store0 = os.player_orbital_storage()
+	if store0 == null:
+		store0 = _Builder.orbital_storage_on(cluster)
+	if store0 == null or not is_instance_valid(store0):
+		fails.append("PC-A orbital storage missing before save")
+		return
+	if not bool(store0.get_meta("orbital_storage", false)):
+		fails.append("PC-A pre-save storage is not orbital")
+	if SoftSession.has_method("save_session"):
+		SoftSession.save_session()
+	if not SoftSession.has_colony_snapshot():
+		fails.append("PC-A SoftSession colony snapshot empty after save")
+	var orb_snap = SoftSession.colony.get("orbital", {}) if typeof(SoftSession.colony) == TYPE_DICTIONARY else {}
+	if typeof(orb_snap) != TYPE_DICTIONARY or not bool(orb_snap.get("storage", false)):
+		fails.append("PC-A snapshot missing orbital storage flag")
+	var parent0: Node = store0.get_parent()
+	if parent0 != null:
+		parent0.remove_child(store0)
+	store0.free()
+	if "_storage" in cluster:
+		cluster.set("_storage", null)
+	await get_tree().process_frame
+	if _Builder.orbital_storage_on(cluster) != null:
+		fails.append("PC-A clear did not remove orbital storage")
+		return
+	if SoftSession.has_method("clear_persist_memory"):
+		SoftSession.clear_persist_memory()
+	if SoftSession.has_colony_snapshot():
+		fails.append("PC-A memory still held colony after clear")
+	if SoftSession.has_method("load_session"):
+		SoftSession.load_session()
+	if not SoftSession.has_colony_snapshot():
+		fails.append("PC-A load_session did not restore colony snapshot")
+	if str(SoftSession.form) != form0 and form0 != "":
+		fails.append("PC-A load changed ship form (%s → %s)" % [form0, SoftSession.form])
+	if hull0 != "" and typeof(SoftSession.ship) == TYPE_DICTIONARY \
+			and str(SoftSession.ship.get("hull", "")) != hull0:
+		fails.append("PC-A load changed ship hull (%s → %s)" % [hull0, SoftSession.ship.get("hull", "")])
+	if SoftSession.has_method("restore_world"):
+		SoftSession.restore_world()
+	await get_tree().process_frame
+	if cluster.has_method("cluster_storage"):
+		store1 = cluster.cluster_storage()
+	if store1 == null:
+		store1 = _Builder.orbital_storage_on(cluster)
+	if store1 == null or not is_instance_valid(store1):
+		fails.append("PC-A orbital storage not restored after load")
+		return
+	if store1.get_parent() != cluster:
+		fails.append("PC-A restored storage left PlayerOrbitalStation")
+	if str(store1.get_meta("site_pin", "missing")) != "":
+		fails.append("PC-A restore minted site_pin (%s)" % store1.get_meta("site_pin"))
+	if not bool(store1.get_meta("orbital_storage", false)):
+		fails.append("PC-A restored storage missing orbital_storage meta")
+	if store1.has_method("combat_stats") and int(store1.combat_stats()) != 0:
+		fails.append("PC-A restore changed storage combat")
+	if store1.has_method("max_units") and int(store1.max_units()) != 1:
+		fails.append("PC-A restore changed storage cap")
+	if pad != null and "extract_rate" in pad \
+			and absf(float(pad.get("extract_rate")) - rate0) > 0.0001:
+		fails.append("PC-A extract_rate / yield changed")
+	if Pvp != null and absf(float(Pvp.PULSE_DPS) - pulse0) > 0.0001:
+		fails.append("PC-A Pulse DPS changed")
+	if Pvp != null and float(Pvp.PULSE_DPS) != 11.0:
+		fails.append("PC-A Pulse DPS drifted (%s)" % Pvp.PULSE_DPS)
+	if Inf != null and int(Inf.MAX_STACKS) != 5:
+		fails.append("PC-A infection cap drifted (%s)" % Inf.MAX_STACKS)
+	if Kits != null and Kits.has_method("kit_ids"):
+		kit_n = int(Kits.kit_ids().size())
+		if kit_n != 12:
+			fails.append("PC-A added a 13th kit (%s)" % kit_n)
+	var persist := str(SoftSession.persist_hud_line()) if SoftSession.has_method("persist_hud_line") else ""
+	if persist.find("COLONY") < 0 or persist.find("SHIP") < 0 or persist.find("SAVED") < 0:
+		fails.append("PC-A persist HUD line missing COLONY/SHIP/SAVED (%s)" % persist)
+	if cluster.has_method("_refresh_label"):
+		cluster._refresh_label()
+	var hud: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+	if hud != null:
+		if hud.has_method("_refresh"):
+			hud._refresh()
+		var lab: Variant = hud.get("_owner_label")
+		if lab is Label:
+			hud_txt += (lab as Label).text
+		var stack: Variant = hud.get("_os_stack")
+		if stack is Label:
+			hud_txt += " " + (stack as Label).text
+	var hud_up := hud_txt.to_upper()
+	if hud_txt != "" and (hud_up.find("COLONY") < 0 or hud_up.find("SAVED") < 0):
+		fails.append("PC-A HUD missing COLONY/SAVED")
+	if LayerContext and str(LayerContext.site_pin_id) != pin0 \
+			and str(LayerContext.site_pin_id).begins_with("SITE_"):
+		fails.append("PC-A minted SITE_* (%s)" % LayerContext.site_pin_id)
+	if not _osh_same_scene(scene0):
+		fails.append("PC-A left OpenSpace")
+	print("[Playtest] PC-A SoftSession restore store=", store1.name,
+		" hull=", SoftSession.ship.get("hull", "") if typeof(SoftSession.ship) == TYPE_DICTIONARY else "",
+		" persist=", persist, " yield=", rate0, " pulse=", pulse0, " kits=", kit_n)
+	print("[Playtest] PASS PC-A SoftSession colony/ship restore · COLONY/SHIP/SAVED · no DPS/yield · no SITE_*")
 
 
 func _assert_in_a(os: Node, fails: PackedStringArray) -> void:

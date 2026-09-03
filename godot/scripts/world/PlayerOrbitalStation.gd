@@ -38,6 +38,8 @@ func _ready() -> void:
 	_ensure_ownership()
 	if get_node_or_null("DockModule") == null:
 		setup(BODY_NEX, "Cybernex")
+	if SoftSession and SoftSession.has_method("restore_orbital_on"):
+		SoftSession.restore_orbital_on(self)
 
 
 func setup(body: String = BODY_NEX, fac: String = "Cybernex") -> void:
@@ -392,6 +394,10 @@ func _refresh_label() -> void:
 		extras.append(tur)
 	if store != "":
 		extras.append(store)
+	if SoftSession and SoftSession.has_method("persist_hud_line"):
+		var pers := str(SoftSession.persist_hud_line())
+		if pers != "":
+			extras.append(pers)
 	if own != "":
 		extras.append(own)
 	if lab == null:

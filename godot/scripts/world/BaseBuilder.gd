@@ -397,6 +397,26 @@ static func place_orbital_storage(cluster: Node3D, faction: String) -> Node3D:
 	return n
 
 
+static func restore_pad_modules(pad: Node3D, faction: String, turret: bool, storage: bool, hangar: bool) -> void:
+	## PC-A: thin restore. Existing place_pad_* only. No new SITE_*.
+	if turret:
+		place_pad_turret(pad, faction)
+	if storage:
+		place_pad_storage(pad, faction)
+	if hangar:
+		place_pad_hangar_stub(pad, faction)
+
+
+static func restore_orbital_modules(cluster: Node3D, faction: String, hangar: bool, turret: bool, storage: bool) -> void:
+	## PC-A: thin restore. Existing place_orbital_* only. No new SITE_*.
+	if hangar:
+		place_orbital_hangar_stub(cluster, faction)
+	if turret:
+		place_orbital_turret(cluster, faction)
+	if storage:
+		place_orbital_storage(cluster, faction)
+
+
 static func place_player_habitat(pad: Node3D, faction: String) -> Node3D:
 	## ST-A: one habitat, code-first. Not a SITE_*, not the OS-G silhouette.
 	return _place_habitat(pad, faction, false)

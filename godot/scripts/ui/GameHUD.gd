@@ -888,6 +888,10 @@ func _refresh() -> void:
 	var ally_line := alliance_hud_text()
 	if ally_line != "":
 		nearest = (nearest + "\n" + ally_line) if nearest else ally_line
+	if SoftSession and SoftSession.has_method("persist_hud_line"):
+		var persist := str(SoftSession.persist_hud_line())
+		if persist != "":
+			nearest = (nearest + "\n" + persist) if nearest else persist
 	if _owner_label:
 		_owner_label.text = nearest
 
