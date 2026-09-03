@@ -200,10 +200,14 @@ static func _fill_fleet(snap: Dictionary, ship: Node, player: Node) -> void:
 				var gd: Node = t.fleet_guest_d()
 				if gd != null and is_instance_valid(gd):
 					n += 1
+			if t.has_method("fleet_guest_e"):
+				var ge: Node = t.fleet_guest_e()
+				if ge != null and is_instance_valid(ge):
+					n += 1
 			if n > 1:
 				break
-	snap["fleet"] = mini(n, 5)
-	snap["fleet_max"] = 5
+	snap["fleet"] = mini(n, 6)
+	snap["fleet_max"] = 6
 
 
 static func has_fields(snap: Dictionary) -> bool:
@@ -277,7 +281,7 @@ static func stack_text(snap: Dictionary) -> String:
 	var fleet_s := "%s %d/%d" % [
 		_SoftK.fleet_label(),
 		int(snap.get("fleet", 0)),
-		int(snap.get("fleet_max", 5)),
+		int(snap.get("fleet_max", 6)),
 	]
 	return "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s" % [
 		econ_s, fuel_s, cargo_s, mod_s, pwr_s, cool_s, ls_s, land_s, eva, en_s, crew_s, fleet_s,
