@@ -503,6 +503,7 @@ func _finish_clash_layout() -> void:
 	_evidence_ar_e()
 	_evidence_ar_k()
 	_evidence_ar_l()
+	_evidence_ar_m()
 	_evidence_river()
 	_evidence_jump_pads()
 	_setup_clash_local_match()
@@ -1119,6 +1120,20 @@ func _evidence_ar_l() -> void:
 	if player and player.ability_system and player.ability_system.has_method("kit_label"):
 		lab = str(player.ability_system.kit_label())
 	print("[AR-L] kits=", n, " fifth=", fifth, " label=", lab, " pin=", LayerContext.site_pin_id if LayerContext else "")
+
+
+func _evidence_ar_m() -> void:
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var n := 0
+	var sixth := ""
+	var lab := ""
+	if Kit and Kit.has_method("kit_ids"):
+		n = Kit.kit_ids().size()
+		if n >= 6:
+			sixth = str(Kit.kit_ids()[5])
+	if player and player.ability_system and player.ability_system.has_method("kit_label"):
+		lab = str(player.ability_system.kit_label())
+	print("[AR-M] kits=", n, " sixth=", sixth, " label=", lab, " pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
 func _want_clash_5v5() -> bool:
