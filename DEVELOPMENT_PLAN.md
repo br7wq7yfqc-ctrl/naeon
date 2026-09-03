@@ -11,10 +11,10 @@
 **Каталог — дыры (очередь, не новый catalog):** `docs/design/WORLD_FILL.md` §6. Ready-made fill → locked plates без GLB → пластины только на титульную дыру. Не mint SITE_*. Не capital-ship wave. OS-H harness built; не G2.  
 **NPC agency + MMO HOLD:** `docs/design/NPC_AGENCY.md` (NP-A…NP-F + NP-C + NP-G ST-C print + NP-H ST-D hangar + **NP-I** ST-G factory built) · `docs/design/MMO_SERVERS.md` (Phase 3 HOLD; 10k CCU / ≥100 на шард без instance-split; нет netcode сейчас; не G5 / G2–G6).
 
-**2026-09-01 — текущий бар PV-C (не Voice, не G2, не G5):**  
+**2026-09-03 — текущий бар PC-A (не Voice, не G2, не G5):**  
 OS-A…OS-H built. G2–G6 закрыты. G1 CRUISE не открыт.  
-ST-A…ST-M / IN-A…F / WF-A / Q-A / Q-B / Q-C / Q-D / Q-E / HF-A / HF-B / HF-C / PV-A / PV-B built.  
-PV-C: first Strategy PvP from ST-A overlay — same host-authority pad rival `CombatDummy`, Pulse 11 both ways, win HP → 0, Infection cap 5, Knowledge labels only. TPS PV-A and hull PV-B stay.  
+ST-A…ST-M / IN-A…F / WF-A / Q-A / Q-B / Q-C / Q-D / Q-E / HF-A / HF-B / HF-C / PV-A / PV-B / PV-C built.  
+PC-A: SoftSession persists pad/orbital player modules + ship across relaunch. SoftKnowledge / HUD COLONY / SHIP / PERSIST only. Host authority. ST-A…ST-M / PV-A…PV-C stay.  
 Петля P0.6 на RTX 3090 жива — не ломать. llvmpipe ≠ FPS PASS.
 
 ---
@@ -140,7 +140,7 @@ PV-C: first Strategy PvP from ST-A overlay — same host-authority pad rival `Co
 
 ### Deliverables
 - Одна система (звезда + 3 тела на разных орбитах + пояс + якоря гейтов) — ARK. Планировка сделана в **Phase G0**; jump points включаются в G3–G4
-- Persistent colonies / ships
+- Persistent colonies / ships — **PC-A built:** SoftSession `user://soft_session.json` remembers pad player modules (habitat/turret/storage/hangar), orbital extras (ST-K/L/M hangar/turret/storage) and ship faction/module kinds; restore via `BaseBuilder` on relaunch; SoftKnowledge / HUD `COLONY` / `SHIP` / `PERSIST` only; host authority; does not steal the ST-A `player_module` slot; never Pulse / kit / P2W. Hangar insurance / full colony sim later. Not Voice. Not aiNEX.
 - Fleet system (до 10–15 кораблей, flagship overlay) — **FL-A + FL-B + FL-C + FL-D + FL-E + FL-F + FL-G + FL-H + FL-I + FL-J + FL-K + FL-L + FL-M + FL-N built:** fourteen extra allied pips on ST-A Strategy overlay (FL-A existing pad-visitor `NpcPilot` / NP-A hull; FL-B / FL-C / FL-D / FL-E / FL-F / FL-G / FL-H / FL-I / FL-J / FL-K / FL-L / FL-M / FL-N SoftNet visual, same grammar; cap 15 = player + 14 closes the 10–15 bar as SoftNet pips; SoftKnowledge / HUD `FLEET n/15`; click/select ≠ combat; host Pulse / occupy; not 15 physical ships; not a second OpenSpace; not ENet)
 - Carriers seed (hangar + drones/fighters) — очередь печати модуля: `docs/design/BASE_STATION_STRATEGY.md` ST-D **built**
 - **Dynamic Ownership Transformation** (prototype): visual + mechanical swap Cybernex (Venus Project) ↔ gROT (biomass industrial) на 1–2 объектах — **DO-A built:** contested transition on one occupied unnamed pad (`Pad_North` / `Pad_Approach` / `Pad_Flank`); `OwnershipData.start_transition` / `advance_transition` + `OwnershipComponent` + `ContestedRing`; SoftKnowledge / HUD `CONTESTED` / `CYBERNEX` / `GROT` only; host authority; ST-F instant flip stays; not HyperGate G4; not galaxy-wide transforms. **DO-B built:** same grammar on the existing `PlayerOrbitalStation` cluster (ST-E dock+habitat stay; ST-G factory stays); not a second pad; not galaxy-wide

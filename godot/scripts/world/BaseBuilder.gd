@@ -207,6 +207,7 @@ static func place_pad_turret(pad: Node3D, faction: String) -> Node3D:
 	if n.has_method("setup"):
 		n.setup(faction)
 	print("[BaseBuilder] pad turret on ", pad.name, " faction=", faction)
+	_pc_a_remember_pad(pad, "turret", faction)
 	return n
 
 
@@ -244,6 +245,7 @@ static func place_pad_storage(pad: Node3D, faction: String) -> Node3D:
 	if n.has_method("setup"):
 		n.setup(faction)
 	print("[BaseBuilder] pad storage on ", pad.name, " faction=", faction)
+	_pc_a_remember_pad(pad, "storage", faction)
 	return n
 
 
@@ -281,6 +283,7 @@ static func place_pad_hangar_stub(pad: Node3D, faction: String) -> Node3D:
 	if n.has_method("setup"):
 		n.setup(faction)
 	print("[BaseBuilder] pad hangar stub on ", pad.name, " faction=", faction)
+	_pc_a_remember_pad(pad, "hangar", faction)
 	return n
 
 
@@ -318,6 +321,7 @@ static func place_orbital_hangar_stub(cluster: Node3D, faction: String) -> Node3
 	if n.has_method("setup_orbital"):
 		n.setup_orbital(faction)
 	print("[BaseBuilder] orbital hangar stub on ", cluster.name, " faction=", faction)
+	_pc_a_remember_orbital("hangar", faction)
 	return n
 
 
@@ -356,6 +360,7 @@ static func place_orbital_turret(cluster: Node3D, faction: String) -> Node3D:
 	if n.has_method("setup_orbital"):
 		n.setup_orbital(faction)
 	print("[BaseBuilder] orbital turret on ", cluster.name, " faction=", faction)
+	_pc_a_remember_orbital("turret", faction)
 	return n
 
 
@@ -394,6 +399,7 @@ static func place_orbital_storage(cluster: Node3D, faction: String) -> Node3D:
 	if n.has_method("setup_orbital"):
 		n.setup_orbital(faction)
 	print("[BaseBuilder] orbital storage on ", cluster.name, " faction=", faction)
+	_pc_a_remember_orbital("storage", faction)
 	return n
 
 
@@ -426,4 +432,34 @@ static func _place_habitat(pad: Node3D, faction: String, by_npc: bool) -> Node3D
 	elif n.has_method("setup"):
 		n.setup(faction)
 	print("[BaseBuilder] ", "npc" if by_npc else "player", " habitat on ", pad.name, " faction=", faction)
+	if not by_npc:
+		_pc_a_remember_pad(pad, "habitat", faction)
 	return n
+
+
+static func _pc_a_on() -> bool:
+	var p0 := load("res://scripts/world/P0Slice.gd")
+	return p0 != null and bool(p0.PC_A_PERSIST)
+
+
+static func _pc_a_session():
+	var tree := Engine.get_main_loop()
+	if tree == null or not (tree is SceneTree):
+		return null
+	return (tree as SceneTree).root.get_node_or_null("/root/SoftSession")
+
+
+static func _pc_a_remember_pad(pad: Node3D, kind: String, faction: String) -> void:
+	if not _pc_a_on():
+		return
+	var sess = _pc_a_session()
+	if sess != null and sess.has_method("remember_pad_module"):
+		sess.remember_pad_module(pad, kind, faction)
+
+
+static func _pc_a_remember_orbital(kind: String, faction: String) -> void:
+	if not _pc_a_on():
+		return
+	var sess = _pc_a_session()
+	if sess != null and sess.has_method("remember_orbital_module"):
+		sess.remember_orbital_module(kind, faction)

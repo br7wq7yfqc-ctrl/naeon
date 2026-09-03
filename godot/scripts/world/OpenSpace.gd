@@ -88,6 +88,7 @@ func _ready() -> void:
 	var CP = load("res://scripts/assets/CanonPlates.gd")
 	if CP and hud_root:
 		CP.spawn_space_hud(hud_root)
+	call_deferred("_restore_pc_a_session")
 
 func _ensure_game_hud() -> void:
 	var tree := get_tree()
@@ -100,6 +101,14 @@ func _ensure_game_hud() -> void:
 	add_child(hud)
 	if hud.has_method("bind_player") and ship != null and is_instance_valid(ship):
 		hud.bind_player(ship)
+
+
+func _restore_pc_a_session() -> void:
+	## PC-A: host restores pad/orbital/ship identity after the ARK boot.
+	if not bool(_P0.PC_A_PERSIST):
+		return
+	if SoftSession and SoftSession.has_method("restore_world"):
+		SoftSession.restore_world(self)
 
 
 func _on_tier(_t: int) -> void:
@@ -1415,7 +1424,12 @@ func _update_hud() -> void:
 		var pvp := ""
 		if _strategy.has_method("pvp_hud_line"):
 			pvp = "  ·  %s  ·  R pulse" % str(_strategy.pvp_hud_line())
-		hud_label.text = ov + pvp + "  ·  Q hack  E firewall  ·  Esc leave"
+		var persist := ""
+		if _strategy.has_method("persist_hud_line"):
+			var pline := str(_strategy.persist_hud_line())
+			if pline != "":
+				persist = "  ·  " + pline
+		hud_label.text = ov + pvp + persist + "  ·  Q hack  E firewall  ·  Esc leave"
 		return
 	var pl: Node3D = nearest_planet(ship.global_position)
 	var alt := 0.0
@@ -1490,6 +1504,10 @@ func _update_hud() -> void:
 	var brief := "%s  ·  %s  ·  %s  ·  %d m/s  ·  HP %d  SHD %d%s%s" % [
 		mode, loc, alt_s, int(spd), int(ship.health), int(ship.shields), extra, tail
 	]
+	if SoftSession and SoftSession.has_method("persist_hud_line"):
+		var persist := str(SoftSession.persist_hud_line())
+		if persist != "":
+			brief += "  ·  " + persist
 	var ally: Node = get_alliance()
 	if ally != null and ally.has_method("hud_line"):
 		var al := str(ally.hud_line())

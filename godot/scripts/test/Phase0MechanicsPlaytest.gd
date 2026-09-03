@@ -57,6 +57,7 @@ func _go() -> void:
 		await _assert_hf_a(os, fails)
 		await _assert_pv_b(os, fails)
 		await _assert_pv_c(os, fails)
+		await _assert_pc_a(os, fails)
 		await _assert_pv_a(os, fails)
 		await _assert_bt_a(os, fails)
 		await _assert_bt_b(os, fails)
@@ -725,6 +726,7 @@ func _go() -> void:
 	await _assert_hf_a(os, fails)
 	await _assert_pv_b(os, fails)
 	await _assert_pv_c(os, fails)
+	await _assert_pc_a(os, fails)
 	await _assert_pv_a(os, fails)
 	await _assert_bt_a(os, fails)
 	await _assert_bt_b(os, fails)
@@ -19076,6 +19078,214 @@ func _assert_pv_c(os: Node, fails: PackedStringArray) -> void:
 		SoftScanCache.invalidate_player()
 	if fails.size() == fail0:
 		print("[Playtest] PASS PV-C")
+
+
+func _assert_pc_a(os: Node, fails: PackedStringArray) -> void:
+	## PC-A: SoftSession persist pad/orbital player modules + ship across relaunch.
+	## SoftKnowledge / HUD COLONY / SHIP / PERSIST only. Host authority.
+	## Does not steal the ST-A player_module slot. Pulse 11. Kits 12. FLEET 15/15.
+	var fail0 := fails.size()
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	var Builder = load("res://scripts/world/BaseBuilder.gd")
+	var nex: Node = _osh_nex()
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var ov: Node = os.strategy_overlay() if os != null and os.has_method("strategy_overlay") else null
+	var pad: Node3D = null
+	var north: Node3D = null
+	var cluster: Node3D = null
+	var habitat: Node3D = null
+	var stored: Node3D = null
+	var north_had := false
+	var orig_fac := "Cybernex"
+	var pulse0 := 11.0
+	if P0 == null or not bool(P0.PC_A_PERSIST) or not bool(P0.PV_C_STRATEGY) \
+			or not bool(P0.ST_A_OVERLAY) or not bool(P0.ST_M_STORAGE):
+		fails.append("PC-A P0Slice flag missing")
+		return
+	if P0 != null and not bool(P0.AR_Z_MATCHMAKING):
+		fails.append("PC-A dropped AR-Z P0Slice flag")
+	if P0 != null and not bool(P0.FL_N_FLEET):
+		fails.append("PC-A dropped FL-N P0Slice flag")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("PC-A flipped ORBITAL_STATIONS")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("PC-A Infection cap drifted")
+	if Kit == null or not Kit.has_method("kit_ids"):
+		fails.append("PC-A AbilityKitCatalog missing")
+	else:
+		var ids: PackedStringArray = Kit.kit_ids()
+		if int(ids.size()) != 12:
+			fails.append("PC-A kit count want 12 (got %s)" % ids.size())
+		if int(ids.size()) >= 13:
+			fails.append("PC-A added a 13th AbilityKit")
+	if SoftSession == null or not SoftSession.has_method("restore_world") \
+			or not SoftSession.has_method("remember_pad_module") \
+			or not SoftSession.has_method("persist_hud_line"):
+		fails.append("PC-A SoftSession persist API missing")
+		return
+	if not bool(SoftSession.is_host_authority()):
+		fails.append("PC-A host authority missing")
+	var clab := str(SoftK.colony_label()) if SoftK and SoftK.has_method("colony_label") else ""
+	var slab := str(SoftK.ship_label()) if SoftK and SoftK.has_method("ship_label") else ""
+	var plab := str(SoftK.persist_label()) if SoftK and SoftK.has_method("persist_label") else ""
+	if clab != "COLONY" and clab != "COLONY HOLD":
+		fails.append("PC-A SoftKnowledge COLONY missing (%s)" % clab)
+	if slab != "SHIP" and slab != "COLONY SHIP":
+		fails.append("PC-A SoftKnowledge SHIP missing (%s)" % slab)
+	if plab != "PERSIST" and plab != "SESSION PERSIST":
+		fails.append("PC-A SoftKnowledge PERSIST missing (%s)" % plab)
+	var hud := str(SoftSession.persist_hud_line())
+	if hud.find("COLONY") < 0 or hud.find("SHIP") < 0 or hud.find("PERSIST") < 0:
+		fails.append("PC-A HUD persist missing (%s)" % hud)
+	if ov != null and ov.has_method("persist_hud_line"):
+		var ohud := str(ov.persist_hud_line())
+		if ohud.find("COLONY") < 0 or ohud.find("SHIP") < 0 or ohud.find("PERSIST") < 0:
+			fails.append("PC-A overlay HUD persist missing (%s)" % ohud)
+	if ov != null and ov.has_method("fleet_cap") and int(ov.fleet_cap()) != 15:
+		fails.append("PC-A FLEET cap=%s, want 15" % int(ov.fleet_cap()))
+	if os == null or nex == null:
+		fails.append("PC-A no OpenSpace/Nex-Prime")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("PC-A must not run on TestArena")
+		return
+	if LayerContext and str(LayerContext.current_layer) == "Arena":
+		fails.append("PC-A must not run on Clash")
+		return
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.2).timeout
+	var tree := get_tree()
+	if tree:
+		for n in tree.get_nodes_in_group("landing_pads"):
+			if n is Node3D and str(n.name) == "Pad_North":
+				north = n as Node3D
+				break
+		var listed: Array = tree.get_nodes_in_group("player_orbital_stations")
+		if not listed.is_empty():
+			cluster = listed[0] as Node3D
+		for want in ["Pad_Flank", "Pad_Approach", "Pad_North"]:
+			for n in tree.get_nodes_in_group("landing_pads"):
+				if n is Node3D and str(n.name) == want:
+					if Builder != null and bool(Builder.pad_has_module(n)):
+						continue
+					pad = n as Node3D
+					break
+			if pad != null:
+				break
+		if pad == null:
+			for n in tree.get_nodes_in_group("landing_pads"):
+				if n is Node3D and Builder != null and bool(Builder.pad_has_player_module(n)) \
+						and str(n.name) != "Pad_North":
+					pad = n as Node3D
+					break
+	if pad == null or not is_instance_valid(pad):
+		fails.append("PC-A no unnamed pad for persist")
+		return
+	if Builder != null and north != null:
+		north_had = bool(Builder.pad_has_player_module(north))
+	if SoftSession.has_method("wipe_colony_memory"):
+		SoftSession.wipe_colony_memory()
+		SoftSession.save_session()
+	if Builder == null:
+		fails.append("PC-A BaseBuilder missing")
+		return
+	habitat = Builder.player_module_on(pad)
+	if habitat == null:
+		habitat = Builder.place_player_habitat(pad, "Cybernex")
+	if habitat == null or not is_instance_valid(habitat):
+		fails.append("PC-A habitat was not placed on %s" % pad.name)
+		return
+	if str(habitat.get_meta("site_pin", "missing")) != "":
+		fails.append("PC-A habitat minted SITE_*")
+	if habitat.has_method("combat_stats") and int(habitat.combat_stats()) != 0:
+		fails.append("PC-A habitat has combat stats")
+	if SoftSession.has_method("remember_pad_module"):
+		SoftSession.remember_pad_module(pad, "habitat", "Cybernex")
+	if cluster == null or not is_instance_valid(cluster):
+		fails.append("PC-A PlayerOrbitalStation missing")
+		return
+	stored = Builder.orbital_storage_on(cluster)
+	if stored == null:
+		stored = Builder.place_orbital_storage(cluster, "Cybernex")
+	if stored == null or not is_instance_valid(stored):
+		fails.append("PC-A orbital extra missing")
+		return
+	if SoftSession.has_method("remember_orbital_module"):
+		SoftSession.remember_orbital_module("storage", "Cybernex")
+	if ship != null and is_instance_valid(ship) and "faction" in ship:
+		orig_fac = str(ship.faction)
+		ship.faction = "gROT"
+	if SoftSession.has_method("remember_ship"):
+		SoftSession.remember_ship(ship)
+	SoftSession.save_session()
+	print("[Playtest] PC-A remember pad=", pad.name, " habitat=", habitat.name,
+		" orbital=storage ship=gROT north_had=", north_had)
+	habitat.queue_free()
+	habitat = null
+	if stored != null and is_instance_valid(stored):
+		stored.queue_free()
+		stored = null
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if SoftSession.has_method("wipe_colony_memory"):
+		SoftSession.wipe_colony_memory()
+	if SoftSession.colony.size() != 0 or SoftSession.orbital.size() != 0 or not SoftSession.ship.is_empty():
+		fails.append("PC-A wipe did not clear in-memory persist")
+	SoftSession.load_session()
+	if SoftSession.colony.is_empty():
+		fails.append("PC-A load lost pad colony")
+	if SoftSession.orbital.is_empty():
+		fails.append("PC-A load lost orbital extra")
+	if str(SoftSession.ship.get("faction", "")) != "gROT":
+		fails.append("PC-A load lost ship faction (%s)" % str(SoftSession.ship.get("faction", "")))
+	SoftSession.restore_world(os)
+	await get_tree().process_frame
+	habitat = Builder.player_module_on(pad)
+	if habitat == null or not is_instance_valid(habitat):
+		fails.append("PC-A restore missed pad habitat on %s" % pad.name)
+	else:
+		var pin := str(habitat.get_meta("site_pin", "missing"))
+		print("[Playtest] PC-A restore habitat=", habitat.name, " pad=", pad.name, " pin=", pin)
+		if pin != "":
+			fails.append("PC-A restore minted SITE_* (%s)" % pin)
+	stored = Builder.orbital_storage_on(cluster)
+	if stored == null or not is_instance_valid(stored):
+		fails.append("PC-A restore missed orbital extra")
+	else:
+		var opin := str(stored.get_meta("site_pin", "missing"))
+		if opin != "":
+			fails.append("PC-A orbital minted SITE_* (%s)" % opin)
+	if ship != null and is_instance_valid(ship) and "faction" in ship:
+		if str(ship.faction) != "gROT":
+			fails.append("PC-A restore missed ship faction (%s)" % str(ship.faction))
+		ship.faction = orig_fac
+	if SoftSession.has_method("remember_ship"):
+		SoftSession.remember_ship(ship)
+	if north != null and north_had and not bool(Builder.pad_has_player_module(north)):
+		fails.append("PC-A stole ST-A player_module slot")
+	if north != null and is_instance_valid(north) and pad != north \
+			and not north_had and bool(Builder.pad_has_player_module(north)):
+		fails.append("PC-A filled ST-A slot that was empty")
+	if ship != null and is_instance_valid(ship):
+		var ab: Node = ship.get_node_or_null("AbilitySystem")
+		if ab != null and ab.get("abilities") != null and (ab.abilities as Array).size() > 0 and ab.abilities[0]:
+			pulse0 = float(ab.abilities[0].damage)
+	if Kit != null and Kit.has_method("kit_by_id"):
+		var loadout: Array = Kit.kit_by_id("cx_nex")
+		if loadout.size() > 0 and loadout[0] != null:
+			pulse0 = float(loadout[0].damage)
+	if absf(pulse0 - 11.0) > 0.01:
+		fails.append("PC-A Pulse DPS drifted (%s)" % pulse0)
+	if ResourceLoader.exists("res://scripts/world/ClashFromWorld.gd") \
+			or ResourceLoader.exists("res://scripts/world/ClashBeacon.gd"):
+		fails.append("PC-A opened G5 world-to-arena")
+	print("[Playtest] PC-A persist · ", hud, " Pulse 11 · host · kits=12 · FLEET 15/15 · G5 closed · no SITE_*")
+	if fails.size() == fail0:
+		print("[Playtest] PASS PC-A")
 
 
 func _assert_pv_a(os: Node, fails: PackedStringArray) -> void:

@@ -352,6 +352,16 @@
     Not a 13th AbilityKit. Not FL-O. AbilityKitCatalog stays at 12
     (cx_nex…gr_thorn). FL-N FLEET 15/15 stays. ST-A…ST-M stay. AR-Z
     stays. ORBITAL_STATIONS stays false. No SITE_* (this pass).
+68. PC-A: SoftSession persists pad/orbital player modules and the
+    player ship across relaunch (same user://soft_session.json).
+    Restore via BaseBuilder. SoftKnowledge / HUD COLONY / SHIP /
+    PERSIST only. Host authority. Infection cap 5. Knowledge soft.
+    story≠power. Does not steal the ST-A player_module slot.
+    Not Pulse / kit unlock / P2W. Not Voice. Not aiNEX. Not G2–G6.
+    Not ranked/pay matchmaking. Not a 13th AbilityKit. Not FL-O.
+    AbilityKitCatalog stays at 12 (cx_nex…gr_thorn). FL-N FLEET
+    15/15 stays. ST-A…ST-M stay. PV-A…PV-C stay. AR-Z stays.
+    ORBITAL_STATIONS stays false. No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

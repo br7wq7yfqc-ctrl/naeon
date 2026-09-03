@@ -18,6 +18,7 @@ class_name StrategyOverlay
 ## FL-N: fourteenth extra allied pip (SoftNet visual, same NP-A grammar). Cap 15.
 ## SN-C: second local viewer sees SoftNet visual habitat/extractor/modules puppet.
 ## PV-C: overlay Pulse 11 vs the same PadPvp rival (PV-A / PV-B stay).
+## PC-A: SoftSession persist HUD COLONY / SHIP / PERSIST (never Pulse / kit).
 ## SoftKnowledge / HUD label only. Click/select ≠ combat. Host Pulse / occupy / Hack.
 
 const _Builder = preload("res://scripts/world/BaseBuilder.gd")
@@ -913,6 +914,13 @@ func pvp_soft_label() -> String:
 
 func pvp_hud_line() -> String:
 	return pvp_soft_label()
+
+
+func persist_hud_line() -> String:
+	## PC-A SoftKnowledge COLONY / SHIP / PERSIST. Never Pulse / kit / P2W.
+	if SoftSession and SoftSession.has_method("persist_hud_line"):
+		return str(SoftSession.persist_hud_line())
+	return "%s · %s · %s" % [_SoftK.colony_label(), _SoftK.ship_label(), _SoftK.persist_label()]
 
 
 func _try_kit(kind: String, target) -> bool:
