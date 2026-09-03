@@ -407,7 +407,8 @@ static func storage_label() -> String:
 	return "STORAGE"
 
 
-## Colony/combat: name the ST-H pad turret. Never Pulse DPS / HP / repair.
+## Colony/combat: name the ST-H pad / ST-L orbital turret.
+## Never Pulse DPS / HP / repair.
 static func turret_label() -> String:
 	var ops := mastery("colony_ops")
 	var combat := mastery("combat")

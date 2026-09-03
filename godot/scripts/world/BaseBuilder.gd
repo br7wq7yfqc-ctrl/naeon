@@ -321,6 +321,44 @@ static func place_orbital_hangar_stub(cluster: Node3D, faction: String) -> Node3
 	return n
 
 
+static func orbital_turret_on(cluster: Node3D) -> Node3D:
+	if cluster == null or not is_instance_valid(cluster):
+		return null
+	var existing: Node = cluster.get_node_or_null("OrbitalDefenseTurret")
+	if existing is Node3D:
+		return existing as Node3D
+	for c in cluster.get_children():
+		if c is Node3D and c.has_meta("orbital_turret") and bool(c.get_meta("orbital_turret")):
+			return c as Node3D
+	return cluster.find_child("OrbitalDefenseTurret", true, false) as Node3D
+
+
+static func place_orbital_turret(cluster: Node3D, faction: String) -> Node3D:
+	## ST-L: one defense turret on the existing PlayerOrbitalStation.
+	## Same PadDefenseTurret grammar as ST-H. Not Clash Turret.gd.
+	var n: Node3D = null
+	if cluster == null or not is_instance_valid(cluster):
+		return null
+	if not bool(cluster.get_meta("player_orbital_station", false)):
+		return null
+	n = orbital_turret_on(cluster)
+	if n != null:
+		return n
+	n = Node3D.new()
+	n.set_script(preload("res://scripts/world/PadDefenseTurret.gd"))
+	n.name = "OrbitalDefenseTurret"
+	n.set_meta("site_pin", "")
+	n.set_meta("player_module", false)
+	cluster.add_child(n)
+	# Off ST-E dock (-14,0,0) / habitat (14,0.4,0), ST-G factory (0,0.2,-16),
+	# ST-K hangar (0,0.2,16).
+	n.position = Vector3(-16.0, 0.4, 12.0)
+	if n.has_method("setup_orbital"):
+		n.setup_orbital(faction)
+	print("[BaseBuilder] orbital turret on ", cluster.name, " faction=", faction)
+	return n
+
+
 static func place_player_habitat(pad: Node3D, faction: String) -> Node3D:
 	## ST-A: one habitat, code-first. Not a SITE_*, not the OS-G silhouette.
 	return _place_habitat(pad, faction, false)

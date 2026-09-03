@@ -44,11 +44,11 @@ Clash: [`ARENA_PREDECESSOR_BENCHMARK.md`](ARENA_PREDECESSOR_BENCHMARK.md).
 | `rules/07` | role_id квестодателей (`CX_PILOT_LIAISON`…) — **Q-D** visitor stamps this on the same Q-A board | второй quest system; кампания |
 | `rules/11`, `rules/23` | иерархия; NP-E intent ≠ siege | pay-to-war; structure siege |
 | `SoftSession.gd` | `user://` form / faction / layer + last action; NP-F short offline cycle | кластер; вторая галактика |
-| `BaseBuilder.gd` | P0 controller-only; ST-A `place_player_habitat`; NP-C `place_npc_habitat`; ST-C/NP-G `print_catalog_module`; ST-G/NP-I `print_factory_catalog_module`; ST-H `place_pad_turret`; ST-I `place_pad_storage`; ST-J `place_pad_hangar_stub`; ST-K `place_orbital_hangar_stub` | mint SITE_* |
+| `BaseBuilder.gd` | P0 controller-only; ST-A `place_player_habitat`; NP-C `place_npc_habitat`; ST-C/NP-G `print_catalog_module`; ST-G/NP-I `print_factory_catalog_module`; ST-H `place_pad_turret`; ST-I `place_pad_storage`; ST-J `place_pad_hangar_stub`; ST-K `place_orbital_hangar_stub`; ST-L `place_orbital_turret` | mint SITE_* |
 | `PadBaseController.gd` | occupy-to-hold, harvest → Contribution / Biomass; NP-B visitor uses the same path | свой yield |
 | `PadPrintBench.gd` | ST-C §6(a) spend → one catalog module; **NP-G** same `print_one_module`; **NP-I** same `print_one_factory_module` | cash skip; hangar (b) |
 | `CarrierHangarQueue.gd` | ST-D §6(b) one hangar slot; **NP-H** same `enqueue_module` | cash skip; factory (c); mint SITE_* |
-| `PlayerOrbitalStation.gd` | ST-E dock+habitat; ST-G factory; ST-K hangar stub; **NP-I** same bench (c) | mint SITE_*; city |
+| `PlayerOrbitalStation.gd` | ST-E dock+habitat; ST-G factory; ST-K hangar stub; ST-L defense turret; **NP-I** same bench (c) | mint SITE_*; city |
 | `ShipController` / `ShipFlightModel` / `ShipLandingGear` | SCM/NAV/HOVER/STALL/LAND; G = LAND на unnamed pad | NPC-пилот |
 | `Contribution.gd` | `add` / `spend`; NP-B harvest + NP-G print + NP-I factory use the same GameManager wallet | отдельный кошелёк NPC |
 | Каталог носителей | slug `cybernex_capital_carrier`, `grot_capital_carrier`, `grot_drone_carrier`, `cybernex_mothership`, `grot_mothership` | hangar + очередь (ST-D **built**; NP-H uses same path) |

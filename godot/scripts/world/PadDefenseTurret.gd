@@ -1,7 +1,9 @@
 extends Node3D
 class_name PadDefenseTurret
 ## ST-H: one player-pad defense module. Not Clash Turret.gd / OUTER 160.
-## Occupied unnamed pad only. Host-authority Pulse (11). Knowledge labels only.
+## ST-L: same grammar on PlayerOrbitalStation (orbital_turret).
+## Occupied unnamed pad (ST-H) or host orbital cluster (ST-L).
+## Host-authority Pulse (11). Knowledge labels only.
 ## Destroyed turret ≠ permadeath. No P2W repair. No SITE_*.
 
 const _Prop := preload("res://scripts/assets/GlbProp.gd")
@@ -20,25 +22,41 @@ var _label: Label3D = null
 
 
 func setup(fac: String) -> void:
+	_bind_turret(fac, false)
+
+
+func setup_orbital(fac: String) -> void:
+	## ST-L: same PadDefenseTurret grammar on the player orbital cluster.
+	_bind_turret(fac, true)
+
+
+func _bind_turret(fac: String, orbital: bool) -> void:
 	faction = fac if fac != "" else "Cybernex"
-	name = "PadDefenseTurret"
+	name = "OrbitalDefenseTurret" if orbital else "PadDefenseTurret"
 	health = max_health
 	_alive = true
 	set_meta("site_pin", "")
 	set_meta("module_type", "turret")
-	set_meta("pad_turret", true)
+	set_meta("pad_turret", not orbital)
+	set_meta("orbital_turret", orbital)
 	set_meta("player_module", false)
 	set_meta("npc_module", false)
 	set_meta("printed_module", false)
 	set_meta("combat_authority", "host")
 	set_meta("p2w_repair", false)
 	set_meta("clash_turret", false)
-	if not is_in_group("pad_defense_turrets"):
+	if orbital:
+		if not is_in_group("orbital_defense_turrets"):
+			add_to_group("orbital_defense_turrets")
+	elif not is_in_group("pad_defense_turrets"):
 		add_to_group("pad_defense_turrets")
 	_spawn_marker()
 	_spawn_mesh()
 	_ensure_label()
-	print("[PadDefenseTurret] ST-H on pad fac=", faction, " hp=", max_health, " pulse=", PULSE_DPS)
+	if orbital:
+		print("[PadDefenseTurret] ST-L on orbital cluster fac=", faction, " hp=", max_health, " pulse=", PULSE_DPS)
+	else:
+		print("[PadDefenseTurret] ST-H on pad fac=", faction, " hp=", max_health, " pulse=", PULSE_DPS)
 
 
 func module_type() -> String:
@@ -156,7 +174,7 @@ func _spawn_marker() -> void:
 	var n := Node3D.new()
 	n.name = "Turret"
 	n.set_meta("site_pin", "")
-	n.set_meta("outpost_part", "pad_turret")
+	n.set_meta("outpost_part", "orbital_turret" if bool(get_meta("orbital_turret", false)) else "pad_turret")
 	add_child(n)
 
 

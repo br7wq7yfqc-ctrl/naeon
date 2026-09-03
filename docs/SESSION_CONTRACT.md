@@ -319,6 +319,13 @@
     ST-J pad stub stays. Not ST-D carrier hangar. Not IN-F SoftNet
     V4. Not a mobile SITE_*. Infection cap 5. Not a 13th AbilityKit.
     Not FL-O. ORBITAL_STATIONS stays false. No SITE_* (this pass).
+64. ST-L: one PadDefenseTurret on the existing PlayerOrbitalStation
+    cluster (ST-E dock+habitat; ST-G factory stays; ST-K hangar stub
+    stays) via BaseBuilder / PadDefenseTurret.setup_orbital.
+    SoftKnowledge / HUD TURRET only. Host authority. Pulse 11.
+    Infection cap 5. ST-H pad turret stays distinct. Not Clash
+    Turret.gd / OUTER 160. Not a 13th AbilityKit. Not FL-O.
+    ORBITAL_STATIONS stays false. No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

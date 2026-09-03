@@ -9,7 +9,7 @@ No P2W · soft Knowledge · Infection max 5 · story ≠ power · Godot 4.7.2 ·
 rules/00–26 · **OPEN_SPACE_SC_BENCHMARK** · **BASE_STATION_STRATEGY** · **ASSET_SOURCE_CANON** · **WORLD_FILL** · DEVELOPMENT_PLAN 2.4 · SITE_PIN · GALAXY_LAYER_PLAN (G2–G6 locked) · TRIPO_ASSET_MANIFEST
 
 ## Where things are authored
-- **Order of work** → `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-K built). OS-A…OS-H remain in `OPEN_SPACE_SC_BENCHMARK.md`. Pointer in `DEVELOPMENT_PLAN.md`
+- **Order of work** → `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-L built). OS-A…OS-H remain in `OPEN_SPACE_SC_BENCHMARK.md`. Pointer in `DEVELOPMENT_PLAN.md`
 - **Mesh source** → `docs/design/ASSET_SOURCE_CANON.md`
 - **Fill vs authored** → `docs/design/WORLD_FILL.md`
 - **Human GPU fact** → `docs/PLAYTEST_SANDBOX.md` (3090 / P0.6; not FPS PASS on llvmpipe)
@@ -472,6 +472,7 @@ HANDOFF → rules/lore/design → skill §25 → code.
 | 2026-09-01 | OS-H root: commit_presence so occupy/radar/layer/camera do not leak ship after hatch. InteriorDirector no longer stamps Space on EVA hatch. | os-h-layer-reset |
 | 2026-08-28 | ST-G: factory in existing PlayerOrbitalStation cluster. Bench (c) spend Contribution/Biomass → one catalog module. Without factory, (c) refuses. No SITE_*. ST-E stays dock+habitat. | st-g-factory |
 | 2026-09-03 | ST-K: one hangar stub on existing PlayerOrbitalStation. Same PadHangarStub / BaseBuilder grammar as ST-J. SoftKnowledge / HUD HANGAR STUB. Host authority. ST-E two modules + ST-G factory stay. ST-J pad stub stays. Hatch/LAND legal. Not ST-D / IN-F. | st-k-orbital-hangar |
+| 2026-09-03 | ST-L: one PadDefenseTurret on existing PlayerOrbitalStation. Same PadDefenseTurret / BaseBuilder grammar as ST-H. SoftKnowledge / HUD TURRET. Host authority. Pulse 11. ST-E two modules + ST-G factory + ST-K hangar stub stay. ST-H pad turret stays distinct. | st-l-orbital-turret |
 
 | 2026-08-21 | OS-I closeout: warm dirt trimesh before EVA snap; disable pooled chunk collision; stop analytic floor-assist fighting hills (fall-through after F/I). Character yaw 0/PI only — no 90deg sideways walk. |
 | 2026-08-21 | OS-J: orbit-read FarPlate/FarMast/outpost hide below ~400 m. Near hull metal. Cyan 96 m slab was the blue monolith next to the ship. |
