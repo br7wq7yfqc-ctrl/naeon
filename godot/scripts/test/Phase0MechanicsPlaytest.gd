@@ -21922,7 +21922,7 @@ func _assert_ar_m(os: Node, fails: PackedStringArray) -> void:
 		fails.append("AR-M Infection cap changed")
 	print("[Playtest] AR-M sixth kit · SoftKnowledge only · AR-A…AR-L stay · no SITE_*")
 	if fails.size() == fail0:
-		print("[Playtest] PASS AR-M")
+		print("[Playtest] AR-M PASS")
 	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
 		SoftScanCache.invalidate_enemies()
 
