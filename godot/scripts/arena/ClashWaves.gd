@@ -2,7 +2,8 @@ extends Node
 class_name ClashWaves
 ## AR-C: timed minion waves on existing ClashLanes (Predecessor bar).
 ## AR-T: first host-authority lane-wave seed — same CombatDummy, Pulse 11,
-## SoftKnowledge WAVE / MINION only. Not a 13th kit. No shop / P2W / XP.
+## SoftKnowledge WAVE / MINION only. Not a 13th kit. No shop / P2W.
+## AR-U XP from a last-hit is a SoftKnowledge label only — never Pulse.
 
 signal wave_spawned(wave_index: int, count: int)
 
@@ -155,6 +156,10 @@ func _on_minion_died(lane: String, _fac: String) -> void:
 	var clash: Node = tree.get_first_node_in_group("aexion_clash")
 	if clash and clash.has_method("register_minion_down"):
 		clash.register_minion_down(lane)
+	elif tree.get_first_node_in_group("clash_local_match"):
+		var local: Node = tree.get_first_node_in_group("clash_local_match")
+		if local != null and local.has_method("register_minion_xp"):
+			local.register_minion_xp()
 
 
 func _wave_lanes() -> PackedStringArray:

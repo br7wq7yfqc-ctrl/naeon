@@ -67,6 +67,8 @@ func register_minion_down(lane: String = "MID") -> void:
 		return
 	# Soft lane pressure only — never a kill-to-5 / P2W farm.
 	_add_pressure(lane, 3.0)
+	# AR-U: SoftKnowledge XP label only. Never Pulse / kit unlock.
+	_grant_minion_xp()
 
 
 func register_camp_down(role: String = "") -> void:
@@ -227,3 +229,16 @@ func objectives_secured() -> int:
 		if bool(_lane_objective_claimed[k]):
 			n += 1
 	return n
+
+
+func _grant_minion_xp() -> void:
+	var tree := get_tree()
+	if tree == null:
+		return
+	var local: Node = tree.get_first_node_in_group("clash_local_match")
+	if local != null and local.has_method("register_minion_xp"):
+		local.register_minion_xp()
+		return
+	var director: Node = tree.get_first_node_in_group("clash_match")
+	if director != null and director.has_method("register_minion_xp"):
+		director.register_minion_xp()

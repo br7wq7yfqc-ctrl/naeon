@@ -524,6 +524,7 @@ func _finish_clash_layout() -> void:
 	_setup_clash_local_match()
 	_evidence_ar_f()
 	_evidence_ar_g()
+	_evidence_ar_u()
 	_setup_arena_playtest()
 
 
@@ -669,10 +670,15 @@ func _update_clash_radar() -> void:
 			if _local_match and _local_match.has_method("actor_count"):
 				var mlabel := "5v5" if _local_match.has_method("is_5v5") and bool(_local_match.is_5v5()) else "3v3"
 				localm = "  ·  %s %d" % [mlabel, int(_local_match.actor_count())]
+			var xp := ""
+			if _local_match and _local_match.has_method("xp_hud_line"):
+				xp = "  ·  %s" % str(_local_match.xp_hud_line())
+			elif get_node_or_null("ClashMatchDirector") and get_node("ClashMatchDirector").has_method("xp_hud_line"):
+				xp = "  ·  %s" % str(get_node("ClashMatchDirector").xp_hud_line())
 			if press == "":
-				_lane_hud.text = "LANE %s%s%s%s%s%s%s%s" % [_lanes.player_lane, wave, camp, kit, mod, river, pad, localm]
+				_lane_hud.text = "LANE %s%s%s%s%s%s%s%s%s" % [_lanes.player_lane, wave, camp, kit, mod, river, pad, localm, xp]
 			else:
-				_lane_hud.text = "LANE %s  ·  %s%s%s%s%s%s%s%s" % [_lanes.player_lane, press, wave, camp, kit, mod, river, pad, localm]
+				_lane_hud.text = "LANE %s  ·  %s%s%s%s%s%s%s%s%s" % [_lanes.player_lane, press, wave, camp, kit, mod, river, pad, localm, xp]
 	if _radar == null or not _radar.has_method("set_snapshot"):
 		return
 	# One entry per node: the old second pass compared a Node against an Array
@@ -1262,6 +1268,29 @@ func _evidence_ar_t() -> void:
 		pulse = float(_waves.pulse_damage())
 	print("[AR-T] wave=", w, " living=", live, " label=", wlab, "/", mlab,
 		" host=", host, " pulse=", pulse, " pin=", LayerContext.site_pin_id if LayerContext else "")
+
+
+func _evidence_ar_u() -> void:
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var xlab := str(SoftK.xp_label()) if SoftK and SoftK.has_method("xp_label") else ""
+	var llab := str(SoftK.level_label()) if SoftK and SoftK.has_method("level_label") else ""
+	var xp := 0.0
+	var lv := 1
+	var line := ""
+	if _local_match and "match_xp" in _local_match:
+		xp = float(_local_match.match_xp)
+		lv = int(_local_match.match_level)
+		if _local_match.has_method("xp_hud_line"):
+			line = str(_local_match.xp_hud_line())
+	var dir: Node = get_node_or_null("ClashMatchDirector")
+	if line == "" and dir and dir.has_method("xp_hud_line"):
+		line = str(dir.xp_hud_line())
+		if dir.has_method("match_xp"):
+			xp = float(dir.match_xp())
+		if dir.has_method("match_level"):
+			lv = int(dir.match_level())
+	print("[AR-U] xp=", xp, " level=", lv, " label=", xlab, "/", llab,
+		" hud=", line, " pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
 func _want_clash_5v5() -> bool:
