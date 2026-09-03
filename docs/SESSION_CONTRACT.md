@@ -362,6 +362,17 @@
     AbilityKitCatalog stays at 12 (cx_nex…gr_thorn). FL-N FLEET
     15/15 stays. ST-A…ST-M stay. PV-A…PV-C stay. AR-Z stays.
     ORBITAL_STATIONS stays false. No SITE_* (this pass).
+69. PC-B: SoftSession persists ONE crate (amount/slug) for PadStorage
+    (ST-I pad and/or ST-M orbital) and/or ship CargoHold across
+    relaunch (same user://soft_session.json). Restore via existing
+    PadStorage / CargoHold APIs only. SoftKnowledge / HUD CRATE /
+    CARGO / PERSIST only. Host authority. Infection cap 5. Knowledge
+    soft. story≠power. Does not redo PC-A. No SITE_* mint. Not Pulse
+    / kit unlock / P2W. Not Voice. Not aiNEX. Not G2–G6. Not
+    ranked/pay matchmaking. Not a 13th AbilityKit. Not FL-O.
+    AbilityKitCatalog stays at 12 (cx_nex…gr_thorn). FL-N FLEET
+    15/15 stays. ST-A…ST-M stay. PV-A…PV-C stay. AR-Z stays.
+    ORBITAL_STATIONS stays false. No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

@@ -125,6 +125,15 @@ const PV_C_STRATEGY := true
 ## Not Voice. Not aiNEX. Not G2–G6. Not ranked/pay matchmaking. Not FL-O.
 ## Not a 13th kit. ORBITAL_STATIONS stays false. No SITE_*.
 const PC_A_PERSIST := true
+## PC-B: SoftSession persists ONE crate (amount/slug) for PadStorage
+## (ST-I pad and/or ST-M orbital) and/or ship CargoHold across relaunch.
+## Same user://soft_session.json. Restore via existing PadStorage / CargoHold
+## APIs only. SoftKnowledge / HUD CRATE / CARGO / PERSIST only.
+## Host authority. Infection cap 5. Knowledge soft. story≠power. No P2W.
+## Does not redo PC-A. No SITE_* mint. AbilityKitCatalog stays at 12.
+## FL-N FLEET 15/15. Not Voice. Not aiNEX. Not G2–G6. Not ranked/pay
+## matchmaking. Not FL-O. Not a 13th kit. ORBITAL_STATIONS stays false.
+const PC_B_PERSIST := true
 ## BT-A: one occupied-pad guard. Tiny 3-state BT (patrol / engage Pulse / return).
 ## Host authority. Pulse 11. PV-A rival stays distinct. G5 closed. Not Clash waves.
 const BT_A_GUARD := true

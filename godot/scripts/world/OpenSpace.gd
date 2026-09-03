@@ -1429,6 +1429,10 @@ func _update_hud() -> void:
 			var pline := str(_strategy.persist_hud_line())
 			if pline != "":
 				persist = "  ·  " + pline
+		if _strategy.has_method("crate_persist_hud_line"):
+			var cline := str(_strategy.crate_persist_hud_line())
+			if cline != "":
+				persist += "  ·  " + cline
 		hud_label.text = ov + pvp + persist + "  ·  Q hack  E firewall  ·  Esc leave"
 		return
 	var pl: Node3D = nearest_planet(ship.global_position)
@@ -1508,6 +1512,10 @@ func _update_hud() -> void:
 		var persist := str(SoftSession.persist_hud_line())
 		if persist != "":
 			brief += "  ·  " + persist
+	if SoftSession and SoftSession.has_method("crate_persist_hud_line"):
+		var crate_line := str(SoftSession.crate_persist_hud_line())
+		if crate_line != "":
+			brief += "  ·  " + crate_line
 	var ally: Node = get_alliance()
 	if ally != null and ally.has_method("hud_line"):
 		var al := str(ally.hud_line())
