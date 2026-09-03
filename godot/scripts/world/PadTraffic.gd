@@ -31,8 +31,8 @@ extends Node3D
 ## Cap 4 (player + 3). Not 10–15 ships. Not a second OpenSpace. Not ENet.
 ## FL-D: a fourth extra allied pip — same SoftNet / NP-A visual grammar.
 ## Cap 5 (player + 4). Not 10–15 ships. Not a second OpenSpace. Not ENet.
-## FL-E / FL-F / FL-G: fifth / sixth / seventh SoftNet visual allies.
-## Cap 8 (player + 7) toward 10–15. Not a second OpenSpace. Not ENet.
+## FL-E / FL-F / FL-G / FL-H: fifth / sixth / seventh / eighth SoftNet visual allies.
+## Cap 9 (player + 8) toward 10–15. Not a second OpenSpace. Not ENet.
 ## Knowledge labels only — never yield.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
@@ -63,6 +63,7 @@ var _fleet_ally_d: Node3D = null
 var _fleet_ally_e: Node3D = null
 var _fleet_ally_f: Node3D = null
 var _fleet_ally_g: Node3D = null
+var _fleet_ally_h: Node3D = null
 var _clash_door: Node3D = null
 var _clash_door_base: Vector3 = Vector3(0.0, 1.15, 20.0)
 
@@ -87,11 +88,12 @@ func setup(host_pad: Node3D) -> void:
 	_spawn_fleet_ally_e()
 	_spawn_fleet_ally_f()
 	_spawn_fleet_ally_g()
+	_spawn_fleet_ally_h()
 	_spawn_clash_door()
 	_offer_player_contract()
 	refresh_labels()
 	set_process(true)
-	print("[PadTraffic] host=", _host_name, " guard=1 visitor=1 surface=1 rival=1 softnet=1 swarm=3 pack=3 fleet=7")
+	print("[PadTraffic] host=", _host_name, " guard=1 visitor=1 surface=1 rival=1 softnet=1 swarm=3 pack=3 fleet=8")
 
 
 func host_pad_name() -> String:
@@ -230,6 +232,20 @@ func fleet_guest_g() -> Node3D:
 	return null
 
 
+func fleet_guest_h() -> Node3D:
+	## FL-H: eighth SoftNet visual ally. Same NP-A hold grammar. Not Ship.tscn.
+	if _fleet_ally_h != null and is_instance_valid(_fleet_ally_h):
+		return _fleet_ally_h
+	var n: Node = get_node_or_null("FleetAllyVisualH")
+	if n is Node3D and is_instance_valid(n):
+		_fleet_ally_h = n as Node3D
+		return _fleet_ally_h
+	_spawn_fleet_ally_h()
+	if _fleet_ally_h != null and is_instance_valid(_fleet_ally_h):
+		return _fleet_ally_h
+	return null
+
+
 func fleet_guests() -> Array:
 	var out: Array = []
 	var a := fleet_guest()
@@ -253,15 +269,18 @@ func fleet_guests() -> Array:
 	var g := fleet_guest_g()
 	if g != null:
 		out.append(g)
+	var h := fleet_guest_h()
+	if h != null:
+		out.append(h)
 	return out
 
 
 func fleet_cap() -> int:
-	return 8
+	return 9
 
 
 func fleet_count() -> int:
-	## Guests only. Overlay / HUD add the player hull for FLEET n/8.
+	## Guests only. Overlay / HUD add the player hull for FLEET n/9.
 	var n := 0
 	if get_visitor() != null:
 		n += 1
@@ -276,6 +295,8 @@ func fleet_count() -> int:
 	if fleet_guest_f() != null:
 		n += 1
 	if fleet_guest_g() != null:
+		n += 1
+	if fleet_guest_h() != null:
 		n += 1
 	return n
 
@@ -296,7 +317,7 @@ func clash_door_target() -> String:
 
 
 func try_add_fleet_guest(_who: Node = null) -> bool:
-	## Cap 8 (player + seven extras). Setup already placed the seven guests.
+	## Cap 9 (player + eight extras). Setup already placed the eight guests.
 	return false
 
 
@@ -1167,6 +1188,44 @@ func _spawn_fleet_ally_g() -> void:
 	lab.position = Vector3(0, 2.4, 0)
 	lab.text = _SoftK.fleet_label()
 	lab.modulate = Color(0.4, 0.7, 1.0)
+	v.add_child(lab)
+
+
+func _spawn_fleet_ally_h() -> void:
+	## FL-H: eighth SoftNet visual hull. Same visitor-hold grammar. Not an eighth Ship.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 != null and not bool(P0.FL_H_FLEET):
+		return
+	if _fleet_ally_h != null and is_instance_valid(_fleet_ally_h):
+		return
+	if get_node_or_null("FleetAllyVisualH") != null:
+		_fleet_ally_h = get_node_or_null("FleetAllyVisualH") as Node3D
+		return
+	var v := Node3D.new()
+	v.name = "FleetAllyVisualH"
+	v.set_meta("pad_traffic_role", "fleet_ally_h")
+	v.set_meta("fleet_member", true)
+	v.set_meta("softnet_visual", true)
+	v.set_meta("combat_authority", "host")
+	v.set_meta("occupy_authority", "host")
+	v.set_meta("site_pin", "")
+	v.position = Vector3(0.0, 6.5, 20.0)
+	add_child(v)
+	_fleet_ally_h = v
+	_add_marker(v, "Hull")
+	if SoftNetSession and SoftNetSession.has_method("bind_visual_puppet"):
+		SoftNetSession.bind_visual_puppet(v)
+	if DisplayServer.get_name() == "headless":
+		return
+	_build_visitor_hull(v)
+	var lab := Label3D.new()
+	lab.name = "Label"
+	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lab.font_size = 22
+	lab.outline_size = 5
+	lab.position = Vector3(0, 2.4, 0)
+	lab.text = _SoftK.fleet_label()
+	lab.modulate = Color(0.95, 0.55, 0.85)
 	v.add_child(lab)
 
 
