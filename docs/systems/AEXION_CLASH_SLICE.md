@@ -33,12 +33,13 @@ OpenSpace → **M** or **Tab** → TestArena Clash · kill dummies to 5 · soft 
 - ClashRadar Control HUD
 - Lane waves (AR-C): `ClashWaves` timed `CombatDummy` proxies march TOP/MID/BOT toward enemy OUTER; hit/be-hit via existing Turret hooks; no shop / P2W / new GLB
 - Jungle camp (AR-D): one off-lane `ClashCamp` (fangtooth-class role, not IP); damageable code-first proxy; soft contest announce; drop = soft WS, not a unique weapon; Knowledge may label only
+- Prime camp (AR-J): one additional off-lane `ClashCamp` (prime-class role, not IP) on the same 60×60; same grammar; soft contest announce; drop = soft WS only (not a unique weapon); SoftKnowledge / HUD labels camp / contest / WS
 - River (same footprint): `ClashRiver` mid-crossing + inter-lane channels on the existing 60×60 floor; terrain/read, not an objective; no jump pads (OTS camera)
 - Kits / module (AR-E): 4 kits × 4 slots (CX Nex/Grid, GR Rot/Spore); one `ClashModuleBench` session `ShipModule` (not a Paragon deck, not cash-shop); Knowledge may label only; forms stay identity
 - 3v3 local (AR-F): `ClashLocalMatch` fills six slots on TOP/MID/BOT (host + SoftNet visual `CombatDummy` puppets). Host owns combat. G5 stays closed. Still startable.
 - 5v5 local (AR-G): same host + SoftNet path; ten slots on TOP/MID/BOT + AR-D jungle. Default TestArena door. `--clash-3v3` keeps 3v3.
 - Pad door (AR-H): occupied unnamed pad `ClashDoor` → TestArena. Not a city-map. G5 cluster stays closed.
-- Match end (AR-I): either team's CORE Turret HP → 0 ends 3v3 and 5v5. SoftKnowledge HUD `WIN` / `LOSS` only. SoftSession records WS (+15 / +3, daily cap 60). Excess wins → `TITLE` cosmetics only. Not planet flip. Not a unique combat item.
+- Match end (AR-I): either team's CORE Turret HP → 0 ends 3v3 and 5v5. SoftKnowledge HUD `WIN` / `LOSS` only. SoftSession records WS (+15 / +3, daily cap 60). Excess wins → `TITLE` cosmetics only. Not planet flip. Not a unique combat item. AR-J does not change this.
 
 ## Soft lane objectives
 | Action | Pressure | Soft WS |
@@ -49,5 +50,6 @@ OpenSpace → **M** or **Tab** → TestArena Clash · kill dummies to 5 · soft 
 | Lane hits 100 | claim once | **+2** |
 | All 3 lanes | match win | win WS |
 | Off-lane camp down | +18 MID | **+2** (not a unique weapon) |
+| Prime camp down | +24 MID | **+3** (soft WS only; not a unique weapon) |
 
 Never permanent map control. Daily WS still capped at 60.

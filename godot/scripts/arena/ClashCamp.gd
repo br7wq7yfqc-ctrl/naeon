@@ -1,6 +1,7 @@
 extends Node3D
 class_name ClashCamp
 ## AR-D: one off-lane jungle objective (fangtooth-class role, not IP).
+## AR-J: optional second pit (prime-class role, not IP) on the same 60×60.
 ## Code-first proxy — no GLB, no unique weapon, Knowledge may label only.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
@@ -8,13 +9,21 @@ const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
 signal contest_changed(contested: bool)
 signal camp_down
 
+const ROLE_FANG := "fangtooth"
+const ROLE_PRIME := "prime"
+
 ## Between MID (x=0±3.2) and TOP (x=14±3.2) on the same 60×60 floor.
 const CAMP_POS := Vector3(7.2, 0.0, -1.2)
+## Opposite jungle pocket — between MID and BOT. Same footprint.
+const PRIME_POS := Vector3(-7.2, 0.0, 1.2)
 const CONTEST_RADIUS := 7.5
 const CAMP_HP := 220.0
+const PRIME_HP := 360.0
 const RESPAWN := 40.0
+const PRIME_RESPAWN := 55.0
 const CONTEST_HOLD := 2.4
 
+var camp_role: String = ROLE_FANG
 var faction: String = "Neutral"
 var max_health: float = CAMP_HP
 var health: float = CAMP_HP
@@ -28,16 +37,26 @@ var _last_announce: String = ""
 var _drop_kind: String = "soft_ws"
 
 func _ready() -> void:
-	name = "ClashCamp"
+	if name == "ClashPrimeCamp" and camp_role != ROLE_PRIME:
+		camp_role = ROLE_PRIME
+	if camp_role == ROLE_PRIME:
+		if name == "" or name == "Node3D":
+			name = "ClashPrimeCamp"
+		max_health = PRIME_HP
+		position = PRIME_POS
+	else:
+		if name == "" or name == "Node3D":
+			name = "ClashCamp"
+		max_health = CAMP_HP
+		position = CAMP_POS
 	add_to_group("clash_camp")
 	add_to_group("enemy")
 	add_to_group("hackable")
-	position = CAMP_POS
 	health = max_health
 	_build_proxy()
 	_refresh_label()
 	set_process(true)
-	print("[ClashCamp] off-lane pit at ", CAMP_POS, " hp=", max_health, " label=", label_text())
+	print("[ClashCamp] ", camp_role, " pit at ", position, " hp=", max_health, " label=", label_text())
 
 
 func bind_player(p: Node3D) -> void:
@@ -68,13 +87,21 @@ func camp_drop_kind() -> String:
 	return _drop_kind
 
 
+func get_camp_role() -> String:
+	return camp_role
+
+
+func is_prime() -> bool:
+	return camp_role == ROLE_PRIME
+
+
 func is_off_lane() -> bool:
 	return absf(global_position.x) > 3.6 and absf(global_position.x - 14.0) > 3.6 \
 		and absf(global_position.x + 14.0) > 3.6
 
 
 func label_text() -> String:
-	return _SoftK.camp_label()
+	return _SoftK.camp_label(camp_role)
 
 
 func get_faction() -> String:
@@ -82,11 +109,11 @@ func get_faction() -> String:
 
 
 func hurtbox_center() -> Vector3:
-	return global_position + Vector3(0, 1.15, 0)
+	return global_position + Vector3(0, 1.35 if is_prime() else 1.15, 0)
 
 
 func hurtbox_radius() -> float:
-	return 1.45
+	return 1.7 if is_prime() else 1.45
 
 
 func note_presence(pos: Vector3) -> void:
@@ -132,7 +159,10 @@ func _open_contest(reason: String) -> void:
 	if _contested:
 		return
 	_contested = true
-	_last_announce = "CAMP CONTESTED — soft · no unique weapon"
+	if is_prime():
+		_last_announce = "PRIME CONTESTED — soft · no unique weapon"
+	else:
+		_last_announce = "CAMP CONTESTED — soft · no unique weapon"
 	contest_changed.emit(true)
 	_refresh_label()
 	if _mat:
@@ -142,7 +172,7 @@ func _open_contest(reason: String) -> void:
 	if tree:
 		var matchn: Node = tree.get_first_node_in_group("clash_match")
 		if matchn and matchn.has_method("register_camp_contest"):
-			matchn.register_camp_contest()
+			matchn.register_camp_contest(camp_role)
 			announced = true
 	if not announced and GameManager:
 		GameManager.toast_requested.emit(_last_announce)
@@ -173,13 +203,14 @@ func _die() -> void:
 	if tree:
 		var clash: Node = tree.get_first_node_in_group("aexion_clash")
 		if clash and clash.has_method("register_camp_down"):
-			clash.register_camp_down()
+			clash.register_camp_down(camp_role)
 	if CombatJuice:
 		CombatJuice.kill_pop(global_position)
 	visible = false
-	print("[ClashCamp] down drop=", _drop_kind, " (not a unique weapon)")
+	print("[ClashCamp] ", camp_role, " down drop=", _drop_kind, " (not a unique weapon)")
 	if get_tree():
-		get_tree().create_timer(RESPAWN).timeout.connect(_respawn)
+		var wait := PRIME_RESPAWN if is_prime() else RESPAWN
+		get_tree().create_timer(wait).timeout.connect(_respawn)
 
 
 func _respawn() -> void:
@@ -195,7 +226,9 @@ func _respawn() -> void:
 
 
 func _build_proxy() -> void:
-	var col := Color(0.55, 0.82, 0.28)
+	var col := Color(0.92, 0.72, 0.22) if is_prime() else Color(0.55, 0.82, 0.28)
+	var mound_sz := Vector3(2.8, 2.0, 2.8) if is_prime() else Vector3(2.2, 1.6, 2.2)
+	var ring_sz := Vector3(5.2, 0.14, 5.2) if is_prime() else Vector3(4.4, 0.12, 4.4)
 	_mat = StandardMaterial3D.new()
 	_mat.albedo_color = col * 0.4
 	_mat.metallic = 0.35
@@ -209,16 +242,16 @@ func _build_proxy() -> void:
 	var mound := MeshInstance3D.new()
 	mound.name = "Mound"
 	var mound_mesh := BoxMesh.new()
-	mound_mesh.size = Vector3(2.2, 1.6, 2.2)
+	mound_mesh.size = mound_sz
 	mound.mesh = mound_mesh
 	mound.material_override = _mat
-	mound.position.y = 0.8
+	mound.position.y = mound_sz.y * 0.5
 	mound.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mound)
 	var ring := MeshInstance3D.new()
 	ring.name = "PitRing"
 	var ring_mesh := BoxMesh.new()
-	ring_mesh.size = Vector3(4.4, 0.12, 4.4)
+	ring_mesh.size = ring_sz
 	ring.mesh = ring_mesh
 	ring.material_override = _mat
 	ring.position.y = 0.06
@@ -231,16 +264,16 @@ func _build_proxy() -> void:
 		_label.font_size = 20
 		_label.outline_size = 10
 		_label.outline_modulate = Color(0, 0, 0, 0.9)
-		_label.position = Vector3(0, 2.6, 0)
+		_label.position = Vector3(0, 2.9 if is_prime() else 2.6, 0)
 		add_child(_label)
 	var body := StaticBody3D.new()
 	body.collision_layer = 4
 	body.collision_mask = 0
 	var cs := CollisionShape3D.new()
 	var box := BoxShape3D.new()
-	box.size = Vector3(2.2, 1.6, 2.2)
+	box.size = mound_sz
 	cs.shape = box
-	cs.position.y = 0.8
+	cs.position.y = mound_sz.y * 0.5
 	body.add_child(cs)
 	add_child(body)
 

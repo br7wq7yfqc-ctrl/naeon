@@ -21,6 +21,7 @@ var _lane_hud: Label = null
 var dummy_scene: PackedScene = preload("res://scenes/combat/CombatDummy.tscn")
 var _waves: Node = null
 var _camp: Node3D = null
+var _prime_camp: Node3D = null
 var _bench: Node3D = null
 var _river: Node3D = null
 var _jump_pads: Node3D = null
@@ -485,6 +486,7 @@ func _finish_clash_layout() -> void:
 		SoftNetSession.bind_player(player)
 	_setup_clash_waves()
 	_setup_clash_camp()
+	_setup_clash_prime_camp()
 	_setup_module_bench()
 	_setup_clash_river()
 	_setup_clash_jump_pads()
@@ -492,6 +494,7 @@ func _finish_clash_layout() -> void:
 	_evidence_ar_b()
 	_evidence_ar_c()
 	_evidence_ar_d()
+	_evidence_ar_j()
 	_evidence_ar_e()
 	_evidence_river()
 	_evidence_jump_pads()
@@ -619,6 +622,8 @@ func _update_clash_radar() -> void:
 			var camp := ""
 			if _camp and _camp.has_method("is_contested") and bool(_camp.is_contested()):
 				camp = "  ·  CAMP CONTEST"
+			if _prime_camp and _prime_camp.has_method("is_contested") and bool(_prime_camp.is_contested()):
+				camp += "  ·  PRIME CONTEST"
 			var kit := ""
 			if player and player.ability_system and player.ability_system.has_method("kit_label"):
 				kit = "  ·  KIT %s" % str(player.ability_system.kit_label())
@@ -665,6 +670,8 @@ func _update_clash_radar() -> void:
 	]
 	if _camp and is_instance_valid(_camp) and _camp.get("_alive") != false:
 		nex.append([(_camp as Node3D).global_position, Color(0.55, 0.9, 0.3)])
+	if _prime_camp and is_instance_valid(_prime_camp) and _prime_camp.get("_alive") != false:
+		nex.append([(_prime_camp as Node3D).global_position, Color(0.92, 0.72, 0.22)])
 	if get_tree():
 		for n in get_tree().get_nodes_in_group("clash_minion"):
 			if n == null or not is_instance_valid(n) or not (n is Node3D):
@@ -963,6 +970,36 @@ func _evidence_ar_d() -> void:
 	if _camp and _camp.has_method("get_contest_state"):
 		st = str(_camp.get_contest_state())
 	print("[AR-D] camp=", _camp != null, " off_lane=", off, " state=", st, " pin=", LayerContext.site_pin_id if LayerContext else "")
+
+
+func _setup_clash_prime_camp() -> void:
+	if get_node_or_null("ClashPrimeCamp"):
+		_prime_camp = get_node_or_null("ClashPrimeCamp") as Node3D
+		if _prime_camp and "camp_role" in _prime_camp:
+			_prime_camp.camp_role = "prime"
+		if _prime_camp and _prime_camp.has_method("bind_player") and player:
+			_prime_camp.bind_player(player)
+		return
+	_prime_camp = Node3D.new()
+	_prime_camp.set_script(preload("res://scripts/arena/ClashCamp.gd"))
+	_prime_camp.name = "ClashPrimeCamp"
+	_prime_camp.set("camp_role", "prime")
+	add_child(_prime_camp)
+	if _prime_camp.has_method("bind_player") and player:
+		_prime_camp.bind_player(player)
+
+
+func _evidence_ar_j() -> void:
+	var off := false
+	var st := ""
+	var role := ""
+	if _prime_camp and _prime_camp.has_method("is_off_lane"):
+		off = bool(_prime_camp.is_off_lane())
+	if _prime_camp and _prime_camp.has_method("get_contest_state"):
+		st = str(_prime_camp.get_contest_state())
+	if _prime_camp and _prime_camp.has_method("get_camp_role"):
+		role = str(_prime_camp.get_camp_role())
+	print("[AR-J] prime=", _prime_camp != null, " role=", role, " off_lane=", off, " state=", st, " pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
 func _setup_module_bench() -> void:

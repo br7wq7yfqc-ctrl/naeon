@@ -61,11 +61,15 @@ static func intercept_claim_toast(enemy_faction: String) -> String:
 		return "Intercept: Nex-band handshake — rival claim active"
 	return "Intercept: unknown protocol"
 
-## Ecology/History: jungle camp name only — never HP / DPS.
-static func camp_label() -> String:
+## Ecology/History: jungle camp name only — never HP / DPS / Pulse / Hack / yield.
+## AR-D fangtooth role vs AR-J prime role. Never a unique weapon.
+static func camp_label(role: String = "") -> String:
 	var eco := mastery("ecology")
 	var hist := mastery("history")
-	if eco >= 10.0 or hist >= 15.0 or rank() >= 5:
+	var named := eco >= 10.0 or hist >= 15.0 or rank() >= 5
+	if str(role) == "prime":
+		return "PRIME PIT" if named else "PRIME"
+	if named:
 		return "PIT OBJECTIVE"
 	return "CAMP"
 

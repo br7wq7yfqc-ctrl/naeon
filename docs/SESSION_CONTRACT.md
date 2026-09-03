@@ -122,6 +122,12 @@
     wins cosmetics/title only. Not a unique combat item. Not planet flip.
     AR-A…AR-H stay. Infection cap 5. Host authority. SN-D stays.
     P0Slice.ORBITAL_STATIONS stays false. No SITE_* (this pass).
+40. AR-J: one extra off-lane prime-class ClashCamp on the existing
+    60×60 TestArena / ClashDirector. Same ClashCamp grammar as AR-D.
+    Soft contest; drop = soft WS only (rules/13). SoftKnowledge / HUD
+    labels camp / contest / WS. Knowledge ≠ DPS / yield / Pulse / Hack.
+    AR-A…AR-I stay. Infection cap 5. Host authority. No SITE_*
+    (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.
