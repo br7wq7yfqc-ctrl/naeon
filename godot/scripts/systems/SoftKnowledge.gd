@@ -194,6 +194,24 @@ static func minion_label() -> String:
 	return "MINION"
 
 
+## AR-U: name Clash match XP. Never DPS / Pulse / yield / kit unlock.
+static func xp_label() -> String:
+	var hist := mastery("history")
+	var combat := mastery("combat")
+	if hist >= 15.0 or combat >= 15.0 or rank() >= 5:
+		return "CLASH XP"
+	return "XP"
+
+
+## AR-U: name Clash match level. Informational only — Rank / XP ≠ power.
+static func level_label(_level: int = 1) -> String:
+	var hist := mastery("history")
+	var combat := mastery("combat")
+	if hist >= 15.0 or combat >= 15.0 or rank() >= 5:
+		return "CLASH LEVEL"
+	return "LEVEL"
+
+
 ## History/combat: surface dummy name only — never Pulse DPS.
 static func surface_dummy_label() -> String:
 	var hist := mastery("history")

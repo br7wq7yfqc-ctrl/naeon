@@ -287,6 +287,14 @@ const AR_S_TWELFTH_KIT := true
 ## AR-A…AR-S stay. Infection cap 5. Host authority. ORBITAL_STATIONS stays
 ## false. No SITE_*.
 const AR_T_MINION_WAVE := true
+## AR-U: first Clash XP/leveling seed on the existing 60×60 TestArena /
+## ClashDirector. SoftKnowledge / HUD XP / LEVEL only. Level is
+## informational — never DPS / Pulse / yield / kit unlock / exclusive
+## module. Infection cap 5. Not a 13th AbilityKit. Not another fleet pip.
+## AbilityKitCatalog stays at 12 (cx_nex…gr_thorn). FL-N FLEET 15/15 stays.
+## AR-T minion wave stays. AR-A…AR-T stay. Host authority.
+## ORBITAL_STATIONS stays false. No SITE_*.
+const AR_U_XP_LEVELING := true
 ## DO-A: contested Cybernex ↔ gROT transition on one occupied unnamed pad.
 ## Uses OwnershipData / OwnershipComponent / ContestedRing. SoftKnowledge
 ## HUD label only (CONTESTED / CYBERNEX / GROT). Not HyperGate G4. Not

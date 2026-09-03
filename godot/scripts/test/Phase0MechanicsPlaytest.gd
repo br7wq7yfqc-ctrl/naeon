@@ -94,6 +94,7 @@ func _go() -> void:
 		await _assert_ar_r(os, fails)
 		await _assert_ar_s(os, fails)
 		await _assert_ar_t(os, fails)
+		await _assert_ar_u(os, fails)
 		await _assert_sn_c(os, fails)
 		await _assert_sn_d(os, fails)
 		await _assert_do_a(os, fails)
@@ -135,6 +136,7 @@ func _go() -> void:
 	await _assert_ar_r(os, fails)
 	await _assert_ar_s(os, fails)
 	await _assert_ar_t(os, fails)
+	await _assert_ar_u(os, fails)
 	_assert_se_a(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 	_assert_scan_cache_live(fails)
@@ -22931,6 +22933,134 @@ func _assert_ar_t(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] AR-T WAVE/MINION · SoftKnowledge only · AR-A…AR-S stay · FLEET 15/15 · no SITE_*")
 	if fails.size() == fail0:
 		print("[Playtest] PASS AR-T")
+	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
+		SoftScanCache.invalidate_enemies()
+
+
+func _assert_ar_u(os: Node, fails: PackedStringArray) -> void:
+	## AR-U: first Clash XP/leveling seed. Isolated — no TestArena scene change.
+	## SoftKnowledge XP / LEVEL labels only. Level never Pulse / kit unlock.
+	var fail0 := fails.size()
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.AR_U_XP_LEVELING):
+		fails.append("AR-U P0Slice flag missing")
+	if P0 != null and not bool(P0.AR_T_MINION_WAVE):
+		fails.append("AR-U dropped AR-T P0Slice flag")
+	if P0 != null and not bool(P0.AR_S_TWELFTH_KIT):
+		fails.append("AR-U dropped AR-S P0Slice flag")
+	if P0 != null and not bool(P0.AR_R_ELEVENTH_KIT):
+		fails.append("AR-U dropped AR-R P0Slice flag")
+	if P0 != null and not bool(P0.AR_I_MATCH_END):
+		fails.append("AR-U dropped AR-I P0Slice flag")
+	if P0 != null and not bool(P0.FL_N_FLEET):
+		fails.append("AR-U dropped FL-N P0Slice flag")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("AR-U flipped ORBITAL_STATIONS")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-U Infection cap drifted")
+	var layer0 := str(LayerContext.current_layer) if LayerContext else ""
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	if Kit == null or not Kit.has_method("kit_ids"):
+		fails.append("AR-U AbilityKitCatalog missing")
+	else:
+		var ids: PackedStringArray = Kit.kit_ids()
+		if int(ids.size()) != 12:
+			fails.append("AR-U isolated kit count want 12 (got %s)" % ids.size())
+		for need in ["cx_nex", "cx_grid", "gr_rot", "gr_spore", "cx_lattice", "gr_vein", "cx_prism", "gr_facet", "cx_helix", "gr_coil", "cx_spire", "gr_thorn"]:
+			if not ids.has(need):
+				fails.append("AR-U isolated dropped kit (%s)" % need)
+		if int(ids.size()) >= 13:
+			fails.append("AR-U isolated added a 13th AbilityKit")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var xlab := str(SoftK.xp_label()) if SoftK and SoftK.has_method("xp_label") else ""
+	var llab := str(SoftK.level_label()) if SoftK and SoftK.has_method("level_label") else ""
+	if xlab == "" or (xlab != "XP" and xlab != "CLASH XP"):
+		fails.append("AR-U isolated SoftKnowledge XP missing (%s)" % xlab)
+	if llab == "" or (llab != "LEVEL" and llab != "CLASH LEVEL"):
+		fails.append("AR-U isolated SoftKnowledge LEVEL missing (%s)" % llab)
+	var host: Node = os if os else self
+	var matchn := Node3D.new()
+	matchn.set_script(preload("res://scripts/arena/ClashLocalMatch.gd"))
+	matchn.name = "ClashLocalMatchARU"
+	host.add_child(matchn)
+	await get_tree().process_frame
+	if not matchn.has_method("grant_xp"):
+		fails.append("AR-U isolated ClashLocalMatch XP API missing")
+	if not matchn.has_method("is_level_informational") or not bool(matchn.is_level_informational()):
+		fails.append("AR-U isolated level is not informational")
+	var waves := Node.new()
+	waves.set_script(preload("res://scripts/arena/ClashWaves.gd"))
+	waves.name = "ClashWavesARU"
+	host.add_child(waves)
+	await get_tree().process_frame
+	if not waves.has_method("pulse_damage") or absf(float(waves.pulse_damage()) - 11.0) > 0.01:
+		fails.append("AR-U isolated AR-T Pulse 11 drifted")
+	if not waves.has_method("wave_soft_label"):
+		fails.append("AR-U isolated dropped AR-T WAVE")
+	var pulse0 := 11.0
+	if waves.has_method("pulse_damage"):
+		pulse0 = float(waves.pulse_damage())
+	var xp0 := float(matchn.match_xp)
+	var lv0 := int(matchn.match_level)
+	if lv0 != 1:
+		fails.append("AR-U isolated start level want 1 (got %s)" % lv0)
+	var got := float(matchn.grant_xp(100.0)) if matchn.has_method("grant_xp") else 0.0
+	if got < 99.9:
+		fails.append("AR-U isolated grant_xp missing (got %s)" % got)
+	if float(matchn.match_xp) < xp0 + 99.9:
+		fails.append("AR-U isolated XP did not rise")
+	if int(matchn.match_level) < 2:
+		fails.append("AR-U isolated LEVEL did not rise (got %s)" % matchn.match_level)
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("combat", 20.0)
+		GameManager.add_mastery("history", 20.0)
+	if waves.has_method("pulse_damage") and absf(float(waves.pulse_damage()) - pulse0) > 0.01:
+		fails.append("AR-U isolated Knowledge/level changed Pulse")
+	var xlab2 := str(matchn.xp_soft_label()) if matchn.has_method("xp_soft_label") else ""
+	var llab2 := str(matchn.level_soft_label()) if matchn.has_method("level_soft_label") else ""
+	if xlab2 == "" or (xlab2 != "XP" and xlab2 != "CLASH XP"):
+		fails.append("AR-U isolated HUD XP missing (%s)" % xlab2)
+	if llab2 == "" or (llab2 != "LEVEL" and llab2 != "CLASH LEVEL"):
+		fails.append("AR-U isolated HUD LEVEL missing (%s)" % llab2)
+	if SoftK and SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked("level")):
+		fails.append("AR-U isolated unlocked exclusive weapon")
+	if SoftK and SoftK.has_method("exclusive_module_unlocked") and bool(SoftK.exclusive_module_unlocked("xp")):
+		fails.append("AR-U isolated unlocked exclusive combat module")
+	if Kit and Kit.has_method("kit_ids") and int(Kit.kit_ids().size()) != 12:
+		fails.append("AR-U isolated level unlocked a 13th kit")
+	var cap15 := 15
+	var traffic: Node = null
+	if os:
+		traffic = os.get_node_or_null("PadTraffic")
+	if traffic == null and get_tree():
+		traffic = get_tree().get_first_node_in_group("pad_traffic")
+	if traffic and traffic.has_method("fleet_cap"):
+		cap15 = int(traffic.fleet_cap())
+	if cap15 != 15:
+		fails.append("AR-U isolated FLEET cap=%s, want 15" % cap15)
+	print("[Playtest] AR-U XP/level isolated · ", xlab2, "/", llab2,
+		" xp=", matchn.match_xp, " lv=", matchn.match_level,
+		" Pulse 11 · host · kits=12 · FLEET 15/15")
+	if is_instance_valid(waves):
+		waves.queue_free()
+	if is_instance_valid(matchn):
+		matchn.queue_free()
+	await get_tree().process_frame
+	if os != null and os.has_method("enter_clash_from_world"):
+		fails.append("AR-U opened G5 world-to-arena")
+	if LayerContext:
+		if str(LayerContext.site_pin_id) != pin0:
+			fails.append("AR-U changed site_pin (%s → %s)" % [pin0, LayerContext.site_pin_id])
+		if layer0 != "" and str(LayerContext.current_layer) == "Arena" and layer0 != "Arena":
+			fails.append("AR-U stole LayerContext to Arena")
+			LayerContext.set_layer(layer0)
+	if Inf and int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-U Infection cap changed")
+	print("[Playtest] AR-U XP/LEVEL · SoftKnowledge only · AR-A…AR-T stay · FLEET 15/15 · no SITE_*")
+	if fails.size() == fail0:
+		print("[Playtest] PASS AR-U")
 	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
 		SoftScanCache.invalidate_enemies()
 

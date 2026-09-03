@@ -10,6 +10,8 @@ var _lane_pressure: Array = [0.35, 0.5, 0.4]  # TOP MID BOT 0..1 toward enemy
 var _kills: int = 0
 var _deaths: int = 0
 var _obj_score: float = 0.0
+var _match_xp: float = 0.0
+var _match_level: int = 1
 var _banner: String = "CLASH — TOP cyan · MID gold · BOT magenta · occupy beacons"
 var _hud: CanvasLayer
 var _result_locked: bool = false
@@ -101,6 +103,7 @@ func _build_hud() -> void:
 func register_kill() -> void:
 	_kills += 1
 	_obj_score += 8.0
+	_grant_kill_xp()
 	if AudioDirector:
 		AudioDirector.play_hit(true)
 	if GameManager:
@@ -112,6 +115,55 @@ func register_kill() -> void:
 	if SessionObjectives:
 		SessionObjectives.on_moved()
 	_flash("KILL + soft Contribution")
+
+
+## AR-U: minion last-hit XP is a label only. Never Pulse / kit unlock.
+func register_minion_xp() -> float:
+	var local := _local_match()
+	if local != null and local.has_method("register_minion_xp"):
+		var got := float(local.register_minion_xp())
+		_sync_xp_from_local(local)
+		return got
+	return _grant_own_xp(25.0)
+
+
+func match_xp() -> float:
+	var local := _local_match()
+	if local != null and "match_xp" in local:
+		return float(local.match_xp)
+	return _match_xp
+
+
+func match_level() -> int:
+	var local := _local_match()
+	if local != null and "match_level" in local:
+		return int(local.match_level)
+	return _match_level
+
+
+func xp_soft_label() -> String:
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if SoftK and SoftK.has_method("xp_label"):
+		return str(SoftK.xp_label())
+	return "XP"
+
+
+func level_soft_label() -> String:
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if SoftK and SoftK.has_method("level_label"):
+		return str(SoftK.level_label(match_level()))
+	return "LEVEL"
+
+
+func xp_hud_line() -> String:
+	return "%s %.0f  ·  %s %d" % [xp_soft_label(), match_xp(), level_soft_label(), match_level()]
+
+
+func score_hud_line() -> String:
+	var eco := 0.0
+	if GameManager:
+		eco = GameManager.biomass if GameManager.player_faction == GameManager.Faction.GROT else GameManager.contribution
+	return "K %d  D %d  ·  OBJ %.0f  ·  ECO %.0f  ·  %s" % [_kills, _deaths, _obj_score, eco, xp_hud_line()]
 
 func register_death() -> void:
 	_deaths += 1
@@ -186,10 +238,7 @@ func _process(delta: float) -> void:
 		lanes.visible = true
 		lanes.text = _lane_bar_line()
 	if score and not _result_locked:
-		var eco := 0.0
-		if GameManager:
-			eco = GameManager.biomass if GameManager.player_faction == GameManager.Faction.GROT else GameManager.contribution
-		score.text = "K %d  D %d  ·  OBJ %.0f  ·  ECO %.0f" % [_kills, _deaths, _obj_score, eco]
+		score.text = score_hud_line()
 
 func _sync_lanes_from_clash() -> void:
 	var clash: Node = null
@@ -221,3 +270,41 @@ func _lane_bar_line() -> String:
 		_lane_pressure[0] * 100.0, _lane_pressure[1] * 100.0, _lane_pressure[2] * 100.0,
 		wave, minion,
 	]
+
+
+func _local_match() -> Node:
+	var host: Node = get_parent()
+	if host:
+		var n: Node = host.get_node_or_null("ClashLocalMatch")
+		if n != null:
+			return n
+	var tree := get_tree()
+	if tree:
+		return tree.get_first_node_in_group("clash_local_match")
+	return null
+
+
+func _grant_kill_xp() -> void:
+	var local := _local_match()
+	if local != null and local.has_method("register_kill_xp"):
+		local.register_kill_xp()
+		_sync_xp_from_local(local)
+		return
+	_grant_own_xp(50.0)
+
+
+func _sync_xp_from_local(local: Node) -> void:
+	if local == null:
+		return
+	if "match_xp" in local:
+		_match_xp = float(local.match_xp)
+	if "match_level" in local:
+		_match_level = int(local.match_level)
+
+
+func _grant_own_xp(amount: float) -> float:
+	if amount <= 0.0:
+		return 0.0
+	_match_xp += amount
+	_match_level = clampi(1 + int(floor(_match_xp / 100.0)), 1, 18)
+	return amount

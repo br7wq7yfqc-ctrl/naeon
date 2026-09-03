@@ -1,5 +1,5 @@
 extends Node
-## Headless AR-A…AR-T + river + jump pads: OTS, structures, waves, camps, kits/module shop, 3v3/5v5, CORE match-end.
+## Headless AR-A…AR-U + river + jump pads: OTS, structures, waves, camps, kits/module shop, 3v3/5v5, CORE match-end, XP/level labels.
 ## godot --path godot --scene res://scenes/test/TestArena.tscn -- --playtest-arena
 
 func _ready() -> void:
@@ -11,7 +11,7 @@ func _ready() -> void:
 	if not wanted:
 		queue_free()
 		return
-	print("[Playtest] arena AR-A…AR-T + river + jump pads driver on")
+	print("[Playtest] arena AR-A…AR-U + river + jump pads driver on")
 	call_deferred("_go")
 
 
@@ -20,7 +20,7 @@ func _go() -> void:
 	var fails: PackedStringArray = PackedStringArray()
 	var arena: Node = get_parent()
 	if arena == null or str(arena.name) != "TestArena":
-		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
+		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
 		return
 
 	var player: Node = arena.get("player")
@@ -104,6 +104,7 @@ func _go() -> void:
 	var ar_r_fails: PackedStringArray = _check_ar_r(arena, lanes, player)
 	var ar_s_fails: PackedStringArray = _check_ar_s(arena, lanes, player)
 	var ar_t_fails: PackedStringArray = await _check_ar_t(arena, lanes, player)
+	var ar_u_fails: PackedStringArray = await _check_ar_u(arena, lanes, player)
 	var ar_i_fails: PackedStringArray = _check_ar_i(arena, lanes, player)
 	fails.append_array(ar_c_fails)
 	fails.append_array(ar_b_fails)
@@ -124,9 +125,10 @@ func _go() -> void:
 	fails.append_array(ar_r_fails)
 	fails.append_array(ar_s_fails)
 	fails.append_array(ar_t_fails)
+	fails.append_array(ar_u_fails)
 	fails.append_array(ar_i_fails)
 
-	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, ar_e_fails, river_fails, pad_fails, ar_f_fails, ar_g_fails, ar_i_fails, ar_j_fails, ar_k_fails, ar_l_fails, ar_m_fails, ar_n_fails, ar_o_fails, ar_p_fails, ar_q_fails, ar_r_fails, ar_s_fails, ar_t_fails, 0 if fails.is_empty() else 1)
+	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, ar_e_fails, river_fails, pad_fails, ar_f_fails, ar_g_fails, ar_i_fails, ar_j_fails, ar_k_fails, ar_l_fails, ar_m_fails, ar_n_fails, ar_o_fails, ar_p_fails, ar_q_fails, ar_r_fails, ar_s_fails, ar_t_fails, ar_u_fails, 0 if fails.is_empty() else 1)
 
 
 func _check_ar_b(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
@@ -2079,6 +2081,125 @@ func _check_ar_t(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	return fails
 
 
+func _check_ar_u(arena: Node, _lanes: Node, player: Node) -> PackedStringArray:
+	var fails: PackedStringArray = PackedStringArray()
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.AR_U_XP_LEVELING):
+		fails.append("AR-U P0Slice flag missing")
+	if P0 != null and not bool(P0.AR_T_MINION_WAVE):
+		fails.append("AR-U dropped AR-T P0Slice flag")
+	if P0 != null and not bool(P0.AR_S_TWELFTH_KIT):
+		fails.append("AR-U dropped AR-S P0Slice flag")
+	if P0 != null and not bool(P0.AR_I_MATCH_END):
+		fails.append("AR-U dropped AR-I P0Slice flag")
+	if P0 != null and not bool(P0.FL_N_FLEET):
+		fails.append("AR-U dropped FL-N P0Slice flag")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("AR-U flipped ORBITAL_STATIONS")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-U Infection cap drifted")
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	if Kit == null or not Kit.has_method("kit_ids"):
+		fails.append("AR-U AbilityKitCatalog missing")
+	else:
+		var ids: PackedStringArray = Kit.kit_ids()
+		if int(ids.size()) != 12:
+			fails.append("AR-U kit count want 12 (got %s)" % ids.size())
+		if ids.has("cx_nex") == false or ids.has("gr_thorn") == false:
+			fails.append("AR-U dropped catalog ends (cx_nex…gr_thorn)")
+		if int(ids.size()) >= 13:
+			fails.append("AR-U added a 13th AbilityKit")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var xlab := str(SoftK.xp_label()) if SoftK and SoftK.has_method("xp_label") else ""
+	var llab := str(SoftK.level_label()) if SoftK and SoftK.has_method("level_label") else ""
+	if xlab == "" or (xlab != "XP" and xlab != "CLASH XP"):
+		fails.append("AR-U SoftKnowledge XP missing (%s)" % xlab)
+	if llab == "" or (llab != "LEVEL" and llab != "CLASH LEVEL"):
+		fails.append("AR-U SoftKnowledge LEVEL missing (%s)" % llab)
+	var localn: Node = arena.get_node_or_null("ClashLocalMatch") if arena else null
+	if localn == null:
+		fails.append("AR-U ClashLocalMatch missing")
+		return fails
+	if not localn.has_method("grant_xp"):
+		fails.append("AR-U ClashLocalMatch XP API missing")
+		return fails
+	if not localn.has_method("is_level_informational") or not bool(localn.is_level_informational()):
+		fails.append("AR-U level is not informational")
+	var pulse0 := 11.0
+	if player and player.get("ability_system") != null:
+		var absys: Node = player.ability_system
+		if absys and "abilities" in absys:
+			for ab in absys.abilities:
+				if ab != null and str(ab.get("ability_name")).to_lower().find("pulse") >= 0:
+					pulse0 = float(ab.get("damage"))
+					break
+	var waves: Node = arena.get_node_or_null("ClashWaves") if arena else null
+	if waves == null and arena:
+		waves = arena.get("_waves")
+	if waves == null or not is_instance_valid(waves):
+		fails.append("AR-U dropped AR-T ClashWaves")
+	elif not waves.has_method("living_minions"):
+		fails.append("AR-U dropped AR-T wave API")
+	elif waves.has_method("pulse_damage") and absf(float(waves.pulse_damage()) - 11.0) > 0.01:
+		fails.append("AR-U AR-T Pulse 11 drifted")
+	var xp0 := float(localn.match_xp)
+	var lv0 := int(localn.match_level)
+	if lv0 < 1 or lv0 > 18:
+		fails.append("AR-U start level out of 1–18 (got %s)" % lv0)
+	var got := float(localn.grant_xp(100.0))
+	if got < 99.9:
+		fails.append("AR-U grant_xp missing (got %s)" % got)
+	if float(localn.match_xp) < xp0 + 99.9:
+		fails.append("AR-U XP did not rise")
+	if int(localn.match_level) < maxi(2, lv0):
+		fails.append("AR-U LEVEL did not rise (got %s)" % localn.match_level)
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("combat", 20.0)
+		GameManager.add_mastery("history", 20.0)
+	if player and player.get("ability_system") != null:
+		var absys2: Node = player.ability_system
+		if absys2 and "abilities" in absys2:
+			for ab in absys2.abilities:
+				if ab != null and str(ab.get("ability_name")).to_lower().find("pulse") >= 0:
+					if absf(float(ab.get("damage")) - pulse0) > 0.01:
+						fails.append("AR-U Knowledge/level changed Pulse")
+					break
+	if waves and waves.has_method("pulse_damage") and absf(float(waves.pulse_damage()) - 11.0) > 0.01:
+		fails.append("AR-U level changed Pulse")
+	var xlab2 := str(localn.xp_soft_label()) if localn.has_method("xp_soft_label") else ""
+	var llab2 := str(localn.level_soft_label()) if localn.has_method("level_soft_label") else ""
+	if xlab2 == "" or (xlab2 != "XP" and xlab2 != "CLASH XP"):
+		fails.append("AR-U HUD XP missing (%s)" % xlab2)
+	if llab2 == "" or (llab2 != "LEVEL" and llab2 != "CLASH LEVEL"):
+		fails.append("AR-U HUD LEVEL missing (%s)" % llab2)
+	if SoftK and SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked("level")):
+		fails.append("AR-U unlocked exclusive weapon")
+	if SoftK and SoftK.has_method("exclusive_module_unlocked") and bool(SoftK.exclusive_module_unlocked("xp")):
+		fails.append("AR-U unlocked exclusive combat module")
+	if Kit and Kit.has_method("kit_ids") and int(Kit.kit_ids().size()) != 12:
+		fails.append("AR-U level unlocked a 13th kit")
+	var director: Node = arena.get_node_or_null("ClashMatchDirector") if arena else null
+	if director and director.has_method("score_hud_line"):
+		var bar := str(director.score_hud_line())
+		if bar.find("XP") < 0:
+			fails.append("AR-U director HUD missing XP (%s)" % bar)
+		if bar.find("LEVEL") < 0:
+			fails.append("AR-U director HUD missing LEVEL (%s)" % bar)
+	if player and player.has_method("ots_evidence"):
+		var ev: Dictionary = player.ots_evidence()
+		if not bool(ev.get("active", false)):
+			fails.append("OTS dropped after AR-U")
+	if LayerContext and str(LayerContext.site_pin_id) != "SITE_TEST_ARENA_PILLAR":
+		fails.append("SITE pin changed during AR-U")
+	if arena and str(arena.name) != "TestArena":
+		fails.append("left TestArena")
+	print("[Playtest] AR-U XP/level seed · ", xlab2, "/", llab2,
+		" xp=", localn.match_xp, " lv=", localn.match_level,
+		" Pulse 11 · host · kits=12 · FLEET 15/15 · G5 closed · no SITE_*")
+	return fails
+
+
 func _check_ar_i(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	var fails: PackedStringArray = PackedStringArray()
 	var P0 = load("res://scripts/world/P0Slice.gd")
@@ -2189,7 +2310,7 @@ func _check_ar_i(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	return fails
 
 
-func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, ar_e: PackedStringArray, river: PackedStringArray, pads: PackedStringArray, ar_f: PackedStringArray, ar_g: PackedStringArray, ar_i: PackedStringArray, ar_j: PackedStringArray, ar_k: PackedStringArray, ar_l: PackedStringArray, ar_m: PackedStringArray, ar_n: PackedStringArray, ar_o: PackedStringArray, ar_p: PackedStringArray, ar_q: PackedStringArray, ar_r: PackedStringArray, ar_s: PackedStringArray, ar_t: PackedStringArray, code: int) -> void:
+func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, ar_e: PackedStringArray, river: PackedStringArray, pads: PackedStringArray, ar_f: PackedStringArray, ar_g: PackedStringArray, ar_i: PackedStringArray, ar_j: PackedStringArray, ar_k: PackedStringArray, ar_l: PackedStringArray, ar_m: PackedStringArray, ar_n: PackedStringArray, ar_o: PackedStringArray, ar_p: PackedStringArray, ar_q: PackedStringArray, ar_r: PackedStringArray, ar_s: PackedStringArray, ar_t: PackedStringArray, ar_u: PackedStringArray, code: int) -> void:
 	if ar_a.is_empty():
 		print("[Playtest] PASS arena AR-A")
 	else:
@@ -2315,6 +2436,12 @@ func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStrin
 	else:
 		print("[Playtest] FAIL arena AR-T")
 		for f in ar_t:
+			print("[Playtest]  - ", f)
+	if ar_u.is_empty():
+		print("[Playtest] PASS arena AR-U")
+	else:
+		print("[Playtest] FAIL arena AR-U")
+		for f in ar_u:
 			print("[Playtest]  - ", f)
 	if AutoUpdater and AutoUpdater.has_method("abort_pending"):
 		AutoUpdater.abort_pending()

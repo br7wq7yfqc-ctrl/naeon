@@ -275,6 +275,14 @@
     13th AbilityKit. AbilityKitCatalog stays at 12 (cx_nex…gr_thorn).
     FL-N FLEET 15/15 stays. AR-A…AR-S stay. Host authority.
     ORBITAL_STATIONS stays false. No SITE_* (this pass).
+59. AR-U: first Clash XP/leveling seed on the existing 60×60
+    TestArena / ClashDirector. SoftKnowledge / HUD XP / LEVEL only.
+    Level is informational — never DPS / Pulse / yield / kit unlock /
+    exclusive module. Rank / XP ≠ power. Infection cap 5. Not a 13th
+    AbilityKit. Not another fleet pip. AbilityKitCatalog stays at 12
+    (cx_nex…gr_thorn). FL-N FLEET 15/15 stays. AR-T minion wave stays.
+    AR-A…AR-T stay. Host authority. ORBITAL_STATIONS stays false.
+    No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

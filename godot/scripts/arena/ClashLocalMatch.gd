@@ -33,6 +33,14 @@ var last_result: String = ""
 var last_player_won: bool = false
 var last_ws_granted: float = 0.0
 var last_cosmetic: bool = false
+## AR-U: match XP / level are SoftKnowledge labels only. Never Pulse / DPS.
+const MINION_XP := 25.0
+const KILL_XP := 50.0
+const XP_PER_LEVEL := 100.0
+const LEVEL_MIN := 1
+const LEVEL_MAX := 18
+var match_xp: float = 0.0
+var match_level: int = 1
 
 
 func _ready() -> void:
@@ -48,6 +56,7 @@ func bind(arena: Node, lanes: Node, dummy_scene: PackedScene, host_player: Node3
 	_isolated = false
 	_started = true
 	mode = MODE_3V3
+	_reset_xp()
 	_fill_3v3()
 	_wire_lane_cores()
 	match_started.emit(mode, actor_count())
@@ -62,6 +71,7 @@ func bind_5v5(arena: Node, lanes: Node, dummy_scene: PackedScene, host_player: N
 	_isolated = false
 	_started = true
 	mode = MODE_5V5
+	_reset_xp()
 	_fill_5v5()
 	_wire_lane_cores()
 	match_started.emit(mode, actor_count())
@@ -80,6 +90,7 @@ func start_isolated(parent: Node, dummy_scene: PackedScene) -> void:
 	if parent != null and get_parent() != parent:
 		parent.add_child(self)
 	position = Vector3(0.0, 80000.0, 0.0)
+	_reset_xp()
 	_fill_3v3()
 	_spawn_isolated_cores()
 	match_started.emit(mode, actor_count())
@@ -98,6 +109,7 @@ func start_isolated_5v5(parent: Node, dummy_scene: PackedScene) -> void:
 	if parent != null and get_parent() != parent:
 		parent.add_child(self)
 	position = Vector3(0.0, 80000.0, 0.0)
+	_reset_xp()
 	_fill_5v5()
 	_spawn_isolated_cores()
 	match_started.emit(mode, actor_count())
@@ -218,7 +230,58 @@ func evidence() -> Dictionary:
 		"result": last_result,
 		"ws": last_ws_granted,
 		"cosmetic": last_cosmetic,
+		"xp": match_xp,
+		"level": match_level,
 	}
+
+
+## AR-U: informational XP only. Never Pulse / DPS / yield / kit unlock.
+func grant_xp(amount: float) -> float:
+	if amount <= 0.0:
+		return 0.0
+	match_xp += amount
+	_recompute_level()
+	return amount
+
+
+func register_minion_xp() -> float:
+	return grant_xp(MINION_XP)
+
+
+func register_kill_xp() -> float:
+	return grant_xp(KILL_XP)
+
+
+func xp_soft_label() -> String:
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if SoftK and SoftK.has_method("xp_label"):
+		return str(SoftK.xp_label())
+	return "XP"
+
+
+func level_soft_label() -> String:
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if SoftK and SoftK.has_method("level_label"):
+		return str(SoftK.level_label(match_level))
+	return "LEVEL"
+
+
+func xp_hud_line() -> String:
+	return "%s %.0f  ·  %s %d" % [xp_soft_label(), match_xp, level_soft_label(), match_level]
+
+
+func is_level_informational() -> bool:
+	## Rank / XP ≠ power. Level never changes Pulse / yield / kit unlock.
+	return true
+
+
+func _recompute_level() -> void:
+	match_level = clampi(LEVEL_MIN + int(floor(match_xp / XP_PER_LEVEL)), LEVEL_MIN, LEVEL_MAX)
+
+
+func _reset_xp() -> void:
+	match_xp = 0.0
+	match_level = LEVEL_MIN
 
 
 func is_match_over() -> bool:
