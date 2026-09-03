@@ -228,6 +228,13 @@
     card deck. Prior 9 kits stay. ClashModuleBench AR-E SENSOR +
     AR-K CARGO stay. AR-A…AR-P stay. Infection cap 5. Host
     authority. ORBITAL_STATIONS stays false. No SITE_* (this pass).
+53. FL-L: twelfth extra allied pip on ST-A Strategy overlay (key B).
+    SoftNet visual hull (pad-visitor / NP-A grammar). Cap 13
+    (player + 12) toward 10–15. HUD FLEET n/13 SoftKnowledge only.
+    Click/select ≠ combat. Host Pulse / occupy. FL-A…FL-K stay.
+    Not 10–15 ships. Not a second OpenSpace. Not ENet. Not G5.
+    Infection cap 5. ORBITAL_STATIONS stays false. No SITE_*
+    (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.
