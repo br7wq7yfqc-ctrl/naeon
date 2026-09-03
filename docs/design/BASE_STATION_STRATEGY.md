@@ -155,7 +155,7 @@ Hangar + очередь на **один** модуль в ST-D. Лимит — m
 
 | ID | Роль | Семя | DoD | Отказ |
 |----|------|------|-----|-------|
-| **ST-A** | Strategy-камера + **один** модуль на unnamed паде | **built:** `StrategyOverlay` (B) / `BaseBuilder.place_player_habitat`; **FL-A/B/C/D/E/F/G/H/I/J/K** fleet pips (cap 12; `FLEET n/12`) | overlay на Nex-Prime; habitat на `Pad_North` / `Pad_Approach` / `Pad_Flank`; корабль и TPS живы; одиннадцать allied SoftNet/visitor pips; click ≠ combat | вторая галактика; mint `SITE_*`; 10–15 ships |
+| **ST-A** | Strategy-камера + **один** модуль на unnamed паде | **built:** `StrategyOverlay` (B) / `BaseBuilder.place_player_habitat`; **FL-A/B/C/D/E/F/G/H/I/J/K/L** fleet pips (cap 13; `FLEET n/13`) | overlay на Nex-Prime; habitat на `Pad_North` / `Pad_Approach` / `Pad_Flank`; корабль и TPS живы; двенадцать allied SoftNet/visitor pips; click ≠ combat | вторая галактика; mint `SITE_*`; 10–15 ships |
 | **ST-B** | Extractor + видимый Contribution | **built:** `PadBaseController` harvest; `Extractor.bind_pad`; HUD stack | occupy → добыча → число на HUD; Knowledge только подпись | P2W-ноды; Knowledge→yield |
 | **ST-C** | Печать модуля на паде / NPC-верстаке | **built:** `PadPrintBench`; `rules/12`, `rules/15`, §6(a) | списать Contribution/Biomass; получить **один** модуль | cash-shop skip |
 | **ST-D** | Очередь на носителе (один модуль) | **built:** `CatalogCarrier` + `CarrierHangarQueue`; catalog slugs; Phase 3 hangar seed | очередь в hangar; упёрлась в mass/power | мобильный `SITE_*` |
