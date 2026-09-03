@@ -58,6 +58,7 @@ var _pack: Node3D = null
 var _fleet_ally: Node3D = null
 var _fleet_ally_c: Node3D = null
 var _fleet_ally_d: Node3D = null
+var _fleet_ally_e: Node3D = null
 var _clash_door: Node3D = null
 var _clash_door_base: Vector3 = Vector3(0.0, 1.15, 20.0)
 
@@ -79,11 +80,12 @@ func setup(host_pad: Node3D) -> void:
 	_spawn_fleet_ally()
 	_spawn_fleet_ally_c()
 	_spawn_fleet_ally_d()
+	_spawn_fleet_ally_e()
 	_spawn_clash_door()
 	_offer_player_contract()
 	refresh_labels()
 	set_process(true)
-	print("[PadTraffic] host=", _host_name, " guard=1 visitor=1 surface=1 rival=1 softnet=1 swarm=3 pack=3 fleet=4")
+	print("[PadTraffic] host=", _host_name, " guard=1 visitor=1 surface=1 rival=1 softnet=1 swarm=3 pack=3 fleet=5")
 
 
 func host_pad_name() -> String:
@@ -180,6 +182,20 @@ func fleet_guest_d() -> Node3D:
 	return null
 
 
+func fleet_guest_e() -> Node3D:
+	## FL-E: fifth SoftNet visual ally. Same NP-A hold grammar. Not Ship.tscn.
+	if _fleet_ally_e != null and is_instance_valid(_fleet_ally_e):
+		return _fleet_ally_e
+	var n: Node = get_node_or_null("FleetAllyVisualE")
+	if n is Node3D and is_instance_valid(n):
+		_fleet_ally_e = n as Node3D
+		return _fleet_ally_e
+	_spawn_fleet_ally_e()
+	if _fleet_ally_e != null and is_instance_valid(_fleet_ally_e):
+		return _fleet_ally_e
+	return null
+
+
 func fleet_guests() -> Array:
 	var out: Array = []
 	var a := fleet_guest()
@@ -194,15 +210,18 @@ func fleet_guests() -> Array:
 	var d := fleet_guest_d()
 	if d != null:
 		out.append(d)
+	var e := fleet_guest_e()
+	if e != null:
+		out.append(e)
 	return out
 
 
 func fleet_cap() -> int:
-	return 5
+	return 6
 
 
 func fleet_count() -> int:
-	## Guests only. Overlay / HUD add the player hull for FLEET n/5.
+	## Guests only. Overlay / HUD add the player hull for FLEET n/6.
 	var n := 0
 	if get_visitor() != null:
 		n += 1
@@ -211,6 +230,8 @@ func fleet_count() -> int:
 	if fleet_guest_c() != null:
 		n += 1
 	if fleet_guest_d() != null:
+		n += 1
+	if fleet_guest_e() != null:
 		n += 1
 	return n
 
@@ -231,7 +252,7 @@ func clash_door_target() -> String:
 
 
 func try_add_fleet_guest(_who: Node = null) -> bool:
-	## Cap 5 (player + four extras). Setup already placed the four guests.
+	## Cap 6 (player + five extras). Setup already placed the five guests.
 	return false
 
 
@@ -988,6 +1009,44 @@ func _spawn_fleet_ally_d() -> void:
 	lab.position = Vector3(0, 2.4, 0)
 	lab.text = _SoftK.fleet_label()
 	lab.modulate = Color(1.0, 0.75, 0.4)
+	v.add_child(lab)
+
+
+func _spawn_fleet_ally_e() -> void:
+	## FL-E: fifth SoftNet visual hull. Same visitor-hold grammar. Not a fifth Ship.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 != null and not bool(P0.FL_E_FLEET):
+		return
+	if _fleet_ally_e != null and is_instance_valid(_fleet_ally_e):
+		return
+	if get_node_or_null("FleetAllyVisualE") != null:
+		_fleet_ally_e = get_node_or_null("FleetAllyVisualE") as Node3D
+		return
+	var v := Node3D.new()
+	v.name = "FleetAllyVisualE"
+	v.set_meta("pad_traffic_role", "fleet_ally_e")
+	v.set_meta("fleet_member", true)
+	v.set_meta("softnet_visual", true)
+	v.set_meta("combat_authority", "host")
+	v.set_meta("occupy_authority", "host")
+	v.set_meta("site_pin", "")
+	v.position = Vector3(20.0, 6.5, 0.0)
+	add_child(v)
+	_fleet_ally_e = v
+	_add_marker(v, "Hull")
+	if SoftNetSession and SoftNetSession.has_method("bind_visual_puppet"):
+		SoftNetSession.bind_visual_puppet(v)
+	if DisplayServer.get_name() == "headless":
+		return
+	_build_visitor_hull(v)
+	var lab := Label3D.new()
+	lab.name = "Label"
+	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lab.font_size = 22
+	lab.outline_size = 5
+	lab.position = Vector3(0, 2.4, 0)
+	lab.text = _SoftK.fleet_label()
+	lab.modulate = Color(1.0, 0.45, 0.58)
 	v.add_child(lab)
 
 
