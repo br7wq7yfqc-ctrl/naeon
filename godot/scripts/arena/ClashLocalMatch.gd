@@ -41,6 +41,9 @@ const LEVEL_MIN := 1
 const LEVEL_MAX := 18
 var match_xp: float = 0.0
 var match_level: int = 1
+## AR-Y: match-end reward is a SoftKnowledge label only. Never a unique item.
+var last_reward: String = ""
+var last_reward_cosmetic: bool = false
 
 
 func _ready() -> void:
@@ -232,6 +235,8 @@ func evidence() -> Dictionary:
 		"cosmetic": last_cosmetic,
 		"xp": match_xp,
 		"level": match_level,
+		"reward": last_reward,
+		"reward_cosmetic": last_reward_cosmetic,
 	}
 
 
@@ -272,6 +277,29 @@ func xp_hud_line() -> String:
 
 func is_level_informational() -> bool:
 	## Rank / XP ≠ power. Level never changes Pulse / yield / kit unlock.
+	return true
+
+
+## AR-Y: informational match-end reward. Never unique item / Pulse / kit unlock.
+func grant_reward(player_won: bool = true) -> String:
+	last_reward_cosmetic = last_cosmetic and player_won
+	last_reward = reward_soft_label()
+	return last_reward
+
+
+func reward_soft_label() -> String:
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if SoftK and SoftK.has_method("reward_label"):
+		return str(SoftK.reward_label(last_reward_cosmetic))
+	return "TITLE" if last_reward_cosmetic else "REWARD"
+
+
+func reward_hud_line() -> String:
+	return reward_soft_label()
+
+
+func is_reward_informational() -> bool:
+	## rules/13 cosmetic / title / lore. Never unique combat item / Pulse.
 	return true
 
 
@@ -561,6 +589,7 @@ func _sync_from_clash(clash: Node) -> void:
 		last_ws_granted = float(clash.last_ws_granted)
 	if "last_cosmetic" in clash:
 		last_cosmetic = bool(clash.last_cosmetic)
+	grant_reward(last_player_won)
 
 
 func _resolve_local(fac: String) -> void:
@@ -580,8 +609,9 @@ func _resolve_local(fac: String) -> void:
 	last_cosmetic = last_player_won and granted <= 0.0
 	if SoftSession and SoftSession.has_method("remember_clash_result"):
 		SoftSession.remember_clash_result(last_player_won, granted)
+	grant_reward(last_player_won)
 	print("[ClashLocalMatch] CORE down fac=", fac, " result=", last_result,
-		" ws=", granted, " cosmetic=", last_cosmetic)
+		" ws=", granted, " cosmetic=", last_cosmetic, " reward=", last_reward)
 
 
 func _clear_cores() -> void:

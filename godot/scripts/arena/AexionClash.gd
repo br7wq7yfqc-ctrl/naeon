@@ -198,19 +198,30 @@ func _end_match(winner: String, player_won: bool = true) -> void:
 	last_cosmetic = player_won and granted <= 0.0
 	if SoftSession and SoftSession.has_method("remember_clash_result"):
 		SoftSession.remember_clash_result(player_won, granted)
+	var tree := get_tree()
+	if tree:
+		var local: Node = tree.get_first_node_in_group("clash_local_match")
+		if local != null:
+			if "last_cosmetic" in local:
+				local.last_cosmetic = last_cosmetic
+			if local.has_method("grant_reward"):
+				local.grant_reward(player_won)
 	match_ended.emit(winner)
 	var lab := last_result
 	if _SoftK:
 		lab = str(_SoftK.clash_result_label(player_won))
 	var title := ""
-	if last_cosmetic and _SoftK:
-		title = str(_SoftK.clash_cosmetic_label())
+	if _SoftK:
+		title = str(_SoftK.reward_label(last_cosmetic))
 	if GameManager:
 		var msg := "%s — soft WS +%.0f (cap 60/day) · no planet flip" % [lab, granted]
 		if title != "":
-			msg = "%s · %s — cosmetics only (daily cap)" % [lab, title]
+			if last_cosmetic:
+				msg = "%s · %s — cosmetics only (daily cap)" % [lab, title]
+			else:
+				msg = "%s · %s — soft WS +%.0f (cap 60/day) · no planet flip" % [lab, title, granted]
 		GameManager.toast_requested.emit(msg)
-	print("[AexionClash] match end → ", winner, " ", last_result, " ws=", granted, " cosmetic=", last_cosmetic)
+	print("[AexionClash] match end → ", winner, " ", last_result, " ws=", granted, " cosmetic=", last_cosmetic, " reward=", title)
 
 func status_line() -> String:
 	var ws: String = war.hud_line() if war else "WS —"
