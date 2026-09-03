@@ -185,8 +185,14 @@ const AR_J_PRIME_CAMP := true
 ## AR-K: second session catalog option on the existing ClashModuleBench.
 ## SoftKnowledge / HUD labels only. Not a Paragon deck. Not cash-shop / P2W.
 ## Knowledge ≠ DPS / yield / Pulse / Hack / rank. AR-A…AR-J stay.
-## AbilityKitCatalog 4 kits stay. Infection cap 5. Host authority. No SITE_*.
+## AbilityKitCatalog prior 4 kits stay. Infection cap 5. Host authority. No SITE_*.
 const AR_K_SESSION_SHOP := true
+## AR-L: fifth Clash AbilityKit (CX Lattice) toward Phase-3 6–8 heroes.
+## Same Pulse / utility / probe|surge / Form Cycle grammar. SoftKnowledge /
+## HUD kit label only. Knowledge ≠ DPS / yield / Pulse / Hack / rank.
+## Prior 4 kits stay. ClashModuleBench AR-E SENSOR + AR-K CARGO stay.
+## Infection cap 5. Host authority. ORBITAL_STATIONS stays false. No SITE_*.
+const AR_L_FIFTH_KIT := true
 ## DO-A: contested Cybernex ↔ gROT transition on one occupied unnamed pad.
 ## Uses OwnershipData / OwnershipComponent / ContestedRing. SoftKnowledge
 ## HUD label only (CONTESTED / CYBERNEX / GROT). Not HyperGate G4. Not

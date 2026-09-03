@@ -132,7 +132,16 @@
     (TestArena / ClashDirector 60×60). AR-E SENSOR stays; new option is
     catalog CARGO / Nex Hold. SoftKnowledge / HUD HOLD only. Knowledge
     ≠ DPS / yield / Pulse / Hack / rank. No cash-shop, P2W kits, or
-    unique weapon. AbilityKitCatalog 4 kits stay. AR-A…AR-J stay.
+    unique weapon. AbilityKitCatalog prior 4 kits stay. AR-A…AR-J stay.
+    Infection cap 5. Host authority. ORBITAL_STATIONS stays false.
+    No SITE_* (this pass).
+42. AR-L: fifth Clash AbilityKit (CX Lattice) on AbilityKitCatalog
+    (TestArena / ClashDirector 60×60) toward Phase-3 6–8 heroes.
+    Same Pulse / utility / probe|surge / Form Cycle grammar from
+    EnergyEconomy. SoftKnowledge / HUD LATTICE only. Knowledge
+    ≠ DPS / yield / Pulse / Hack / rank. No cash-shop, P2W kits, or
+    unique weapon. No Paragon card deck. Prior 4 kits stay.
+    ClashModuleBench AR-E SENSOR + AR-K CARGO stay. AR-A…AR-K stay.
     Infection cap 5. Host authority. ORBITAL_STATIONS stays false.
     No SITE_* (this pass).
 

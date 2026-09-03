@@ -22,8 +22,17 @@ AR-E extra kits (same cost sheet, identity only):
 | 2 R | Grid Probe | Rot Bloom |
 | 3 F | Form Cycle | Form Cycle |
 
-TestArena: `1` / `2` cycle faction kits. Forms = identity, never a hidden stat.
+AR-L fifth kit (same cost sheet, identity only; toward 6–8):
+
+| Slot | Cybernex Lattice |
+|------|------------------|
+| 0 Q | Pulse Bolt |
+| 1 E | Lattice Seal |
+| 2 R | Lattice Probe |
+| 3 F | Form Cycle |
+
+TestArena: `1` / `2` / `3` cycle faction kits. SoftKnowledge HUD `LATTICE` / `NEX LATTICE`. Forms = identity, never a hidden stat.
 
 No P2W: costs/cooldowns fixed; economy never raises damage. Knowledge insight is a soft damage scalar only.
 
-Updated: 2026-08-17
+Updated: 2026-09-03

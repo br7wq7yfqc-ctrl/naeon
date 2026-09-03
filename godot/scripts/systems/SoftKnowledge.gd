@@ -83,6 +83,26 @@ static func module_bench_label() -> String:
 	return "MODULE BENCH"
 
 
+## AR-L: name a Clash AbilityKit. Never DPS / yield / Pulse / Hack / rank.
+static func kit_label(kit_id: String = "") -> String:
+	var combat := mastery("combat")
+	var hist := mastery("history")
+	var named := combat >= 10.0 or hist >= 15.0 or rank() >= 5
+	match str(kit_id):
+		"cx_lattice":
+			return "NEX LATTICE" if named else "LATTICE"
+		"cx_nex":
+			return "NEX KIT" if named else "NEX"
+		"cx_grid":
+			return "NEX GRID" if named else "GRID"
+		"gr_rot":
+			return "ROT KIT" if named else "ROT"
+		"gr_spore":
+			return "ROT SPORE" if named else "SPORE"
+		_:
+			return "KIT" if named else "KIT"
+
+
 ## AR-K: name the second session bench option. Never DPS / yield / Pulse / Hack / rank.
 static func module_option_label(kind: String = "cargo") -> String:
 	var cyber := mastery("cybernetics")
