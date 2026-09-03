@@ -320,6 +320,15 @@ const AR_W_THIRD_LANE_WAVE := true
 ## AR-T / AR-V / AR-W waves stay. AR-U XP/LEVEL stay informational.
 ## AR-A…AR-W stay. Host authority. ORBITAL_STATIONS stays false. No SITE_*.
 const AR_X_SMALL_CAMP := true
+## AR-Y: first Clash rewards pipeline seed on the existing 60×60 TestArena /
+## ClashDirector. SoftKnowledge / HUD REWARD / TITLE only (rules/13 cosmetic
+## / title / lore). Match-end grant is informational — never unique combat
+## item / Pulse / yield / kit unlock. Infection cap 5. Not a 13th AbilityKit.
+## Not another fleet pip. AbilityKitCatalog stays at 12 (cx_nex…gr_thorn).
+## FL-N FLEET 15/15 stays. AR-X small jungle camp stays. AR-W third-lane wave stays. AR-V second-lane
+## wave stays. AR-U XP/LEVEL stays. AR-T minion wave stays. AR-A…AR-X stay.
+## Host authority. ORBITAL_STATIONS stays false. No SITE_*.
+const AR_Y_REWARDS := true
 ## DO-A: contested Cybernex ↔ gROT transition on one occupied unnamed pad.
 ## Uses OwnershipData / OwnershipComponent / ContestedRing. SoftKnowledge
 ## HUD label only (CONTESTED / CYBERNEX / GROT). Not HyperGate G4. Not

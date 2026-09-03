@@ -98,6 +98,7 @@ func _go() -> void:
 		await _assert_ar_v(os, fails)
 		await _assert_ar_w(os, fails)
 		await _assert_ar_x(os, fails)
+		await _assert_ar_y(os, fails)
 		await _assert_sn_c(os, fails)
 		await _assert_sn_d(os, fails)
 		await _assert_do_a(os, fails)
@@ -143,6 +144,7 @@ func _go() -> void:
 	await _assert_ar_v(os, fails)
 	await _assert_ar_w(os, fails)
 	await _assert_ar_x(os, fails)
+	await _assert_ar_y(os, fails)
 	_assert_se_a(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 	_assert_scan_cache_live(fails)
@@ -23573,6 +23575,134 @@ func _assert_ar_x(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] AR-X small off-lane · CAMP/JUNGLE · soft WS only · AR-D/AR-J stay · AR-T/V/W stay · AR-U informational · FLEET 15/15 · no SITE_*")
 	if fails.size() == fail0:
 		print("[Playtest] PASS AR-X")
+	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
+		SoftScanCache.invalidate_enemies()
+
+
+func _assert_ar_y(os: Node, fails: PackedStringArray) -> void:
+	## AR-Y: first Clash rewards pipeline seed. Isolated — no TestArena scene change.
+	## SoftKnowledge REWARD / TITLE labels only. Never unique item / Pulse / kit unlock.
+	var fail0 := fails.size()
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.AR_Y_REWARDS):
+		fails.append("AR-Y P0Slice flag missing")
+	if P0 != null and not bool(P0.AR_W_THIRD_LANE_WAVE):
+		fails.append("AR-Y dropped AR-W P0Slice flag")
+	if P0 != null and not bool(P0.AR_X_SMALL_CAMP):
+		fails.append("AR-Y dropped AR-X P0Slice flag")
+	if P0 != null and not bool(P0.AR_V_SECOND_LANE_WAVE):
+		fails.append("AR-Y dropped AR-V P0Slice flag")
+	if P0 != null and not bool(P0.AR_U_XP_LEVELING):
+		fails.append("AR-Y dropped AR-U P0Slice flag")
+	if P0 != null and not bool(P0.AR_T_MINION_WAVE):
+		fails.append("AR-Y dropped AR-T P0Slice flag")
+	if P0 != null and not bool(P0.AR_I_MATCH_END):
+		fails.append("AR-Y dropped AR-I P0Slice flag")
+	if P0 != null and not bool(P0.FL_N_FLEET):
+		fails.append("AR-Y dropped FL-N P0Slice flag")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("AR-Y flipped ORBITAL_STATIONS")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-Y Infection cap drifted")
+	var layer0 := str(LayerContext.current_layer) if LayerContext else ""
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	if Kit == null or not Kit.has_method("kit_ids"):
+		fails.append("AR-Y AbilityKitCatalog missing")
+	else:
+		var ids: PackedStringArray = Kit.kit_ids()
+		if int(ids.size()) != 12:
+			fails.append("AR-Y isolated kit count want 12 (got %s)" % ids.size())
+		if int(ids.size()) >= 13:
+			fails.append("AR-Y isolated added a 13th AbilityKit")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var rlab := str(SoftK.reward_label(false)) if SoftK and SoftK.has_method("reward_label") else ""
+	if rlab == "" or (rlab != "REWARD" and rlab != "CLASH REWARD"):
+		fails.append("AR-Y isolated SoftKnowledge REWARD missing (%s)" % rlab)
+	var tlab := str(SoftK.reward_label(true)) if SoftK and SoftK.has_method("reward_label") else ""
+	if tlab == "" or (tlab != "TITLE" and tlab != "CLASH TITLE"):
+		fails.append("AR-Y isolated SoftKnowledge TITLE missing (%s)" % tlab)
+	var host: Node = os if os else self
+	var matchn := Node3D.new()
+	matchn.set_script(preload("res://scripts/arena/ClashLocalMatch.gd"))
+	matchn.name = "ClashLocalMatchARY"
+	host.add_child(matchn)
+	await get_tree().process_frame
+	if not matchn.has_method("grant_reward"):
+		fails.append("AR-Y isolated ClashLocalMatch reward API missing")
+	if not matchn.has_method("is_reward_informational") or not bool(matchn.is_reward_informational()):
+		fails.append("AR-Y isolated reward is not informational")
+	var waves := Node.new()
+	waves.set_script(preload("res://scripts/arena/ClashWaves.gd"))
+	waves.name = "ClashWavesARY"
+	host.add_child(waves)
+	await get_tree().process_frame
+	if not waves.has_method("pulse_damage") or absf(float(waves.pulse_damage()) - 11.0) > 0.01:
+		fails.append("AR-Y isolated AR-T Pulse 11 drifted")
+	if not matchn.has_method("grant_xp"):
+		fails.append("AR-Y isolated dropped AR-U XP API")
+	if waves.has_method("opposite_lane") == false:
+		fails.append("AR-Y isolated dropped AR-V opposite-lane API")
+	var pulse0 := 11.0
+	if waves.has_method("pulse_damage"):
+		pulse0 = float(waves.pulse_damage())
+	var xp0 := float(matchn.match_xp)
+	var got := str(matchn.grant_reward(true)) if matchn.has_method("grant_reward") else ""
+	if got == "" or (got != "REWARD" and got != "CLASH REWARD" and got != "TITLE" and got != "CLASH TITLE"):
+		fails.append("AR-Y isolated grant_reward missing (%s)" % got)
+	if absf(float(matchn.match_xp) - xp0) > 0.01:
+		fails.append("AR-Y isolated reward grant changed XP")
+	matchn.last_cosmetic = true
+	var capped := str(matchn.grant_reward(true)) if matchn.has_method("grant_reward") else ""
+	if capped == "" or (capped != "TITLE" and capped != "CLASH TITLE"):
+		fails.append("AR-Y isolated capped reward is not TITLE (%s)" % capped)
+	matchn.last_cosmetic = false
+	matchn.grant_reward(true)
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("combat", 20.0)
+		GameManager.add_mastery("history", 20.0)
+	if waves.has_method("pulse_damage") and absf(float(waves.pulse_damage()) - pulse0) > 0.01:
+		fails.append("AR-Y isolated Knowledge/reward changed Pulse")
+	var rlab2 := str(matchn.reward_soft_label()) if matchn.has_method("reward_soft_label") else ""
+	if rlab2 == "" or (rlab2 != "REWARD" and rlab2 != "CLASH REWARD" and rlab2 != "TITLE" and rlab2 != "CLASH TITLE"):
+		fails.append("AR-Y isolated HUD REWARD missing (%s)" % rlab2)
+	if SoftK and SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked("reward")):
+		fails.append("AR-Y isolated unlocked exclusive weapon")
+	if SoftK and SoftK.has_method("exclusive_module_unlocked") and bool(SoftK.exclusive_module_unlocked("title")):
+		fails.append("AR-Y isolated unlocked exclusive combat module")
+	if Kit and Kit.has_method("kit_ids") and int(Kit.kit_ids().size()) != 12:
+		fails.append("AR-Y isolated reward unlocked a 13th kit")
+	var cap15 := 15
+	var traffic: Node = null
+	if os:
+		traffic = os.get_node_or_null("PadTraffic")
+	if traffic == null and get_tree():
+		traffic = get_tree().get_first_node_in_group("pad_traffic")
+	if traffic and traffic.has_method("fleet_cap"):
+		cap15 = int(traffic.fleet_cap())
+	if cap15 != 15:
+		fails.append("AR-Y isolated FLEET cap=%s, want 15" % cap15)
+	print("[Playtest] AR-Y rewards isolated · ", rlab2,
+		" Pulse 11 · host · kits=12 · FLEET 15/15")
+	if is_instance_valid(waves):
+		waves.queue_free()
+	if is_instance_valid(matchn):
+		matchn.queue_free()
+	await get_tree().process_frame
+	if os != null and os.has_method("enter_clash_from_world"):
+		fails.append("AR-Y opened G5 world-to-arena")
+	if LayerContext:
+		if str(LayerContext.site_pin_id) != pin0:
+			fails.append("AR-Y changed site_pin (%s → %s)" % [pin0, LayerContext.site_pin_id])
+		if layer0 != "" and str(LayerContext.current_layer) == "Arena" and layer0 != "Arena":
+			fails.append("AR-Y stole LayerContext to Arena")
+			LayerContext.set_layer(layer0)
+	if Inf and int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-Y Infection cap changed")
+	print("[Playtest] AR-Y REWARD/TITLE · SoftKnowledge only · AR-A…AR-X stay · FLEET 15/15 · no SITE_*")
+	if fails.size() == fail0:
+		print("[Playtest] PASS AR-Y")
 	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
 		SoftScanCache.invalidate_enemies()
 

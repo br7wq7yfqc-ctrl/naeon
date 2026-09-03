@@ -301,6 +301,17 @@
     FLEET 15/15 stays. AR-T and AR-V waves stay. AR-U XP/LEVEL stay
     informational. AR-A…AR-V stay. Host authority. ORBITAL_STATIONS
     stays false. No SITE_* (this pass).
+62. AR-Y: first Clash rewards pipeline seed on the existing 60×60
+    TestArena / ClashDirector. SoftKnowledge / HUD REWARD / TITLE
+    only (rules/13 cosmetic / title / lore). Match-end grant is
+    informational — never unique combat item / Pulse / yield / kit
+    unlock. Infection cap 5. Not a 13th AbilityKit. Not another
+    fleet pip. AbilityKitCatalog stays at 12 (cx_nex…gr_thorn).
+    FL-N FLEET 15/15 stays. AR-X small jungle camp stays. AR-W
+    third-lane wave stays. AR-V second-lane wave stays. AR-U
+    XP/LEVEL stays. AR-T minion wave stays. AR-A…AR-X stay.
+    Host authority. ORBITAL_STATIONS
+    stays false. No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

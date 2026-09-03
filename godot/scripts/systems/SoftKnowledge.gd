@@ -219,6 +219,18 @@ static func level_label(_level: int = 1) -> String:
 	return "LEVEL"
 
 
+## AR-Y: name a Clash match-end reward. Cosmetic / title / lore only.
+## Never unique combat item / Pulse / yield / kit unlock.
+static func reward_label(cosmetic: bool = false) -> String:
+	if cosmetic:
+		return clash_cosmetic_label()
+	var hist := mastery("history")
+	var combat := mastery("combat")
+	if hist >= 15.0 or combat >= 15.0 or rank() >= 5:
+		return "CLASH REWARD"
+	return "REWARD"
+
+
 ## History/combat: surface dummy name only — never Pulse DPS.
 static func surface_dummy_label() -> String:
 	var hist := mastery("history")

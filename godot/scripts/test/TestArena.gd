@@ -530,6 +530,7 @@ func _finish_clash_layout() -> void:
 	_evidence_ar_f()
 	_evidence_ar_g()
 	_evidence_ar_u()
+	_evidence_ar_y()
 	_setup_arena_playtest()
 
 
@@ -687,10 +688,15 @@ func _update_clash_radar() -> void:
 				xp = "  ·  %s" % str(_local_match.xp_hud_line())
 			elif get_node_or_null("ClashMatchDirector") and get_node("ClashMatchDirector").has_method("xp_hud_line"):
 				xp = "  ·  %s" % str(get_node("ClashMatchDirector").xp_hud_line())
+			var reward := ""
+			if _local_match and _local_match.has_method("reward_hud_line"):
+				reward = "  ·  %s" % str(_local_match.reward_hud_line())
+			elif get_node_or_null("ClashMatchDirector") and get_node("ClashMatchDirector").has_method("reward_hud_line"):
+				reward = "  ·  %s" % str(get_node("ClashMatchDirector").reward_hud_line())
 			if press == "":
-				_lane_hud.text = "LANE %s%s%s%s%s%s%s%s%s" % [_lanes.player_lane, wave, camp, kit, mod, river, pad, localm, xp]
+				_lane_hud.text = "LANE %s%s%s%s%s%s%s%s%s%s" % [_lanes.player_lane, wave, camp, kit, mod, river, pad, localm, xp, reward]
 			else:
-				_lane_hud.text = "LANE %s  ·  %s%s%s%s%s%s%s%s%s" % [_lanes.player_lane, press, wave, camp, kit, mod, river, pad, localm, xp]
+				_lane_hud.text = "LANE %s  ·  %s%s%s%s%s%s%s%s%s%s" % [_lanes.player_lane, press, wave, camp, kit, mod, river, pad, localm, xp, reward]
 	if _radar == null or not _radar.has_method("set_snapshot"):
 		return
 	# One entry per node: the old second pass compared a Node against an Array
@@ -1415,6 +1421,23 @@ func _evidence_ar_u() -> void:
 		if dir.has_method("match_level"):
 			lv = int(dir.match_level())
 	print("[AR-U] xp=", xp, " level=", lv, " label=", xlab, "/", llab,
+		" hud=", line, " pin=", LayerContext.site_pin_id if LayerContext else "")
+
+
+func _evidence_ar_y() -> void:
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var rlab := str(SoftK.reward_label()) if SoftK and SoftK.has_method("reward_label") else ""
+	var tlab := str(SoftK.clash_cosmetic_label()) if SoftK and SoftK.has_method("clash_cosmetic_label") else ""
+	var line := ""
+	var granted := ""
+	if _local_match and _local_match.has_method("reward_hud_line"):
+		line = str(_local_match.reward_hud_line())
+		if "last_reward" in _local_match:
+			granted = str(_local_match.last_reward)
+	var dir: Node = get_node_or_null("ClashMatchDirector")
+	if line == "" and dir and dir.has_method("reward_hud_line"):
+		line = str(dir.reward_hud_line())
+	print("[AR-Y] reward=", rlab, " title=", tlab, " granted=", granted,
 		" hud=", line, " pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
