@@ -17,6 +17,7 @@ class_name StrategyOverlay
 ## FL-M: thirteenth extra allied pip (SoftNet visual, same NP-A grammar). Cap 14.
 ## FL-N: fourteenth extra allied pip (SoftNet visual, same NP-A grammar). Cap 15.
 ## SN-C: second local viewer sees SoftNet visual habitat/extractor/modules puppet.
+## PV-C: overlay Pulse 11 vs the same PadPvp rival (PV-A / PV-B stay).
 ## SoftKnowledge / HUD label only. Click/select ≠ combat. Host Pulse / occupy / Hack.
 
 const _Builder = preload("res://scripts/world/BaseBuilder.gd")
@@ -890,8 +891,32 @@ func try_firewall(target = null) -> bool:
 	return _try_kit("firewall", target)
 
 
+func try_pulse(target = null) -> bool:
+	## PV-C: same AbilitySystem Pulse 11 as PV-A / PV-B. Overlay is not a second kit.
+	return _try_kit("pulse", target)
+
+
+func pvp_target() -> Node:
+	if not _active:
+		return null
+	var traffic := _pad_traffic()
+	if traffic != null and is_instance_valid(traffic) and traffic.has_method("get_rival"):
+		var r: Node = traffic.get_rival()
+		if r != null and is_instance_valid(r):
+			return r
+	return null
+
+
+func pvp_soft_label() -> String:
+	return str(_SoftK.pvp_label())
+
+
+func pvp_hud_line() -> String:
+	return pvp_soft_label()
+
+
 func _try_kit(kind: String, target) -> bool:
-	## HF-C: reuse walker / hull AbilitySystem. Overlay is not a second kit.
+	## HF-C / PV-C: reuse walker / hull AbilitySystem. Overlay is not a second kit.
 	if not _active:
 		return false
 	var caster := overlay_caster()
@@ -901,12 +926,17 @@ func _try_kit(kind: String, target) -> bool:
 		caster._ensure_ability_kit()
 	var hint: Node = target as Node if target is Node else null
 	if hint == null or not is_instance_valid(hint):
-		hint = infection_target()
+		if kind == "pulse":
+			hint = pvp_target()
+		else:
+			hint = infection_target()
 	_pin_caster_for_pad(caster, hint)
 	if kind == "hack" and caster.has_method("try_hack"):
 		return bool(caster.try_hack(hint))
 	if kind == "firewall" and caster.has_method("try_firewall"):
 		return bool(caster.try_firewall(hint))
+	if kind == "pulse" and caster.has_method("try_pulse"):
+		return bool(caster.try_pulse(hint))
 	return false
 
 
@@ -1023,6 +1053,9 @@ func _input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 			elif k == KEY_E:
 				try_firewall()
+				get_viewport().set_input_as_handled()
+			elif k == KEY_R:
+				try_pulse()
 				get_viewport().set_input_as_handled()
 			elif k == KEY_I or k == KEY_F or k == KEY_M or k == KEY_TAB:
 				get_viewport().set_input_as_handled()

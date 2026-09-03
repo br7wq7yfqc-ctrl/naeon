@@ -111,6 +111,12 @@ const PV_A_PVP := true
 ## PV-B: first Space PvP from the seated player hull (OpenSpace, not Clash).
 ## Same PadPvp rival. Pulse 11 both ways. Win = rival HP → 0. No permadeath.
 const PV_B_SPACE := true
+## PV-C: first Strategy PvP from ST-A overlay (key B). Same PadPvp rival as
+## PV-A / PV-B. Overlay Pulse 11 both ways. Win = rival HP → 0. No permadeath.
+## Infection cap 5. SoftKnowledge / HUD PVP only. TPS PV-A and hull PV-B stay.
+## Click/select still ≠ combat. G5 stays closed. Not Clash. Not a 13th kit.
+## Not FL-O. Host authority. ORBITAL_STATIONS stays false. No SITE_*.
+const PV_C_STRATEGY := true
 ## BT-A: one occupied-pad guard. Tiny 3-state BT (patrol / engage Pulse / return).
 ## Host authority. Pulse 11. PV-A rival stays distinct. G5 closed. Not Clash waves.
 const BT_A_GUARD := true
