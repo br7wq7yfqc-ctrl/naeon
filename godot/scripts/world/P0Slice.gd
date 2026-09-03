@@ -84,6 +84,12 @@ const ST_I_STORAGE := true
 ## ST-J: one hangar stub on an occupied unnamed pad via BaseBuilder.
 ## Not ST-D CarrierHangarQueue. Hatch/LAND stay on the pad. No rover. No SITE_*.
 const ST_J_HANGAR := true
+## ST-K: one hangar stub on the existing PlayerOrbitalStation cluster
+## (ST-E dock+habitat, ST-G factory stays). Same PadHangarStub / BaseBuilder
+## grammar as ST-J. SoftKnowledge / HUD label only. Host authority.
+## Hatch/LAND stay legal. Not ST-D carrier hangar. Not IN-F SoftNet V4.
+## Not a mobile SITE_*. Does not flip ORBITAL_STATIONS. Infection cap 5.
+const ST_K_HANGAR := true
 ## PV-A: first TPS PvP on an occupied unnamed pad. One host-authority rival
 ## CombatDummy takes Pulse and deals Pulse back (DPS 11). Win = rival HP → 0.
 ## No permadeath. Infection cap 5. Knowledge labels only. G5 stays closed.

@@ -50,6 +50,7 @@ func _go() -> void:
 		await _assert_st_h(os, fails)
 		await _assert_st_i(os, fails)
 		await _assert_st_j(os, fails)
+		await _assert_st_k(os, fails)
 		await _assert_hf_b(os, fails)
 		await _assert_hf_a(os, fails)
 		await _assert_pv_b(os, fails)
@@ -712,6 +713,7 @@ func _go() -> void:
 	await _assert_st_h(os, fails)
 	await _assert_st_i(os, fails)
 	await _assert_st_j(os, fails)
+	await _assert_st_k(os, fails)
 	await _assert_hf_b(os, fails)
 	await _assert_hf_a(os, fails)
 	await _assert_pv_b(os, fails)
@@ -13741,6 +13743,231 @@ func _assert_st_j(os: Node, fails: PackedStringArray) -> void:
 	if not _osh_same_scene(scene0_j):
 		fails.append("ST-J overlay/hatch left OpenSpace")
 	print("[Playtest] ST-J hangar stub present · LAND/hatch on pad · overlay B opens · no SITE_*")
+
+
+func _assert_st_k(os: Node, fails: PackedStringArray) -> void:
+	## ST-K: one hangar stub on the existing PlayerOrbitalStation cluster.
+	## Same PadHangarStub / BaseBuilder grammar as ST-J. SoftKnowledge / HUD
+	## label only. Host authority. Hatch/LAND stay legal. Not ST-D / IN-F.
+	## ST-E dock+habitat stay. ST-G factory stays. ST-J pad stub stays.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	var cluster: Node3D = null
+	var factory: Node3D = null
+	var stub_k: Node3D = null
+	var stub_j: Node3D = null
+	var pad_j: Node = _in_a_occupied_pad(os)
+	var ov: Node = os.strategy_overlay() if os != null and os.has_method("strategy_overlay") else null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var scene0 := _osh_scene_file()
+	var mods := 0
+	var orbital_n := 0
+	var kit_n := 0
+	var lab_k := ""
+	var hud_txt := ""
+	if P0 == null or not bool(P0.ST_K_HANGAR):
+		fails.append("ST-K P0Slice flag missing")
+		return
+	if not bool(P0.ST_J_HANGAR) or not bool(P0.ST_E_ORBITAL) or not bool(P0.ST_G_FACTORY):
+		fails.append("ST-K dropped ST-E/G/J")
+	if bool(P0.ORBITAL_STATIONS):
+		fails.append("ST-K flipped P0Slice.ORBITAL_STATIONS")
+	if os == null:
+		fails.append("ST-K no OpenSpace")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("ST-K must not run on Clash")
+		return
+	if LayerContext and str(LayerContext.current_layer) == "Arena":
+		fails.append("ST-K must not run on Clash")
+		return
+	if os.has_method("player_orbital_station"):
+		cluster = os.player_orbital_station()
+	if cluster == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("player_orbital_stations")
+		if not listed.is_empty() and listed[0] is Node3D:
+			cluster = listed[0] as Node3D
+	if cluster == null:
+		fails.append("ST-K player orbital cluster missing")
+		return
+	if str(cluster.get_meta("site_pin", "")) != "":
+		fails.append("ST-K cluster minted site_pin (%s)" % str(cluster.get_meta("site_pin")))
+		return
+	if bool(cluster.get_meta("city", false)):
+		fails.append("ST-K cluster marked city")
+	if cluster.has_method("is_host_authority") and not bool(cluster.is_host_authority()):
+		fails.append("ST-K is not host authority")
+	if cluster.has_method("cluster_modules"):
+		mods = cluster.cluster_modules().size()
+	if mods != 2:
+		fails.append("ST-K rewrote ST-E cluster_modules (%s)" % mods)
+	if get_tree():
+		orbital_n = get_tree().get_nodes_in_group("player_orbital_modules").size()
+		if orbital_n != 2:
+			fails.append("ST-K rewrote ST-E orbital pair, got %s" % orbital_n)
+	if cluster.has_method("factory_module"):
+		factory = cluster.factory_module()
+	if factory == null and os.has_method("player_factory"):
+		factory = os.player_factory()
+	if factory == null:
+		fails.append("ST-K dropped ST-G factory")
+		return
+	if factory.get_parent() != cluster:
+		fails.append("ST-K factory left the player cluster")
+	if cluster.has_method("ensure_hangar_stub"):
+		stub_k = cluster.ensure_hangar_stub()
+	if stub_k == null and os.has_method("player_orbital_hangar"):
+		stub_k = os.player_orbital_hangar()
+	if stub_k == null:
+		stub_k = _Builder.place_orbital_hangar_stub(cluster, "Cybernex")
+	if stub_k == null or not is_instance_valid(stub_k):
+		fails.append("ST-K orbital hangar stub missing")
+		return
+	if stub_k.get_parent() != cluster:
+		fails.append("ST-K hangar stub is not on PlayerOrbitalStation")
+	var spin_k := str(stub_k.get_meta("site_pin", "missing"))
+	if spin_k != "":
+		fails.append("ST-K hangar stub minted site_pin (%s)" % spin_k)
+	if stub_k.has_meta("player_module") and bool(stub_k.get_meta("player_module")):
+		fails.append("ST-K stole the ST-A player_module slot")
+	if bool(stub_k.get_meta("pad_hangar_stub", false)):
+		fails.append("ST-K stole the ST-J pad_hangar_stub slot")
+	if not bool(stub_k.get_meta("orbital_hangar_stub", false)):
+		fails.append("ST-K hangar stub missing orbital_hangar_stub meta")
+	if str(stub_k.get_meta("module_type", "")) != "hangar_stub":
+		fails.append("ST-K module is not hangar_stub")
+	var sscript_k := str(stub_k.get_script().resource_path) if stub_k.get_script() != null else ""
+	if sscript_k.find("CarrierHangarQueue") >= 0:
+		fails.append("ST-K reused ST-D CarrierHangarQueue")
+	if sscript_k.find("HangarBay") >= 0:
+		fails.append("ST-K reused IN-C HangarBay")
+	if sscript_k != "" and sscript_k.find("PadHangarStub.gd") < 0:
+		fails.append("ST-K hangar stub script drifted (%s)" % sscript_k)
+	if str(stub_k.name) != "OrbitalHangarStub":
+		fails.append("ST-K hangar stub name drifted (%s)" % stub_k.name)
+	if stub_k.has_method("is_carrier_hangar") and bool(stub_k.is_carrier_hangar()):
+		fails.append("ST-K is a carrier hangar")
+	if stub_k.has_method("combat_stats") and int(stub_k.combat_stats()) != 0:
+		fails.append("ST-K hangar stub combat drifted")
+	if stub_k.has_method("rover_spawned") and bool(stub_k.rover_spawned()):
+		fails.append("ST-K spawned a rover")
+	if stub_k.has_method("hatch_exit") and str(stub_k.hatch_exit()) != "dock":
+		fails.append("ST-K hatch does not return to dock (%s)" % stub_k.hatch_exit())
+	if stub_k.has_method("hatch_returns_to_dock") and not bool(stub_k.hatch_returns_to_dock()):
+		fails.append("ST-K hatch leaves the dock")
+	if stub_k.has_method("scene_swap") and bool(stub_k.scene_swap()):
+		fails.append("ST-K hangar stub swaps scene")
+	if stub_k.has_method("bay_slots") and int(stub_k.bay_slots()) != 1:
+		fails.append("ST-K bay slots drifted (%s)" % stub_k.bay_slots())
+	if bool(stub_k.get_meta("mobile_site", false)):
+		fails.append("ST-K is a mobile SITE_*")
+	if cluster.has_method("cluster_modules") and cluster.cluster_modules().size() != 2:
+		fails.append("ST-K hangar folded into the ST-E orbital pair")
+	if cluster.has_method("factory_module") and cluster.factory_module() == null:
+		fails.append("ST-K hangar dropped ST-G factory")
+	if pad_j != null:
+		var host_j: Node3D = pad_j as Node3D
+		if not host_j.has_meta("pad_up"):
+			var walk_k: Node = pad_j
+			while walk_k:
+				if walk_k is Node3D and str(walk_k.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+					host_j = walk_k as Node3D
+					break
+				walk_k = walk_k.get_parent()
+		if host_j != null and str(host_j.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+			if pad_j.has_method("ensure_pad_hangar_stub"):
+				stub_j = pad_j.ensure_pad_hangar_stub()
+			if stub_j == null:
+				stub_j = _Builder.pad_hangar_stub_on(host_j)
+			if stub_j == null or not is_instance_valid(stub_j):
+				fails.append("ST-K dropped ST-J pad hangar stub")
+			elif stub_j == stub_k:
+				fails.append("ST-K reused the ST-J pad hangar stub")
+	if Inf != null and int(Inf.MAX_STACKS) != 5:
+		fails.append("ST-K infection cap drifted (%s)" % Inf.MAX_STACKS)
+	if Kits != null and Kits.has_method("kit_ids"):
+		kit_n = int(Kits.kit_ids().size())
+		if kit_n != 12:
+			fails.append("ST-K added a 13th kit (%s)" % kit_n)
+	if SoftK != null and SoftK.has_method("hangar_stub_label"):
+		lab_k = str(SoftK.hangar_stub_label())
+	if lab_k == "":
+		fails.append("ST-K Knowledge hangar stub label empty")
+	if cluster.has_method("hangar_hud_line"):
+		var hud_k := str(cluster.hangar_hud_line())
+		if hud_k == "" or hud_k != lab_k:
+			fails.append("ST-K HUD hangar line drifted (%s vs %s)" % [hud_k, lab_k])
+	var hud: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+	if hud != null:
+		if hud.has_method("_refresh"):
+			hud._refresh()
+		var lab: Variant = hud.get("_owner_label")
+		if lab is Label:
+			hud_txt += (lab as Label).text
+		var stack: Variant = hud.get("_os_stack")
+		if stack is Label:
+			hud_txt += " " + (stack as Label).text
+	var hud_up := hud_txt.to_upper()
+	if hud_txt != "" and hud_up.find("HANGAR") < 0:
+		fails.append("ST-K HUD missing hangar stub label")
+	if ship != null and is_instance_valid(ship) and pad_j != null:
+		var host_land: Node3D = pad_j as Node3D
+		if not host_land.has_meta("pad_up"):
+			var walk_l: Node = pad_j
+			while walk_l:
+				if walk_l is Node3D and str(walk_l.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+					host_land = walk_l as Node3D
+					break
+				walk_l = walk_l.get_parent()
+		if host_land != null and str(host_land.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+			var pad_up_k: Vector3 = host_land.get_meta("pad_up") if host_land.has_meta("pad_up") else Vector3.UP
+			if "velocity" in ship:
+				ship.velocity = Vector3.ZERO
+			ship.global_position = host_land.global_position + pad_up_k * 6.0
+			if ship.has_method("_set_mode"):
+				ship._set_mode(2)
+			if ship.has_method("_do_land"):
+				ship._do_land()
+			if not bool(ship.get("is_landed")):
+				fails.append("ST-K LAND did not stay legal on the pad")
+			if not _osh_same_scene(scene0):
+				fails.append("ST-K LAND swapped scene")
+	var scene_k := str(get_tree().current_scene.name) if get_tree() and get_tree().current_scene else ""
+	if scene_k.find("MainMenu") >= 0:
+		fails.append("ST-K hatch/LAND went to MainMenu")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("logistics", 20.0)
+		GameManager.add_mastery("colony_ops", 20.0)
+	print("[Playtest] ST-K orbital hangar stub present cluster=", cluster.name,
+		" label=", lab_k, " hatch=", stub_k.hatch_exit() if stub_k.has_method("hatch_exit") else "",
+		" factory=", factory.name if factory else "", " kits=", kit_n)
+	if ov != null and ov.has_method("try_enter"):
+		if ov.has_method("is_active") and bool(ov.is_active()) and ov.has_method("exit_overlay"):
+			ov.exit_overlay()
+			await get_tree().process_frame
+		if ship != null and is_instance_valid(ship) and pad_j != null:
+			var host_ov: Node3D = pad_j as Node3D
+			var pad_up_ov: Vector3 = host_ov.get_meta("pad_up") if host_ov.has_meta("pad_up") else Vector3.UP
+			if "velocity" in ship:
+				ship.velocity = Vector3.ZERO
+			ship.global_position = host_ov.global_position + pad_up_ov * 8.0
+			await get_tree().process_frame
+		if not bool(ov.try_enter()):
+			fails.append("ST-K overlay B did not open")
+		else:
+			if ov.has_method("exit_overlay"):
+				ov.exit_overlay()
+			await get_tree().process_frame
+	if LayerContext and str(LayerContext.site_pin_id) != pin0 \
+			and str(LayerContext.site_pin_id).begins_with("SITE_"):
+		fails.append("ST-K minted SITE_* (%s)" % LayerContext.site_pin_id)
+	if not _osh_same_scene(scene0):
+		fails.append("ST-K overlay/hatch left OpenSpace")
+	print("[Playtest] ST-K orbital hangar stub present · ST-E/G/J stay · hatch/LAND legal · no SITE_*")
 
 
 func _assert_in_a(os: Node, fails: PackedStringArray) -> void:

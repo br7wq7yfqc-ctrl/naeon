@@ -855,6 +855,10 @@ func _refresh() -> void:
 			if not stn.has_method("ownership_state_label"):
 				continue
 			var stn_l := str(stn.ownership_state_label())
+			if stn.has_method("hangar_hud_line"):
+				var hg_l := str(stn.hangar_hud_line())
+				if hg_l != "" and stn_l.find(hg_l) < 0:
+					stn_l = ("%s  %s" % [stn_l, hg_l]) if stn_l != "" else hg_l
 			if stn_l == "":
 				continue
 			if nearest.find(stn_l) < 0:
@@ -1070,6 +1074,10 @@ func _refresh_os_stack(pocket: bool, pad: Node) -> void:
 			if not stn.has_method("ownership_state_label"):
 				continue
 			var stn_s := str(stn.ownership_state_label())
+			if stn.has_method("hangar_hud_line"):
+				var hg_s := str(stn.hangar_hud_line())
+				if hg_s != "" and stn_s.find(hg_s) < 0:
+					stn_s = ("%s  %s" % [stn_s, hg_s]) if stn_s != "" else hg_s
 			if stn_s != "" and body.find(stn_s) < 0:
 				body += "\n" + stn_s
 	_os_stack.text = body

@@ -1,3 +1,5 @@
+**2026-09-03 — ST-K: one hangar stub on existing PlayerOrbitalStation cluster (ST-E dock+habitat, ST-G factory stays; BaseBuilder / PadHangarStub.setup_orbital; SoftKnowledge / HUD HANGAR STUB only; host authority; hatch/LAND stay legal; ST-J pad stub stays; not ST-D carrier hangar; not IN-F SoftNet V4; Infection cap 5; not a 13th kit; not FL-O; ORBITAL_STATIONS false)**
+
 **2026-09-03 — AR-Y: first Clash rewards pipeline seed on existing TestArena / ClashDirector (60×60) — SoftKnowledge / HUD REWARD / TITLE only (rules/13 cosmetic / title / lore); match-end grant informational; never unique combat item / Pulse / yield / kit unlock; Infection cap 5; not a 13th kit; not FL-O; AbilityKitCatalog stays at 12 (cx_nex…gr_thorn); FL-N FLEET 15/15 stays; AR-X small jungle camp stays; AR-W third-lane wave stays; AR-V second-lane wave stays; AR-U XP/LEVEL stays; AR-T wave stays; AR-A…AR-X stay; host authority; ORBITAL_STATIONS false**
 
 **2026-09-03 — AR-W: third Clash lane minion-wave on existing TestArena / ClashDirector (60×60) — remaining Clash lane (MID) host-authority CombatDummy WAVE/MINION, Pulse 11; completes 3-lane MOBA seed; SoftKnowledge / HUD WAVE / MINION only; Infection cap 5; not a 13th kit / XP power / fleet pip; AbilityKitCatalog stays at 12 (cx_nex…gr_thorn); FL-N FLEET 15/15 stays; AR-T and AR-V stay; AR-U XP/LEVEL stay informational; AR-A…AR-V stay; host authority; ORBITAL_STATIONS false**
@@ -808,6 +810,8 @@ DO-B: existing `PlayerOrbitalStation` cluster → same contested start/advance g
 ST-G: factory in the existing `PlayerOrbitalStation` cluster (ST-E stays dock+habitat). Spend Contribution/Biomass at bench (c) → **one** catalog module. Without factory, (c) refuses. No cash-shop skip. Knowledge does not cheapen `rules/15`.  
 ST-H: occupy unnamed pad → one `PadDefenseTurret` via `BaseBuilder` (not Clash `Turret.gd`). HP; Pulse 11. Overlay B still opens. ST-A/B stay. No `SITE_*`.  
 ST-I: occupy unnamed pad → one `PadStorage` via `BaseBuilder` (not a second ship `CargoHold`). Holds **one** crate; occupy dock transfers pad-storage ↔ ship hold. Knowledge labels only. Mass/value stay. Overlay B still opens. ST-A/B/H stay. No `SITE_*`.  
+ST-J: occupy unnamed pad → one `PadHangarStub` via `BaseBuilder`. Hatch/LAND stay on the pad. Not ST-D carrier hangar. Overlay B still opens. ST-A/B/H/I stay. No rover. No `SITE_*`.  
+ST-K: existing `PlayerOrbitalStation` cluster → one hangar stub via `BaseBuilder.place_orbital_hangar_stub` (`PadHangarStub.setup_orbital`). SoftKnowledge / HUD `HANGAR STUB` only. Host authority. Hatch/LAND stay legal. ST-E dock+habitat stay. ST-G factory stays. ST-J pad stub stays. Not ST-D. Not IN-F. Not a mobile `SITE_*`. `ORBITAL_STATIONS` stays off.  
 IN-A: `I` at the player orbital cluster or an occupied unnamed pad → station foyer/ops pocket. `I` on the ST-D catalog carrier → `hangar_bay` pocket. Seat↔pocket↔hatch stays. Hatch from station/hangar returns to pad or dock (not MainMenu). No `SITE_*`. 0 Tripo.  
 IN-B: station **E** is board status / occupy / factory print gate (recycler toggle stays). **F** at `OpsSeat` or `HangarSeat` boards that seat; **I** returns to the same pocket. Live life-support readout; vented pocket uses the EVA suit soft warn (no HP). Station/hangar still ≠ ship cockpit. No `SITE_*`. 0 Tripo.  
 IN-C: ST-D catalog carrier has `HangarBay` + `CargoHold`. Ramp deploys when landed / slow hover / docked; BLOCKED when too fast or too high. Hatch from `hangar_bay` walks plates to the pad (not MainMenu). No rover. No `SITE_*`. 0 Tripo.  
@@ -923,6 +927,8 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | ST-G own factory print | **built** — factory in player cluster; spend → one catalog module; (c) refuses without factory |
 | ST-H pad turret | **built** — one PadDefenseTurret after occupy; HP; Pulse 11; not Clash OUTER; overlay B stays |
 | ST-I pad storage | **built** — one PadStorage after occupy; one-unit occupy dock ↔ ship CargoHold; Knowledge labels; mass/value stay |
+| ST-J pad hangar stub | **built** — one PadHangarStub after occupy; hatch/LAND on pad; not ST-D carrier hangar; overlay B stays |
+| ST-K orbital hangar stub | **built** — one PadHangarStub on PlayerOrbitalStation; SoftKnowledge / HUD label; host authority; ST-E/G/J stay |
 | IN-A interiors bar | **built** — station pocket ≠ ship; hangar_bay ≠ ship; doors not locked props |
 | IN-B interiors bar | **built** — ops console occupy/factory gate; F seat → I same pocket; LS readout |
 | IN-C hangar ramp | **built** — HangarBay+CargoHold on catalog carrier; gated ramp; hatch → plates → pad; no rover |

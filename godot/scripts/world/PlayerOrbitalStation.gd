@@ -22,6 +22,7 @@ var faction: String = "Cybernex"
 var ownership: OwnershipData
 var _modules: Array = []
 var _factory: Node3D = null
+var _hangar: Node3D = null
 var _contest_ring: Node3D = null
 var _contest_side: String = ""
 var _status: String = "owned"
@@ -105,6 +106,53 @@ func factory_module() -> Node3D:
 
 func has_factory() -> bool:
 	return factory_module() != null
+
+
+func hangar_stub() -> Node3D:
+	## ST-K: orbital hangar stub. Not in the ST-E dock+habitat pair.
+	if _hangar != null and is_instance_valid(_hangar) and _hangar.is_inside_tree():
+		return _hangar
+	var n: Node = get_node_or_null("OrbitalHangarStub")
+	if n is Node3D:
+		_hangar = n as Node3D
+		return _hangar
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	n = _Builder.orbital_hangar_stub_on(self)
+	if n is Node3D:
+		_hangar = n as Node3D
+		return _hangar
+	return null
+
+
+func has_hangar_stub() -> bool:
+	return hangar_stub() != null
+
+
+func hangar_hud_line() -> String:
+	## SoftKnowledge hangar stub label only. Never mass / queue / combat.
+	if hangar_stub() == null:
+		return ""
+	return _SoftK.hangar_stub_label()
+
+
+func ensure_hangar_stub() -> Node3D:
+	## ST-K: one hangar stub in this player cluster. Not a third ST-E module.
+	## Host authority. SoftKnowledge / HUD label only.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	var n: Node3D = hangar_stub()
+	if P0 == null or not bool(P0.ST_K_HANGAR):
+		return null
+	if not is_host_authority():
+		return n
+	if n != null:
+		return n
+	n = _Builder.place_orbital_hangar_stub(self, faction)
+	if n != null:
+		_hangar = n
+		_refresh_label()
+		print("[PlayerOrbitalStation] ST-K hangar stub in cluster body=", orbit_body, " site_pin=")
+	return n
 
 
 func ensure_factory() -> Node3D:
@@ -237,6 +285,7 @@ func _refresh_label() -> void:
 	var lab: Label3D = get_node_or_null("ClusterLabel") as Label3D
 	var kinds := ",".join(module_kinds())
 	var own := ownership_state_label()
+	var hang := hangar_hud_line()
 	if lab == null:
 		lab = Label3D.new()
 		lab.name = "ClusterLabel"
@@ -245,7 +294,12 @@ func _refresh_label() -> void:
 		lab.outline_size = 4
 		lab.position = Vector3(0.0, 6.0, 0.0)
 		add_child(lab)
-	if own != "":
+	if hang != "":
+		if own != "":
+			lab.text = "%s\n%s · %s\n%s\n%s" % [_SoftK.orbital_station_label(), kinds, orbit_body, hang, own]
+		else:
+			lab.text = "%s\n%s · %s\n%s" % [_SoftK.orbital_station_label(), kinds, orbit_body, hang]
+	elif own != "":
 		lab.text = "%s\n%s · %s\n%s" % [_SoftK.orbital_station_label(), kinds, orbit_body, own]
 	else:
 		lab.text = "%s\n%s · %s" % [_SoftK.orbital_station_label(), kinds, orbit_body]

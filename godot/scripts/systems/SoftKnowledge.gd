@@ -416,7 +416,8 @@ static func turret_label() -> String:
 	return "TURRET"
 
 
-## Colony/logistics: name the ST-J pad hangar stub. Never mass / queue / combat.
+## Colony/logistics: name the ST-J pad / ST-K orbital hangar stub.
+## Never mass / queue / combat / rover.
 static func hangar_stub_label() -> String:
 	var ops := mastery("colony_ops")
 	var logi := mastery("logistics")
