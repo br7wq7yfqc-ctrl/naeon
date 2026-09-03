@@ -283,6 +283,15 @@
     (cx_nex…gr_thorn). FL-N FLEET 15/15 stays. AR-T minion wave stays.
     AR-A…AR-T stay. Host authority. ORBITAL_STATIONS stays false.
     No SITE_* (this pass).
+60. AR-V: second Clash lane minion-wave on the existing 60×60
+    TestArena / ClashDirector. Mirror AR-T (one host-authority
+    WAVE/MINION, Pulse 11) on the opposite lane. SoftKnowledge /
+    HUD WAVE / MINION only. Infection cap 5. Not a 13th AbilityKit.
+    Not XP power. Not another fleet pip. AbilityKitCatalog stays
+    at 12 (cx_nex…gr_thorn). FL-N FLEET 15/15 stays. AR-T wave
+    stays on its lane. AR-U XP/LEVEL stay informational.
+    AR-A…AR-U stay. Host authority. ORBITAL_STATIONS stays false.
+    No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

@@ -519,6 +519,7 @@ func _finish_clash_layout() -> void:
 	_evidence_ar_r()
 	_evidence_ar_s()
 	_evidence_ar_t()
+	_evidence_ar_v()
 	_evidence_river()
 	_evidence_jump_pads()
 	_setup_clash_local_match()
@@ -1267,6 +1268,38 @@ func _evidence_ar_t() -> void:
 	if _waves and _waves.has_method("pulse_damage"):
 		pulse = float(_waves.pulse_damage())
 	print("[AR-T] wave=", w, " living=", live, " label=", wlab, "/", mlab,
+		" host=", host, " pulse=", pulse, " pin=", LayerContext.site_pin_id if LayerContext else "")
+
+
+func _evidence_ar_v() -> void:
+	var seed := "TOP"
+	var opp := "BOT"
+	var seed_n := 0
+	var opp_n := 0
+	var lanes := PackedStringArray()
+	var wlab := ""
+	var mlab := ""
+	var host := false
+	var pulse := 0.0
+	if _waves and _waves.has_method("seed_lane"):
+		seed = str(_waves.seed_lane())
+	if _waves and _waves.has_method("opposite_lane"):
+		opp = str(_waves.opposite_lane())
+	if _waves and _waves.has_method("living_on_lane"):
+		seed_n = _waves.living_on_lane(seed).size()
+		opp_n = _waves.living_on_lane(opp).size()
+	if _waves and _waves.has_method("living_lanes"):
+		lanes = _waves.living_lanes()
+	if _waves and _waves.has_method("wave_soft_label"):
+		wlab = str(_waves.wave_soft_label())
+	if _waves and _waves.has_method("minion_soft_label"):
+		mlab = str(_waves.minion_soft_label())
+	if _waves and _waves.has_method("is_host_authority"):
+		host = bool(_waves.is_host_authority())
+	if _waves and _waves.has_method("pulse_damage"):
+		pulse = float(_waves.pulse_damage())
+	print("[AR-V] seed=", seed, "/", seed_n, " opposite=", opp, "/", opp_n,
+		" lanes=", ",".join(lanes), " label=", wlab, "/", mlab,
 		" host=", host, " pulse=", pulse, " pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
