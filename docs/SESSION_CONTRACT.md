@@ -128,6 +128,13 @@
     labels camp / contest / WS. Knowledge ≠ DPS / yield / Pulse / Hack.
     AR-A…AR-I stay. Infection cap 5. Host authority. No SITE_*
     (this pass).
+41. AR-K: second session catalog option on the existing ClashModuleBench
+    (TestArena / ClashDirector 60×60). AR-E SENSOR stays; new option is
+    catalog CARGO / Nex Hold. SoftKnowledge / HUD HOLD only. Knowledge
+    ≠ DPS / yield / Pulse / Hack / rank. No cash-shop, P2W kits, or
+    unique weapon. AbilityKitCatalog 4 kits stay. AR-A…AR-J stay.
+    Infection cap 5. Host authority. ORBITAL_STATIONS stays false.
+    No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

@@ -177,6 +177,11 @@ const AR_I_MATCH_END := true
 ## SoftKnowledge labels camp / contest / WS. Not a unique weapon.
 ## AR-A…AR-I stay. Infection cap 5. Host authority. No SITE_*.
 const AR_J_PRIME_CAMP := true
+## AR-K: second session catalog option on the existing ClashModuleBench.
+## SoftKnowledge / HUD labels only. Not a Paragon deck. Not cash-shop / P2W.
+## Knowledge ≠ DPS / yield / Pulse / Hack / rank. AR-A…AR-J stay.
+## AbilityKitCatalog 4 kits stay. Infection cap 5. Host authority. No SITE_*.
+const AR_K_SESSION_SHOP := true
 ## DO-A: contested Cybernex ↔ gROT transition on one occupied unnamed pad.
 ## Uses OwnershipData / OwnershipComponent / ContestedRing. SoftKnowledge
 ## HUD label only (CONTESTED / CYBERNEX / GROT). Not HyperGate G4. Not

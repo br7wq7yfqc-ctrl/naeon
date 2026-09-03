@@ -1,3 +1,5 @@
+**2026-09-03 — AR-K: session items-shop seed on existing Clash TestArena / ClashDirector (60×60) — second session module option on the same ClashModuleBench (catalog/blueprint NAEON cargo hold, not a Paragon card); SoftKnowledge / HUD labels only; Knowledge ≠ DPS / yield / Pulse / Hack / rank; no cash-shop / P2W / unique weapon; AR-A…AR-J stay; AbilityKitCatalog 4 kits stay; host authority; Infection cap 5; ORBITAL_STATIONS false**
+
 **2026-09-03 — FL-E: fifth fleet allied pip on ST-A Strategy overlay (SoftNet / NP-A visual; cap 6 = player + 5 toward 10–15; FLEET n/6 SoftKnowledge; host Pulse/occupy; click ≠ combat; FL-A/FL-B/FL-C/FL-D stay)**
 
 **2026-09-03 — AR-J: second jungle objective on existing 60×60 TestArena / ClashDirector — one prime-class ClashCamp (not IP); same ClashCamp grammar as AR-D fangtooth; soft contest; drop = soft WS only (rules/13); SoftKnowledge / HUD labels camp / contest / WS; Knowledge ≠ DPS / yield / Pulse / Hack; AR-A…AR-I stay; host authority; Infection cap 5; no SITE_*; no G2–G6**
@@ -809,7 +811,8 @@ SN-B: second local viewer seated with the host on the player hull / OpenSpace se
 SN-C: second local viewer on ST-A Strategy overlay (key B) on an occupied unnamed pad sees a SoftNet visual puppet of the host pad / strategy actor (habitat / extractor / modules pose). Host keeps Pulse / occupy / Hack. No second physical pad modules. SoftKnowledge `NET` label only. SN-A pad puppet stays. SN-B hull puppet stays. Overlay B still opens. Clash unchanged. Not ENet cluster. Not 10k CCU. G5 stays closed. No `SITE_*`.  
 SN-D: second local viewer in Clash (`TestArena` / `ClashMatchDirector`) sees a SoftNet visual puppet of the host (arena / Clash pose). Host keeps Pulse / Hack / form. No second physical Clash dummy. SoftKnowledge `NET` label only. SN-A / SN-B / SN-C stay. AR-H pad door stays as the legal Clash entry. Not leftover 5v5 soak. Not ENet cluster. Not 10k CCU. G5 stays closed. No `SITE_*`.  
 AR-I: CORE Turret HP → 0 ends Clash on the existing TestArena / ClashDirector (3v3 + 5v5). SoftKnowledge HUD `WIN` / `LOSS` only. SoftSession War Score +15 win / +3 loss; daily cap 60 → further wins cosmetics/title. Not planet flip. Not a unique combat item. AR-A…AR-H stay. SN-D stays. Infection cap 5. `ORBITAL_STATIONS` stays false.  
-AR-J: one extra off-lane prime-class `ClashCamp` on the same 60×60 (AR-D fangtooth stays). Code-first proxy; soft contest announce; drop = soft War Score only (not a unique weapon). SoftKnowledge / HUD labels camp / contest / WS. Knowledge ≠ DPS / yield / Pulse / Hack / exclusive modules. AR-A…AR-I stay. Host authority. Infection cap 5. No `SITE_*`. No G2–G6.
+AR-J: one extra off-lane prime-class `ClashCamp` on the same 60×60 (AR-D fangtooth stays). Code-first proxy; soft contest announce; drop = soft War Score only (not a unique weapon). SoftKnowledge / HUD labels camp / contest / WS. Knowledge ≠ DPS / yield / Pulse / Hack / exclusive modules. AR-A…AR-I stay. Host authority. Infection cap 5. No `SITE_*`. No G2–G6.  
+AR-K: second session catalog option on the existing `ClashModuleBench` (AR-E `ShipModule.SENSOR` stays; new option is catalog `CARGO` / Nex Hold). SoftKnowledge / HUD `HOLD` / `NEX HOLD` only. Knowledge ≠ DPS / yield / Pulse / Hack / rank. No cash-shop of power, no P2W kits, no unique weapon from purchase. AbilityKitCatalog 4 kits stay. AR-A…AR-J stay. Host authority. Infection cap 5. `ORBITAL_STATIONS` stays false. No `SITE_*`. No G2–G6.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -877,6 +880,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | AR-H pad clash door | **built** — occupied unnamed pad door → Clash TestArena; not city-map; G5 cluster closed; AR-A…G stay |
 | AR-I CORE match-end | **built** — CORE HP → 0 ends 3v3/5v5; SoftKnowledge WIN/LOSS; SoftSession WS +15/+3, daily cap 60; not planet flip |
 | AR-J prime jungle camp | **built** — one extra off-lane prime-class ClashCamp on the same 60×60; soft contest; drop = soft WS; AR-D fangtooth stays; Knowledge labels only |
+| AR-K session items-shop | **built** — second session catalog option on the same ClashModuleBench; SoftKnowledge HOLD label; not a Paragon deck; AR-E SENSOR + 4 kits stay |
 | SE-A hull buses | **built** — power/cool/life live; overdraw/overheat sag; IN-B LS soft; no P2W skip |
 | MC-A ship crew seat | **built** — CrewSeat in ship_int; F/I same pocket; HUD CREW label; SoftNet puppet optional; pilot unchanged |
 | MC-B crew gunner role | **built** — GUNNER SoftKnowledge / HUD label on the MC-A seat; CREW n/2 stays; Pulse/Hack numbers stay; host authority |

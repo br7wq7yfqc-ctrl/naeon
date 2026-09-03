@@ -1,5 +1,5 @@
 extends Node
-## Headless AR-A…AR-J + river + jump pads: OTS, structures, waves, camps, kits/module, 3v3/5v5, CORE match-end.
+## Headless AR-A…AR-K + river + jump pads: OTS, structures, waves, camps, kits/module shop, 3v3/5v5, CORE match-end.
 ## godot --path godot --scene res://scenes/test/TestArena.tscn -- --playtest-arena
 
 func _ready() -> void:
@@ -11,7 +11,7 @@ func _ready() -> void:
 	if not wanted:
 		queue_free()
 		return
-	print("[Playtest] arena AR-A…AR-J + river + jump pads driver on")
+	print("[Playtest] arena AR-A…AR-K + river + jump pads driver on")
 	call_deferred("_go")
 
 
@@ -20,7 +20,7 @@ func _go() -> void:
 	var fails: PackedStringArray = PackedStringArray()
 	var arena: Node = get_parent()
 	if arena == null or str(arena.name) != "TestArena":
-		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
+		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
 		return
 
 	var player: Node = arena.get("player")
@@ -94,6 +94,7 @@ func _go() -> void:
 	var ar_g_fails: PackedStringArray = _check_ar_g(arena, lanes, player)
 	var pad_fails: PackedStringArray = await _check_jump_pads(arena, player)
 	var ar_j_fails: PackedStringArray = _check_ar_j(arena, lanes, player)
+	var ar_k_fails: PackedStringArray = _check_ar_k(arena, lanes, player)
 	var ar_i_fails: PackedStringArray = _check_ar_i(arena, lanes, player)
 	fails.append_array(ar_c_fails)
 	fails.append_array(ar_b_fails)
@@ -104,9 +105,10 @@ func _go() -> void:
 	fails.append_array(ar_f_fails)
 	fails.append_array(ar_g_fails)
 	fails.append_array(ar_j_fails)
+	fails.append_array(ar_k_fails)
 	fails.append_array(ar_i_fails)
 
-	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, ar_e_fails, river_fails, pad_fails, ar_f_fails, ar_g_fails, ar_i_fails, ar_j_fails, 0 if fails.is_empty() else 1)
+	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, ar_e_fails, river_fails, pad_fails, ar_f_fails, ar_g_fails, ar_i_fails, ar_j_fails, ar_k_fails, 0 if fails.is_empty() else 1)
 
 
 func _check_ar_b(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
@@ -878,6 +880,111 @@ func _check_ar_j(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	return fails
 
 
+func _check_ar_k(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
+	var fails: PackedStringArray = PackedStringArray()
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.AR_K_SESSION_SHOP):
+		fails.append("AR-K P0Slice flag missing")
+	if P0 != null and not bool(P0.AR_J_PRIME_CAMP):
+		fails.append("AR-K dropped AR-J P0Slice flag")
+	if P0 != null and not bool(P0.AR_I_MATCH_END):
+		fails.append("AR-K dropped AR-I P0Slice flag")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("AR-K flipped ORBITAL_STATIONS")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-K Infection cap drifted")
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	if Kit == null or not Kit.has_method("kit_ids") or int(Kit.kit_ids().size()) != 4:
+		fails.append("AR-K AbilityKitCatalog 4 kits drifted")
+	var bench: Node = arena.get_node_or_null("ClashModuleBench") if arena else null
+	if bench == null and arena:
+		bench = arena.get("_bench")
+	if bench == null or not is_instance_valid(bench):
+		fails.append("AR-K ClashModuleBench missing")
+		return fails
+	if bench.has_method("is_on_footprint") and not bool(bench.is_on_footprint()):
+		fails.append("AR-K bench left the TestArena footprint")
+	if bench.has_method("is_off_lane") and not bool(bench.is_off_lane()):
+		fails.append("AR-K bench sits on a lane strip")
+	elif lanes and lanes.has_method("is_off_lane") and bench is Node3D \
+		and not bool(lanes.is_off_lane((bench as Node3D).global_position)):
+		fails.append("AR-K bench not off-lane on ClashLanes")
+	var n := int(bench.offer_count()) if bench.has_method("offer_count") else 0
+	if n != 2:
+		fails.append("AR-K bench offer count want 2 (got %s)" % n)
+	if bench.has_method("option_kind") and str(bench.option_kind(0)) != "sensor":
+		fails.append("AR-K dropped AR-E SENSOR offer")
+	if bench.has_method("option_kind") and str(bench.option_kind(1)) != "cargo":
+		fails.append("AR-K second offer is not catalog cargo")
+	if bench.has_method("is_weapon_offer") and bool(bench.is_weapon_offer(1)):
+		fails.append("AR-K second offer is a unique weapon")
+	if bench.has_method("is_paragon_deck") and bool(bench.is_paragon_deck()):
+		fails.append("AR-K became a Paragon card deck")
+	if bench.has_method("is_cash_shop") and bool(bench.is_cash_shop()):
+		fails.append("AR-K is a cash-shop")
+	if bench.has_method("cost_kind") and str(bench.cost_kind()) != "session":
+		fails.append("AR-K bench is not session-cost")
+	if bench.has_method("modifies_combat") and bool(bench.modifies_combat()):
+		fails.append("AR-K bench claims combat power")
+	var pulse0 := 11.0
+	var hp0 := 0.0
+	if player:
+		hp0 = float(player.get("max_health")) if "max_health" in player else 0.0
+		if player.get("ability_system") != null:
+			var absys: Node = player.ability_system
+			if absys and "abilities" in absys:
+				for ab in absys.abilities:
+					if ab != null and str(ab.get("ability_name")).to_lower().find("pulse") >= 0:
+						pulse0 = float(ab.get("damage"))
+						break
+	if not bench.has_method("try_equip"):
+		fails.append("AR-K try_equip missing")
+		return fails
+	if not bool(bench.try_equip(player, 1)):
+		fails.append("AR-K could not equip second session module")
+	if bench.has_method("equipped_index") and int(bench.equipped_index()) != 1:
+		fails.append("AR-K did not equip the second option")
+	if bench.has_method("option_kind") and str(bench.option_kind(1)) == "weapon":
+		fails.append("AR-K equipped a weapon")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("cybernetics", 20.0)
+		GameManager.add_mastery("logistics", 20.0)
+	var olab := str(SoftK.module_option_label("cargo")) if SoftK else ""
+	if olab == "" or (olab != "HOLD" and olab != "NEX HOLD"):
+		fails.append("AR-K SoftKnowledge option label missing (%s)" % olab)
+	if bench.has_method("option_label"):
+		var blab := str(bench.option_label(1))
+		if blab == "" or (blab != "HOLD" and blab != "NEX HOLD"):
+			fails.append("AR-K HUD option label missing (%s)" % blab)
+	if player:
+		if "max_health" in player and hp0 > 0.0 and absf(float(player.get("max_health")) - hp0) > 0.01:
+			fails.append("AR-K Knowledge changed HP")
+		if player.get("ability_system") != null:
+			var absys2: Node = player.ability_system
+			if absys2 and "abilities" in absys2:
+				for ab in absys2.abilities:
+					if ab != null and str(ab.get("ability_name")).to_lower().find("pulse") >= 0:
+						if absf(float(ab.get("damage")) - pulse0) > 0.01:
+							fails.append("AR-K Knowledge changed Pulse")
+						break
+	if SoftK and SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked("hold")):
+		fails.append("AR-K unlocked exclusive weapon")
+	if SoftK and SoftK.has_method("exclusive_module_unlocked") and bool(SoftK.exclusive_module_unlocked("cargo_nex_hold")):
+		fails.append("AR-K unlocked exclusive combat module")
+	if player and player.has_method("ots_evidence"):
+		var ev: Dictionary = player.ots_evidence()
+		if not bool(ev.get("active", false)):
+			fails.append("OTS dropped after AR-K")
+	if LayerContext and str(LayerContext.site_pin_id) != "SITE_TEST_ARENA_PILLAR":
+		fails.append("SITE pin changed during AR-K")
+	if arena and str(arena.name) != "TestArena":
+		fails.append("left TestArena")
+	print("[Playtest] AR-K session shop · 2 options · cargo catalog · SoftKnowledge only · G5 closed · no SITE_*")
+	return fails
+
+
 func _check_ar_i(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	var fails: PackedStringArray = PackedStringArray()
 	var P0 = load("res://scripts/world/P0Slice.gd")
@@ -988,7 +1095,7 @@ func _check_ar_i(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	return fails
 
 
-func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, ar_e: PackedStringArray, river: PackedStringArray, pads: PackedStringArray, ar_f: PackedStringArray, ar_g: PackedStringArray, ar_i: PackedStringArray, ar_j: PackedStringArray, code: int) -> void:
+func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, ar_e: PackedStringArray, river: PackedStringArray, pads: PackedStringArray, ar_f: PackedStringArray, ar_g: PackedStringArray, ar_i: PackedStringArray, ar_j: PackedStringArray, ar_k: PackedStringArray, code: int) -> void:
 	if ar_a.is_empty():
 		print("[Playtest] PASS arena AR-A")
 	else:
@@ -1054,6 +1161,12 @@ func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStrin
 	else:
 		print("[Playtest] FAIL arena AR-J")
 		for f in ar_j:
+			print("[Playtest]  - ", f)
+	if ar_k.is_empty():
+		print("[Playtest] PASS arena AR-K")
+	else:
+		print("[Playtest] FAIL arena AR-K")
+		for f in ar_k:
 			print("[Playtest]  - ", f)
 	if AutoUpdater and AutoUpdater.has_method("abort_pending"):
 		AutoUpdater.abort_pending()

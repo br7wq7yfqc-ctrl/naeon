@@ -496,6 +496,7 @@ func _finish_clash_layout() -> void:
 	_evidence_ar_d()
 	_evidence_ar_j()
 	_evidence_ar_e()
+	_evidence_ar_k()
 	_evidence_river()
 	_evidence_jump_pads()
 	_setup_clash_local_match()
@@ -1085,6 +1086,19 @@ func _evidence_ar_e() -> void:
 	if _bench and _bench.has_method("equipped_id"):
 		equipped = str(_bench.equipped_id())
 	print("[AR-E] kits=", n, " kit=", kit_id, " bench=", _bench != null, " equipped=", equipped, " pin=", LayerContext.site_pin_id if LayerContext else "")
+
+
+func _evidence_ar_k() -> void:
+	var n := 0
+	var second := ""
+	var lab := ""
+	if _bench and _bench.has_method("offer_count"):
+		n = int(_bench.offer_count())
+	if _bench and _bench.has_method("option_kind"):
+		second = str(_bench.option_kind(1))
+	if _bench and _bench.has_method("option_label"):
+		lab = str(_bench.option_label(1))
+	print("[AR-K] offers=", n, " second=", second, " label=", lab, " pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
 func _want_clash_5v5() -> bool:
