@@ -509,6 +509,8 @@ func ensure_pad_bases() -> void:
 	_stream_bases()
 	if SoftSession and SoftSession.has_method("restore_colony"):
 		SoftSession.restore_colony()
+	if SoftSession and SoftSession.has_method("restore_crate"):
+		SoftSession.restore_crate()
 
 
 func _spawn_pad(pad_name: String, dir: Vector3) -> void:

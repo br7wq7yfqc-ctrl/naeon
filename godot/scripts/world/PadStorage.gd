@@ -119,7 +119,6 @@ func seed_one() -> void:
 		return
 	_units.append(_Hold.make_crate("pad_storage_1"))
 	_refresh_label()
-	_pc_b_remember()
 
 
 func storage_label() -> String:

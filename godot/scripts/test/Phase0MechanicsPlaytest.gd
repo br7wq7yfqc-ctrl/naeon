@@ -19435,6 +19435,20 @@ func _assert_pc_b(os: Node, fails: PackedStringArray) -> void:
 		fails.append("PC-B restore missed crate amount (%s)" % int(store.crate_amount()))
 	if str(store.get_meta("site_pin", "missing")) != "":
 		fails.append("PC-B restore minted SITE_*")
+	## Filler seed_one must not overwrite the persisted crate (same JSON file).
+	if store.has_method("retrieve_unit"):
+		while store.has_method("unit_count") and int(store.unit_count()) > 0:
+			var seeded_drop: Dictionary = store.retrieve_unit(0)
+			if seeded_drop.is_empty():
+				break
+	if store.has_method("seed_one"):
+		store.seed_one()
+	if str(SoftSession.crate.get("slug", "")) != slug:
+		fails.append("PC-B seed_one clobbered crate persist (%s)" % str(SoftSession.crate.get("slug", "")))
+	SoftSession.restore_crate(os)
+	await get_tree().process_frame
+	if store.has_method("crate_slug") and str(store.crate_slug()) != slug:
+		fails.append("PC-B restore after seed missed crate (%s)" % str(store.crate_slug()))
 	if ship != null and is_instance_valid(ship):
 		hold = ship.get_node_or_null("CargoHold")
 	if hold != null and hold.has_method("store_unit") and hold.has_method("crate_slug"):
