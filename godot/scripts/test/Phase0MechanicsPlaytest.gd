@@ -85,6 +85,7 @@ func _go() -> void:
 		await _assert_ar_m(os, fails)
 		await _assert_ar_n(os, fails)
 		await _assert_ar_o(os, fails)
+		await _assert_ar_p(os, fails)
 		await _assert_sn_c(os, fails)
 		await _assert_sn_d(os, fails)
 		await _assert_do_a(os, fails)
@@ -121,6 +122,7 @@ func _go() -> void:
 	await _assert_ar_m(os, fails)
 	await _assert_ar_n(os, fails)
 	await _assert_ar_o(os, fails)
+	await _assert_ar_p(os, fails)
 	_assert_se_a(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 	_assert_scan_cache_live(fails)
@@ -22101,8 +22103,8 @@ func _assert_ar_o(os: Node, fails: PackedStringArray) -> void:
 		fails.append("AR-O AbilityKitCatalog missing")
 		return
 	var ids: PackedStringArray = Kit.kit_ids()
-	if int(ids.size()) != 8:
-		fails.append("AR-O isolated kit count want 8 (got %s)" % ids.size())
+	if int(ids.size()) < 8:
+		fails.append("AR-O isolated kit count want >= 8 (got %s)" % ids.size())
 	for need in ["cx_nex", "cx_grid", "gr_rot", "gr_spore", "cx_lattice", "gr_vein", "cx_prism"]:
 		if not ids.has(need):
 			fails.append("AR-O isolated dropped prior kit (%s)" % need)
@@ -22200,6 +22202,146 @@ func _assert_ar_o(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] AR-O eighth kit · SoftKnowledge only · AR-A…AR-N stay · no SITE_*")
 	if fails.size() == fail0:
 		print("[Playtest] PASS AR-O")
+	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
+		SoftScanCache.invalidate_enemies()
+
+
+func _assert_ar_p(os: Node, fails: PackedStringArray) -> void:
+	## AR-P: ninth Clash AbilityKit (CX Helix) on the same TestArena grammar.
+	## Isolated — no TestArena scene change. SoftKnowledge / HUD labels only.
+	var fail0 := fails.size()
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.AR_P_NINTH_KIT):
+		fails.append("AR-P P0Slice flag missing")
+	if P0 != null and not bool(P0.AR_O_EIGHTH_KIT):
+		fails.append("AR-P dropped AR-O P0Slice flag")
+	if P0 != null and not bool(P0.AR_N_SEVENTH_KIT):
+		fails.append("AR-P dropped AR-N P0Slice flag")
+	if P0 != null and not bool(P0.AR_M_SIXTH_KIT):
+		fails.append("AR-P dropped AR-M P0Slice flag")
+	if P0 != null and not bool(P0.AR_L_FIFTH_KIT):
+		fails.append("AR-P dropped AR-L P0Slice flag")
+	if P0 != null and not bool(P0.AR_K_SESSION_SHOP):
+		fails.append("AR-P dropped AR-K P0Slice flag")
+	if P0 != null and not bool(P0.AR_J_PRIME_CAMP):
+		fails.append("AR-P dropped AR-J P0Slice flag")
+	if P0 != null and not bool(P0.AR_I_MATCH_END):
+		fails.append("AR-P dropped AR-I P0Slice flag")
+	if P0 != null and not bool(P0.AR_H_DOOR):
+		fails.append("AR-P dropped AR-H P0Slice flag")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("AR-P flipped ORBITAL_STATIONS")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-P Infection cap drifted")
+	var layer0 := str(LayerContext.current_layer) if LayerContext else ""
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	if Kit == null or not Kit.has_method("kit_ids") or not Kit.has_method("kit_by_id"):
+		fails.append("AR-P AbilityKitCatalog missing")
+		return
+	var ids: PackedStringArray = Kit.kit_ids()
+	if int(ids.size()) != 9:
+		fails.append("AR-P isolated kit count want 9 (got %s)" % ids.size())
+	for need in ["cx_nex", "cx_grid", "gr_rot", "gr_spore", "cx_lattice", "gr_vein", "cx_prism", "gr_facet"]:
+		if not ids.has(need):
+			fails.append("AR-P isolated dropped prior kit (%s)" % need)
+	if not ids.has("cx_helix"):
+		fails.append("AR-P isolated ninth kit cx_helix missing")
+	var kit: Array = Kit.kit_by_id("cx_helix")
+	if kit.size() != 4:
+		fails.append("AR-P isolated Helix is not 4 slots")
+	else:
+		if kit[0] == null or str(kit[0].ability_name) != "Pulse Bolt":
+			fails.append("AR-P isolated Helix slot0 is not Pulse")
+		elif absf(float(kit[0].damage) - 11.0) > 0.01:
+			fails.append("AR-P isolated Helix Pulse damage drifted")
+		if kit[1] == null or not bool(kit[1].is_firewall) or str(kit[1].ability_name) != "Helix Seal":
+			fails.append("AR-P isolated Helix utility missing")
+		if kit[2] == null or not bool(kit[2].is_hacking) or str(kit[2].ability_name) != "Helix Probe":
+			fails.append("AR-P isolated Helix probe missing")
+		if kit[3] == null or str(kit[3].ability_name) != "Form Cycle":
+			fails.append("AR-P isolated Helix Form Cycle missing")
+	if Kit.has_method("kit_for_faction"):
+		var cx0: Array = Kit.kit_for_faction("Cybernex")
+		var gr0: Array = Kit.kit_for_faction("gROT")
+		if cx0.size() != 4 or str(cx0[1].ability_name) != "Nex-Firewall":
+			fails.append("AR-P isolated default CX kit changed")
+		if gr0.size() != 4 or str(gr0[1].ability_name) != "Hack":
+			fails.append("AR-P isolated default GR kit changed")
+	if Kit.has_method("kits_for_faction"):
+		var cx_cycle: PackedStringArray = Kit.kits_for_faction("Cybernex")
+		if cx_cycle.size() < 5 or str(cx_cycle[4]) != "cx_helix":
+			fails.append("AR-P isolated CX Helix not selectable in kit cycle")
+		if cx_cycle.size() < 4 or str(cx_cycle[3]) != "cx_prism":
+			fails.append("AR-P isolated CX Prism dropped from kit cycle")
+		var gr_cycle: PackedStringArray = Kit.kits_for_faction("gROT")
+		if gr_cycle.size() < 4 or str(gr_cycle[3]) != "gr_facet":
+			fails.append("AR-P isolated GR Facet dropped from kit cycle")
+	var host: Node = os if os else self
+	var dummy := Node3D.new()
+	dummy.name = "AR-PDummy"
+	var absys := Node.new()
+	absys.set_script(preload("res://scripts/abilities/AbilitySystem.gd"))
+	absys.name = "AbilitySystem"
+	dummy.add_child(absys)
+	host.add_child(dummy)
+	await get_tree().process_frame
+	if absys.has_method("setup_kit"):
+		absys.setup_kit("cx_helix", "Cybernex")
+		if str(absys.current_kit_id) != "cx_helix":
+			fails.append("AR-P isolated could not apply CX Helix kit")
+		if absys.abilities.size() != 4:
+			fails.append("AR-P isolated Helix kit not 4 slots")
+		elif str(absys.abilities[1].ability_name) != "Helix Seal":
+			fails.append("AR-P isolated player Helix utility missing")
+		elif absys.abilities[0] and absf(float(absys.abilities[0].damage) - 11.0) > 0.01:
+			fails.append("AR-P isolated Pulse DPS drifted")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("combat", 20.0)
+		GameManager.add_mastery("history", 20.0)
+	if absys.abilities.size() > 0 and absys.abilities[0] and absf(float(absys.abilities[0].damage) - 11.0) > 0.01:
+		fails.append("AR-P isolated Knowledge changed Pulse")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var klab := str(SoftK.kit_label("cx_helix")) if SoftK and SoftK.has_method("kit_label") else ""
+	if klab == "" or (klab != "HELIX" and klab != "NEX HELIX"):
+		fails.append("AR-P isolated SoftKnowledge kit label missing (%s)" % klab)
+	if absys.has_method("kit_label"):
+		var hlab := str(absys.kit_label())
+		if hlab == "" or (hlab != "HELIX" and hlab != "NEX HELIX"):
+			fails.append("AR-P isolated HUD kit label missing (%s)" % hlab)
+	if SoftK and SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked("helix")):
+		fails.append("AR-P isolated unlocked exclusive weapon")
+	if SoftK and SoftK.has_method("exclusive_module_unlocked") and bool(SoftK.exclusive_module_unlocked("cx_helix")):
+		fails.append("AR-P isolated unlocked exclusive combat module")
+	var bench: Node3D = Node3D.new()
+	bench.set_script(preload("res://scripts/arena/ClashModuleBench.gd"))
+	bench.name = "ClashModuleBenchARP"
+	host.add_child(bench)
+	await get_tree().process_frame
+	var offers := int(bench.offer_count()) if bench.has_method("offer_count") else 0
+	if offers != 2:
+		fails.append("AR-P isolated drifted ClashModuleBench offers (got %s)" % offers)
+	print("[Playtest] AR-P ninth kit isolated · kits=", ids.size(), " ninth=cx_helix",
+		" label=", klab, " · prior 8 stay · AR-K bench stays")
+	if is_instance_valid(dummy):
+		dummy.queue_free()
+	if is_instance_valid(bench):
+		bench.queue_free()
+	await get_tree().process_frame
+	if os != null and os.has_method("enter_clash_from_world"):
+		fails.append("AR-P opened G5 world-to-arena")
+	if LayerContext:
+		if str(LayerContext.site_pin_id) != pin0:
+			fails.append("AR-P changed site_pin (%s → %s)" % [pin0, LayerContext.site_pin_id])
+		if layer0 != "" and str(LayerContext.current_layer) == "Arena" and layer0 != "Arena":
+			fails.append("AR-P stole LayerContext to Arena")
+			LayerContext.set_layer(layer0)
+	if Inf and int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-P Infection cap changed")
+	print("[Playtest] AR-P ninth kit · SoftKnowledge only · AR-A…AR-O stay · no SITE_*")
+	if fails.size() == fail0:
+		print("[Playtest] PASS AR-P")
 	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
 		SoftScanCache.invalidate_enemies()
 
