@@ -117,6 +117,14 @@ const PV_B_SPACE := true
 ## Click/select still ≠ combat. G5 stays closed. Not Clash. Not a 13th kit.
 ## Not FL-O. Host authority. ORBITAL_STATIONS stays false. No SITE_*.
 const PV_C_STRATEGY := true
+## PC-A: SoftSession persists pad/orbital player modules + ship across relaunch.
+## Same user://soft_session.json. SoftKnowledge / HUD COLONY / SHIP / PERSIST only.
+## Host authority. Infection cap 5. Knowledge soft. story≠power. No P2W.
+## Restore via BaseBuilder. Does not steal the ST-A player_module slot.
+## ST-A…ST-M / PV-A…PV-C stay. AbilityKitCatalog stays at 12. FL-N FLEET 15/15.
+## Not Voice. Not aiNEX. Not G2–G6. Not ranked/pay matchmaking. Not FL-O.
+## Not a 13th kit. ORBITAL_STATIONS stays false. No SITE_*.
+const PC_A_PERSIST := true
 ## BT-A: one occupied-pad guard. Tiny 3-state BT (patrol / engage Pulse / return).
 ## Host authority. Pulse 11. PV-A rival stays distinct. G5 closed. Not Clash waves.
 const BT_A_GUARD := true

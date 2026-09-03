@@ -1,12 +1,17 @@
 extends Node
 ## Soft local session persist — form/faction/layer + last legal action.
 ## NP-F: player leave starts a short local offline cycle. Not combat power. Not P2W.
+## PC-A: pad/orbital player modules + ship across relaunch. Same user:// file.
+## SoftKnowledge / HUD only. Host authority. Never Pulse / kit / P2W.
 
 signal offline_changed(offline: bool)
 
 const PATH := "user://soft_session.json"
 const LEGAL_ACTIONS := ["occupy", "harvest", "invite", "form", "faction"]
 const WS_DAILY_CAP := 60.0
+const LEGAL_PADS := ["Pad_North", "Pad_Approach", "Pad_Flank"]
+const LEGAL_PAD_KINDS := ["habitat", "turret", "storage", "hangar"]
+const LEGAL_ORBITAL_KINDS := ["hangar", "turret", "storage"]
 
 var form: String = "Canine"
 var faction: String = "Cybernex"
@@ -19,6 +24,9 @@ var war_score_day: String = ""
 var clash_result: String = ""
 var clash_ws_granted: float = 0.0
 var clash_cosmetic: bool = false
+var colony: Array = []
+var orbital: Array = []
+var ship: Dictionary = {}
 var _offline: bool = false
 
 func _ready() -> void:
@@ -51,8 +59,12 @@ func load_session() -> void:
 	clash_result = str(data.get("clash_result", clash_result))
 	clash_ws_granted = float(data.get("clash_ws_granted", clash_ws_granted))
 	clash_cosmetic = bool(data.get("clash_cosmetic", clash_cosmetic))
+	_ingest_colony(data.get("colony", []))
+	_ingest_orbital(data.get("orbital", []))
+	_ingest_ship(data.get("ship", {}))
 	_roll_ws_day()
-	print("[SoftSession] loaded form=", form, " faction=", faction, " ws=", war_score_daily, "/", WS_DAILY_CAP)
+	print("[SoftSession] loaded form=", form, " faction=", faction, " ws=", war_score_daily, "/", WS_DAILY_CAP,
+		" colony=", colony.size(), " orbital=", orbital.size(), " ship=", str(ship.get("faction", "")))
 
 func save_session() -> void:
 	var payload := {
@@ -69,6 +81,10 @@ func save_session() -> void:
 		"clash_cosmetic": clash_cosmetic,
 		"saved_at": Time.get_datetime_string_from_system(true),
 	}
+	if _pc_a():
+		payload["colony"] = colony
+		payload["orbital"] = orbital
+		payload["ship"] = ship
 	var f := FileAccess.open(PATH, FileAccess.WRITE)
 	if f == null:
 		return
@@ -175,6 +191,8 @@ func remember_player(p: Node, action: String = "") -> void:
 		last_layer = LayerContext.current_layer
 	if action != "":
 		note_player_action(action)
+	if _pc_a() and is_host_authority():
+		remember_ship(p)
 	save_session()
 
 func apply_to_player(p: Node) -> void:
@@ -189,3 +207,267 @@ func apply_to_player(p: Node) -> void:
 		if p.has_method("_load_form_visual"):
 			p._load_form_visual()
 	print("[SoftSession] applied form=", form, " faction=", faction)
+
+
+func _pc_a() -> bool:
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	return P0 != null and bool(P0.PC_A_PERSIST)
+
+
+func is_host_authority() -> bool:
+	if multiplayer == null or not multiplayer.has_multiplayer_peer():
+		return true
+	return multiplayer.is_server()
+
+
+func persist_hud_line() -> String:
+	## SoftKnowledge COLONY / SHIP / PERSIST. Never Pulse / kit / P2W.
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if SoftK == null:
+		return ""
+	return "%s · %s · %s" % [str(SoftK.colony_label()), str(SoftK.ship_label()), str(SoftK.persist_label())]
+
+
+func remember_pad_module(pad, kind: String, faction_name: String) -> void:
+	## Player pad module identity only. Not NPC. Not SITE_*. Not Pulse.
+	if not _pc_a() or not is_host_authority():
+		return
+	var pname := ""
+	var k := str(kind)
+	var fac := str(faction_name)
+	if pad is Node:
+		pname = str((pad as Node).name)
+	else:
+		pname = str(pad)
+	if not LEGAL_PADS.has(pname):
+		return
+	if not LEGAL_PAD_KINDS.has(k):
+		return
+	if fac == "":
+		fac = "Cybernex"
+	_upsert_entry(colony, {"pad": pname, "kind": k, "faction": fac}, "pad")
+	save_session()
+	print("[SoftSession] PC-A pad ", pname, " kind=", k, " faction=", fac)
+
+
+func remember_orbital_module(kind: String, faction_name: String) -> void:
+	## ST-K/L/M extras on the existing PlayerOrbitalStation. Not ST-E dock/habitat.
+	if not _pc_a() or not is_host_authority():
+		return
+	var k := str(kind)
+	var fac := str(faction_name)
+	if not LEGAL_ORBITAL_KINDS.has(k):
+		return
+	if fac == "":
+		fac = "Cybernex"
+	_upsert_entry(orbital, {"kind": k, "faction": fac}, "")
+	save_session()
+	print("[SoftSession] PC-A orbital kind=", k, " faction=", fac)
+
+
+func remember_ship(p: Node = null) -> void:
+	## Ship faction + module kind tags. Never HP / DPS / Pulse / kit unlock.
+	if not _pc_a() or not is_host_authority():
+		return
+	var fac := faction
+	var kinds: Array = []
+	var hull: Node = p
+	if hull != null and is_instance_valid(hull):
+		if "faction" in hull and str(hull.get("faction")) != "":
+			fac = str(hull.get("faction"))
+		kinds = _ship_module_kinds(hull)
+	if fac == "":
+		fac = "Cybernex"
+	ship = {"faction": fac, "modules": kinds}
+	faction = fac
+	save_session()
+	print("[SoftSession] PC-A ship faction=", fac, " modules=", kinds.size())
+
+
+func wipe_colony_memory() -> void:
+	## Playtest relaunch sim. Does not write disk.
+	colony = []
+	orbital = []
+	ship = {}
+
+
+func restore_world(os: Node = null) -> void:
+	## Host-only. BaseBuilder place_*. Never steals the ST-A player_module slot.
+	if not _pc_a() or not is_host_authority():
+		return
+	restore_colony()
+	restore_orbital()
+	restore_ship(os)
+	print("[SoftSession] PC-A restore colony=", colony.size(), " orbital=", orbital.size(),
+		" ship=", str(ship.get("faction", "")))
+
+
+func restore_colony() -> void:
+	var Builder = load("res://scripts/world/BaseBuilder.gd")
+	var tree := get_tree()
+	if not _pc_a() or not is_host_authority() or Builder == null or tree == null:
+		return
+	for raw in colony:
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var pname := str(raw.get("pad", ""))
+		var k := str(raw.get("kind", ""))
+		var fac := str(raw.get("faction", "Cybernex"))
+		var pad: Node3D = _pad_named(pname)
+		if pad == null or not LEGAL_PAD_KINDS.has(k):
+			continue
+		_place_pad_kind(Builder, pad, k, fac)
+
+
+func restore_orbital() -> void:
+	var Builder = load("res://scripts/world/BaseBuilder.gd")
+	var tree := get_tree()
+	var cluster: Node3D = null
+	if not _pc_a() or not is_host_authority() or Builder == null or tree == null:
+		return
+	var listed: Array = tree.get_nodes_in_group("player_orbital_stations")
+	if listed.is_empty():
+		return
+	cluster = listed[0] as Node3D
+	if cluster == null or not is_instance_valid(cluster):
+		return
+	for raw in orbital:
+		if typeof(raw) != TYPE_DICTIONARY:
+			continue
+		var k := str(raw.get("kind", ""))
+		var fac := str(raw.get("faction", "Cybernex"))
+		_place_orbital_kind(Builder, cluster, k, fac)
+
+
+func restore_ship(os: Node = null) -> void:
+	if not _pc_a() or not is_host_authority():
+		return
+	var fac := str(ship.get("faction", faction))
+	if fac == "":
+		return
+	faction = fac
+	var hull: Node = null
+	if os != null and is_instance_valid(os):
+		hull = os.get("ship") as Node
+	if hull == null:
+		var tree := get_tree()
+		if tree:
+			hull = tree.get_first_node_in_group("player_ship")
+	if hull != null and is_instance_valid(hull) and "faction" in hull:
+		hull.faction = fac
+	var walker: Node = null
+	if os != null and is_instance_valid(os):
+		walker = os.get("player") as Node
+	if walker != null and is_instance_valid(walker) and "faction" in walker:
+		walker.faction = fac
+
+
+func _ingest_colony(raw) -> void:
+	colony = []
+	if typeof(raw) != TYPE_ARRAY:
+		return
+	for e in raw:
+		if typeof(e) != TYPE_DICTIONARY:
+			continue
+		var pname := str(e.get("pad", ""))
+		var k := str(e.get("kind", ""))
+		var fac := str(e.get("faction", "Cybernex"))
+		if LEGAL_PADS.has(pname) and LEGAL_PAD_KINDS.has(k):
+			colony.append({"pad": pname, "kind": k, "faction": fac if fac != "" else "Cybernex"})
+
+
+func _ingest_orbital(raw) -> void:
+	orbital = []
+	if typeof(raw) != TYPE_ARRAY:
+		return
+	for e in raw:
+		if typeof(e) != TYPE_DICTIONARY:
+			continue
+		var k := str(e.get("kind", ""))
+		var fac := str(e.get("faction", "Cybernex"))
+		if LEGAL_ORBITAL_KINDS.has(k):
+			orbital.append({"kind": k, "faction": fac if fac != "" else "Cybernex"})
+
+
+func _ingest_ship(raw) -> void:
+	ship = {}
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	var fac := str(raw.get("faction", ""))
+	var mods = raw.get("modules", [])
+	var kinds: Array = []
+	if fac == "":
+		return
+	if typeof(mods) == TYPE_ARRAY:
+		for m in mods:
+			var tag := str(m)
+			if tag != "":
+				kinds.append(tag)
+	ship = {"faction": fac, "modules": kinds}
+
+
+func _upsert_entry(bucket: Array, entry: Dictionary, key: String) -> void:
+	var kind := str(entry.get("kind", ""))
+	for i in range(bucket.size()):
+		var cur = bucket[i]
+		if typeof(cur) != TYPE_DICTIONARY:
+			continue
+		if str(cur.get("kind", "")) != kind:
+			continue
+		if key != "" and str(cur.get(key, "")) != str(entry.get(key, "")):
+			continue
+		bucket[i] = entry
+		return
+	bucket.append(entry)
+
+
+func _pad_named(pname: String) -> Node3D:
+	var tree := get_tree()
+	if tree == null or pname == "":
+		return null
+	for n in tree.get_nodes_in_group("landing_pads"):
+		if n is Node3D and str(n.name) == pname:
+			return n as Node3D
+	return null
+
+
+func _place_pad_kind(Builder, pad: Node3D, kind: String, fac: String) -> void:
+	match kind:
+		"habitat":
+			## Do not steal an occupied ST-A player_module slot.
+			if Builder.pad_has_player_module(pad):
+				return
+			Builder.place_player_habitat(pad, fac)
+		"turret":
+			Builder.place_pad_turret(pad, fac)
+		"storage":
+			Builder.place_pad_storage(pad, fac)
+		"hangar":
+			Builder.place_pad_hangar_stub(pad, fac)
+
+
+func _place_orbital_kind(Builder, cluster: Node3D, kind: String, fac: String) -> void:
+	match kind:
+		"hangar":
+			Builder.place_orbital_hangar_stub(cluster, fac)
+		"turret":
+			Builder.place_orbital_turret(cluster, fac)
+		"storage":
+			Builder.place_orbital_storage(cluster, fac)
+
+
+func _ship_module_kinds(p: Node) -> Array:
+	var out: Array = []
+	if p == null or not ("modules" in p):
+		return out
+	var mods = p.get("modules")
+	if typeof(mods) != TYPE_ARRAY:
+		return out
+	for m in mods:
+		if m == null:
+			continue
+		if m.has_method("short_tag"):
+			var tag := str(m.short_tag())
+			if tag != "":
+				out.append(tag)
+	return out

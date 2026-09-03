@@ -285,6 +285,33 @@ static func pvp_label() -> String:
 	return "PVP"
 
 
+## PC-A: name a persisted player colony. Never Pulse / yield / kit unlock.
+static func colony_label() -> String:
+	var ops := mastery("colony_ops")
+	var hist := mastery("history")
+	if ops >= 10.0 or hist >= 15.0 or rank() >= 5:
+		return "COLONY HOLD"
+	return "COLONY"
+
+
+## PC-A: name the persisted player ship. Never thrust / Pulse / HP.
+static func ship_label() -> String:
+	var logi := mastery("logistics")
+	var hist := mastery("history")
+	if logi >= 10.0 or hist >= 15.0 or rank() >= 5:
+		return "COLONY SHIP"
+	return "SHIP"
+
+
+## PC-A: name SoftSession relaunch persist. Never DPS / P2W / kit unlock.
+static func persist_label() -> String:
+	var hist := mastery("history")
+	var logi := mastery("logistics")
+	if hist >= 15.0 or logi >= 15.0 or rank() >= 5:
+		return "SESSION PERSIST"
+	return "PERSIST"
+
+
 ## History/combat: gROT swarm name only — never Pulse DPS / HP / yield.
 static func swarm_label() -> String:
 	var hist := mastery("history")
