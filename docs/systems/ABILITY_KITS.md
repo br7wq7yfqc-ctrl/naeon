@@ -49,7 +49,16 @@ AR-N seventh kit (same cost sheet, identity only; CX slot after Lattice / Vein):
 | 2 R | Prism Probe |
 | 3 F | Form Cycle |
 
-TestArena: `1` / `2` / `3` / `4` cycle faction kits. SoftKnowledge HUD `LATTICE` / `NEX LATTICE` · `VEIN` / `ROT VEIN` · `PRISM` / `NEX PRISM`. Forms = identity, never a hidden stat.
+AR-O eighth kit (same cost sheet, identity only; gROT slot after Prism / Vein):
+
+| Slot | gROT Facet |
+|------|------------|
+| 0 Q | Pulse Bolt |
+| 1 E | Facet Seal |
+| 2 R | Facet Probe |
+| 3 F | Form Cycle |
+
+TestArena: `1` / `2` / `3` / `4` cycle faction kits. SoftKnowledge HUD `LATTICE` / `NEX LATTICE` · `VEIN` / `ROT VEIN` · `PRISM` / `NEX PRISM` · `FACET` / `ROT FACET`. Forms = identity, never a hidden stat.
 
 No P2W: costs/cooldowns fixed; economy never raises damage. Knowledge insight is a soft damage scalar only.
 

@@ -6,6 +6,7 @@ class_name AbilityKitCatalog
 ## probe|surge / Form Cycle grammar. SoftKnowledge labels only.
 ## AR-M: sixth kit (GR Vein) — gROT symmetric to CX Lattice. Same grammar.
 ## AR-N: seventh kit (CX Prism) — Cybernex symmetric slot after Lattice / Vein.
+## AR-O: eighth kit (GR Facet) — gROT symmetric slot after CX Prism / GR Vein.
 
 const EE = preload("res://scripts/systems/EnergyEconomy.gd")
 
@@ -16,6 +17,7 @@ const KIT_GR_SPORE := "gr_spore"
 const KIT_CX_LATTICE := "cx_lattice"
 const KIT_GR_VEIN := "gr_vein"
 const KIT_CX_PRISM := "cx_prism"
+const KIT_GR_FACET := "gr_facet"
 
 const KIT_TABLE := [
 	{"id": KIT_CX_NEX, "faction": "Cybernex", "label": "Nex"},
@@ -25,6 +27,7 @@ const KIT_TABLE := [
 	{"id": KIT_CX_LATTICE, "faction": "Cybernex", "label": "Lattice"},
 	{"id": KIT_GR_VEIN, "faction": "gROT", "label": "Vein"},
 	{"id": KIT_CX_PRISM, "faction": "Cybernex", "label": "Prism"},
+	{"id": KIT_GR_FACET, "faction": "gROT", "label": "Facet"},
 ]
 
 
@@ -75,6 +78,8 @@ static func kit_by_id(kit_id: String) -> Array:
 			return [_pulse(), _spore_claim(), _rot_bloom(), _form_cycle()]
 		KIT_GR_VEIN:
 			return [_pulse(), _vein_claim(), _vein_surge(), _form_cycle()]
+		KIT_GR_FACET:
+			return [_pulse(), _facet_seal(), _facet_probe(), _form_cycle()]
 		KIT_GR_ROT:
 			return [_pulse(), _hack_grot(), _surge(), _form_cycle()]
 		_:
@@ -304,6 +309,36 @@ static func _vein_surge() -> Ability:
 	a.force = 8.0
 	a.targeting = Ability.TargetingType.AOE
 	a.effect_color = Color(0.68, 0.08, 0.32)
+	return a
+
+
+static func _facet_seal() -> Ability:
+	var a := Ability.new()
+	a.ability_name = "Facet Seal"
+	a.description = "Short facet seal window (identity, same cost sheet)"
+	a.cooldown = EE.CD_FIREWALL
+	a.energy_cost = EE.NEX_FIREWALL
+	a.duration = 2.5
+	a.heal = 12.0
+	a.range = 18.0
+	a.is_firewall = true
+	a.faction_restriction = Ability.FactionRestriction.GROT_ONLY
+	a.effect_color = Color(0.95, 0.38, 0.55)
+	return a
+
+
+static func _facet_probe() -> Ability:
+	var a := Ability.new()
+	a.ability_name = "Facet Probe"
+	a.description = "Channeled facet recon (identity, same cost sheet)"
+	a.cooldown = EE.CD_PROBE
+	a.energy_cost = EE.SYSTEM_PROBE
+	a.damage = 7.0
+	a.range = 18.0
+	a.is_hacking = true
+	a.is_channeled = true
+	a.channel_time = 1.5
+	a.effect_color = Color(0.82, 0.15, 0.42)
 	return a
 
 

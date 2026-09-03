@@ -83,7 +83,7 @@ static func module_bench_label() -> String:
 	return "MODULE BENCH"
 
 
-## AR-L / AR-M / AR-N: name a Clash AbilityKit. Never DPS / yield / Pulse / Hack / rank.
+## AR-L / AR-M / AR-N / AR-O: name a Clash AbilityKit. Never DPS / yield / Pulse / Hack / rank.
 static func kit_label(kit_id: String = "") -> String:
 	var combat := mastery("combat")
 	var hist := mastery("history")
@@ -103,6 +103,8 @@ static func kit_label(kit_id: String = "") -> String:
 			return "ROT SPORE" if named else "SPORE"
 		"gr_vein":
 			return "ROT VEIN" if named else "VEIN"
+		"gr_facet":
+			return "ROT FACET" if named else "FACET"
 		_:
 			return "KIT" if named else "KIT"
 

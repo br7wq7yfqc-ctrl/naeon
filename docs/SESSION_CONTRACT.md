@@ -185,6 +185,16 @@
     Not 10–15 ships. Not a second OpenSpace. Not ENet. Not G5.
     Infection cap 5. ORBITAL_STATIONS stays false. No SITE_*
     (this pass).
+48. AR-O: eighth Clash AbilityKit (GR Facet) on AbilityKitCatalog
+    (TestArena / ClashDirector 60×60) toward Phase-3 6–8 heroes.
+    gROT symmetric slot after CX Prism / GR Vein. Same Pulse
+    / utility / probe|surge / Form Cycle grammar from EnergyEconomy.
+    SoftKnowledge / HUD FACET only. Knowledge ≠ DPS / yield /
+    Pulse / Hack / rank. No cash-shop, P2W kits, or unique weapon.
+    No Paragon card deck. Prior 7 kits stay. ClashModuleBench
+    AR-E SENSOR + AR-K CARGO stay. AR-A…AR-N stay. Infection
+    cap 5. Host authority. ORBITAL_STATIONS stays false.
+    No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

@@ -83,6 +83,7 @@ func _go() -> void:
 		await _assert_ar_l(os, fails)
 		await _assert_ar_m(os, fails)
 		await _assert_ar_n(os, fails)
+		await _assert_ar_o(os, fails)
 		await _assert_sn_c(os, fails)
 		await _assert_sn_d(os, fails)
 		await _assert_do_a(os, fails)
@@ -118,6 +119,7 @@ func _go() -> void:
 	await _assert_ar_l(os, fails)
 	await _assert_ar_m(os, fails)
 	await _assert_ar_n(os, fails)
+	await _assert_ar_o(os, fails)
 	_assert_se_a(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 	_assert_scan_cache_live(fails)
@@ -21964,8 +21966,8 @@ func _assert_ar_n(os: Node, fails: PackedStringArray) -> void:
 		fails.append("AR-N AbilityKitCatalog missing")
 		return
 	var ids: PackedStringArray = Kit.kit_ids()
-	if int(ids.size()) != 7:
-		fails.append("AR-N isolated kit count want 7 (got %s)" % ids.size())
+	if int(ids.size()) < 7:
+		fails.append("AR-N isolated kit count want >= 7 (got %s)" % ids.size())
 	for need in ["cx_nex", "cx_grid", "gr_rot", "gr_spore", "cx_lattice", "gr_vein"]:
 		if not ids.has(need):
 			fails.append("AR-N isolated dropped prior kit (%s)" % need)
@@ -22060,6 +22062,142 @@ func _assert_ar_n(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] AR-N seventh kit · SoftKnowledge only · AR-A…AR-M stay · no SITE_*")
 	if fails.size() == fail0:
 		print("[Playtest] PASS AR-N")
+	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
+		SoftScanCache.invalidate_enemies()
+
+
+func _assert_ar_o(os: Node, fails: PackedStringArray) -> void:
+	## AR-O: eighth Clash AbilityKit (GR Facet) on the same TestArena grammar.
+	## Isolated — no TestArena scene change. SoftKnowledge / HUD labels only.
+	var fail0 := fails.size()
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.AR_O_EIGHTH_KIT):
+		fails.append("AR-O P0Slice flag missing")
+	if P0 != null and not bool(P0.AR_N_SEVENTH_KIT):
+		fails.append("AR-O dropped AR-N P0Slice flag")
+	if P0 != null and not bool(P0.AR_M_SIXTH_KIT):
+		fails.append("AR-O dropped AR-M P0Slice flag")
+	if P0 != null and not bool(P0.AR_L_FIFTH_KIT):
+		fails.append("AR-O dropped AR-L P0Slice flag")
+	if P0 != null and not bool(P0.AR_K_SESSION_SHOP):
+		fails.append("AR-O dropped AR-K P0Slice flag")
+	if P0 != null and not bool(P0.AR_J_PRIME_CAMP):
+		fails.append("AR-O dropped AR-J P0Slice flag")
+	if P0 != null and not bool(P0.AR_I_MATCH_END):
+		fails.append("AR-O dropped AR-I P0Slice flag")
+	if P0 != null and not bool(P0.AR_H_DOOR):
+		fails.append("AR-O dropped AR-H P0Slice flag")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("AR-O flipped ORBITAL_STATIONS")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-O Infection cap drifted")
+	var layer0 := str(LayerContext.current_layer) if LayerContext else ""
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	if Kit == null or not Kit.has_method("kit_ids") or not Kit.has_method("kit_by_id"):
+		fails.append("AR-O AbilityKitCatalog missing")
+		return
+	var ids: PackedStringArray = Kit.kit_ids()
+	if int(ids.size()) != 8:
+		fails.append("AR-O isolated kit count want 8 (got %s)" % ids.size())
+	for need in ["cx_nex", "cx_grid", "gr_rot", "gr_spore", "cx_lattice", "gr_vein", "cx_prism"]:
+		if not ids.has(need):
+			fails.append("AR-O isolated dropped prior kit (%s)" % need)
+	if not ids.has("gr_facet"):
+		fails.append("AR-O isolated eighth kit gr_facet missing")
+	var kit: Array = Kit.kit_by_id("gr_facet")
+	if kit.size() != 4:
+		fails.append("AR-O isolated Facet is not 4 slots")
+	else:
+		if kit[0] == null or str(kit[0].ability_name) != "Pulse Bolt":
+			fails.append("AR-O isolated Facet slot0 is not Pulse")
+		elif absf(float(kit[0].damage) - 11.0) > 0.01:
+			fails.append("AR-O isolated Facet Pulse damage drifted")
+		if kit[1] == null or not bool(kit[1].is_firewall) or str(kit[1].ability_name) != "Facet Seal":
+			fails.append("AR-O isolated Facet utility missing")
+		if kit[2] == null or not bool(kit[2].is_hacking) or str(kit[2].ability_name) != "Facet Probe":
+			fails.append("AR-O isolated Facet probe missing")
+		if kit[3] == null or str(kit[3].ability_name) != "Form Cycle":
+			fails.append("AR-O isolated Facet Form Cycle missing")
+	if Kit.has_method("kit_for_faction"):
+		var cx0: Array = Kit.kit_for_faction("Cybernex")
+		var gr0: Array = Kit.kit_for_faction("gROT")
+		if cx0.size() != 4 or str(cx0[1].ability_name) != "Nex-Firewall":
+			fails.append("AR-O isolated default CX kit changed")
+		if gr0.size() != 4 or str(gr0[1].ability_name) != "Hack":
+			fails.append("AR-O isolated default GR kit changed")
+	if Kit.has_method("kits_for_faction"):
+		var gr_cycle: PackedStringArray = Kit.kits_for_faction("gROT")
+		if gr_cycle.size() < 4 or str(gr_cycle[3]) != "gr_facet":
+			fails.append("AR-O isolated GR Facet not selectable in kit cycle")
+		var cx_cycle: PackedStringArray = Kit.kits_for_faction("Cybernex")
+		if cx_cycle.size() < 4 or str(cx_cycle[3]) != "cx_prism":
+			fails.append("AR-O isolated CX Prism dropped from kit cycle")
+	var host: Node = os if os else self
+	var dummy := Node3D.new()
+	dummy.name = "AR-ODummy"
+	var absys := Node.new()
+	absys.set_script(preload("res://scripts/abilities/AbilitySystem.gd"))
+	absys.name = "AbilitySystem"
+	dummy.add_child(absys)
+	host.add_child(dummy)
+	await get_tree().process_frame
+	if absys.has_method("setup_kit"):
+		absys.setup_kit("gr_facet", "gROT")
+		if str(absys.current_kit_id) != "gr_facet":
+			fails.append("AR-O isolated could not apply GR Facet kit")
+		if absys.abilities.size() != 4:
+			fails.append("AR-O isolated Facet kit not 4 slots")
+		elif str(absys.abilities[1].ability_name) != "Facet Seal":
+			fails.append("AR-O isolated player Facet utility missing")
+		elif absys.abilities[0] and absf(float(absys.abilities[0].damage) - 11.0) > 0.01:
+			fails.append("AR-O isolated Pulse DPS drifted")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("combat", 20.0)
+		GameManager.add_mastery("history", 20.0)
+	if absys.abilities.size() > 0 and absys.abilities[0] and absf(float(absys.abilities[0].damage) - 11.0) > 0.01:
+		fails.append("AR-O isolated Knowledge changed Pulse")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var klab := str(SoftK.kit_label("gr_facet")) if SoftK and SoftK.has_method("kit_label") else ""
+	if klab == "" or (klab != "FACET" and klab != "ROT FACET"):
+		fails.append("AR-O isolated SoftKnowledge kit label missing (%s)" % klab)
+	if absys.has_method("kit_label"):
+		var hlab := str(absys.kit_label())
+		if hlab == "" or (hlab != "FACET" and hlab != "ROT FACET"):
+			fails.append("AR-O isolated HUD kit label missing (%s)" % hlab)
+	if SoftK and SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked("facet")):
+		fails.append("AR-O isolated unlocked exclusive weapon")
+	if SoftK and SoftK.has_method("exclusive_module_unlocked") and bool(SoftK.exclusive_module_unlocked("gr_facet")):
+		fails.append("AR-O isolated unlocked exclusive combat module")
+	var bench: Node3D = Node3D.new()
+	bench.set_script(preload("res://scripts/arena/ClashModuleBench.gd"))
+	bench.name = "ClashModuleBenchARO"
+	host.add_child(bench)
+	await get_tree().process_frame
+	var offers := int(bench.offer_count()) if bench.has_method("offer_count") else 0
+	if offers != 2:
+		fails.append("AR-O isolated drifted ClashModuleBench offers (got %s)" % offers)
+	print("[Playtest] AR-O eighth kit isolated · kits=", ids.size(), " eighth=gr_facet",
+		" label=", klab, " · prior 7 stay · AR-K bench stays")
+	if is_instance_valid(dummy):
+		dummy.queue_free()
+	if is_instance_valid(bench):
+		bench.queue_free()
+	await get_tree().process_frame
+	if os != null and os.has_method("enter_clash_from_world"):
+		fails.append("AR-O opened G5 world-to-arena")
+	if LayerContext:
+		if str(LayerContext.site_pin_id) != pin0:
+			fails.append("AR-O changed site_pin (%s → %s)" % [pin0, LayerContext.site_pin_id])
+		if layer0 != "" and str(LayerContext.current_layer) == "Arena" and layer0 != "Arena":
+			fails.append("AR-O stole LayerContext to Arena")
+			LayerContext.set_layer(layer0)
+	if Inf and int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-O Infection cap changed")
+	print("[Playtest] AR-O eighth kit · SoftKnowledge only · AR-A…AR-N stay · no SITE_*")
+	if fails.size() == fail0:
+		print("[Playtest] PASS AR-O")
 	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
 		SoftScanCache.invalidate_enemies()
 
