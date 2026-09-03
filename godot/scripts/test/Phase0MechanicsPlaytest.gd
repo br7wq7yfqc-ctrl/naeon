@@ -51,6 +51,7 @@ func _go() -> void:
 		await _assert_st_i(os, fails)
 		await _assert_st_j(os, fails)
 		await _assert_st_k(os, fails)
+		await _assert_st_l(os, fails)
 		await _assert_hf_b(os, fails)
 		await _assert_hf_a(os, fails)
 		await _assert_pv_b(os, fails)
@@ -714,6 +715,7 @@ func _go() -> void:
 	await _assert_st_i(os, fails)
 	await _assert_st_j(os, fails)
 	await _assert_st_k(os, fails)
+	await _assert_st_l(os, fails)
 	await _assert_hf_b(os, fails)
 	await _assert_hf_a(os, fails)
 	await _assert_pv_b(os, fails)
@@ -13968,6 +13970,278 @@ func _assert_st_k(os: Node, fails: PackedStringArray) -> void:
 	if not _osh_same_scene(scene0):
 		fails.append("ST-K overlay/hatch left OpenSpace")
 	print("[Playtest] ST-K orbital hangar stub present · ST-E/G/J stay · hatch/LAND legal · no SITE_*")
+
+
+func _assert_st_l(os: Node, fails: PackedStringArray) -> void:
+	## ST-L: one PadDefenseTurret on the existing PlayerOrbitalStation cluster.
+	## Same PadDefenseTurret / BaseBuilder grammar as ST-H. SoftKnowledge / HUD
+	## label only. Host authority. Pulse 11. Infection cap 5. ST-H pad turret
+	## stays distinct. ST-K hangar stub stays. Not Clash OUTER. Not a 13th kit.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	var cluster: Node3D = null
+	var factory: Node3D = null
+	var stub_k: Node3D = null
+	var turret_l: Node3D = null
+	var turret_h: Node3D = null
+	var pad_h: Node = _in_a_occupied_pad(os)
+	var ov: Node = os.strategy_overlay() if os != null and os.has_method("strategy_overlay") else null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var walker: Node3D = os.get("player") as Node3D if os else null
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var scene0 := _osh_scene_file()
+	var mods := 0
+	var orbital_n := 0
+	var kit_n := 0
+	var lab_l := ""
+	var hud_txt := ""
+	var rival: Node3D = null
+	if P0 == null or not bool(P0.ST_L_TURRET):
+		fails.append("ST-L P0Slice flag missing")
+		return
+	if not bool(P0.ST_H_TURRET) or not bool(P0.ST_K_HANGAR) \
+			or not bool(P0.ST_E_ORBITAL) or not bool(P0.ST_G_FACTORY):
+		fails.append("ST-L dropped ST-E/G/H/K")
+	if bool(P0.ORBITAL_STATIONS):
+		fails.append("ST-L flipped P0Slice.ORBITAL_STATIONS")
+	if os == null:
+		fails.append("ST-L no OpenSpace")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("ST-L must not run on Clash")
+		return
+	if LayerContext and str(LayerContext.current_layer) == "Arena":
+		fails.append("ST-L must not run on Clash")
+		return
+	if os.has_method("player_orbital_station"):
+		cluster = os.player_orbital_station()
+	if cluster == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("player_orbital_stations")
+		if not listed.is_empty() and listed[0] is Node3D:
+			cluster = listed[0] as Node3D
+	if cluster == null:
+		fails.append("ST-L player orbital cluster missing")
+		return
+	if str(cluster.get_meta("site_pin", "")) != "":
+		fails.append("ST-L cluster minted site_pin (%s)" % str(cluster.get_meta("site_pin")))
+		return
+	if bool(cluster.get_meta("city", false)):
+		fails.append("ST-L cluster marked city")
+	if cluster.has_method("is_host_authority") and not bool(cluster.is_host_authority()):
+		fails.append("ST-L is not host authority")
+	if cluster.has_method("cluster_modules"):
+		mods = cluster.cluster_modules().size()
+	if mods != 2:
+		fails.append("ST-L rewrote ST-E cluster_modules (%s)" % mods)
+	if get_tree():
+		orbital_n = get_tree().get_nodes_in_group("player_orbital_modules").size()
+		if orbital_n != 2:
+			fails.append("ST-L rewrote ST-E orbital pair, got %s" % orbital_n)
+	if cluster.has_method("factory_module"):
+		factory = cluster.factory_module()
+	if factory == null and os.has_method("player_factory"):
+		factory = os.player_factory()
+	if factory == null:
+		fails.append("ST-L dropped ST-G factory")
+		return
+	if factory.get_parent() != cluster:
+		fails.append("ST-L factory left the player cluster")
+	if cluster.has_method("hangar_stub"):
+		stub_k = cluster.hangar_stub()
+	if stub_k == null and os.has_method("player_orbital_hangar"):
+		stub_k = os.player_orbital_hangar()
+	if stub_k == null:
+		fails.append("ST-L dropped ST-K hangar stub")
+		return
+	if stub_k.get_parent() != cluster:
+		fails.append("ST-L hangar stub left PlayerOrbitalStation")
+	if cluster.has_method("ensure_defense_turret"):
+		turret_l = cluster.ensure_defense_turret()
+	if turret_l == null and os.has_method("player_orbital_turret"):
+		turret_l = os.player_orbital_turret()
+	if turret_l == null:
+		turret_l = _Builder.place_orbital_turret(cluster, "Cybernex")
+	if turret_l == null or not is_instance_valid(turret_l):
+		fails.append("ST-L orbital turret missing")
+		return
+	if turret_l.get_parent() != cluster:
+		fails.append("ST-L turret is not on PlayerOrbitalStation")
+	var spin_l := str(turret_l.get_meta("site_pin", "missing"))
+	if spin_l != "":
+		fails.append("ST-L turret minted site_pin (%s)" % spin_l)
+	if turret_l.has_meta("player_module") and bool(turret_l.get_meta("player_module")):
+		fails.append("ST-L stole the ST-A player_module slot")
+	if bool(turret_l.get_meta("pad_turret", false)):
+		fails.append("ST-L stole the ST-H pad_turret slot")
+	if not bool(turret_l.get_meta("orbital_turret", false)):
+		fails.append("ST-L turret missing orbital_turret meta")
+	if str(turret_l.get_meta("module_type", "")) != "turret":
+		fails.append("ST-L module is not turret")
+	var tscript_l := str(turret_l.get_script().resource_path) if turret_l.get_script() != null else ""
+	if tscript_l.ends_with("combat/Turret.gd") or tscript_l.ends_with("scenes/combat/Turret.gd"):
+		fails.append("ST-L reused Clash Turret.gd")
+	if tscript_l != "" and tscript_l.find("PadDefenseTurret.gd") < 0:
+		fails.append("ST-L turret script drifted (%s)" % tscript_l)
+	if str(turret_l.name) != "OrbitalDefenseTurret":
+		fails.append("ST-L turret name drifted (%s)" % turret_l.name)
+	if turret_l == stub_k:
+		fails.append("ST-L reused the ST-K hangar stub")
+	if "max_health" in turret_l and absf(float(turret_l.max_health) - 160.0) < 0.01:
+		fails.append("ST-L reused Clash OUTER 160 HP")
+	if "health" not in turret_l or float(turret_l.health) <= 0.0:
+		fails.append("ST-L turret has no HP")
+	if turret_l.has_method("pulse_dps") and absf(float(turret_l.pulse_dps()) - 11.0) > 0.01:
+		fails.append("ST-L Pulse DPS drifted (%s)" % turret_l.pulse_dps())
+	if turret_l.has_method("combat_authority") and str(turret_l.combat_authority()) != "host":
+		fails.append("ST-L combat authority is not host")
+	if turret_l.has_method("is_host_authority") and not bool(turret_l.is_host_authority()):
+		fails.append("ST-L turret is not host authority")
+	if turret_l.has_method("has_p2w_repair") and bool(turret_l.has_p2w_repair()):
+		fails.append("ST-L P2W repair")
+	if turret_l.has_method("try_cash_repair_skip") and bool(turret_l.try_cash_repair_skip(999.0)):
+		fails.append("ST-L cash-shop repair skip")
+	if turret_l.has_method("is_g5_closed") and not bool(turret_l.is_g5_closed()):
+		fails.append("ST-L G5 Clash-from-world is open")
+	var clash_src_l := FileAccess.get_file_as_string("res://scripts/arena/ClashLanes.gd")
+	var arena_src_l := FileAccess.get_file_as_string("res://scripts/test/TestArena.gd")
+	if clash_src_l.find('"hp": 160.0') < 0 or clash_src_l.find("Turret.gd") < 0:
+		fails.append("ST-L Clash OUTER / Turret.gd drifted")
+	if arena_src_l.find("Turret.tscn") < 0:
+		fails.append("ST-L TestArena turrets drifted")
+	if arena_src_l.find("OrbitalDefenseTurret") >= 0 or arena_src_l.find("PadDefenseTurret") >= 0:
+		fails.append("ST-L wrote orbital turret into TestArena")
+	if cluster.has_method("cluster_modules") and cluster.cluster_modules().size() != 2:
+		fails.append("ST-L turret folded into the ST-E orbital pair")
+	if cluster.has_method("factory_module") and cluster.factory_module() == null:
+		fails.append("ST-L turret dropped ST-G factory")
+	if pad_h != null:
+		var host_h: Node3D = pad_h as Node3D
+		if not host_h.has_meta("pad_up"):
+			var walk_l: Node = pad_h
+			while walk_l:
+				if walk_l is Node3D and str(walk_l.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+					host_h = walk_l as Node3D
+					break
+				walk_l = walk_l.get_parent()
+		if host_h != null and str(host_h.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+			if pad_h.has_method("ensure_pad_turret"):
+				turret_h = pad_h.ensure_pad_turret()
+			if turret_h == null:
+				turret_h = _Builder.pad_turret_on(host_h)
+			if turret_h == null or not is_instance_valid(turret_h):
+				fails.append("ST-L dropped ST-H pad turret")
+			elif turret_h == turret_l:
+				fails.append("ST-L reused the ST-H pad turret")
+			elif bool(turret_h.get_meta("orbital_turret", false)):
+				fails.append("ST-L overwrote ST-H as orbital")
+	if Inf != null and int(Inf.MAX_STACKS) != 5:
+		fails.append("ST-L infection cap drifted (%s)" % Inf.MAX_STACKS)
+	if Kits != null and Kits.has_method("kit_ids"):
+		kit_n = int(Kits.kit_ids().size())
+		if kit_n != 12:
+			fails.append("ST-L added a 13th kit (%s)" % kit_n)
+	if SoftK != null and SoftK.has_method("turret_label"):
+		lab_l = str(SoftK.turret_label())
+	if lab_l == "":
+		fails.append("ST-L Knowledge turret label empty")
+	if cluster.has_method("turret_hud_line"):
+		var hud_l := str(cluster.turret_hud_line())
+		if hud_l == "" or hud_l != lab_l:
+			fails.append("ST-L HUD turret line drifted (%s vs %s)" % [hud_l, lab_l])
+	var hud: Node = get_tree().get_first_node_in_group("game_hud") if get_tree() else null
+	if hud != null:
+		if hud.has_method("_refresh"):
+			hud._refresh()
+		var lab: Variant = hud.get("_owner_label")
+		if lab is Label:
+			hud_txt += (lab as Label).text
+		var stack: Variant = hud.get("_os_stack")
+		if stack is Label:
+			hud_txt += " " + (stack as Label).text
+	var hud_up := hud_txt.to_upper()
+	if hud_txt != "" and hud_up.find("TURRET") < 0:
+		fails.append("ST-L HUD missing turret label")
+	var nex_l: Node = _osh_nex()
+	var traffic_l: Node = null
+	if nex_l != null and nex_l.has_method("pad_traffic"):
+		traffic_l = nex_l.call("pad_traffic")
+	if traffic_l == null and get_tree():
+		var listed_t: Array = get_tree().get_nodes_in_group("pad_traffic")
+		if not listed_t.is_empty():
+			traffic_l = listed_t[0]
+	if traffic_l != null and traffic_l.has_method("get_rival"):
+		rival = traffic_l.get_rival()
+	if rival == null and traffic_l != null:
+		var pvp_l: Node = traffic_l.get_pvp() if traffic_l.has_method("get_pvp") else traffic_l.get_node_or_null("PadPvp")
+		if pvp_l != null and pvp_l.has_method("get_rival"):
+			rival = pvp_l.get_rival()
+	if rival != null and is_instance_valid(rival):
+		if "aggro_range" in rival:
+			rival.set("aggro_range", 20.0)
+		var rival_home_l: Vector3 = rival.global_position
+		rival.global_position = turret_l.global_position + Vector3(2.0, 0.0, 2.0)
+		var hp0_l := float(rival.health) if "health" in rival else 80.0
+		var walker_hp0_l := 0.0
+		if walker != null and is_instance_valid(walker) and "health" in walker:
+			walker_hp0_l = float(walker.health)
+		if not turret_l.has_method("try_pulse") or not bool(turret_l.try_pulse(rival)):
+			fails.append("ST-L turret did not fire Pulse")
+		else:
+			var hp1_l := float(rival.health) if "health" in rival else hp0_l
+			print("[Playtest] ST-L pulse rival ", snapped(hp0_l, 0.01), " -> ", snapped(hp1_l, 0.01))
+			if hp1_l >= hp0_l - 0.01:
+				fails.append("ST-L Pulse did not reduce rival HP")
+			if "health" in rival:
+				rival.set("health", hp0_l)
+				if rival.has_method("is_alive") and not bool(rival.is_alive()):
+					rival.set("_alive", true)
+		if is_instance_valid(rival):
+			rival.global_position = rival_home_l
+		var t_hp0_l := float(turret_l.health)
+		if turret_l.has_method("take_damage"):
+			turret_l.take_damage(t_hp0_l + 40.0, "gROT")
+		if turret_l.has_method("is_alive") and bool(turret_l.is_alive()):
+			fails.append("ST-L destroyed turret still alive")
+		if walker != null and is_instance_valid(walker) and "health" in walker:
+			if float(walker.health) <= 0.0:
+				fails.append("ST-L turret death was permadeath")
+			elif walker_hp0_l > 0.0 and float(walker.health) < walker_hp0_l - 0.01:
+				fails.append("ST-L turret death damaged the walker")
+	else:
+		fails.append("ST-L PV-A rival missing for Pulse")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("logistics", 20.0)
+		GameManager.add_mastery("colony_ops", 20.0)
+	print("[Playtest] ST-L orbital turret present cluster=", cluster.name,
+		" label=", lab_l, " pulse=", turret_l.pulse_dps() if turret_l.has_method("pulse_dps") else "",
+		" factory=", factory.name if factory else "", " hangar=", stub_k.name if stub_k else "",
+		" kits=", kit_n)
+	if ov != null and ov.has_method("try_enter"):
+		if ov.has_method("is_active") and bool(ov.is_active()) and ov.has_method("exit_overlay"):
+			ov.exit_overlay()
+			await get_tree().process_frame
+		if ship != null and is_instance_valid(ship) and pad_h != null:
+			var host_ov_l: Node3D = pad_h as Node3D
+			var pad_up_ov_l: Vector3 = host_ov_l.get_meta("pad_up") if host_ov_l.has_meta("pad_up") else Vector3.UP
+			if "velocity" in ship:
+				ship.velocity = Vector3.ZERO
+			ship.global_position = host_ov_l.global_position + pad_up_ov_l * 8.0
+			await get_tree().process_frame
+		if not bool(ov.try_enter()):
+			fails.append("ST-L overlay B did not open")
+		else:
+			if ov.has_method("exit_overlay"):
+				ov.exit_overlay()
+			await get_tree().process_frame
+	if LayerContext and str(LayerContext.site_pin_id) != pin0 \
+			and str(LayerContext.site_pin_id).begins_with("SITE_"):
+		fails.append("ST-L minted SITE_* (%s)" % LayerContext.site_pin_id)
+	if not _osh_same_scene(scene0):
+		fails.append("ST-L overlay left OpenSpace")
+	print("[Playtest] ST-L orbital turret present · Pulse 11 · ST-E/G/H/K stay · no SITE_*")
 
 
 func _assert_in_a(os: Node, fails: PackedStringArray) -> void:

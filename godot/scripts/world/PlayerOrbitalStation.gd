@@ -23,6 +23,7 @@ var ownership: OwnershipData
 var _modules: Array = []
 var _factory: Node3D = null
 var _hangar: Node3D = null
+var _turret: Node3D = null
 var _contest_ring: Node3D = null
 var _contest_side: String = ""
 var _status: String = "owned"
@@ -152,6 +153,53 @@ func ensure_hangar_stub() -> Node3D:
 		_hangar = n
 		_refresh_label()
 		print("[PlayerOrbitalStation] ST-K hangar stub in cluster body=", orbit_body, " site_pin=")
+	return n
+
+
+func defense_turret() -> Node3D:
+	## ST-L: orbital defense turret. Not in the ST-E dock+habitat pair.
+	if _turret != null and is_instance_valid(_turret) and _turret.is_inside_tree():
+		return _turret
+	var n: Node = get_node_or_null("OrbitalDefenseTurret")
+	if n is Node3D:
+		_turret = n as Node3D
+		return _turret
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	n = _Builder.orbital_turret_on(self)
+	if n is Node3D:
+		_turret = n as Node3D
+		return _turret
+	return null
+
+
+func has_defense_turret() -> bool:
+	return defense_turret() != null
+
+
+func turret_hud_line() -> String:
+	## SoftKnowledge turret label only. Never Pulse / HP / repair.
+	if defense_turret() == null:
+		return ""
+	return _SoftK.turret_label()
+
+
+func ensure_defense_turret() -> Node3D:
+	## ST-L: one PadDefenseTurret in this player cluster. Not a third ST-E module.
+	## Host authority. SoftKnowledge / HUD label only. Pulse 11.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	var n: Node3D = defense_turret()
+	if P0 == null or not bool(P0.ST_L_TURRET):
+		return null
+	if not is_host_authority():
+		return n
+	if n != null:
+		return n
+	n = _Builder.place_orbital_turret(self, faction)
+	if n != null:
+		_turret = n
+		_refresh_label()
+		print("[PlayerOrbitalStation] ST-L defense turret in cluster body=", orbit_body, " site_pin=")
 	return n
 
 
@@ -286,6 +334,14 @@ func _refresh_label() -> void:
 	var kinds := ",".join(module_kinds())
 	var own := ownership_state_label()
 	var hang := hangar_hud_line()
+	var tur := turret_hud_line()
+	var extras := PackedStringArray()
+	if hang != "":
+		extras.append(hang)
+	if tur != "":
+		extras.append(tur)
+	if own != "":
+		extras.append(own)
 	if lab == null:
 		lab = Label3D.new()
 		lab.name = "ClusterLabel"
@@ -294,13 +350,8 @@ func _refresh_label() -> void:
 		lab.outline_size = 4
 		lab.position = Vector3(0.0, 6.0, 0.0)
 		add_child(lab)
-	if hang != "":
-		if own != "":
-			lab.text = "%s\n%s · %s\n%s\n%s" % [_SoftK.orbital_station_label(), kinds, orbit_body, hang, own]
-		else:
-			lab.text = "%s\n%s · %s\n%s" % [_SoftK.orbital_station_label(), kinds, orbit_body, hang]
-	elif own != "":
-		lab.text = "%s\n%s · %s\n%s" % [_SoftK.orbital_station_label(), kinds, orbit_body, own]
+	if extras.size() > 0:
+		lab.text = "%s\n%s · %s\n%s" % [_SoftK.orbital_station_label(), kinds, orbit_body, "\n".join(extras)]
 	else:
 		lab.text = "%s\n%s · %s" % [_SoftK.orbital_station_label(), kinds, orbit_body]
 
