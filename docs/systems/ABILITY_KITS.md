@@ -67,7 +67,16 @@ AR-P ninth kit (same cost sheet, identity only; CX slot after Prism / Facet):
 | 2 R | Helix Probe |
 | 3 F | Form Cycle |
 
-TestArena: `1` / `2` / `3` / `4` / `5` cycle faction kits. SoftKnowledge HUD `LATTICE` / `NEX LATTICE` · `VEIN` / `ROT VEIN` · `PRISM` / `NEX PRISM` · `FACET` / `ROT FACET` · `HELIX` / `NEX HELIX`. Forms = identity, never a hidden stat.
+AR-Q tenth kit (same cost sheet, identity only; gROT symmetric to Helix):
+
+| Slot | gROT Coil |
+|------|-----------|
+| 0 Q | Pulse Bolt |
+| 1 E | Coil Seal |
+| 2 R | Coil Probe |
+| 3 F | Form Cycle |
+
+TestArena: `1` / `2` / `3` / `4` / `5` cycle faction kits. SoftKnowledge HUD `LATTICE` / `NEX LATTICE` · `VEIN` / `ROT VEIN` · `PRISM` / `NEX PRISM` · `FACET` / `ROT FACET` · `HELIX` / `NEX HELIX` · `COIL` / `ROT COIL`. Forms = identity, never a hidden stat.
 
 No P2W: costs/cooldowns fixed; economy never raises damage. Knowledge insight is a soft damage scalar only.
 
