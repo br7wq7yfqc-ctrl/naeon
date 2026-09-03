@@ -219,7 +219,7 @@ static func _fill_fleet(snap: Dictionary, ship: Node, player: Node) -> void:
 			if n > 1:
 				break
 	snap["fleet"] = mini(n, 9)
-	snap["fleet_max"] = 9,
+	snap["fleet_max"] = 9
 
 
 static func has_fields(snap: Dictionary) -> bool:
