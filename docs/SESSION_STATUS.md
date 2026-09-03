@@ -1,3 +1,5 @@
+**2026-09-03 — AR-R: eleventh Clash AbilityKit (CX Spire) on existing TestArena / ClashDirector (60×60) toward Phase-3 6–8 heroes — Cybernex symmetric slot after GR Coil / CX Helix; same Pulse / utility / probe|surge / Form Cycle grammar from EnergyEconomy; SoftKnowledge / HUD SPIRE / NEX SPIRE only; Knowledge ≠ DPS / yield / Pulse / Hack / rank; no cash-shop / P2W / unique weapon; no Paragon card deck; AR-A…AR-Q stay; ClashModuleBench AR-E SENSOR + AR-K CARGO stay; prior 10 kits stay; host authority; Infection cap 5; ORBITAL_STATIONS false**
+
 **2026-09-03 — FL-L: twelfth fleet allied pip on ST-A Strategy overlay (SoftNet / NP-A visual; cap 13 = player + 12 toward 10–15; FLEET n/13 SoftKnowledge; host Pulse/occupy; click ≠ combat; FL-A/FL-B/FL-C/FL-D/FL-E/FL-F/FL-G/FL-H/FL-I/FL-J/FL-K stay)**
 
 **2026-09-03 — AR-Q: tenth Clash AbilityKit (GR Coil) on existing TestArena / ClashDirector (60×60) — gROT symmetric to CX Helix; same Pulse / utility / probe|surge / Form Cycle grammar from EnergyEconomy; SoftKnowledge / HUD COIL / ROT COIL only; Knowledge ≠ DPS / yield / Pulse / Hack / rank; no cash-shop / P2W / unique weapon; no Paragon card deck; AR-A…AR-P stay; ClashModuleBench AR-E SENSOR + AR-K CARGO stay; prior 9 kits stay; host authority; Infection cap 5; ORBITAL_STATIONS false**
@@ -932,6 +934,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | AR-O eighth AbilityKit | **built** — GR Facet eighth kit (Pulse / Facet Seal / Facet Probe / Form Cycle); SoftKnowledge FACET label; prior 7 kits stay; AR-K bench stays |
 | AR-P ninth AbilityKit | **built** — CX Helix ninth kit (Pulse / Helix Seal / Helix Probe / Form Cycle); SoftKnowledge HELIX label; prior 8 kits stay; AR-K bench stays |
 | AR-Q tenth AbilityKit | **built** — GR Coil tenth kit (Pulse / Coil Seal / Coil Probe / Form Cycle); SoftKnowledge COIL label; prior 9 kits stay; AR-K bench stays |
+| AR-R eleventh AbilityKit | **built** — CX Spire eleventh kit (Pulse / Spire Seal / Spire Probe / Form Cycle); SoftKnowledge SPIRE label; prior 10 kits stay; AR-K bench stays |
 | SE-A hull buses | **built** — power/cool/life live; overdraw/overheat sag; IN-B LS soft; no P2W skip |
 | MC-A ship crew seat | **built** — CrewSeat in ship_int; F/I same pocket; HUD CREW label; SoftNet puppet optional; pilot unchanged |
 | MC-B crew gunner role | **built** — GUNNER SoftKnowledge / HUD label on the MC-A seat; CREW n/2 stays; Pulse/Hack numbers stay; host authority |
