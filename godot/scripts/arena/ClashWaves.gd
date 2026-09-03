@@ -6,6 +6,8 @@ class_name ClashWaves
 ## AR-V: second host-authority WAVE/MINION on the opposite Clash lane
 ## (TOP stays AR-T; BOT is the opposite seed). Same Pulse 11. Not a 13th
 ## kit. Not XP power. Not another fleet pip.
+## AR-W: third host-authority WAVE/MINION on the remaining Clash lane
+## (MID). Completes the 3-lane MOBA seed. Same Pulse 11. Not a 13th kit.
 ## AR-U XP from a last-hit is a SoftKnowledge label only — never Pulse.
 
 signal wave_spawned(wave_index: int, count: int)
@@ -15,8 +17,10 @@ const FIRST_WAVE_DELAY := 0.2
 const STAGGER := 0.28
 const PULSE_DAMAGE := 11.0
 ## AR-T seed lane. AR-V mirrors the same wave on the opposite side lane.
+## AR-W is the remaining Clash lane (MID) — 3-lane seed complete.
 const SEED_LANE := "TOP"
 const OPPOSITE_LANE := "BOT"
+const THIRD_LANE := "MID"
 
 var wave_index: int = 0
 var last_wave_count: int = 0
@@ -41,9 +45,11 @@ func bind(arena: Node, lanes: Node, dummy_scene: PackedScene) -> void:
 	_started = true
 	print("[ClashWaves] bound lanes=", lanes != null, " dummy=", dummy_scene != null)
 	_queue_wave()
-	# AR-T first dummy on the seed lane; AR-V first dummy on the opposite lane.
+	# AR-T / AR-V / AR-W first dummy on TOP / BOT / MID so a tight live-cap
+	# cannot starve the remaining Clash lane.
 	_spawn_first_for_lane(SEED_LANE)
 	_spawn_first_for_lane(OPPOSITE_LANE)
+	_spawn_first_for_lane(THIRD_LANE)
 	_timer = WAVE_INTERVAL
 
 
@@ -67,6 +73,10 @@ func seed_lane() -> String:
 
 func opposite_lane() -> String:
 	return OPPOSITE_LANE
+
+
+func third_lane() -> String:
+	return THIRD_LANE
 
 
 func wave_lanes() -> PackedStringArray:
@@ -131,8 +141,8 @@ func _queue_wave() -> void:
 	var per := _per_side()
 	var room := cap - live
 	var planned: Array = []
-	# Interleave lanes so AR-T seed and AR-V opposite both get a dummy
-	# even when the live cap is tight (never starve the second lane).
+	# Interleave lanes so AR-T / AR-V / AR-W all get a dummy even when
+	# the live cap is tight (never starve the remaining Clash lane).
 	for i in per:
 		for fac in ["Cybernex", "gROT"]:
 			for lane in lanes:
@@ -154,8 +164,8 @@ func _queue_wave() -> void:
 	print("[ClashWaves] wave ", wave_index, " queued n=", last_wave_count, " lanes=", ",".join(lanes))
 	if wave_index == 1 and GameManager:
 		GameManager.toast_requested.emit(
-			"%s — CombatDummy %s · Pulse 11 · host · %s+%s · no shop · no P2W" % [
-				wave_soft_label(), minion_soft_label(), SEED_LANE, OPPOSITE_LANE,
+			"%s — CombatDummy %s · Pulse 11 · host · %s+%s+%s · no shop · no P2W" % [
+				wave_soft_label(), minion_soft_label(), SEED_LANE, OPPOSITE_LANE, THIRD_LANE,
 			]
 		)
 
@@ -195,7 +205,9 @@ func _spawn_minion(lane: String, fac: String, idx: int) -> void:
 	d.set_meta("lane", lane)
 	d.set_meta("clash_wave", true)
 	d.set_meta("combat_authority", "host")
-	if lane == OPPOSITE_LANE:
+	if lane == THIRD_LANE:
+		d.set_meta("clash_seed", "ar_w")
+	elif lane == OPPOSITE_LANE:
 		d.set_meta("clash_seed", "ar_v")
 	else:
 		d.set_meta("clash_seed", "ar_t")
@@ -224,18 +236,14 @@ func _on_minion_died(lane: String, _fac: String) -> void:
 
 
 func _wave_lanes() -> PackedStringArray:
-	var gq := get_node_or_null("/root/GraphicsQuality")
-	var tier := 1
-	if gq:
-		tier = int(gq.tier)
-	# AR-T seed + AR-V opposite. MID stays an AR-C extra when the quality
-	# tier can afford a third strip. Low-tier / isolated still get both
-	# side-lane seeds (never drop AR-T to spawn AR-V).
+	# AR-T seed + AR-V opposite + AR-W remaining (MID). Always three
+	# Clash lanes — never drop a seed to spawn another. Quality tier
+	# still caps how many dummies live, not which lanes exist.
 	var out := PackedStringArray([SEED_LANE])
 	if not out.has(OPPOSITE_LANE):
 		out.append(OPPOSITE_LANE)
-	if tier >= 1 and not out.has("MID"):
-		out.append("MID")
+	if not out.has(THIRD_LANE):
+		out.append(THIRD_LANE)
 	return out
 
 
