@@ -5,6 +5,7 @@ class_name AbilityKitCatalog
 ## AR-L: fifth kit (CX Lattice) toward Phase-3 6–8. Same Pulse / utility /
 ## probe|surge / Form Cycle grammar. SoftKnowledge labels only.
 ## AR-M: sixth kit (GR Vein) — gROT symmetric to CX Lattice. Same grammar.
+## AR-N: seventh kit (CX Prism) — Cybernex symmetric slot after Lattice / Vein.
 
 const EE = preload("res://scripts/systems/EnergyEconomy.gd")
 
@@ -14,6 +15,7 @@ const KIT_GR_ROT := "gr_rot"
 const KIT_GR_SPORE := "gr_spore"
 const KIT_CX_LATTICE := "cx_lattice"
 const KIT_GR_VEIN := "gr_vein"
+const KIT_CX_PRISM := "cx_prism"
 
 const KIT_TABLE := [
 	{"id": KIT_CX_NEX, "faction": "Cybernex", "label": "Nex"},
@@ -22,6 +24,7 @@ const KIT_TABLE := [
 	{"id": KIT_GR_SPORE, "faction": "gROT", "label": "Spore"},
 	{"id": KIT_CX_LATTICE, "faction": "Cybernex", "label": "Lattice"},
 	{"id": KIT_GR_VEIN, "faction": "gROT", "label": "Vein"},
+	{"id": KIT_CX_PRISM, "faction": "Cybernex", "label": "Prism"},
 ]
 
 
@@ -66,6 +69,8 @@ static func kit_by_id(kit_id: String) -> Array:
 			return [_pulse(), _nex_latch(), _grid_probe(), _form_cycle()]
 		KIT_CX_LATTICE:
 			return [_pulse(), _lattice_seal(), _lattice_probe(), _form_cycle()]
+		KIT_CX_PRISM:
+			return [_pulse(), _prism_seal(), _prism_probe(), _form_cycle()]
 		KIT_GR_SPORE:
 			return [_pulse(), _spore_claim(), _rot_bloom(), _form_cycle()]
 		KIT_GR_VEIN:
@@ -161,6 +166,36 @@ static func _lattice_probe() -> Ability:
 	a.is_channeled = true
 	a.channel_time = 1.5
 	a.effect_color = Color(0.65, 0.7, 1.0)
+	return a
+
+
+static func _prism_seal() -> Ability:
+	var a := Ability.new()
+	a.ability_name = "Prism Seal"
+	a.description = "Short prism seal window (identity, same cost sheet)"
+	a.cooldown = EE.CD_FIREWALL
+	a.energy_cost = EE.NEX_FIREWALL
+	a.duration = 2.5
+	a.heal = 12.0
+	a.range = 18.0
+	a.is_firewall = true
+	a.faction_restriction = Ability.FactionRestriction.CYBERNEX_ONLY
+	a.effect_color = Color(0.72, 0.52, 1.0)
+	return a
+
+
+static func _prism_probe() -> Ability:
+	var a := Ability.new()
+	a.ability_name = "Prism Probe"
+	a.description = "Channeled prism recon (identity, same cost sheet)"
+	a.cooldown = EE.CD_PROBE
+	a.energy_cost = EE.SYSTEM_PROBE
+	a.damage = 7.0
+	a.range = 18.0
+	a.is_hacking = true
+	a.is_channeled = true
+	a.channel_time = 1.5
+	a.effect_color = Color(0.88, 0.48, 1.0)
 	return a
 
 

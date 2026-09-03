@@ -40,7 +40,16 @@ AR-M sixth kit (same cost sheet, identity only; gROT symmetric to Lattice):
 | 2 R | Vein Surge |
 | 3 F | Form Cycle |
 
-TestArena: `1` / `2` / `3` cycle faction kits. SoftKnowledge HUD `LATTICE` / `NEX LATTICE` · `VEIN` / `ROT VEIN`. Forms = identity, never a hidden stat.
+AR-N seventh kit (same cost sheet, identity only; CX slot after Lattice / Vein):
+
+| Slot | Cybernex Prism |
+|------|----------------|
+| 0 Q | Pulse Bolt |
+| 1 E | Prism Seal |
+| 2 R | Prism Probe |
+| 3 F | Form Cycle |
+
+TestArena: `1` / `2` / `3` / `4` cycle faction kits. SoftKnowledge HUD `LATTICE` / `NEX LATTICE` · `VEIN` / `ROT VEIN` · `PRISM` / `NEX PRISM`. Forms = identity, never a hidden stat.
 
 No P2W: costs/cooldowns fixed; economy never raises damage. Knowledge insight is a soft damage scalar only.
 
