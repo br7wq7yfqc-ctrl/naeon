@@ -101,6 +101,7 @@ func _go() -> void:
 		await _assert_ar_w(os, fails)
 		await _assert_ar_x(os, fails)
 		await _assert_ar_y(os, fails)
+		await _assert_ar_z(os, fails)
 		await _assert_sn_c(os, fails)
 		await _assert_sn_d(os, fails)
 		await _assert_do_a(os, fails)
@@ -147,6 +148,7 @@ func _go() -> void:
 	await _assert_ar_w(os, fails)
 	await _assert_ar_x(os, fails)
 	await _assert_ar_y(os, fails)
+	await _assert_ar_z(os, fails)
 	_assert_se_a(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 	_assert_scan_cache_live(fails)
@@ -24204,6 +24206,136 @@ func _assert_ar_y(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] AR-Y REWARD/TITLE · SoftKnowledge only · AR-A…AR-X stay · FLEET 15/15 · no SITE_*")
 	if fails.size() == fail0:
 		print("[Playtest] PASS AR-Y")
+	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
+		SoftScanCache.invalidate_enemies()
+
+
+func _assert_ar_z(os: Node, fails: PackedStringArray) -> void:
+	## AR-Z: first Clash matchmaking seed. Isolated — no TestArena scene change.
+	## SoftKnowledge MATCH / QUEUE / READY only. Never pay-rank / P2W skip / Pulse.
+	var fail0 := fails.size()
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.AR_Z_MATCHMAKING):
+		fails.append("AR-Z P0Slice flag missing")
+	if P0 != null and not bool(P0.AR_Y_REWARDS):
+		fails.append("AR-Z dropped AR-Y P0Slice flag")
+	if P0 != null and not bool(P0.AR_X_SMALL_CAMP):
+		fails.append("AR-Z dropped AR-X P0Slice flag")
+	if P0 != null and not bool(P0.AR_W_THIRD_LANE_WAVE):
+		fails.append("AR-Z dropped AR-W P0Slice flag")
+	if P0 != null and not bool(P0.AR_U_XP_LEVELING):
+		fails.append("AR-Z dropped AR-U P0Slice flag")
+	if P0 != null and not bool(P0.AR_I_MATCH_END):
+		fails.append("AR-Z dropped AR-I P0Slice flag")
+	if P0 != null and not bool(P0.FL_N_FLEET):
+		fails.append("AR-Z dropped FL-N P0Slice flag")
+	if P0 != null and not bool(P0.ST_L_TURRET):
+		fails.append("AR-Z dropped ST-L P0Slice flag")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("AR-Z flipped ORBITAL_STATIONS")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-Z Infection cap drifted")
+	var layer0 := str(LayerContext.current_layer) if LayerContext else ""
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	if Kit == null or not Kit.has_method("kit_ids"):
+		fails.append("AR-Z AbilityKitCatalog missing")
+	else:
+		var ids: PackedStringArray = Kit.kit_ids()
+		if int(ids.size()) != 12:
+			fails.append("AR-Z isolated kit count want 12 (got %s)" % ids.size())
+		if int(ids.size()) >= 13:
+			fails.append("AR-Z isolated added a 13th AbilityKit")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var mlab := str(SoftK.match_label()) if SoftK and SoftK.has_method("match_label") else ""
+	if mlab == "" or (mlab != "MATCH" and mlab != "CLASH MATCH"):
+		fails.append("AR-Z isolated SoftKnowledge MATCH missing (%s)" % mlab)
+	var qlab := str(SoftK.queue_label()) if SoftK and SoftK.has_method("queue_label") else ""
+	if qlab == "" or (qlab != "QUEUE" and qlab != "CLASH QUEUE"):
+		fails.append("AR-Z isolated SoftKnowledge QUEUE missing (%s)" % qlab)
+	var rlab := str(SoftK.ready_label()) if SoftK and SoftK.has_method("ready_label") else ""
+	if rlab == "" or (rlab != "READY" and rlab != "CLASH READY"):
+		fails.append("AR-Z isolated SoftKnowledge READY missing (%s)" % rlab)
+	var host: Node = os if os else self
+	var matchn := Node3D.new()
+	matchn.set_script(preload("res://scripts/arena/ClashLocalMatch.gd"))
+	matchn.name = "ClashLocalMatchARZ"
+	host.add_child(matchn)
+	await get_tree().process_frame
+	if not matchn.has_method("open_queue") or not matchn.has_method("mark_ready"):
+		fails.append("AR-Z isolated ClashLocalMatch queue/ready API missing")
+	if not matchn.has_method("is_matchmaking_informational") or not bool(matchn.is_matchmaking_informational()):
+		fails.append("AR-Z isolated matchmaking is not informational")
+	if matchn.has_method("is_rank_gated") and bool(matchn.is_rank_gated()):
+		fails.append("AR-Z isolated pay-rank matchmaking is gated")
+	if not matchn.has_method("grant_reward"):
+		fails.append("AR-Z isolated dropped AR-Y reward API")
+	var waves := Node.new()
+	waves.set_script(preload("res://scripts/arena/ClashWaves.gd"))
+	waves.name = "ClashWavesARZ"
+	host.add_child(waves)
+	await get_tree().process_frame
+	if not waves.has_method("pulse_damage") or absf(float(waves.pulse_damage()) - 11.0) > 0.01:
+		fails.append("AR-Z isolated AR-T Pulse 11 drifted")
+	var pulse0 := 11.0
+	if waves.has_method("pulse_damage"):
+		pulse0 = float(waves.pulse_damage())
+	var xp0 := float(matchn.match_xp)
+	var queued := str(matchn.open_queue()) if matchn.has_method("open_queue") else ""
+	if queued == "" or (queued != "QUEUE" and queued != "CLASH QUEUE"):
+		fails.append("AR-Z isolated open_queue missing (%s)" % queued)
+	if matchn.has_method("try_cash_queue_skip") and bool(matchn.try_cash_queue_skip(99.0)):
+		fails.append("AR-Z isolated P2W queue skip worked")
+	var ready := str(matchn.mark_ready()) if matchn.has_method("mark_ready") else ""
+	if ready == "" or (ready != "READY" and ready != "CLASH READY"):
+		fails.append("AR-Z isolated mark_ready missing (%s)" % ready)
+	if absf(float(matchn.match_xp) - xp0) > 0.01:
+		fails.append("AR-Z isolated queue/ready changed XP")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("combat", 20.0)
+		GameManager.add_mastery("history", 20.0)
+	if waves.has_method("pulse_damage") and absf(float(waves.pulse_damage()) - pulse0) > 0.01:
+		fails.append("AR-Z isolated Knowledge/queue changed Pulse")
+	var rlab2 := str(matchn.match_soft_label()) if matchn.has_method("match_soft_label") else ""
+	if rlab2 == "" or (rlab2 != "READY" and rlab2 != "CLASH READY"):
+		fails.append("AR-Z isolated HUD READY missing (%s)" % rlab2)
+	if SoftK and SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked("queue")):
+		fails.append("AR-Z isolated unlocked exclusive weapon")
+	if SoftK and SoftK.has_method("exclusive_module_unlocked") and bool(SoftK.exclusive_module_unlocked("ready")):
+		fails.append("AR-Z isolated unlocked exclusive combat module")
+	if Kit and Kit.has_method("kit_ids") and int(Kit.kit_ids().size()) != 12:
+		fails.append("AR-Z isolated queue unlocked a 13th kit")
+	var cap15 := 15
+	var traffic: Node = null
+	if os:
+		traffic = os.get_node_or_null("PadTraffic")
+	if traffic == null and get_tree():
+		traffic = get_tree().get_first_node_in_group("pad_traffic")
+	if traffic and traffic.has_method("fleet_cap"):
+		cap15 = int(traffic.fleet_cap())
+	if cap15 != 15:
+		fails.append("AR-Z isolated FLEET cap=%s, want 15" % cap15)
+	print("[Playtest] AR-Z matchmaking isolated · ", rlab2,
+		" Pulse 11 · host · kits=12 · FLEET 15/15")
+	if is_instance_valid(waves):
+		waves.queue_free()
+	if is_instance_valid(matchn):
+		matchn.queue_free()
+	await get_tree().process_frame
+	if os != null and os.has_method("enter_clash_from_world"):
+		fails.append("AR-Z opened G5 world-to-arena")
+	if LayerContext:
+		if str(LayerContext.site_pin_id) != pin0:
+			fails.append("AR-Z changed site_pin (%s → %s)" % [pin0, LayerContext.site_pin_id])
+		if layer0 != "" and str(LayerContext.current_layer) == "Arena" and layer0 != "Arena":
+			fails.append("AR-Z stole LayerContext to Arena")
+			LayerContext.set_layer(layer0)
+	if Inf and int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-Z Infection cap changed")
+	print("[Playtest] AR-Z MATCH/QUEUE/READY · SoftKnowledge only · AR-A…AR-Y stay · FLEET 15/15 · no SITE_*")
+	if fails.size() == fail0:
+		print("[Playtest] PASS AR-Z")
 	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
 		SoftScanCache.invalidate_enemies()
 

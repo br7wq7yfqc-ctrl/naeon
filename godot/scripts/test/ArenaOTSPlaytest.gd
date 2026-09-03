@@ -1,5 +1,5 @@
 extends Node
-## Headless AR-A…AR-Y + river + jump pads: OTS, structures, waves, camps, kits/module shop, 3v3/5v5, CORE match-end, XP/level labels, 3-lane waves, small jungle camp, rewards pipeline.
+## Headless AR-A…AR-Z + river + jump pads: OTS, structures, waves, camps, kits/module shop, 3v3/5v5, CORE match-end, XP/level labels, 3-lane waves, small jungle camp, rewards pipeline, matchmaking seed.
 ## godot --path godot --scene res://scenes/test/TestArena.tscn -- --playtest-arena
 
 func _ready() -> void:
@@ -11,7 +11,7 @@ func _ready() -> void:
 	if not wanted:
 		queue_free()
 		return
-	print("[Playtest] arena AR-A…AR-Y + river + jump pads driver on")
+	print("[Playtest] arena AR-A…AR-Z + river + jump pads driver on")
 	call_deferred("_go")
 
 
@@ -20,7 +20,7 @@ func _go() -> void:
 	var fails: PackedStringArray = PackedStringArray()
 	var arena: Node = get_parent()
 	if arena == null or str(arena.name) != "TestArena":
-		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
+		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
 		return
 
 	var player: Node = arena.get("player")
@@ -109,6 +109,7 @@ func _go() -> void:
 	var ar_w_fails: PackedStringArray = await _check_ar_w(arena, lanes, player)
 	var ar_x_fails: PackedStringArray = await _check_ar_x(arena, lanes, player)
 	var ar_y_fails: PackedStringArray = _check_ar_y(arena, lanes, player)
+	var ar_z_fails: PackedStringArray = _check_ar_z(arena, lanes, player)
 	var ar_i_fails: PackedStringArray = _check_ar_i(arena, lanes, player)
 	fails.append_array(ar_c_fails)
 	fails.append_array(ar_b_fails)
@@ -134,9 +135,10 @@ func _go() -> void:
 	fails.append_array(ar_w_fails)
 	fails.append_array(ar_x_fails)
 	fails.append_array(ar_y_fails)
+	fails.append_array(ar_z_fails)
 	fails.append_array(ar_i_fails)
 
-	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, ar_e_fails, river_fails, pad_fails, ar_f_fails, ar_g_fails, ar_i_fails, ar_j_fails, ar_k_fails, ar_l_fails, ar_m_fails, ar_n_fails, ar_o_fails, ar_p_fails, ar_q_fails, ar_r_fails, ar_s_fails, ar_t_fails, ar_u_fails, ar_v_fails, ar_w_fails, ar_x_fails, ar_y_fails, 0 if fails.is_empty() else 1)
+	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, ar_e_fails, river_fails, pad_fails, ar_f_fails, ar_g_fails, ar_i_fails, ar_j_fails, ar_k_fails, ar_l_fails, ar_m_fails, ar_n_fails, ar_o_fails, ar_p_fails, ar_q_fails, ar_r_fails, ar_s_fails, ar_t_fails, ar_u_fails, ar_v_fails, ar_w_fails, ar_x_fails, ar_y_fails, ar_z_fails, 0 if fails.is_empty() else 1)
 
 
 func _check_ar_b(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
@@ -2817,6 +2819,122 @@ func _check_ar_y(arena: Node, _lanes: Node, player: Node) -> PackedStringArray:
 	return fails
 
 
+func _check_ar_z(arena: Node, _lanes: Node, player: Node) -> PackedStringArray:
+	var fails: PackedStringArray = PackedStringArray()
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.AR_Z_MATCHMAKING):
+		fails.append("AR-Z P0Slice flag missing")
+	if P0 != null and not bool(P0.AR_Y_REWARDS):
+		fails.append("AR-Z dropped AR-Y P0Slice flag")
+	if P0 != null and not bool(P0.AR_X_SMALL_CAMP):
+		fails.append("AR-Z dropped AR-X P0Slice flag")
+	if P0 != null and not bool(P0.AR_W_THIRD_LANE_WAVE):
+		fails.append("AR-Z dropped AR-W P0Slice flag")
+	if P0 != null and not bool(P0.AR_U_XP_LEVELING):
+		fails.append("AR-Z dropped AR-U P0Slice flag")
+	if P0 != null and not bool(P0.AR_I_MATCH_END):
+		fails.append("AR-Z dropped AR-I P0Slice flag")
+	if P0 != null and not bool(P0.FL_N_FLEET):
+		fails.append("AR-Z dropped FL-N P0Slice flag")
+	if P0 != null and not bool(P0.ST_L_TURRET):
+		fails.append("AR-Z dropped ST-L P0Slice flag")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("AR-Z flipped ORBITAL_STATIONS")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-Z Infection cap drifted")
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	if Kit == null or not Kit.has_method("kit_ids"):
+		fails.append("AR-Z AbilityKitCatalog missing")
+	else:
+		var ids: PackedStringArray = Kit.kit_ids()
+		if int(ids.size()) != 12:
+			fails.append("AR-Z kit count want 12 (got %s)" % ids.size())
+		if ids.has("cx_nex") == false or ids.has("gr_thorn") == false:
+			fails.append("AR-Z dropped catalog ends (cx_nex…gr_thorn)")
+		if int(ids.size()) >= 13:
+			fails.append("AR-Z added a 13th AbilityKit")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var mlab := str(SoftK.match_label()) if SoftK and SoftK.has_method("match_label") else ""
+	if mlab == "" or (mlab != "MATCH" and mlab != "CLASH MATCH"):
+		fails.append("AR-Z SoftKnowledge MATCH missing (%s)" % mlab)
+	var qlab := str(SoftK.queue_label()) if SoftK and SoftK.has_method("queue_label") else ""
+	if qlab == "" or (qlab != "QUEUE" and qlab != "CLASH QUEUE"):
+		fails.append("AR-Z SoftKnowledge QUEUE missing (%s)" % qlab)
+	var rlab := str(SoftK.ready_label()) if SoftK and SoftK.has_method("ready_label") else ""
+	if rlab == "" or (rlab != "READY" and rlab != "CLASH READY"):
+		fails.append("AR-Z SoftKnowledge READY missing (%s)" % rlab)
+	var localn: Node = arena.get_node_or_null("ClashLocalMatch") if arena else null
+	if localn == null:
+		fails.append("AR-Z ClashLocalMatch missing")
+		return fails
+	if not localn.has_method("open_queue") or not localn.has_method("mark_ready"):
+		fails.append("AR-Z ClashLocalMatch queue/ready API missing")
+		return fails
+	if not localn.has_method("is_matchmaking_informational") or not bool(localn.is_matchmaking_informational()):
+		fails.append("AR-Z matchmaking is not informational")
+	if localn.has_method("is_rank_gated") and bool(localn.is_rank_gated()):
+		fails.append("AR-Z pay-rank matchmaking is gated")
+	var pulse0 := 11.0
+	if player and player.get("ability_system") != null:
+		var absys: Node = player.ability_system
+		if absys and "abilities" in absys:
+			for ab in absys.abilities:
+				if ab != null and str(ab.get("ability_name")).to_lower().find("pulse") >= 0:
+					pulse0 = float(ab.get("damage"))
+					break
+	var xp0 := float(localn.match_xp) if "match_xp" in localn else 0.0
+	var reward0 := str(localn.last_reward) if "last_reward" in localn else ""
+	var queued := str(localn.open_queue())
+	if queued == "" or (queued != "QUEUE" and queued != "CLASH QUEUE"):
+		fails.append("AR-Z open_queue missing (%s)" % queued)
+	if localn.has_method("try_cash_queue_skip") and bool(localn.try_cash_queue_skip(99.0)):
+		fails.append("AR-Z P2W queue skip worked")
+	var ready := str(localn.mark_ready())
+	if ready == "" or (ready != "READY" and ready != "CLASH READY"):
+		fails.append("AR-Z mark_ready missing (%s)" % ready)
+	if "match_xp" in localn and absf(float(localn.match_xp) - xp0) > 0.01:
+		fails.append("AR-Z queue/ready changed XP")
+	if "last_reward" in localn and str(localn.last_reward) != reward0:
+		fails.append("AR-Z queue/ready changed reward")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("combat", 20.0)
+		GameManager.add_mastery("history", 20.0)
+	if player and player.get("ability_system") != null:
+		var absys2: Node = player.ability_system
+		if absys2 and "abilities" in absys2:
+			for ab in absys2.abilities:
+				if ab != null and str(ab.get("ability_name")).to_lower().find("pulse") >= 0:
+					if absf(float(ab.get("damage")) - pulse0) > 0.01:
+						fails.append("AR-Z Knowledge/queue changed Pulse")
+					break
+	var rlab2 := str(localn.match_soft_label()) if localn.has_method("match_soft_label") else ""
+	if rlab2 == "" or (rlab2 != "READY" and rlab2 != "CLASH READY"):
+		fails.append("AR-Z HUD READY missing (%s)" % rlab2)
+	if SoftK and SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked("queue")):
+		fails.append("AR-Z unlocked exclusive weapon")
+	if SoftK and SoftK.has_method("exclusive_module_unlocked") and bool(SoftK.exclusive_module_unlocked("ready")):
+		fails.append("AR-Z unlocked exclusive combat module")
+	if Kit and Kit.has_method("kit_ids") and int(Kit.kit_ids().size()) != 12:
+		fails.append("AR-Z queue unlocked a 13th kit")
+	var director: Node = arena.get_node_or_null("ClashMatchDirector") if arena else null
+	if director and director.has_method("score_hud_line"):
+		var bar := str(director.score_hud_line())
+		if bar.find("READY") < 0 and bar.find("QUEUE") < 0 and bar.find("MATCH") < 0:
+			fails.append("AR-Z director HUD missing MATCH/QUEUE/READY (%s)" % bar)
+	if player and player.has_method("ots_evidence"):
+		var ev: Dictionary = player.ots_evidence()
+		if not bool(ev.get("active", false)):
+			fails.append("OTS dropped after AR-Z")
+	if LayerContext and str(LayerContext.site_pin_id) != "SITE_TEST_ARENA_PILLAR":
+		fails.append("SITE pin changed during AR-Z")
+	if arena and str(arena.name) != "TestArena":
+		fails.append("left TestArena")
+	print("[Playtest] AR-Z matchmaking seed · ", rlab2,
+		" Pulse 11 · host · kits=12 · FLEET 15/15 · G5 closed · no SITE_*")
+	return fails
+
+
 func _check_ar_i(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	var fails: PackedStringArray = PackedStringArray()
 	var P0 = load("res://scripts/world/P0Slice.gd")
@@ -2927,7 +3045,7 @@ func _check_ar_i(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	return fails
 
 
-func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, ar_e: PackedStringArray, river: PackedStringArray, pads: PackedStringArray, ar_f: PackedStringArray, ar_g: PackedStringArray, ar_i: PackedStringArray, ar_j: PackedStringArray, ar_k: PackedStringArray, ar_l: PackedStringArray, ar_m: PackedStringArray, ar_n: PackedStringArray, ar_o: PackedStringArray, ar_p: PackedStringArray, ar_q: PackedStringArray, ar_r: PackedStringArray, ar_s: PackedStringArray, ar_t: PackedStringArray, ar_u: PackedStringArray, ar_v: PackedStringArray, ar_w: PackedStringArray, ar_x: PackedStringArray, ar_y: PackedStringArray, code: int) -> void:
+func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, ar_e: PackedStringArray, river: PackedStringArray, pads: PackedStringArray, ar_f: PackedStringArray, ar_g: PackedStringArray, ar_i: PackedStringArray, ar_j: PackedStringArray, ar_k: PackedStringArray, ar_l: PackedStringArray, ar_m: PackedStringArray, ar_n: PackedStringArray, ar_o: PackedStringArray, ar_p: PackedStringArray, ar_q: PackedStringArray, ar_r: PackedStringArray, ar_s: PackedStringArray, ar_t: PackedStringArray, ar_u: PackedStringArray, ar_v: PackedStringArray, ar_w: PackedStringArray, ar_x: PackedStringArray, ar_y: PackedStringArray, ar_z: PackedStringArray, code: int) -> void:
 	if ar_a.is_empty():
 		print("[Playtest] PASS arena AR-A")
 	else:
@@ -3083,6 +3201,12 @@ func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStrin
 	else:
 		print("[Playtest] FAIL arena AR-Y")
 		for f in ar_y:
+			print("[Playtest]  - ", f)
+	if ar_z.is_empty():
+		print("[Playtest] PASS arena AR-Z")
+	else:
+		print("[Playtest] FAIL arena AR-Z")
+		for f in ar_z:
 			print("[Playtest]  - ", f)
 	if AutoUpdater and AutoUpdater.has_method("abort_pending"):
 		AutoUpdater.abort_pending()
