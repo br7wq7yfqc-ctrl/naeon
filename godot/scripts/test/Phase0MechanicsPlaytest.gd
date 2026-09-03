@@ -23764,13 +23764,47 @@ func _assert_cr_a(os: Node, fails: PackedStringArray) -> void:
 		GameManager.set_faction(fac0_r)
 
 
+func _fl_fleet_fields(ov: Node, traffic: Node, ship: Node) -> Dictionary:
+	## FL-A…FL-N HUD fleet numbers. PadTraffic / StrategyOverlay — not Hud.snapshot.
+	## load() of OpenSpaceHudStack is a GDScript with no snapshot() (SCRIPT ERROR).
+	var cap := 15
+	if ov != null and is_instance_valid(ov) and ov.has_method("fleet_cap"):
+		cap = int(ov.fleet_cap())
+	elif traffic != null and is_instance_valid(traffic) and traffic.has_method("fleet_cap"):
+		cap = int(traffic.fleet_cap())
+	var n := -1
+	if ov != null and is_instance_valid(ov) and ov.has_method("fleet_count"):
+		n = int(ov.fleet_count())
+	if n < 0 and traffic != null and is_instance_valid(traffic):
+		n = 0
+		if ship != null and is_instance_valid(ship):
+			n += 1
+		if traffic.has_method("fleet_guests"):
+			for g in traffic.fleet_guests():
+				if g != null and is_instance_valid(g):
+					n += 1
+		elif traffic.has_method("fleet_count"):
+			n += int(traffic.fleet_count())
+	if n < 0:
+		n = 0
+	return {"fleet": mini(n, cap) if cap > 0 else n, "fleet_max": cap}
+
+
+func _fl_fleet_hud_text(ov: Node, _soft_k = null) -> String:
+	## Same FLEET / FLEET MANIFEST n/cap line StrategyOverlay already exposes.
+	if ov != null and is_instance_valid(ov) and ov.has_method("fleet_hud_line"):
+		return str(ov.fleet_hud_line())
+	var word := str(SoftKnowledge.fleet_label())
+	var snap := _fl_fleet_fields(ov, null, null)
+	return "%s %d/%d" % [word, int(snap.get("fleet", 0)), int(snap.get("fleet_max", 15))]
+
+
 func _assert_fl_a(os: Node, fails: PackedStringArray) -> void:
 	## FL-A: first extra allied fleet pip on ST-A overlay (existing NP-A visitor).
 	## SoftKnowledge / HUD FLEET. Click ≠ combat. Host Pulse / occupy.
 	## FL-B may raise cap to 3; this assert still requires the first visitor pip.
 	var P0 = load("res://scripts/world/P0Slice.gd")
 	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
-	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
 	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
 	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
 	var pulse0 := 11.0
@@ -23899,9 +23933,9 @@ func _assert_fl_a(os: Node, fails: PackedStringArray) -> void:
 		fails.append("FL-A select granted combat authority")
 	if str(guest.get_meta("combat_authority", "")) != "host":
 		fails.append("FL-A guest combat_authority left host")
-	if Hud != null:
-		var snap: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-		var stxt := str(Hud.stack_text(snap)).to_upper()
+	if ov != null or traffic != null:
+		var snap: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+		var stxt := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 		if int(snap.get("fleet", -1)) < 2 or int(snap.get("fleet_max", -1)) < 2:
 			fails.append("FL-A HUD fleet=%s/%s, want >= 2" % [
 				snap.get("fleet"), snap.get("fleet_max")
@@ -23909,7 +23943,7 @@ func _assert_fl_a(os: Node, fails: PackedStringArray) -> void:
 		if stxt.find("FLEET") < 0:
 			fails.append("FL-A HUD missing FLEET")
 		if SoftK != null and GameManager and GameManager.has_method("add_mastery"):
-			var word0 := str(SoftK.fleet_label())
+			var word0 := str(SoftKnowledge.fleet_label())
 			GameManager.add_mastery("logistics", 20.0)
 			GameManager.add_mastery("history", 20.0)
 			if SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked()):
@@ -23920,11 +23954,11 @@ func _assert_fl_a(os: Node, fails: PackedStringArray) -> void:
 				var pab1 = Kits._pulse()
 				if pab1 != null and "damage" in pab1 and absf(float(pab1.damage) - 11.0) > 0.01:
 					fails.append("FL-A Knowledge changed Pulse DPS")
-			var snap2: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
+			var snap2: Dictionary = _fl_fleet_fields(ov, traffic, ship)
 			if int(snap2.get("fleet", -1)) != int(snap.get("fleet", -1)) \
 					or int(snap2.get("fleet_max", -1)) != int(snap.get("fleet_max", -1)):
 				fails.append("FL-A Knowledge changed fleet count")
-			var word1 := str(SoftK.fleet_label())
+			var word1 := str(SoftKnowledge.fleet_label())
 			if word0.find("FLEET") < 0 or word1.find("FLEET") < 0:
 				fails.append("FL-A Knowledge dropped FLEET word")
 	if get_tree():
@@ -23968,7 +24002,6 @@ func _assert_fl_b(os: Node, fails: PackedStringArray) -> void:
 	## FL-C / FL-D may raise cap; this assert still requires the first two extra pips.
 	var P0 = load("res://scripts/world/P0Slice.gd")
 	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
-	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
 	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
 	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
 	var pulse0 := 11.0
@@ -24116,9 +24149,9 @@ func _assert_fl_b(os: Node, fails: PackedStringArray) -> void:
 		fails.append("FL-B visitor combat_authority left host")
 	if str(guest_b.get_meta("combat_authority", "")) != "host":
 		fails.append("FL-B ally combat_authority left host after select")
-	if Hud != null:
-		var snap: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-		var stxt := str(Hud.stack_text(snap)).to_upper()
+	if ov != null or traffic != null:
+		var snap: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+		var stxt := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 		if int(snap.get("fleet", -1)) < 3 or int(snap.get("fleet_max", -1)) < 3:
 			fails.append("FL-B HUD fleet=%s/%s, want >= 3" % [
 				snap.get("fleet"), snap.get("fleet_max")
@@ -24126,7 +24159,7 @@ func _assert_fl_b(os: Node, fails: PackedStringArray) -> void:
 		if stxt.find("FLEET") < 0:
 			fails.append("FL-B HUD missing FLEET")
 		if SoftK != null and GameManager and GameManager.has_method("add_mastery"):
-			var word0 := str(SoftK.fleet_label())
+			var word0 := str(SoftKnowledge.fleet_label())
 			GameManager.add_mastery("logistics", 20.0)
 			GameManager.add_mastery("history", 20.0)
 			if SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked()):
@@ -24137,11 +24170,11 @@ func _assert_fl_b(os: Node, fails: PackedStringArray) -> void:
 				var pab1 = Kits._pulse()
 				if pab1 != null and "damage" in pab1 and absf(float(pab1.damage) - 11.0) > 0.01:
 					fails.append("FL-B Knowledge changed Pulse DPS")
-			var snap2: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
+			var snap2: Dictionary = _fl_fleet_fields(ov, traffic, ship)
 			if int(snap2.get("fleet", -1)) != int(snap.get("fleet", -1)) \
 					or int(snap2.get("fleet_max", -1)) != int(snap.get("fleet_max", -1)):
 				fails.append("FL-B Knowledge changed fleet count")
-			var word1 := str(SoftK.fleet_label())
+			var word1 := str(SoftKnowledge.fleet_label())
 			if word0.find("FLEET") < 0 or word1.find("FLEET") < 0:
 				fails.append("FL-B Knowledge dropped FLEET word")
 	if get_tree():
@@ -24188,7 +24221,6 @@ func _assert_fl_c(os: Node, fails: PackedStringArray) -> void:
 	## FL-D may raise cap to 5; this assert still requires the first three extra pips.
 	var P0 = load("res://scripts/world/P0Slice.gd")
 	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
-	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
 	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
 	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
 	var pulse0 := 11.0
@@ -24352,9 +24384,9 @@ func _assert_fl_c(os: Node, fails: PackedStringArray) -> void:
 		fails.append("FL-C ally B combat_authority left host after select")
 	if str(guest_c.get_meta("combat_authority", "")) != "host":
 		fails.append("FL-C ally C combat_authority left host after select")
-	if Hud != null:
-		var snap: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-		var stxt := str(Hud.stack_text(snap)).to_upper()
+	if ov != null or traffic != null:
+		var snap: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+		var stxt := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 		if int(snap.get("fleet", -1)) < 4 or int(snap.get("fleet_max", -1)) < 4:
 			fails.append("FL-C HUD fleet=%s/%s, want >= 4" % [
 				snap.get("fleet"), snap.get("fleet_max")
@@ -24362,7 +24394,7 @@ func _assert_fl_c(os: Node, fails: PackedStringArray) -> void:
 		if stxt.find("FLEET") < 0:
 			fails.append("FL-C HUD missing FLEET")
 		if SoftK != null and GameManager and GameManager.has_method("add_mastery"):
-			var word0 := str(SoftK.fleet_label())
+			var word0 := str(SoftKnowledge.fleet_label())
 			GameManager.add_mastery("logistics", 20.0)
 			GameManager.add_mastery("history", 20.0)
 			if SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked()):
@@ -24373,11 +24405,11 @@ func _assert_fl_c(os: Node, fails: PackedStringArray) -> void:
 				var pab1 = Kits._pulse()
 				if pab1 != null and "damage" in pab1 and absf(float(pab1.damage) - 11.0) > 0.01:
 					fails.append("FL-C Knowledge changed Pulse DPS")
-			var snap2: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
+			var snap2: Dictionary = _fl_fleet_fields(ov, traffic, ship)
 			if int(snap2.get("fleet", -1)) != int(snap.get("fleet", -1)) \
 					or int(snap2.get("fleet_max", -1)) != int(snap.get("fleet_max", -1)):
 				fails.append("FL-C Knowledge changed fleet count")
-			var word1 := str(SoftK.fleet_label())
+			var word1 := str(SoftKnowledge.fleet_label())
 			if word0.find("FLEET") < 0 or word1.find("FLEET") < 0:
 				fails.append("FL-C Knowledge dropped FLEET word")
 	if get_tree():
@@ -24428,7 +24460,6 @@ func _assert_fl_d(os: Node, fails: PackedStringArray) -> void:
 	## Cap 5 (or later slices ≥5). SoftKnowledge / HUD FLEET. Click ≠ combat. Host Pulse / occupy.
 	var P0 = load("res://scripts/world/P0Slice.gd")
 	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
-	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
 	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
 	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
 	var pulse0 := 11.0
@@ -24608,9 +24639,9 @@ func _assert_fl_d(os: Node, fails: PackedStringArray) -> void:
 		fails.append("FL-D ally C combat_authority left host after select")
 	if str(guest_d.get_meta("combat_authority", "")) != "host":
 		fails.append("FL-D ally D combat_authority left host after select")
-	if Hud != null:
-		var snap: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-		var stxt := str(Hud.stack_text(snap)).to_upper()
+	if ov != null or traffic != null:
+		var snap: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+		var stxt := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 		if int(snap.get("fleet", -1)) < 5 or int(snap.get("fleet_max", -1)) < 5:
 			fails.append("FL-D HUD fleet=%s/%s, want >= 5" % [
 				snap.get("fleet"), snap.get("fleet_max")
@@ -24618,7 +24649,7 @@ func _assert_fl_d(os: Node, fails: PackedStringArray) -> void:
 		if stxt.find("FLEET") < 0:
 			fails.append("FL-D HUD missing FLEET")
 		if SoftK != null and GameManager and GameManager.has_method("add_mastery"):
-			var word0 := str(SoftK.fleet_label())
+			var word0 := str(SoftKnowledge.fleet_label())
 			GameManager.add_mastery("logistics", 20.0)
 			GameManager.add_mastery("history", 20.0)
 			if SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked()):
@@ -24629,12 +24660,12 @@ func _assert_fl_d(os: Node, fails: PackedStringArray) -> void:
 				var pab1 = Kits._pulse()
 				if pab1 != null and "damage" in pab1 and absf(float(pab1.damage) - 11.0) > 0.01:
 					fails.append("FL-D Knowledge changed Pulse DPS")
-			var snap2: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-			var stxt2 := str(Hud.stack_text(snap2)).to_upper()
+			var snap2: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+			var stxt2 := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 			if int(snap2.get("fleet", -1)) != int(snap.get("fleet", -1)) \
 					or int(snap2.get("fleet_max", -1)) != int(snap.get("fleet_max", -1)):
 				fails.append("FL-D Knowledge changed fleet count")
-			var word1 := str(SoftK.fleet_label())
+			var word1 := str(SoftKnowledge.fleet_label())
 			if word0.find("FLEET") < 0 or word1.find("FLEET") < 0:
 				fails.append("FL-D Knowledge dropped FLEET word")
 			if word1 != "FLEET MANIFEST":
@@ -24692,7 +24723,6 @@ func _assert_fl_e(os: Node, fails: PackedStringArray) -> void:
 	## Cap 6. SoftKnowledge / HUD FLEET n/6. Click ≠ combat. Host Pulse / occupy.
 	var P0 = load("res://scripts/world/P0Slice.gd")
 	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
-	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
 	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
 	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
 	var pulse0 := 11.0
@@ -24888,9 +24918,9 @@ func _assert_fl_e(os: Node, fails: PackedStringArray) -> void:
 		fails.append("FL-E ally D combat_authority left host after select")
 	if str(guest_e.get_meta("combat_authority", "")) != "host":
 		fails.append("FL-E ally E combat_authority left host after select")
-	if Hud != null:
-		var snap: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-		var stxt := str(Hud.stack_text(snap)).to_upper()
+	if ov != null or traffic != null:
+		var snap: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+		var stxt := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 		if int(snap.get("fleet", -1)) < 6 or int(snap.get("fleet_max", -1)) < 6:
 			fails.append("FL-E HUD fleet=%s/%s, want >= 6" % [
 				snap.get("fleet"), snap.get("fleet_max")
@@ -24898,7 +24928,7 @@ func _assert_fl_e(os: Node, fails: PackedStringArray) -> void:
 		if stxt.find("FLEET") < 0:
 			fails.append("FL-E HUD missing FLEET")
 		if SoftK != null and GameManager and GameManager.has_method("add_mastery"):
-			var word0 := str(SoftK.fleet_label())
+			var word0 := str(SoftKnowledge.fleet_label())
 			GameManager.add_mastery("logistics", 20.0)
 			GameManager.add_mastery("history", 20.0)
 			if SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked()):
@@ -24909,12 +24939,12 @@ func _assert_fl_e(os: Node, fails: PackedStringArray) -> void:
 				var pab1 = Kits._pulse()
 				if pab1 != null and "damage" in pab1 and absf(float(pab1.damage) - 11.0) > 0.01:
 					fails.append("FL-E Knowledge changed Pulse DPS")
-			var snap2: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-			var stxt2 := str(Hud.stack_text(snap2)).to_upper()
+			var snap2: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+			var stxt2 := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 			if int(snap2.get("fleet", -1)) != int(snap.get("fleet", -1)) \
 					or int(snap2.get("fleet_max", -1)) != int(snap.get("fleet_max", -1)):
 				fails.append("FL-E Knowledge changed fleet count")
-			var word1 := str(SoftK.fleet_label())
+			var word1 := str(SoftKnowledge.fleet_label())
 			if word0.find("FLEET") < 0 or word1.find("FLEET") < 0:
 				fails.append("FL-E Knowledge dropped FLEET word")
 			if word1 != "FLEET MANIFEST":
@@ -24975,7 +25005,6 @@ func _assert_fl_f(os: Node, fails: PackedStringArray) -> void:
 	## Cap 7. SoftKnowledge / HUD FLEET MANIFEST 7/7. Click ≠ combat. Host Pulse / occupy.
 	var P0 = load("res://scripts/world/P0Slice.gd")
 	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
-	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
 	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
 	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
 	var pulse0 := 11.0
@@ -25187,9 +25216,9 @@ func _assert_fl_f(os: Node, fails: PackedStringArray) -> void:
 		fails.append("FL-F ally E combat_authority left host after select")
 	if str(guest_f.get_meta("combat_authority", "")) != "host":
 		fails.append("FL-F ally F combat_authority left host after select")
-	if Hud != null:
-		var snap: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-		var stxt := str(Hud.stack_text(snap)).to_upper()
+	if ov != null or traffic != null:
+		var snap: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+		var stxt := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 		if int(snap.get("fleet", -1)) < 7 or int(snap.get("fleet_max", -1)) < 7:
 			fails.append("FL-F HUD fleet=%s/%s, want >= 7" % [
 				snap.get("fleet"), snap.get("fleet_max")
@@ -25197,7 +25226,7 @@ func _assert_fl_f(os: Node, fails: PackedStringArray) -> void:
 		if stxt.find("FLEET") < 0:
 			fails.append("FL-F HUD missing FLEET")
 		if SoftK != null and GameManager and GameManager.has_method("add_mastery"):
-			var word0 := str(SoftK.fleet_label())
+			var word0 := str(SoftKnowledge.fleet_label())
 			GameManager.add_mastery("logistics", 20.0)
 			GameManager.add_mastery("history", 20.0)
 			if SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked()):
@@ -25208,12 +25237,12 @@ func _assert_fl_f(os: Node, fails: PackedStringArray) -> void:
 				var pab1 = Kits._pulse()
 				if pab1 != null and "damage" in pab1 and absf(float(pab1.damage) - 11.0) > 0.01:
 					fails.append("FL-F Knowledge changed Pulse DPS")
-			var snap2: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-			var stxt2 := str(Hud.stack_text(snap2)).to_upper()
+			var snap2: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+			var stxt2 := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 			if int(snap2.get("fleet", -1)) != int(snap.get("fleet", -1)) \
 					or int(snap2.get("fleet_max", -1)) != int(snap.get("fleet_max", -1)):
 				fails.append("FL-F Knowledge changed fleet count")
-			var word1 := str(SoftK.fleet_label())
+			var word1 := str(SoftKnowledge.fleet_label())
 			if word0.find("FLEET") < 0 or word1.find("FLEET") < 0:
 				fails.append("FL-F Knowledge dropped FLEET word")
 			if word1 != "FLEET MANIFEST":
@@ -25277,7 +25306,6 @@ func _assert_fl_g(os: Node, fails: PackedStringArray) -> void:
 	## Cap 8. SoftKnowledge / HUD FLEET MANIFEST 8/8. Click ≠ combat. Host Pulse / occupy.
 	var P0 = load("res://scripts/world/P0Slice.gd")
 	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
-	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
 	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
 	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
 	var pulse0 := 11.0
@@ -25514,9 +25542,9 @@ func _assert_fl_g(os: Node, fails: PackedStringArray) -> void:
 		fails.append("FL-G ally F combat_authority left host after select")
 	if str(guest_g.get_meta("combat_authority", "")) != "host":
 		fails.append("FL-G ally G combat_authority left host after select")
-	if Hud != null:
-		var snap: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-		var stxt := str(Hud.stack_text(snap)).to_upper()
+	if ov != null or traffic != null:
+		var snap: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+		var stxt := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 		if int(snap.get("fleet", -1)) < 8 or int(snap.get("fleet_max", -1)) < 8:
 			fails.append("FL-G HUD fleet=%s/%s, want >= 8" % [
 				snap.get("fleet"), snap.get("fleet_max")
@@ -25524,7 +25552,7 @@ func _assert_fl_g(os: Node, fails: PackedStringArray) -> void:
 		if stxt.find("FLEET") < 0:
 			fails.append("FL-G HUD missing FLEET")
 		if SoftK != null and GameManager and GameManager.has_method("add_mastery"):
-			var word0 := str(SoftK.fleet_label())
+			var word0 := str(SoftKnowledge.fleet_label())
 			GameManager.add_mastery("logistics", 20.0)
 			GameManager.add_mastery("history", 20.0)
 			if SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked()):
@@ -25535,12 +25563,12 @@ func _assert_fl_g(os: Node, fails: PackedStringArray) -> void:
 				var pab1 = Kits._pulse()
 				if pab1 != null and "damage" in pab1 and absf(float(pab1.damage) - 11.0) > 0.01:
 					fails.append("FL-G Knowledge changed Pulse DPS")
-			var snap2: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-			var stxt2 := str(Hud.stack_text(snap2)).to_upper()
+			var snap2: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+			var stxt2 := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 			if int(snap2.get("fleet", -1)) != int(snap.get("fleet", -1)) \
 					or int(snap2.get("fleet_max", -1)) != int(snap.get("fleet_max", -1)):
 				fails.append("FL-G Knowledge changed fleet count")
-			var word1 := str(SoftK.fleet_label())
+			var word1 := str(SoftKnowledge.fleet_label())
 			if word0.find("FLEET") < 0 or word1.find("FLEET") < 0:
 				fails.append("FL-G Knowledge dropped FLEET word")
 			if word1 != "FLEET MANIFEST":
@@ -25607,7 +25635,6 @@ func _assert_fl_h(os: Node, fails: PackedStringArray) -> void:
 	## Cap 9. SoftKnowledge / HUD FLEET MANIFEST 9/9. Click ≠ combat. Host Pulse / occupy.
 	var P0 = load("res://scripts/world/P0Slice.gd")
 	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
-	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
 	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
 	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
 	var pulse0 := 11.0
@@ -25861,9 +25888,9 @@ func _assert_fl_h(os: Node, fails: PackedStringArray) -> void:
 		fails.append("FL-H ally G combat_authority left host after select")
 	if str(guest_h.get_meta("combat_authority", "")) != "host":
 		fails.append("FL-H ally H combat_authority left host after select")
-	if Hud != null:
-		var snap: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-		var stxt := str(Hud.stack_text(snap)).to_upper()
+	if ov != null or traffic != null:
+		var snap: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+		var stxt := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 		if int(snap.get("fleet", -1)) < 9 or int(snap.get("fleet_max", -1)) < 9:
 			fails.append("FL-H HUD fleet=%s/%s, want >= 9" % [
 				snap.get("fleet"), snap.get("fleet_max")
@@ -25871,7 +25898,7 @@ func _assert_fl_h(os: Node, fails: PackedStringArray) -> void:
 		if stxt.find("FLEET") < 0:
 			fails.append("FL-H HUD missing FLEET")
 		if SoftK != null and GameManager and GameManager.has_method("add_mastery"):
-			var word0 := str(SoftK.fleet_label())
+			var word0 := str(SoftKnowledge.fleet_label())
 			GameManager.add_mastery("logistics", 20.0)
 			GameManager.add_mastery("history", 20.0)
 			if SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked()):
@@ -25882,12 +25909,12 @@ func _assert_fl_h(os: Node, fails: PackedStringArray) -> void:
 				var pab1 = Kits._pulse()
 				if pab1 != null and "damage" in pab1 and absf(float(pab1.damage) - 11.0) > 0.01:
 					fails.append("FL-H Knowledge changed Pulse DPS")
-			var snap2: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-			var stxt2 := str(Hud.stack_text(snap2)).to_upper()
+			var snap2: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+			var stxt2 := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 			if int(snap2.get("fleet", -1)) != int(snap.get("fleet", -1)) \
 					or int(snap2.get("fleet_max", -1)) != int(snap.get("fleet_max", -1)):
 				fails.append("FL-H Knowledge changed fleet count")
-			var word1 := str(SoftK.fleet_label())
+			var word1 := str(SoftKnowledge.fleet_label())
 			if word0.find("FLEET") < 0 or word1.find("FLEET") < 0:
 				fails.append("FL-H Knowledge dropped FLEET word")
 			if word1 != "FLEET MANIFEST":
@@ -25957,7 +25984,6 @@ func _assert_fl_i(os: Node, fails: PackedStringArray) -> void:
 	## Cap >= 10. SoftKnowledge / HUD FLEET. Click ≠ combat. Host Pulse / occupy.
 	var P0 = load("res://scripts/world/P0Slice.gd")
 	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
-	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
 	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
 	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
 	var pulse0 := 11.0
@@ -26227,9 +26253,9 @@ func _assert_fl_i(os: Node, fails: PackedStringArray) -> void:
 		fails.append("FL-I ally H combat_authority left host after select")
 	if str(guest_i.get_meta("combat_authority", "")) != "host":
 		fails.append("FL-I ally I combat_authority left host after select")
-	if Hud != null:
-		var snap: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-		var stxt := str(Hud.stack_text(snap)).to_upper()
+	if ov != null or traffic != null:
+		var snap: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+		var stxt := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 		if int(snap.get("fleet", -1)) < 10 or int(snap.get("fleet_max", -1)) < 10:
 			fails.append("FL-I HUD fleet=%s/%s, want >= 10" % [
 				snap.get("fleet"), snap.get("fleet_max")
@@ -26237,7 +26263,7 @@ func _assert_fl_i(os: Node, fails: PackedStringArray) -> void:
 		if stxt.find("FLEET") < 0:
 			fails.append("FL-I HUD missing FLEET")
 		if SoftK != null and GameManager and GameManager.has_method("add_mastery"):
-			var word0 := str(SoftK.fleet_label())
+			var word0 := str(SoftKnowledge.fleet_label())
 			GameManager.add_mastery("logistics", 20.0)
 			GameManager.add_mastery("history", 20.0)
 			if SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked()):
@@ -26248,12 +26274,12 @@ func _assert_fl_i(os: Node, fails: PackedStringArray) -> void:
 				var pab1 = Kits._pulse()
 				if pab1 != null and "damage" in pab1 and absf(float(pab1.damage) - 11.0) > 0.01:
 					fails.append("FL-I Knowledge changed Pulse DPS")
-			var snap2: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-			var stxt2 := str(Hud.stack_text(snap2)).to_upper()
+			var snap2: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+			var stxt2 := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 			if int(snap2.get("fleet", -1)) != int(snap.get("fleet", -1)) \
 					or int(snap2.get("fleet_max", -1)) != int(snap.get("fleet_max", -1)):
 				fails.append("FL-I Knowledge changed fleet count")
-			var word1 := str(SoftK.fleet_label())
+			var word1 := str(SoftKnowledge.fleet_label())
 			if word0.find("FLEET") < 0 or word1.find("FLEET") < 0:
 				fails.append("FL-I Knowledge dropped FLEET word")
 			if word1 != "FLEET MANIFEST":
@@ -26326,7 +26352,6 @@ func _assert_fl_j(os: Node, fails: PackedStringArray) -> void:
 	## Cap 11. SoftKnowledge / HUD FLEET MANIFEST 11/11. Click ≠ combat. Host Pulse / occupy.
 	var P0 = load("res://scripts/world/P0Slice.gd")
 	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
-	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
 	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
 	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
 	var pulse0 := 11.0
@@ -26612,9 +26637,9 @@ func _assert_fl_j(os: Node, fails: PackedStringArray) -> void:
 		fails.append("FL-J ally I combat_authority left host after select")
 	if str(guest_j.get_meta("combat_authority", "")) != "host":
 		fails.append("FL-J ally J combat_authority left host after select")
-	if Hud != null:
-		var snap: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-		var stxt := str(Hud.stack_text(snap)).to_upper()
+	if ov != null or traffic != null:
+		var snap: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+		var stxt := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 		if int(snap.get("fleet", -1)) < 11 or int(snap.get("fleet_max", -1)) < 11:
 			fails.append("FL-J HUD fleet=%s/%s, want >= 11" % [
 				snap.get("fleet"), snap.get("fleet_max")
@@ -26622,7 +26647,7 @@ func _assert_fl_j(os: Node, fails: PackedStringArray) -> void:
 		if stxt.find("FLEET") < 0:
 			fails.append("FL-J HUD missing FLEET")
 		if SoftK != null and GameManager and GameManager.has_method("add_mastery"):
-			var word0 := str(SoftK.fleet_label())
+			var word0 := str(SoftKnowledge.fleet_label())
 			GameManager.add_mastery("logistics", 20.0)
 			GameManager.add_mastery("history", 20.0)
 			if SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked()):
@@ -26633,11 +26658,11 @@ func _assert_fl_j(os: Node, fails: PackedStringArray) -> void:
 				var pab1 = Kits._pulse()
 				if pab1 != null and "damage" in pab1 and absf(float(pab1.damage) - 11.0) > 0.01:
 					fails.append("FL-J Knowledge changed Pulse DPS")
-			var snap2: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-			var stxt2 := str(Hud.stack_text(snap2)).to_upper()
+			var snap2: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+			var stxt2 := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 			if int(snap2.get("fleet", -1)) < 11 or int(snap2.get("fleet_max", -1)) < 11:
 				fails.append("FL-J Knowledge changed fleet count")
-			var word1 := str(SoftK.fleet_label())
+			var word1 := str(SoftKnowledge.fleet_label())
 			if word0.find("FLEET") < 0 or word1.find("FLEET") < 0:
 				fails.append("FL-J Knowledge dropped FLEET word")
 			if word1 != "FLEET MANIFEST":
@@ -26713,7 +26738,6 @@ func _assert_fl_k(os: Node, fails: PackedStringArray) -> void:
 	## Cap 12. SoftKnowledge / HUD FLEET MANIFEST 12/12. Click ≠ combat. Host Pulse / occupy.
 	var P0 = load("res://scripts/world/P0Slice.gd")
 	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
-	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
 	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
 	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
 	var pulse0 := 11.0
@@ -27016,9 +27040,9 @@ func _assert_fl_k(os: Node, fails: PackedStringArray) -> void:
 		fails.append("FL-K ally J combat_authority left host after select")
 	if str(guest_k.get_meta("combat_authority", "")) != "host":
 		fails.append("FL-K ally K combat_authority left host after select")
-	if Hud != null:
-		var snap: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-		var stxt := str(Hud.stack_text(snap)).to_upper()
+	if ov != null or traffic != null:
+		var snap: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+		var stxt := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 		if int(snap.get("fleet", -1)) < 12 or int(snap.get("fleet_max", -1)) < 12:
 			fails.append("FL-K HUD fleet=%s/%s, want >= 12" % [
 				snap.get("fleet"), snap.get("fleet_max")
@@ -27026,7 +27050,7 @@ func _assert_fl_k(os: Node, fails: PackedStringArray) -> void:
 		if stxt.find("FLEET") < 0:
 			fails.append("FL-K HUD missing FLEET")
 		if SoftK != null and GameManager and GameManager.has_method("add_mastery"):
-			var word0 := str(SoftK.fleet_label())
+			var word0 := str(SoftKnowledge.fleet_label())
 			GameManager.add_mastery("logistics", 20.0)
 			GameManager.add_mastery("history", 20.0)
 			if SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked()):
@@ -27037,11 +27061,11 @@ func _assert_fl_k(os: Node, fails: PackedStringArray) -> void:
 				var pab1 = Kits._pulse()
 				if pab1 != null and "damage" in pab1 and absf(float(pab1.damage) - 11.0) > 0.01:
 					fails.append("FL-K Knowledge changed Pulse DPS")
-			var snap2: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-			var stxt2 := str(Hud.stack_text(snap2)).to_upper()
+			var snap2: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+			var stxt2 := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 			if int(snap2.get("fleet", -1)) < 12 or int(snap2.get("fleet_max", -1)) < 12:
 				fails.append("FL-K Knowledge changed fleet count")
-			var word1 := str(SoftK.fleet_label())
+			var word1 := str(SoftKnowledge.fleet_label())
 			if word0.find("FLEET") < 0 or word1.find("FLEET") < 0:
 				fails.append("FL-K Knowledge dropped FLEET word")
 			if word1 != "FLEET MANIFEST":
@@ -27120,7 +27144,6 @@ func _assert_fl_l(os: Node, fails: PackedStringArray) -> void:
 	## Cap 13. SoftKnowledge / HUD FLEET MANIFEST 13/13. Click ≠ combat. Host Pulse / occupy.
 	var P0 = load("res://scripts/world/P0Slice.gd")
 	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
-	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
 	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
 	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
 	var pulse0 := 11.0
@@ -27439,9 +27462,9 @@ func _assert_fl_l(os: Node, fails: PackedStringArray) -> void:
 		fails.append("FL-L ally K combat_authority left host after select")
 	if str(guest_l.get_meta("combat_authority", "")) != "host":
 		fails.append("FL-L ally L combat_authority left host after select")
-	if Hud != null:
-		var snap: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-		var stxt := str(Hud.stack_text(snap)).to_upper()
+	if ov != null or traffic != null:
+		var snap: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+		var stxt := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 		if int(snap.get("fleet", -1)) < 13 or int(snap.get("fleet_max", -1)) < 13:
 			fails.append("FL-L HUD fleet=%s/%s, want >= 13" % [
 				snap.get("fleet"), snap.get("fleet_max")
@@ -27449,7 +27472,7 @@ func _assert_fl_l(os: Node, fails: PackedStringArray) -> void:
 		if stxt.find("FLEET") < 0:
 			fails.append("FL-L HUD missing FLEET")
 		if SoftK != null and GameManager and GameManager.has_method("add_mastery"):
-			var word0 := str(SoftK.fleet_label())
+			var word0 := str(SoftKnowledge.fleet_label())
 			GameManager.add_mastery("logistics", 20.0)
 			GameManager.add_mastery("history", 20.0)
 			if SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked()):
@@ -27460,11 +27483,11 @@ func _assert_fl_l(os: Node, fails: PackedStringArray) -> void:
 				var pab1 = Kits._pulse()
 				if pab1 != null and "damage" in pab1 and absf(float(pab1.damage) - 11.0) > 0.01:
 					fails.append("FL-L Knowledge changed Pulse DPS")
-			var snap2: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-			var stxt2 := str(Hud.stack_text(snap2)).to_upper()
+			var snap2: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+			var stxt2 := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 			if int(snap2.get("fleet", -1)) < 13 or int(snap2.get("fleet_max", -1)) < 13:
 				fails.append("FL-L Knowledge changed fleet count")
-			var word1 := str(SoftK.fleet_label())
+			var word1 := str(SoftKnowledge.fleet_label())
 			if word0.find("FLEET") < 0 or word1.find("FLEET") < 0:
 				fails.append("FL-L Knowledge dropped FLEET word")
 			if word1 != "FLEET MANIFEST":
@@ -27546,7 +27569,6 @@ func _assert_fl_m(os: Node, fails: PackedStringArray) -> void:
 	## Cap 14. SoftKnowledge / HUD FLEET MANIFEST 14/14. Click ≠ combat. Host Pulse / occupy.
 	var P0 = load("res://scripts/world/P0Slice.gd")
 	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
-	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
 	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
 	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
 	var pulse0 := 11.0
@@ -27881,9 +27903,9 @@ func _assert_fl_m(os: Node, fails: PackedStringArray) -> void:
 		fails.append("FL-M ally L combat_authority left host after select")
 	if str(guest_m.get_meta("combat_authority", "")) != "host":
 		fails.append("FL-M ally M combat_authority left host after select")
-	if Hud != null:
-		var snap: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-		var stxt := str(Hud.stack_text(snap)).to_upper()
+	if ov != null or traffic != null:
+		var snap: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+		var stxt := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 		if int(snap.get("fleet", -1)) < 14 or int(snap.get("fleet_max", -1)) < 14:
 			fails.append("FL-M HUD fleet=%s/%s, want >= 14" % [
 				snap.get("fleet"), snap.get("fleet_max")
@@ -27891,7 +27913,7 @@ func _assert_fl_m(os: Node, fails: PackedStringArray) -> void:
 		if stxt.find("FLEET") < 0:
 			fails.append("FL-M HUD missing FLEET")
 		if SoftK != null and GameManager and GameManager.has_method("add_mastery"):
-			var word0 := str(SoftK.fleet_label())
+			var word0 := str(SoftKnowledge.fleet_label())
 			GameManager.add_mastery("logistics", 20.0)
 			GameManager.add_mastery("history", 20.0)
 			if SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked()):
@@ -27902,11 +27924,11 @@ func _assert_fl_m(os: Node, fails: PackedStringArray) -> void:
 				var pab1 = Kits._pulse()
 				if pab1 != null and "damage" in pab1 and absf(float(pab1.damage) - 11.0) > 0.01:
 					fails.append("FL-M Knowledge changed Pulse DPS")
-			var snap2: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-			var stxt2 := str(Hud.stack_text(snap2)).to_upper()
+			var snap2: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+			var stxt2 := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 			if int(snap2.get("fleet", -1)) < 14 or int(snap2.get("fleet_max", -1)) < 14:
 				fails.append("FL-M Knowledge changed fleet count")
-			var word1 := str(SoftK.fleet_label())
+			var word1 := str(SoftKnowledge.fleet_label())
 			if word0.find("FLEET") < 0 or word1.find("FLEET") < 0:
 				fails.append("FL-M Knowledge dropped FLEET word")
 			if word1 != "FLEET MANIFEST":
@@ -27991,7 +28013,6 @@ func _assert_fl_n(os: Node, fails: PackedStringArray) -> void:
 	## Cap 15. SoftKnowledge / HUD FLEET MANIFEST 15/15. Click ≠ combat. Host Pulse / occupy.
 	var P0 = load("res://scripts/world/P0Slice.gd")
 	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
-	var Hud = load("res://scripts/ui/OpenSpaceHudStack.gd")
 	var Kits = load("res://scripts/abilities/AbilityKitCatalog.gd")
 	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
 	var pulse0 := 11.0
@@ -28343,9 +28364,9 @@ func _assert_fl_n(os: Node, fails: PackedStringArray) -> void:
 		fails.append("FL-N ally M combat_authority left host after select")
 	if str(guest_n.get_meta("combat_authority", "")) != "host":
 		fails.append("FL-N ally N combat_authority left host after select")
-	if Hud != null:
-		var snap: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-		var stxt := str(Hud.stack_text(snap)).to_upper()
+	if ov != null or traffic != null:
+		var snap: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+		var stxt := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 		if int(snap.get("fleet", -1)) != 15 or int(snap.get("fleet_max", -1)) != 15:
 			fails.append("FL-N HUD fleet=%s/%s, want 15/15" % [
 				snap.get("fleet"), snap.get("fleet_max")
@@ -28353,7 +28374,7 @@ func _assert_fl_n(os: Node, fails: PackedStringArray) -> void:
 		if stxt.find("FLEET") < 0 or stxt.find("15/15") < 0:
 			fails.append("FL-N HUD missing FLEET 15/15")
 		if SoftK != null and GameManager and GameManager.has_method("add_mastery"):
-			var word0 := str(SoftK.fleet_label())
+			var word0 := str(SoftKnowledge.fleet_label())
 			GameManager.add_mastery("logistics", 20.0)
 			GameManager.add_mastery("history", 20.0)
 			if SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked()):
@@ -28364,11 +28385,11 @@ func _assert_fl_n(os: Node, fails: PackedStringArray) -> void:
 				var pab1 = Kits._pulse()
 				if pab1 != null and "damage" in pab1 and absf(float(pab1.damage) - 11.0) > 0.01:
 					fails.append("FL-N Knowledge changed Pulse DPS")
-			var snap2: Dictionary = Hud.snapshot(ship, os.get("player") if os else null, host)
-			var stxt2 := str(Hud.stack_text(snap2)).to_upper()
+			var snap2: Dictionary = _fl_fleet_fields(ov, traffic, ship)
+			var stxt2 := str(_fl_fleet_hud_text(ov, SoftK)).to_upper()
 			if int(snap2.get("fleet", -1)) != 15 or int(snap2.get("fleet_max", -1)) != 15:
 				fails.append("FL-N Knowledge changed fleet count")
-			var word1 := str(SoftK.fleet_label())
+			var word1 := str(SoftKnowledge.fleet_label())
 			if word0.find("FLEET") < 0 or word1.find("FLEET") < 0:
 				fails.append("FL-N Knowledge dropped FLEET word")
 			if word1 != "FLEET MANIFEST":
