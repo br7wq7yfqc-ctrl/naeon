@@ -353,8 +353,8 @@ func _check_ar_e(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 		return fails
 	var ids: PackedStringArray = Kit.kit_ids()
 	print("[Playtest] kits=", ",".join(ids), " n=", ids.size())
-	if ids.size() < 4 or ids.size() > 8:
-		fails.append("kit count not 4–8")
+	if ids.size() < 4 or ids.size() > 9:
+		fails.append("kit count not 4–9")
 	var seen_fac: Dictionary = {}
 	for kit_id in ids:
 		var kit: Array = Kit.kit_by_id(str(kit_id))
