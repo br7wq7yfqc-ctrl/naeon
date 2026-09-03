@@ -303,6 +303,15 @@ const AR_U_XP_LEVELING := true
 ## AR-T wave stays on its lane. AR-U XP/LEVEL stay informational.
 ## AR-A…AR-U stay. Host authority. ORBITAL_STATIONS stays false. No SITE_*.
 const AR_V_SECOND_LANE_WAVE := true
+## AR-W: third Clash lane minion-wave on the existing 60×60 TestArena /
+## ClashDirector. Remaining Clash lane (MID) gets the same host-authority
+## WAVE/MINION Pulse 11 seed. Completes the 3-lane MOBA seed.
+## SoftKnowledge / HUD WAVE / MINION only. Infection cap 5. Not a 13th
+## AbilityKit. Not XP power. Not another fleet pip. AbilityKitCatalog
+## stays at 12 (cx_nex…gr_thorn). FL-N FLEET 15/15 stays. AR-T and AR-V
+## waves stay. AR-U XP/LEVEL stay informational. AR-A…AR-V stay. Host
+## authority. ORBITAL_STATIONS stays false. No SITE_*.
+const AR_W_THIRD_LANE_WAVE := true
 ## DO-A: contested Cybernex ↔ gROT transition on one occupied unnamed pad.
 ## Uses OwnershipData / OwnershipComponent / ContestedRing. SoftKnowledge
 ## HUD label only (CONTESTED / CYBERNEX / GROT). Not HyperGate G4. Not

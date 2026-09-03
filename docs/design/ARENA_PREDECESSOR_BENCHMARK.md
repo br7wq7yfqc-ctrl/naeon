@@ -25,7 +25,7 @@ NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY
 | 2 | Топология: 3 линии, jungle, river, вертикаль / jump pads | `ClashLanes` TOP/MID/BOT на полу ~60×60 | **3 линии** + **AR-D** camp + **AR-J** prime camp + **река** (`ClashRiver`) + **jump pads** (`ClashJumpPads`, короткий hop) на том же 60×60 | feel lock; не city-map | новая city-map; SITE_* mint |
 | 3 | Структуры: towers / inhibitors / core | башни = live `Turret` 160 HP; nexus = prop | **AR-B:** OUTER×6 + MID×6 + INHIB×2 + CORE×2, все с HP (`Turret`); inhib = gate у ядра (не 3-й полный ряд); нет P2W-ремонта | AR-C волны; не city-map | P2W-ремонт башен |
 | 4 | Objectives: camps / fangtooth / prime | claim beacons + lane pressure + tower-down | **AR-D** fangtooth + **AR-J** prime (оба off-lane, не IP); damageable; soft contest; drop = soft WS, не unique weapon; Knowledge только подпись | feel lock; **не** story-power drop | unique DPS с босса; Knowledge→урон |
-| 5 | Waves / minions | `CombatDummy` с `lane_spawn_table()` | **AR-C + AR-T + AR-V:** `ClashWaves` — периодические волны `CombatDummy` по линии; **AR-T seed** host-authority Pulse 11; **AR-V** opposite-lane mirror; SoftKnowledge `WAVE` / `MINION`; march к OUTER; без магазина | feel lock | магазин-миньоны |
+| 5 | Waves / minions | `CombatDummy` с `lane_spawn_table()` | **AR-C + AR-T + AR-V + AR-W:** `ClashWaves` — периодические волны `CombatDummy` по линии; **AR-T seed** host-authority Pulse 11; **AR-V** opposite-lane mirror; **AR-W** remaining lane (MID); SoftKnowledge `WAVE` / `MINION`; march к OUTER; без магазина | feel lock | магазин-миньоны |
 | 6 | Heroes / kits | `AbilityKitCatalog` + `AbilitySystem`; формы = идентичность | **AR-E + AR-L + AR-M + AR-N + AR-O + AR-P + AR-Q + AR-R + AR-S:** 12 китов × 4 слота (CX Nex/Grid/Lattice/Prism/Helix/Spire, GR Rot/Spore/Vein/Facet/Coil/Thorn; Pulse / utility / probe\|surge / Form Cycle) | feel lock; формы не rank-стат; toward 6–8 | P2W kits; форма = скрытый MMR |
 | 7 | Items / cards | модули / blueprints NAEON, не колода Paragon | **AR-E + AR-K:** один `ClashModuleBench` (session `ShipModule.SENSOR` + catalog `CARGO` / Nex Hold); Knowledge только подпись; не колода | не shop of power | cash-shop power; клон карт Epic |
 | 8 | Vision / wards | `ClashRadar`; soft scan | радар всегда рисует форму; вард-предметов нет | wait или soft label; Knowledge не покупает вард | pay-to-ward |
@@ -39,23 +39,23 @@ NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY
 | Узел | Факт |
 |------|------|
 | `ClashLanes.gd` | 3 полосы; OUTER/MID/INHIB/CORE live `Turret`; `structure_table()` + `lane_march_path()` |
-| `ClashWaves.gd` | timed волны `CombatDummy` по линии; **AR-T** host-authority Pulse 11; **AR-V** opposite-lane seed; SoftKnowledge `WAVE` / `MINION`; cap по GraphicsQuality; no P2W |
+| `ClashWaves.gd` | timed волны `CombatDummy` по линии; **AR-T** host-authority Pulse 11; **AR-V** opposite-lane seed; **AR-W** remaining-lane (MID) seed; SoftKnowledge `WAVE` / `MINION`; cap по GraphicsQuality; no P2W |
 | `AexionClash.gd` | kills→5, pressure TOP/MID/BOT, soft WS, `SITE_TEST_ARENA_PILLAR` уже в LayerContext (не чеканить новый) |
 | `ClashMatchDirector.gd` | K/D, banner, lane HUD; **AR-T** SoftKnowledge `WAVE` / `MINION`; **AR-U** SoftKnowledge `XP` / `LEVEL`; no P2W |
 | `ClashCamp.gd` | два off-lane pit (AR-D fangtooth + AR-J prime); HP; soft contest announce; drop = soft WS (не оружие) |
 | `ClashRiver.gd` | река на том же 60×60: mid-crossing + каналы между полосами; terrain/read, не objective |
 | `ClashJumpPads.gd` | 4 pad на том же 60×60; короткий hop walker/hero, не полёт и не корабль |
-| `TestArena.gd` | дверь слоя; beacons Neutral; `ClashWaves` на полосах (**AR-T** WAVE/MINION + **AR-V** opposite lane); `ClashCamp` + `ClashPrimeCamp`; один `ClashModuleBench` (AR-E SENSOR + AR-K CARGO); `ClashRiver`; `ClashJumpPads`; `ClashLocalMatch` 5v5 (3v3 startable); **AR-U** XP/LEVEL HUD |
+| `TestArena.gd` | дверь слоя; beacons Neutral; `ClashWaves` на полосах (**AR-T** WAVE/MINION + **AR-V** opposite + **AR-W** MID); `ClashCamp` + `ClashPrimeCamp`; один `ClashModuleBench` (AR-E SENSOR + AR-K CARGO); `ClashRiver`; `ClashJumpPads`; `ClashLocalMatch` 5v5 (3v3 startable); **AR-U** XP/LEVEL HUD |
 | `ClashLocalMatch.gd` | 5v5 local host authority; 10 actors на TOP/MID/BOT + jungle; 3v3 startable; SoftNet visual puppets; G5 закрыт; **AR-U** match XP / level labels only |
 | `AbilityKitCatalog.gd` | 12 китов (AR-E 4 + AR-L Lattice + AR-M Vein + AR-N Prism + AR-O Facet + AR-P Helix + AR-Q Coil + AR-R Spire + AR-S Thorn); costs из `EnergyEconomy`; `kit_for_faction` = прежний default |
 | `HeroFormCatalog.gd` | Canine/Feline/Avian/Human + лёгкие loco-числа — **не** rank; не усиливать |
 | `docs/systems/AEXION_CLASH_SLICE.md` | бар уже назван Predecessor; non-goal: full lanes/items P2W |
 | `docs/rules/13_MOBA_ARENA_INFLUENCE.md` | арена не флипает планету; daily WS 60 |
-| Phase 3 план | 6–8 heroes / items / matchmaking — **ещё не код**; jungle bite = AR-D + AR-J; items-shop seed = AR-K; fifth kit = AR-L; sixth kit = AR-M; seventh kit = AR-N; eighth kit = AR-O; ninth kit = AR-P; tenth kit = AR-Q; eleventh kit = AR-R; twelfth kit = AR-S (12 kits toward 6–8); minion-wave seed = AR-T; XP/leveling seed = AR-U; second-lane wave = AR-V (5v5 local = AR-G) |
+| Phase 3 план | 6–8 heroes / items / matchmaking — **ещё не код**; jungle bite = AR-D + AR-J; items-shop seed = AR-K; fifth kit = AR-L; sixth kit = AR-M; seventh kit = AR-N; eighth kit = AR-O; ninth kit = AR-P; tenth kit = AR-Q; eleventh kit = AR-R; twelfth kit = AR-S (12 kits toward 6–8); minion-wave seed = AR-T; XP/leveling seed = AR-U; second-lane wave = AR-V; third-lane wave = AR-W (3 lanes; 5v5 local = AR-G) |
 
 ---
 
-## Срезы AR-A…AR-V
+## Срезы AR-A…AR-W
 
 Каждый срез playable сам. **Не начинать, пока OS-A зелёный** (космос читает одно тело). Арена не перехватывает очередь Open Space.
 
@@ -83,6 +83,7 @@ NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY
 | **AR-T** | first Clash minion-wave seed | **сделано:** одна host-authority lane-волна `CombatDummy` на том же 60×60 (`ClashWaves`); Pulse 11; SoftKnowledge `WAVE` / `MINION`; Infection cap 5; не 13-й кит; 12 kits stay; FL-N FLEET 15/15 stays | этот срез | unique weapon; XP power; cash-shop; AbilityKit 13; leftover 5v5 soak |
 | **AR-U** | first Clash XP/leveling seed | **сделано:** SoftKnowledge / HUD `XP` / `LEVEL` на том же 60×60 (`ClashLocalMatch` / `ClashMatchDirector`); level informational only — never DPS / Pulse / yield / kit unlock; Infection cap 5; не 13-й кит; 12 kits stay; FL-N FLEET 15/15 stays; AR-T wave stays | этот срез | Rank / XP = power; AbilityKit 13; FL-O; leftover 5v5 soak |
 | **AR-V** | second Clash lane minion-wave | **сделано:** вторая host-authority lane-волна `CombatDummy` на opposite Clash lane (тот же `ClashWaves`); Pulse 11; SoftKnowledge `WAVE` / `MINION`; AR-T остаётся на своей полосе; Infection cap 5; не 13-й кит; 12 kits stay; FL-N FLEET 15/15 stays; AR-U XP/LEVEL informational | этот срез | unique weapon; XP power; AbilityKit 13; FL-O; leftover 5v5 soak |
+| **AR-W** | third Clash lane minion-wave | **сделано:** третья host-authority lane-волна `CombatDummy` на remaining Clash lane MID (тот же `ClashWaves`); Pulse 11; SoftKnowledge `WAVE` / `MINION`; 3-lane seed complete; AR-T и AR-V остаются; Infection cap 5; не 13-й кит; 12 kits stay; FL-N FLEET 15/15 stays; AR-U XP/LEVEL informational | этот срез | unique weapon; XP power; AbilityKit 13; FL-O; leftover 5v5 soak |
 
 ---
 
@@ -94,4 +95,4 @@ NPC/Clash bots ≠ player agency; MMO/10k CCU HOLD: [`NPC_AGENCY.md`](NPC_AGENCY
 
 ## Этот PR
 
-AR-V: second Clash lane minion-wave on the existing TestArena / ClashDirector 60×60. Mirrors AR-T (host-authority `WAVE` / `MINION`, Pulse 11) on the opposite Clash lane. SoftKnowledge / HUD `WAVE` / `MINION` only. Infection cap 5. Not a 13th kit. Not XP power. Not another fleet pip. AbilityKitCatalog stays at 12 (`cx_nex`…`gr_thorn`). FL-N FLEET 15/15 stays. AR-T stays on its lane. AR-U XP/LEVEL stay informational. AR-A…AR-U, река и jump pads не откатывать. G5 закрыт. Не mint SITE_*. Knowledge не меняет DPS. Дверь: меню → AEXION CLASH → TestArena.
+AR-W: third Clash lane minion-wave on the existing TestArena / ClashDirector 60×60. Remaining Clash lane (MID) gets the same host-authority `WAVE` / `MINION` Pulse 11 seed. Completes the 3-lane MOBA seed. SoftKnowledge / HUD `WAVE` / `MINION` only. Infection cap 5. Not a 13th kit. Not XP power. Not another fleet pip. AbilityKitCatalog stays at 12 (`cx_nex`…`gr_thorn`). FL-N FLEET 15/15 stays. AR-T and AR-V stay. AR-U XP/LEVEL stay informational. AR-A…AR-V, река и jump pads не откатывать. G5 закрыт. Не mint SITE_*. Knowledge не меняет DPS. Дверь: меню → AEXION CLASH → TestArena.
