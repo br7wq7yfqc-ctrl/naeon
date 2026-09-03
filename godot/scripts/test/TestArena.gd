@@ -460,9 +460,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey and event.pressed and not event.echo \
 		and (event.keycode == KEY_1 or event.keycode == KEY_2 or event.keycode == KEY_3 \
-		or event.keycode == KEY_4 or event.physical_keycode == KEY_1 \
-		or event.physical_keycode == KEY_2 or event.physical_keycode == KEY_3 \
-		or event.physical_keycode == KEY_4):
+		or event.keycode == KEY_4 or event.keycode == KEY_5 \
+		or event.physical_keycode == KEY_1 or event.physical_keycode == KEY_2 \
+		or event.physical_keycode == KEY_3 or event.physical_keycode == KEY_4 \
+		or event.physical_keycode == KEY_5):
 		var idx := 0
 		if event.keycode == KEY_2 or event.physical_keycode == KEY_2:
 			idx = 1
@@ -470,6 +471,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			idx = 2
 		elif event.keycode == KEY_4 or event.physical_keycode == KEY_4:
 			idx = 3
+		elif event.keycode == KEY_5 or event.physical_keycode == KEY_5:
+			idx = 4
 		_apply_arena_kit(idx)
 		return
 	if event.is_action_pressed("ui_home") or (event is InputEventKey and event.pressed and event.keycode == KEY_TAB):
@@ -509,6 +512,7 @@ func _finish_clash_layout() -> void:
 	_evidence_ar_m()
 	_evidence_ar_n()
 	_evidence_ar_o()
+	_evidence_ar_p()
 	_evidence_river()
 	_evidence_jump_pads()
 	_setup_clash_local_match()
@@ -1167,6 +1171,20 @@ func _evidence_ar_o() -> void:
 	if player and player.ability_system and player.ability_system.has_method("kit_label"):
 		lab = str(player.ability_system.kit_label())
 	print("[AR-O] kits=", n, " eighth=", eighth, " label=", lab, " pin=", LayerContext.site_pin_id if LayerContext else "")
+
+
+func _evidence_ar_p() -> void:
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var n := 0
+	var ninth := ""
+	var lab := ""
+	if Kit and Kit.has_method("kit_ids"):
+		n = Kit.kit_ids().size()
+		if n >= 9:
+			ninth = str(Kit.kit_ids()[8])
+	if player and player.ability_system and player.ability_system.has_method("kit_label"):
+		lab = str(player.ability_system.kit_label())
+	print("[AR-P] kits=", n, " ninth=", ninth, " label=", lab, " pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
 func _want_clash_5v5() -> bool:

@@ -7,6 +7,7 @@ class_name AbilityKitCatalog
 ## AR-M: sixth kit (GR Vein) — gROT symmetric to CX Lattice. Same grammar.
 ## AR-N: seventh kit (CX Prism) — Cybernex symmetric slot after Lattice / Vein.
 ## AR-O: eighth kit (GR Facet) — gROT symmetric slot after CX Prism / GR Vein.
+## AR-P: ninth kit (CX Helix) — Cybernex symmetric slot after Prism / Facet.
 
 const EE = preload("res://scripts/systems/EnergyEconomy.gd")
 
@@ -18,6 +19,7 @@ const KIT_CX_LATTICE := "cx_lattice"
 const KIT_GR_VEIN := "gr_vein"
 const KIT_CX_PRISM := "cx_prism"
 const KIT_GR_FACET := "gr_facet"
+const KIT_CX_HELIX := "cx_helix"
 
 const KIT_TABLE := [
 	{"id": KIT_CX_NEX, "faction": "Cybernex", "label": "Nex"},
@@ -28,6 +30,7 @@ const KIT_TABLE := [
 	{"id": KIT_GR_VEIN, "faction": "gROT", "label": "Vein"},
 	{"id": KIT_CX_PRISM, "faction": "Cybernex", "label": "Prism"},
 	{"id": KIT_GR_FACET, "faction": "gROT", "label": "Facet"},
+	{"id": KIT_CX_HELIX, "faction": "Cybernex", "label": "Helix"},
 ]
 
 
@@ -74,6 +77,8 @@ static func kit_by_id(kit_id: String) -> Array:
 			return [_pulse(), _lattice_seal(), _lattice_probe(), _form_cycle()]
 		KIT_CX_PRISM:
 			return [_pulse(), _prism_seal(), _prism_probe(), _form_cycle()]
+		KIT_CX_HELIX:
+			return [_pulse(), _helix_seal(), _helix_probe(), _form_cycle()]
 		KIT_GR_SPORE:
 			return [_pulse(), _spore_claim(), _rot_bloom(), _form_cycle()]
 		KIT_GR_VEIN:
@@ -201,6 +206,36 @@ static func _prism_probe() -> Ability:
 	a.is_channeled = true
 	a.channel_time = 1.5
 	a.effect_color = Color(0.88, 0.48, 1.0)
+	return a
+
+
+static func _helix_seal() -> Ability:
+	var a := Ability.new()
+	a.ability_name = "Helix Seal"
+	a.description = "Short helix seal window (identity, same cost sheet)"
+	a.cooldown = EE.CD_FIREWALL
+	a.energy_cost = EE.NEX_FIREWALL
+	a.duration = 2.5
+	a.heal = 12.0
+	a.range = 18.0
+	a.is_firewall = true
+	a.faction_restriction = Ability.FactionRestriction.CYBERNEX_ONLY
+	a.effect_color = Color(0.28, 0.92, 0.78)
+	return a
+
+
+static func _helix_probe() -> Ability:
+	var a := Ability.new()
+	a.ability_name = "Helix Probe"
+	a.description = "Channeled helix recon (identity, same cost sheet)"
+	a.cooldown = EE.CD_PROBE
+	a.energy_cost = EE.SYSTEM_PROBE
+	a.damage = 7.0
+	a.range = 18.0
+	a.is_hacking = true
+	a.is_channeled = true
+	a.channel_time = 1.5
+	a.effect_color = Color(0.18, 0.85, 0.72)
 	return a
 
 

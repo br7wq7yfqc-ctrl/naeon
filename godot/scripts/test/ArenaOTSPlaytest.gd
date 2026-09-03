@@ -1,5 +1,5 @@
 extends Node
-## Headless AR-A…AR-O + river + jump pads: OTS, structures, waves, camps, kits/module shop, 3v3/5v5, CORE match-end.
+## Headless AR-A…AR-P + river + jump pads: OTS, structures, waves, camps, kits/module shop, 3v3/5v5, CORE match-end.
 ## godot --path godot --scene res://scenes/test/TestArena.tscn -- --playtest-arena
 
 func _ready() -> void:
@@ -11,7 +11,7 @@ func _ready() -> void:
 	if not wanted:
 		queue_free()
 		return
-	print("[Playtest] arena AR-A…AR-O + river + jump pads driver on")
+	print("[Playtest] arena AR-A…AR-P + river + jump pads driver on")
 	call_deferred("_go")
 
 
@@ -20,7 +20,7 @@ func _go() -> void:
 	var fails: PackedStringArray = PackedStringArray()
 	var arena: Node = get_parent()
 	if arena == null or str(arena.name) != "TestArena":
-		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
+		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
 		return
 
 	var player: Node = arena.get("player")
@@ -99,6 +99,7 @@ func _go() -> void:
 	var ar_m_fails: PackedStringArray = _check_ar_m(arena, lanes, player)
 	var ar_n_fails: PackedStringArray = _check_ar_n(arena, lanes, player)
 	var ar_o_fails: PackedStringArray = _check_ar_o(arena, lanes, player)
+	var ar_p_fails: PackedStringArray = _check_ar_p(arena, lanes, player)
 	var ar_i_fails: PackedStringArray = _check_ar_i(arena, lanes, player)
 	fails.append_array(ar_c_fails)
 	fails.append_array(ar_b_fails)
@@ -114,9 +115,10 @@ func _go() -> void:
 	fails.append_array(ar_m_fails)
 	fails.append_array(ar_n_fails)
 	fails.append_array(ar_o_fails)
+	fails.append_array(ar_p_fails)
 	fails.append_array(ar_i_fails)
 
-	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, ar_e_fails, river_fails, pad_fails, ar_f_fails, ar_g_fails, ar_i_fails, ar_j_fails, ar_k_fails, ar_l_fails, ar_m_fails, ar_n_fails, ar_o_fails, 0 if fails.is_empty() else 1)
+	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, ar_e_fails, river_fails, pad_fails, ar_f_fails, ar_g_fails, ar_i_fails, ar_j_fails, ar_k_fails, ar_l_fails, ar_m_fails, ar_n_fails, ar_o_fails, ar_p_fails, 0 if fails.is_empty() else 1)
 
 
 func _check_ar_b(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
@@ -351,8 +353,8 @@ func _check_ar_e(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 		return fails
 	var ids: PackedStringArray = Kit.kit_ids()
 	print("[Playtest] kits=", ",".join(ids), " n=", ids.size())
-	if ids.size() < 4 or ids.size() > 8:
-		fails.append("kit count not 4–8")
+	if ids.size() < 4 or ids.size() > 9:
+		fails.append("kit count not 4–9")
 	var seen_fac: Dictionary = {}
 	for kit_id in ids:
 		var kit: Array = Kit.kit_by_id(str(kit_id))
@@ -1371,8 +1373,8 @@ func _check_ar_o(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 		fails.append("AR-O AbilityKitCatalog missing")
 		return fails
 	var ids: PackedStringArray = Kit.kit_ids()
-	if int(ids.size()) != 8:
-		fails.append("AR-O kit count want 8 (got %s)" % ids.size())
+	if int(ids.size()) < 8:
+		fails.append("AR-O kit count want >= 8 (got %s)" % ids.size())
 	for need in ["cx_nex", "cx_grid", "gr_rot", "gr_spore", "cx_lattice", "gr_vein", "cx_prism"]:
 		if not ids.has(need):
 			fails.append("AR-O dropped prior kit (%s)" % need)
@@ -1466,6 +1468,135 @@ func _check_ar_o(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	if arena and str(arena.name) != "TestArena":
 		fails.append("left TestArena")
 	print("[Playtest] AR-O eighth kit · gr_facet · SoftKnowledge only · prior 7 stay · G5 closed · no SITE_*")
+	return fails
+
+
+func _check_ar_p(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
+	var fails: PackedStringArray = PackedStringArray()
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.AR_P_NINTH_KIT):
+		fails.append("AR-P P0Slice flag missing")
+	if P0 != null and not bool(P0.AR_O_EIGHTH_KIT):
+		fails.append("AR-P dropped AR-O P0Slice flag")
+	if P0 != null and not bool(P0.AR_N_SEVENTH_KIT):
+		fails.append("AR-P dropped AR-N P0Slice flag")
+	if P0 != null and not bool(P0.AR_M_SIXTH_KIT):
+		fails.append("AR-P dropped AR-M P0Slice flag")
+	if P0 != null and not bool(P0.AR_L_FIFTH_KIT):
+		fails.append("AR-P dropped AR-L P0Slice flag")
+	if P0 != null and not bool(P0.AR_K_SESSION_SHOP):
+		fails.append("AR-P dropped AR-K P0Slice flag")
+	if P0 != null and not bool(P0.AR_J_PRIME_CAMP):
+		fails.append("AR-P dropped AR-J P0Slice flag")
+	if P0 != null and not bool(P0.AR_I_MATCH_END):
+		fails.append("AR-P dropped AR-I P0Slice flag")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("AR-P flipped ORBITAL_STATIONS")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-P Infection cap drifted")
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	if Kit == null or not Kit.has_method("kit_ids") or not Kit.has_method("kit_by_id"):
+		fails.append("AR-P AbilityKitCatalog missing")
+		return fails
+	var ids: PackedStringArray = Kit.kit_ids()
+	if int(ids.size()) != 9:
+		fails.append("AR-P kit count want 9 (got %s)" % ids.size())
+	for need in ["cx_nex", "cx_grid", "gr_rot", "gr_spore", "cx_lattice", "gr_vein", "cx_prism", "gr_facet"]:
+		if not ids.has(need):
+			fails.append("AR-P dropped prior kit (%s)" % need)
+	if not ids.has("cx_helix"):
+		fails.append("AR-P ninth kit cx_helix missing")
+	var kit: Array = Kit.kit_by_id("cx_helix")
+	if kit.size() != 4:
+		fails.append("AR-P Helix is not 4 slots")
+	else:
+		if kit[0] == null or str(kit[0].ability_name) != "Pulse Bolt":
+			fails.append("AR-P Helix slot0 is not Pulse")
+		elif absf(float(kit[0].damage) - 11.0) > 0.01:
+			fails.append("AR-P Helix Pulse damage drifted")
+		var slot1 = kit[1]
+		if slot1 == null or not bool(slot1.is_firewall):
+			fails.append("AR-P Helix slot1 is not utility")
+		elif str(slot1.ability_name) != "Helix Seal":
+			fails.append("AR-P Helix utility missing")
+		var slot2 = kit[2]
+		if slot2 == null or not bool(slot2.is_hacking):
+			fails.append("AR-P Helix slot2 is not probe-or-surge")
+		elif str(slot2.ability_name) != "Helix Probe":
+			fails.append("AR-P Helix probe missing")
+		if kit[3] == null or str(kit[3].ability_name) != "Form Cycle":
+			fails.append("AR-P Helix slot3 is not Form Cycle")
+	if Kit.has_method("kit_for_faction"):
+		var cx0: Array = Kit.kit_for_faction("Cybernex")
+		var gr0: Array = Kit.kit_for_faction("gROT")
+		if cx0.size() != 4 or str(cx0[1].ability_name) != "Nex-Firewall":
+			fails.append("AR-P default CX kit changed")
+		if gr0.size() != 4 or str(gr0[1].ability_name) != "Hack":
+			fails.append("AR-P default GR kit changed")
+	if Kit.has_method("kits_for_faction"):
+		var cx_cycle: PackedStringArray = Kit.kits_for_faction("Cybernex")
+		if cx_cycle.size() < 5 or str(cx_cycle[4]) != "cx_helix":
+			fails.append("AR-P CX Helix not selectable in TestArena kit cycle")
+		if cx_cycle.size() < 4 or str(cx_cycle[3]) != "cx_prism":
+			fails.append("AR-P CX Prism dropped from TestArena kit cycle")
+		var gr_cycle: PackedStringArray = Kit.kits_for_faction("gROT")
+		if gr_cycle.size() < 4 or str(gr_cycle[3]) != "gr_facet":
+			fails.append("AR-P GR Facet dropped from TestArena kit cycle")
+	if player == null or not player.ability_system:
+		fails.append("AR-P player AbilitySystem missing")
+		return fails
+	var absys = player.ability_system
+	var hp0 := float(player.max_health)
+	var hp_now := float(player.health)
+	var pulse0 := 11.0
+	if absys.abilities.size() > 0 and absys.abilities[0]:
+		pulse0 = float(absys.abilities[0].damage)
+	if absys.has_method("setup_kit"):
+		absys.setup_kit("cx_helix", "Cybernex")
+		if str(absys.current_kit_id) != "cx_helix":
+			fails.append("AR-P could not apply CX Helix kit")
+		if absys.abilities.size() != 4:
+			fails.append("AR-P Helix kit not 4 slots on player")
+		elif str(absys.abilities[1].ability_name) != "Helix Seal":
+			fails.append("AR-P player Helix utility missing")
+	if absf(float(player.max_health) - hp0) > 0.01 or absf(float(player.health) - hp_now) > 0.01:
+		fails.append("AR-P kit swap changed HP")
+	if absys.abilities.size() > 0 and absys.abilities[0] and absf(float(absys.abilities[0].damage) - pulse0) > 0.01:
+		fails.append("AR-P kit swap changed Pulse DPS")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("combat", 20.0)
+		GameManager.add_mastery("history", 20.0)
+	if absf(float(player.max_health) - hp0) > 0.01:
+		fails.append("AR-P Knowledge changed HP")
+	if absys.abilities.size() > 0 and absys.abilities[0] and absf(float(absys.abilities[0].damage) - pulse0) > 0.01:
+		fails.append("AR-P Knowledge changed Pulse")
+	var klab := str(SoftK.kit_label("cx_helix")) if SoftK and SoftK.has_method("kit_label") else ""
+	if klab == "" or (klab != "HELIX" and klab != "NEX HELIX"):
+		fails.append("AR-P SoftKnowledge kit label missing (%s)" % klab)
+	if absys.has_method("kit_label"):
+		var hlab := str(absys.kit_label())
+		if hlab == "" or (hlab != "HELIX" and hlab != "NEX HELIX"):
+			fails.append("AR-P HUD kit label missing (%s)" % hlab)
+	if SoftK and SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked("helix")):
+		fails.append("AR-P unlocked exclusive weapon")
+	if SoftK and SoftK.has_method("exclusive_module_unlocked") and bool(SoftK.exclusive_module_unlocked("cx_helix")):
+		fails.append("AR-P unlocked exclusive combat module")
+	var bench: Node = arena.get_node_or_null("ClashModuleBench") if arena else null
+	if bench == null and arena:
+		bench = arena.get("_bench")
+	if bench and bench.has_method("offer_count") and int(bench.offer_count()) != 2:
+		fails.append("AR-P drifted ClashModuleBench offers")
+	if player and player.has_method("ots_evidence"):
+		var ev: Dictionary = player.ots_evidence()
+		if not bool(ev.get("active", false)):
+			fails.append("OTS dropped after AR-P")
+	if LayerContext and str(LayerContext.site_pin_id) != "SITE_TEST_ARENA_PILLAR":
+		fails.append("SITE pin changed during AR-P")
+	if arena and str(arena.name) != "TestArena":
+		fails.append("left TestArena")
+	print("[Playtest] AR-P ninth kit · cx_helix · SoftKnowledge only · prior 8 stay · G5 closed · no SITE_*")
 	return fails
 
 
@@ -1579,7 +1710,7 @@ func _check_ar_i(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	return fails
 
 
-func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, ar_e: PackedStringArray, river: PackedStringArray, pads: PackedStringArray, ar_f: PackedStringArray, ar_g: PackedStringArray, ar_i: PackedStringArray, ar_j: PackedStringArray, ar_k: PackedStringArray, ar_l: PackedStringArray, ar_m: PackedStringArray, ar_n: PackedStringArray, ar_o: PackedStringArray, code: int) -> void:
+func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, ar_e: PackedStringArray, river: PackedStringArray, pads: PackedStringArray, ar_f: PackedStringArray, ar_g: PackedStringArray, ar_i: PackedStringArray, ar_j: PackedStringArray, ar_k: PackedStringArray, ar_l: PackedStringArray, ar_m: PackedStringArray, ar_n: PackedStringArray, ar_o: PackedStringArray, ar_p: PackedStringArray, code: int) -> void:
 	if ar_a.is_empty():
 		print("[Playtest] PASS arena AR-A")
 	else:
@@ -1675,6 +1806,12 @@ func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStrin
 	else:
 		print("[Playtest] FAIL arena AR-O")
 		for f in ar_o:
+			print("[Playtest]  - ", f)
+	if ar_p.is_empty():
+		print("[Playtest] PASS arena AR-P")
+	else:
+		print("[Playtest] FAIL arena AR-P")
+		for f in ar_p:
 			print("[Playtest]  - ", f)
 	if AutoUpdater and AutoUpdater.has_method("abort_pending"):
 		AutoUpdater.abort_pending()
