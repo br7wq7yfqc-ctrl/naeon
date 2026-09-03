@@ -499,6 +499,24 @@ static func hangar_stub_label() -> String:
 	return "HANGAR STUB"
 
 
+## PC-C: name the insured hangar. Never Pulse / queue skip / kit unlock.
+static func hangar_label() -> String:
+	var ops := mastery("colony_ops")
+	var logi := mastery("logistics")
+	if ops >= 15.0 or logi >= 15.0 or rank() >= 5:
+		return "T1 HANGAR"
+	return "HANGAR"
+
+
+## PC-C: name hangar insurance persist. Never cash-shop / P2W restore.
+static func insure_label() -> String:
+	var hist := mastery("history")
+	var logi := mastery("logistics")
+	if hist >= 15.0 or logi >= 15.0 or rank() >= 5:
+		return "HANGAR INSURE"
+	return "INSURE"
+
+
 ## Q-A: name the ops contract board. Never yield / DPS / exclusive modules.
 static func contract_board_label() -> String:
 	var intel := mastery("quest_intel")
