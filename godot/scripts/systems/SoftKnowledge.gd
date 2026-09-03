@@ -176,6 +176,24 @@ static func clash_cosmetic_label() -> String:
 	return "TITLE"
 
 
+## AR-T: name a Clash lane wave. Never DPS / XP / Pulse / Hack / yield.
+static func wave_label() -> String:
+	var hist := mastery("history")
+	var combat := mastery("combat")
+	if hist >= 15.0 or combat >= 15.0 or rank() >= 5:
+		return "LANE WAVE"
+	return "WAVE"
+
+
+## AR-T: name a Clash lane minion. Never DPS / XP / Pulse / Hack / yield.
+static func minion_label() -> String:
+	var hist := mastery("history")
+	var combat := mastery("combat")
+	if hist >= 15.0 or combat >= 15.0 or rank() >= 5:
+		return "LANE MINION"
+	return "MINION"
+
+
 ## History/combat: surface dummy name only — never Pulse DPS.
 static func surface_dummy_label() -> String:
 	var hist := mastery("history")

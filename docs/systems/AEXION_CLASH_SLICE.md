@@ -31,7 +31,7 @@ OpenSpace → **M** or **Tab** → TestArena Clash · kill dummies to 5 · soft 
 - Lane structures (AR-B): OUTER / MID / INHIB / CORE as live `Turret` HP on the same 60×60; one INHIB per side (core gate); no P2W repair
 - OUTER still fires (160 HP, +28 soft pressure); MID/INHIB/CORE take damage; enemy CORE down = soft match win
 - ClashRadar Control HUD
-- Lane waves (AR-C): `ClashWaves` timed `CombatDummy` proxies march TOP/MID/BOT toward enemy OUTER; hit/be-hit via existing Turret hooks; no shop / P2W / new GLB
+- Lane waves (AR-C + AR-T): `ClashWaves` timed `CombatDummy` proxies march TOP/MID/BOT toward enemy OUTER; **AR-T seed** is host-authority Pulse 11 with SoftKnowledge / HUD `WAVE` / `MINION` only; hit/be-hit via existing Turret hooks; no shop / P2W / XP / 13th kit / new GLB
 - Jungle camp (AR-D): one off-lane `ClashCamp` (fangtooth-class role, not IP); damageable code-first proxy; soft contest announce; drop = soft WS, not a unique weapon; Knowledge may label only
 - Prime camp (AR-J): one additional off-lane `ClashCamp` (prime-class role, not IP) on the same 60×60; same grammar; soft contest announce; drop = soft WS only (not a unique weapon); SoftKnowledge / HUD labels camp / contest / WS
 - River (same footprint): `ClashRiver` mid-crossing + inter-lane channels on the existing 60×60 floor; terrain/read, not an objective; no jump pads (OTS camera)
@@ -45,6 +45,7 @@ OpenSpace → **M** or **Tab** → TestArena Clash · kill dummies to 5 · soft 
 - Tenth kit (AR-Q): GR Coil on the same catalog (Pulse / Coil Seal / Coil Probe / Form Cycle). SoftKnowledge / HUD `COIL` / `ROT COIL` only. gROT symmetric to CX Helix. Prior 9 kits stay. AR-K bench stays.
 - Eleventh kit (AR-R): CX Spire on the same catalog (Pulse / Spire Seal / Spire Probe / Form Cycle). SoftKnowledge / HUD `SPIRE` / `NEX SPIRE` only. Cybernex symmetric slot after GR Coil / CX Helix. Prior 10 kits stay. AR-K bench stays.
 - Twelfth kit (AR-S): GR Thorn on the same catalog (Pulse / Thorn Seal / Thorn Probe / Form Cycle). SoftKnowledge / HUD `THORN` / `ROT THORN` only. gROT symmetric to CX Spire. Prior 11 kits stay. AR-K bench stays.
+- Minion-wave seed (AR-T): one host-authority lane wave of `CombatDummy` on the same `ClashWaves`. SoftKnowledge / HUD `WAVE` / `MINION` only. Pulse 11. Infection cap 5. Not a unique weapon, XP power, cash-shop, or 13th kit. Catalog stays at 12. FL-N FLEET 15/15 stays.
 - 3v3 local (AR-F): `ClashLocalMatch` fills six slots on TOP/MID/BOT (host + SoftNet visual `CombatDummy` puppets). Host owns combat. G5 stays closed. Still startable.
 - 5v5 local (AR-G): same host + SoftNet path; ten slots on TOP/MID/BOT + AR-D jungle. Default TestArena door. `--clash-3v3` keeps 3v3.
 - Pad door (AR-H): occupied unnamed pad `ClashDoor` → TestArena. Not a city-map. G5 cluster stays closed.

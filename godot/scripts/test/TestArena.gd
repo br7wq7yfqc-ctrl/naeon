@@ -518,6 +518,7 @@ func _finish_clash_layout() -> void:
 	_evidence_ar_q()
 	_evidence_ar_r()
 	_evidence_ar_s()
+	_evidence_ar_t()
 	_evidence_river()
 	_evidence_jump_pads()
 	_setup_clash_local_match()
@@ -640,7 +641,13 @@ func _update_clash_radar() -> void:
 				press = str(_clash.lane_hud_line())
 			var wave := ""
 			if _waves and "wave_index" in _waves and int(_waves.wave_index) > 0:
-				wave = "  ·  WAVE %d" % int(_waves.wave_index)
+				var wlab := "WAVE"
+				var mlab := "MINION"
+				if _waves.has_method("wave_soft_label"):
+					wlab = str(_waves.wave_soft_label())
+				if _waves.has_method("minion_soft_label"):
+					mlab = str(_waves.minion_soft_label())
+				wave = "  ·  %s %d  ·  %s" % [wlab, int(_waves.wave_index), mlab]
 			var camp := ""
 			if _camp and _camp.has_method("is_contested") and bool(_camp.is_contested()):
 				camp = "  ·  CAMP CONTEST"
@@ -1232,6 +1239,29 @@ func _evidence_ar_s() -> void:
 	if player and player.ability_system and player.ability_system.has_method("kit_label"):
 		lab = str(player.ability_system.kit_label())
 	print("[AR-S] kits=", n, " twelfth=", twelfth, " label=", lab, " pin=", LayerContext.site_pin_id if LayerContext else "")
+
+
+func _evidence_ar_t() -> void:
+	var live := 0
+	var w := 0
+	var wlab := ""
+	var mlab := ""
+	var host := false
+	var pulse := 0.0
+	if _waves and _waves.has_method("living_minions"):
+		live = _waves.living_minions().size()
+	if _waves and "wave_index" in _waves:
+		w = int(_waves.wave_index)
+	if _waves and _waves.has_method("wave_soft_label"):
+		wlab = str(_waves.wave_soft_label())
+	if _waves and _waves.has_method("minion_soft_label"):
+		mlab = str(_waves.minion_soft_label())
+	if _waves and _waves.has_method("is_host_authority"):
+		host = bool(_waves.is_host_authority())
+	if _waves and _waves.has_method("pulse_damage"):
+		pulse = float(_waves.pulse_damage())
+	print("[AR-T] wave=", w, " living=", live, " label=", wlab, "/", mlab,
+		" host=", host, " pulse=", pulse, " pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
 func _want_clash_5v5() -> bool:

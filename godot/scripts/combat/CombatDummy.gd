@@ -194,7 +194,10 @@ func _lane_ai(_delta: float, do_ai: bool) -> void:
 		if _windup_t > 0.0:
 			_windup_t -= _delta
 			if _windup_t <= 0.0 and dist <= attack_range * 1.15:
-				_fire_at(hostile)
+				if has_meta("clash_wave") and bool(get_meta("clash_wave")):
+					try_pulse(hostile)
+				else:
+					_fire_at(hostile)
 				_cd = attack_cooldown
 		elif _cd <= 0.0:
 			_windup_t = 0.22
@@ -573,7 +576,16 @@ func _flash() -> void:
 
 func _update_labels() -> void:
 	if label:
-		var base := intel_name if intel_name != "" else (("%s WAVE" % faction) if lane_march else str(faction))
+		var base := intel_name
+		if base == "":
+			if lane_march:
+				var SoftW = load("res://scripts/systems/SoftKnowledge.gd")
+				if SoftW and SoftW.has_method("minion_label"):
+					base = str(SoftW.minion_label())
+				else:
+					base = "MINION"
+			else:
+				base = str(faction)
 		var stacks := infection_stacks()
 		if stacks > 0:
 			var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
