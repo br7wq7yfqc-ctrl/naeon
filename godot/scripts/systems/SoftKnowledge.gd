@@ -412,7 +412,7 @@ static func net_visual_label() -> String:
 	return "NET"
 
 
-## FL-A/B/C/D/E/F/G: name the Strategy overlay fleet pip. Never DPS / yield / thrust.
+## FL-A/B/C/D/E/F/G/H: name the Strategy overlay fleet pip. Never DPS / yield / thrust.
 static func fleet_label() -> String:
 	var logi := mastery("logistics")
 	var hist := mastery("history")
