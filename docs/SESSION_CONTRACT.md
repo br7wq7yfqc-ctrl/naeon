@@ -267,6 +267,14 @@
     FL-A…FL-M stay. Not 15 physical ships. Not a second OpenSpace.
     Not ENet. Not G5. Infection cap 5. ORBITAL_STATIONS stays false.
     No SITE_* (this pass).
+58. AR-T: first Clash minion-wave seed on the existing 60×60
+    TestArena / ClashDirector. One host-authority lane wave of
+    CombatDummy (reuse ClashWaves). SoftKnowledge / HUD WAVE /
+    MINION only. Same Pulse 11 grammar as CombatDummy / pad rivals.
+    Infection cap 5. Not a unique weapon, XP power, cash-shop, or
+    13th AbilityKit. AbilityKitCatalog stays at 12 (cx_nex…gr_thorn).
+    FL-N FLEET 15/15 stays. AR-A…AR-S stay. Host authority.
+    ORBITAL_STATIONS stays false. No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

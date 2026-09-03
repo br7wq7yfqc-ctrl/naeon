@@ -279,6 +279,14 @@ const AR_R_ELEVENTH_KIT := true
 ## Prior 11 kits stay. ClashModuleBench AR-E SENSOR + AR-K CARGO stay.
 ## Infection cap 5. Host authority. ORBITAL_STATIONS stays false. No SITE_*.
 const AR_S_TWELFTH_KIT := true
+## AR-T: first Clash minion-wave seed on the existing 60×60 TestArena /
+## ClashDirector. Host-authority CombatDummy lane wave. SoftKnowledge /
+## HUD WAVE / MINION only. Same Pulse 11 grammar as pad rivals. Infection
+## cap 5. Not a unique weapon, XP power, cash-shop, or 13th AbilityKit.
+## AbilityKitCatalog stays at 12 (cx_nex…gr_thorn). FL-N FLEET 15/15 stays.
+## AR-A…AR-S stay. Infection cap 5. Host authority. ORBITAL_STATIONS stays
+## false. No SITE_*.
+const AR_T_MINION_WAVE := true
 ## DO-A: contested Cybernex ↔ gROT transition on one occupied unnamed pad.
 ## Uses OwnershipData / OwnershipComponent / ContestedRing. SoftKnowledge
 ## HUD label only (CONTESTED / CYBERNEX / GROT). Not HyperGate G4. Not

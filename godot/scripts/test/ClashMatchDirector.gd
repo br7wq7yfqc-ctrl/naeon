@@ -209,6 +209,15 @@ func _sync_lanes_from_clash() -> void:
 
 
 func _lane_bar_line() -> String:
-	return "TOP %.0f   MID %.0f   BOT %.0f   /100  (soft)" % [
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var wave := "WAVE"
+	var minion := "MINION"
+	if SoftK:
+		if SoftK.has_method("wave_label"):
+			wave = str(SoftK.wave_label())
+		if SoftK.has_method("minion_label"):
+			minion = str(SoftK.minion_label())
+	return "TOP %.0f   MID %.0f   BOT %.0f   /100  (soft)  ·  %s  ·  %s" % [
 		_lane_pressure[0] * 100.0, _lane_pressure[1] * 100.0, _lane_pressure[2] * 100.0,
+		wave, minion,
 	]
