@@ -251,6 +251,15 @@
     Not 10–15 ships. Not a second OpenSpace. Not ENet. Not G5.
     Infection cap 5. ORBITAL_STATIONS stays false. No SITE_*
     (this pass).
+56. AR-S: twelfth Clash AbilityKit (GR Thorn) on AbilityKitCatalog
+    (TestArena / ClashDirector 60×60) toward Phase-3 6–8 heroes.
+    gROT symmetric to CX Spire. Same Pulse / utility / probe|surge
+    / Form Cycle grammar from EnergyEconomy. SoftKnowledge / HUD
+    THORN / ROT THORN only. Knowledge ≠ DPS / yield / Pulse / Hack /
+    rank. No cash-shop, P2W kits, or unique weapon. No Paragon
+    card deck. Prior 11 kits stay. ClashModuleBench AR-E SENSOR +
+    AR-K CARGO stay. AR-A…AR-R stay. Infection cap 5. Host
+    authority. ORBITAL_STATIONS stays false. No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

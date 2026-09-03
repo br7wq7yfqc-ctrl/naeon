@@ -44,6 +44,7 @@ OpenSpace → **M** or **Tab** → TestArena Clash · kill dummies to 5 · soft 
 - Ninth kit (AR-P): CX Helix on the same catalog (Pulse / Helix Seal / Helix Probe / Form Cycle). SoftKnowledge / HUD `HELIX` / `NEX HELIX` only. Cybernex symmetric slot after CX Prism / GR Facet. Prior 8 kits stay. AR-K bench stays.
 - Tenth kit (AR-Q): GR Coil on the same catalog (Pulse / Coil Seal / Coil Probe / Form Cycle). SoftKnowledge / HUD `COIL` / `ROT COIL` only. gROT symmetric to CX Helix. Prior 9 kits stay. AR-K bench stays.
 - Eleventh kit (AR-R): CX Spire on the same catalog (Pulse / Spire Seal / Spire Probe / Form Cycle). SoftKnowledge / HUD `SPIRE` / `NEX SPIRE` only. Cybernex symmetric slot after GR Coil / CX Helix. Prior 10 kits stay. AR-K bench stays.
+- Twelfth kit (AR-S): GR Thorn on the same catalog (Pulse / Thorn Seal / Thorn Probe / Form Cycle). SoftKnowledge / HUD `THORN` / `ROT THORN` only. gROT symmetric to CX Spire. Prior 11 kits stay. AR-K bench stays.
 - 3v3 local (AR-F): `ClashLocalMatch` fills six slots on TOP/MID/BOT (host + SoftNet visual `CombatDummy` puppets). Host owns combat. G5 stays closed. Still startable.
 - 5v5 local (AR-G): same host + SoftNet path; ten slots on TOP/MID/BOT + AR-D jungle. Default TestArena door. `--clash-3v3` keeps 3v3.
 - Pad door (AR-H): occupied unnamed pad `ClashDoor` → TestArena. Not a city-map. G5 cluster stays closed.

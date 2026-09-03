@@ -85,7 +85,16 @@ AR-R eleventh kit (same cost sheet, identity only; CX slot after Coil / Helix):
 | 2 R | Spire Probe |
 | 3 F | Form Cycle |
 
-TestArena: `1` / `2` / `3` / `4` / `5` / `6` cycle faction kits. SoftKnowledge HUD `LATTICE` / `NEX LATTICE` · `VEIN` / `ROT VEIN` · `PRISM` / `NEX PRISM` · `FACET` / `ROT FACET` · `HELIX` / `NEX HELIX` · `COIL` / `ROT COIL` · `SPIRE` / `NEX SPIRE`. Forms = identity, never a hidden stat.
+AR-S twelfth kit (same cost sheet, identity only; gROT symmetric to Spire):
+
+| Slot | gROT Thorn |
+|------|------------|
+| 0 Q | Pulse Bolt |
+| 1 E | Thorn Seal |
+| 2 R | Thorn Probe |
+| 3 F | Form Cycle |
+
+TestArena: `1` / `2` / `3` / `4` / `5` / `6` cycle faction kits. SoftKnowledge HUD `LATTICE` / `NEX LATTICE` · `VEIN` / `ROT VEIN` · `PRISM` / `NEX PRISM` · `FACET` / `ROT FACET` · `HELIX` / `NEX HELIX` · `COIL` / `ROT COIL` · `SPIRE` / `NEX SPIRE` · `THORN` / `ROT THORN`. Forms = identity, never a hidden stat.
 
 No P2W: costs/cooldowns fixed; economy never raises damage. Knowledge insight is a soft damage scalar only.
 
