@@ -83,6 +83,20 @@ static func module_bench_label() -> String:
 	return "MODULE BENCH"
 
 
+## AR-K: name the second session bench option. Never DPS / yield / Pulse / Hack / rank.
+static func module_option_label(kind: String = "cargo") -> String:
+	var cyber := mastery("cybernetics")
+	var logi := mastery("logistics")
+	var named := cyber >= 10.0 or logi >= 15.0 or rank() >= 5
+	match str(kind):
+		"cargo", "hold":
+			return "NEX HOLD" if named else "HOLD"
+		"sensor":
+			return "NEX SENSOR" if named else "SENSOR"
+		_:
+			return module_bench_label()
+
+
 ## Logistics/Ecology: rover name only — never speed / HP.
 static func rover_label() -> String:
 	var logi := mastery("logistics")

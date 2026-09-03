@@ -75,6 +75,7 @@ func _go() -> void:
 		await _assert_ar_h(os, fails)
 		await _assert_ar_i(os, fails)
 		await _assert_ar_j(os, fails)
+		await _assert_ar_k(os, fails)
 		await _assert_sn_c(os, fails)
 		await _assert_sn_d(os, fails)
 		await _assert_do_a(os, fails)
@@ -106,6 +107,7 @@ func _go() -> void:
 	await _assert_ar_g(os, fails)
 	await _assert_ar_i(os, fails)
 	await _assert_ar_j(os, fails)
+	await _assert_ar_k(os, fails)
 	_assert_se_a(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 	_assert_scan_cache_live(fails)
@@ -21567,6 +21569,102 @@ func _assert_ar_j(os: Node, fails: PackedStringArray) -> void:
 	if Inf and int(Inf.MAX_STACKS) != 5:
 		fails.append("AR-J Infection cap changed")
 	print("[Playtest] AR-J prime off-lane · soft WS only · AR-A…AR-I stay · no SITE_*")
+	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
+		SoftScanCache.invalidate_enemies()
+
+
+func _assert_ar_k(os: Node, fails: PackedStringArray) -> void:
+	## AR-K: second session catalog option on the same ClashModuleBench.
+	## Isolated — no TestArena scene change. SoftKnowledge / HUD labels only.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.AR_K_SESSION_SHOP):
+		fails.append("AR-K P0Slice flag missing")
+	if P0 != null and not bool(P0.AR_J_PRIME_CAMP):
+		fails.append("AR-K dropped AR-J P0Slice flag")
+	if P0 != null and not bool(P0.AR_I_MATCH_END):
+		fails.append("AR-K dropped AR-I P0Slice flag")
+	if P0 != null and not bool(P0.AR_H_DOOR):
+		fails.append("AR-K dropped AR-H P0Slice flag")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("AR-K flipped ORBITAL_STATIONS")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-K Infection cap drifted")
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	if Kit == null or not Kit.has_method("kit_ids") or int(Kit.kit_ids().size()) != 4:
+		fails.append("AR-K AbilityKitCatalog 4 kits drifted")
+	var layer0 := str(LayerContext.current_layer) if LayerContext else ""
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var host: Node = os if os else self
+	var bench: Node3D = Node3D.new()
+	bench.set_script(preload("res://scripts/arena/ClashModuleBench.gd"))
+	bench.name = "ClashModuleBenchARK"
+	host.add_child(bench)
+	await get_tree().process_frame
+	if bench is Node3D:
+		bench.global_position = Vector3(-7.2, 0.0, 10.5)
+	if bench.has_method("is_on_footprint") and not bool(bench.is_on_footprint()):
+		fails.append("AR-K bench left the TestArena footprint")
+	if bench.has_method("is_off_lane") and not bool(bench.is_off_lane()):
+		fails.append("AR-K bench sits on a lane strip")
+	var n := int(bench.offer_count()) if bench.has_method("offer_count") else 0
+	if n != 2:
+		fails.append("AR-K isolated offer count want 2 (got %s)" % n)
+	if bench.has_method("option_kind") and str(bench.option_kind(0)) != "sensor":
+		fails.append("AR-K dropped AR-E SENSOR offer")
+	if bench.has_method("option_kind") and str(bench.option_kind(1)) != "cargo":
+		fails.append("AR-K second offer is not catalog cargo")
+	if bench.has_method("is_weapon_offer") and bool(bench.is_weapon_offer(1)):
+		fails.append("AR-K second offer is a unique weapon")
+	if bench.has_method("is_paragon_deck") and bool(bench.is_paragon_deck()):
+		fails.append("AR-K became a Paragon card deck")
+	if bench.has_method("is_cash_shop") and bool(bench.is_cash_shop()):
+		fails.append("AR-K is a cash-shop")
+	if bench.has_method("cost_kind") and str(bench.cost_kind()) != "session":
+		fails.append("AR-K bench is not session-cost")
+	if bench.has_method("modifies_combat") and bool(bench.modifies_combat()):
+		fails.append("AR-K bench claims combat power")
+	var dummy := Node3D.new()
+	dummy.name = "AR-KDummy"
+	host.add_child(dummy)
+	if not bench.has_method("try_equip") or not bool(bench.try_equip(dummy, 1)):
+		fails.append("AR-K isolated could not equip second session module")
+	elif bench.has_method("equipped_index") and int(bench.equipped_index()) != 1:
+		fails.append("AR-K isolated did not equip the second option")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("cybernetics", 20.0)
+		GameManager.add_mastery("logistics", 20.0)
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var olab := str(SoftK.module_option_label("cargo")) if SoftK else ""
+	if olab == "" or (olab != "HOLD" and olab != "NEX HOLD"):
+		fails.append("AR-K SoftKnowledge option label missing (%s)" % olab)
+	if bench.has_method("option_label"):
+		var blab := str(bench.option_label(1))
+		if blab == "" or (blab != "HOLD" and blab != "NEX HOLD"):
+			fails.append("AR-K HUD option label missing (%s)" % blab)
+	if SoftK and SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked("hold")):
+		fails.append("AR-K unlocked exclusive weapon")
+	if SoftK and SoftK.has_method("exclusive_module_unlocked") and bool(SoftK.exclusive_module_unlocked("cargo_nex_hold")):
+		fails.append("AR-K unlocked exclusive combat module")
+	print("[Playtest] AR-K session shop isolated · offers=", n, " second=",
+		bench.option_kind(1) if bench.has_method("option_kind") else "?",
+		" label=", olab, " · AR-E SENSOR stays")
+	if is_instance_valid(dummy):
+		dummy.queue_free()
+	if is_instance_valid(bench):
+		bench.queue_free()
+	await get_tree().process_frame
+	if os != null and os.has_method("enter_clash_from_world"):
+		fails.append("AR-K opened G5 world-to-arena")
+	if LayerContext:
+		if str(LayerContext.site_pin_id) != pin0:
+			fails.append("AR-K changed site_pin (%s → %s)" % [pin0, LayerContext.site_pin_id])
+		if layer0 != "" and str(LayerContext.current_layer) == "Arena" and layer0 != "Arena":
+			fails.append("AR-K stole LayerContext to Arena")
+			LayerContext.set_layer(layer0)
+	if Inf and int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-K Infection cap changed")
+	print("[Playtest] AR-K session catalog · SoftKnowledge only · AR-A…AR-J stay · no SITE_*")
 	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
 		SoftScanCache.invalidate_enemies()
 

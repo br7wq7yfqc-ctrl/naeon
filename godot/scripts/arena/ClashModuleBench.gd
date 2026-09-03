@@ -1,6 +1,7 @@
 extends Node3D
 class_name ClashModuleBench
 ## AR-E: one module/blueprint bench on the existing TestArena footprint.
+## AR-K: second session catalog option on this same bench (not a Paragon deck).
 ## Session item — not a shop of power, not cash-shop. Knowledge may label only.
 
 const _SoftK = preload("res://scripts/systems/SoftKnowledge.gd")
@@ -14,17 +15,24 @@ const EQUIP_COST := 0.0  ## session — Contribution or none, never cash
 var _player_ref: Node3D = null
 var _label: Label3D = null
 var _mat: StandardMaterial3D = null
+var _offers: Array[ShipModule] = []
 var _offer: ShipModule = null
+var _offer_index: int = 0
 var _equipped: ShipModule = null
+var _equipped_index: int = -1
 
 func _ready() -> void:
 	name = "ClashModuleBench"
 	add_to_group("clash_module_bench")
 	position = BENCH_POS
-	_offer = _ShipModule.make_sensor("Nex Sensor")
+	_offers.append(_ShipModule.make_sensor("Nex Sensor"))
+	_offers.append(_ShipModule.make_cargo("Nex Hold"))
+	_offer_index = 0
+	_offer = _offers[0]
 	_build_proxy()
 	_refresh_label()
-	print("[ClashModuleBench] session bench at ", BENCH_POS, " offer=", offer_id(), " cost=", EQUIP_COST)
+	print("[ClashModuleBench] session bench at ", BENCH_POS, " offers=", offer_count(),
+		" first=", offer_id(), " second=", second_offer_id(), " cost=", EQUIP_COST)
 
 
 func bind_player(p: Node3D) -> void:
@@ -52,12 +60,85 @@ func equip_cost() -> float:
 	return EQUIP_COST
 
 
+func offer_count() -> int:
+	return _offers.size()
+
+
 func offer_id() -> String:
 	return str(_offer.module_id) if _offer else ""
 
 
 func offer_name() -> String:
 	return str(_offer.display_name) if _offer else ""
+
+
+func second_offer_id() -> String:
+	return option_id(1)
+
+
+func second_offer_name() -> String:
+	return option_name(1)
+
+
+func option_id(index: int) -> String:
+	var m: ShipModule = _module_at(index)
+	return str(m.module_id) if m else ""
+
+
+func option_name(index: int) -> String:
+	var m: ShipModule = _module_at(index)
+	return str(m.display_name) if m else ""
+
+
+func option_kind(index: int) -> String:
+	var m: ShipModule = _module_at(index)
+	if m == null:
+		return ""
+	match int(m.module_type):
+		int(ShipModule.ModuleType.SENSOR):
+			return "sensor"
+		int(ShipModule.ModuleType.CARGO):
+			return "cargo"
+		int(ShipModule.ModuleType.WEAPON):
+			return "weapon"
+		int(ShipModule.ModuleType.ENGINE):
+			return "engine"
+		int(ShipModule.ModuleType.SHIELD):
+			return "shield"
+		int(ShipModule.ModuleType.EXTRACTOR):
+			return "extractor"
+		_:
+			return "hull"
+
+
+func option_label(index: int) -> String:
+	return _SoftK.module_option_label(option_kind(index))
+
+
+func is_weapon_offer(index: int) -> bool:
+	return option_kind(index) == "weapon"
+
+
+func is_paragon_deck() -> bool:
+	return false
+
+
+func is_cash_shop() -> bool:
+	return cost_kind() != "session" or EQUIP_COST > 0.0
+
+
+func select_offer(index: int) -> bool:
+	var m: ShipModule = _module_at(index)
+	if m == null:
+		return false
+	_offer_index = index
+	_offer = m
+	_refresh_label()
+	return true
+
+
+func selected_index() -> int:
+	return _offer_index
 
 
 func has_equipped() -> bool:
@@ -72,6 +153,10 @@ func equipped_name() -> String:
 	return str(_equipped.display_name) if _equipped else ""
 
 
+func equipped_index() -> int:
+	return _equipped_index
+
+
 func label_text() -> String:
 	return _SoftK.module_bench_label()
 
@@ -80,7 +165,9 @@ func modifies_combat() -> bool:
 	return false
 
 
-func try_equip(player: Node = null) -> bool:
+func try_equip(player: Node = null, option: int = -1) -> bool:
+	if option >= 0 and not select_offer(option):
+		return false
 	var p: Node = player if player != null else _player_ref
 	if p == null or not is_instance_valid(p) or _offer == null:
 		return false
@@ -90,6 +177,7 @@ func try_equip(player: Node = null) -> bool:
 		if not bool(GameManager.try_spend_contribution(EQUIP_COST)):
 			return false
 	_equipped = _offer
+	_equipped_index = _offer_index
 	if p.has_method("equip_clash_module"):
 		p.equip_clash_module(_equipped)
 	else:
@@ -100,18 +188,31 @@ func try_equip(player: Node = null) -> bool:
 		GameManager.toast_requested.emit(
 			"Module %s — session blueprint, not a power card" % offer_name()
 		)
-	print("[ClashModuleBench] equipped ", offer_id(), " combat=", modifies_combat())
+	print("[ClashModuleBench] equipped ", offer_id(), " slot=", _equipped_index,
+		" combat=", modifies_combat())
 	return true
+
+
+func _module_at(index: int) -> ShipModule:
+	if index < 0 or index >= _offers.size():
+		return null
+	return _offers[index]
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
-	if event.keycode != KEY_G and event.physical_keycode != KEY_G:
-		return
+	var key: int = int(event.keycode)
+	var phys: int = int(event.physical_keycode)
 	if _player_ref == null or not is_instance_valid(_player_ref):
 		return
 	if global_position.distance_to(_player_ref.global_position) > INTERACT_RADIUS:
+		return
+	if key == KEY_2 or phys == KEY_2:
+		try_equip(_player_ref, 1)
+		get_viewport().set_input_as_handled()
+		return
+	if key != KEY_G and phys != KEY_G:
 		return
 	try_equip(_player_ref)
 	get_viewport().set_input_as_handled()
@@ -172,9 +273,14 @@ func _refresh_label() -> void:
 	if _label == null:
 		return
 	var tag := label_text()
-	if has_equipped():
-		_label.text = "%s\n%s · ON" % [tag, offer_name()]
+	var first := option_name(0)
+	var second := "%s · %s" % [option_label(1), option_name(1)]
+	if has_equipped() and _equipped_index == 1:
+		_label.text = "%s\n%s · 2\n%s · ON" % [tag, first, second]
+		_label.modulate = Color(0.55, 0.95, 0.75)
+	elif has_equipped():
+		_label.text = "%s\n%s · ON\n%s · 2" % [tag, first, second]
 		_label.modulate = Color(0.55, 0.95, 0.75)
 	else:
-		_label.text = "%s\n%s · G" % [tag, offer_name()]
+		_label.text = "%s\n%s · G\n%s · 2" % [tag, first, second]
 		_label.modulate = Color(0.45, 0.85, 1.0)
