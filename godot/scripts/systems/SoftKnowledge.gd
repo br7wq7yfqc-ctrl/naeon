@@ -107,6 +107,8 @@ static func kit_label(kit_id: String = "") -> String:
 			return "ROT VEIN" if named else "VEIN"
 		"gr_facet":
 			return "ROT FACET" if named else "FACET"
+		"gr_coil":
+			return "ROT COIL" if named else "COIL"
 		_:
 			return "KIT" if named else "KIT"
 
