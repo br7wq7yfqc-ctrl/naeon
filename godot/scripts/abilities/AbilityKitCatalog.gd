@@ -2,6 +2,8 @@ extends RefCounted
 class_name AbilityKitCatalog
 ## Balanced cross-mode ability kits — costs from EnergyEconomy (single source).
 ## AR-E: 4 faction kits × 4 slots. Forms = identity, never a hidden stat.
+## AR-L: fifth kit (CX Lattice) toward Phase-3 6–8. Same Pulse / utility /
+## probe|surge / Form Cycle grammar. SoftKnowledge labels only.
 
 const EE = preload("res://scripts/systems/EnergyEconomy.gd")
 
@@ -9,12 +11,14 @@ const KIT_CX_NEX := "cx_nex"
 const KIT_CX_GRID := "cx_grid"
 const KIT_GR_ROT := "gr_rot"
 const KIT_GR_SPORE := "gr_spore"
+const KIT_CX_LATTICE := "cx_lattice"
 
 const KIT_TABLE := [
 	{"id": KIT_CX_NEX, "faction": "Cybernex", "label": "Nex"},
 	{"id": KIT_CX_GRID, "faction": "Cybernex", "label": "Grid"},
 	{"id": KIT_GR_ROT, "faction": "gROT", "label": "Rot"},
 	{"id": KIT_GR_SPORE, "faction": "gROT", "label": "Spore"},
+	{"id": KIT_CX_LATTICE, "faction": "Cybernex", "label": "Lattice"},
 ]
 
 
@@ -57,6 +61,8 @@ static func kit_by_id(kit_id: String) -> Array:
 	match kit_id:
 		KIT_CX_GRID:
 			return [_pulse(), _nex_latch(), _grid_probe(), _form_cycle()]
+		KIT_CX_LATTICE:
+			return [_pulse(), _lattice_seal(), _lattice_probe(), _form_cycle()]
 		KIT_GR_SPORE:
 			return [_pulse(), _spore_claim(), _rot_bloom(), _form_cycle()]
 		KIT_GR_ROT:
@@ -120,6 +126,36 @@ static func _probe() -> Ability:
 	a.is_channeled = true
 	a.channel_time = 1.5
 	a.effect_color = Color(0.4, 0.85, 1.0)
+	return a
+
+
+static func _lattice_seal() -> Ability:
+	var a := Ability.new()
+	a.ability_name = "Lattice Seal"
+	a.description = "Short lattice seal window (identity, same cost sheet)"
+	a.cooldown = EE.CD_FIREWALL
+	a.energy_cost = EE.NEX_FIREWALL
+	a.duration = 2.5
+	a.heal = 12.0
+	a.range = 18.0
+	a.is_firewall = true
+	a.faction_restriction = Ability.FactionRestriction.CYBERNEX_ONLY
+	a.effect_color = Color(0.45, 0.8, 1.0)
+	return a
+
+
+static func _lattice_probe() -> Ability:
+	var a := Ability.new()
+	a.ability_name = "Lattice Probe"
+	a.description = "Channeled lattice recon (identity, same cost sheet)"
+	a.cooldown = EE.CD_PROBE
+	a.energy_cost = EE.SYSTEM_PROBE
+	a.damage = 7.0
+	a.range = 18.0
+	a.is_hacking = true
+	a.is_channeled = true
+	a.channel_time = 1.5
+	a.effect_color = Color(0.65, 0.7, 1.0)
 	return a
 
 

@@ -189,6 +189,11 @@ func setup_kit(kit_id: String, faction: String = "") -> void:
 
 
 func kit_label() -> String:
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if SoftK and SoftK.has_method("kit_label"):
+		var lab := str(SoftK.kit_label(current_kit_id))
+		if lab != "":
+			return lab
 	var meta: Dictionary = _Kit.kit_meta(current_kit_id)
 	if meta.is_empty():
 		return current_kit_id if current_kit_id != "" else "—"
