@@ -81,6 +81,19 @@ func can_store_unit(vol: float, mass: float) -> bool:
 	return true
 
 
+func crate_amount() -> int:
+	## PC-B: one-crate count. Cap 1. Never a SITE_* mint.
+	return _units.size()
+
+
+func crate_slug() -> String:
+	## PC-B: first crate id/slug already on the unit.
+	if _units.is_empty():
+		return ""
+	var e: Dictionary = _units[0] as Dictionary
+	return str(e.get("slug", e.get("id", "")))
+
+
 func store_unit(entry: Dictionary) -> bool:
 	var packed: Dictionary = _Hold.normalize_unit(entry)
 	var vol := float(packed.get("volume", _Hold.UNIT_VOL_M3))
@@ -89,6 +102,7 @@ func store_unit(entry: Dictionary) -> bool:
 		return false
 	_units.append(packed)
 	_refresh_label()
+	_pc_b_remember()
 	return true
 
 
@@ -105,6 +119,7 @@ func seed_one() -> void:
 		return
 	_units.append(_Hold.make_crate("pad_storage_1"))
 	_refresh_label()
+	_pc_b_remember()
 
 
 func storage_label() -> String:
@@ -165,6 +180,14 @@ func _ensure_label() -> void:
 	_label.position = Vector3(0, 2.2, 0)
 	add_child(_label)
 	_refresh_label()
+
+
+func _pc_b_remember() -> void:
+	## SoftSession crate snapshot. Host only. Not a second hold.
+	if SoftSession == null or not SoftSession.has_method("remember_crate"):
+		return
+	var where := "orbital" if bool(get_meta("orbital_storage", false)) else "pad"
+	SoftSession.remember_crate(self, where)
 
 
 func _refresh_label() -> void:

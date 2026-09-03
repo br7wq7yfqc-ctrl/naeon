@@ -58,6 +58,7 @@ func _go() -> void:
 		await _assert_pv_b(os, fails)
 		await _assert_pv_c(os, fails)
 		await _assert_pc_a(os, fails)
+		await _assert_pc_b(os, fails)
 		await _assert_pv_a(os, fails)
 		await _assert_bt_a(os, fails)
 		await _assert_bt_b(os, fails)
@@ -727,6 +728,7 @@ func _go() -> void:
 	await _assert_pv_b(os, fails)
 	await _assert_pv_c(os, fails)
 	await _assert_pc_a(os, fails)
+	await _assert_pc_b(os, fails)
 	await _assert_pv_a(os, fails)
 	await _assert_bt_a(os, fails)
 	await _assert_bt_b(os, fails)
@@ -19286,6 +19288,177 @@ func _assert_pc_a(os: Node, fails: PackedStringArray) -> void:
 	print("[Playtest] PC-A persist · ", hud, " Pulse 11 · host · kits=12 · FLEET 15/15 · G5 closed · no SITE_*")
 	if fails.size() == fail0:
 		print("[Playtest] PASS PC-A")
+
+
+func _assert_pc_b(os: Node, fails: PackedStringArray) -> void:
+	## PC-B: SoftSession persist ONE crate (amount/slug) across relaunch.
+	## PadStorage ST-I and/or ST-M and/or ship CargoHold. Restore via existing APIs.
+	## SoftKnowledge / HUD CRATE / CARGO / PERSIST only. Host authority.
+	## Does not redo PC-A. Pulse 11. Kits 12. FLEET 15/15. No SITE_*.
+	var fail0 := fails.size()
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	var Builder = load("res://scripts/world/BaseBuilder.gd")
+	var Hold = load("res://scripts/ship/CargoHold.gd")
+	var nex: Node = _osh_nex()
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var ov: Node = os.strategy_overlay() if os != null and os.has_method("strategy_overlay") else null
+	var pad: Node3D = null
+	var store: Node3D = null
+	var hold: Node = null
+	var slug := "pc_b_crate"
+	var pulse0 := 11.0
+	if SoftSession != null and "PC_B_SLUG" in SoftSession:
+		slug = str(SoftSession.PC_B_SLUG)
+	if P0 == null or not bool(P0.PC_B_PERSIST) or not bool(P0.PC_A_PERSIST) \
+			or not bool(P0.ST_I_STORAGE) or not bool(P0.ST_M_STORAGE):
+		fails.append("PC-B P0Slice flag missing")
+		return
+	if P0 != null and not bool(P0.AR_Z_MATCHMAKING):
+		fails.append("PC-B dropped AR-Z P0Slice flag")
+	if P0 != null and not bool(P0.FL_N_FLEET):
+		fails.append("PC-B dropped FL-N P0Slice flag")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("PC-B flipped ORBITAL_STATIONS")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("PC-B Infection cap drifted")
+	if Kit == null or not Kit.has_method("kit_ids"):
+		fails.append("PC-B AbilityKitCatalog missing")
+	else:
+		var ids: PackedStringArray = Kit.kit_ids()
+		if int(ids.size()) != 12:
+			fails.append("PC-B kit count want 12 (got %s)" % ids.size())
+		if int(ids.size()) >= 13:
+			fails.append("PC-B added a 13th AbilityKit")
+	if SoftSession == null or not SoftSession.has_method("remember_crate") \
+			or not SoftSession.has_method("restore_crate") \
+			or not SoftSession.has_method("crate_persist_hud_line") \
+			or not SoftSession.has_method("wipe_crate_memory"):
+		fails.append("PC-B SoftSession crate API missing")
+		return
+	if not bool(SoftSession.is_host_authority()):
+		fails.append("PC-B host authority missing")
+	var clab := str(SoftK.crate_label()) if SoftK and SoftK.has_method("crate_label") else ""
+	var cargo := str(SoftK.cargo_label()) if SoftK and SoftK.has_method("cargo_label") else ""
+	var plab := str(SoftK.persist_label()) if SoftK and SoftK.has_method("persist_label") else ""
+	if clab != "CRATE" and clab != "SCU CRATE":
+		fails.append("PC-B SoftKnowledge CRATE missing (%s)" % clab)
+	if cargo != "CARGO" and cargo != "CARGO HOLD":
+		fails.append("PC-B SoftKnowledge CARGO missing (%s)" % cargo)
+	if plab != "PERSIST" and plab != "SESSION PERSIST":
+		fails.append("PC-B SoftKnowledge PERSIST missing (%s)" % plab)
+	var hud := str(SoftSession.crate_persist_hud_line())
+	if hud.find("CRATE") < 0 or hud.find("CARGO") < 0 or hud.find("PERSIST") < 0:
+		fails.append("PC-B HUD crate persist missing (%s)" % hud)
+	if ov != null and ov.has_method("crate_persist_hud_line"):
+		var ohud := str(ov.crate_persist_hud_line())
+		if ohud.find("CRATE") < 0 or ohud.find("CARGO") < 0 or ohud.find("PERSIST") < 0:
+			fails.append("PC-B overlay HUD crate persist missing (%s)" % ohud)
+	if ov != null and ov.has_method("fleet_cap") and int(ov.fleet_cap()) != 15:
+		fails.append("PC-B FLEET cap=%s, want 15" % int(ov.fleet_cap()))
+	if os == null or nex == null:
+		fails.append("PC-B no OpenSpace/Nex-Prime")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("PC-B must not run on TestArena")
+		return
+	if LayerContext and str(LayerContext.current_layer) == "Arena":
+		fails.append("PC-B must not run on Clash")
+		return
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.2).timeout
+	var tree := get_tree()
+	if tree:
+		for n in tree.get_nodes_in_group("pad_storage"):
+			if n is Node3D and is_instance_valid(n):
+				store = n as Node3D
+				pad = n.get_parent() as Node3D
+				break
+		if store == null:
+			for want in ["Pad_Flank", "Pad_Approach", "Pad_North"]:
+				for n in tree.get_nodes_in_group("landing_pads"):
+					if n is Node3D and str(n.name) == want:
+						pad = n as Node3D
+						break
+				if pad != null:
+					break
+	if store == null and pad != null and Builder != null:
+		store = Builder.place_pad_storage(pad, "Cybernex")
+	if store == null or not is_instance_valid(store):
+		fails.append("PC-B no PadStorage for crate persist")
+		return
+	if str(store.get_meta("site_pin", "missing")) != "":
+		fails.append("PC-B pad storage minted SITE_*")
+	if store.has_method("is_ship_cargo_hold") and bool(store.is_ship_cargo_hold()):
+		fails.append("PC-B reused ship CargoHold as PadStorage")
+	if Hold == null or not Hold.has_method("make_crate"):
+		fails.append("PC-B CargoHold.make_crate missing")
+		return
+	if store.has_method("retrieve_unit"):
+		while store.has_method("unit_count") and int(store.unit_count()) > 0:
+			var dropped: Dictionary = store.retrieve_unit(0)
+			if dropped.is_empty():
+				break
+	if not bool(store.store_unit(Hold.make_crate(slug))):
+		fails.append("PC-B could not store crate via PadStorage")
+		return
+	if store.has_method("crate_slug") and str(store.crate_slug()) != slug:
+		fails.append("PC-B PadStorage slug drifted (%s)" % str(store.crate_slug()))
+	if store.has_method("crate_amount") and int(store.crate_amount()) != 1:
+		fails.append("PC-B PadStorage amount drifted (%s)" % int(store.crate_amount()))
+	SoftSession.remember_crate(store, "pad")
+	SoftSession.save_session()
+	print("[Playtest] PC-B remember pad=", str(pad.name) if pad else "?", " slug=", slug, " amount=1")
+	if store.has_method("retrieve_unit"):
+		var cleared: Dictionary = store.retrieve_unit(0)
+		if cleared.is_empty():
+			fails.append("PC-B could not clear live crate")
+	if SoftSession.has_method("wipe_crate_memory"):
+		SoftSession.wipe_crate_memory()
+	if not SoftSession.crate.is_empty():
+		fails.append("PC-B wipe did not clear in-memory crate")
+	SoftSession.load_session()
+	if str(SoftSession.crate.get("slug", "")) != slug:
+		fails.append("PC-B load lost crate slug (%s)" % str(SoftSession.crate.get("slug", "")))
+	if int(SoftSession.crate.get("amount", 0)) != 1:
+		fails.append("PC-B load lost crate amount (%s)" % str(SoftSession.crate.get("amount", 0)))
+	if str(SoftSession.crate.get("where", "")) != "pad":
+		fails.append("PC-B load lost crate where (%s)" % str(SoftSession.crate.get("where", "")))
+	SoftSession.restore_crate(os)
+	await get_tree().process_frame
+	if store.has_method("crate_slug") and str(store.crate_slug()) != slug:
+		fails.append("PC-B restore missed PadStorage crate (%s)" % str(store.crate_slug()))
+	if store.has_method("crate_amount") and int(store.crate_amount()) != 1:
+		fails.append("PC-B restore missed crate amount (%s)" % int(store.crate_amount()))
+	if str(store.get_meta("site_pin", "missing")) != "":
+		fails.append("PC-B restore minted SITE_*")
+	if ship != null and is_instance_valid(ship):
+		hold = ship.get_node_or_null("CargoHold")
+	if hold != null and hold.has_method("store_unit") and hold.has_method("crate_slug"):
+		## Ship CargoHold API stays legal for the same snapshot. Not a second mint.
+		if hold.has_method("can_store_unit") and bool(hold.can_store_unit(Hold.UNIT_VOL_M3, Hold.UNIT_MASS_T)):
+			var _ship_ok := bool(hold.store_unit(Hold.make_crate(slug)))
+			if hold.has_method("crate_slug") and str(hold.crate_slug()) == "":
+				fails.append("PC-B ship CargoHold slug API empty after store")
+	if ship != null and is_instance_valid(ship):
+		var ab: Node = ship.get_node_or_null("AbilitySystem")
+		if ab != null and ab.get("abilities") != null and (ab.abilities as Array).size() > 0 and ab.abilities[0]:
+			pulse0 = float(ab.abilities[0].damage)
+	if Kit != null and Kit.has_method("kit_by_id"):
+		var loadout: Array = Kit.kit_by_id("cx_nex")
+		if loadout.size() > 0 and loadout[0] != null:
+			pulse0 = float(loadout[0].damage)
+	if absf(pulse0 - 11.0) > 0.01:
+		fails.append("PC-B Pulse DPS drifted (%s)" % pulse0)
+	if ResourceLoader.exists("res://scripts/world/ClashFromWorld.gd") \
+			or ResourceLoader.exists("res://scripts/world/ClashBeacon.gd"):
+		fails.append("PC-B opened G5 world-to-arena")
+	print("[Playtest] PC-B persist · ", hud, " Pulse 11 · host · kits=12 · FLEET 15/15 · G5 closed · no SITE_*")
+	if fails.size() == fail0:
+		print("[Playtest] PASS PC-B")
 
 
 func _assert_pv_a(os: Node, fails: PackedStringArray) -> void:

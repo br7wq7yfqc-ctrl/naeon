@@ -77,6 +77,8 @@ func store_unit(entry: Dictionary) -> bool:
 		var Board = load("res://scripts/systems/ContractBoard.gd")
 		if Board:
 			Board.note_progress("deliver_crate")
+		if SoftSession and SoftSession.has_method("remember_crate"):
+			SoftSession.remember_crate(self, "ship")
 	return true
 
 func retrieve_unit(index: int = 0) -> Dictionary:
@@ -91,10 +93,31 @@ func retrieve_unit(index: int = 0) -> Dictionary:
 func unit_count() -> int:
 	return units.size()
 
+
+func crate_amount() -> int:
+	## PC-B: one-crate count. Never a SITE_* mint.
+	return units.size()
+
+
+func crate_slug() -> String:
+	## PC-B: first crate id/slug already on the unit.
+	if units.is_empty():
+		return ""
+	var e: Dictionary = units[0] as Dictionary
+	var slug := str(e.get("slug", e.get("id", "")))
+	return slug
+
 static func normalize_unit(entry: Dictionary) -> Dictionary:
 	## Mass / value stay authored. Knowledge may only label at display time.
+	## slug aliases id; amount is the one-crate count already on the hold.
+	var slug := str(entry.get("slug", entry.get("id", "crate")))
+	if slug == "":
+		slug = "crate"
+	var amount := clampi(int(entry.get("amount", 1)), 1, 1)
 	return {
-		"id": str(entry.get("id", "crate")),
+		"id": slug,
+		"slug": slug,
+		"amount": amount,
 		"kind": str(entry.get("kind", "crate")),
 		"volume": float(entry.get("volume", UNIT_VOL_M3)),
 		"mass": float(entry.get("mass", UNIT_MASS_T)),
@@ -102,8 +125,11 @@ static func normalize_unit(entry: Dictionary) -> Dictionary:
 	}
 
 static func make_crate(id: String = "crate") -> Dictionary:
+	var slug := id if id != "" else "crate"
 	return {
-		"id": id,
+		"id": slug,
+		"slug": slug,
+		"amount": 1,
 		"kind": "crate",
 		"volume": UNIT_VOL_M3,
 		"mass": UNIT_MASS_T,

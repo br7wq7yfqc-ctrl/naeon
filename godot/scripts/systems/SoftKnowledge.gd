@@ -366,6 +366,14 @@ static func crate_label() -> String:
 	return "CRATE"
 
 
+## PC-B: name ship / pad cargo hold. Never mass / value / Pulse / kit unlock.
+static func cargo_label() -> String:
+	var logi := mastery("logistics")
+	if logi >= 15.0 or rank() >= 5:
+		return "CARGO HOLD"
+	return "CARGO"
+
+
 ## Colony/biomass ops: name the soft wallet. Never changes harvest yield.
 ## gROT: BIOMASS / BIOMASS RANK. Cybernex stays CONTRIB / CONTRIBUTION.
 static func yield_label(grot: bool = false) -> String:

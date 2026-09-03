@@ -2,6 +2,7 @@ extends Node
 ## Soft local session persist — form/faction/layer + last legal action.
 ## NP-F: player leave starts a short local offline cycle. Not combat power. Not P2W.
 ## PC-A: pad/orbital player modules + ship across relaunch. Same user:// file.
+## PC-B: one crate (amount/slug) for PadStorage / CargoHold. Same file.
 ## SoftKnowledge / HUD only. Host authority. Never Pulse / kit / P2W.
 
 signal offline_changed(offline: bool)
@@ -12,6 +13,8 @@ const WS_DAILY_CAP := 60.0
 const LEGAL_PADS := ["Pad_North", "Pad_Approach", "Pad_Flank"]
 const LEGAL_PAD_KINDS := ["habitat", "turret", "storage", "hangar"]
 const LEGAL_ORBITAL_KINDS := ["hangar", "turret", "storage"]
+const LEGAL_CRATE_WHERE := ["pad", "orbital", "ship"]
+const PC_B_SLUG := "pc_b_crate"
 
 var form: String = "Canine"
 var faction: String = "Cybernex"
@@ -27,6 +30,7 @@ var clash_cosmetic: bool = false
 var colony: Array = []
 var orbital: Array = []
 var ship: Dictionary = {}
+var crate: Dictionary = {}
 var _offline: bool = false
 
 func _ready() -> void:
@@ -62,9 +66,11 @@ func load_session() -> void:
 	_ingest_colony(data.get("colony", []))
 	_ingest_orbital(data.get("orbital", []))
 	_ingest_ship(data.get("ship", {}))
+	_ingest_crate(data.get("crate", {}))
 	_roll_ws_day()
 	print("[SoftSession] loaded form=", form, " faction=", faction, " ws=", war_score_daily, "/", WS_DAILY_CAP,
-		" colony=", colony.size(), " orbital=", orbital.size(), " ship=", str(ship.get("faction", "")))
+		" colony=", colony.size(), " orbital=", orbital.size(), " ship=", str(ship.get("faction", "")),
+		" crate=", str(crate.get("slug", "")))
 
 func save_session() -> void:
 	var payload := {
@@ -85,6 +91,8 @@ func save_session() -> void:
 		payload["colony"] = colony
 		payload["orbital"] = orbital
 		payload["ship"] = ship
+	if _pc_b():
+		payload["crate"] = crate
 	var f := FileAccess.open(PATH, FileAccess.WRITE)
 	if f == null:
 		return
@@ -214,6 +222,11 @@ func _pc_a() -> bool:
 	return P0 != null and bool(P0.PC_A_PERSIST)
 
 
+func _pc_b() -> bool:
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	return P0 != null and bool(P0.PC_B_PERSIST)
+
+
 func is_host_authority() -> bool:
 	if multiplayer == null or not multiplayer.has_multiplayer_peer():
 		return true
@@ -226,6 +239,14 @@ func persist_hud_line() -> String:
 	if SoftK == null:
 		return ""
 	return "%s · %s · %s" % [str(SoftK.colony_label()), str(SoftK.ship_label()), str(SoftK.persist_label())]
+
+
+func crate_persist_hud_line() -> String:
+	## PC-B SoftKnowledge CRATE / CARGO / PERSIST. Never mass / Pulse / kit.
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if SoftK == null:
+		return ""
+	return "%s · %s · %s" % [str(SoftK.crate_label()), str(SoftK.cargo_label()), str(SoftK.persist_label())]
 
 
 func remember_pad_module(pad, kind: String, faction_name: String) -> void:
@@ -284,22 +305,78 @@ func remember_ship(p: Node = null) -> void:
 	print("[SoftSession] PC-A ship faction=", fac, " modules=", kinds.size())
 
 
+func remember_crate(source = null, where: String = "") -> void:
+	## ONE crate amount/slug from existing PadStorage / CargoHold. No SITE_*.
+	if not _pc_b() or not is_host_authority():
+		return
+	var amount := 0
+	var slug := ""
+	var loc := str(where)
+	if source is Node and is_instance_valid(source):
+		if source.has_method("crate_amount"):
+			amount = int(source.crate_amount())
+		elif source.has_method("unit_count"):
+			amount = int(source.unit_count())
+		if source.has_method("crate_slug"):
+			slug = str(source.crate_slug())
+		if loc == "":
+			if source.has_meta("orbital_storage") and bool(source.get_meta("orbital_storage")):
+				loc = "orbital"
+			elif source.has_meta("pad_storage") and bool(source.get_meta("pad_storage")):
+				loc = "pad"
+			elif str(source.name) == "CargoHold":
+				loc = "ship"
+	if not LEGAL_CRATE_WHERE.has(loc):
+		return
+	if not _legal_crate_slug(slug) or amount < 1:
+		return
+	crate = {"amount": 1, "slug": slug, "where": loc}
+	save_session()
+	print("[SoftSession] PC-B crate slug=", slug, " amount=1 where=", loc)
+
+
+func restore_crate(os: Node = null) -> void:
+	## Host-only. Existing PadStorage / CargoHold APIs. Never mints SITE_*.
+	if not _pc_b() or not is_host_authority():
+		return
+	var slug := str(crate.get("slug", ""))
+	var loc := str(crate.get("where", ""))
+	var amount := clampi(int(crate.get("amount", 0)), 0, 1)
+	if amount < 1 or not _legal_crate_slug(slug) or not LEGAL_CRATE_WHERE.has(loc):
+		return
+	var target: Node = _crate_target(loc, os)
+	if target == null or not is_instance_valid(target):
+		return
+	_apply_crate_to(target, slug)
+
+
 func wipe_colony_memory() -> void:
 	## Playtest relaunch sim. Does not write disk.
 	colony = []
 	orbital = []
 	ship = {}
+	crate = {}
+
+
+func wipe_crate_memory() -> void:
+	## PC-B playtest relaunch sim. Does not write disk.
+	crate = {}
 
 
 func restore_world(os: Node = null) -> void:
 	## Host-only. BaseBuilder place_*. Never steals the ST-A player_module slot.
-	if not _pc_a() or not is_host_authority():
+	if not is_host_authority():
 		return
-	restore_colony()
-	restore_orbital()
-	restore_ship(os)
-	print("[SoftSession] PC-A restore colony=", colony.size(), " orbital=", orbital.size(),
-		" ship=", str(ship.get("faction", "")))
+	if _pc_a():
+		restore_colony()
+		restore_orbital()
+		restore_ship(os)
+		print("[SoftSession] PC-A restore colony=", colony.size(), " orbital=", orbital.size(),
+			" ship=", str(ship.get("faction", "")))
+	if _pc_b():
+		restore_crate(os)
+		print("[SoftSession] PC-B restore crate=", str(crate.get("slug", "")),
+			" amount=", int(crate.get("amount", 0)), " where=", str(crate.get("where", "")))
 
 
 func restore_colony() -> void:
@@ -404,6 +481,75 @@ func _ingest_ship(raw) -> void:
 			if tag != "":
 				kinds.append(tag)
 	ship = {"faction": fac, "modules": kinds}
+
+
+func _ingest_crate(raw) -> void:
+	crate = {}
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	var slug := str(raw.get("slug", ""))
+	var loc := str(raw.get("where", ""))
+	var amount := clampi(int(raw.get("amount", 0)), 0, 1)
+	if amount < 1 or not _legal_crate_slug(slug) or not LEGAL_CRATE_WHERE.has(loc):
+		return
+	crate = {"amount": 1, "slug": slug, "where": loc}
+
+
+func _legal_crate_slug(slug: String) -> bool:
+	if slug == "" or slug.begins_with("SITE_") or slug.find("/") >= 0:
+		return false
+	if slug.length() > 48:
+		return false
+	return true
+
+
+func _crate_target(loc: String, os: Node = null) -> Node:
+	var tree := get_tree()
+	if loc == "ship":
+		var hull: Node = null
+		if os != null and is_instance_valid(os):
+			hull = os.get("ship") as Node
+		if hull == null and tree:
+			hull = tree.get_first_node_in_group("player_ship")
+		if hull != null and is_instance_valid(hull):
+			return hull.get_node_or_null("CargoHold")
+		return null
+	if tree == null:
+		return null
+	if loc == "orbital":
+		var listed: Array = tree.get_nodes_in_group("orbital_storages")
+		if not listed.is_empty() and listed[0] is Node:
+			return listed[0]
+		return null
+	var pads: Array = tree.get_nodes_in_group("pad_storage")
+	if not pads.is_empty() and pads[0] is Node:
+		return pads[0]
+	for pname in LEGAL_PADS:
+		var pad := _pad_named(pname)
+		if pad == null:
+			continue
+		var store: Node = pad.get_node_or_null("PadStorage")
+		if store != null:
+			return store
+	return null
+
+
+func _apply_crate_to(target: Node, slug: String) -> void:
+	## Existing store_unit / retrieve_unit / make_crate only.
+	var Hold = load("res://scripts/ship/CargoHold.gd")
+	if target == null or Hold == null or not target.has_method("store_unit"):
+		return
+	var packed: Dictionary = Hold.make_crate(slug)
+	var vol := float(packed.get("volume", Hold.UNIT_VOL_M3))
+	var mass := float(packed.get("mass", Hold.UNIT_MASS_T))
+	if target.has_method("retrieve_unit") and target.has_method("can_store_unit"):
+		var guard := 0
+		while not bool(target.can_store_unit(vol, mass)) and guard < 8:
+			var dropped: Dictionary = target.retrieve_unit(0)
+			if dropped.is_empty():
+				break
+			guard += 1
+	var _ok := bool(target.store_unit(packed))
 
 
 func _upsert_entry(bucket: Array, entry: Dictionary, key: String) -> void:
