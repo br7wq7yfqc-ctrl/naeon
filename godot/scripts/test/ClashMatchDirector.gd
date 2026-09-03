@@ -126,9 +126,12 @@ func register_objective() -> void:
 	_flash("OBJECTIVE secured")
 
 
-func register_camp_contest() -> void:
+func register_camp_contest(role: String = "") -> void:
 	# Soft announce only — Knowledge may label the pit, never unique DPS.
-	_flash("CAMP CONTESTED — soft · no unique weapon")
+	if str(role) == "prime":
+		_flash("PRIME CONTESTED — soft · no unique weapon")
+	else:
+		_flash("CAMP CONTESTED — soft · no unique weapon")
 
 func show_soft_result(result_label: String, cosmetic_label: String = "") -> void:
 	## AR-I: SoftKnowledge WIN / LOSS (title if daily WS cap). Never DPS.

@@ -1,3 +1,5 @@
+**2026-09-03 — AR-J: second jungle objective on existing 60×60 TestArena / ClashDirector — one prime-class ClashCamp (not IP); same ClashCamp grammar as AR-D fangtooth; soft contest; drop = soft WS only (rules/13); SoftKnowledge / HUD labels camp / contest / WS; Knowledge ≠ DPS / yield / Pulse / Hack; AR-A…AR-I stay; host authority; Infection cap 5; no SITE_*; no G2–G6**
+
 **2026-09-02 — AR-I: CORE Turret HP → 0 ends Clash match (3v3 + 5v5 on existing TestArena / ClashDirector); SoftKnowledge WIN / LOSS only; SoftSession WS +15 win / +3 loss, daily cap 60 → further wins cosmetics/title; not planet flip; AR-A…AR-H stay; SN-D stays; Infection cap 5; ORBITAL_STATIONS false**
 
 **2026-09-02 — FL-D: fourth fleet allied pip on ST-A Strategy overlay (SoftNet / NP-A visual; cap 5 = player + 4; FLEET n/5 SoftKnowledge; host Pulse/occupy; click ≠ combat; FL-A/FL-B/FL-C stay)**
@@ -802,7 +804,9 @@ FL-C: third extra allied pip on the same ST-A overlay. SoftNet visual hull (pad-
 FL-D: fourth extra allied pip on the same ST-A overlay. SoftNet visual hull (pad-visitor / NP-A grammar). Cap **5** (player + 4). HUD `FLEET n/5` is SoftKnowledge only. Click/select ≠ combat. Host Pulse / occupy. Not 10–15 ships. Not a second OpenSpace. Not ENet. Not G5. FL-A / FL-B / FL-C first three extra pips stay. Overlay B still opens. No `SITE_*`. `ORBITAL_STATIONS` stays off.  
 SN-B: second local viewer seated with the host on the player hull / OpenSpace sees a SoftNet visual puppet of the host hull / pilot (or crew-seat pose). Host keeps Pulse / occupy / thrust. No second physical hull. SoftKnowledge `NET` label only. SN-A pad puppet stays. MC-A/B/C crew seats stay. FL-A / FL-B / FL-C / FL-D fleet pips stay. BT-A/B/C/D stay. PV-A/B stay. Clash unchanged. Not ENet cluster. Not 10k CCU. G5 stays closed. No `SITE_*`.  
 SN-C: second local viewer on ST-A Strategy overlay (key B) on an occupied unnamed pad sees a SoftNet visual puppet of the host pad / strategy actor (habitat / extractor / modules pose). Host keeps Pulse / occupy / Hack. No second physical pad modules. SoftKnowledge `NET` label only. SN-A pad puppet stays. SN-B hull puppet stays. Overlay B still opens. Clash unchanged. Not ENet cluster. Not 10k CCU. G5 stays closed. No `SITE_*`.  
-SN-D: second local viewer in Clash (`TestArena` / `ClashMatchDirector`) sees a SoftNet visual puppet of the host (arena / Clash pose). Host keeps Pulse / Hack / form. No second physical Clash dummy. SoftKnowledge `NET` label only. SN-A / SN-B / SN-C stay. AR-H pad door stays as the legal Clash entry. Not leftover 5v5 soak. Not ENet cluster. Not 10k CCU. G5 stays closed. No `SITE_*`.
+SN-D: second local viewer in Clash (`TestArena` / `ClashMatchDirector`) sees a SoftNet visual puppet of the host (arena / Clash pose). Host keeps Pulse / Hack / form. No second physical Clash dummy. SoftKnowledge `NET` label only. SN-A / SN-B / SN-C stay. AR-H pad door stays as the legal Clash entry. Not leftover 5v5 soak. Not ENet cluster. Not 10k CCU. G5 stays closed. No `SITE_*`.  
+AR-I: CORE Turret HP → 0 ends Clash on the existing TestArena / ClashDirector (3v3 + 5v5). SoftKnowledge HUD `WIN` / `LOSS` only. SoftSession War Score +15 win / +3 loss; daily cap 60 → further wins cosmetics/title. Not planet flip. Not a unique combat item. AR-A…AR-H stay. SN-D stays. Infection cap 5. `ORBITAL_STATIONS` stays false.  
+AR-J: one extra off-lane prime-class `ClashCamp` on the same 60×60 (AR-D fangtooth stays). Code-first proxy; soft contest announce; drop = soft War Score only (not a unique weapon). SoftKnowledge / HUD labels camp / contest / WS. Knowledge ≠ DPS / yield / Pulse / Hack / exclusive modules. AR-A…AR-I stay. Host authority. Infection cap 5. No `SITE_*`. No G2–G6.
 
 P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
@@ -867,6 +871,8 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | AR-F 3v3 local | **built** — 6 actors on existing lanes; host authority; SoftNet visual; G5 closed; still startable |
 | AR-G 5v5 local | **built** — 10 actors on existing lanes + jungle; host authority; SoftNet visual; G5 closed |
 | AR-H pad clash door | **built** — occupied unnamed pad door → Clash TestArena; not city-map; G5 cluster closed; AR-A…G stay |
+| AR-I CORE match-end | **built** — CORE HP → 0 ends 3v3/5v5; SoftKnowledge WIN/LOSS; SoftSession WS +15/+3, daily cap 60; not planet flip |
+| AR-J prime jungle camp | **built** — one extra off-lane prime-class ClashCamp on the same 60×60; soft contest; drop = soft WS; AR-D fangtooth stays; Knowledge labels only |
 | SE-A hull buses | **built** — power/cool/life live; overdraw/overheat sag; IN-B LS soft; no P2W skip |
 | MC-A ship crew seat | **built** — CrewSeat in ship_int; F/I same pocket; HUD CREW label; SoftNet puppet optional; pilot unchanged |
 | MC-B crew gunner role | **built** — GUNNER SoftKnowledge / HUD label on the MC-A seat; CREW n/2 stays; Pulse/Hack numbers stay; host authority |

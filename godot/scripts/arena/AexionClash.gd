@@ -69,17 +69,21 @@ func register_minion_down(lane: String = "MID") -> void:
 	_add_pressure(lane, 3.0)
 
 
-func register_camp_down() -> void:
+func register_camp_down(role: String = "") -> void:
 	if _ended or not active:
 		return
-	# Fangtooth-class role: soft WS + pressure. Not a kill-to-5, not a weapon.
-	_add_pressure("MID", 18.0)
+	# Fangtooth / prime: soft WS + pressure. Not a kill-to-5, not a weapon.
+	var prime := str(role) == "prime"
+	var press := 24.0 if prime else 18.0
+	var ws := 3.0 if prime else OBJECTIVE_WS
+	_add_pressure("MID", press)
 	if war:
-		war.add_match_points(OBJECTIVE_WS)
+		war.add_match_points(ws)
 	if GameManager:
 		GameManager.add_mastery("ecology", 0.8)
+		var tag := "Prime" if prime else "Camp"
 		GameManager.toast_requested.emit(
-			"Camp secured (+%.0f soft WS) — not a unique weapon" % OBJECTIVE_WS
+			"%s secured (+%.0f soft WS) — not a unique weapon" % [tag, ws]
 		)
 
 

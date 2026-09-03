@@ -73,6 +73,7 @@ func _go() -> void:
 		await _assert_sn_b(os, fails)
 		await _assert_ar_h(os, fails)
 		await _assert_ar_i(os, fails)
+		await _assert_ar_j(os, fails)
 		await _assert_sn_c(os, fails)
 		await _assert_sn_d(os, fails)
 		await _assert_do_a(os, fails)
@@ -103,6 +104,7 @@ func _go() -> void:
 	await _assert_ar_f(os, fails)
 	await _assert_ar_g(os, fails)
 	await _assert_ar_i(os, fails)
+	await _assert_ar_j(os, fails)
 	_assert_se_a(os, fails)
 	await _assert_landed_hatch_on_pad(os, fails)
 	_assert_scan_cache_live(fails)
@@ -21472,6 +21474,97 @@ func _assert_ar_i(os: Node, fails: PackedStringArray) -> void:
 	if SoftK and SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked("clash")):
 		fails.append("AR-I unlocked exclusive weapon")
 	print("[Playtest] AR-I CORE→0 WIN/LOSS + WS cap 60 · SoftKnowledge only · host authority · no SITE_*")
+	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
+		SoftScanCache.invalidate_enemies()
+
+
+func _assert_ar_j(os: Node, fails: PackedStringArray) -> void:
+	## AR-J: one extra prime-class ClashCamp. Isolated — no TestArena scene change.
+	## Soft WS drop only. AR-D fangtooth stays. Knowledge labels only.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.AR_J_PRIME_CAMP):
+		fails.append("AR-J P0Slice flag missing")
+	if P0 != null and not bool(P0.AR_I_MATCH_END):
+		fails.append("AR-J dropped AR-I P0Slice flag")
+	if P0 != null and not bool(P0.AR_H_DOOR):
+		fails.append("AR-J dropped AR-H P0Slice flag")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("AR-J flipped ORBITAL_STATIONS")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-J Infection cap drifted")
+	var layer0 := str(LayerContext.current_layer) if LayerContext else ""
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var host: Node = os if os else self
+	var fang: Node3D = Node3D.new()
+	fang.set_script(preload("res://scripts/arena/ClashCamp.gd"))
+	fang.name = "ClashCampARJFang"
+	host.add_child(fang)
+	var prime: Node3D = Node3D.new()
+	prime.set_script(preload("res://scripts/arena/ClashCamp.gd"))
+	prime.name = "ClashPrimeCampARJ"
+	prime.set("camp_role", "prime")
+	host.add_child(prime)
+	await get_tree().process_frame
+	if fang is Node3D:
+		fang.global_position = Vector3(7.2, 0.0, -1.2)
+	if prime is Node3D:
+		prime.global_position = Vector3(-7.2, 0.0, 1.2)
+	if fang.has_method("get_camp_role") and str(fang.get_camp_role()) != "fangtooth":
+		fails.append("AR-J fangtooth role drifted (%s)" % fang.get_camp_role())
+	if not prime.has_method("is_prime") or not bool(prime.is_prime()):
+		fails.append("AR-J prime role missing")
+	if prime.has_method("is_off_lane") and not bool(prime.is_off_lane()):
+		fails.append("AR-J prime sits on a lane strip")
+	if fang.has_method("is_off_lane") and not bool(fang.is_off_lane()):
+		fails.append("AR-J fangtooth sits on a lane strip")
+	if fang.global_position.distance_to(prime.global_position) < 4.0:
+		fails.append("AR-J prime stacked on fangtooth")
+	if prime.has_method("camp_drop_kind") and str(prime.camp_drop_kind()) != "soft_ws":
+		fails.append("AR-J prime drop is not soft WS")
+	if fang.has_method("camp_drop_kind") and str(fang.camp_drop_kind()) != "soft_ws":
+		fails.append("AR-J fangtooth drop drifted")
+	var hp0 := float(prime.get("health"))
+	var max0 := float(prime.get("max_health"))
+	prime.take_damage(18.0, "Cybernex")
+	if float(prime.get("health")) >= hp0:
+		fails.append("AR-J prime did not take damage")
+	if prime.has_method("is_alive") and not bool(prime.is_alive()):
+		fails.append("AR-J 18 dmg killed prime")
+	if prime.has_method("is_contested") and not bool(prime.is_contested()):
+		fails.append("AR-J prime did not contest")
+	var announced := str(prime.last_announce()) if prime.has_method("last_announce") else ""
+	if announced.to_lower().find("contest") < 0 and announced.to_lower().find("weapon") < 0:
+		fails.append("AR-J prime contest announce missing")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("ecology", 20.0)
+		GameManager.add_mastery("history", 20.0)
+	if absf(float(prime.get("max_health")) - max0) > 0.01:
+		fails.append("AR-J Knowledge changed prime HP")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var plab := str(SoftK.camp_label("prime")) if SoftK else ""
+	if plab == "" or (plab != "PRIME" and plab != "PRIME PIT"):
+		fails.append("AR-J SoftKnowledge prime label missing (%s)" % plab)
+	if SoftK and SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked("prime")):
+		fails.append("AR-J unlocked exclusive weapon")
+	print("[Playtest] AR-J prime camp isolated · role=", prime.get_camp_role() if prime.has_method("get_camp_role") else "?",
+		" drop=soft_ws · AR-D fangtooth stays · label=", plab)
+	if is_instance_valid(fang):
+		fang.queue_free()
+	if is_instance_valid(prime):
+		prime.queue_free()
+	await get_tree().process_frame
+	if os != null and os.has_method("enter_clash_from_world"):
+		fails.append("AR-J opened G5 world-to-arena")
+	if LayerContext:
+		if str(LayerContext.site_pin_id) != pin0:
+			fails.append("AR-J changed site_pin (%s → %s)" % [pin0, LayerContext.site_pin_id])
+		if layer0 != "" and str(LayerContext.current_layer) == "Arena" and layer0 != "Arena":
+			fails.append("AR-J stole LayerContext to Arena")
+			LayerContext.set_layer(layer0)
+	if Inf and int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-J Infection cap changed")
+	print("[Playtest] AR-J prime off-lane · soft WS only · AR-A…AR-I stay · no SITE_*")
 	if SoftScanCache and SoftScanCache.has_method("invalidate_enemies"):
 		SoftScanCache.invalidate_enemies()
 

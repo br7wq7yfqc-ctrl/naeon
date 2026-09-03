@@ -167,6 +167,11 @@ const AR_H_DOOR := true
 ## Excess wins → cosmetics / title label. Not planet flip. Not SITE_*.
 ## Does not flip ORBITAL_STATIONS. Infection cap 5. SN-D stays.
 const AR_I_MATCH_END := true
+## AR-J: one extra off-lane prime-class ClashCamp on the existing 60×60.
+## Same ClashCamp / CombatDummy grammar as AR-D. Drop = soft WS only.
+## SoftKnowledge labels camp / contest / WS. Not a unique weapon.
+## AR-A…AR-I stay. Infection cap 5. Host authority. No SITE_*.
+const AR_J_PRIME_CAMP := true
 ## DO-A: contested Cybernex ↔ gROT transition on one occupied unnamed pad.
 ## Uses OwnershipData / OwnershipComponent / ContestedRing. SoftKnowledge
 ## HUD label only (CONTESTED / CYBERNEX / GROT). Not HyperGate G4. Not

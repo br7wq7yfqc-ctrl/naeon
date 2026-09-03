@@ -1,5 +1,5 @@
 extends Node
-## Headless AR-A…AR-I + river + jump pads: OTS, structures, waves, camp, kits/module, 3v3/5v5, CORE match-end.
+## Headless AR-A…AR-J + river + jump pads: OTS, structures, waves, camps, kits/module, 3v3/5v5, CORE match-end.
 ## godot --path godot --scene res://scenes/test/TestArena.tscn -- --playtest-arena
 
 func _ready() -> void:
@@ -11,7 +11,7 @@ func _ready() -> void:
 	if not wanted:
 		queue_free()
 		return
-	print("[Playtest] arena AR-A…AR-I + river + jump pads driver on")
+	print("[Playtest] arena AR-A…AR-J + river + jump pads driver on")
 	call_deferred("_go")
 
 
@@ -20,7 +20,7 @@ func _go() -> void:
 	var fails: PackedStringArray = PackedStringArray()
 	var arena: Node = get_parent()
 	if arena == null or str(arena.name) != "TestArena":
-		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
+		_finish(["no TestArena parent"], PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), PackedStringArray(), 1)
 		return
 
 	var player: Node = arena.get("player")
@@ -93,6 +93,7 @@ func _go() -> void:
 	var ar_f_fails: PackedStringArray = _check_ar_f(arena, lanes, player)
 	var ar_g_fails: PackedStringArray = _check_ar_g(arena, lanes, player)
 	var pad_fails: PackedStringArray = await _check_jump_pads(arena, player)
+	var ar_j_fails: PackedStringArray = _check_ar_j(arena, lanes, player)
 	var ar_i_fails: PackedStringArray = _check_ar_i(arena, lanes, player)
 	fails.append_array(ar_c_fails)
 	fails.append_array(ar_b_fails)
@@ -102,9 +103,10 @@ func _go() -> void:
 	fails.append_array(pad_fails)
 	fails.append_array(ar_f_fails)
 	fails.append_array(ar_g_fails)
+	fails.append_array(ar_j_fails)
 	fails.append_array(ar_i_fails)
 
-	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, ar_e_fails, river_fails, pad_fails, ar_f_fails, ar_g_fails, ar_i_fails, 0 if fails.is_empty() else 1)
+	_finish(ar_a_fails, ar_b_fails, ar_c_fails, ar_d_fails, ar_e_fails, river_fails, pad_fails, ar_f_fails, ar_g_fails, ar_i_fails, ar_j_fails, 0 if fails.is_empty() else 1)
 
 
 func _check_ar_b(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
@@ -769,6 +771,113 @@ func _check_ar_g(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	return fails
 
 
+func _check_ar_j(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
+	var fails: PackedStringArray = PackedStringArray()
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	if P0 == null or not bool(P0.AR_J_PRIME_CAMP):
+		fails.append("AR-J P0Slice flag missing")
+	if P0 != null and not bool(P0.AR_I_MATCH_END):
+		fails.append("AR-J dropped AR-I P0Slice flag")
+	if P0 != null and bool(P0.ORBITAL_STATIONS):
+		fails.append("AR-J flipped ORBITAL_STATIONS")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("AR-J Infection cap drifted")
+	var fang: Node = arena.get_node_or_null("ClashCamp") if arena else null
+	if fang == null and arena:
+		fang = arena.get("_camp")
+	if fang == null or not is_instance_valid(fang):
+		fails.append("AR-J lost AR-D ClashCamp")
+		return fails
+	var prime: Node = arena.get_node_or_null("ClashPrimeCamp") if arena else null
+	if prime == null and arena:
+		prime = arena.get("_prime_camp")
+	if prime == null or not is_instance_valid(prime):
+		fails.append("ClashPrimeCamp missing")
+		return fails
+	if prime == fang:
+		fails.append("prime camp is the AR-D pit")
+	if not prime.has_method("take_damage") or not prime.has_method("is_contested"):
+		fails.append("ClashPrimeCamp API missing")
+		return fails
+	var role := ""
+	if prime.has_method("get_camp_role"):
+		role = str(prime.get_camp_role())
+	elif "camp_role" in prime:
+		role = str(prime.camp_role)
+	if role != "prime":
+		fails.append("prime camp role is not prime (%s)" % role)
+	if prime.has_method("is_off_lane") and not bool(prime.is_off_lane()):
+		fails.append("prime camp sits on a lane strip")
+	elif lanes and lanes.has_method("is_off_lane") and prime is Node3D \
+		and not bool(lanes.is_off_lane((prime as Node3D).global_position)):
+		fails.append("prime camp not off-lane on ClashLanes")
+	if fang is Node3D and prime is Node3D:
+		if (fang as Node3D).global_position.distance_to((prime as Node3D).global_position) < 4.0:
+			fails.append("prime camp stacked on AR-D pit")
+	var hp0 := float(prime.get("health"))
+	var max0 := float(prime.get("max_health"))
+	if max0 <= float(fang.get("max_health")) + 0.01:
+		fails.append("prime camp HP not a distinct class")
+	prime.take_damage(18.0, "Cybernex")
+	var hp1 := float(prime.get("health"))
+	print("[Playtest] prime camp hp ", hp0, " -> ", hp1, " role=", role,
+		" state=", prime.call("get_contest_state") if prime.has_method("get_contest_state") else "?")
+	if hp1 >= hp0:
+		fails.append("prime camp did not take damage")
+	if prime.has_method("is_alive") and not bool(prime.is_alive()):
+		fails.append("18 dmg should not kill prime camp")
+	if not bool(prime.is_contested()):
+		fails.append("prime camp did not announce contest")
+	var announced := ""
+	if prime.has_method("last_announce"):
+		announced = str(prime.last_announce())
+	if announced == "":
+		fails.append("prime contest announce empty")
+	elif announced.to_lower().find("weapon") < 0 and announced.to_lower().find("contest") < 0:
+		fails.append("prime contest announce missing")
+	if prime.has_method("camp_drop_kind") and str(prime.camp_drop_kind()) != "soft_ws":
+		fails.append("prime drop is not soft WS")
+	if fang.has_method("camp_drop_kind") and str(fang.camp_drop_kind()) != "soft_ws":
+		fails.append("AR-D drop drifted off soft WS")
+	if GameManager and GameManager.has_method("add_mastery"):
+		GameManager.add_mastery("ecology", 20.0)
+		GameManager.add_mastery("history", 20.0)
+	if absf(float(prime.get("max_health")) - max0) > 0.01:
+		fails.append("Knowledge changed prime camp HP")
+	if fang.has_method("get") and absf(float(fang.get("max_health")) - 220.0) > 0.01:
+		fails.append("Knowledge changed AR-D camp HP")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if SoftK:
+		var plab := str(SoftK.camp_label("prime"))
+		if plab == "" or (plab != "PRIME" and plab != "PRIME PIT"):
+			fails.append("SoftKnowledge prime label missing (%s)" % plab)
+		if SoftK.has_method("exclusive_weapon_unlocked") and bool(SoftK.exclusive_weapon_unlocked("prime")):
+			fails.append("AR-J unlocked exclusive weapon")
+	if prime.has_method("label_text") and str(prime.label_text()) == "":
+		fails.append("Knowledge prime label empty")
+	var waves: Node = arena.get_node_or_null("ClashWaves") if arena else null
+	if waves == null and arena:
+		waves = arena.get("_waves")
+	if waves == null or not waves.has_method("living_minions") or waves.living_minions().is_empty():
+		fails.append("waves gone after prime camp")
+	if lanes and lanes.has_method("living_roles"):
+		var living: PackedStringArray = lanes.living_roles()
+		for need in ["OUTER", "MID", "INHIB", "CORE"]:
+			if not living.has(need):
+				fails.append("structure role gone after prime camp: " + need)
+	if player and player.has_method("ots_evidence"):
+		var ev: Dictionary = player.ots_evidence()
+		if not bool(ev.get("active", false)):
+			fails.append("OTS dropped after prime camp")
+	if LayerContext and str(LayerContext.site_pin_id) != "SITE_TEST_ARENA_PILLAR":
+		fails.append("SITE pin changed during AR-J")
+	if arena and str(arena.name) != "TestArena":
+		fails.append("left TestArena")
+	print("[Playtest] AR-J prime off-lane · soft WS · AR-D stays · G5 closed · no SITE_*")
+	return fails
+
+
 func _check_ar_i(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	var fails: PackedStringArray = PackedStringArray()
 	var P0 = load("res://scripts/world/P0Slice.gd")
@@ -879,7 +988,7 @@ func _check_ar_i(arena: Node, lanes: Node, player: Node) -> PackedStringArray:
 	return fails
 
 
-func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, ar_e: PackedStringArray, river: PackedStringArray, pads: PackedStringArray, ar_f: PackedStringArray, ar_g: PackedStringArray, ar_i: PackedStringArray, code: int) -> void:
+func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStringArray, ar_d: PackedStringArray, ar_e: PackedStringArray, river: PackedStringArray, pads: PackedStringArray, ar_f: PackedStringArray, ar_g: PackedStringArray, ar_i: PackedStringArray, ar_j: PackedStringArray, code: int) -> void:
 	if ar_a.is_empty():
 		print("[Playtest] PASS arena AR-A")
 	else:
@@ -939,6 +1048,12 @@ func _finish(ar_a: PackedStringArray, ar_b: PackedStringArray, ar_c: PackedStrin
 	else:
 		print("[Playtest] FAIL arena AR-I")
 		for f in ar_i:
+			print("[Playtest]  - ", f)
+	if ar_j.is_empty():
+		print("[Playtest] PASS arena AR-J")
+	else:
+		print("[Playtest] FAIL arena AR-J")
+		for f in ar_j:
 			print("[Playtest]  - ", f)
 	if AutoUpdater and AutoUpdater.has_method("abort_pending"):
 		AutoUpdater.abort_pending()

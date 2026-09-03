@@ -6,7 +6,7 @@
 **Движок:** Godot 4.7.2
 **Принцип:** Local-first → Vertical Slices → Iterative Multiplayer → Platform + AI + Educational Systems  
 **SC → NAEON (роли, не клон):** `docs/design/SC_FEATURE_MAP.md` · бар подхода OS-A…OS-H: `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (OS-A…OS-H built; harness ритуала. 60 FPS / 5 мин = 3090 human gate).  
-**Clash нативен; бар арены — Predecessor/Paragon, не Arena Commander:** `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (AR-A…AR-H; код арены не вытесняет OS-A).  
+**Clash нативен; бар арены — Predecessor/Paragon, не Arena Commander:** `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (AR-A…AR-J; код арены не вытесняет OS-A).  
 **Стратегия — третий бар, не Clash и не полёт OPEN SPACE:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-J built: overlay, extractor, print, hangar, orbital cluster, CX↔GR owner swap, own factory print, one pad turret, one pad storage, one pad hangar stub).  
 **Каталог — дыры (очередь, не новый catalog):** `docs/design/WORLD_FILL.md` §6. Ready-made fill → locked plates без GLB → пластины только на титульную дыру. Не mint SITE_*. Не capital-ship wave. OS-H harness built; не G2.  
 **NPC agency + MMO HOLD:** `docs/design/NPC_AGENCY.md` (NP-A…NP-F + NP-C + NP-G ST-C print + NP-H ST-D hangar + **NP-I** ST-G factory built) · `docs/design/MMO_SERVERS.md` (Phase 3 HOLD; 10k CCU / ≥100 на шард без instance-split; нет netcode сейчас; не G5 / G2–G6).
@@ -139,7 +139,7 @@ PV-B: first Space PvP from the seated player hull — same host-authority pad ri
 - Advanced AI-bots + NPC quest givers skeleton — **Q-D built** (same Q-A ContractBoard id on the pad visitor; not a second quest system)
 - **Quest system foundation**: Contract Board, generated quests (templates), basic Alliance Quest Constructor — **Q-A + Q-B + Q-C + Q-D + Q-E built** (one board, occupy/harvest/deliver_crate/scan_extractor, one shared alliance occupy/logistics contract, one optional Learning Node, one NPC giver on the same board; not campaigns)
 - **Knowledge & Skills foundation**: Knowledge Rank / Subject Mastery, optional Learning Nodes в квестах, soft combat integration (informational) — **Q-A + Q-B + Q-C + Q-D + Q-E built** (`SoftKnowledge` `quest_intel` / `alliance_intel` / `field_intel` labels only; never DPS / yield / exclusive modules). **KR-A built:** Knowledge Rank 0–4 from lifetime mastery (same `AllianceRanks` 0–4 family). SoftKnowledge / HUD label only (`KNOWLEDGE` / `KNOWLEDGE RANK` + rank number). BR-A stays. Rank ≠ yield / DPS / Pulse / Hack / print / exclusive modules.
-- **MOBA Full Prototype**: 5v5/3v3, 6–8 heroes, lanes + jungle, items, objectives, rewards pipeline, basic matchmaking — **AR-I first bite built:** CORE destroy is the honest match-end on the existing 60×60; soft WS (rules/13) only. Full jungle / 6–8 heroes / items shop / matchmaking still later. Not Voice. Not G2–G6.
+- **MOBA Full Prototype**: 5v5/3v3, 6–8 heroes, lanes + jungle, items, objectives, rewards pipeline, basic matchmaking — **AR-I first bite built:** CORE destroy is the honest match-end on the existing 60×60; soft WS (rules/13) only. **AR-J prime camp bite built:** one extra off-lane prime-class `ClashCamp` on the same 60×60 (AR-D fangtooth stays); drop = soft WS only; SoftKnowledge labels. Full 6–8 heroes / items shop / matchmaking still later. Not Voice. Not G2–G6.
 - aiNEX basic (colony planner + MOBA builds + simple educational puzzle generation)
 - Voice foundation (open-source STT/TTS path first)
 
