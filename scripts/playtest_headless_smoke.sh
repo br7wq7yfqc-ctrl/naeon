@@ -34,20 +34,20 @@ grep -E 'Playtest|SCRIPT ERROR|AR-A|AR-B|AR-C|AR-D|AR-E|AR-F|AR-G|AR-I|AR-J|AR-K
 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/ui/MainMenu.tscn --quit-after 4 > /tmp/pt_mm.log 2>&1 || true
 echo MM_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_mm.log || true)
 set +e
-timeout 200 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/world/OpenSpace.tscn -- --playtest-mechanics > /tmp/pt_mech.log 2>&1
+timeout 220 "$GODOT" --headless --path "$ROOT/godot" --scene res://scenes/world/OpenSpace.tscn -- --playtest-mechanics > /tmp/pt_mech.log 2>&1
 MECH_CODE=$?
 set -e
 # Verdict is the [Playtest] line. Godot 4.7 dummy renderer may not exit after quit()
 # (timeout 124) or the harness may OS.kill itself (137).
 if grep -q '\[Playtest\] FAIL' /tmp/pt_mech.log; then
   MECH_CODE=1
-elif grep -q '\[Playtest\] FL-J PASS' /tmp/pt_mech.log && grep -q 'FLEET MANIFEST 11/11' /tmp/pt_mech.log && grep -q '\[Playtest\] PASS AR-P' /tmp/pt_mech.log && grep -q 'ninth=cx_helix' /tmp/pt_mech.log; then
+elif grep -q '\[Playtest\] FL-K PASS' /tmp/pt_mech.log && grep -q 'FLEET MANIFEST 12/12' /tmp/pt_mech.log && grep -q '\[Playtest\] PASS AR-P' /tmp/pt_mech.log && grep -q 'ninth=cx_helix' /tmp/pt_mech.log; then
   MECH_CODE=0
 else
   MECH_CODE=1
 fi
 echo MECH_CODE=$MECH_CODE MECH_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_mech.log || true)
-grep -E 'Playtest|SCRIPT ERROR|OS-H|ST-A|FL-J|FLEET MANIFEST 11/11|PASS AR-P|ninth=cx_helix|kits=' /tmp/pt_mech.log | tail -80 || true
+grep -E 'Playtest|SCRIPT ERROR|OS-H|ST-A|FL-K|FLEET MANIFEST 12/12|PASS AR-P|ninth=cx_helix|kits=' /tmp/pt_mech.log | tail -80 || true
 grep -E 'SurfaceWater|CaveInterior|SurfaceFauna|SCRIPT ERROR|CanonPlates|PadAmbientLife|site_pin' /tmp/pt_os.log | head -20 || true
 grep -E 'SCRIPT ERROR|CanonPlates|TestArena|AbilitySystem' /tmp/pt_ta.log | head -20 || true
 grep -E 'SCRIPT ERROR|CanonPlates' /tmp/pt_mm.log | head -20 || true
