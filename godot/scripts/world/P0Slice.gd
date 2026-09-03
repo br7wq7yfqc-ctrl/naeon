@@ -184,6 +184,11 @@ const FL_H_FLEET := true
 ## HUD FLEET n/10. Click ≠ combat. Host Pulse / occupy. Not 10–15 ships.
 ## Not ENet. Not G5. FL-A / FL-B / FL-C / FL-D / FL-E / FL-F / FL-G / FL-H stay. ORBITAL_STATIONS off.
 const FL_I_FLEET := true
+## FL-J: tenth extra allied pip on the same ST-A overlay. SoftNet visual
+## (pad-visitor / NP-A hull grammar). Cap 11 (player + 10) toward 10–15.
+## HUD FLEET n/11. Click ≠ combat. Host Pulse / occupy. Not 10–15 ships.
+## Not ENet. Not G5. FL-A / FL-B / FL-C / FL-D / FL-E / FL-F / FL-G / FL-H / FL-I stay. ORBITAL_STATIONS off.
+const FL_J_FLEET := true
 ## AR-H: one door on an occupied unnamed pad into Clash TestArena.
 ## Not a city-map. Not G2. G5 cluster stays closed. Tab/menu Clash stays.
 const AR_H_DOOR := true
