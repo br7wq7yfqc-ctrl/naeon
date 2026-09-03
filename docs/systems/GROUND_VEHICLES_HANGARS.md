@@ -113,6 +113,8 @@ IN-C (V0+V1): `HangarBay.gd` + `CargoHold` + `CargoRamp` on `CatalogCarrier` (`c
 
 ST-J: pad-side `PadHangarStub` via `BaseBuilder` after occupy on unnamed `Pad_North` / `Pad_Approach` / `Pad_Flank`. Hatch/LAND stay on the pad (same OpenSpace). Not ST-D `CarrierHangarQueue`. No rover. No `SITE_*`.
 
+ST-K: same `PadHangarStub` grammar on the existing `PlayerOrbitalStation` cluster via `BaseBuilder.place_orbital_hangar_stub`. SoftKnowledge / HUD label only. Host authority. Hatch/LAND stay legal. ST-E dock+habitat and ST-G factory stay. Not ST-D `CarrierHangarQueue`. Not IN-F SoftNet V4. No rover. No `SITE_*`.
+
 IN-D (V2): `GroundVehicle` rover on ramp top when plates are `DEPLOYED`. WASD drive, `F` board/exit (walker parked, not freed). Drive onto the unnamed pad deck. One rover. No SoftNet multi-seat. No `SITE_*`. 0 Tripo. Procedural chassis/wheels.
 
 IN-E (V3): drive onto the deployed ramp mouth / `hangar_bay` volume → despawn world rover → `CargoHold` (`id` + `health`). Bay console or hangar interact retrieves onto ramp top when `DEPLOYED` and IN-C pose rules pass. Takeoff keeps inventory. No second world rover. No pay-stat power. No SoftNet multi-seat. No `SITE_*`. 0 Tripo.

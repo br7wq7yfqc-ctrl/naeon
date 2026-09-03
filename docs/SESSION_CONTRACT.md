@@ -312,6 +312,13 @@
     XP/LEVEL stays. AR-T minion wave stays. AR-A…AR-X stay.
     Host authority. ORBITAL_STATIONS
     stays false. No SITE_* (this pass).
+63. ST-K: one hangar stub on the existing PlayerOrbitalStation
+    cluster (ST-E dock+habitat; ST-G factory stays) via BaseBuilder
+    / PadHangarStub. SoftKnowledge / HUD HANGAR STUB only. Host
+    authority. Hatch/LAND stay legal (same OpenSpace, not MainMenu).
+    ST-J pad stub stays. Not ST-D carrier hangar. Not IN-F SoftNet
+    V4. Not a mobile SITE_*. Infection cap 5. Not a 13th AbilityKit.
+    Not FL-O. ORBITAL_STATIONS stays false. No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.
