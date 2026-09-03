@@ -41,13 +41,13 @@ set -e
 # (timeout 124) or the harness may OS.kill itself (137).
 if grep -q '\[Playtest\] FAIL' /tmp/pt_mech.log; then
   MECH_CODE=1
-elif grep -q '\[Playtest\] FL-M PASS' /tmp/pt_mech.log && grep -q 'FLEET MANIFEST 14/14' /tmp/pt_mech.log && grep -q '\[Playtest\] PASS AR-P' /tmp/pt_mech.log && grep -q 'ninth=cx_helix' /tmp/pt_mech.log; then
+elif grep -q '\[Playtest\] FL-N PASS' /tmp/pt_mech.log && grep -q 'FLEET MANIFEST 15/15' /tmp/pt_mech.log && grep -q '\[Playtest\] PASS AR-P' /tmp/pt_mech.log && grep -q 'ninth=cx_helix' /tmp/pt_mech.log; then
   MECH_CODE=0
 else
   MECH_CODE=1
 fi
 echo MECH_CODE=$MECH_CODE MECH_ERR=$(grep -c 'SCRIPT ERROR' /tmp/pt_mech.log || true)
-grep -E 'Playtest|SCRIPT ERROR|OS-H|ST-A|FL-M|FLEET MANIFEST 14/14|PASS AR-P|ninth=cx_helix|kits=' /tmp/pt_mech.log | tail -80 || true
+grep -E 'Playtest|SCRIPT ERROR|OS-H|ST-A|FL-N|FLEET MANIFEST 15/15|PASS AR-P|ninth=cx_helix|kits=' /tmp/pt_mech.log | tail -80 || true
 grep -E 'SurfaceWater|CaveInterior|SurfaceFauna|SCRIPT ERROR|CanonPlates|PadAmbientLife|site_pin' /tmp/pt_os.log | head -20 || true
 grep -E 'SCRIPT ERROR|CanonPlates|TestArena|AbilitySystem' /tmp/pt_ta.log | head -20 || true
 grep -E 'SCRIPT ERROR|CanonPlates' /tmp/pt_mm.log | head -20 || true
