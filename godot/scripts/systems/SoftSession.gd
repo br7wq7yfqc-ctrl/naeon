@@ -388,7 +388,7 @@ func remember_hangar_insure(source = null, where: String = "") -> void:
 		elif source.has_meta("pad_hangar_stub") and bool(source.get_meta("pad_hangar_stub")):
 			loc = "pad"
 			kind = "hangar_stub"
-			var parent := source.get_parent()
+			var parent: Node = source.get_parent()
 			if parent != null:
 				pname = str(parent.name)
 		elif source.has_meta("hangar_queue") and bool(source.get_meta("hangar_queue")):
@@ -403,7 +403,7 @@ func remember_hangar_insure(source = null, where: String = "") -> void:
 		return
 	if loc == "pad":
 		if pname == "" and source is Node and is_instance_valid(source):
-			var pad_n := source.get_parent()
+			var pad_n: Node = source.get_parent()
 			if pad_n != null:
 				pname = str(pad_n.name)
 		if not LEGAL_PADS.has(pname):
