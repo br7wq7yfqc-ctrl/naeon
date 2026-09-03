@@ -182,8 +182,24 @@ func register_camp_contest(role: String = "") -> void:
 	# Soft announce only — Knowledge may label the pit, never unique DPS.
 	if str(role) == "prime":
 		_flash("PRIME CONTESTED — soft · no unique weapon")
+	elif str(role) == "small" or str(role) == "jungle":
+		_flash("CAMP CONTESTED — soft · no unique weapon")
 	else:
 		_flash("CAMP CONTESTED — soft · no unique weapon")
+
+
+func camp_soft_label() -> String:
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if SoftK and SoftK.has_method("camp_label"):
+		return str(SoftK.camp_label("small"))
+	return "CAMP"
+
+
+func jungle_soft_label() -> String:
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	if SoftK and SoftK.has_method("jungle_label"):
+		return str(SoftK.jungle_label())
+	return "JUNGLE"
 
 func show_soft_result(result_label: String, cosmetic_label: String = "") -> void:
 	## AR-I: SoftKnowledge WIN / LOSS (title if daily WS cap). Never DPS.
@@ -266,9 +282,21 @@ func _lane_bar_line() -> String:
 			wave = str(SoftK.wave_label())
 		if SoftK.has_method("minion_label"):
 			minion = str(SoftK.minion_label())
-	return "TOP %.0f   MID %.0f   BOT %.0f   /100  (soft)  ·  %s  ·  %s" % [
+	var camp := "CAMP"
+	var jungle := "JUNGLE"
+	if SoftK:
+		if SoftK.has_method("camp_label"):
+			camp = str(SoftK.camp_label("small"))
+		if SoftK.has_method("jungle_label"):
+			jungle = str(SoftK.jungle_label())
+	if camp == jungle:
+		if camp == "JUNGLE":
+			camp = "CAMP"
+		else:
+			jungle = "JUNGLE"
+	return "TOP %.0f   MID %.0f   BOT %.0f   /100  (soft)  ·  %s  ·  %s  ·  %s  ·  %s" % [
 		_lane_pressure[0] * 100.0, _lane_pressure[1] * 100.0, _lane_pressure[2] * 100.0,
-		wave, minion,
+		wave, minion, camp, jungle,
 	]
 
 

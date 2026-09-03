@@ -22,6 +22,7 @@ var dummy_scene: PackedScene = preload("res://scenes/combat/CombatDummy.tscn")
 var _waves: Node = null
 var _camp: Node3D = null
 var _prime_camp: Node3D = null
+var _small_camp: Node3D = null
 var _bench: Node3D = null
 var _river: Node3D = null
 var _jump_pads: Node3D = null
@@ -500,6 +501,7 @@ func _finish_clash_layout() -> void:
 	_setup_clash_waves()
 	_setup_clash_camp()
 	_setup_clash_prime_camp()
+	_setup_clash_small_camp()
 	_setup_module_bench()
 	_setup_clash_river()
 	_setup_clash_jump_pads()
@@ -521,6 +523,7 @@ func _finish_clash_layout() -> void:
 	_evidence_ar_t()
 	_evidence_ar_v()
 	_evidence_ar_w()
+	_evidence_ar_x()
 	_evidence_river()
 	_evidence_jump_pads()
 	_setup_clash_local_match()
@@ -656,6 +659,13 @@ func _update_clash_radar() -> void:
 				camp = "  ·  CAMP CONTEST"
 			if _prime_camp and _prime_camp.has_method("is_contested") and bool(_prime_camp.is_contested()):
 				camp += "  ·  PRIME CONTEST"
+			if _small_camp and _small_camp.has_method("is_contested") and bool(_small_camp.is_contested()):
+				var slab := "CAMP"
+				if _small_camp.has_method("label_text"):
+					slab = str(_small_camp.label_text())
+				if slab == "":
+					slab = "JUNGLE"
+				camp += "  ·  %s CONTEST" % slab
 			var kit := ""
 			if player and player.ability_system and player.ability_system.has_method("kit_label"):
 				kit = "  ·  KIT %s" % str(player.ability_system.kit_label())
@@ -709,6 +719,8 @@ func _update_clash_radar() -> void:
 		nex.append([(_camp as Node3D).global_position, Color(0.55, 0.9, 0.3)])
 	if _prime_camp and is_instance_valid(_prime_camp) and _prime_camp.get("_alive") != false:
 		nex.append([(_prime_camp as Node3D).global_position, Color(0.92, 0.72, 0.22)])
+	if _small_camp and is_instance_valid(_small_camp) and _small_camp.get("_alive") != false:
+		nex.append([(_small_camp as Node3D).global_position, Color(0.32, 0.78, 0.72)])
 	if get_tree():
 		for n in get_tree().get_nodes_in_group("clash_minion"):
 			if n == null or not is_instance_valid(n) or not (n is Node3D):
@@ -1037,6 +1049,47 @@ func _evidence_ar_j() -> void:
 	if _prime_camp and _prime_camp.has_method("get_camp_role"):
 		role = str(_prime_camp.get_camp_role())
 	print("[AR-J] prime=", _prime_camp != null, " role=", role, " off_lane=", off, " state=", st, " pin=", LayerContext.site_pin_id if LayerContext else "")
+
+
+func _setup_clash_small_camp() -> void:
+	if get_node_or_null("ClashSmallCamp"):
+		_small_camp = get_node_or_null("ClashSmallCamp") as Node3D
+		if _small_camp and "camp_role" in _small_camp:
+			_small_camp.camp_role = "small"
+		if _small_camp and _small_camp.has_method("bind_player") and player:
+			_small_camp.bind_player(player)
+		return
+	_small_camp = Node3D.new()
+	_small_camp.set_script(preload("res://scripts/arena/ClashCamp.gd"))
+	_small_camp.name = "ClashSmallCamp"
+	_small_camp.set("camp_role", "small")
+	add_child(_small_camp)
+	if _small_camp.has_method("bind_player") and player:
+		_small_camp.bind_player(player)
+
+
+func _evidence_ar_x() -> void:
+	var off := false
+	var st := ""
+	var role := ""
+	var lab := ""
+	var host := false
+	var pulse := 0.0
+	if _small_camp and _small_camp.has_method("is_off_lane"):
+		off = bool(_small_camp.is_off_lane())
+	if _small_camp and _small_camp.has_method("get_contest_state"):
+		st = str(_small_camp.get_contest_state())
+	if _small_camp and _small_camp.has_method("get_camp_role"):
+		role = str(_small_camp.get_camp_role())
+	if _small_camp and _small_camp.has_method("label_text"):
+		lab = str(_small_camp.label_text())
+	if _small_camp and _small_camp.has_method("is_host_authority"):
+		host = bool(_small_camp.is_host_authority())
+	if _small_camp and _small_camp.has_method("pulse_damage"):
+		pulse = float(_small_camp.pulse_damage())
+	print("[AR-X] small=", _small_camp != null, " role=", role, " off_lane=", off,
+		" state=", st, " label=", lab, " host=", host, " pulse=", pulse,
+		" pin=", LayerContext.site_pin_id if LayerContext else "")
 
 
 func _setup_module_bench() -> void:
