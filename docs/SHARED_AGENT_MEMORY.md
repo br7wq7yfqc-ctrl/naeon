@@ -551,8 +551,9 @@ Summary of what every agent must now assume:
   uncalled.
 - The arena hero's procedural silhouette has no locomotion animation — art work,
   not a logic defect.
-- Mac 10-minute soak: harness is `--playtest-soak` / `scripts/playtest_mac_gpu_soak.sh`
-  (GUI Godot 4.7.2, min preset). Headless TIME_FPS is dummy — refuse it.
-  Record FPS/RAM after the Mac GPU run in `docs/PROTOTYPE_TO_PLAYABLE.md`.
+- Mac 10-minute soak **signed off 2026-09-05** on owner GPU: GUI Godot 4.7.2,
+  AMD Radeon Pro 5600M, Vulkan Forward+, min preset LOW, 41 samples / 600s.
+  TIME_FPS min=56.0 avg=59.7 max=60.0. RAM 101.1→101.4 MB (climb_steps=0).
+  nodes 815→815. Headless TIME_FPS is dummy — refuse it.
 
 

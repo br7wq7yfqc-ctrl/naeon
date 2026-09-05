@@ -374,10 +374,13 @@ When observation and code disagree, measure.
   `OpenSpace._setup_interior`).
 - The procedural hero silhouette has no locomotion animation on the arena hero;
   that is art/animation work, not a logic defect.
-- Mac 10-minute soak: `--playtest-soak` on GUI Godot 4.7.2
-  (`/Applications/Godot.app`, min preset, honest TIME_FPS). Headless FPS is
-  dummy and must not sign off rules/25. Numbers: pending the Mac GPU run
-  (`scripts/playtest_mac_gpu_soak.sh`).
+- Mac 10-minute soak: **signed off 2026-09-05** on owner GPU.
+  GUI Godot 4.7.2 `/Applications/Godot.app` (`--playtest-soak`, not headless).
+  Device: AMD Radeon Pro 5600M, Vulkan 1.2 Forward+, display=macOS,
+  min preset `LOW (min 1060)`. 41 samples / 600s.
+  TIME_FPS min=56.0 avg=59.7 max=60.0 (honest, vsync-capped, not clamped in
+  code). MEMORY_STATIC 101.1 → 101.4 MB (delta +0.4, climb_steps=0).
+  OBJECT_NODE_COUNT 815 → 815. Headless dummy FPS still must not sign this off.
 
 ---
 
