@@ -1690,6 +1690,8 @@ func _assert_claim_beacon_ledger(fails: PackedStringArray, plates: Array) -> voi
 	## WORLD_FILL §6 queue 2: occupy pylons use locked ledger slugs only.
 	## cybernex_claim_beacon / grot_claim_beacon (dump phjM0 / nFxgT).
 	## No honest GLB → code-first / meta-only. No SITE_*. No minted UUID.
+	## ONE_PAD keeps a single PadBaseController — extra plates stay unnamed
+	## logistics (no occupy pylon). Do not mint a beacon on those.
 	var locked_slugs := PackedStringArray(["cybernex_claim_beacon", "grot_claim_beacon"])
 	var locked_dumps := PackedStringArray(["phjM0", "nFxgT"])
 	var tagged := 0
@@ -1698,9 +1700,14 @@ func _assert_claim_beacon_ledger(fails: PackedStringArray, plates: Array) -> voi
 			continue
 		if not str(p.name).begins_with("Pad_"):
 			continue
-		if p.has_method("_ensure_claim_beacon") and p.get_node_or_null("ClaimBeaconVis") == null:
-			p.call("_ensure_claim_beacon")
-		var vis: Node = p.get_node_or_null("ClaimBeaconVis")
+		var ctrl: Node = p.get_node_or_null("BaseCluster/PadBaseController")
+		if ctrl == null:
+			ctrl = p.find_child("PadBaseController", true, false)
+		if ctrl == null:
+			continue
+		if ctrl.has_method("_ensure_claim_beacon"):
+			ctrl.call("_ensure_claim_beacon")
+		var vis: Node = ctrl.get_node_or_null("ClaimBeaconVis")
 		if vis == null:
 			fails.append("WF-A claim beacon missing on %s" % p.name)
 			continue
@@ -1719,8 +1726,8 @@ func _assert_claim_beacon_ledger(fails: PackedStringArray, plates: Array) -> voi
 		var uid := str(vis.get_meta("uuid", ""))
 		if _wf_a_looks_like_uuid(uid) or _wf_a_looks_like_uuid(str(vis.name)):
 			fails.append("WF-A claim beacon minted UUID on %s" % p.name)
-	if tagged < 3:
-		fails.append("WF-A want locked claim beacons on 3 unnamed pads, got %s" % tagged)
+	if tagged < 1:
+		fails.append("WF-A occupy pylon missing locked claim beacon")
 	print("[Playtest] WF-A claim_beacons=", tagged, " slugs=cybernex_claim_beacon,grot_claim_beacon dumps=phjM0,nFxgT")
 
 
