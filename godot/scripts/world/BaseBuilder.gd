@@ -90,7 +90,8 @@ static func npc_module_on(pad: Node3D) -> Node3D:
 
 
 static func pad_has_player_module(pad: Node3D) -> bool:
-	return module_on(pad) != null
+	## Player habitat only. NP-C NpcHabitat is pad_has_module, not this slot.
+	return player_module_on(pad) != null
 
 
 static func module_on(pad: Node3D) -> Node3D:

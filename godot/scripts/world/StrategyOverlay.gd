@@ -125,7 +125,7 @@ func readiness_line() -> String:
 	if d > ENTER_M:
 		_last_line = "STRATEGY: %s %.0f m — land or EVA first" % [pad.name, d]
 		return _last_line
-	if _Builder.pad_has_player_module(pad):
+	if _Builder.pad_has_module(pad):
 		_last_line = "STRATEGY: %s · habitat already placed · B overlay" % pad.name
 		return _last_line
 	_last_line = "STRATEGY: %s %.0f m · B overlay · click/Enter habitat" % [pad.name, d]
@@ -1052,7 +1052,7 @@ func place_module() -> Node3D:
 	if _actor_distance(_pad) > ENTER_M:
 		_toast(readiness_line())
 		return null
-	if _Builder.pad_has_player_module(_pad):
+	if _Builder.pad_has_module(_pad):
 		var line := "STRATEGY: pad already has a module (one per pad this slice)"
 		_last_line = line
 		_toast(line)
