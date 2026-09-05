@@ -455,11 +455,7 @@ func _spawn_beam(caster: Node, to: Vector3, color: Color) -> void:
 	imm.surface_add_vertex(caster.global_position + Vector3.UP * 1.3)
 	imm.surface_add_vertex(to)
 	imm.surface_end()
-	var tree: SceneTree = caster.get_tree()
-	tree.create_timer(0.25).timeout.connect(func():
-		if is_instance_valid(im):
-			im.queue_free()
-	)
+	SafeTimeout.free_after(im, 0.25)
 
 func _spawn_shield_fx(caster: Node, color: Color) -> void:
 	if caster == null:
@@ -470,10 +466,7 @@ func _spawn_shield_fx(caster: Node, color: Color) -> void:
 	caster.add_child(shell)
 	shell.position = Vector3.UP * 1.0
 	var dur: float = max(duration, 0.6)
-	caster.get_tree().create_timer(dur).timeout.connect(func():
-		if is_instance_valid(shell):
-			shell.queue_free()
-	)
+	SafeTimeout.free_after(shell, dur)
 
 func _ray_query(caster: Node, max_range: float) -> Dictionary:
 	if caster == null or not caster.is_inside_tree():

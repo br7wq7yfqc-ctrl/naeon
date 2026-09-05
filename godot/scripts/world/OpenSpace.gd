@@ -71,6 +71,7 @@ func _ready() -> void:
 	_setup_clash_softnet()
 	_setup_mechanics_playtest()
 	_setup_sandbox_playtest()
+	_setup_soak_playtest()
 	if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
 		floating.set_target(ship)
 	if floating != null and is_instance_valid(floating) and floating.has_method("rebase_now"):
@@ -398,6 +399,13 @@ func _setup_sandbox_playtest() -> void:
 	var n := Node.new()
 	n.set_script(preload("res://scripts/test/SandboxPlaytest.gd"))
 	n.name = "SandboxPlaytest"
+	add_child(n)
+
+
+func _setup_soak_playtest() -> void:
+	var n := Node.new()
+	n.set_script(preload("res://scripts/test/OpenSpaceSoak.gd"))
+	n.name = "OpenSpaceSoak"
 	add_child(n)
 
 

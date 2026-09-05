@@ -40,6 +40,7 @@ var _player_cache: Node3D = null
 var _ai_accum: float = 0.0
 var _spawn_pos: Vector3
 var _mat: StandardMaterial3D
+var _flash_albedo: Color = Color.WHITE
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _stagger: float = 0.0
 var _windup_t: float = 0.0
@@ -286,12 +287,12 @@ func _begin_windup_fx() -> void:
 	if _mat == null:
 		return
 	_mat.emission_energy_multiplier = 2.4
-	var tree := get_tree()
-	if tree:
-		tree.create_timer(0.22).timeout.connect(func():
-			if is_instance_valid(self) and _mat:
-				_mat.emission_energy_multiplier = 1.2
-		)
+	SafeTimeout.after(self, 0.22, "_end_windup_fx")
+
+
+func _end_windup_fx() -> void:
+	if _mat:
+		_mat.emission_energy_multiplier = 1.2
 
 
 func take_damage(amount: float, _source_faction: String = "") -> void:
@@ -447,7 +448,7 @@ func _die() -> void:
 	print("[CombatDummy] Downed")
 	var vis := _visual_root()
 	if vis and DisplayServer.get_name() != "headless" and get_tree():
-		var tw := get_tree().create_tween()
+		var tw := create_tween()
 		tw.tween_property(vis, "scale", Vector3(1.35, 0.08, 1.35), 0.28)
 		tw.tween_callback(_hide_corpse)
 	else:
@@ -567,12 +568,14 @@ func _find_piloted_hull() -> Node3D:
 func _flash() -> void:
 	if _mat == null:
 		return
-	var orig: Color = _mat.albedo_color
+	_flash_albedo = _mat.albedo_color
 	_mat.albedo_color = Color(1, 1, 1)
-	get_tree().create_timer(0.07).timeout.connect(func():
-		if is_instance_valid(self) and _mat:
-			_mat.albedo_color = orig
-	)
+	SafeTimeout.after(self, 0.07, "_end_flash")
+
+
+func _end_flash() -> void:
+	if _mat:
+		_mat.albedo_color = _flash_albedo
 
 func _update_labels() -> void:
 	if label:
@@ -597,6 +600,11 @@ func _update_labels() -> void:
 		label.modulate = Color(0.95, 0.25, 0.5) if faction == "gROT" else Color(0.3, 0.9, 1.0)
 	if health_bar:
 		health_bar.text = "%d" % int(health)
+
+func _end_hit_pop() -> void:
+	if _mat:
+		_mat.emission_energy_multiplier = 1.2
+
 
 func try_load_drone() -> void:
 	if DisplayServer.get_name() == "headless":
@@ -639,12 +647,9 @@ func _hit_pop(amount: float) -> void:
 	if vis == null or not is_instance_valid(vis):
 		return
 	var base := vis.scale
-	var tw := get_tree().create_tween()
+	var tw := create_tween()
 	tw.tween_property(vis, "scale", base * 1.12, 0.05)
 	tw.tween_property(vis, "scale", base, 0.12)
 	if _mat:
 		_mat.emission_energy_multiplier = 2.8 if amount >= 20.0 else 1.8
-		get_tree().create_timer(0.1).timeout.connect(func():
-			if is_instance_valid(self) and _mat:
-				_mat.emission_energy_multiplier = 1.2
-		)
+		SafeTimeout.after(self, 0.1, "_end_hit_pop")

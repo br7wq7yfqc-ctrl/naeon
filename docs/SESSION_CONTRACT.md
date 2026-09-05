@@ -37,8 +37,10 @@
     downed state, match conclusion, pad streaming teardown (memory climb closed,
     measured flat across two laps). Single record:
     **`docs/PROTOTYPE_TO_PLAYABLE.md`** (this pass)
-17. Next: 10-min soak on Mac GPU for the FPS half of rules/25 (this VM is
-    llvmpipe, so only the memory half could be signed off here)
+17. Next: 10-min soak on Mac GPU for the FPS half of rules/25 — harness
+    `--playtest-soak` / `scripts/playtest_mac_gpu_soak.sh` (GUI Godot 4.7.2,
+    min preset, honest TIME_FPS). This VM is llvmpipe. Record FPS/RAM in
+    `docs/PROTOTYPE_TO_PLAYABLE.md` after the Mac run.
 18. ST-A: strategy overlay (B) + one habitat on unnamed pad; ship/TPS remain
     (built). G2–G6 still locked.
 19. ST-B: extractor visible on unnamed pad + Contribution on HUD after occupy

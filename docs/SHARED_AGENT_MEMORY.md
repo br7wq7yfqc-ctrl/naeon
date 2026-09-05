@@ -551,7 +551,8 @@ Summary of what every agent must now assume:
   uncalled.
 - The arena hero's procedural silhouette has no locomotion animation — art work,
   not a logic defect.
-- Mac 10-minute soak still needs the owner's GPU for the FPS half of rules/25;
-  this VM is llvmpipe, so only the memory half is signed off.
+- Mac 10-minute soak: harness is `--playtest-soak` / `scripts/playtest_mac_gpu_soak.sh`
+  (GUI Godot 4.7.2, min preset). Headless TIME_FPS is dummy — refuse it.
+  Record FPS/RAM after the Mac GPU run in `docs/PROTOTYPE_TO_PLAYABLE.md`.
 
 

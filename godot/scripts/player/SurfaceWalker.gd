@@ -1332,10 +1332,7 @@ func _spawn_wade_fx(up: Vector3) -> void:
 	p.position = Vector3(0, 0.2, 0)
 	var tree := get_tree()
 	if tree:
-		tree.create_timer(0.55).timeout.connect(func():
-			if is_instance_valid(p):
-				p.queue_free()
-		)
+		SafeTimeout.free_after(p, 0.55)
 
 
 var _terrain_hint_cd: float = 0.0
@@ -1611,10 +1608,7 @@ func _mag_latch_fx() -> void:
 		p2.draw_pass_1 = sm
 		tree.current_scene.add_child(p2)
 		p2.global_position = global_position
-		tree.create_timer(0.5).timeout.connect(func():
-			if is_instance_valid(p2):
-				p2.queue_free()
-		)
+		SafeTimeout.free_after(p2, 0.5)
 
 
 func _mag_step_fx() -> void:

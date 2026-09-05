@@ -1,4 +1,7 @@
+**2026-09-05 — leftover polish (no new slice): (1) Mac GPU 10-min OpenSpace soak harness `--playtest-soak` / `scripts/playtest_mac_gpu_soak.sh` (GUI Godot 4.7.2, min preset, honest TIME_FPS / MEMORY_STATIC / OBJECT_NODE_COUNT; headless dummy FPS refused); (2) `SafeTimeout` + instance_id so SceneTreeTimer lambdas no longer error `Lambda capture was freed` after PASS PC-A habitat/storage `queue_free`; (3) WORLD_FILL §6 queue 2 occupy pylon tags locked ledger slugs `cybernex_claim_beacon`/`grot_claim_beacon` dump `phjM0`/`nFxgT`, empty site_pin, code-first if no GLB. Infection cap 5. SoftKnowledge only. Pulse 11. kits 12. FLEET 15/15. ORBITAL_STATIONS false. No SITE_*. No ST-O / PC-D / FL-O.**
+
 **2026-09-05 — playtest isolation: ST-A / PC-A no longer collide with NP-C/NP-G or SoftSession leftover (`pad_has_player_module` is player-only; ST-A frees leftover player habitats before placing exactly one; NP-C prefers Flank; NP-G colocates with NP-C; PC-A skips npc/printed pads; NP-C/G run after PC-A). Infection cap 5. SoftKnowledge only. Pulse 11. kits 12. FLEET 15/15. ORBITAL_STATIONS false. No SITE_*. No new slice.**
+
 
 **2026-09-03 — ST-N: first carrier drone/fighter seed on existing ST-D CatalogCarrier / CarrierHangarQueue (one host-authority CombatDummy + SoftNet visual parented to hangar; SoftKnowledge / HUD DRONE / FIGHTER / HANGAR only; Pulse 11 both ways; Infection cap 5; no permadeath; not a second hull / 15th fleet pip / new OpenSpace; cash-shop skip still refused; kits 12; FLEET 15/15; PC-A+B+C stay; ST-A…ST-M stay; ORBITAL_STATIONS false)**
 

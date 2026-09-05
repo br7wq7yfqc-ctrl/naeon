@@ -623,11 +623,11 @@ func _form_switch_fx() -> void:
 		GameManager.toast_requested.emit("Hero form → %s (%s) · soft mobility only" % [current_form, faction])
 	if SoftSession:
 		SoftSession.remember_player(self, "form")
-	var tw := get_tree().create_timer(0.35)
-	tw.timeout.connect(func():
-		if _body_mat:
-			_body_mat.emission_energy_multiplier = 1.6
-	)
+	SafeTimeout.after(self, 0.35, "_end_form_switch_fx")
+
+func _end_form_switch_fx() -> void:
+	if _body_mat:
+		_body_mat.emission_energy_multiplier = 1.6
 
 func _strip_colliders(n: Node) -> void:
 	# Remove StaticBody/CollisionShape so form mesh never freezes CharacterBody3D

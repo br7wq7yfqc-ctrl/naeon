@@ -1626,6 +1626,7 @@ func _assert_wf_a(fails: PackedStringArray) -> void:
 					fails.append("WF-A pad clutter minted UUID on %s" % cname)
 		if local_n < per_pad_min:
 			per_pad_min = local_n
+	_assert_claim_beacon_ledger(fails, plates)
 	if unnamed_n < 3:
 		fails.append("WF-A want 3 unnamed pads, got %s" % unnamed_n)
 	var sc: Node = pads_root.get_node_or_null("WorldFillScatter") if pads_root else null
@@ -1682,7 +1683,45 @@ func _assert_wf_a(fails: PackedStringArray) -> void:
 			fails.append("WF-A OS-G host is not an unnamed pad")
 	if LayerContext and str(LayerContext.site_pin_id) != "" and str(LayerContext.site_pin_id) != "SITE_SPACE_TEST_PAD":
 		fails.append("WF-A site_pin left catalog (%s)" % LayerContext.site_pin_id)
-	print("[Playtest] WF-A pads=", unnamed_n, " fill=", fill_n, " slugs=", ",".join(slugs), " new_SITE_*=", new_sites.size(), " new_UUID=", new_uuids.size())
+	print("[Playtest] WF-A pads=", unnamed_n, " fill=", fill_n, " slugs=", ",".join(slugs), " new_SITE_*=", new_sites.size(), " new_UUID=", new_uuids.size(), " claim_beacons_locked")
+
+
+func _assert_claim_beacon_ledger(fails: PackedStringArray, plates: Array) -> void:
+	## WORLD_FILL §6 queue 2: occupy pylons use locked ledger slugs only.
+	## cybernex_claim_beacon / grot_claim_beacon (dump phjM0 / nFxgT).
+	## No honest GLB → code-first / meta-only. No SITE_*. No minted UUID.
+	var locked_slugs := PackedStringArray(["cybernex_claim_beacon", "grot_claim_beacon"])
+	var locked_dumps := PackedStringArray(["phjM0", "nFxgT"])
+	var tagged := 0
+	for p in plates:
+		if p == null or not is_instance_valid(p):
+			continue
+		if not str(p.name).begins_with("Pad_"):
+			continue
+		if p.has_method("_ensure_claim_beacon") and p.get_node_or_null("ClaimBeaconVis") == null:
+			p.call("_ensure_claim_beacon")
+		var vis: Node = p.get_node_or_null("ClaimBeaconVis")
+		if vis == null:
+			fails.append("WF-A claim beacon missing on %s" % p.name)
+			continue
+		tagged += 1
+		var slug := str(vis.get_meta("ledger_slug", ""))
+		if locked_slugs.find(slug) < 0:
+			fails.append("WF-A claim beacon slug not locked (%s on %s)" % [slug, p.name])
+		var dump_id := str(vis.get_meta("dump_id", ""))
+		if locked_dumps.find(dump_id) < 0:
+			fails.append("WF-A claim beacon dump_id not locked (%s on %s)" % [dump_id, p.name])
+		var pin := str(vis.get_meta("site_pin", "missing"))
+		if pin.begins_with("SITE_"):
+			fails.append("WF-A claim beacon minted SITE_* on %s (%s)" % [p.name, pin])
+		elif pin != "":
+			fails.append("WF-A claim beacon site_pin not empty on %s (%s)" % [p.name, pin])
+		var uid := str(vis.get_meta("uuid", ""))
+		if _wf_a_looks_like_uuid(uid) or _wf_a_looks_like_uuid(str(vis.name)):
+			fails.append("WF-A claim beacon minted UUID on %s" % p.name)
+	if tagged < 3:
+		fails.append("WF-A want locked claim beacons on 3 unnamed pads, got %s" % tagged)
+	print("[Playtest] WF-A claim_beacons=", tagged, " slugs=cybernex_claim_beacon,grot_claim_beacon dumps=phjM0,nFxgT")
 
 
 func _wf_a_catalog_frozen(fails: PackedStringArray) -> void:

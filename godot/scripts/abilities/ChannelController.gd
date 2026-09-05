@@ -229,12 +229,7 @@ func _spawn_complete_burst() -> void:
 	p.draw_pass_1 = dm
 	p.position = Vector3(0, 0.5, 0)
 	c.add_child(p)
-	var tree := c.get_tree()
-	if tree:
-		tree.create_timer(0.7).timeout.connect(func():
-			if is_instance_valid(p):
-				p.queue_free()
-		)
+	SafeTimeout.free_after(p, 0.7)
 
 
 func _clear_vfx() -> void:

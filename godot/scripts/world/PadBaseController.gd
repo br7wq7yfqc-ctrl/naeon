@@ -58,8 +58,7 @@ const PAD_YARD_CAP := 6
 func _ready() -> void:
 	add_to_group("pad_base")
 	add_to_group("hackable")
-	if DisplayServer.get_name() != "headless":
-		call_deferred("_ensure_claim_beacon")
+	call_deferred("_ensure_claim_beacon")
 	ownership = OwnershipData.new()
 	# Unique per pad: every cluster is named "BaseCluster", so parent+self
 	# collided across all planets and soft influence landed on a random pad.
@@ -1554,8 +1553,7 @@ func swap_cluster_theme(faction_name: String) -> void:
 	_reload_theme_under(cluster, fac)
 	if pad != null and pad != cluster:
 		_reload_theme_under(pad, fac)
-	if DisplayServer.get_name() != "headless":
-		call_deferred("_ensure_claim_beacon")
+	call_deferred("_ensure_claim_beacon")
 	print("[PadBase] dual-theme cluster → ", fac)
 
 
@@ -1595,50 +1593,66 @@ func _notify_hud(msg: String) -> void:
 
 
 func _ensure_claim_beacon() -> void:
-	# Dummy: building then freeing the pylon is 7× mesh_get_surface_count.
-	if DisplayServer.get_name() == "headless":
-		return
-	# Rebuild on every ownership flip — returning early left the pylon showing
-	# the previous owner's colours.
+	# WORLD_FILL §6 queue 2: occupy pylon uses locked ledger slugs
+	# cybernex_claim_beacon / grot_claim_beacon (dump phjM0 / nFxgT).
+	# No honest GLB yet → code-first pylon. Never mint SITE_* / UUID.
+	# Headless: meta-only node (mesh_get_surface_count is 7× on dummy).
 	var old := get_node_or_null("ClaimBeaconVis")
 	if old:
 		old.queue_free()
 	var root := Node3D.new()
 	root.name = "ClaimBeaconVis"
 	add_child(root)
+	_tag_claim_beacon(root)
+	if DisplayServer.get_name() == "headless":
+		return
 	var loaded := false
-	if DisplayServer.get_name() != "headless":
-		var fac := "cybernex"
-		if ownership:
-			var fn := ownership.faction_name().to_lower()
-			if fn == "grot":
-				fac = "grot"
-		var rels := [
-			"props/ownership_claim_pylon/ownership_claim_pylon_%s_lod1.glb" % fac,
-			"props/ownership_claim_pylon/ownership_claim_pylon_%s_lod2.glb" % fac,
-			"props/faction_claim_totem/faction_claim_totem_%s_lod1.glb" % fac,
-			"props/claim_beacon/claim_beacon_%s_lod1.glb" % fac,
-		]
-		var AP = load("res://scripts/assets/AssetPaths.gd")
-		for rel in rels:
-			var path := ""
-			if AP and AP.has_method("resolve"):
-				path = AP.resolve(rel)
-			if path == "" or not FileAccess.file_exists(path):
-				continue
-			var doc := GLTFDocument.new()
-			var st := GLTFState.new()
-			if doc.append_from_file(path, st) != OK:
-				continue
-			var scn := doc.generate_scene(st)
-			if scn:
-				root.add_child(scn)
-				scn.scale = Vector3.ONE * 1.4
-				scn.position = Vector3(0, 0.2, 0)
-				loaded = true
-				break
+	var fac := "cybernex"
+	var slug := str(root.get_meta("ledger_slug", "cybernex_claim_beacon"))
+	if slug == "grot_claim_beacon":
+		fac = "grot"
+	var rels := [
+		"props/%s/%s_lod1.glb" % [slug, slug],
+		"props/%s/%s_%s_lod1.glb" % [slug, slug, fac],
+		"props/claim_beacon/claim_beacon_%s_lod1.glb" % fac,
+		"props/ownership_claim_pylon/ownership_claim_pylon_%s_lod1.glb" % fac,
+		"props/ownership_claim_pylon/ownership_claim_pylon_%s_lod2.glb" % fac,
+		"props/faction_claim_totem/faction_claim_totem_%s_lod1.glb" % fac,
+	]
+	var AP = load("res://scripts/assets/AssetPaths.gd")
+	for rel in rels:
+		var path := ""
+		if AP and AP.has_method("resolve"):
+			path = AP.resolve(rel)
+		if path == "" or not FileAccess.file_exists(path):
+			continue
+		var doc := GLTFDocument.new()
+		var st := GLTFState.new()
+		if doc.append_from_file(path, st) != OK:
+			continue
+		var scn := doc.generate_scene(st)
+		if scn:
+			root.add_child(scn)
+			scn.scale = Vector3.ONE * 1.4
+			scn.position = Vector3(0, 0.2, 0)
+			loaded = true
+			break
 	if not loaded:
 		_build_proc_pylon(root)
+
+
+func _tag_claim_beacon(root: Node) -> void:
+	var slug := "cybernex_claim_beacon"
+	var dump_id := "phjM0"
+	if ownership:
+		var fn := ownership.faction_name().to_lower() if ownership.has_method("faction_name") else ""
+		if fn == "grot":
+			slug = "grot_claim_beacon"
+			dump_id = "nFxgT"
+	root.set_meta("ledger_slug", slug)
+	root.set_meta("dump_id", dump_id)
+	root.set_meta("site_pin", "")
+	root.set_meta("uuid", "")
 
 
 func _build_proc_pylon(root: Node3D) -> void:
@@ -1778,10 +1792,7 @@ func _spawn_claim_fx(col: Color) -> void:
 	p.draw_pass_1 = dm
 	p.position = Vector3(0, 1.5, 0)
 	add_child(p)
-	get_tree().create_timer(1.0).timeout.connect(func():
-		if is_instance_valid(p):
-			p.queue_free()
-	)
+	SafeTimeout.free_after(p, 1.0)
 
 
 func _update_city_density() -> void:
