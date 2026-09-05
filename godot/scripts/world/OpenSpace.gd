@@ -71,6 +71,7 @@ func _ready() -> void:
 	_setup_clash_softnet()
 	_setup_mechanics_playtest()
 	_setup_sandbox_playtest()
+	_setup_soak_playtest()
 	if floating != null and is_instance_valid(floating) and floating.has_method("set_target"):
 		floating.set_target(ship)
 	if floating != null and is_instance_valid(floating) and floating.has_method("rebase_now"):
@@ -398,6 +399,13 @@ func _setup_sandbox_playtest() -> void:
 	var n := Node.new()
 	n.set_script(preload("res://scripts/test/SandboxPlaytest.gd"))
 	n.name = "SandboxPlaytest"
+	add_child(n)
+
+
+func _setup_soak_playtest() -> void:
+	var n := Node.new()
+	n.set_script(preload("res://scripts/test/OpenSpaceSoak.gd"))
+	n.name = "OpenSpaceSoak"
 	add_child(n)
 
 
@@ -1565,6 +1573,10 @@ func _update_hud() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and (event.keycode == KEY_ESCAPE or event.physical_keycode == KEY_ESCAPE):
+		for a in OS.get_cmdline_user_args():
+			if str(a) == "--playtest-soak":
+				get_viewport().set_input_as_handled()
+				return
 		if strategy_overlay_active() and _strategy.has_method("exit_overlay"):
 			_strategy.exit_overlay()
 			get_viewport().set_input_as_handled()

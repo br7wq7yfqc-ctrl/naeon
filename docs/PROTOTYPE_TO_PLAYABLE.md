@@ -374,9 +374,13 @@ When observation and code disagree, measure.
   `OpenSpace._setup_interior`).
 - The procedural hero silhouette has no locomotion animation on the arena hero;
   that is art/animation work, not a logic defect.
-- Mac 10-minute soak still needs the owner's GPU — this VM is llvmpipe, so the
-  FPS half of rules/25 cannot be signed off here. The memory half is measured
-  above.
+- Mac 10-minute soak: **signed off 2026-09-05** on owner GPU.
+  GUI Godot 4.7.2 `/Applications/Godot.app` (`--playtest-soak`, not headless).
+  Device: AMD Radeon Pro 5600M, Vulkan 1.2 Forward+, display=macOS,
+  min preset `LOW (min 1060)`. 41 samples / 600s.
+  TIME_FPS min=56.0 avg=59.7 max=60.0 (honest, vsync-capped, not clamped in
+  code). MEMORY_STATIC 101.1 → 101.4 MB (delta +0.4, climb_steps=0).
+  OBJECT_NODE_COUNT 815 → 815. Headless dummy FPS still must not sign this off.
 
 ---
 

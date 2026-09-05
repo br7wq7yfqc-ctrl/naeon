@@ -39,6 +39,7 @@ var _contest_t: float = 0.0
 var _player_ref: Node3D = null
 var _label: Label3D = null
 var _mat: StandardMaterial3D = null
+var _flash_albedo: Color = Color.WHITE
 var _last_announce: String = ""
 var _drop_kind: String = "soft_ws"
 
@@ -338,10 +339,11 @@ func _refresh_label() -> void:
 func _flash() -> void:
 	if _mat == null:
 		return
-	var orig: Color = _mat.albedo_color
-	_mat.albedo_color = Color(1, 1, 1, orig.a)
-	if get_tree():
-		get_tree().create_timer(0.07).timeout.connect(func():
-			if is_instance_valid(self) and _mat:
-				_mat.albedo_color = orig
-		)
+	_flash_albedo = _mat.albedo_color
+	_mat.albedo_color = Color(1, 1, 1, _flash_albedo.a)
+	SafeTimeout.after(self, 0.07, "_end_flash")
+
+
+func _end_flash() -> void:
+	if _mat:
+		_mat.albedo_color = _flash_albedo

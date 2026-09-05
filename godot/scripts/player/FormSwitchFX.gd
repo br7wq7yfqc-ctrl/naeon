@@ -51,12 +51,14 @@ static func play_at(parent: Node3D, faction: String, form: String) -> void:
 	gp.draw_pass_1 = sm
 	fx.add_child(gp)
 	# animate scale + fade
-	var tw := parent.get_tree().create_tween()
+	var tw := fx.create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(mi, "scale", Vector3(2.2, 0.4, 2.2), 0.4)
 	tw.tween_property(mat, "emission_energy_multiplier", 0.1, 0.4)
+	var fid := fx.get_instance_id()
 	tw.chain().tween_callback(func():
-		if is_instance_valid(fx):
-			fx.queue_free()
+		var n := instance_from_id(fid)
+		if n:
+			n.queue_free()
 	)
 	print("[FormSwitchFX] ", form, " / ", faction)

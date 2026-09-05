@@ -140,10 +140,12 @@ static func _can_spawn_oneshot() -> bool:
 
 static func _track(p: GPUParticles3D, tree: SceneTree, life: float) -> void:
 	_active_oneshot += 1
+	var id := p.get_instance_id()
 	tree.create_timer(life).timeout.connect(func():
 		_active_oneshot = maxi(0, _active_oneshot - 1)
-		if is_instance_valid(p):
-			p.queue_free()
+		var n := instance_from_id(id)
+		if n:
+			n.queue_free()
 	)
 
 
@@ -234,13 +236,15 @@ static func claim_radial(at: Vector3, color: Color, tree: SceneTree) -> void:
 	mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
 	tree.current_scene.add_child(mi)
 	mi.global_position = at + Vector3(0, 0.4, 0)
+	var mid := mi.get_instance_id()
 	var tw := tree.create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(mi, "scale", Vector3.ONE * 3.2, 0.45)
 	tw.tween_property(mat, "albedo_color:a", 0.0, 0.45)
 	tw.chain().tween_callback(func():
-		if is_instance_valid(mi):
-			mi.queue_free()
+		var n := instance_from_id(mid)
+		if n:
+			n.queue_free()
 	)
 
 
@@ -267,10 +271,7 @@ static func muzzle_flash(at: Vector3, dir: Vector3, color: Color, tree: SceneTre
 	light.shadow_enabled = false
 	tree.current_scene.add_child(light)
 	light.global_position = at
-	tree.create_timer(0.12).timeout.connect(func():
-		if is_instance_valid(light):
-			light.queue_free()
-	)
+	SafeTimeout.free_after(light, 0.12)
 
 
 static func active_count() -> int:

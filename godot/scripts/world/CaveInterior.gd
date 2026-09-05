@@ -394,11 +394,13 @@ func _try_crystal_scan() -> void:
 			var mat := (cr as MeshInstance3D).material_override as StandardMaterial3D
 			if mat:
 				mat.emission_energy_multiplier = 6.5
+				var crid := (cr as MeshInstance3D).get_instance_id()
 				var tree2 := get_tree()
 				if tree2:
 					tree2.create_timer(0.35).timeout.connect(func():
-						if is_instance_valid(mat):
-							mat.emission_energy_multiplier = 2.4
+						var n := instance_from_id(crid) as MeshInstance3D
+						if n and n.material_override is StandardMaterial3D:
+							(n.material_override as StandardMaterial3D).emission_energy_multiplier = 2.4
 					)
 	print("[CaveInterior] crystal soft-scan")
 
@@ -424,12 +426,7 @@ func _spawn_scan_fx(at: Vector3) -> void:
 	p.draw_pass_1 = sm
 	add_child(p)
 	p.global_position = at
-	var tree := get_tree()
-	if tree:
-		tree.create_timer(0.7).timeout.connect(func():
-			if is_instance_valid(p):
-				p.queue_free()
-		)
+	SafeTimeout.free_after(p, 0.7)
 
 
 func _try_crystal_glb(parent: Node3D, pos: Vector3) -> void:

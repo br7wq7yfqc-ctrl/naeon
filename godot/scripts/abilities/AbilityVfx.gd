@@ -56,11 +56,15 @@ static func cast_flash(caster: Node, color: Color, energy: float = 2.5) -> void:
 	tw.tween_property(light, "light_energy", 0.0, 0.28)
 	tw.tween_property(ring, "scale", Vector3.ONE * 1.8, 0.32)
 	tw.tween_property(mat, "albedo_color:a", 0.0, 0.32)
+	var lid := light.get_instance_id()
+	var rid := ring.get_instance_id()
 	tw.chain().tween_callback(func():
-		if is_instance_valid(light):
-			light.queue_free()
-		if is_instance_valid(ring):
-			ring.queue_free()
+		var ln := instance_from_id(lid)
+		if ln:
+			ln.queue_free()
+		var rn := instance_from_id(rid)
+		if rn:
+			rn.queue_free()
 	)
 
 
@@ -112,7 +116,4 @@ static func impact_burst(at: Vector3, color: Color, tree: SceneTree, crit: bool 
 	p.draw_pass_1 = sm
 	tree.current_scene.add_child(p)
 	p.global_position = at
-	tree.create_timer(0.5).timeout.connect(func():
-		if is_instance_valid(p):
-			p.queue_free()
-	)
+	SafeTimeout.free_after(p, 0.5)

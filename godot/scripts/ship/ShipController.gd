@@ -1135,13 +1135,7 @@ func _fire_weapon() -> void:
 		flash.shadow_enabled = false
 		add_child(flash)
 		flash.position = Vector3(0, 0, -2.0)
-		var flash_ref = flash
-		var tree := get_tree()
-		if tree:
-			tree.create_timer(0.07).timeout.connect(func():
-				if is_instance_valid(flash_ref):
-					flash_ref.queue_free()
-			)
+		SafeTimeout.free_after(flash, 0.07)
 	if AudioDirector:
 		AudioDirector.play_hit(false)
 	_NP.muzzle_flash(origin, dir, _NP.faction_color(str(faction)), get_tree())
@@ -1682,9 +1676,11 @@ func set_hatch_open(open: bool) -> void:
 		var tw := tree.create_tween()
 		tw.tween_property(door, "rotation:y", target_y, 0.28)
 		if not open:
+			var did := (door as Node).get_instance_id()
 			tw.tween_callback(func():
-				if is_instance_valid(door):
-					(door as MeshInstance3D).visible = false
+				var n := instance_from_id(did) as MeshInstance3D
+				if n:
+					n.visible = false
 			)
 	else:
 		(door as MeshInstance3D).rotation.y = target_y
