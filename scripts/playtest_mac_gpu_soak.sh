@@ -7,7 +7,6 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 GODOT="/Applications/Godot.app/Contents/MacOS/Godot"
 if [ -x "$HOME/bin/godot" ]; then
-  # ~/bin/godot must symlink to /Applications/Godot.app (4.7.2)
   GODOT="$HOME/bin/godot"
 fi
 if [ ! -x "$GODOT" ]; then
@@ -20,15 +19,15 @@ case "$VER" in
   4.7.2*) ;;
   *) echo "[soak] want Godot 4.7.2, got: $VER" >&2; exit 2 ;;
 esac
-LOG="${SOAK_LOG:-$ROOT/logs/soak_mac_gpu.log}"
-mkdir -p "$(dirname "$LOG")"
-echo "[soak] log=$LOG duration=600s min-preset GUI (no --headless)"
-# Mac has no GNU timeout. Python watchdog covers a hung window (~12 min).
-# caffeinate keeps the GPU session awake.
+SAMPLES="${SOAK_SAMPLES:-$ROOT/logs/soak_samples.log}"
+ENGINE="${SOAK_ENGINE:-$ROOT/logs/soak_engine.log}"
+mkdir -p "$(dirname "$SAMPLES")"
+: > "$SAMPLES"
+echo "[soak] samples=$SAMPLES engine=$ENGINE duration=600s min-preset GUI (no --headless)"
 set +e
-/usr/bin/python3 - "$GODOT" "$ROOT/godot" "$LOG" <<'PY'
+/usr/bin/python3 - "$GODOT" "$ROOT/godot" "$ENGINE" "$SAMPLES" <<'PY'
 import subprocess, sys, time, os, signal
-godot, path, log_path = sys.argv[1], sys.argv[2], sys.argv[3]
+godot, path, engine_log, samples = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 cmd = [
     "caffeinate", "-dimsu",
     godot,
@@ -37,7 +36,7 @@ cmd = [
     "--", "--playtest-soak",
 ]
 print("[soak] exec", " ".join(cmd), flush=True)
-with open(log_path, "w") as log:
+with open(engine_log, "w") as log:
     log.write("[soak] start %s\n" % time.strftime("%Y-%m-%dT%H:%M:%S"))
     log.flush()
     p = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT)
@@ -64,11 +63,15 @@ PY
 RC=$?
 set -e
 echo SOAK_CODE=$RC
-grep -E '\[Soak\]|SCRIPT ERROR|Lambda capture' "$LOG" | tail -80 || true
-if grep -q '\[Soak\] FAIL' "$LOG"; then
+echo '---SAMPLES---'
+grep -aE '\[Soak\]|SCRIPT ERROR|Lambda capture' "$SAMPLES" | tail -80 || true
+echo '---ENGINE GPU---'
+grep -aE 'Vulkan|Metal|Device|llvmpipe|SCRIPT ERROR' "$ENGINE" | head -10 || true
+if grep -aq '\[Soak\] FAIL' "$SAMPLES" 2>/dev/null; then
   exit 1
 fi
-if grep -q '\[Soak\] DONE' "$LOG"; then
+if grep -aq '\[Soak\] DONE' "$SAMPLES" 2>/dev/null; then
   exit 0
 fi
-exit "$RC"
+echo "[soak] no DONE in samples (rc=$RC)" >&2
+exit 1

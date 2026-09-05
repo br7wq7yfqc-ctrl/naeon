@@ -3,11 +3,13 @@ extends Node
 ## SESSION_CONTRACT §17. GUI Godot only — headless TIME_FPS is dummy.
 ## godot --path godot --scene res://scenes/world/OpenSpace.tscn -- --playtest-soak
 ## Never prints [Playtest] PASS. Honest TIME_FPS / MEMORY_STATIC / OBJECT_NODE_COUNT.
-## Mac GUI Godot often does not attach stdout — also append logs/soak_mac_gpu.log.
+## Samples go to logs/soak_samples.log (Mac GUI often has no stdout).
 
 const DURATION_SEC := 600.0
 const SAMPLE_SEC := 15.0
 const BOOT_SEC := 2.4
+
+var _log_path := ""
 
 
 func _ready() -> void:
@@ -19,8 +21,31 @@ func _ready() -> void:
 	if not wanted:
 		queue_free()
 		return
-	_log("[Soak] OpenSpace GPU driver on")
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	var tree := get_tree()
+	if tree:
+		tree.auto_accept_quit = false
+	_log_path = _samples_path()
+	DirAccess.make_dir_recursive_absolute(_log_path.get_base_dir())
+	var f := FileAccess.open(_log_path, FileAccess.WRITE)
+	if f:
+		f.store_line("[Soak] OpenSpace GPU driver on")
+		f.flush()
+		f.close()
+	print("[Soak] OpenSpace GPU driver on log=", _log_path)
 	call_deferred("_go")
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		pass
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed:
+		var k: int = event.keycode if event.keycode != KEY_NONE else event.physical_keycode
+		if k == KEY_ESCAPE:
+			get_viewport().set_input_as_handled()
 
 
 func _go() -> void:
@@ -53,7 +78,6 @@ func _go() -> void:
 	var ram_prev := -1.0
 	var climb_steps := 0
 	var nodes0 := -1
-	var last_fps := 0.0
 	var last_ram := 0.0
 	var last_nodes := 0
 	var last_objs := 0
@@ -63,7 +87,6 @@ func _go() -> void:
 		var ram := float(Performance.get_monitor(Performance.MEMORY_STATIC)) / 1048576.0
 		var nodes := int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))
 		var objs := int(Performance.get_monitor(Performance.OBJECT_COUNT))
-		last_fps = fps
 		last_ram = ram
 		last_nodes = nodes
 		last_objs = objs
@@ -91,17 +114,24 @@ func _go() -> void:
 		adapter, display, tier_name, n, fps_min, fps_avg, fps_max, ram0, last_ram, ram_delta, climb_steps, nodes0, last_nodes, last_objs
 	])
 	_log("[Soak] honest TIME_FPS (not clamped). rules/25 target ~60 sustained on min preset; memory must not climb monotonically.")
+	var tree := get_tree()
+	if tree:
+		tree.auto_accept_quit = true
 	_quit(0)
+
+
+func _samples_path() -> String:
+	var godot_root := ProjectSettings.globalize_path("res://").rstrip("/")
+	return godot_root.get_base_dir().path_join("logs/soak_samples.log")
 
 
 func _log(line: String) -> void:
 	print(line)
-	var godot_root := ProjectSettings.globalize_path("res://").rstrip("/")
-	var path := godot_root.get_base_dir().path_join("logs/soak_mac_gpu.log")
-	DirAccess.make_dir_recursive_absolute(godot_root.get_base_dir().path_join("logs"))
-	var f := FileAccess.open(path, FileAccess.READ_WRITE)
+	if _log_path == "":
+		_log_path = _samples_path()
+	var f := FileAccess.open(_log_path, FileAccess.READ_WRITE)
 	if f == null:
-		f = FileAccess.open(path, FileAccess.WRITE)
+		f = FileAccess.open(_log_path, FileAccess.WRITE)
 	if f:
 		f.seek_end()
 		f.store_line(line)
