@@ -3,6 +3,7 @@ extends Node
 ## SESSION_CONTRACT §17. GUI Godot only — headless TIME_FPS is dummy.
 ## godot --path godot --scene res://scenes/world/OpenSpace.tscn -- --playtest-soak
 ## Never prints [Playtest] PASS. Honest TIME_FPS / MEMORY_STATIC / OBJECT_NODE_COUNT.
+## Mac GUI Godot often does not attach stdout — also append logs/soak_mac_gpu.log.
 
 const DURATION_SEC := 600.0
 const SAMPLE_SEC := 15.0
@@ -18,7 +19,7 @@ func _ready() -> void:
 	if not wanted:
 		queue_free()
 		return
-	print("[Soak] OpenSpace GPU driver on")
+	_log("[Soak] OpenSpace GPU driver on")
 	call_deferred("_go")
 
 
@@ -26,13 +27,13 @@ func _go() -> void:
 	var display := str(DisplayServer.get_name())
 	var adapter := str(RenderingServer.get_video_adapter_name())
 	var ad_l := adapter.to_lower()
-	print("[Soak] display=", display, " adapter=", adapter)
+	_log("[Soak] display=%s adapter=%s" % [display, adapter])
 	if display == "headless":
-		print("[Soak] FAIL headless dummy renderer (not Mac GPU)")
+		_log("[Soak] FAIL headless dummy renderer (not Mac GPU)")
 		_quit(2)
 		return
 	if adapter == "" or "llvmpipe" in ad_l or "softpipe" in ad_l or "swiftshader" in ad_l:
-		print("[Soak] FAIL software adapter (", adapter, ")")
+		_log("[Soak] FAIL software adapter (%s)" % adapter)
 		_quit(2)
 		return
 	var gq := get_node_or_null("/root/GraphicsQuality")
@@ -41,7 +42,7 @@ func _go() -> void:
 	var tier_name := "LOW"
 	if gq and gq.has_method("tier_name"):
 		tier_name = str(gq.tier_name())
-	print("[Soak] min preset tier=", tier_name, " duration=", int(DURATION_SEC), "s sample=", int(SAMPLE_SEC), "s")
+	_log("[Soak] min preset tier=%s duration=%ds sample=%ds" % [tier_name, int(DURATION_SEC), int(SAMPLE_SEC)])
 	await get_tree().create_timer(BOOT_SEC).timeout
 	var t0 := Time.get_ticks_msec()
 	var fps_min := 9999.0
@@ -78,7 +79,7 @@ func _go() -> void:
 		if ram_prev >= 0.0 and ram > ram_prev + 0.5:
 			climb_steps += 1
 		ram_prev = ram
-		print("[Soak] t=%.0fs fps=%.1f ram_mb=%.1f nodes=%d objects=%d" % [
+		_log("[Soak] t=%.0fs fps=%.1f ram_mb=%.1f nodes=%d objects=%d" % [
 			elapsed, fps, ram, nodes, objs
 		])
 		if elapsed + 0.05 >= DURATION_SEC:
@@ -86,11 +87,26 @@ func _go() -> void:
 		await get_tree().create_timer(SAMPLE_SEC).timeout
 	var fps_avg := (fps_sum / float(n)) if n > 0 else 0.0
 	var ram_delta := last_ram - ram0
-	print("[Soak] DONE adapter=%s display=%s tier=%s samples=%d fps_min=%.1f fps_avg=%.1f fps_max=%.1f ram0=%.1f ramN=%.1f ram_delta=%.1f climb_steps=%d nodes0=%d nodesN=%d objectsN=%d" % [
+	_log("[Soak] DONE adapter=%s display=%s tier=%s samples=%d fps_min=%.1f fps_avg=%.1f fps_max=%.1f ram0=%.1f ramN=%.1f ram_delta=%.1f climb_steps=%d nodes0=%d nodesN=%d objectsN=%d" % [
 		adapter, display, tier_name, n, fps_min, fps_avg, fps_max, ram0, last_ram, ram_delta, climb_steps, nodes0, last_nodes, last_objs
 	])
-	print("[Soak] honest TIME_FPS (not clamped). rules/25 target ~60 sustained on min preset; memory must not climb monotonically.")
+	_log("[Soak] honest TIME_FPS (not clamped). rules/25 target ~60 sustained on min preset; memory must not climb monotonically.")
 	_quit(0)
+
+
+func _log(line: String) -> void:
+	print(line)
+	var godot_root := ProjectSettings.globalize_path("res://").rstrip("/")
+	var path := godot_root.get_base_dir().path_join("logs/soak_mac_gpu.log")
+	DirAccess.make_dir_recursive_absolute(godot_root.get_base_dir().path_join("logs"))
+	var f := FileAccess.open(path, FileAccess.READ_WRITE)
+	if f == null:
+		f = FileAccess.open(path, FileAccess.WRITE)
+	if f:
+		f.seek_end()
+		f.store_line(line)
+		f.flush()
+		f.close()
 
 
 func _quit(code: int) -> void:
