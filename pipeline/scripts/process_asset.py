@@ -4,6 +4,8 @@ NAEON Blender processor (economical):
   - LOD0/1/2 decimation
   - dual-theme Cybernex / gROT materials
   - optional --keep-materials (preserve Tripo PBR, tint only)
+  - optional --no-tint (keep Tripo PBR with no faction mix)
+  - optional --faction cybernex|grot (export that faction only + unfactioned lod alias)
   - optional --wear (extra worn/damaged material variants — free multiplication)
   - collision hull proxy in manifest
   - export to assets/{category}/{name}/
@@ -49,6 +51,8 @@ def run_inside_blender(
     category: str = "props",
     keep_materials: bool = False,
     wear: bool = False,
+    faction: str | None = None,
+    no_tint: bool = False,
 ) -> None:
     import bpy
 
@@ -117,7 +121,7 @@ def run_inside_blender(
                                 tint = (0.15, 0.75, 1.0, 1.0)
                             else:
                                 tint = (0.95, 0.12, 0.42, 1.0)
-                            if col:
+                            if col and not no_tint:
                                 c = list(col.default_value)
                                 col.default_value = (
                                     c[0] * 0.55 + tint[0] * 0.45,
@@ -125,7 +129,7 @@ def run_inside_blender(
                                     c[2] * 0.55 + tint[2] * 0.45,
                                     1.0,
                                 )
-                            if emis:
+                            if emis and not no_tint:
                                 try:
                                     emis.default_value = tint
                                 except Exception:
@@ -173,8 +177,10 @@ def run_inside_blender(
     if wear:
         variants.append(("worn", True))
 
+    factions = (faction,) if faction in ("cybernex", "grot") else ("cybernex", "grot")
+
     exports: list[str] = []
-    for faction in ("cybernex", "grot"):
+    for fac in factions:
         for vname, worn in variants:
             for lod_name, ratio in lod_map:
                 bpy.ops.object.select_all(action="DESELECT")
@@ -182,17 +188,20 @@ def run_inside_blender(
                 bpy.context.view_layer.objects.active = base
                 bpy.ops.object.duplicate()
                 obj = bpy.context.view_layer.objects.active
-                suffix = f"{faction}_{vname}_{lod_name}" if wear else f"{faction}_{lod_name}"
+                suffix = f"{fac}_{vname}_{lod_name}" if wear else f"{fac}_{lod_name}"
                 obj.name = f"{name}_{suffix}"
                 if ratio < 0.999:
                     mod = obj.modifiers.new(name="Decimate", type="DECIMATE")
                     mod.ratio = ratio
                     bpy.ops.object.modifier_apply(modifier=mod.name)
-                apply_faction_material(obj, faction, worn=worn)
+                apply_faction_material(obj, fac, worn=worn)
                 out_path = out_dir / f"{name}_{suffix}.glb"
                 export_glb(out_path)
                 exports.append(str(out_path))
-                # remove duplicate mesh to keep scene clean
+                if faction in ("cybernex", "grot") and not wear:
+                    alias = out_dir / f"{name}_{lod_name}.glb"
+                    shutil.copy2(out_path, alias)
+                    exports.append(str(alias))
                 bpy.data.objects.remove(obj, do_unlink=True)
 
     # Simple collision: box dimensions of base
@@ -207,9 +216,10 @@ def run_inside_blender(
         "category": category,
         "source": str(input_path),
         "exports": exports,
-        "factions": ["cybernex", "grot"],
+        "factions": list(factions),
         "lods": ["lod0", "lod1", "lod2"],
         "keep_materials": keep_materials,
+        "no_tint": no_tint,
         "wear": wear,
         "collision": collision,
         "created": time.time(),
@@ -241,6 +251,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-assets-copy", action="store_true")
     parser.add_argument("--category", default="props")
     parser.add_argument("--keep-materials", action="store_true", help="Preserve Tripo PBR, tint by faction")
+    parser.add_argument("--no-tint", action="store_true", help="With --keep-materials, do not mix faction tint")
+    parser.add_argument("--faction", choices=["cybernex", "grot"], default=None,
+                        help="Export only this faction (locked dual-theme plates)")
     parser.add_argument("--wear", action="store_true", help="Also export worn material variants (free ×2)")
     args = parser.parse_args(argv)
 
@@ -261,6 +274,8 @@ def main(argv: list[str] | None = None) -> int:
             getattr(args, "category", "props"),
             keep_materials=args.keep_materials,
             wear=args.wear,
+            faction=args.faction,
+            no_tint=args.no_tint,
         )
         if not args.no_assets_copy:
             copy_to_assets(args.name, out_dir, getattr(args, "category", "props"))
@@ -283,6 +298,10 @@ def main(argv: list[str] | None = None) -> int:
         cmd.append("--no-assets-copy")
     if args.keep_materials:
         cmd.append("--keep-materials")
+    if args.no_tint:
+        cmd.append("--no-tint")
+    if args.faction:
+        cmd.extend(["--faction", args.faction])
     if args.wear:
         cmd.append("--wear")
     print("→", " ".join(cmd))

@@ -1595,7 +1595,8 @@ func _notify_hud(msg: String) -> void:
 func _ensure_claim_beacon() -> void:
 	# WORLD_FILL §6 queue 2: occupy pylon uses locked ledger slugs
 	# cybernex_claim_beacon / grot_claim_beacon (dump phjM0 / nFxgT).
-	# No honest GLB yet → code-first pylon. Never mint SITE_* / UUID.
+	# Prefer slug-folder GLB from those plates. Generic claim_beacon is
+	# fallback only (not the locked dumps). Never mint SITE_* / UUID.
 	# Headless: meta-only node (mesh_get_surface_count is 7× on dummy).
 	var old := get_node_or_null("ClaimBeaconVis")
 	if old:
@@ -1605,8 +1606,11 @@ func _ensure_claim_beacon() -> void:
 	add_child(root)
 	_tag_claim_beacon(root)
 	if DisplayServer.get_name() == "headless":
+		root.set_meta("mesh_source", "meta_only")
+		root.set_meta("glb_rel", "")
 		return
 	var loaded := false
+	var loaded_rel := ""
 	var fac := "cybernex"
 	var slug := str(root.get_meta("ledger_slug", "cybernex_claim_beacon"))
 	if slug == "grot_claim_beacon":
@@ -1636,8 +1640,14 @@ func _ensure_claim_beacon() -> void:
 			scn.scale = Vector3.ONE * 1.4
 			scn.position = Vector3(0, 0.2, 0)
 			loaded = true
+			loaded_rel = rel
 			break
-	if not loaded:
+	if loaded:
+		root.set_meta("mesh_source", "ledger_glb")
+		root.set_meta("glb_rel", loaded_rel)
+	else:
+		root.set_meta("mesh_source", "proc_pylon")
+		root.set_meta("glb_rel", "")
 		_build_proc_pylon(root)
 
 
