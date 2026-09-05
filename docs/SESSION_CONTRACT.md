@@ -389,6 +389,15 @@
     FL-N FLEET 15/15 stays. ST-A…ST-M stay. PV-A…PV-C stay.
     AR-Z stays. DO-A/B stay. ORBITAL_STATIONS stays false.
     No SITE_* (this pass). Full colony sim still later.
+71. Headless mechanics isolation (polish, not a new slice): ST-A
+    still wants exactly one player_module; PC-A still places a
+    persist habitat. NP-C NpcHabitat / NP-G PrintedExtractor no
+    longer occupy the persist plate first; pad_has_player_module
+    is the player slot only (npc is pad_has_module). SoftSession
+    leftover player habitats are cleared before the ST-A place.
+    Infection cap 5. SoftKnowledge only. Pulse 11. AbilityKitCatalog
+    stays at 12. FL-N FLEET 15/15. ORBITAL_STATIONS stays false.
+    No SITE_*. Not FL-O. Not Voice. Not aiNEX. Not G2–G6. Not P2W.
 
 ## Tripo
 - Balance check when generating; code-first when zero.

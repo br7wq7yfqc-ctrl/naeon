@@ -397,20 +397,26 @@ func place_one_module() -> Node3D:
 
 
 func _empty_unnamed_pad() -> Node3D:
-	var legal: Array = ["Pad_North", "Pad_Approach", "Pad_Flank"]
+	## Prefer Flank after North is the ST-A player slot. PC-A persist
+	## takes a free unnamed plate (Flank/Approach); skip printed pads.
+	var legal: Array = ["Pad_Flank", "Pad_Approach", "Pad_North"]
 	var cands: Array = []
 	if _pad != null and is_instance_valid(_pad) and str(_pad.name) in legal:
-		cands.append(_pad)
+		if not BaseBuilder.pad_has_module(_pad):
+			cands.append(_pad)
 	var tree := get_tree()
 	if tree:
-		for n in tree.get_nodes_in_group("landing_pads"):
-			if n is Node3D and str(n.name) in legal and n not in cands:
-				cands.append(n)
+		for want in legal:
+			for n in tree.get_nodes_in_group("landing_pads"):
+				if n is Node3D and str(n.name) == want and n not in cands:
+					cands.append(n)
 	for n in cands:
 		var pad: Node3D = n as Node3D
 		if pad == null:
 			continue
 		if BaseBuilder.pad_has_module(pad):
+			continue
+		if BaseBuilder.printed_module_on(pad) != null:
 			continue
 		return pad
 	return null
@@ -898,16 +904,33 @@ func _run_offline_follow() -> void:
 
 func _print_target_pad() -> Node3D:
 	## Prefer the harvest pad. If that bench already granted (player ST-C), next unnamed.
+	## Colocate with NP-C when present so PC-A keeps a free persist plate.
 	## ONE_PAD streams one controller; other unnamed plates still take a §6(a) bench.
-	var legal: Array = ["Pad_North", "Pad_Approach", "Pad_Flank"]
+	var legal: Array = ["Pad_Flank", "Pad_Approach", "Pad_North"]
 	var cands: Array = []
 	if _pad != null and is_instance_valid(_pad) and str(_pad.name) in legal:
 		cands.append(_pad)
 	var tree := get_tree()
 	if tree:
-		for n in tree.get_nodes_in_group("landing_pads"):
-			if n is Node3D and str(n.name) in legal and n not in cands:
-				cands.append(n)
+		for want in legal:
+			for n in tree.get_nodes_in_group("landing_pads"):
+				if n is Node3D and str(n.name) == want and n not in cands:
+					cands.append(n)
+	var npc_pad: Node3D = null
+	for n in cands:
+		var pad: Node3D = n as Node3D
+		if pad == null:
+			continue
+		if BaseBuilder.printed_module_on(pad) != null:
+			continue
+		if BaseBuilder.npc_module_on(pad) != null:
+			npc_pad = pad
+			break
+	if npc_pad != null:
+		var npc_bench := _ensure_print_bench_on(npc_pad)
+		if npc_bench != null:
+			if not npc_bench.has_method("granted_module") or npc_bench.granted_module() == null:
+				return npc_pad
 	for n in cands:
 		var pad: Node3D = n as Node3D
 		if pad == null:

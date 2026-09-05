@@ -710,10 +710,6 @@ func _go() -> void:
 	await _cockpit_space_takeoff_view(fails)
 	await _npc_takeoff_land(fails)
 	await _npc_occupy_harvest(fails)
-	await _npc_place_module(fails)
-	await _npc_print_catalog(fails)
-	await _npc_hangar_queue(fails)
-	await _npc_factory_print(fails)
 	await _npc_squad_invite(fails)
 	await _npc_offline_cycle(fails)
 	await _npc_soft_alliance(fails)
@@ -732,6 +728,12 @@ func _go() -> void:
 	await _assert_pc_a(os, fails)
 	await _assert_pc_b(os, fails)
 	await _assert_pc_c(os, fails)
+	## NP-C/G after PC-A so persist gets a free unnamed pad (NP-C habitat
+	## + NP-G print used to occupy Pad_Approach before the persist seed).
+	await _npc_place_module(fails)
+	await _npc_print_catalog(fails)
+	await _npc_hangar_queue(fails)
+	await _npc_factory_print(fails)
 	await _assert_st_n(os, fails)
 	await _assert_pv_a(os, fails)
 	await _assert_bt_a(os, fails)
@@ -12266,6 +12268,18 @@ func _assert_st_a(os: Node, fails: PackedStringArray) -> void:
 	if pad == null:
 		fails.append("ST-A no unnamed pad (Pad_North class)")
 		return
+	## Isolate from SoftSession restore / leftover player habitats on other
+	## pads (PC-A persist). This slice still places exactly one player_module.
+	if tree:
+		for n in tree.get_nodes_in_group("player_base_modules"):
+			if n is Node and is_instance_valid(n):
+				if n.is_in_group("player_base_modules"):
+					n.remove_from_group("player_base_modules")
+				n.queue_free()
+	if SoftSession != null and SoftSession.has_method("wipe_colony_memory"):
+		SoftSession.wipe_colony_memory()
+	await get_tree().process_frame
+	await get_tree().process_frame
 	var up: Vector3 = pad.get_meta("pad_up") if pad.has_meta("pad_up") else Vector3.UP
 	if ship:
 		ship.global_position = pad.global_position + up * 8.0
@@ -19178,15 +19192,20 @@ func _assert_pc_a(os: Node, fails: PackedStringArray) -> void:
 				if n is Node3D and str(n.name) == want:
 					if Builder != null and bool(Builder.pad_has_module(n)):
 						continue
+					if Builder != null and Builder.printed_module_on(n) != null:
+						continue
 					pad = n as Node3D
 					break
 			if pad != null:
 				break
 		if pad == null:
-			for n in tree.get_nodes_in_group("landing_pads"):
-				if n is Node3D and Builder != null and bool(Builder.pad_has_player_module(n)) \
-						and str(n.name) != "Pad_North":
-					pad = n as Node3D
+			for want in ["Pad_Flank", "Pad_Approach"]:
+				for n in tree.get_nodes_in_group("landing_pads"):
+					if n is Node3D and str(n.name) == want \
+							and Builder != null and Builder.player_module_on(n) != null:
+						pad = n as Node3D
+						break
+				if pad != null:
 					break
 	if pad == null or not is_instance_valid(pad):
 		fails.append("PC-A no unnamed pad for persist")
