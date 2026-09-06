@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-NAEON — Tripo text-to-3D (OpenAPI v2) with HQ quality tiers.
+NAEON — Tripo text-to-3D and image-to-3D (OpenAPI v2) with HQ quality tiers.
 
 Quality profiles:
   draft   — cheap blockout (texture off) ~10 cr
@@ -10,6 +10,7 @@ Quality profiles:
 
 Usage:
   python generate_tripo.py --prompt "..." --name x --quality high --priority A
+  python generate_tripo.py --image path/to/approved.jpg --name x --quality standard
 """
 from __future__ import annotations
 
@@ -163,6 +164,80 @@ def create_text_task(
     return task_id
 
 
+def upload_image(path: Path) -> str:
+    ext = path.suffix.lower().lstrip(".") or "jpg"
+    if ext == "jpeg":
+        ext = "jpg"
+    mime = f"image/{ext}"
+    auth = {"Authorization": f"Bearer {API_KEY}"}
+    with path.open("rb") as f:
+        r = requests.post(
+            f"{BASE_URL}/upload",
+            headers=auth,
+            files={"file": (path.name, f, mime)},
+            timeout=120,
+        )
+    if r.status_code >= 400:
+        raise RuntimeError(f"upload {r.status_code} {r.text[:400]}")
+    data = r.json()
+    d = data.get("data") or data
+    token = d.get("file_token") or d.get("image_token") or data.get("file_token") or data.get("image_token")
+    if not token:
+        raise RuntimeError(f"no upload token {data}")
+    return str(token)
+
+
+def create_image_task(
+    token: str,
+    ext: str,
+    *,
+    model_version: str,
+    texture: bool,
+    pbr: bool,
+    texture_quality: str | None,
+    geometry_quality: str | None,
+    face_limit: int | None,
+    negative_prompt: str | None = None,
+) -> str:
+    payload: dict = {
+        "type": "image_to_model",
+        "model_version": model_version,
+        "file": {"type": ext, "file_token": token, "image_token": token},
+        "texture": texture,
+        "pbr": pbr,
+    }
+    if texture_quality:
+        payload["texture_quality"] = texture_quality
+    if geometry_quality:
+        payload["geometry_quality"] = geometry_quality
+    if face_limit:
+        payload["face_limit"] = face_limit
+    if negative_prompt:
+        payload["negative_prompt"] = negative_prompt
+    r = requests.post(f"{BASE_URL}/task", headers=headers(), json=payload, timeout=90)
+    if r.status_code >= 400:
+        print("[Tripo] image_to_model create failed:", r.status_code, r.text[:800])
+        payload.pop("geometry_quality", None)
+        payload.pop("negative_prompt", None)
+        r = requests.post(f"{BASE_URL}/task", headers=headers(), json=payload, timeout=90)
+        if r.status_code >= 400:
+            payload.pop("texture_quality", None)
+            payload.pop("face_limit", None)
+            print("[Tripo] retry image_to_model without extra fields…")
+            r = requests.post(f"{BASE_URL}/task", headers=headers(), json=payload, timeout=90)
+        if r.status_code >= 400:
+            print("[Tripo] image_to_model create failed final:", r.status_code, r.text[:800])
+            r.raise_for_status()
+    data = r.json()
+    task_id = None
+    if isinstance(data, dict):
+        task_id = data.get("data", {}).get("task_id") if isinstance(data.get("data"), dict) else None
+        task_id = task_id or data.get("task_id")
+    if not task_id or not isinstance(task_id, str):
+        raise RuntimeError(f"Unexpected create response: {data}")
+    return task_id
+
+
 def poll_task(task_id: str, timeout_s: int = 900, interval: float = 5.0) -> dict:
     deadline = time.time() + timeout_s
     while time.time() < deadline:
@@ -225,7 +300,8 @@ def main() -> int:
     BASE_URL = os.getenv("TRIPO_API_BASE", BASE_URL).rstrip("/")
 
     parser = argparse.ArgumentParser(description="Generate 3D asset via Tripo (HQ-capable)")
-    parser.add_argument("--prompt", required=True)
+    parser.add_argument("--prompt", default="", help="text_to_model prompt (optional if --image)")
+    parser.add_argument("--image", default=None, help="Approved plate path for image_to_model")
     parser.add_argument("--name", required=True)
     parser.add_argument("--priority", choices=["A", "B", "C", "S"], default="B")
     parser.add_argument("--quality", choices=list(QUALITY_PRESETS.keys()), default=None,
@@ -237,7 +313,12 @@ def main() -> int:
     parser.add_argument("--min-balance", type=float, default=200.0, help="Refuse if balance below this after estimate")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--skip-balance-guard", action="store_true")
+    parser.add_argument("--force", action="store_true", help="Overwrite existing inbox model.glb")
     args = parser.parse_args()
+
+    if not args.image and not args.prompt:
+        print("ERROR: --prompt or --image required")
+        return 1
 
     # Resolve quality from priority if not set
     quality = args.quality
@@ -258,11 +339,19 @@ def main() -> int:
     INBOX.mkdir(parents=True, exist_ok=True)
     out_dir = INBOX / args.name
     out_dir.mkdir(exist_ok=True)
+    existing = out_dir / "model.glb"
+    if existing.is_file() and not args.force and not args.dry_run:
+        print(f"ERROR: {existing} exists (pass --force to overwrite)")
+        return 3
 
-    print(f"[Tripo] priority={args.priority} quality={quality} est≈{est}cr | {args.name}")
+    mode = "image_to_model" if args.image else "text_to_model"
+    print(f"[Tripo] mode={mode} priority={args.priority} quality={quality} est≈{est}cr | {args.name}")
     print(f"  model={preset['model_version']} texture={preset['texture']} pbr={preset['pbr']} "
           f"tq={preset['texture_quality']} gq={preset['geometry_quality']} faces={face_limit}")
-    print(f"Prompt: {args.prompt}")
+    if args.image:
+        print(f"Image: {args.image}")
+    if args.prompt:
+        print(f"Prompt: {args.prompt}")
 
     bal = get_balance() if API_KEY else None
     credits = 0.0
@@ -278,7 +367,8 @@ def main() -> int:
 
     if args.dry_run:
         meta = {
-            "name": args.name, "prompt": args.prompt, "priority": args.priority,
+            "name": args.name, "prompt": args.prompt, "image": args.image,
+            "mode": mode, "priority": args.priority,
             "quality": quality, "preset": preset, "est_cost": est, "status": "dry_run",
             "created": time.time(),
         }
@@ -287,16 +377,37 @@ def main() -> int:
         return 0
 
     print("→ Creating task…")
-    task_id = create_text_task(
-        args.prompt,
-        model_version=preset["model_version"],
-        texture=bool(preset["texture"]),
-        pbr=bool(preset["pbr"]),
-        texture_quality=preset.get("texture_quality"),
-        geometry_quality=preset.get("geometry_quality"),
-        face_limit=face_limit,
-        negative_prompt=args.negative_prompt,
-    )
+    if args.image:
+        img = Path(args.image).expanduser().resolve()
+        if not img.is_file():
+            print(f"ERROR: image not found: {img}")
+            return 1
+        ext = img.suffix.lower().lstrip(".")
+        if ext == "jpeg":
+            ext = "jpg"
+        token = upload_image(img)
+        task_id = create_image_task(
+            token,
+            ext,
+            model_version=preset["model_version"],
+            texture=bool(preset["texture"]),
+            pbr=bool(preset["pbr"]),
+            texture_quality=preset.get("texture_quality"),
+            geometry_quality=preset.get("geometry_quality"),
+            face_limit=face_limit,
+            negative_prompt=args.negative_prompt,
+        )
+    else:
+        task_id = create_text_task(
+            args.prompt,
+            model_version=preset["model_version"],
+            texture=bool(preset["texture"]),
+            pbr=bool(preset["pbr"]),
+            texture_quality=preset.get("texture_quality"),
+            geometry_quality=preset.get("geometry_quality"),
+            face_limit=face_limit,
+            negative_prompt=args.negative_prompt,
+        )
     print(f"  task_id={task_id}")
     print("→ Polling…")
     task = poll_task(task_id)
@@ -306,6 +417,8 @@ def main() -> int:
     meta = {
         "name": args.name,
         "prompt": args.prompt,
+        "image": str(Path(args.image).expanduser().resolve()) if args.image else None,
+        "mode": mode,
         "priority": args.priority,
         "quality": quality,
         "preset": preset,

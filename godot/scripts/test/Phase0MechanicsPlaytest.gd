@@ -1689,7 +1689,8 @@ func _assert_wf_a(fails: PackedStringArray) -> void:
 func _assert_claim_beacon_ledger(fails: PackedStringArray, plates: Array) -> void:
 	## WORLD_FILL §6 queue 2: occupy pylons use locked ledger slugs only.
 	## cybernex_claim_beacon / grot_claim_beacon (dump phjM0 / nFxgT).
-	## No honest GLB → code-first / meta-only. No SITE_*. No minted UUID.
+	## Prefer slug-folder GLB from those plates (GUI). Headless = meta-only.
+	## No SITE_*. No minted UUID.
 	## ONE_PAD keeps a single PadBaseController — extra plates stay unnamed
 	## logistics (no occupy pylon). Do not mint a beacon on those.
 	var locked_slugs := PackedStringArray(["cybernex_claim_beacon", "grot_claim_beacon"])
@@ -1726,6 +1727,18 @@ func _assert_claim_beacon_ledger(fails: PackedStringArray, plates: Array) -> voi
 		var uid := str(vis.get_meta("uuid", ""))
 		if _wf_a_looks_like_uuid(uid) or _wf_a_looks_like_uuid(str(vis.name)):
 			fails.append("WF-A claim beacon minted UUID on %s" % p.name)
+		if DisplayServer.get_name() != "headless":
+			var src := str(vis.get_meta("mesh_source", ""))
+			var rel := str(vis.get_meta("glb_rel", ""))
+			var slug_rel := "props/%s/%s_lod1.glb" % [slug, slug]
+			var AP = load("res://scripts/assets/AssetPaths.gd")
+			var slug_path := ""
+			if AP and AP.has_method("resolve"):
+				slug_path = AP.resolve(slug_rel)
+			var have_slug := slug_path != "" and FileAccess.file_exists(slug_path)
+			print("[Playtest] WF-A claim beacon mesh_source=", src, " glb_rel=", rel, " slug_glb=", have_slug)
+			if have_slug and (src != "ledger_glb" or rel.find(slug) < 0):
+				fails.append("WF-A claim beacon did not load slug-folder GLB on %s (%s %s)" % [p.name, src, rel])
 	if tagged < 1:
 		fails.append("WF-A occupy pylon missing locked claim beacon")
 	print("[Playtest] WF-A claim_beacons=", tagged, " slugs=cybernex_claim_beacon,grot_claim_beacon dumps=phjM0,nFxgT")
