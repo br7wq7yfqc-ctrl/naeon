@@ -1,6 +1,6 @@
 # NAEON — Shared Agent Memory
 
-**Last updated:** 2026-08-28 (ST-G own factory print §6(c) in the existing player cluster)
+**Last updated:** 2026-09-06 (leftover: occupy-pylon GLB lod-budget + Mac soak with GLB; no new slice)
 
 ## Core constraints
 No P2W · soft Knowledge · Infection max 5 · story ≠ power · Godot 4.7.2 · adult hard-sci-fi · site_pin catalog only · WorldFill = authored skeleton + unnamed filler · ready-made assets first, Tripo unique only · one resident system (ARK) · no planetary voxel shell · perf/25 (FPS on owner GPU, not llvmpipe)
