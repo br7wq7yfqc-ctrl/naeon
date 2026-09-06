@@ -58,7 +58,7 @@ Public GET on the bucket still needs `storage.admin` on SA `neon-access`.
 39. Clash beacons start Neutral; C/Hack occupy-to-hold (1.75, decays on leave); full claim = objective + lane pressure
 40. Extractor harvest only while owned by the player faction; ship bolts use ProjectilePool
 41. Clash HUD drops SessionObjectives briefing / LAYER chip (F3 still dumps)
-42. Mac 10-min soak signed off 2026-09-05: GUI Godot 4.7.2 AMD Radeon Pro 5600M min=56 avg=59.7 max=60 RAM flat (headless dummy FPS refused)
+42. Mac 10-min soak: 2026-09-05 proc pylon min=56 avg=59.7 max=60 RAM flat; **2026-09-06 occupy-pylon GLB in tree** GUI Godot 4.7.2 AMD Radeon Pro 5600M LOW TIME_FPS min=59 avg=137 max=145 (vsync off) RAM 101.1→104.1 then flat nodes=815 (headless dummy FPS refused)
 43. Cave crystal is a named `Crystal` node; V scan only inside the pocket; prompt at the deposit
 44. Rover mouse look (yaw + cam pitch) while boarded
 45. Clash HUD: MatchBanner legend ~4s then hide; ScoreLine `K D · OBJ · ECO`; LaneHUD lane+pressure only; GameHUD econ hidden (F3 dump)

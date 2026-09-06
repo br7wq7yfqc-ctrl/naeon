@@ -38,10 +38,13 @@
     measured flat across two laps). Single record:
     **`docs/PROTOTYPE_TO_PLAYABLE.md`** (this pass)
 17. 10-min soak on Mac GPU for the FPS half of rules/25 — **measured
-    2026-09-05**: GUI Godot 4.7.2, AMD Radeon Pro 5600M, min preset LOW,
-    TIME_FPS min=56 avg=59.7 max=60, RAM 101.1→101.4 MB flat, nodes=815.
-    Harness `--playtest-soak` / `scripts/playtest_mac_gpu_soak.sh`. This VM
-    is llvmpipe. Headless TIME_FPS is dummy.
+    2026-09-05** (proc pylon) and **re-measured 2026-09-06** with occupy-pylon
+    GLB in tree: GUI Godot 4.7.2, AMD Radeon Pro 5600M, min preset LOW,
+    TIME_FPS min=59 avg=137 max=145 (vsync off; honest, not dummy),
+    RAM 101.1→104.1 MB then flat (climb_steps=1 at t=30s GLB settle),
+    nodes=815. Harness `--playtest-soak` / `scripts/playtest_mac_gpu_soak.sh`.
+    This VM is llvmpipe. Headless TIME_FPS is dummy. RTX 3060
+    (`desktop-1e1mhmjvvm`) was Tailscale-offline this pass.
 18. ST-A: strategy overlay (B) + one habitat on unnamed pad; ship/TPS remain
     (built). G2–G6 still locked.
 19. ST-B: extractor visible on unnamed pad + Contribution on HUD after occupy
