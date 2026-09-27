@@ -27,6 +27,7 @@
 - Кольцо на земле: [`../lore/RING_ON_GROUND.md`](../lore/RING_ON_GROUND.md)
 - Исход и Исток: [`../lore/EXODUS_AND_SOURCE.md`](../lore/EXODUS_AND_SOURCE.md)
 - Правки сюжета тома I: [`PLOT_FIXES.md`](PLOT_FIXES.md)
+- Литературный навык: [`.cursor/skills/naeon-literary/SKILL.md`](../../.cursor/skills/naeon-literary/SKILL.md)
 
 ## Платы и листы
 
