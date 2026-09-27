@@ -26,6 +26,7 @@
 - Хронология катушек: [`../lore/TIMELINE_COILS.md`](../lore/TIMELINE_COILS.md)
 - Кольцо на земле: [`../lore/RING_ON_GROUND.md`](../lore/RING_ON_GROUND.md)
 - Исход и Исток: [`../lore/EXODUS_AND_SOURCE.md`](../lore/EXODUS_AND_SOURCE.md)
+- Правки сюжета тома I: [`PLOT_FIXES.md`](PLOT_FIXES.md)
 
 ## Платы и листы
 
