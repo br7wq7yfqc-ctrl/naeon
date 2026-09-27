@@ -35,5 +35,6 @@
 - Платы глав 1–4: [`plates/tom1_ch01_04/`](plates/tom1_ch01_04/)
 - Платы пролога: [`plates/tom1_prolog/`](plates/tom1_prolog/)
 - Листы героев: [`characters/`](characters/)
+- Инструкции к платам и секвенциям: [`PLATE_BRIEFS.md`](PLATE_BRIEFS.md)
 
 Один путь на файл. Платы глав 1–4 только в `plates/tom1_ch01_04/`. Черновые `plates_batch_*` и старые PDF в репозиторий не кладём.
