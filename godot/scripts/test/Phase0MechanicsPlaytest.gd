@@ -50,6 +50,7 @@ func _go() -> void:
 		await _assert_st_h(os, fails)
 		await _assert_st_i(os, fails)
 		await _assert_st_j(os, fails)
+		await _assert_st_o(os, fails)
 		await _assert_st_k(os, fails)
 		await _assert_st_l(os, fails)
 		await _assert_st_m(os, fails)
@@ -718,6 +719,7 @@ func _go() -> void:
 	await _assert_st_h(os, fails)
 	await _assert_st_i(os, fails)
 	await _assert_st_j(os, fails)
+	await _assert_st_o(os, fails)
 	await _assert_st_k(os, fails)
 	await _assert_st_l(os, fails)
 	await _assert_st_m(os, fails)
@@ -13832,6 +13834,283 @@ func _assert_st_j(os: Node, fails: PackedStringArray) -> void:
 	if not _osh_same_scene(scene0_j):
 		fails.append("ST-J overlay/hatch left OpenSpace")
 	print("[Playtest] ST-J hangar stub present · LAND/hatch on pad · overlay B opens · no SITE_*")
+
+
+func _assert_st_o(os: Node, fails: PackedStringArray) -> void:
+	## ST-O: one Firewall node / Spore pylon after occupy via BaseBuilder.
+	## ±1 Infection, cap 5 refuse. Same fortify budget CX/GR. Not Pulse turret.
+	## Not occupy ClaimBeaconVis. Overlay B opens. ST-A/B/H/I/J stay. No SITE_*.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	var SoftK = load("res://scripts/systems/SoftKnowledge.gd")
+	var Kit = load("res://scripts/abilities/AbilityKitCatalog.gd")
+	var Inf = load("res://scripts/abilities/InfectionStatus.gd")
+	var nex: Node = _osh_nex()
+	var pad: Node = _in_a_occupied_pad(os)
+	var host: Node3D = null
+	var pylon: Node3D = null
+	var rival: Node3D = null
+	var ov: Node = os.strategy_overlay() if os != null and os.has_method("strategy_overlay") else null
+	var ship: Node3D = os.get("ship") as Node3D if os else null
+	var walker: Node3D = os.get("player") as Node3D if os else null
+	var pin0 := str(LayerContext.site_pin_id) if LayerContext else ""
+	var traffic: Node = null
+	if P0 == null or not bool(P0.ST_O_PYLON) or not bool(P0.ST_J_HANGAR) \
+			or not bool(P0.ST_H_TURRET) or not bool(P0.ST_A_OVERLAY) or not bool(P0.ST_B_EXTRACTOR):
+		fails.append("ST-O P0Slice flag missing")
+		return
+	if bool(P0.ORBITAL_STATIONS):
+		fails.append("ST-O flipped ORBITAL_STATIONS")
+	if Inf == null or int(Inf.MAX_STACKS) != 5:
+		fails.append("ST-O Infection cap drifted")
+	if Kit == null or not Kit.has_method("kit_ids"):
+		fails.append("ST-O AbilityKitCatalog missing")
+	else:
+		var ids: PackedStringArray = Kit.kit_ids()
+		if int(ids.size()) != 12:
+			fails.append("ST-O kit count want 12 (got %s)" % ids.size())
+		if int(ids.size()) >= 13:
+			fails.append("ST-O added a 13th AbilityKit")
+	if SoftK == null or not SoftK.has_method("pylon_label"):
+		fails.append("ST-O SoftKnowledge pylon_label missing")
+		return
+	var cx_lab := str(SoftK.pylon_label(false))
+	var gr_lab := str(SoftK.pylon_label(true))
+	if cx_lab != "FIREWALL NODE" and cx_lab != "T1 FIREWALL NODE":
+		fails.append("ST-O SoftKnowledge FIREWALL NODE missing (%s)" % cx_lab)
+	if gr_lab != "SPORE PYLON" and gr_lab != "T1 SPORE PYLON":
+		fails.append("ST-O SoftKnowledge SPORE PYLON missing (%s)" % gr_lab)
+	if os == null or nex == null:
+		fails.append("ST-O no OpenSpace/Nex-Prime")
+		return
+	if str(os.get_class()) == "TestArena" or str(os.name).begins_with("TestArena"):
+		fails.append("ST-O must not run on Clash")
+		return
+	if LayerContext and str(LayerContext.current_layer) == "Arena":
+		fails.append("ST-O must not run on Clash")
+		return
+	if nex.has_method("ensure_pad_bases"):
+		nex.ensure_pad_bases()
+		await get_tree().create_timer(0.25).timeout
+	if pad == null:
+		pad = _in_a_occupied_pad(os)
+	if pad == null:
+		fails.append("ST-O no occupied unnamed pad")
+		return
+	host = pad as Node3D
+	if not host.has_meta("pad_up"):
+		var walk: Node = pad
+		while walk:
+			if walk is Node3D and str(walk.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]:
+				host = walk as Node3D
+				break
+			walk = walk.get_parent()
+	if host == null or not (str(host.name) in ["Pad_North", "Pad_Approach", "Pad_Flank"]):
+		fails.append("ST-O pad is not unnamed North/Approach/Flank")
+		return
+	var pin := str(host.get_meta("site_pin")) if host.has_meta("site_pin") else ""
+	if pin.begins_with("SITE_"):
+		fails.append("ST-O minted SITE_* (%s)" % pin)
+		return
+	if pad.has_method("claim"):
+		pad.claim("Cybernex", 2.0)
+	var ow = pad.get("ownership") if pad != null else null
+	if ow and ow.has_method("advance_transition"):
+		ow.advance_transition(8.0, 5.0)
+	await get_tree().process_frame
+	if pad.has_method("ensure_pad_pylon"):
+		pylon = pad.ensure_pad_pylon()
+	if pylon == null:
+		pylon = _Builder.place_pad_pylon(host, "Cybernex")
+	if pylon == null or not is_instance_valid(pylon):
+		fails.append("ST-O pylon missing on occupied unnamed pad")
+		return
+	var tpin := str(pylon.get_meta("site_pin", "missing"))
+	if tpin != "":
+		fails.append("ST-O pylon minted site_pin (%s)" % tpin)
+	if pylon.has_meta("player_module") and bool(pylon.get_meta("player_module")):
+		fails.append("ST-O stole the ST-A player_module slot")
+	if str(pylon.get_meta("module_type", "")) != "pylon":
+		fails.append("ST-O module is not pylon")
+	if pylon.has_meta("occupy_pylon") and bool(pylon.get_meta("occupy_pylon")):
+		fails.append("ST-O reused occupy ClaimBeaconVis")
+	if pylon.has_method("is_occupy_beacon") and bool(pylon.is_occupy_beacon()):
+		fails.append("ST-O claims to be occupy beacon")
+	var pscript := str(pylon.get_script().resource_path) if pylon.get_script() != null else ""
+	if pscript.ends_with("Turret.gd") and pscript.find("PadDefenseTurret") < 0:
+		fails.append("ST-O reused Clash Turret.gd")
+	if pscript != "" and pscript.find("PadPylon.gd") < 0:
+		fails.append("ST-O pylon script drifted (%s)" % pscript)
+	if str(pylon.name) != "PadPylon":
+		fails.append("ST-O pylon name drifted (%s)" % pylon.name)
+	if pylon.has_method("pulse_dps") and absf(float(pylon.pulse_dps())) > 0.01:
+		fails.append("ST-O Pulse DPS drifted (%s)" % pylon.pulse_dps())
+	if pylon.has_method("combat_authority") and str(pylon.combat_authority()) != "host":
+		fails.append("ST-O combat authority is not host")
+	if pylon.has_method("has_p2w_repair") and bool(pylon.has_p2w_repair()):
+		fails.append("ST-O P2W repair")
+	if pylon.has_method("try_cash_repair_skip") and bool(pylon.try_cash_repair_skip(99.0)):
+		fails.append("ST-O cash-shop repair skip")
+	if pylon.has_method("try_cash_cleanse") and bool(pylon.try_cash_cleanse(99.0)):
+		fails.append("ST-O cash-shop cleanse")
+	if pylon.has_method("is_g5_closed") and not bool(pylon.is_g5_closed()):
+		fails.append("ST-O G5 Clash-from-world is open")
+	if not ("health" in pylon) or float(pylon.health) <= 0.0:
+		fails.append("ST-O pylon has no HP")
+	if "max_health" in pylon and absf(float(pylon.max_health) - 120.0) > 0.01:
+		fails.append("ST-O fortify HP drifted (%s)" % pylon.max_health)
+	var extras := 0
+	if get_tree():
+		extras = get_tree().get_nodes_in_group("pad_pylons").size()
+	if extras != 1:
+		fails.append("ST-O want a pad pylon group, got %s" % extras)
+	var beacon: Node = pad.get_node_or_null("ClaimBeaconVis") if pad != null else null
+	if beacon == null and host != null:
+		beacon = host.find_child("ClaimBeaconVis", true, false)
+	if beacon != null and beacon == pylon:
+		fails.append("ST-O replaced occupy ClaimBeaconVis")
+	var turret: Node = pad.visible_turret() if pad.has_method("visible_turret") else host.get_node_or_null("PadDefenseTurret")
+	if turret == null:
+		turret = _Builder.pad_turret_on(host)
+	if turret == null or not is_instance_valid(turret):
+		fails.append("ST-O dropped ST-H turret")
+	if turret == pylon:
+		fails.append("ST-O reused the ST-H turret node")
+	var hab: Node = _Builder.player_module_on(host)
+	if hab != null:
+		var combat := int(hab.combat_stats()) if hab.has_method("combat_stats") else -1
+		if combat != 0:
+			fails.append("ST-O ST-A habitat combat drifted")
+	var ext: Node = pad.visible_extractor() if pad.has_method("visible_extractor") else host.get_node_or_null("PadHarvestExtractor")
+	if ext == null or not is_instance_valid(ext):
+		fails.append("ST-O ST-B extractor missing")
+	var arena_src := ""
+	if FileAccess.file_exists("res://scripts/test/TestArena.gd"):
+		arena_src = FileAccess.get_file_as_string("res://scripts/test/TestArena.gd")
+	if arena_src.find("PadPylon") >= 0:
+		fails.append("ST-O wrote pad pylon into TestArena")
+	if nex.has_method("pad_traffic"):
+		traffic = nex.call("pad_traffic")
+	if traffic == null and get_tree():
+		var listed: Array = get_tree().get_nodes_in_group("pad_traffic")
+		if not listed.is_empty():
+			traffic = listed[0]
+	if traffic != null and traffic.has_method("get_rival"):
+		rival = traffic.get_rival()
+	if rival == null and traffic != null:
+		var pvp: Node = traffic.get_pvp() if traffic.has_method("get_pvp") else traffic.get_node_or_null("PadPvp")
+		if pvp != null and pvp.has_method("get_rival"):
+			rival = pvp.get_rival()
+	if rival == null or not is_instance_valid(rival):
+		fails.append("ST-O PV-A rival missing for Infection")
+		return
+	if "aggro_range" in rival:
+		rival.set("aggro_range", 20.0)
+	var rival_home: Vector3 = rival.global_position
+	rival.global_position = pylon.global_position + Vector3(2.0, 0.0, 2.0)
+	await get_tree().process_frame
+	while rival.has_method("infection_stacks") and int(rival.infection_stacks()) > 0:
+		if rival.has_method("purge_infection"):
+			rival.purge_infection(1)
+		else:
+			break
+	if not rival.has_method("apply_infection"):
+		fails.append("ST-O rival has no apply_infection")
+		return
+	for _i in 3:
+		rival.apply_infection(1)
+	var stacks0 := int(rival.infection_stacks()) if rival.has_method("infection_stacks") else -1
+	if stacks0 != 3:
+		fails.append("ST-O could not seed 3 Infection stacks (%s)" % stacks0)
+	if not pylon.has_method("try_firewall"):
+		fails.append("ST-O try_firewall missing")
+		return
+	var fw := str(pylon.try_firewall(rival))
+	var stacks1 := int(rival.infection_stacks()) if rival.has_method("infection_stacks") else -1
+	print("[Playtest] ST-O CX firewall stacks ", stacks0, " -> ", stacks1, " refuse=", fw)
+	if stacks1 != stacks0 - 1:
+		fails.append("ST-O Firewall did not remove 1 stack (%s -> %s)" % [stacks0, stacks1])
+	while rival.has_method("infection_stacks") and int(rival.infection_stacks()) < 5:
+		var why_up := str(rival.apply_infection(1))
+		if why_up != "":
+			break
+	var stacks_cap := int(rival.infection_stacks()) if rival.has_method("infection_stacks") else -1
+	if stacks_cap != 5:
+		fails.append("ST-O could not reach Infection cap 5 (%s)" % stacks_cap)
+	if pylon.has_method("reload_for_faction"):
+		pylon.reload_for_faction("gROT")
+	var spore := str(pylon.try_spore(rival)) if pylon.has_method("try_spore") else "missing"
+	var stacks_ref := int(rival.infection_stacks()) if rival.has_method("infection_stacks") else -1
+	print("[Playtest] ST-O GR spore at cap refuse=", spore, " stacks=", stacks_ref)
+	if spore.find("Infection cap 5") < 0:
+		fails.append("ST-O Spore did not refuse at cap 5 (%s)" % spore)
+	if stacks_ref != 5:
+		fails.append("ST-O Spore broke Infection cap (%s)" % stacks_ref)
+	if rival.has_method("try_cash_cleanse") and bool(rival.try_cash_cleanse(99.0)):
+		fails.append("ST-O cash-shop cleanse on rival")
+	if stacks_ref != int(rival.infection_stacks()):
+		fails.append("ST-O cash cleanse changed stacks")
+	while rival.has_method("infection_stacks") and int(rival.infection_stacks()) > 0:
+		if rival.has_method("purge_infection"):
+			rival.purge_infection(1)
+		else:
+			break
+	var spore1 := str(pylon.try_spore(rival)) if pylon.has_method("try_spore") else "missing"
+	var stacks_sp := int(rival.infection_stacks()) if rival.has_method("infection_stacks") else -1
+	print("[Playtest] ST-O GR spore from 0 -> ", stacks_sp, " refuse=", spore1)
+	if stacks_sp != 1:
+		fails.append("ST-O Spore did not add 1 stack (%s)" % stacks_sp)
+	if pylon.has_method("reload_for_faction"):
+		pylon.reload_for_faction("Cybernex")
+	while rival.has_method("infection_stacks") and int(rival.infection_stacks()) > 0:
+		if rival.has_method("purge_infection"):
+			rival.purge_infection(1)
+		else:
+			break
+	if is_instance_valid(rival):
+		rival.global_position = rival_home
+	var walker_hp0 := 0.0
+	if walker != null and is_instance_valid(walker) and "health" in walker:
+		walker_hp0 = float(walker.health)
+	var p_hp0 := float(pylon.health)
+	if pylon.has_method("take_damage"):
+		pylon.take_damage(p_hp0 + 40.0, "gROT")
+	if pylon.has_method("is_alive") and bool(pylon.is_alive()):
+		fails.append("ST-O destroyed pylon still alive")
+	if walker != null and is_instance_valid(walker) and "health" in walker:
+		if float(walker.health) <= 0.0:
+			fails.append("ST-O pylon death was permadeath")
+		elif walker_hp0 > 0.0 and float(walker.health) < walker_hp0 - 0.01:
+			fails.append("ST-O pylon death damaged the walker")
+	if ov == null or not ov.has_method("try_enter"):
+		fails.append("ST-O StrategyOverlay missing")
+		return
+	if ov.has_method("is_active") and bool(ov.is_active()) and ov.has_method("exit_overlay"):
+		ov.exit_overlay()
+		await get_tree().process_frame
+	var pad_up: Vector3 = host.get_meta("pad_up") if host.has_meta("pad_up") else Vector3.UP
+	if ship != null and is_instance_valid(ship):
+		if "velocity" in ship:
+			ship.velocity = Vector3.ZERO
+		ship.global_position = host.global_position + pad_up * 8.0
+	await get_tree().process_frame
+	if not bool(ov.try_enter()):
+		fails.append("ST-O overlay B did not open (%s)" % str(ov.readiness_line() if ov.has_method("readiness_line") else ""))
+	else:
+		var ly := str(LayerContext.current_layer) if LayerContext else ""
+		if ly != "Strategy":
+			fails.append("ST-O LayerContext not Strategy (%s)" % ly)
+		if ov.has_method("exit_overlay"):
+			ov.exit_overlay()
+		await get_tree().process_frame
+	if LayerContext and str(LayerContext.site_pin_id) != pin0 \
+			and str(LayerContext.site_pin_id).begins_with("SITE_"):
+		fails.append("ST-O minted SITE_* (%s)" % LayerContext.site_pin_id)
+	if pad.has_method("pylon_hud_line"):
+		var hud := str(pad.pylon_hud_line())
+		if hud.find("FIREWALL") < 0 and hud.find("SPORE") < 0 and hud.find("PYLON") < 0:
+			fails.append("ST-O HUD pylon label missing (%s)" % hud)
+	print("[Playtest] ST-O pylon present Firewall −1 / Spore +1 cap 5 · no SITE_* · Clash TestArena unchanged")
 
 
 func _assert_st_k(os: Node, fails: PackedStringArray) -> void:

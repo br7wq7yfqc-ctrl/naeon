@@ -1,3 +1,5 @@
+**2026-09-07 — ST-O: one Firewall node / Spore pylon on an occupied unnamed pad via BaseBuilder.place_pad_pylon / PadPylon (CX Firewall −1 / gROT Spore +1; Infection cap 5 refuse; same fortify budget HP 120 / 16 m; SoftKnowledge / HUD FIREWALL NODE / SPORE PYLON only; host authority; ST-H turret stays distinct; occupy ClaimBeaconVis stays distinct; overlay B stays; ST-A/B/H/I/J stay; not Clash turret; not Pulse DPS; not a 13th kit; FLEET 15/15; PC-A remembers kind=pylon; ORBITAL_STATIONS false; no SITE_*).**
+
 **2026-09-06 — leftover polish (no new slice): WORLD_FILL §6 queue 2 occupy-pylon GLB budget + stand-up. `process_asset` exported base+lod in one GLB (88k/93k verts, 4.1/4.6 MB); now LOD object only + unique-mesh COLLAPSE + `--max-verts 12000,4000,1500` + `--max-tex 1024` + `--stand-up` (CX X→Z). lod1 CX 3875 verts 336 KB / GR 3671 verts 434 KB. GUI `mesh_source=ledger_glb` `glb_rel=props/cybernex_claim_beacon/cybernex_claim_beacon_lod1.glb`. Mac soak with GLB in tree: 5600M LOW TIME_FPS min=59 avg=137 max=145, RAM 101.1→104.1 then flat, nodes=815. Headless PASS PC-A/B/C PV-C AR-Z FL-N, SCRIPT=0 LAMBDA=0 FAIL=0, claim_beacons=1, new_SITE_*=0. Pad/extractor/debris still no lock-rows — skip (no mint). CX interceptor still unbound — skip (new plates). 3060 Tailscale-offline. Infection cap 5. SoftKnowledge only. Pulse 11. kits 12. FLEET 15/15. ORBITAL_STATIONS false. No SITE_*. No ST-O / PC-D / FL-O.**
 
 **2026-09-05 — leftover polish (no new slice): WORLD_FILL §6 queue 2 honest GLB from locked dumps `phjM0`/`nFxgT` → `assets/props/cybernex_claim_beacon/` / `grot_claim_beacon/` (image_to_model, keep PBR, faction-only; generic `claim_beacon` inbox untouched). Occupy pylon tags stay. Headless meta-only. Infection cap 5. SoftKnowledge only. Pulse 11. kits 12. FLEET 15/15. ORBITAL_STATIONS false. No SITE_*. No ST-O / PC-D / FL-O.**
@@ -918,7 +920,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 
 | Документ | Роль |
 |----------|------|
-| `docs/design/BASE_STATION_STRATEGY.md` | ST-A…ST-M built |
+| `docs/design/BASE_STATION_STRATEGY.md` | ST-A…ST-O built |
 | `docs/design/OPEN_SPACE_SC_BENCHMARK.md` | Бар подхода OS-A…OS-H. G2–G6 закрыты |
 | `docs/design/ASSET_SOURCE_CANON.md` | unique→Tripo / CC0→neon / paid→neon+notice / отказ |
 | `docs/design/WORLD_FILL.md` | Авторский скелет / безымянный filler. Не чеканит `SITE_*` |
@@ -960,6 +962,7 @@ P0.6 on the owner's RTX 3090 stays the FPS fact. llvmpipe ≠ FPS PASS.
 | ST-H pad turret | **built** — one PadDefenseTurret after occupy; HP; Pulse 11; not Clash OUTER; overlay B stays |
 | ST-I pad storage | **built** — one PadStorage after occupy; one-unit occupy dock ↔ ship CargoHold; Knowledge labels; mass/value stay |
 | ST-J pad hangar stub | **built** — one PadHangarStub after occupy; hatch/LAND on pad; not ST-D carrier hangar; overlay B stays |
+| ST-O pad Firewall / Spore pylon | **built** — one PadPylon after occupy; Infection ±1; cap 5 refuse; SoftKnowledge FIREWALL NODE / SPORE PYLON; not Clash turret; overlay B stays |
 | ST-K orbital hangar stub | **built** — one PadHangarStub on PlayerOrbitalStation; SoftKnowledge / HUD label; host authority; ST-E/G/J stay |
 | ST-L orbital defense turret | **built** — one PadDefenseTurret on PlayerOrbitalStation; SoftKnowledge / HUD label; Pulse 11; host authority; ST-E/G/H/K stay |
 | ST-M orbital storage | **built** — one PadStorage on PlayerOrbitalStation; SoftKnowledge / HUD label; host authority; ST-E/G/I/K/L stay |

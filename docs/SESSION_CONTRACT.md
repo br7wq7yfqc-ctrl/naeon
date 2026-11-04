@@ -404,6 +404,16 @@
     Infection cap 5. SoftKnowledge only. Pulse 11. AbilityKitCatalog
     stays at 12. FL-N FLEET 15/15. ORBITAL_STATIONS stays false.
     No SITE_*. Not FL-O. Not Voice. Not aiNEX. Not G2–G6. Not P2W.
+72. ST-O: one Firewall node / Spore pylon on an occupied unnamed pad
+    via BaseBuilder. Structure Hack resist / Infection pressure.
+    Same fortify budget both factions (±1 stack, HP 120, 16 m).
+    SoftKnowledge / HUD FIREWALL NODE / SPORE PYLON only. Host
+    authority. Infection cap 5 refuse. Overlay B stays. ST-A/B/H/I/J
+    stay. ST-H turret stays distinct. Occupy ClaimBeaconVis stays
+    distinct. Not Clash Turret. Not Pulse DPS. Not a 13th kit. Not
+    FL-O. No P2W cleanse/repair. No permadeath. AbilityKitCatalog
+    stays at 12 (cx_nex…gr_thorn). FL-N FLEET 15/15 stays.
+    ORBITAL_STATIONS stays false. No SITE_* (this pass).
 
 ## Tripo
 - Balance check when generating; code-first when zero.

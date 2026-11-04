@@ -479,6 +479,17 @@ static func storage_label() -> String:
 	return "STORAGE"
 
 
+## Colony/combat: name the ST-O pad Firewall node / Spore pylon.
+## Never stack count / DPS / HP / repair. Theme only.
+static func pylon_label(grot: bool = false) -> String:
+	var ops := mastery("colony_ops")
+	var combat := mastery("combat")
+	var named := ops >= 15.0 or combat >= 15.0 or rank() >= 5
+	if grot:
+		return "T1 SPORE PYLON" if named else "SPORE PYLON"
+	return "T1 FIREWALL NODE" if named else "FIREWALL NODE"
+
+
 ## Colony/combat: name the ST-H pad / ST-L orbital turret.
 ## Never Pulse DPS / HP / repair.
 static func turret_label() -> String:

@@ -1,6 +1,6 @@
 # NAEON — Shared Agent Memory
 
-**Last updated:** 2026-09-06 (leftover: occupy-pylon GLB lod-budget + Mac soak with GLB; no new slice)
+**Last updated:** 2026-09-07 (ST-O: pad Firewall node / Spore pylon)
 
 ## Core constraints
 No P2W · soft Knowledge · Infection max 5 · story ≠ power · Godot 4.7.2 · adult hard-sci-fi · site_pin catalog only · WorldFill = authored skeleton + unnamed filler · ready-made assets first, Tripo unique only · one resident system (ARK) · no planetary voxel shell · perf/25 (FPS on owner GPU, not llvmpipe)
@@ -9,7 +9,7 @@ No P2W · soft Knowledge · Infection max 5 · story ≠ power · Godot 4.7.2 ·
 rules/00–26 · **OPEN_SPACE_SC_BENCHMARK** · **BASE_STATION_STRATEGY** · **ASSET_SOURCE_CANON** · **WORLD_FILL** · DEVELOPMENT_PLAN 2.4 · SITE_PIN · GALAXY_LAYER_PLAN (G2–G6 locked) · TRIPO_ASSET_MANIFEST
 
 ## Where things are authored
-- **Order of work** → `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-M built). OS-A…OS-H remain in `OPEN_SPACE_SC_BENCHMARK.md`. Pointer in `DEVELOPMENT_PLAN.md`
+- **Order of work** → `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-O built). OS-A…OS-H remain in `OPEN_SPACE_SC_BENCHMARK.md`. Pointer in `DEVELOPMENT_PLAN.md`
 - **Mesh source** → `docs/design/ASSET_SOURCE_CANON.md`
 - **Fill vs authored** → `docs/design/WORLD_FILL.md`
 - **Human GPU fact** → `docs/PLAYTEST_SANDBOX.md` (3090 / P0.6; not FPS PASS on llvmpipe)
@@ -555,5 +555,7 @@ Summary of what every agent must now assume:
   AMD Radeon Pro 5600M, Vulkan Forward+, min preset LOW, 41 samples / 600s.
   TIME_FPS min=56.0 avg=59.7 max=60.0. RAM 101.1→101.4 MB (climb_steps=0).
   nodes 815→815. Headless TIME_FPS is dummy — refuse it.
+
+| 2026-09-07 | ST-O: one PadPylon Firewall node / Spore pylon after occupy; Infection ±1 cap 5; not Clash turret; not occupy ClaimBeaconVis | Sequential-dev |
 
 

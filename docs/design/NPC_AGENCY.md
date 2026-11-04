@@ -156,7 +156,7 @@ OS-G силуэт и ambient life — WorldFill / плотность, не жи�
 | Сейчас | Дальше |
 |--------|--------|
 | NP-A…F + NP-C habitat + NP-G ST-C print + NP-H ST-D hangar + NP-I ST-G factory + **Q-D** same Q-A board giver + **BT-A** pad-guard + **BT-B** visitor 3-state BT + **BT-C** gROT swarm (3 dummy, gather / pulse-engage / scatter-return) + **BT-D** Cybernex pack (3 dummy, same 3-state) | следующий NP-срез |
-| Стратегия — ST-A…ST-G built; NPC print = (a)/(b)/(c) | не mint `SITE_*` |
+| Стратегия — ST-A…ST-O built; NPC print = (a)/(b)/(c) | не mint `SITE_*` |
 | SoftNet — visual | authority later; не 10k |
 | G2–G6 | закрыты |
 | `MMO_SERVERS.md` | HOLD до Phase 3 |

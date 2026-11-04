@@ -28,6 +28,7 @@ Clash / Predecessor bar: `docs/design/ARENA_PREDECESSOR_BENCHMARK.md`.
 | **ST-B** | **built** | Extractor на unnamed паде; occupy → harvest → Contribution на HUD. Knowledge ≠ yield. |
 | **ST-C** | **built** | Печать одного catalog-модуля на паде / NPC-верстаке. Spend Contribution/Biomass. Нет cash-shop skip. |
 | **ST-D** | **built** | Очередь одного модуля в hangar catalog-носителя. Refuse mass/power. Не мобильный SITE_*. |
+| **ST-O** | **built** | Один Firewall node / Spore pylon на occupied unnamed паде. Infection ±1, cap 5. SoftKnowledge FIREWALL NODE / SPORE PYLON. Не Clash turret, не occupy ClaimBeaconVis. |
 | **ST-E** | **built** | Своя орбитальная станция: два catalog-модуля (dock + habitat) в одном кластере у Nex-Prime. Не город. Не SITE_*. |
 | **ST-F** | **built** | CX↔GR на occupied unnamed pad; theme + services; harvest/print/hangar numbers stay. Не SITE_*, не арена-флип. |
 | **NP-C** | **built** | NPC ставит один habitat на пустой unnamed пад (тот же BaseBuilder). Не SITE_*. |
