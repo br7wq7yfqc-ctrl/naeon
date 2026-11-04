@@ -161,7 +161,8 @@ func actor_kind(n: Node3D = null) -> String:
 		return "extractor"
 	if mt != "":
 		return "module"
-	if src.has_meta("pad_turret") or src.has_meta("pad_storage") or src.has_meta("pad_hangar_stub"):
+	if src.has_meta("pad_turret") or src.has_meta("pad_storage") or src.has_meta("pad_hangar_stub") \
+			or src.has_meta("pad_pylon"):
 		return "module"
 	if src.has_meta("printed_module") or src.has_meta("player_module") or src.has_meta("npc_module"):
 		return "module"
@@ -273,6 +274,9 @@ func _pad_strategy_actors(pad: Node3D) -> Array:
 	var hangar: Node3D = _Builder.pad_hangar_stub_on(pad)
 	if hangar != null:
 		out.append(hangar)
+	var pylon: Node3D = _Builder.pad_pylon_on(pad)
+	if pylon != null:
+		out.append(pylon)
 	var npc: Node3D = _Builder.npc_module_on(pad)
 	if npc != null:
 		out.append(npc)
@@ -296,7 +300,8 @@ func _is_physical_module(n: Node) -> bool:
 		return true
 	if n.has_meta("player_module") or n.has_meta("printed_module") or n.has_meta("npc_module"):
 		return true
-	if n.has_meta("pad_turret") or n.has_meta("pad_storage") or n.has_meta("pad_hangar_stub"):
+	if n.has_meta("pad_turret") or n.has_meta("pad_storage") or n.has_meta("pad_hangar_stub") \
+			or n.has_meta("pad_pylon"):
 		return true
 	return false
 

@@ -72,6 +72,7 @@ func _ready() -> void:
 	call_deferred("_ensure_pad_turret")
 	call_deferred("_ensure_pad_storage")
 	call_deferred("_ensure_pad_hangar_stub")
+	call_deferred("_ensure_pad_pylon")
 	_seed_pad_cargo()
 	_contest_ring = Node3D.new()
 	_contest_ring.set_script(preload("res://scripts/world/ContestedRing.gd"))
@@ -147,6 +148,7 @@ func _process(delta: float) -> void:
 			call_deferred("_ensure_pad_turret")
 			call_deferred("_ensure_pad_storage")
 			call_deferred("_ensure_pad_hangar_stub")
+			call_deferred("_ensure_pad_pylon")
 	_tick_occupy(delta)
 	_tick_guard_respawn(delta)
 	_tick_arena_influence(delta)
@@ -318,6 +320,7 @@ func _tick_occupy(delta: float) -> void:
 		_ensure_pad_turret()
 		_ensure_pad_storage()
 		_ensure_pad_hangar_stub()
+		_ensure_pad_pylon()
 	_occupy_label_t += delta
 	if _occupy_label_t >= 0.35:
 		_occupy_label_t = 0.0
@@ -477,6 +480,7 @@ func _lock_to(f: OwnershipData.Faction, noisy: bool) -> void:
 	call_deferred("_ensure_pad_turret")
 	call_deferred("_ensure_pad_storage")
 	call_deferred("_ensure_pad_hangar_stub")
+	call_deferred("_ensure_pad_pylon")
 	print("[PadBase] claim → ", ownership.faction_name(), " @ ", name)
 
 
@@ -873,6 +877,57 @@ func visible_hangar_stub() -> Node3D:
 func ensure_pad_hangar_stub() -> Node3D:
 	_ensure_pad_hangar_stub()
 	return visible_hangar_stub()
+
+
+func visible_pylon() -> Node3D:
+	## ST-O: one pad Firewall node / Spore pylon. Not occupy ClaimBeaconVis.
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	var pad := _unnamed_pad_host()
+	if pad != null:
+		return _Builder.pad_pylon_on(pad)
+	return find_child("PadPylon", true, false) as Node3D
+
+
+func ensure_pad_pylon() -> Node3D:
+	_ensure_pad_pylon()
+	return visible_pylon()
+
+
+func pylon_hud_line() -> String:
+	## SoftKnowledge pylon label only. Never stacks / DPS / HP.
+	if visible_pylon() == null:
+		return ""
+	var grot := false
+	if ownership and ownership.has_method("faction_name"):
+		grot = str(ownership.faction_name()) == "gROT"
+	elif GameManager and GameManager.has_method("get_faction_name"):
+		grot = str(GameManager.get_faction_name()) == "gROT"
+	return _SoftK.pylon_label(grot)
+
+
+func _ensure_pad_pylon() -> void:
+	## ST-O: one Firewall / Spore pylon after occupy. Distinct from ST-H turret
+	## and occupy ClaimBeaconVis.
+	var P0 = load("res://scripts/world/P0Slice.gd")
+	var _Builder = preload("res://scripts/world/BaseBuilder.gd")
+	var pad := _unnamed_pad_host()
+	var fac := default_faction
+	if P0 == null or not bool(P0.ST_O_PYLON):
+		return
+	if pad == null:
+		return
+	if ownership == null or not ownership.is_fully_owned():
+		return
+	if _status == "contested":
+		return
+	if _Builder.pad_pylon_on(pad) != null:
+		return
+	if ownership.has_method("faction_name"):
+		fac = str(ownership.faction_name())
+	if fac == "" or fac == "Neutral" or fac == "Contested":
+		fac = default_faction
+	_Builder.place_pad_pylon(pad, fac)
+	print("[PadBase] ST-O pylon on ", pad.name)
 
 
 func _ensure_pad_hangar_stub() -> void:

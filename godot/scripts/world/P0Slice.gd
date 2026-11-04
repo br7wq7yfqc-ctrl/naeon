@@ -84,6 +84,14 @@ const ST_I_STORAGE := true
 ## ST-J: one hangar stub on an occupied unnamed pad via BaseBuilder.
 ## Not ST-D CarrierHangarQueue. Hatch/LAND stay on the pad. No rover. No SITE_*.
 const ST_J_HANGAR := true
+## ST-O: one Firewall node (CX) / Spore pylon (gROT) on an occupied unnamed
+## pad via BaseBuilder. Structure Hack resist / Infection pressure. Same
+## fortify budget both factions (±1 stack, HP 120, 16 m). SoftKnowledge /
+## HUD FIREWALL NODE / SPORE PYLON only. Host authority. Infection cap 5.
+## ST-H pad turret stays distinct. Occupy ClaimBeaconVis stays distinct.
+## Not Clash Turret / OUTER 160. Not a 13th kit. Not FL-O. Not Pulse DPS.
+## Does not flip ORBITAL_STATIONS. No SITE_*.
+const ST_O_PYLON := true
 ## ST-K: one hangar stub on the existing PlayerOrbitalStation cluster
 ## (ST-E dock+habitat, ST-G factory stays). Same PadHangarStub / BaseBuilder
 ## grammar as ST-J. SoftKnowledge / HUD label only. Host authority.

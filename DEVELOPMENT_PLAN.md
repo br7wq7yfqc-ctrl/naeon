@@ -7,14 +7,14 @@
 **Принцип:** Local-first → Vertical Slices → Iterative Multiplayer → Platform + AI + Educational Systems  
 **SC → NAEON (роли, не клон):** `docs/design/SC_FEATURE_MAP.md` · бар подхода OS-A…OS-H: `docs/design/OPEN_SPACE_SC_BENCHMARK.md` (OS-A…OS-H built; harness ритуала. 60 FPS / 5 мин = 3090 human gate).  
 **Clash нативен; бар арены — Predecessor/Paragon, не Arena Commander:** `docs/design/ARENA_PREDECESSOR_BENCHMARK.md` (AR-A…AR-Z; код арены не вытесняет OS-A).  
-**Стратегия — третий бар, не Clash и не полёт OPEN SPACE:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-N built: overlay, extractor, print, hangar, orbital cluster, CX↔GR owner swap, own factory print, one pad turret, one pad storage, one pad hangar stub, one orbital hangar stub, one orbital defense turret, one orbital storage, one hangar drone/fighter). 
+**Стратегия — третий бар, не Clash и не полёт OPEN SPACE:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-O built: overlay, extractor, print, hangar, orbital cluster, CX↔GR owner swap, own factory print, one pad turret, one pad storage, one pad hangar stub, one Firewall node / Spore pylon, one orbital hangar stub, one orbital defense turret, one orbital storage, one hangar drone/fighter). 
 **Каталог — дыры (очередь, не новый catalog):** `docs/design/WORLD_FILL.md` §6. Ready-made fill → locked plates без GLB → пластины только на титульную дыру. Не mint SITE_*. Не capital-ship wave. OS-H harness built; не G2.  
 **NPC agency + MMO HOLD:** `docs/design/NPC_AGENCY.md` (NP-A…NP-F + NP-C + NP-G ST-C print + NP-H ST-D hangar + **NP-I** ST-G factory built) · `docs/design/MMO_SERVERS.md` (Phase 3 HOLD; 10k CCU / ≥100 на шард без instance-split; нет netcode сейчас; не G5 / G2–G6).
 
-**2026-09-03 — текущий бар ST-N (не Voice, не G2, не G5):**  
+**2026-09-07 — текущий бар ST-O (не Voice, не G2, не G5):**  
 OS-A…OS-H built. G2–G6 закрыты. G1 CRUISE не открыт.  
-ST-A…ST-N / IN-A…F / WF-A / Q-A / Q-B / Q-C / Q-D / Q-E / HF-A / HF-B / HF-C / PV-A / PV-B / PV-C built.  
-PC-A+PC-B+PC-C stay built. ST-N: one host-authority drone/fighter on the existing ST-D hangar (`CarrierHangarQueue`). SoftKnowledge / HUD DRONE / FIGHTER / HANGAR. Pulse 11 both ways. Infection cap 5. Not a 15th fleet pip.  
+ST-A…ST-O / IN-A…F / WF-A / Q-A / Q-B / Q-C / Q-D / Q-E / HF-A / HF-B / HF-C / PV-A / PV-B / PV-C built.  
+PC-A+PC-B+PC-C stay built. ST-O: one Firewall node / Spore pylon on an occupied unnamed pad (`PadPylon`). SoftKnowledge / HUD FIREWALL NODE / SPORE PYLON. Infection ±1, cap 5. Same fortify budget CX/GR. Not Pulse turret. Not occupy ClaimBeaconVis.  
 Петля P0.6 на RTX 3090 жива — не ломать. llvmpipe ≠ FPS PASS.
 
 ---
@@ -72,7 +72,7 @@ PC-A+PC-B+PC-C stay built. ST-N: one host-authority drone/fighter on the existin
 - **DoD**: экипировать, летать, стрелять, save/load
 
 ### 1.3 Colony / Strategy Core
-**Бар:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-N built). Overlay на загруженном теле ARK — не карта галактики.
+**Бар:** `docs/design/BASE_STATION_STRATEGY.md` (ST-A…ST-O built). Overlay на загруженном теле ARK — не карта галактики.
 
 - **ST-A (built):** `StrategyOverlay` (клавиша B) + один habitat на `Pad_North` / `Pad_Approach` / `Pad_Flank`. `LayerContext` = Strategy. Корабль и TPS живы после Esc/B. Не `SITE_*`.
 - **ST-B (built):** видимый extractor на unnamed паде; occupy → harvest → Contribution на HUD. Knowledge только подпись.
@@ -80,8 +80,9 @@ PC-A+PC-B+PC-C stay built. ST-N: one host-authority drone/fighter on the existin
 - **ST-D (built):** очередь одного модуля в hangar catalog-носителя (`CatalogCarrier` / `CarrierHangarQueue`). Refuse если mass/power корпуса превышен. Не мобильный `SITE_*`. Интерьеры later.
 - **ST-N (built):** one host-authority drone/fighter on that same ST-D hangar (`CombatDummy` + SoftNet visual, parented to `CarrierHangarQueue`). SoftKnowledge / HUD `DRONE` / `FIGHTER` / `HANGAR`. Pulse 11 both ways. Infection cap 5. No permadeath. Not a second player hull. Not a 15th fleet pip. Not a new OpenSpace. PC-A+B+C stay.
 - **ST-E (built):** своя орбитальная станция — два catalog-модуля (dock + habitat) в одном `PlayerOrbitalStation` на орбите Nex-Prime. Не город. Не `SITE_*`. `ORBITAL_STATIONS` выкл.
-- Свои базы из модулей на unnamed pads / claimed dirt (occupy-to-hold): habitat (ST-A), extractor (ST-B), turret (ST-H), pad, storage (ST-I), hangar stub (ST-J)
+- Свои базы из модулей на unnamed pads / claimed dirt (occupy-to-hold): habitat (ST-A), extractor (ST-B), turret (ST-H), pad, storage (ST-I), hangar stub (ST-J), Firewall node / Spore pylon (ST-O)
 - **ST-J (built):** one `PadHangarStub` on an occupied unnamed pad via `BaseBuilder.place_pad_hangar_stub` after occupy. Hatch/LAND stay on the pad. Not ST-D `CarrierHangarQueue`. Overlay B still opens. ST-A/B/H/I stay. Knowledge labels only. No rover. No `SITE_*`.
+- **ST-O (built):** one `PadPylon` on an occupied unnamed pad via `BaseBuilder.place_pad_pylon` after occupy. CX Firewall −1 / gROT Spore +1. Infection cap 5 refuse. Same fortify budget (HP 120, 16 m). SoftKnowledge / HUD `FIREWALL NODE` / `SPORE PYLON`. Overlay B still opens. ST-A/B/H/I/J stay. Not Clash turret. Not occupy `ClaimBeaconVis`. No Pulse DPS. No P2W cleanse. No `SITE_*`.
 - **ST-K (built):** one hangar stub on the existing `PlayerOrbitalStation` cluster via `BaseBuilder.place_orbital_hangar_stub` (`PadHangarStub.setup_orbital`). ST-E dock+habitat stay. ST-G factory stays. SoftKnowledge / HUD label only. Host authority. Hatch/LAND stay legal. Not ST-D carrier hangar. Not IN-F. Not a mobile `SITE_*`. `ORBITAL_STATIONS` stays false.
 - **ST-L (built):** one `PadDefenseTurret` on the existing `PlayerOrbitalStation` cluster via `BaseBuilder.place_orbital_turret` (`PadDefenseTurret.setup_orbital`). ST-E dock+habitat stay. ST-G factory stays. ST-K hangar stub stays. SoftKnowledge / HUD label only. Host authority. Pulse 11. Infection cap 5. ST-H pad turret stays distinct. Not Clash `Turret.gd` / OUTER 160. Not a 13th kit. Not FL-O. `ORBITAL_STATIONS` stays false.
 - **ST-M (built):** one `PadStorage` on the existing `PlayerOrbitalStation` cluster via `BaseBuilder.place_orbital_storage` (`PadStorage.setup_orbital`). ST-E dock+habitat stay. ST-G factory stays. ST-K hangar stub stays. ST-L turret stays. SoftKnowledge / HUD label only. Host authority. Infection cap 5. ST-I pad storage stays distinct. Not a second ship `CargoHold`. Not a 13th kit. Not FL-O. `ORBITAL_STATIONS` stays false.
@@ -100,6 +101,7 @@ PC-A+PC-B+PC-C stay built. ST-N: one host-authority drone/fighter on the existin
 - **DoD ST-H:** occupy unnamed pad → one visible turret with HP; Pulse hits a pad hostile; destroyed turret ≠ permadeath; not Clash OUTER; overlay B opens; no `SITE_*`
 - **DoD ST-I:** occupy unnamed pad → one visible storage; one-unit occupy dock pad-storage ↔ ship CargoHold; mass/value stay; overlay B opens; no `SITE_*`
 - **DoD ST-J:** occupy unnamed pad → one hangar stub; hatch/LAND on pad; overlay B opens; no `SITE_*`
+- **DoD ST-O:** occupy unnamed pad → one Firewall node / Spore pylon; Infection ±1; cap 5 refuse; overlay B opens; not Clash turret; no `SITE_*`
 - **DoD ST-K:** one hangar stub on the existing player orbital cluster; SoftKnowledge / HUD label; ST-E/G/J stay; hatch/LAND legal; no `SITE_*`
 - **DoD ST-L:** one defense turret on the existing player orbital cluster; SoftKnowledge / HUD label; Pulse 11; host authority; ST-E/G/H/K stay; no `SITE_*`
 - **DoD ST-M:** one storage on the existing player orbital cluster; SoftKnowledge / HUD label; host authority; ST-E/G/I/K/L stay; no `SITE_*`

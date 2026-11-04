@@ -835,12 +835,20 @@ func _refresh() -> void:
 						var rl := str(n.pad_restock_hud_line())
 						if rl != "":
 							best_txt += "  ·  %s" % rl
+					if n.has_method("pylon_hud_line"):
+						var pl := str(n.pylon_hud_line())
+						if pl != "" and best_txt.find(pl) < 0:
+							best_txt += "  ·  %s" % pl
 				else:
 					best_txt = "PAD %s  %s  claim %.0f%%  (%.0fm)" % [n.get_faction(), st, claim_ratio * 100.0, d]
 					if n.has_method("pad_restock_hud_line"):
 						var rl2 := str(n.pad_restock_hud_line())
 						if rl2 != "":
 							best_txt += "  ·  %s" % rl2
+					if n.has_method("pylon_hud_line"):
+						var pl2 := str(n.pylon_hud_line())
+						if pl2 != "" and best_txt.find(pl2) < 0:
+							best_txt += "  ·  %s" % pl2
 				if st == "contested" or str(n.get_faction()) == "Contested":
 					contested_near = true
 				if n.has_method("ownership_state_label"):
@@ -1081,6 +1089,10 @@ func _refresh_os_stack(pocket: bool, pad: Node) -> void:
 		var own_s := str(pad.ownership_state_label())
 		if own_s != "":
 			body += "\n" + own_s
+		if pad.has_method("pylon_hud_line"):
+			var pyl_s := str(pad.pylon_hud_line())
+			if pyl_s != "" and body.find(pyl_s) < 0:
+				body += "\n" + pyl_s
 	var hud_tree := get_tree()
 	if hud_tree:
 		for stn in hud_tree.get_nodes_in_group("player_orbital_stations"):

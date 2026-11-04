@@ -12,7 +12,7 @@ const PATH := "user://soft_session.json"
 const LEGAL_ACTIONS := ["occupy", "harvest", "invite", "form", "faction"]
 const WS_DAILY_CAP := 60.0
 const LEGAL_PADS := ["Pad_North", "Pad_Approach", "Pad_Flank"]
-const LEGAL_PAD_KINDS := ["habitat", "turret", "storage", "hangar"]
+const LEGAL_PAD_KINDS := ["habitat", "turret", "storage", "hangar", "pylon"]
 const LEGAL_ORBITAL_KINDS := ["hangar", "turret", "storage"]
 const LEGAL_CRATE_WHERE := ["pad", "orbital", "ship"]
 const LEGAL_HANGAR_WHERE := ["pad", "orbital", "queue"]
@@ -789,6 +789,8 @@ func _place_pad_kind(Builder, pad: Node3D, kind: String, fac: String) -> void:
 			Builder.place_pad_storage(pad, fac)
 		"hangar":
 			Builder.place_pad_hangar_stub(pad, fac)
+		"pylon":
+			Builder.place_pad_pylon(pad, fac)
 
 
 func _place_orbital_kind(Builder, cluster: Node3D, kind: String, fac: String) -> void:
